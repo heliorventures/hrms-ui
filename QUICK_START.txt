@@ -1,0 +1,229 @@
+================================================================================
+                    KABIPAY - QUICK START GUIDE
+================================================================================
+
+🎯 GET STARTED IN 3 STEPS:
+
+Step 1: Install Dependencies
+-----------------------------
+Open PowerShell in the KabiPay-UI folder and run:
+
+    cd d:\work\KabiPay-UI
+    npm install
+
+This will install all required packages (React, TypeScript, Tailwind, etc.)
+
+
+Step 2: Start Development Server
+---------------------------------
+After installation completes, run:
+
+    npm run dev
+
+The server will start and show you a URL (usually http://localhost:5173)
+
+
+Step 3: Open in Browser
+------------------------
+Open your browser and go to:
+
+    http://localhost:5173
+
+You should see the KabiPay application login/dashboard!
+
+
+================================================================================
+                              TESTING THE APP
+================================================================================
+
+🔐 Mock User Accounts:
+
+Employee Account:
+  - Name: John Doe
+  - Role: Employee
+  - Can access: Dashboard, Attendance, Leave, Payroll, Expenses, Notifications
+
+Admin Account:
+  - Name: Jane Smith  
+  - Role: Admin
+  - Can access: Everything + Employee Management + Reports
+
+Switch between roles using the button in the header!
+
+
+📱 Features to Demo:
+
+1. Dashboard
+   ✓ Punch in/out with real-time clock
+   ✓ Leave balance cards
+   ✓ Notifications preview
+   ✓ On leave today
+   ✓ Upcoming holidays
+
+2. Attendance & Timesheet
+   ✓ View attendance history
+   ✓ Add timesheet entries
+   ✓ Raise correction requests
+
+3. Leave Management
+   ✓ View leave balance
+   ✓ Apply for leave (with date picker)
+   ✓ View leave history
+
+4. Payroll
+   ✓ View payslips
+   ✓ Detailed salary breakdown
+   ✓ Tax regime information
+
+5. Expenses
+   ✓ Submit expense claims
+   ✓ Create travel requests
+   ✓ Track status
+
+6. Notifications
+   ✓ Filter unread/all
+   ✓ Mark as read
+   ✓ Navigate to related items
+
+7. Admin Features (Switch to Admin role first!)
+   ✓ Employee management (Add/Edit)
+   ✓ Attendance reports
+   ✓ Leave reports
+   ✓ Payroll reports
+
+
+🎨 UI Features to Show:
+
+✓ Theme Toggle - Switch between light and dark mode (button in header)
+✓ Responsive Design - Resize browser to see mobile view
+✓ Smooth Animations - Notice the theme transitions
+✓ Clean Tables - Check the data display in various modules
+✓ Modal Forms - Click "Add Employee" or "Apply Leave"
+
+
+================================================================================
+                            BUILD FOR PRODUCTION
+================================================================================
+
+When ready to deploy:
+
+    npm run build
+
+This creates an optimized production build in the 'dist' folder.
+
+
+================================================================================
+                              CHECK CODE QUALITY
+================================================================================
+
+Run ESLint to check code:
+
+    npm run lint
+
+Fix issues automatically:
+
+    npm run lint -- --fix
+
+
+================================================================================
+                                PROJECT FILES
+================================================================================
+
+📄 Important Documentation:
+
+  README.md           - Project overview and quick start
+  SETUP.md            - Detailed installation and configuration
+  FEATURES.md         - Complete feature documentation
+  PROJECT_SUMMARY.md  - Full project summary and statistics
+  QUICK_START.txt     - This file
+
+
+📁 Key Folders:
+
+  src/components/     - Reusable UI components
+  src/modules/        - Feature modules (dashboard, attendance, etc.)
+  src/contexts/       - Global state (theme, auth, tenant)
+  src/mocks/          - Mock data for all features
+  src/types/          - TypeScript type definitions
+
+
+================================================================================
+                              TROUBLESHOOTING
+================================================================================
+
+❌ If "npm install" fails:
+    - Check Node.js version (need v18+): node --version
+    - Delete node_modules folder and try again
+    - Try: npm cache clean --force
+
+❌ If dev server won't start:
+    - Check if port 5173 is already in use
+    - Try a different port: npm run dev -- --port 3000
+
+❌ If you see "command not found":
+    - Make sure you're in the KabiPay-UI folder
+    - Check Node.js is installed: node --version
+    - Check npm is installed: npm --version
+
+❌ If browser shows blank page:
+    - Check console for errors (F12 in browser)
+    - Clear browser cache and refresh
+    - Try a different browser
+
+
+================================================================================
+                            BACKEND INTEGRATION
+================================================================================
+
+This app is designed to work with:
+  Backend: Rust
+  API: async-graphql  
+  Database: PostgreSQL
+
+When backend is ready:
+  1. Update useMockApi hook with real API calls
+  2. Configure GraphQL client (Apollo)
+  3. Add authentication (JWT)
+  4. Update environment variables (.env file)
+
+See SETUP.md for detailed integration instructions.
+
+
+================================================================================
+                                TECH STACK
+================================================================================
+
+✓ React 18          - UI library
+✓ TypeScript        - Type safety
+✓ Vite              - Build tool
+✓ Tailwind CSS      - Styling
+✓ React Router      - Navigation
+✓ Context API       - State management
+
+
+================================================================================
+                              CONTACT & SUPPORT
+================================================================================
+
+For questions or issues:
+  - Check documentation files (README.md, SETUP.md, FEATURES.md)
+  - Review code comments in source files
+  - Check console for error messages
+
+
+================================================================================
+                                  ENJOY!
+================================================================================
+
+Your KabiPay application is ready to demo! 🎉
+
+Remember:
+  ✓ Everything works with mock data
+  ✓ No real backend required
+  ✓ Switch roles to see admin features
+  ✓ Try both light and dark themes
+  ✓ Resize window to test responsive design
+
+Happy coding! 🚀
+
+================================================================================

@@ -1,0 +1,56 @@
+import { AttendanceRecord } from '../types';
+
+export const mockAttendance: AttendanceRecord[] = [
+  {
+    id: 'att-1',
+    tenantId: 'tenant-1',
+    userId: 'user-1',
+    date: '2026-02-03',
+    punchIn: '09:15:00',
+    punchOut: '18:30:00',
+    status: 'present',
+    workHours: 9.25,
+    location: {
+      latitude: 28.6139,
+      longitude: 77.209,
+      address: 'TechCorp Office, Connaught Place, New Delhi',
+    },
+  },
+  {
+    id: 'att-2',
+    tenantId: 'tenant-1',
+    userId: 'user-1',
+    date: '2026-02-02',
+    punchIn: '09:00:00',
+    punchOut: '17:45:00',
+    status: 'present',
+    workHours: 8.75,
+  },
+  {
+    id: 'att-3',
+    tenantId: 'tenant-1',
+    userId: 'user-1',
+    date: '2026-02-01',
+    status: 'holiday',
+  },
+  {
+    id: 'att-4',
+    tenantId: 'tenant-1',
+    userId: 'user-1',
+    date: '2026-01-31',
+    punchIn: '09:30:00',
+    punchOut: '13:00:00',
+    status: 'half-day',
+    workHours: 3.5,
+  },
+  {
+    id: 'att-5',
+    tenantId: 'tenant-1',
+    userId: 'user-1',
+    date: '2026-01-30',
+    punchIn: '09:10:00',
+    punchOut: '18:15:00',
+    status: 'present',
+    workHours: 9.08,
+  },
+];
