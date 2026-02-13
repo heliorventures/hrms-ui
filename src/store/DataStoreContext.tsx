@@ -15,7 +15,9 @@ import type {
   SalaryHistoryEntry,
   LeaveStatus,
   AttendanceStatus,
+  DeclaredDeduction,
 } from '../types';
+import type { PunchRecord } from './localStorageStore';
 import {
   loadData,
   saveData,
@@ -55,6 +57,15 @@ interface DataStoreContextType {
   // Payroll (read for employee; admin can modify via these)
   getPayslips: (userId: string, tenantId: string) => Payslip[];
   getSalaryHistory: (userId: string, tenantId: string) => SalaryHistoryEntry[];
+
+  // Punch in/out (persists across logout)
+  getPunchRecord: (userId: string) => PunchRecord | null;
+  setPunchIn: (userId: string) => void;
+  setPunchOut: (userId: string) => void;
+
+  // Tax declarations (Old regime deductions)
+  getDeclaredDeductions: (userId: string, tenantId: string, fy: string) => DeclaredDeduction[];
+  setDeclaredDeductions: (userId: string, tenantId: string, fy: string, deductions: DeclaredDeduction[]) => void;
 }
 
 const DataStoreContext = createContext<DataStoreContextType | undefined>(undefined);
@@ -299,6 +310,69 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
     [data.salaryHistory]
   );
 
+  const getPunchRecord = useCallback(
+    (userId: string): PunchRecord | null => {
+      const today = new Date().toISOString().split('T')[0];
+      const key = `${userId}-${today}`;
+      return data.punchRecords[key] ?? null;
+    },
+    [data.punchRecords]
+  );
+
+  const setPunchIn = useCallback((userId: string) => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const key = `${userId}-${today}`;
+    setData((prev) => ({
+      ...prev,
+      punchRecords: {
+        ...prev.punchRecords,
+        [key]: {
+          punchIn: now.toISOString(),
+          date: today,
+        },
+      },
+    }));
+  }, []);
+
+  const setPunchOut = useCallback((userId: string) => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const key = `${userId}-${today}`;
+    const existing = data.punchRecords[key];
+    if (!existing) return;
+    setData((prev) => ({
+      ...prev,
+      punchRecords: {
+        ...prev.punchRecords,
+        [key]: {
+          ...existing,
+          punchOut: now.toISOString(),
+        },
+      },
+    }));
+  }, [data.punchRecords]);
+
+  const getDeclaredDeductions = useCallback(
+    (userId: string, tenantId: string, fy: string) =>
+      data.declaredDeductions[`${userId}-${tenantId}-${fy}`] ?? [],
+    [data.declaredDeductions]
+  );
+
+  const setDeclaredDeductions = useCallback(
+    (userId: string, tenantId: string, fy: string, deductions: DeclaredDeduction[]) => {
+      const key = `${userId}-${tenantId}-${fy}`;
+      setData((prev) => ({
+        ...prev,
+        declaredDeductions: {
+          ...prev.declaredDeductions,
+          [key]: deductions,
+        },
+      }));
+    },
+    []
+  );
+
   const value: DataStoreContextType = {
     data,
     refresh,
@@ -321,6 +395,11 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
     deleteEmployee,
     getPayslips,
     getSalaryHistory,
+    getPunchRecord,
+    setPunchIn,
+    setPunchOut,
+    getDeclaredDeductions,
+    setDeclaredDeductions,
   };
 
   return (

@@ -16,11 +16,12 @@ import type {
   Notification,
   Holiday,
   AttendanceStatus,
+  DeclaredDeduction,
 } from '../types';
 import { mockAttendance } from '../mocks/attendance';
 import { mockLeaveApplications, mockLeaveBalances, mockHolidays } from '../mocks/leaves';
 import { mockEmployees } from '../mocks/employees';
-import { mockPayslips, mockSalaryHistory } from '../mocks/payroll';
+import { mockPayslips, mockSalaryHistory, mockDeclaredDeductionsByFy } from '../mocks/payroll';
 import { mockExpenses, mockTravelRequests } from '../mocks/expenses';
 import { mockNotifications } from '../mocks/notifications';
 
@@ -36,9 +37,17 @@ export function getAttendanceStatusFromHours(hours: number): AttendanceStatus {
   return 'absent';
 }
 
+export interface PunchRecord {
+  punchIn: string; // ISO time
+  punchOut?: string;
+  date: string; // YYYY-MM-DD
+}
+
 export interface DemoData {
   timesheetEntries: TimesheetEntry[];
   attendanceOverrides: Record<string, AttendanceStatus>; // key: userId-date
+  punchRecords: Record<string, PunchRecord>; // key: userId-date (today's active punch)
+  declaredDeductions: Record<string, DeclaredDeduction[]>; // key: userId-tenantId-fy
   leaveApplications: LeaveApplication[];
   leaveBalances: Record<string, LeaveBalance[]>; // key: tenantId (global) or tenantId-userId (per-user)
   employees: Employee[];
@@ -69,6 +78,8 @@ function getDefaultData(): DemoData {
   return {
     timesheetEntries: initialTimesheet,
     attendanceOverrides: {},
+    punchRecords: {},
+    declaredDeductions: { ...mockDeclaredDeductionsByFy },
     leaveApplications: [...mockLeaveApplications],
     leaveBalances: {
       'tenant-1': [...mockLeaveBalances],
@@ -97,6 +108,8 @@ export function loadData(): DemoData {
       return {
         timesheetEntries: parsed.timesheetEntries ?? defaults.timesheetEntries,
         attendanceOverrides: parsed.attendanceOverrides ?? {},
+        punchRecords: parsed.punchRecords ?? {},
+        declaredDeductions: parsed.declaredDeductions ?? defaults.declaredDeductions,
         leaveApplications: parsed.leaveApplications ?? defaults.leaveApplications,
         leaveBalances: parsed.leaveBalances ?? defaults.leaveBalances,
         employees: parsed.employees ?? defaults.employees,

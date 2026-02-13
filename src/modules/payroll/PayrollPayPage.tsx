@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { useDataStore } from '../../store/DataStoreContext';
-import { mockDeclaredDeductionsByFy } from '../../mocks/payroll';
 import Card from '../../components/common/Card';
 import MaskedAmount from '../../components/common/MaskedAmount';
 import Button from '../../components/common/Button';
@@ -88,7 +87,7 @@ const PayrollPayPage = () => {
   });
   const [taxRegime, setTaxRegime] = useState<TaxRegime>('new');
 
-  const { getSalaryHistory, getPayslips } = useDataStore();
+  const { getSalaryHistory, getPayslips, getDeclaredDeductions } = useDataStore();
   const salaryHistory = user ? getSalaryHistory(user.id, currentTenant.id) : [];
   const payslips = user ? getPayslips(user.id, currentTenant.id) : [];
 
@@ -102,8 +101,10 @@ const PayrollPayPage = () => {
   const currentSalary = salaryHistory[0];
   const previousSalaries = salaryHistory.slice(1);
 
-  const declaredKey = user && currentTenant ? `${user.id}-${currentTenant.id}-${fy}` : '';
-  const declaredDeductions = (mockDeclaredDeductionsByFy[declaredKey] ?? []) as { section: string; name: string; amount: number }[];
+  const declaredDeductions =
+    user && currentTenant
+      ? getDeclaredDeductions(user.id, currentTenant.id, fy)
+      : [];
   const totalDeclaredDeduction = declaredDeductions.reduce((s, d) => s + d.amount, 0);
   const annualGross = (currentSalary?.totalMonthly ?? 0) * 12;
   const standardDeductionNew = 75000;

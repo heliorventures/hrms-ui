@@ -154,6 +154,7 @@ export interface DeclaredDeduction {
   section: string;
   name: string;
   amount: number;
+  documentUploaded?: boolean;
 }
 
 export interface ExpenseClaim {

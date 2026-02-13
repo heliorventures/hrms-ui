@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
+import { useDataStore } from '../../store/DataStoreContext';
 import Badge from '../../components/common/Badge';
 import PunchInOut from './components/PunchInOut';
 import LeaveBalanceCard from './components/LeaveBalanceCard';
@@ -11,10 +11,18 @@ import UpcomingHolidays from './components/UpcomingHolidays';
 const Dashboard = () => {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
-  const [isPunchedIn, setIsPunchedIn] = useState(false);
+  const { getPunchRecord, setPunchIn, setPunchOut } = useDataStore();
+
+  const punchRecord = user ? getPunchRecord(user.id) : null;
+  const isPunchedIn = punchRecord != null && !punchRecord.punchOut;
 
   const handlePunchToggle = () => {
-    setIsPunchedIn(!isPunchedIn);
+    if (!user) return;
+    if (isPunchedIn) {
+      setPunchOut(user.id);
+    } else {
+      setPunchIn(user.id);
+    }
   };
 
   return (
@@ -34,6 +42,7 @@ const Dashboard = () => {
 
         <PunchInOut
           isPunchedIn={isPunchedIn}
+          punchRecord={punchRecord}
           onToggle={handlePunchToggle}
         />
 
