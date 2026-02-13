@@ -1,36 +1,38 @@
 import { useState } from 'react';
-import { useMockApi } from '../../hooks/useMockApi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
-import { mockLeaveApplications, mockLeaveBalances } from '../../mocks/leaves';
+import { useDataStore } from '../../store/DataStoreContext';
 import { LeaveApplication, LeaveStatus } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ApplyLeaveModal from './components/ApplyLeaveModal';
 
 const LeavePage = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { currentTenant } = useTenant();
+  const {
+    getLeaveApplications,
+    getAllLeaveApplications,
+    getLeaveBalances,
+    updateLeaveStatus,
+    deleteLeaveApplication,
+    getEmployees,
+  } = useDataStore();
+
   const [showApplyModal, setShowApplyModal] = useState(false);
 
-  const { data: leaveBalance, loading: balanceLoading } = useMockApi(
-    () => mockLeaveBalances,
-    { delay: 300 }
-  );
+  const leaveBalance = user ? getLeaveBalances(currentTenant.id, user.id) : [];
+  const leaveApplications = user
+    ? role === 'admin'
+      ? getAllLeaveApplications(currentTenant.id)
+      : getLeaveApplications(user.id, currentTenant.id)
+    : [];
+  const employees = getEmployees(currentTenant.id);
 
-  const { data: leaveApplications, loading: applicationsLoading } = useMockApi(
-    () =>
-      mockLeaveApplications
-        .filter(
-          (leave) =>
-            leave.tenantId === currentTenant.id && leave.userId === user?.id
-        )
-        .sort((a, b) => b.appliedOn.localeCompare(a.appliedOn)),
-    { delay: 400 }
-  );
+  const getEmployeeName = (userId: string) =>
+    employees.find((e) => e.id === userId)?.name ?? userId;
 
   const getStatusVariant = (status: LeaveStatus) => {
     switch (status) {
@@ -48,6 +50,15 @@ const LeavePage = () => {
   };
 
   const columns = [
+    ...(role === 'admin'
+      ? [
+          {
+            key: 'userName',
+            label: 'Employee',
+            render: (leave: LeaveApplication) => getEmployeeName(leave.userId),
+          },
+        ]
+      : []),
     {
       key: 'leaveType',
       label: 'Leave Type',
@@ -57,13 +68,13 @@ const LeavePage = () => {
     },
     {
       key: 'fromDate',
-      label: 'From Date',
+      label: 'From',
       render: (leave: LeaveApplication) =>
         new Date(leave.fromDate).toLocaleDateString('en-IN'),
     },
     {
       key: 'toDate',
-      label: 'To Date',
+      label: 'To',
       render: (leave: LeaveApplication) =>
         new Date(leave.toDate).toLocaleDateString('en-IN'),
     },
@@ -73,13 +84,6 @@ const LeavePage = () => {
       render: (leave: LeaveApplication) => `${leave.days} day(s)`,
     },
     {
-      key: 'reason',
-      label: 'Reason',
-      render: (leave: LeaveApplication) => (
-        <span className="max-w-xs truncate">{leave.reason}</span>
-      ),
-    },
-    {
       key: 'status',
       label: 'Status',
       render: (leave: LeaveApplication) => (
@@ -87,10 +91,46 @@ const LeavePage = () => {
       ),
     },
     {
-      key: 'appliedOn',
-      label: 'Applied On',
-      render: (leave: LeaveApplication) =>
-        new Date(leave.appliedOn).toLocaleDateString('en-IN'),
+      key: 'actions',
+      label: 'Actions',
+      render: (leave: LeaveApplication) => (
+        <div className="flex gap-2">
+          {leave.status === 'pending' && (
+            <>
+              {role === 'admin' ? (
+                <>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() =>
+                      updateLeaveStatus(leave.id, 'approved', user?.id)
+                    }
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() =>
+                      updateLeaveStatus(leave.id, 'rejected', user?.id)
+                    }
+                  >
+                    Reject
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => deleteLeaveApplication(leave.id)}
+                >
+                  Delete
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      ),
     },
   ];
 
@@ -100,48 +140,44 @@ const LeavePage = () => {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Leave Management
         </h1>
-        <Button onClick={() => setShowApplyModal(true)}>Apply for Leave</Button>
+        {role !== 'admin' && (
+          <Button onClick={() => setShowApplyModal(true)}>Apply for Leave</Button>
+        )}
       </div>
 
       <Card title="Leave Balance">
-        {balanceLoading ? (
-          <LoadingSpinner />
-        ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {leaveBalance?.map((balance) => (
-              <div
-                key={balance.leaveType}
-                className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-              >
-                <div className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-                  {balance.leaveType}
-                </div>
-                <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                  {balance.available}
-                </div>
-                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  of {balance.total} available
-                </div>
-                <div className="mt-2">
-                  <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                    <div
-                      className="h-full bg-primary-600 dark:bg-primary-500"
-                      style={{
-                        width: `${(balance.available / balance.total) * 100}%`,
-                      }}
-                    />
-                  </div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {leaveBalance.map((balance) => (
+            <div
+              key={balance.leaveType}
+              className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+            >
+              <div className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                {balance.leaveType}
+              </div>
+              <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                {balance.available}
+              </div>
+              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                of {balance.total} available
+              </div>
+              <div className="mt-2">
+                <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div
+                    className="h-full bg-primary-600 dark:bg-primary-500"
+                    style={{
+                      width: `${(balance.available / balance.total) * 100}%`,
+                    }}
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </Card>
 
-      <Card title="Leave History">
-        {applicationsLoading ? (
-          <LoadingSpinner />
-        ) : leaveApplications && leaveApplications.length > 0 ? (
+      <Card title={role === 'admin' ? 'All Leave Applications' : 'Leave History'}>
+        {leaveApplications.length > 0 ? (
           <Table
             data={leaveApplications}
             columns={columns}
@@ -157,7 +193,6 @@ const LeavePage = () => {
       <ApplyLeaveModal
         isOpen={showApplyModal}
         onClose={() => setShowApplyModal(false)}
-        leaveBalances={leaveBalance || []}
       />
     </div>
   );

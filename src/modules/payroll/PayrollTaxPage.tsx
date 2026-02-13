@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useTenant } from '../../contexts/TenantContext';
 import { OLD_REGIME_DEDUCTIONS, NEW_REGIME_DEDUCTIONS } from '../../mocks/payroll';
 import Card from '../../components/common/Card';
 import type { TaxRegime } from '../../types';
@@ -8,7 +7,6 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
 const PayrollTaxPage = () => {
-  const { currentTenant } = useTenant();
   const [taxRegime, setTaxRegime] = useState<TaxRegime>('new');
 
   const deductions = taxRegime === 'old' ? OLD_REGIME_DEDUCTIONS : NEW_REGIME_DEDUCTIONS;

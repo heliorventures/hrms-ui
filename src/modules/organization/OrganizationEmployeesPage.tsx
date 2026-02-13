@@ -1,9 +1,7 @@
 import { useState, useMemo } from 'react';
-import { useMockApi } from '../../hooks/useMockApi';
 import { useTenant } from '../../contexts/TenantContext';
-import { mockEmployees } from '../../mocks/employees';
+import { useDataStore } from '../../store/DataStoreContext';
 import Card from '../../components/common/Card';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Input from '../../components/common/Input';
 import type { Employee } from '../../types';
 
@@ -23,28 +21,14 @@ const matchSearch = (employee: Employee, query: string): boolean => {
 
 const OrganizationEmployeesPage = () => {
   const { currentTenant } = useTenant();
+  const { getEmployees } = useDataStore();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: employees, loading } = useMockApi(
-    () =>
-      mockEmployees
-        .filter((e) => e.tenantId === currentTenant.id)
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    { delay: 300 }
-  );
+  const employees = getEmployees(currentTenant.id);
 
   const filteredEmployees = useMemo(() => {
-    if (!employees) return [];
     return employees.filter((e) => matchSearch(e, searchQuery));
   }, [employees, searchQuery]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingSpinner />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

@@ -1,21 +1,24 @@
 import { useState } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useTenant } from '../../../contexts/TenantContext';
+import { useDataStore } from '../../../store/DataStoreContext';
 import Modal from '../../../components/common/Modal';
 import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
-import { LeaveBalance, LeaveType } from '../../../types';
+import type { LeaveType } from '../../../types';
 
 interface ApplyLeaveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  leaveBalances: LeaveBalance[];
 }
 
-const ApplyLeaveModal = ({
-  isOpen,
-  onClose,
-  leaveBalances,
-}: ApplyLeaveModalProps) => {
+const ApplyLeaveModal = ({ isOpen, onClose }: ApplyLeaveModalProps) => {
+  const { user } = useAuth();
+  const { currentTenant } = useTenant();
+  const { getLeaveBalances, addLeaveApplication } = useDataStore();
+  const leaveBalances = user ? getLeaveBalances(currentTenant.id, user.id) : [];
+
   const [formData, setFormData] = useState({
     leaveType: 'casual' as LeaveType,
     fromDate: '',
@@ -51,7 +54,25 @@ const ApplyLeaveModal = ({
       return;
     }
 
-    alert('Leave application submitted successfully!');
+    if (!user) return;
+
+    addLeaveApplication({
+      tenantId: currentTenant.id,
+      userId: user.id,
+      leaveType: formData.leaveType,
+      fromDate: formData.fromDate,
+      toDate: formData.toDate,
+      days,
+      reason: formData.reason,
+      status: 'pending',
+    });
+
+    setFormData({
+      leaveType: 'casual',
+      fromDate: '',
+      toDate: '',
+      reason: '',
+    });
     onClose();
   };
 

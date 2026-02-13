@@ -38,6 +38,31 @@ const organizationNav: NavItemWithChildren = {
   ],
 };
 
+const adminNav: NavItemWithChildren = {
+  label: 'Admin',
+  icon: (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  ),
+  children: [
+    { path: '/admin/employees', label: 'Employees' },
+    { path: '/admin/reports', label: 'Reports' },
+    { path: '/admin/settings', label: 'Settings' },
+  ],
+};
+
 const payrollNav: NavItemWithChildren = {
   label: 'Payroll',
   icon: (
@@ -51,6 +76,7 @@ const payrollNav: NavItemWithChildren = {
     </svg>
   ),
   children: [
+    { path: '/payroll/payslips', label: 'Payslips' },
     { path: '/payroll/pay', label: 'Pay' },
     { path: '/payroll/tax', label: 'Tax' },
   ],
@@ -61,8 +87,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const location = useLocation();
   const isOrgPath = location.pathname.startsWith('/organization');
   const isPayrollPath = location.pathname.startsWith('/payroll');
+  const isAdminPath = location.pathname.startsWith('/admin');
   const [orgExpanded, setOrgExpanded] = useState(isOrgPath);
   const [payrollExpanded, setPayrollExpanded] = useState(isPayrollPath);
+  const [adminExpanded, setAdminExpanded] = useState(isAdminPath);
 
   const getNavItemColors = (path: string) => {
     if (path === '/dashboard') {
@@ -190,21 +218,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         </svg>
       ),
     },
-    {
-      path: '/admin/reports',
-      label: 'Reports',
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
-        </svg>
-      ),
-      adminOnly: true,
-    },
   ];
 
   const filteredNavItems = navItems.filter(
@@ -213,6 +226,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const showOrgExpanded = orgExpanded || isOrgPath;
   const showPayrollExpanded = payrollExpanded || isPayrollPath;
+  const showAdminExpanded = adminExpanded || isAdminPath;
 
   return (
     <>
@@ -259,7 +273,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
           <nav className="flex-1 space-y-2 overflow-y-auto p-4">
             {filteredNavItems
-              .filter((item) => item.path !== '/admin/employees' && item.path !== '/admin/reports')
               .map((item) => {
                 const colors = getNavItemColors(item.path);
                 return (
@@ -371,27 +384,53 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               )}
             </div>
 
-            {role === 'admin' &&
-              filteredNavItems
-                .filter((item) => item.adminOnly)
-                .map((item) => {
-                  const colors = getNavItemColors(item.path);
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      onClick={onClose}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                          isActive ? colors.active : colors.inactive
-                        }`
-                      }
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </NavLink>
-                  );
-                })}
+            {role === 'admin' && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAdminExpanded(!showAdminExpanded)}
+                  className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
+                    isAdminPath
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
+                      : 'text-gray-700 hover:bg-indigo-50 dark:text-gray-300 dark:hover:bg-indigo-900/20'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {adminNav.icon}
+                    <span>{adminNav.label}</span>
+                  </div>
+                  <svg
+                    className={`h-4 w-4 shrink-0 transition-transform ${showAdminExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showAdminExpanded && (
+                  <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-indigo-200 pl-3 dark:border-indigo-800">
+                    {adminNav.children.map((child) => {
+                      const subColors = getNavItemColors(child.path);
+                      return (
+                        <NavLink
+                          key={child.path}
+                          to={child.path}
+                          onClick={onClose}
+                          className={({ isActive }) =>
+                            `flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200 ${
+                              isActive ? subColors.active : subColors.inactive
+                            }`
+                          }
+                        >
+                          <span>{child.label}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </nav>
         </div>
       </aside>

@@ -5,6 +5,7 @@ import LoginPage from '../modules/auth/LoginPage';
 import Dashboard from '../modules/dashboard/Dashboard';
 import AttendancePage from '../modules/attendance/AttendancePage';
 import LeavePage from '../modules/leave/LeavePage';
+import PayrollPage from '../modules/payroll/PayrollPage';
 import PayrollPayPage from '../modules/payroll/PayrollPayPage';
 import PayrollTaxPage from '../modules/payroll/PayrollTaxPage';
 import ExpensesPage from '../modules/expenses/ExpensesPage';
@@ -15,6 +16,7 @@ import OrganizationDocumentsPage from '../modules/organization/OrganizationDocum
 import EmployeeDetailPage from '../modules/organization/EmployeeDetailPage';
 import AdminEmployeesPage from '../modules/admin/AdminEmployeesPage';
 import AdminReportsPage from '../modules/admin/AdminReportsPage';
+import AdminSettingsPage from '../modules/admin/AdminSettingsPage';
 
 const ProtectedLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -36,7 +38,8 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="attendance" element={<AttendancePage />} />
         <Route path="leave" element={<LeavePage />} />
-        <Route path="payroll" element={<Navigate to="/payroll/pay" replace />} />
+        <Route path="payroll" element={<Navigate to="/payroll/payslips" replace />} />
+        <Route path="payroll/payslips" element={<PayrollPage />} />
         <Route path="payroll/pay" element={<PayrollPayPage />} />
         <Route path="payroll/tax" element={<PayrollTaxPage />} />
         <Route path="expenses" element={<ExpensesPage />} />
@@ -50,6 +53,7 @@ const AppRoutes = () => {
           <>
             <Route path="admin/employees" element={<AdminEmployeesPage />} />
             <Route path="admin/reports" element={<AdminReportsPage />} />
+            <Route path="admin/settings" element={<AdminSettingsPage />} />
           </>
         )}
         

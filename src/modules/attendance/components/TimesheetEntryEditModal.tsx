@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useTenant } from '../../../contexts/TenantContext';
-import { useDataStore } from '../../../store/DataStoreContext';
-import Card from '../../../components/common/Card';
+import { useState, useEffect } from 'react';
+import Modal from '../../../components/common/Modal';
 import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
+import type { TimesheetEntry } from '../../../types';
 
-interface TimesheetEntryFormProps {
+interface TimesheetEntryEditModalProps {
+  isOpen: boolean;
   onClose: () => void;
-  initialDate?: string;
+  entry: TimesheetEntry | null;
+  onSave: (id: string, updates: Partial<TimesheetEntry>) => void;
 }
 
 const projects = [
@@ -18,31 +18,42 @@ const projects = [
   { value: 'proj-3', label: 'Project Gamma' },
 ];
 
-const TimesheetEntryForm = ({ onClose, initialDate }: TimesheetEntryFormProps) => {
-  const { user } = useAuth();
-  const { currentTenant } = useTenant();
-  const { addTimesheetEntry } = useDataStore();
-
+const TimesheetEntryEditModal = ({
+  isOpen,
+  onClose,
+  entry,
+  onSave,
+}: TimesheetEntryEditModalProps) => {
   const [formData, setFormData] = useState({
-    date: initialDate || new Date().toISOString().split('T')[0],
+    date: '',
     projectId: 'proj-1',
+    projectName: 'Project Alpha',
     taskDescription: '',
     hours: '',
   });
 
+  useEffect(() => {
+    if (entry) {
+      setFormData({
+        date: entry.date,
+        projectId: entry.projectId,
+        projectName: entry.projectName,
+        taskDescription: entry.taskDescription,
+        hours: String(entry.hours),
+      });
+    }
+  }, [entry]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    const proj = projects.find((p) => p.value === formData.projectId);
-    addTimesheetEntry({
-      tenantId: currentTenant.id,
-      userId: user.id,
+    if (!entry) return;
+    const selectedProject = projects.find((p) => p.value === formData.projectId);
+    onSave(entry.id, {
       date: formData.date,
       projectId: formData.projectId,
-      projectName: proj?.label ?? 'Project Alpha',
+      projectName: selectedProject?.label ?? formData.projectName,
       taskDescription: formData.taskDescription,
       hours: parseFloat(formData.hours) || 0,
-      status: 'submitted',
     });
     onClose();
   };
@@ -51,11 +62,22 @@ const TimesheetEntryForm = ({ onClose, initialDate }: TimesheetEntryFormProps) =
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'projectId') {
+      const proj = projects.find((p) => p.value === value);
+      setFormData((prev) => ({
+        ...prev,
+        projectId: value,
+        projectName: proj?.label ?? prev.projectName,
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
+  if (!entry) return null;
+
   return (
-    <Card title="Add Timesheet Entry">
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Timesheet Entry">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input
@@ -104,15 +126,15 @@ const TimesheetEntryForm = ({ onClose, initialDate }: TimesheetEntryFormProps) =
         />
         <div className="flex gap-3">
           <Button type="submit" variant="primary">
-            Submit Entry
+            Save
           </Button>
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
         </div>
       </form>
-    </Card>
+    </Modal>
   );
 };
 
-export default TimesheetEntryForm;
+export default TimesheetEntryEditModal;

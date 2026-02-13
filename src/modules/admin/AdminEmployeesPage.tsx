@@ -1,27 +1,20 @@
 import { useState } from 'react';
-import { useMockApi } from '../../hooks/useMockApi';
 import { useTenant } from '../../contexts/TenantContext';
-import { mockEmployees } from '../../mocks/employees';
+import { useDataStore } from '../../store/DataStoreContext';
 import { Employee } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import AddEditEmployeeModal from './components/AddEditEmployeeModal';
 
 const AdminEmployeesPage = () => {
   const { currentTenant } = useTenant();
+  const { getEmployees, addEmployee, updateEmployee } = useDataStore();
   const [showModal, setShowModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
-  const { data: employees, loading } = useMockApi(
-    () =>
-      mockEmployees
-        .filter((e) => e.tenantId === currentTenant.id)
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    { delay: 400 }
-  );
+  const employees = getEmployees(currentTenant.id);
 
   const handleAddEmployee = () => {
     setSelectedEmployee(null);
@@ -94,9 +87,7 @@ const AdminEmployeesPage = () => {
       </div>
 
       <Card title="Employee List">
-        {loading ? (
-          <LoadingSpinner />
-        ) : employees && employees.length > 0 ? (
+        {employees.length > 0 ? (
           <Table
             data={employees}
             columns={columns}
@@ -113,6 +104,14 @@ const AdminEmployeesPage = () => {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         employee={selectedEmployee}
+        onSave={(emp) => {
+          if ('id' in emp) {
+            const { id, ...updates } = emp;
+            updateEmployee(id, updates);
+          } else {
+            addEmployee(emp);
+          }
+        }}
       />
     </div>
   );

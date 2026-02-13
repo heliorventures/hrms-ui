@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTenant } from '../../../contexts/TenantContext';
 import Modal from '../../../components/common/Modal';
 import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
@@ -9,13 +10,16 @@ interface AddEditEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
   employee: Employee | null;
+  onSave?: (employee: Employee | Omit<Employee, 'id'>) => void;
 }
 
 const AddEditEmployeeModal = ({
   isOpen,
   onClose,
   employee,
+  onSave,
 }: AddEditEmployeeModalProps) => {
+  const { currentTenant } = useTenant();
   const [formData, setFormData] = useState({
     employeeId: '',
     name: '',
@@ -78,10 +82,24 @@ const AddEditEmployeeModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const emp: Omit<Employee, 'id'> = {
+      tenantId: currentTenant.id,
+      employeeId: formData.employeeId,
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      department: formData.department,
+      designation: formData.designation,
+      joiningDate: formData.joiningDate,
+      dateOfBirth: formData.dateOfBirth,
+      address: formData.address,
+      qualification: formData.qualification,
+      status: formData.status,
+    };
     if (employee) {
-      alert('Employee updated successfully!');
+      onSave?.({ ...emp, id: employee.id } as Employee);
     } else {
-      alert('Employee added successfully!');
+      onSave?.(emp);
     }
     onClose();
   };

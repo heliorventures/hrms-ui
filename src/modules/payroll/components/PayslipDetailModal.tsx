@@ -1,13 +1,21 @@
 import Modal from '../../../components/common/Modal';
 import Badge from '../../../components/common/Badge';
+import Button from '../../../components/common/Button';
+import MaskedAmount from '../../../components/common/MaskedAmount';
 import { Payslip } from '../../../types';
 
 interface PayslipDetailModalProps {
   payslip: Payslip | null;
   onClose: () => void;
+  onDownload?: () => void;
+  employeeName?: string;
 }
 
-const PayslipDetailModal = ({ payslip, onClose }: PayslipDetailModalProps) => {
+const PayslipDetailModal = ({
+  payslip,
+  onClose,
+  onDownload,
+}: PayslipDetailModalProps) => {
   if (!payslip) return null;
 
   const formatMonth = (month: string) => {
@@ -16,14 +24,6 @@ const PayslipDetailModal = ({ payslip, onClose }: PayslipDetailModalProps) => {
       month: 'long',
       year: 'numeric',
     });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(amount);
   };
 
   const earnings = payslip.components.filter((c) => c.type === 'earning');
@@ -37,7 +37,7 @@ const PayslipDetailModal = ({ payslip, onClose }: PayslipDetailModalProps) => {
       size="lg"
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Generated On
@@ -46,7 +46,14 @@ const PayslipDetailModal = ({ payslip, onClose }: PayslipDetailModalProps) => {
               {new Date(payslip.generatedOn).toLocaleDateString('en-IN')}
             </p>
           </div>
-          <Badge variant="info">{payslip.taxRegime.toUpperCase()} Regime</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="info">{payslip.taxRegime.toUpperCase()} Regime</Badge>
+            {onDownload && (
+              <Button size="sm" variant="outline" onClick={onDownload}>
+                Download PDF
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -63,9 +70,7 @@ const PayslipDetailModal = ({ payslip, onClose }: PayslipDetailModalProps) => {
                   <span className="text-gray-600 dark:text-gray-400">
                     {component.name}
                   </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {formatCurrency(component.amount)}
-                  </span>
+                  <MaskedAmount amount={component.amount} />
                 </div>
               ))}
               <div className="border-t border-gray-200 pt-2 dark:border-gray-700">
@@ -73,9 +78,7 @@ const PayslipDetailModal = ({ payslip, onClose }: PayslipDetailModalProps) => {
                   <span className="text-gray-900 dark:text-white">
                     Gross Salary
                   </span>
-                  <span className="text-gray-900 dark:text-white">
-                    {formatCurrency(payslip.grossSalary)}
-                  </span>
+                  <MaskedAmount amount={payslip.grossSalary} />
                 </div>
               </div>
             </div>
@@ -94,8 +97,9 @@ const PayslipDetailModal = ({ payslip, onClose }: PayslipDetailModalProps) => {
                   <span className="text-gray-600 dark:text-gray-400">
                     {component.name}
                   </span>
-                  <span className="font-medium text-red-600 dark:text-red-400">
-                    - {formatCurrency(component.amount)}
+                  <span className="flex items-center gap-2">
+                    <span className="text-red-600 dark:text-red-400">-</span>
+                    <MaskedAmount amount={component.amount} />
                   </span>
                 </div>
               ))}
@@ -104,8 +108,9 @@ const PayslipDetailModal = ({ payslip, onClose }: PayslipDetailModalProps) => {
                   <span className="text-gray-900 dark:text-white">
                     Total Deductions
                   </span>
-                  <span className="text-red-600 dark:text-red-400">
-                    - {formatCurrency(payslip.totalDeductions)}
+                  <span className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                    -
+                    <MaskedAmount amount={payslip.totalDeductions} />
                   </span>
                 </div>
               </div>
@@ -113,13 +118,14 @@ const PayslipDetailModal = ({ payslip, onClose }: PayslipDetailModalProps) => {
           </div>
 
           <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-gray-900 dark:text-white">
                 Net Salary
               </span>
-              <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                {formatCurrency(payslip.netSalary)}
-              </span>
+              <MaskedAmount
+                amount={payslip.netSalary}
+                className="text-xl font-bold text-green-600 dark:text-green-400"
+              />
             </div>
           </div>
         </div>

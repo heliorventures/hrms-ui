@@ -1,16 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
-import { useMockApi } from '../../hooks/useMockApi';
-import {
-  mockSalaryHistory,
-  mockCompanyPayComponents,
-  mockPayslips,
-  mockDeclaredDeductionsByFy,
-} from '../../mocks/payroll';
+import { useDataStore } from '../../store/DataStoreContext';
+import { mockDeclaredDeductionsByFy } from '../../mocks/payroll';
 import Card from '../../components/common/Card';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import MaskedAmount from '../../components/common/MaskedAmount';
+import Button from '../../components/common/Button';
 import type { TaxRegime } from '../../types';
+import { downloadPayslipPdf } from '../../utils/generatePayslipPdf';
 
 type TabId = 'salary' | 'payslip' | 'incometax';
 
@@ -91,32 +88,19 @@ const PayrollPayPage = () => {
   });
   const [taxRegime, setTaxRegime] = useState<TaxRegime>('new');
 
-  const { data: salaryHistory, loading: loadingSalary } = useMockApi(
-    () =>
-      mockSalaryHistory
-        .filter((s) => s.tenantId === currentTenant.id && s.userId === user?.id)
-        .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom)),
-    { delay: 300 }
-  );
+  const { getSalaryHistory, getPayslips } = useDataStore();
+  const salaryHistory = user ? getSalaryHistory(user.id, currentTenant.id) : [];
+  const payslips = user ? getPayslips(user.id, currentTenant.id) : [];
 
-  const { data: payslips, loading: loadingPayslip } = useMockApi(
-    () =>
-      mockPayslips
-        .filter((p) => p.tenantId === currentTenant.id && p.userId === user?.id)
-        .sort((a, b) => b.month.localeCompare(a.month)),
-    { delay: 300 }
-  );
-
-  const companyComponents = mockCompanyPayComponents.filter((c) => c.tenantId === currentTenant.id);
   const selectedPayslip = useMemo(
-    () => payslips?.find((p) => p.month === selectedMonth),
+    () => payslips.find((p) => p.month === selectedMonth),
     [payslips, selectedMonth]
   );
 
   const fyOptions = getFinancialYears();
 
-  const currentSalary = salaryHistory?.[0];
-  const previousSalaries = salaryHistory?.slice(1) ?? [];
+  const currentSalary = salaryHistory[0];
+  const previousSalaries = salaryHistory.slice(1);
 
   const declaredKey = user && currentTenant ? `${user.id}-${currentTenant.id}-${fy}` : '';
   const declaredDeductions = (mockDeclaredDeductionsByFy[declaredKey] ?? []) as { section: string; name: string; amount: number }[];
@@ -152,10 +136,7 @@ const PayrollPayPage = () => {
 
       {activeTab === 'salary' && (
         <div className="space-y-6">
-          {loadingSalary ? (
-            <Card><LoadingSpinner /></Card>
-          ) : (
-            <>
+          <>
               {currentSalary && (
                 <Card title="Current Salary">
                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -206,11 +187,10 @@ const PayrollPayPage = () => {
                   </ul>
                 </Card>
               )}
-              {!currentSalary && !loadingSalary && (
+              {!currentSalary && (
                 <Card><p className="text-center text-gray-500 dark:text-gray-400">No salary history found.</p></Card>
               )}
-            </>
-          )}
+          </>
         </div>
       )}
 
@@ -223,20 +203,27 @@ const PayrollPayPage = () => {
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             >
-              {payslips?.map((p) => (
+              {payslips.map((p) => (
                 <option key={p.id} value={p.month}>
                   {new Date(p.month + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
                 </option>
               ))}
             </select>
           </div>
-          {loadingPayslip ? (
-            <Card><LoadingSpinner /></Card>
-          ) : selectedPayslip ? (
+          {selectedPayslip ? (
             <Card title={`Payslip – ${new Date(selectedPayslip.month + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}`}>
-              <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-                Company pay components (independent of tax regime). Generated on {formatDate(selectedPayslip.generatedOn)}.
-              </p>
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Generated on {formatDate(selectedPayslip.generatedOn)}.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => downloadPayslipPdf(selectedPayslip)}
+                >
+                  Download PDF
+                </Button>
+              </div>
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Earnings</h4>
@@ -244,14 +231,14 @@ const PayrollPayPage = () => {
                     {selectedPayslip.components.filter((c) => c.type === 'earning').map((c) => (
                       <div key={c.name} className="flex justify-between text-sm">
                         <span>{c.name}</span>
-                        <span className="font-medium text-green-600 dark:text-green-400">{formatCurrency(c.amount)}</span>
+                        <MaskedAmount amount={c.amount} />
                       </div>
                     ))}
                   </div>
                   <div className="mt-2 border-t pt-2 text-sm font-medium">
                     <div className="flex justify-between">
                       <span>Gross Salary</span>
-                      <span>{formatCurrency(selectedPayslip.grossSalary)}</span>
+                      <MaskedAmount amount={selectedPayslip.grossSalary} />
                     </div>
                   </div>
                 </div>
@@ -261,21 +248,27 @@ const PayrollPayPage = () => {
                     {selectedPayslip.components.filter((c) => c.type === 'deduction').map((c) => (
                       <div key={c.name} className="flex justify-between text-sm">
                         <span>{c.name}</span>
-                        <span className="font-medium text-red-600 dark:text-red-400">- {formatCurrency(c.amount)}</span>
+                        <span className="flex items-center gap-2">
+                          <span className="text-red-600 dark:text-red-400">-</span>
+                          <MaskedAmount amount={c.amount} />
+                        </span>
                       </div>
                     ))}
                   </div>
                   <div className="mt-2 border-t pt-2 text-sm font-medium">
                     <div className="flex justify-between text-red-600 dark:text-red-400">
                       <span>Total Deductions</span>
-                      <span>{formatCurrency(selectedPayslip.totalDeductions)}</span>
+                      <span className="flex items-center gap-2">
+                        -
+                        <MaskedAmount amount={selectedPayslip.totalDeductions} />
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-                  <div className="flex justify-between text-lg font-bold text-green-800 dark:text-green-200">
+                  <div className="flex justify-between items-center text-lg font-bold text-green-800 dark:text-green-200">
                     <span>Net In-Hand</span>
-                    <span>{formatCurrency(selectedPayslip.netSalary)}</span>
+                    <MaskedAmount amount={selectedPayslip.netSalary} />
                   </div>
                 </div>
               </div>

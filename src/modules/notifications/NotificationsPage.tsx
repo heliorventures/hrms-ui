@@ -4,7 +4,7 @@ import { useMockApi } from '../../hooks/useMockApi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { mockNotifications } from '../../mocks/notifications';
-import { Notification, NotificationType } from '../../types';
+import { NotificationType } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';

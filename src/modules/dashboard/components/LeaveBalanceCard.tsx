@@ -1,14 +1,11 @@
 import { useMockApi } from '../../../hooks/useMockApi';
-import { useTenant } from '../../../contexts/TenantContext';
 import { mockLeaveBalances } from '../../../mocks/leaves';
 import Card from '../../../components/common/Card';
 import LoadingSpinner from '../../../components/common/LoadingSpinner';
 
 const LeaveBalanceCard = () => {
-  const { currentTenant } = useTenant();
-  
   const { data: leaveBalances, loading } = useMockApi(
-    () => mockLeaveBalances.filter((lb) => true), // Filter by tenant if needed
+    () => mockLeaveBalances,
     { delay: 300 }
   );
 
