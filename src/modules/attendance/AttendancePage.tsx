@@ -1,58 +1,149 @@
-import { useState, useMemo } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTenant } from '../../contexts/TenantContext';
-import { useDataStore } from '../../store/DataStoreContext';
-import { AttendanceRecord, TimesheetEntry } from '../../types';
+import { useCallback, useEffect, useState } from 'react';
+import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
 import Table from '../../components/common/Table';
+import Modal from '../../components/common/Modal';
+import { useGraphClient } from '../../hooks/useGraphClient';
 import TimesheetEntryForm from './components/TimesheetEntryForm';
-import TimesheetEntryEditModal from './components/TimesheetEntryEditModal';
-import AttendanceCalendar from './components/AttendanceCalendar';
-import CorrectionRequestModal from './components/CorrectionRequestModal';
+
+interface ShiftRow {
+  id: string;
+  name: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  workHours?: number | null;
+  isNightShift: boolean;
+}
+
+interface AttendanceRow {
+  id: string;
+  employeeId: string;
+  workDate: string;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+  status?: string | null;
+  source?: string | null;
+  lateMinutes?: number | null;
+}
+
+interface TimesheetEntryRow {
+  id: string;
+  workDate: string;
+  hoursWorked: string;
+  projectCode?: string | null;
+  description?: string | null;
+  status: string;
+}
+
+interface AttendanceBoardData {
+  shifts: ShiftRow[];
+  attendance: AttendanceRow[];
+}
+
+interface TimesheetData {
+  timesheetEntries: TimesheetEntryRow[];
+}
+
+const ATTENDANCE_BOARD = gql`
+  query AttendanceBoard($limit: Int! = 20) {
+    shifts(limit: $limit) {
+      id
+      name
+      startTime
+      endTime
+      workHours
+      isNightShift
+    }
+    attendance(limit: $limit) {
+      id
+      employeeId
+      workDate
+      checkInTime
+      checkOutTime
+      status
+      source
+      lateMinutes
+    }
+  }
+`;
+
+const TIMESHEET_Q = gql`
+  query TimesheetOnly($limit: Int! = 50) {
+    timesheetEntries(limit: $limit) {
+      id
+      workDate
+      hoursWorked
+      projectCode
+      description
+      status
+    }
+  }
+`;
 
 const AttendancePage = () => {
-  const { user } = useAuth();
-  const { currentTenant } = useTenant();
-  const {
-    getTimesheetEntries,
-    updateTimesheetEntry,
-    deleteTimesheetEntry,
-    getAttendance,
-  } = useDataStore();
+  const client = useGraphClient('client');
+  const [data, setData] = useState<AttendanceBoardData | null>(null);
+  const [timesheet, setTimesheet] = useState<TimesheetEntryRow[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [timesheetError, setTimesheetError] = useState<string | null>(null);
+  const [timesheetOpen, setTimesheetOpen] = useState(false);
 
-  const [showTimesheetForm, setShowTimesheetForm] = useState(false);
-  const [showCorrectionModal, setShowCorrectionModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [editingEntry, setEditingEntry] = useState<TimesheetEntry | null>(null);
-  const [currentMonth, setCurrentMonth] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  });
+  const loadBoard = useCallback(async () => {
+    return client.request<AttendanceBoardData>(ATTENDANCE_BOARD, { limit: 20 });
+  }, [client]);
 
-  const timesheetEntries = user
-    ? getTimesheetEntries(user.id, currentTenant.id)
-    : [];
-  const [monthStart, monthEnd] = useMemo(() => {
-    const [y, m] = currentMonth.split('-').map(Number);
-    return [
-      `${y}-${String(m).padStart(2, '0')}-01`,
-      `${y}-${String(m).padStart(2, '0')}-${new Date(y, m, 0).getDate()}`,
-    ];
-  }, [currentMonth]);
+  const loadTimesheet = useCallback(async () => {
+    const result = await client.request<TimesheetData>(TIMESHEET_Q, { limit: 50 });
+    return result.timesheetEntries;
+  }, [client]);
 
-  const attendanceRecords = user
-    ? getAttendance(user.id, currentTenant.id, monthStart, monthEnd)
-    : [];
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        setTimesheetError(null);
+        const [board, tsResult] = await Promise.all([
+          loadBoard(),
+          loadTimesheet()
+            .then((rows) => ({ ok: true as const, rows }))
+            .catch((e) => {
+              if (!cancelled) {
+                setTimesheetError(
+                  e instanceof Error ? e.message : 'Timesheet needs a signed-in employee session'
+                );
+              }
+              return { ok: false as const, rows: [] as TimesheetEntryRow[] };
+            }),
+        ]);
+        if (!cancelled) {
+          setData(board);
+          if (tsResult.ok) {
+            setTimesheet(tsResult.rows);
+            setTimesheetError(null);
+          } else {
+            setTimesheet(null);
+          }
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load attendance data');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadBoard, loadTimesheet]);
 
-  const entriesForSelectedDate = useMemo(() => {
-    if (!selectedDate) return [];
-    return timesheetEntries.filter((e) => e.date === selectedDate);
-  }, [timesheetEntries, selectedDate]);
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
+  const statusVariant = (status?: string | null) => {
+    switch ((status ?? '').toLowerCase()) {
       case 'present':
         return 'success';
       case 'absent':
@@ -61,250 +152,166 @@ const AttendancePage = () => {
         return 'warning';
       case 'leave':
         return 'info';
-      case 'holiday':
-        return 'neutral';
       default:
         return 'neutral';
     }
   };
 
-  const handleAddEntryForDate = (date: string) => {
-    setSelectedDate(date);
-    setShowTimesheetForm(true);
-  };
-
-  const attendanceColumns = [
-    {
-      key: 'date',
-      label: 'Date',
-      render: (record: AttendanceRecord) =>
-        new Date(record.date).toLocaleDateString('en-IN', {
-          weekday: 'short',
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        }),
-    },
-    {
-      key: 'punchIn',
-      label: 'Punch In',
-      render: (record: AttendanceRecord) => record.punchIn || '-',
-    },
-    {
-      key: 'punchOut',
-      label: 'Punch Out',
-      render: (record: AttendanceRecord) => record.punchOut || '-',
-    },
-    {
-      key: 'workHours',
-      label: 'Work Hours',
-      render: (record: AttendanceRecord) =>
-        record.workHours ? `${record.workHours.toFixed(2)}h` : '-',
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (record: AttendanceRecord) => (
-        <Badge variant={getStatusVariant(record.status)}>
-          {record.status}
-        </Badge>
-      ),
-    },
-  ];
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Attendance & Timesheet
-        </h1>
-        <Button onClick={() => setShowTimesheetForm(!showTimesheetForm)}>
-          {showTimesheetForm ? 'Hide Timesheet Form' : 'Add Timesheet Entry'}
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance & Shifts</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Live data from the attendance subgraph through the gateway.
+        </p>
       </div>
 
-      {showTimesheetForm && (
-        <TimesheetEntryForm
-          onClose={() => setShowTimesheetForm(false)}
-          initialDate={selectedDate ?? undefined}
-        />
+      {error && (
+        <Card>
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Card title="Attendance Calendar">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const [y, m] = currentMonth.split('-').map(Number);
-                    const prev = m === 1 ? { y: y - 1, m: 12 } : { y, m: m - 1 };
-                    setCurrentMonth(
-                      `${prev.y}-${String(prev.m).padStart(2, '0')}`
-                    );
-                  }}
-                >
-                  ← Prev
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const [y, m] = currentMonth.split('-').map(Number);
-                    const next = m === 12 ? { y: y + 1, m: 1 } : { y, m: m + 1 };
-                    setCurrentMonth(
-                      `${next.y}-${String(next.m).padStart(2, '0')}`
-                    );
-                  }}
-                >
-                  Next →
-                </Button>
-              </div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {new Date(currentMonth + '-01').toLocaleDateString('en-IN', {
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
-            <AttendanceCalendar
-              attendance={attendanceRecords}
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              currentMonth={currentMonth}
-            />
-            {selectedDate && (
-              <div className="mt-4 flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Selected: {new Date(selectedDate).toLocaleDateString('en-IN')}
-                </span>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={() => handleAddEntryForDate(selectedDate)}
-                >
-                  Add entry for this date
-                </Button>
-              </div>
-            )}
-            {selectedDate && entriesForSelectedDate.length > 0 && (
-              <div className="mt-3 space-y-2">
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  Time entries for this date:
+      <Card title="Shift Templates">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading shifts…</p>
+        ) : data?.shifts?.length ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {data.shifts.map((shift) => (
+              <div
+                key={shift.id}
+                className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{shift.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {shift.startTime ?? '—'} to {shift.endTime ?? '—'}
+                    </p>
+                  </div>
+                  <Badge variant={shift.isNightShift ? 'warning' : 'info'}>
+                    {shift.isNightShift ? 'Night' : 'Day'}
+                  </Badge>
+                </div>
+                <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                  Work hours: {shift.workHours ?? '—'}
                 </p>
-                {entriesForSelectedDate.map((e) => (
-                  <div
-                    key={e.id}
-                    className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 dark:border-gray-600"
-                  >
-                    <span className="text-sm">
-                      {e.projectName}: {e.hours}h - {e.taskDescription}
-                    </span>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingEntry(e)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => deleteTimesheetEntry(e.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
               </div>
-            )}
-          </Card>
-        </div>
-
-        <div>
-          <Card title="Timesheet Entries">
-            {timesheetEntries.length > 0 ? (
-              <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                {timesheetEntries.slice(0, 20).map((e) => (
-                  <div
-                    key={e.id}
-                    className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-600"
-                  >
-                    <div>
-                      <span className="font-medium">
-                        {new Date(e.date).toLocaleDateString('en-IN')}
-                      </span>
-                      <span className="ml-2 text-gray-500">
-                        {e.projectName} - {e.hours}h
-                      </span>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingEntry(e)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => deleteTimesheetEntry(e.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {timesheetEntries.length > 20 && (
-                  <p className="text-xs text-gray-500">
-                    Showing 20 of {timesheetEntries.length}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                No timesheet entries. Add one above.
-              </p>
-            )}
-          </Card>
-        </div>
-      </div>
-
-      <Card title="Attendance Records (derived from timesheet)">
-        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-          Full hours (≥8h) → Present • Partial (4–8h) → Half day • No entry →
-          Absent
-        </p>
-        {attendanceRecords.length > 0 ? (
-          <Table
-            data={attendanceRecords}
-            columns={attendanceColumns}
-            keyExtractor={(record) => record.id}
-          />
+            ))}
+          </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            No attendance records for this month
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No shifts found.</p>
         )}
       </Card>
 
-      <TimesheetEntryEditModal
-        isOpen={!!editingEntry}
-        onClose={() => setEditingEntry(null)}
-        entry={editingEntry}
-        onSave={updateTimesheetEntry}
-      />
+      <Card title="Recent Attendance">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading attendance…</p>
+        ) : data?.attendance?.length ? (
+          <Table
+            data={data.attendance}
+            keyExtractor={(row) => row.id}
+            columns={[
+              {
+                key: 'employeeId',
+                label: 'Employee',
+                render: (row: AttendanceRow) => row.employeeId,
+              },
+              {
+                key: 'workDate',
+                label: 'Date',
+                render: (row: AttendanceRow) => new Date(row.workDate).toLocaleDateString('en-IN'),
+              },
+              {
+                key: 'checkInTime',
+                label: 'Check in',
+                render: (row: AttendanceRow) => row.checkInTime ?? '—',
+              },
+              {
+                key: 'checkOutTime',
+                label: 'Check out',
+                render: (row: AttendanceRow) => row.checkOutTime ?? '—',
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (row: AttendanceRow) => (
+                  <Badge variant={statusVariant(row.status)}>{row.status ?? '—'}</Badge>
+                ),
+              },
+              { key: 'source', label: 'Source', render: (row: AttendanceRow) => row.source ?? '—' },
+              {
+                key: 'lateMinutes',
+                label: 'Late min',
+                render: (row: AttendanceRow) => row.lateMinutes ?? '—',
+              },
+            ]}
+          />
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No attendance rows found.</p>
+        )}
+      </Card>
 
-      <CorrectionRequestModal
-        isOpen={showCorrectionModal}
-        onClose={() => setShowCorrectionModal(false)}
-        date={selectedDate || ''}
-      />
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Timesheet</h2>
+        <Button variant="primary" onClick={() => setTimesheetOpen(true)} disabled={loading}>
+          Add entry
+        </Button>
+      </div>
+
+      <Card title="Your timesheet entries">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading timesheet…</p>
+        ) : timesheetError ? (
+          <p className="text-sm text-amber-700 dark:text-amber-300">{timesheetError}</p>
+        ) : timesheet && timesheet.length > 0 ? (
+          <Table
+            data={timesheet}
+            keyExtractor={(row) => row.id}
+            columns={[
+              {
+                key: 'workDate',
+                label: 'Date',
+                render: (row: TimesheetEntryRow) =>
+                  new Date(row.workDate).toLocaleDateString('en-IN'),
+              },
+              { key: 'hoursWorked', label: 'Hours' },
+              {
+                key: 'projectCode',
+                label: 'Project',
+                render: (row: TimesheetEntryRow) => row.projectCode ?? '—',
+              },
+              {
+                key: 'description',
+                label: 'Notes',
+                render: (row: TimesheetEntryRow) => (
+                  <span className="max-w-xs truncate">{row.description ?? '—'}</span>
+                ),
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (row: TimesheetEntryRow) => <Badge variant="info">{row.status}</Badge>,
+              },
+            ]}
+          />
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No timesheet entries yet.</p>
+        )}
+      </Card>
+
+      <Modal isOpen={timesheetOpen} onClose={() => setTimesheetOpen(false)} title="Add timesheet">
+        <TimesheetEntryForm
+          onClose={() => setTimesheetOpen(false)}
+          onCreated={async () => {
+            try {
+              setTimesheet(await loadTimesheet());
+            } catch (e) {
+              setTimesheetError(e instanceof Error ? e.message : 'Failed to refresh timesheet');
+            }
+          }}
+        />
+      </Modal>
     </div>
   );
 };

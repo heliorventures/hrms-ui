@@ -24,15 +24,16 @@ KabiPay is a comprehensive solution for managing employee attendance, leave, pay
 ### 1. Dashboard Module
 
 #### Purpose
+
 Central hub for employees to get a quick overview of their work status and important information.
 
 #### Components
+
 - **PunchInOut Widget**
   - Real-time clock display
   - Punch in/out button with status indicator
   - Location tracking (mock)
   - Selfie requirement indicator for remote work
-  
 - **Leave Balance Cards**
   - Display all leave types (Casual, Sick, Earned, Comp-off)
   - Visual representation of available vs used leaves
@@ -56,6 +57,7 @@ Central hub for employees to get a quick overview of their work status and impor
 ### 2. Attendance & Timesheet Module
 
 #### Attendance Tracking
+
 - **Day-wise Attendance List**
   - Punch in/out times
   - Work hours calculation
@@ -68,6 +70,7 @@ Central hub for employees to get a quick overview of their work status and impor
   - Admin approval workflow (UI ready)
 
 #### Timesheet Management
+
 - **Entry Form**
   - Project selection
   - Task description
@@ -83,6 +86,7 @@ Central hub for employees to get a quick overview of their work status and impor
 ### 3. Leave Management Module
 
 #### Leave Balance
+
 - **Visual Representation**
   - Total allocated leaves
   - Used leaves
@@ -90,6 +94,7 @@ Central hub for employees to get a quick overview of their work status and impor
   - Progress bars for each leave type
 
 #### Leave Application
+
 - **Application Form**
   - Leave type selection
   - Date range picker
@@ -106,6 +111,7 @@ Central hub for employees to get a quick overview of their work status and impor
 ### 4. Payroll Module
 
 #### Payslip View
+
 - **Monthly Payslips**
   - Card-based layout
   - Gross salary display
@@ -114,6 +120,7 @@ Central hub for employees to get a quick overview of their work status and impor
   - Tax regime indicator
 
 #### Detailed Breakdown
+
 - **Earnings**
   - Basic salary
   - HRA
@@ -136,6 +143,7 @@ Central hub for employees to get a quick overview of their work status and impor
 ### 5. Expenses & Travel Module
 
 #### Expense Claims
+
 - **Submission**
   - Expense type selection (travel, food, accommodation, supplies, other)
   - Amount entry
@@ -151,6 +159,7 @@ Central hub for employees to get a quick overview of their work status and impor
   - Reimbursed status
 
 #### Travel Requests
+
 - **Request Form**
   - From/To locations
   - Travel dates
@@ -167,6 +176,7 @@ Central hub for employees to get a quick overview of their work status and impor
 ### 6. Notifications Module
 
 #### Types of Notifications
+
 - **Company Notifications**
   - Company-wide announcements
   - Policy updates
@@ -185,6 +195,7 @@ Central hub for employees to get a quick overview of their work status and impor
   - Mandatory training alerts
 
 #### Features
+
 - **Read/Unread Status**
   - Visual indicators
   - Mark as read functionality
@@ -204,6 +215,7 @@ Central hub for employees to get a quick overview of their work status and impor
 #### Employee Management
 
 ##### Employee List
+
 - **Table View**
   - Employee ID
   - Name
@@ -225,6 +237,7 @@ Central hub for employees to get a quick overview of their work status and impor
   - Status management
 
 ##### Bulk Operations (UI Ready)
+
 - Import employees via CSV
 - Export employee data
 - Bulk status updates
@@ -232,6 +245,7 @@ Central hub for employees to get a quick overview of their work status and impor
 #### Reports & Analytics
 
 ##### Attendance Reports
+
 - **Metrics**
   - Total present days
   - Total absent days
@@ -246,6 +260,7 @@ Central hub for employees to get a quick overview of their work status and impor
   - Status filter
 
 ##### Leave Reports
+
 - **Metrics**
   - Total applications
   - Approved leaves
@@ -260,6 +275,7 @@ Central hub for employees to get a quick overview of their work status and impor
   - Status
 
 ##### Payroll Reports
+
 - **Metrics**
   - Total gross salary
   - Total net salary
@@ -275,12 +291,14 @@ Central hub for employees to get a quick overview of their work status and impor
 ## UI/UX Features
 
 ### Theme Support
+
 - **Light Theme:** Clean, professional appearance
 - **Dark Theme:** Eye-friendly for extended use
 - **Smooth Transitions:** Seamless theme switching
 - **Persistence:** Theme preference stored in localStorage
 
 ### Responsive Design
+
 - **Desktop (lg+)**
   - Full sidebar always visible
   - Multi-column layouts
@@ -300,6 +318,7 @@ Central hub for employees to get a quick overview of their work status and impor
   - Touch-optimized interactions
 
 ### Accessibility
+
 - **Keyboard Navigation:** Full keyboard support
 - **ARIA Labels:** Screen reader compatible
 - **Focus Indicators:** Clear focus states
@@ -308,6 +327,7 @@ Central hub for employees to get a quick overview of their work status and impor
 ## Technical Features
 
 ### Mock API Layer
+
 ```typescript
 const { data, loading, error } = useMockApi(
   () => mockData.filter(...),
@@ -316,18 +336,21 @@ const { data, loading, error } = useMockApi(
 ```
 
 Features:
+
 - Configurable delay (simulates network latency)
 - Loading states
 - Error handling
 - Easy transition to real API
 
 ### Type Safety
+
 - Full TypeScript coverage
 - Interface definitions for all data structures
 - Type-safe component props
 - GraphQL-compatible types
 
 ### Code Quality
+
 - ESLint configuration with strict rules
 - Prettier for consistent formatting
 - Functional components only
@@ -338,19 +361,23 @@ Features:
 ## Backend Integration Readiness
 
 ### GraphQL Schema Ready
+
 All TypeScript types are designed to match GraphQL schema:
+
 - Query types
 - Mutation input types
 - Subscription types (for real-time updates)
 - Pagination support
 
 ### Multi-Tenant Architecture
+
 - Tenant context at root level
 - All data filtered by tenantId
 - Tenant switching capability
 - Isolated data per tenant
 
 ### Authentication Ready
+
 - Auth context structure in place
 - Role-based access control
 - Route guards for admin routes
@@ -413,15 +440,18 @@ All TypeScript types are designed to match GraphQL schema:
 ## Deployment
 
 ### Vite Build
+
 ```bash
 npm run build
 ```
+
 - Optimized production build
 - Asset optimization
 - Code minification
 - Source maps (configurable)
 
 ### Hosting Options
+
 - **Static Hosting:** Netlify, Vercel, GitHub Pages
 - **CDN:** CloudFront, Cloudflare
 - **Container:** Docker deployment ready
@@ -437,18 +467,21 @@ npm run build
 ## Support & Maintenance
 
 ### Code Organization
+
 - Clear module structure
 - Consistent naming conventions
 - Reusable components
 - Centralized configuration
 
 ### Scalability
+
 - Component reusability
 - Easy feature addition
 - Modular architecture
 - Clean separation of concerns
 
 ### Maintainability
+
 - TypeScript for type safety
 - ESLint for code quality
 - Prettier for consistency

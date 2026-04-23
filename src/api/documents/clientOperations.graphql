@@ -1,0 +1,145 @@
+# Operations that need a client JWT (employee resolved from claims). Not for unauthenticated x-tenant-id-only probes.
+
+query LeaveBalances($limit: Int! = 20, $year: Int) {
+  leaveBalances(limit: $limit, year: $year) {
+    id
+    leaveTypeId
+    year
+    balanceDays
+    entitledDays
+    pendingDays
+    usedDays
+    carriedForwardDays
+  }
+}
+
+query ClientOpsUpcomingHolidays($fromDate: NaiveDate, $limit: Int! = 15) {
+  upcomingHolidays(fromDate: $fromDate, limit: $limit) {
+    id
+    holidayDate
+    name
+    calendarName
+    holidayType
+  }
+}
+
+query TimesheetRows($limit: Int! = 50) {
+  timesheetEntries(limit: $limit) {
+    id
+    workDate
+    hoursWorked
+    projectCode
+    description
+    status
+  }
+}
+
+query TaxComputationsList($limit: Int! = 10) {
+  taxComputations(limit: $limit) {
+    id
+    fiscalYear
+    taxConfigVersionId
+    taxRegimeChosen
+    grossIncome
+    totalDeductions
+    taxableIncome
+    finalTax
+    tdsPerMonth
+    computedAt
+  }
+}
+
+query OrgDocumentsList($tlim: Int! = 50, $dlim: Int! = 50) {
+  documentTypes(limit: $tlim) {
+    id
+    name
+    category
+    isRequired
+  }
+  employeeDocuments(limit: $dlim) {
+    id
+    documentTypeId
+    status
+    uploadedAt
+    expiryDate
+  }
+}
+
+query ClientOpsPayslipsList($limit: Int! = 10) {
+  payslips(limit: $limit) {
+    id
+    netSalary
+    grossSalary
+    totalDeductions
+    status
+    generatedAt
+    lines {
+      id
+      salaryComponentId
+      amount
+      componentType
+    }
+  }
+}
+
+mutation SubmitLeaveRequest($input: SubmitLeaveRequestInput!) {
+  submitLeaveRequest(input: $input) {
+    id
+    status
+    fromDate
+    toDate
+    daysRequested
+  }
+}
+
+mutation SubmitExpense($input: SubmitExpenseInput!) {
+  submitExpense(input: $input) {
+    id
+    status
+    amount
+    title
+  }
+}
+
+mutation MarkNotificationRead($id: ID!) {
+  markNotificationRead(id: $id) {
+    id
+    isRead
+  }
+}
+
+mutation MarkAllNotificationsRead {
+  markAllNotificationsRead
+}
+
+mutation PunchToday {
+  punchToday {
+    id
+    workDate
+    checkInTime
+    checkOutTime
+    status
+  }
+}
+
+mutation CreateTimesheetEntry($input: CreateTimesheetEntryInput!) {
+  createTimesheetEntry(input: $input) {
+    id
+    workDate
+    hoursWorked
+    projectCode
+    status
+  }
+}
+
+mutation DeleteTimesheetEntry($id: ID!) {
+  deleteTimesheetEntry(id: $id)
+}
+
+mutation UpsertTaxComputation($input: UpsertTaxComputationInput!) {
+  upsertTaxComputation(input: $input) {
+    id
+    fiscalYear
+    taxRegimeChosen
+  }
+}

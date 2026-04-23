@@ -1,6 +1,24 @@
-# KabiPay-UI
+# kabipay-ui
 
-A modern, UI-first KabiPay application built with React, TypeScript, and Tailwind CSS.
+React + TypeScript + Vite client for KabiPay (employee and admin areas). Talks to **kabipay-auth** (REST) and the **kabipay-gateway** GraphQL endpoint.
+
+## Dependencies
+
+| Requirement | Notes |
+|-------------|--------|
+| **Node.js** | LTS (v20+ recommended). |
+| **npm** | Comes with Node. |
+| **Backend** | For full functionality: Postgres + **kabipay-svc** (auth + subgraphs) + **kabipay-gateway** running; see those repos’ READMEs. |
+
+## Configure
+
+Runtime URLs are **not** baked into the build. Edit **`public/config.json`** (served as static `/config.json`):
+
+| Field | Purpose |
+|-------|---------|
+| `gatewayUrl` | Federated GraphQL HTTP URL (e.g. `http://127.0.0.1:4009/graphql`). |
+| `authUrl` | `kabipay-auth` base URL, no trailing slash (e.g. `http://127.0.0.1:4001`). |
+| `devTenantId` | Default tenant UUID for login and `x-tenant-id` when needed. |
 
 ## Features
 
@@ -18,7 +36,7 @@ A modern, UI-first KabiPay application built with React, TypeScript, and Tailwin
 - Tailwind CSS for styling
 - React Router for navigation
 - Context API for state management
-- Mock API layer (GraphQL-ready)
+- GraphQL client against the federated gateway (`public/config.json`)
 - Multi-tenant architecture (frontend)
 
 ## Getting Started
@@ -29,11 +47,23 @@ A modern, UI-first KabiPay application built with React, TypeScript, and Tailwin
 npm install
 ```
 
+### GraphQL codegen (optional)
+
+When the gateway exposes a live schema, generate typed documents:
+
+```bash
+npm run codegen
+```
+
+`codegen.ts` reads `gatewayUrl` from `public/config.json`. Run the gateway first.
+
 ### Development
 
 ```bash
 npm run dev
 ```
+
+Default dev server: **http://localhost:5173** (Vite).
 
 ### Build
 
@@ -46,6 +76,17 @@ npm run build
 ```bash
 npm run lint
 ```
+
+## Typical local order
+
+1. **kabipay-database** — Postgres + migrations.
+2. **kabipay-svc** — `kabipay-auth` and subgraphs.
+3. **kabipay-gateway** — stitch subgraphs.
+4. This UI — set `public/config.json`, then `npm run dev`.
+
+## Related repositories
+
+- **kabipay-database**, **kabipay-svc**, **kabipay-gateway** — see each README.
 
 ## Project Structure
 
@@ -65,7 +106,7 @@ src/
 │   ├── notifications/# Notifications
 │   └── admin/        # Admin panel
 ├── hooks/            # Custom React hooks
-├── mocks/            # Mock data and API
+├── profile/          # Profile defaults derived from auth user
 ├── routes/           # Route configuration
 ├── theme/            # Theme configuration
 ├── utils/            # Utility functions
@@ -75,36 +116,26 @@ src/
 
 ## Architecture
 
-### Mock API Layer
+### API and auth
 
-The application uses a mock API layer that mimics GraphQL queries and mutations. This allows for:
-- Simulated loading states
-- Error handling
-- Configurable delays
-- Easy transition to real GraphQL backend
+- Runtime URLs come from `public/config.json` (`gatewayUrl`, `authUrl`, `devTenantId`).
+- The GraphQL client sends `Authorization` and `x-tenant-id` when a session is active.
 
 ### Multi-Tenant Model
 
 - All data is tenant-aware
-- Tenant context maintains active tenant
-- All API calls filtered by tenantId
-- User can switch tenants (mock)
+- Tenant context tracks the active tenant id (from the signed-in user or `devTenantId` before login)
+- Client GraphQL calls include `x-tenant-id`
 
 ### Role-Based Access
 
 - Two roles: Employee and Admin
 - Role-based routing and component rendering
 - Admin routes hidden from employees
-- Mock role switching for demo
 
-## Backend Integration (Future)
+## Backend
 
-This frontend is designed to integrate with:
-- Rust backend
-- async-graphql
-- PostgreSQL database
-- Multi-tenant architecture
-- JWT authentication
+The UI targets the KabiPay gateway and `kabipay-auth` services (Rust, PostgreSQL, JWT).
 
 ## License
 

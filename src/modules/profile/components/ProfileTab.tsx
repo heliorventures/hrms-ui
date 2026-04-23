@@ -18,7 +18,9 @@ const ProfileTab = ({ data }: ProfileTabProps) => {
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Display Name</p>
-            <p className="mt-1 text-gray-900 dark:text-white">{primaryDetails.displayName || '-'}</p>
+            <p className="mt-1 text-gray-900 dark:text-white">
+              {primaryDetails.displayName || '-'}
+            </p>
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Gender</p>
@@ -37,7 +39,9 @@ const ProfileTab = ({ data }: ProfileTabProps) => {
             <p className="mt-1 text-gray-900 dark:text-white">{primaryDetails.nationality}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Physically Handicapped</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              Physically Handicapped
+            </p>
             <p className="mt-1 text-gray-900 dark:text-white">
               {primaryDetails.physicallyHandicapped ? 'Yes' : 'No'}
             </p>
@@ -53,9 +57,12 @@ const ProfileTab = ({ data }: ProfileTabProps) => {
                 key={edu.id}
                 className="rounded-lg border border-gray-200 p-3 dark:border-gray-700"
               >
-                <p className="font-medium text-gray-900 dark:text-white">{edu.degree} – {edu.institution}</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {edu.degree} – {edu.institution}
+                </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {edu.year} {edu.percentage ? `• ${edu.percentage}` : ''} {edu.summary ? `• ${edu.summary}` : ''}
+                  {edu.year} {edu.percentage ? `• ${edu.percentage}` : ''}{' '}
+                  {edu.summary ? `• ${edu.summary}` : ''}
                 </p>
               </div>
             ))}
@@ -86,10 +93,7 @@ const ProfileTab = ({ data }: ProfileTabProps) => {
         {addresses && addresses.length > 0 ? (
           <div className="space-y-4">
             {addresses.map((addr, idx) => (
-              <div
-                key={idx}
-                className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-              >
+              <div key={idx} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                 <p className="text-gray-900 dark:text-white">
                   {addr.line1}
                   {addr.line2 ? `, ${addr.line2}` : ''}
@@ -120,7 +124,9 @@ const ProfileTab = ({ data }: ProfileTabProps) => {
           {contact.alternate && (
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <p className="text-sm font-medium text-gray-900 dark:text-white">Alternate Contact</p>
-              <p className="mt-1 text-gray-600 dark:text-gray-300">{contact.alternate.personName}</p>
+              <p className="mt-1 text-gray-600 dark:text-gray-300">
+                {contact.alternate.personName}
+              </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Relation: {contact.alternate.relation} • {contact.alternate.phone}
               </p>

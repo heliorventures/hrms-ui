@@ -17,6 +17,7 @@ import EmployeeDetailPage from '../modules/organization/EmployeeDetailPage';
 import AdminEmployeesPage from '../modules/admin/AdminEmployeesPage';
 import AdminReportsPage from '../modules/admin/AdminReportsPage';
 import AdminSettingsPage from '../modules/admin/AdminSettingsPage';
+import ModuleHealth from '../modules/admin/ModuleHealth';
 
 const ProtectedLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -31,7 +32,10 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route
+        path="/login"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+      />
 
       <Route path="/" element={<ProtectedLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
@@ -48,15 +52,16 @@ const AppRoutes = () => {
         <Route path="organization/employees" element={<OrganizationEmployeesPage />} />
         <Route path="organization/employees/:employeeId" element={<EmployeeDetailPage />} />
         <Route path="organization/documents" element={<OrganizationDocumentsPage />} />
-        
+
         {role === 'admin' && (
           <>
             <Route path="admin/employees" element={<AdminEmployeesPage />} />
             <Route path="admin/reports" element={<AdminReportsPage />} />
             <Route path="admin/settings" element={<AdminSettingsPage />} />
+            <Route path="admin/module-health" element={<ModuleHealth />} />
           </>
         )}
-        
+
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

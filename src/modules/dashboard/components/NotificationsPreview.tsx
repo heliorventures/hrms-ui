@@ -1,38 +1,70 @@
 import { Link } from 'react-router-dom';
-import { useMockApi } from '../../../hooks/useMockApi';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useTenant } from '../../../contexts/TenantContext';
-import { mockNotifications } from '../../../mocks/notifications';
+import { useEffect, useState } from 'react';
+import { gql } from 'graphql-request';
 import Card from '../../../components/common/Card';
-import LoadingSpinner from '../../../components/common/LoadingSpinner';
+import { useGraphClient } from '../../../hooks/useGraphClient';
+
+interface NotificationRow {
+  id: string;
+  title?: string | null;
+  message?: string | null;
+  isRead: boolean;
+}
+
+interface NotificationPreviewData {
+  notifications: NotificationRow[];
+}
+
+const NOTIFICATION_PREVIEW = gql`
+  query NotificationPreview($limit: Int! = 20) {
+    notifications(limit: $limit) {
+      id
+      title
+      message
+      isRead
+    }
+  }
+`;
 
 interface NotificationsPreviewProps {
   fullHeight?: boolean;
 }
 
 const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps) => {
-  const { user } = useAuth();
-  const { currentTenant } = useTenant();
-
+  const client = useGraphClient('client');
   const limit = fullHeight ? 20 : 3;
-  const { data: notifications, loading } = useMockApi(
-    () =>
-      mockNotifications
-        .filter(
-          (n) =>
-            n.tenantId === currentTenant.id &&
-            (!n.userId || n.userId === user?.id)
-        )
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, limit),
-    { delay: 300 }
-  );
+  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const result = await client.request<NotificationPreviewData>(NOTIFICATION_PREVIEW, {
+          limit,
+        });
+        if (!cancelled) {
+          setNotifications(result.notifications ?? []);
+        }
+      } catch {
+        if (!cancelled) {
+          setNotifications([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [client, limit]);
 
   if (loading) {
     return (
       <Card title="Recent Notifications" className={fullHeight ? 'h-full flex flex-col' : ''}>
         <div className={fullHeight ? 'flex-1 min-h-0 flex items-center justify-center' : ''}>
-          <LoadingSpinner />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading notifications...</p>
         </div>
       </Card>
     );
@@ -40,9 +72,7 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
 
   const header = (
     <div className="mb-4 flex shrink-0 items-center justify-between">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-        Recent Notifications
-      </h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Notifications</h3>
       <Link
         to="/notifications"
         className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
@@ -64,14 +94,14 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
               <div className="flex-shrink-0">
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    notification.read
+                    notification.isRead
                       ? 'bg-gray-100 dark:bg-gray-700'
                       : 'bg-primary-100 dark:bg-primary-900'
                   }`}
                 >
                   <svg
                     className={`h-4 w-4 ${
-                      notification.read
+                      notification.isRead
                         ? 'text-gray-500 dark:text-gray-400'
                         : 'text-primary-600 dark:text-primary-400'
                     }`}
@@ -90,10 +120,10 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {notification.title}
+                  {notification.title ?? 'Untitled notification'}
                 </p>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {notification.message}
+                  {notification.message ?? 'No message body provided.'}
                 </p>
               </div>
             </div>
@@ -101,9 +131,7 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
         ))}
       </div>
     ) : (
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        No notifications
-      </p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
     );
 
   if (fullHeight) {

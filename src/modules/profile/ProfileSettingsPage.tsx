@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
-import { getMockUserProfile, getDefaultUserProfile } from '../../mocks/userProfile';
+import { getDefaultUserProfile } from '../../profile/defaultUserProfile';
 import Card from '../../components/common/Card';
 import AboutTab from './components/AboutTab';
 import ProfileTab from './components/ProfileTab';
@@ -22,10 +22,7 @@ const ProfileSettingsPage = () => {
   const { currentTenant } = useTenant();
   const [activeTab, setActiveTab] = useState<TabId>('about');
 
-  const profile = user ? getMockUserProfile(user.id) : undefined;
-  const data = user
-    ? (profile ?? getDefaultUserProfile(user, currentTenant.name))
-    : null;
+  const data = user ? getDefaultUserProfile(user, currentTenant.name) : null;
 
   if (!user || !data) {
     return (
@@ -43,17 +40,11 @@ const ProfileSettingsPage = () => {
       <Card className="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-              Email
-            </p>
-            <p className="mt-1 font-medium text-gray-900 dark:text-white">
-              {data.header.email}
-            </p>
+            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Email</p>
+            <p className="mt-1 font-medium text-gray-900 dark:text-white">{data.header.email}</p>
           </div>
           <div>
-            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-              Phone
-            </p>
+            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Phone</p>
             <p className="mt-1 font-medium text-gray-900 dark:text-white">
               {data.header.phone || '-'}
             </p>
@@ -92,9 +83,7 @@ const ProfileSettingsPage = () => {
             <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
               Department
             </p>
-            <p className="mt-1 font-medium text-gray-900 dark:text-white">
-              {data.org.department}
-            </p>
+            <p className="mt-1 font-medium text-gray-900 dark:text-white">{data.org.department}</p>
           </div>
           <div>
             <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">

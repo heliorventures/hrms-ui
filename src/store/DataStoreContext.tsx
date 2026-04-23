@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  ReactNode,
-} from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import type {
   TimesheetEntry,
   LeaveApplication,
@@ -36,7 +29,12 @@ interface DataStoreContextType {
   deleteTimesheetEntry: (id: string) => void;
 
   // Attendance (derived + overrides)
-  getAttendance: (userId: string, tenantId: string, fromDate?: string, toDate?: string) => ReturnType<typeof deriveAttendanceFromTimesheet>;
+  getAttendance: (
+    userId: string,
+    tenantId: string,
+    fromDate?: string,
+    toDate?: string
+  ) => ReturnType<typeof deriveAttendanceFromTimesheet>;
   setAttendanceOverride: (userId: string, date: string, status: AttendanceStatus) => void;
 
   // Leave
@@ -65,7 +63,12 @@ interface DataStoreContextType {
 
   // Tax declarations (Old regime deductions)
   getDeclaredDeductions: (userId: string, tenantId: string, fy: string) => DeclaredDeduction[];
-  setDeclaredDeductions: (userId: string, tenantId: string, fy: string, deductions: DeclaredDeduction[]) => void;
+  setDeclaredDeductions: (
+    userId: string,
+    tenantId: string,
+    fy: string,
+    deductions: DeclaredDeduction[]
+  ) => void;
 }
 
 const DataStoreContext = createContext<DataStoreContextType | undefined>(undefined);
@@ -74,7 +77,7 @@ function generateId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function DataStoreProvider({ children }: { children: ReactNode }) {
+export const DataStoreProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState<DemoData>(loadData);
 
   const refresh = useCallback(() => {
@@ -93,31 +96,23 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
     [data.timesheetEntries]
   );
 
-  const addTimesheetEntry = useCallback(
-    (entry: Omit<TimesheetEntry, 'id'>) => {
-      const newEntry: TimesheetEntry = {
-        ...entry,
-        id: generateId('ts'),
-      };
-      setData((prev) => ({
-        ...prev,
-        timesheetEntries: [...prev.timesheetEntries, newEntry],
-      }));
-    },
-    []
-  );
+  const addTimesheetEntry = useCallback((entry: Omit<TimesheetEntry, 'id'>) => {
+    const newEntry: TimesheetEntry = {
+      ...entry,
+      id: generateId('ts'),
+    };
+    setData((prev) => ({
+      ...prev,
+      timesheetEntries: [...prev.timesheetEntries, newEntry],
+    }));
+  }, []);
 
-  const updateTimesheetEntry = useCallback(
-    (id: string, updates: Partial<TimesheetEntry>) => {
-      setData((prev) => ({
-        ...prev,
-        timesheetEntries: prev.timesheetEntries.map((e) =>
-          e.id === id ? { ...e, ...updates } : e
-        ),
-      }));
-    },
-    []
-  );
+  const updateTimesheetEntry = useCallback((id: string, updates: Partial<TimesheetEntry>) => {
+    setData((prev) => ({
+      ...prev,
+      timesheetEntries: prev.timesheetEntries.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+    }));
+  }, []);
 
   const deleteTimesheetEntry = useCallback((id: string) => {
     setData((prev) => ({
@@ -173,75 +168,66 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
     [data.leaveBalances]
   );
 
-  const addLeaveApplication = useCallback(
-    (leave: Omit<LeaveApplication, 'id' | 'appliedOn'>) => {
-      const newLeave: LeaveApplication = {
-        ...leave,
-        id: generateId('leave'),
-        appliedOn: new Date().toISOString().split('T')[0],
+  const addLeaveApplication = useCallback((leave: Omit<LeaveApplication, 'id' | 'appliedOn'>) => {
+    const newLeave: LeaveApplication = {
+      ...leave,
+      id: generateId('leave'),
+      appliedOn: new Date().toISOString().split('T')[0],
+    };
+    const balanceKey = `${leave.tenantId}-${leave.userId}`;
+    setData((prev) => {
+      const balances = prev.leaveBalances[balanceKey] ?? prev.leaveBalances[leave.tenantId] ?? [];
+      const updated = balances.map((b) =>
+        b.leaveType === leave.leaveType
+          ? { ...b, used: b.used + leave.days, available: b.available - leave.days }
+          : b
+      );
+      return {
+        ...prev,
+        leaveApplications: [...prev.leaveApplications, newLeave],
+        leaveBalances: { ...prev.leaveBalances, [balanceKey]: updated },
       };
-      const balanceKey = `${leave.tenantId}-${leave.userId}`;
-      setData((prev) => {
+    });
+  }, []);
+
+  const updateLeaveStatus = useCallback((id: string, status: LeaveStatus, approvedBy?: string) => {
+    setData((prev) => {
+      const leave = prev.leaveApplications.find((l) => l.id === id);
+      if (!leave) return prev;
+      let newBalances = prev.leaveBalances;
+      if (status === 'rejected') {
+        const balanceKey = `${leave.tenantId}-${leave.userId}`;
         const balances = prev.leaveBalances[balanceKey] ?? prev.leaveBalances[leave.tenantId] ?? [];
         const updated = balances.map((b) =>
           b.leaveType === leave.leaveType
-            ? { ...b, used: b.used + leave.days, available: b.available - leave.days }
+            ? { ...b, used: b.used - leave.days, available: b.available + leave.days }
             : b
         );
-        return {
-          ...prev,
-          leaveApplications: [...prev.leaveApplications, newLeave],
-          leaveBalances: { ...prev.leaveBalances, [balanceKey]: updated },
-        };
-      });
-    },
-    []
-  );
-
-  const updateLeaveStatus = useCallback(
-    (id: string, status: LeaveStatus, approvedBy?: string) => {
-      setData((prev) => {
-        const leave = prev.leaveApplications.find((l) => l.id === id);
-        if (!leave) return prev;
-        let newBalances = prev.leaveBalances;
-        if (status === 'rejected') {
-          const balanceKey = `${leave.tenantId}-${leave.userId}`;
-          const balances = prev.leaveBalances[balanceKey] ?? prev.leaveBalances[leave.tenantId] ?? [];
-          const updated = balances.map((b) =>
-            b.leaveType === leave.leaveType
-              ? { ...b, used: b.used - leave.days, available: b.available + leave.days }
-              : b
-          );
-          newBalances = { ...prev.leaveBalances, [balanceKey]: updated };
-        }
-        return {
-          ...prev,
-          leaveApplications: prev.leaveApplications.map((l) =>
-            l.id === id
-              ? {
-                  ...l,
-                  status,
-                  approvedBy,
-                  approvedOn: new Date().toISOString().split('T')[0],
-                }
-              : l
-          ),
-          leaveBalances: newBalances,
-        };
-      });
-    },
-    []
-  );
-
-  const updateLeaveBalances = useCallback(
-    (tenantId: string, balances: LeaveBalance[]) => {
-      setData((prev) => ({
+        newBalances = { ...prev.leaveBalances, [balanceKey]: updated };
+      }
+      return {
         ...prev,
-        leaveBalances: { ...prev.leaveBalances, [tenantId]: balances },
-      }));
-    },
-    []
-  );
+        leaveApplications: prev.leaveApplications.map((l) =>
+          l.id === id
+            ? {
+                ...l,
+                status,
+                approvedBy,
+                approvedOn: new Date().toISOString().split('T')[0],
+              }
+            : l
+        ),
+        leaveBalances: newBalances,
+      };
+    });
+  }, []);
+
+  const updateLeaveBalances = useCallback((tenantId: string, balances: LeaveBalance[]) => {
+    setData((prev) => ({
+      ...prev,
+      leaveBalances: { ...prev.leaveBalances, [tenantId]: balances },
+    }));
+  }, []);
 
   const deleteLeaveApplication = useCallback((id: string) => {
     setData((prev) => {
@@ -281,9 +267,7 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
   const updateEmployee = useCallback((id: string, updates: Partial<Employee>) => {
     setData((prev) => ({
       ...prev,
-      employees: prev.employees.map((e) =>
-        e.id === id ? { ...e, ...updates } : e
-      ),
+      employees: prev.employees.map((e) => (e.id === id ? { ...e, ...updates } : e)),
     }));
   }, []);
 
@@ -312,7 +296,7 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
 
   const getPunchRecord = useCallback(
     (userId: string): PunchRecord | null => {
-      const today = new Date().toISOString().split('T')[0];
+      const [today] = new Date().toISOString().split('T');
       const key = `${userId}-${today}`;
       return data.punchRecords[key] ?? null;
     },
@@ -321,7 +305,7 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
 
   const setPunchIn = useCallback((userId: string) => {
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    const [today] = now.toISOString().split('T');
     const key = `${userId}-${today}`;
     setData((prev) => ({
       ...prev,
@@ -335,23 +319,26 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const setPunchOut = useCallback((userId: string) => {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const key = `${userId}-${today}`;
-    const existing = data.punchRecords[key];
-    if (!existing) return;
-    setData((prev) => ({
-      ...prev,
-      punchRecords: {
-        ...prev.punchRecords,
-        [key]: {
-          ...existing,
-          punchOut: now.toISOString(),
+  const setPunchOut = useCallback(
+    (userId: string) => {
+      const now = new Date();
+      const [today] = now.toISOString().split('T');
+      const key = `${userId}-${today}`;
+      const existing = data.punchRecords[key];
+      if (!existing) return;
+      setData((prev) => ({
+        ...prev,
+        punchRecords: {
+          ...prev.punchRecords,
+          [key]: {
+            ...existing,
+            punchOut: now.toISOString(),
+          },
         },
-      },
-    }));
-  }, [data.punchRecords]);
+      }));
+    },
+    [data.punchRecords]
+  );
 
   const getDeclaredDeductions = useCallback(
     (userId: string, tenantId: string, fy: string) =>
@@ -387,9 +374,9 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
     getLeaveBalances,
     addLeaveApplication,
     updateLeaveStatus,
-  deleteLeaveApplication,
-  updateLeaveBalances,
-  getEmployees,
+    deleteLeaveApplication,
+    updateLeaveBalances,
+    getEmployees,
     addEmployee,
     updateEmployee,
     deleteEmployee,
@@ -402,12 +389,8 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
     setDeclaredDeductions,
   };
 
-  return (
-    <DataStoreContext.Provider value={value}>
-      {children}
-    </DataStoreContext.Provider>
-  );
-}
+  return <DataStoreContext.Provider value={value}>{children}</DataStoreContext.Provider>;
+};
 
 export function useDataStore() {
   const context = useContext(DataStoreContext);

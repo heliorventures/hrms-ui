@@ -19,7 +19,9 @@ const AboutTab = ({ data }: AboutTabProps) => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Display Name</p>
-            <p className="mt-1 text-gray-900 dark:text-white">{data.primaryDetails.displayName || data.primaryDetails.name}</p>
+            <p className="mt-1 text-gray-900 dark:text-white">
+              {data.primaryDetails.displayName || data.primaryDetails.name}
+            </p>
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Email</p>

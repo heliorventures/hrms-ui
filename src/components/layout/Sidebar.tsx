@@ -220,9 +220,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     },
   ];
 
-  const filteredNavItems = navItems.filter(
-    (item) => !item.adminOnly || role === 'admin'
-  );
+  const filteredNavItems = navItems.filter((item) => !item.adminOnly || role === 'admin');
 
   const showOrgExpanded = orgExpanded || isOrgPath;
   const showPayrollExpanded = payrollExpanded || isPayrollPath;
@@ -231,10 +229,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   return (
     <>
       {isOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden" onClick={onClose} />
       )}
 
       <aside
@@ -247,20 +242,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       >
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center justify-between border-b border-primary-200 bg-gradient-to-r from-primary-600 to-purple-600 px-4 dark:border-gray-700 dark:from-primary-800 dark:to-purple-900">
-            <span className="text-lg font-semibold text-white drop-shadow-md">
-              KabiPay
-            </span>
+            <span className="text-lg font-semibold text-white drop-shadow-md">KabiPay</span>
             <button
               onClick={onClose}
               className="rounded-lg p-2 text-white transition-all hover:bg-white/20 lg:hidden"
               aria-label="Close sidebar"
             >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -272,25 +260,24 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           </div>
 
           <nav className="flex-1 space-y-2 overflow-y-auto p-4">
-            {filteredNavItems
-              .map((item) => {
-                const colors = getNavItemColors(item.path);
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={onClose}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                        isActive ? colors.active : colors.inactive
-                      }`
-                    }
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </NavLink>
-                );
-              })}
+            {filteredNavItems.map((item) => {
+              const colors = getNavItemColors(item.path);
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                      isActive ? colors.active : colors.inactive
+                    }`
+                  }
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
 
             <div className="pt-2">
               <button
@@ -312,7 +299,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
               {showOrgExpanded && (
@@ -358,7 +350,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
               {showPayrollExpanded && (
@@ -405,7 +402,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
                 {showAdminExpanded && (

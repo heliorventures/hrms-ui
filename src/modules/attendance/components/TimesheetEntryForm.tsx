@@ -1,112 +1,108 @@
-import { useState } from 'react';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useTenant } from '../../../contexts/TenantContext';
-import { useDataStore } from '../../../store/DataStoreContext';
+import { FormEvent, useState } from 'react';
+import { gql } from 'graphql-request';
 import Card from '../../../components/common/Card';
-import Input from '../../../components/common/Input';
-import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
+import Input from '../../../components/common/Input';
+import { useGraphClient } from '../../../hooks/useGraphClient';
+
+const CREATE_TIMESHEET = gql`
+  mutation CreateTimesheetEntry($input: CreateTimesheetEntryInput!) {
+    createTimesheetEntry(input: $input) {
+      id
+      workDate
+      hoursWorked
+      projectCode
+      status
+    }
+  }
+`;
 
 interface TimesheetEntryFormProps {
   onClose: () => void;
   initialDate?: string;
+  onCreated: () => void;
 }
 
-const projects = [
-  { value: 'proj-1', label: 'Project Alpha' },
-  { value: 'proj-2', label: 'Project Beta' },
-  { value: 'proj-3', label: 'Project Gamma' },
-];
+const TimesheetEntryForm = ({ onClose, initialDate, onCreated }: TimesheetEntryFormProps) => {
+  const client = useGraphClient('client');
+  const today = new Date().toISOString().slice(0, 10);
+  const [workDate, setWorkDate] = useState(
+    initialDate ? new Date(initialDate).toISOString().slice(0, 10) : today
+  );
+  const [hoursWorked, setHoursWorked] = useState('8');
+  const [projectCode, setProjectCode] = useState('');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-const TimesheetEntryForm = ({ onClose, initialDate }: TimesheetEntryFormProps) => {
-  const { user } = useAuth();
-  const { currentTenant } = useTenant();
-  const { addTimesheetEntry } = useDataStore();
-
-  const [formData, setFormData] = useState({
-    date: initialDate || new Date().toISOString().split('T')[0],
-    projectId: 'proj-1',
-    taskDescription: '',
-    hours: '',
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    const proj = projects.find((p) => p.value === formData.projectId);
-    addTimesheetEntry({
-      tenantId: currentTenant.id,
-      userId: user.id,
-      date: formData.date,
-      projectId: formData.projectId,
-      projectName: proj?.label ?? 'Project Alpha',
-      taskDescription: formData.taskDescription,
-      hours: parseFloat(formData.hours) || 0,
-      status: 'submitted',
-    });
-    onClose();
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      await client.request(CREATE_TIMESHEET, {
+        input: {
+          workDate,
+          hoursWorked,
+          projectCode: projectCode.trim() || null,
+          description: description.trim() || null,
+        },
+      });
+      onCreated();
+      onClose();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to create entry');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <Card title="Add Timesheet Entry">
+    <Card title="Add timesheet entry">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Input
-            label="Date"
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            required
-            fullWidth
-          />
-          <Select
-            label="Project"
-            name="projectId"
-            value={formData.projectId}
-            onChange={handleChange}
-            options={projects}
-            required
-            fullWidth
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Task Description
-          </label>
-          <textarea
-            name="taskDescription"
-            value={formData.taskDescription}
-            onChange={handleChange}
-            rows={3}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-            required
-          />
-        </div>
+        {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+
+        <Input
+          type="date"
+          label="Work date"
+          value={workDate}
+          onChange={(e) => setWorkDate(e.target.value)}
+          fullWidth
+          required
+        />
         <Input
           label="Hours"
-          type="number"
-          name="hours"
-          value={formData.hours}
-          onChange={handleChange}
-          min="0"
-          max="24"
-          step="0.5"
-          required
+          value={hoursWorked}
+          onChange={(e) => setHoursWorked(e.target.value)}
           fullWidth
+          required
+          inputMode="decimal"
         />
+        <Input
+          label="Project code"
+          value={projectCode}
+          onChange={(e) => setProjectCode(e.target.value)}
+          fullWidth
+          placeholder="Optional"
+        />
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Description
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            placeholder="Optional"
+          />
+        </div>
+
         <div className="flex gap-3">
-          <Button type="submit" variant="primary">
-            Submit Entry
+          <Button type="submit" variant="primary" disabled={submitting}>
+            {submitting ? 'Saving…' : 'Submit entry'}
           </Button>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
         </div>

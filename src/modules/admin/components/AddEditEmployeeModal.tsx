@@ -13,12 +13,7 @@ interface AddEditEmployeeModalProps {
   onSave?: (employee: Employee | Omit<Employee, 'id'>) => void;
 }
 
-const AddEditEmployeeModal = ({
-  isOpen,
-  onClose,
-  employee,
-  onSave,
-}: AddEditEmployeeModalProps) => {
+const AddEditEmployeeModal = ({ isOpen, onClose, employee, onSave }: AddEditEmployeeModalProps) => {
   const { currentTenant } = useTenant();
   const [formData, setFormData] = useState({
     employeeId: '',

@@ -48,12 +48,18 @@ const JobDetailsTab = ({ data }: JobDetailsTabProps) => {
       <Card title="Job Details">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Job Title (Primary)</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              Job Title (Primary)
+            </p>
             <p className="mt-1 text-gray-900 dark:text-white">{jobDetail.jobTitlePrimary}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Job Title (Secondary)</p>
-            <p className="mt-1 text-gray-900 dark:text-white">{jobDetail.jobTitleSecondary || '-'}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              Job Title (Secondary)
+            </p>
+            <p className="mt-1 text-gray-900 dark:text-white">
+              {jobDetail.jobTitleSecondary || '-'}
+            </p>
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Manager</p>
@@ -68,7 +74,9 @@ const JobDetailsTab = ({ data }: JobDetailsTabProps) => {
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Joining Date</p>
-            <p className="mt-1 text-gray-900 dark:text-white">{formatDate(jobDetail.joiningDate)}</p>
+            <p className="mt-1 text-gray-900 dark:text-white">
+              {formatDate(jobDetail.joiningDate)}
+            </p>
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Worker Type</p>
@@ -106,10 +114,7 @@ const JobDetailsTab = ({ data }: JobDetailsTabProps) => {
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {customFields.map((field, idx) => (
-              <div
-                key={idx}
-                className="rounded-lg border border-gray-200 p-3 dark:border-gray-700"
-              >
+              <div key={idx} className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {field.label}
                 </p>

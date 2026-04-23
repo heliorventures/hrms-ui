@@ -9,11 +9,7 @@ interface CorrectionRequestModalProps {
   date: string;
 }
 
-const CorrectionRequestModal = ({
-  isOpen,
-  onClose,
-  date,
-}: CorrectionRequestModalProps) => {
+const CorrectionRequestModal = ({ isOpen, onClose, date }: CorrectionRequestModalProps) => {
   const [formData, setFormData] = useState({
     correctPunchIn: '',
     correctPunchOut: '',
@@ -26,26 +22,17 @@ const CorrectionRequestModal = ({
     onClose();
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Raise Attendance Correction Request"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Raise Attendance Correction Request">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="rounded-lg bg-gray-100 p-3 dark:bg-gray-700">
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Date:{' '}
-            <span className="font-medium">
-              {new Date(date).toLocaleDateString('en-IN')}
-            </span>
+            Date: <span className="font-medium">{new Date(date).toLocaleDateString('en-IN')}</span>
           </p>
         </div>
 

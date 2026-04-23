@@ -1,6 +1,5 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
-import { useDataStore } from '../../store/DataStoreContext';
 import Badge from '../../components/common/Badge';
 import PunchInOut from './components/PunchInOut';
 import LeaveBalanceCard from './components/LeaveBalanceCard';
@@ -11,19 +10,6 @@ import UpcomingHolidays from './components/UpcomingHolidays';
 const Dashboard = () => {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
-  const { getPunchRecord, setPunchIn, setPunchOut } = useDataStore();
-
-  const punchRecord = user ? getPunchRecord(user.id) : null;
-  const isPunchedIn = punchRecord != null && !punchRecord.punchOut;
-
-  const handlePunchToggle = () => {
-    if (!user) return;
-    if (isPunchedIn) {
-      setPunchOut(user.id);
-    } else {
-      setPunchIn(user.id);
-    }
-  };
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-6">
@@ -40,11 +26,7 @@ const Dashboard = () => {
           <Badge variant="success">{user?.employeeId}</Badge>
         </div>
 
-        <PunchInOut
-          isPunchedIn={isPunchedIn}
-          punchRecord={punchRecord}
-          onToggle={handlePunchToggle}
-        />
+        <PunchInOut />
 
         <div className="space-y-6">
           <LeaveBalanceCard />

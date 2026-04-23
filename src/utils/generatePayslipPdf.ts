@@ -32,7 +32,12 @@ export function downloadPayslipPdf(payslip: Payslip, employeeName?: string) {
     y += 8;
   }
 
-  doc.text(`Generated On: ${new Date(payslip.generatedOn).toLocaleDateString('en-IN')}`, pageWidth / 2, y, { align: 'center' });
+  doc.text(
+    `Generated On: ${new Date(payslip.generatedOn).toLocaleDateString('en-IN')}`,
+    pageWidth / 2,
+    y,
+    { align: 'center' }
+  );
   y += 15;
 
   doc.setFontSize(11);

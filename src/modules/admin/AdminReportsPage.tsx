@@ -1,52 +1,135 @@
-import { useState } from 'react';
-import { useMockApi } from '../../hooks/useMockApi';
-import { useTenant } from '../../contexts/TenantContext';
-import { mockAttendance } from '../../mocks/attendance';
-import { mockLeaveApplications } from '../../mocks/leaves';
-import { mockPayslips } from '../../mocks/payroll';
-import { mockUsers } from '../../mocks/users';
+import { useEffect, useMemo, useState } from 'react';
+import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { useGraphClient } from '../../hooks/useGraphClient';
+
+interface EmployeeRow {
+  id: string;
+  employeeCode: string;
+  fullName: string;
+}
+
+interface AttendanceRow {
+  id: string;
+  employeeId: string;
+  workDate: string;
+  status?: string | null;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+}
+
+interface LeaveRow {
+  id: string;
+  employeeId: string;
+  fromDate: string;
+  toDate: string;
+  status: string;
+}
+
+interface PayrollCycleRow {
+  id: string;
+  name: string;
+  month: number;
+  year: number;
+  status: string;
+  paymentDate?: string | null;
+}
+
+interface SalaryComponentRow {
+  id: string;
+  componentType: string;
+  isActive: boolean;
+  isTaxable: boolean;
+}
+
+interface ReportsData {
+  employees: EmployeeRow[];
+  attendance: AttendanceRow[];
+  leaveRequests: LeaveRow[];
+  payrollCycles: PayrollCycleRow[];
+  salaryComponents: SalaryComponentRow[];
+}
+
+const REPORTS_QUERY = gql`
+  query AdminReportsData {
+    employees(limit: 100) {
+      id
+      employeeCode
+      fullName
+    }
+    attendance(limit: 100) {
+      id
+      employeeId
+      workDate
+      status
+      checkInTime
+      checkOutTime
+    }
+    leaveRequests(limit: 100) {
+      id
+      employeeId
+      fromDate
+      toDate
+      status
+    }
+    payrollCycles(limit: 100) {
+      id
+      name
+      month
+      year
+      status
+      paymentDate
+    }
+    salaryComponents(limit: 100) {
+      id
+      componentType
+      isActive
+      isTaxable
+    }
+  }
+`;
 
 const AdminReportsPage = () => {
-  const { currentTenant } = useTenant();
-  const [reportType, setReportType] = useState<'attendance' | 'leave' | 'payroll'>(
-    'attendance'
-  );
+  const client = useGraphClient('client');
+  const [reportType, setReportType] = useState<'attendance' | 'leave' | 'payroll'>('attendance');
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
     employeeId: 'all',
   });
+  const [data, setData] = useState<ReportsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: attendanceData } = useMockApi(
-    () => mockAttendance.filter((a) => a.tenantId === currentTenant.id),
-    { delay: 300 }
-  );
-
-  const { data: leaveData } = useMockApi(
-    () => mockLeaveApplications.filter((l) => l.tenantId === currentTenant.id),
-    { delay: 300 }
-  );
-
-  const { data: payrollData } = useMockApi(
-    () => mockPayslips.filter((p) => p.tenantId === currentTenant.id),
-    { delay: 300 }
-  );
-
-  const { data: employees } = useMockApi(
-    () => mockUsers.filter((u) => u.tenantId === currentTenant.id),
-    { delay: 300 }
-  );
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await client.request<ReportsData>(REPORTS_QUERY);
+        if (!cancelled) setData(result);
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load report data');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [client]);
 
   const employeeOptions = [
     { value: 'all', label: 'All Employees' },
-    ...(employees?.map((emp) => ({
+    ...((data?.employees ?? []).map((emp) => ({
       value: emp.id,
-      label: `${emp.name} (${emp.employeeId})`,
+      label: `${emp.fullName} (${emp.employeeCode})`,
     })) || []),
   ];
 
@@ -56,100 +139,110 @@ const AdminReportsPage = () => {
     { value: 'payroll', label: 'Payroll Report' },
   ];
 
-  const handleFilterChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGenerateReport = () => {
-    alert(`Generating ${reportType} report with filters...`);
-  };
+  const filteredAttendance = useMemo(() => {
+    return (data?.attendance ?? []).filter((row) => {
+      if (filters.employeeId !== 'all' && row.employeeId !== filters.employeeId) return false;
+      if (filters.startDate && row.workDate < filters.startDate) return false;
+      if (filters.endDate && row.workDate > filters.endDate) return false;
+      return true;
+    });
+  }, [data, filters]);
+
+  const filteredLeave = useMemo(() => {
+    return (data?.leaveRequests ?? []).filter((row) => {
+      if (filters.employeeId !== 'all' && row.employeeId !== filters.employeeId) return false;
+      if (filters.startDate && row.toDate < filters.startDate) return false;
+      if (filters.endDate && row.fromDate > filters.endDate) return false;
+      return true;
+    });
+  }, [data, filters]);
+
+  const filteredPayrollCycles = useMemo(() => {
+    return (data?.payrollCycles ?? []).filter((row) => {
+      const comparable = row.paymentDate ?? `${row.year}-${String(row.month).padStart(2, '0')}-01`;
+      if (filters.startDate && comparable < filters.startDate) return false;
+      if (filters.endDate && comparable > filters.endDate) return false;
+      return true;
+    });
+  }, [data, filters]);
 
   const getAttendanceStats = () => {
-    if (!attendanceData) return null;
+    if (!data) return null;
 
-    const totalPresent = attendanceData.filter((a) => a.status === 'present').length;
-    const totalAbsent = attendanceData.filter((a) => a.status === 'absent').length;
-    const totalHalfDay = attendanceData.filter((a) => a.status === 'half-day').length;
-    const avgWorkHours =
-      attendanceData.reduce((sum, a) => sum + (a.workHours || 0), 0) /
-      (totalPresent + totalHalfDay || 1);
+    const totalPresent = filteredAttendance.filter(
+      (a) => a.status === 'PRESENT' || a.status === 'present'
+    ).length;
+    const totalAbsent = filteredAttendance.filter(
+      (a) => a.status === 'ABSENT' || a.status === 'absent'
+    ).length;
+    const totalHalfDay = filteredAttendance.filter(
+      (a) => a.status === 'HALF_DAY' || a.status === 'half-day'
+    ).length;
+    const withBothTimes = filteredAttendance.filter((a) => a.checkInTime && a.checkOutTime);
+    const avgTracked =
+      withBothTimes.length > 0 ? withBothTimes.length / filteredAttendance.length : 0;
 
-    return { totalPresent, totalAbsent, totalHalfDay, avgWorkHours };
+    return { totalPresent, totalAbsent, totalHalfDay, avgTracked };
   };
 
   const getLeaveStats = () => {
-    if (!leaveData) return null;
+    if (!data) return null;
 
-    const totalLeaves = leaveData.length;
-    const approved = leaveData.filter((l) => l.status === 'approved').length;
-    const pending = leaveData.filter((l) => l.status === 'pending').length;
-    const rejected = leaveData.filter((l) => l.status === 'rejected').length;
+    const totalLeaves = filteredLeave.length;
+    const approved = filteredLeave.filter((l) => l.status.toLowerCase() === 'approved').length;
+    const pending = filteredLeave.filter((l) => l.status.toLowerCase() === 'pending').length;
+    const rejected = filteredLeave.filter((l) => l.status.toLowerCase() === 'rejected').length;
 
     return { totalLeaves, approved, pending, rejected };
   };
 
   const getPayrollStats = () => {
-    if (!payrollData) return null;
+    if (!data) return null;
 
-    const totalGross = payrollData.reduce((sum, p) => sum + p.grossSalary, 0);
-    const totalNet = payrollData.reduce((sum, p) => sum + p.netSalary, 0);
-    const totalDeductions = payrollData.reduce(
-      (sum, p) => sum + p.totalDeductions,
-      0
-    );
-    const avgSalary = totalNet / (payrollData.length || 1);
+    const totalCycles = filteredPayrollCycles.length;
+    const processed = filteredPayrollCycles.filter(
+      (p) => p.status.toLowerCase() === 'processed'
+    ).length;
+    const activeComponents = (data.salaryComponents ?? []).filter((s) => s.isActive).length;
+    const taxableComponents = (data.salaryComponents ?? []).filter((s) => s.isTaxable).length;
 
-    return { totalGross, totalNet, totalDeductions, avgSalary };
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(amount);
+    return { totalCycles, processed, activeComponents, taxableComponents };
   };
 
   const renderReportContent = () => {
     switch (reportType) {
       case 'attendance': {
         const stats = getAttendanceStats();
-        if (!stats) return <LoadingSpinner />;
+        if (!stats) return <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>;
         return (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Total Present
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Total Present</div>
               <div className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
                 {stats.totalPresent}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Total Absent
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Total Absent</div>
               <div className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
                 {stats.totalAbsent}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Half Days
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Half Days</div>
               <div className="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                 {stats.totalHalfDay}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Avg Work Hours
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Time Tracked Coverage</div>
               <div className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {stats.avgWorkHours.toFixed(1)}h
+                {(stats.avgTracked * 100).toFixed(0)}%
               </div>
             </div>
           </div>
@@ -157,37 +250,29 @@ const AdminReportsPage = () => {
       }
       case 'leave': {
         const stats = getLeaveStats();
-        if (!stats) return <LoadingSpinner />;
+        if (!stats) return <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>;
         return (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Total Applications
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Total Applications</div>
               <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
                 {stats.totalLeaves}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Approved
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Approved</div>
               <div className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
                 {stats.approved}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Pending
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Pending</div>
               <div className="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                 {stats.pending}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Rejected
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Rejected</div>
               <div className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
                 {stats.rejected}
               </div>
@@ -197,39 +282,31 @@ const AdminReportsPage = () => {
       }
       case 'payroll': {
         const stats = getPayrollStats();
-        if (!stats) return <LoadingSpinner />;
+        if (!stats) return <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>;
         return (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Total Gross
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Payroll Cycles</div>
               <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-                {formatCurrency(stats.totalGross)}
+                {stats.totalCycles}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Total Net
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Processed Cycles</div>
               <div className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
-                {formatCurrency(stats.totalNet)}
+                {stats.processed}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Total Deductions
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Active Components</div>
               <div className="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
-                {formatCurrency(stats.totalDeductions)}
+                {stats.activeComponents}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Avg Salary
-              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Taxable Components</div>
               <div className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {formatCurrency(stats.avgSalary)}
+                {stats.taxableComponents}
               </div>
             </div>
           </div>
@@ -240,9 +317,19 @@ const AdminReportsPage = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-        Reports & Analytics
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
+
+      {error && (
+        <Card>
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </Card>
+      )}
+
+      {loading && (
+        <Card>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading report data...</p>
+        </Card>
+      )}
 
       <Card title="Report Filters">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -284,7 +371,9 @@ const AdminReportsPage = () => {
         </div>
 
         <div className="mt-4">
-          <Button onClick={handleGenerateReport}>Generate Report</Button>
+          <Button disabled title="Export/report generation is not wired yet">
+            Generate Report
+          </Button>
         </div>
       </Card>
 

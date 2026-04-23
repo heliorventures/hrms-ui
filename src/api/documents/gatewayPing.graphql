@@ -1,0 +1,5 @@
+# Placeholder document so GraphQL Codegen can emit the `graphql` helper.
+# Safe to delete once real operations exist under src/.
+query GatewayPing {
+  __typename
+}

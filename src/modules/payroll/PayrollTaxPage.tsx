@@ -1,15 +1,95 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTenant } from '../../contexts/TenantContext';
-import { useDataStore } from '../../store/DataStoreContext';
-import {
-  OLD_REGIME_DEDUCTIONS,
-  NEW_REGIME_DEDUCTIONS,
-} from '../../mocks/payroll';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
+import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import type { TaxRegime, DeclaredDeduction } from '../../types';
+import Table from '../../components/common/Table';
+import { useGraphClient } from '../../hooks/useGraphClient';
+
+interface TaxConfigurationRow {
+  id: string;
+  fiscalYear: number;
+  regime?: string | null;
+  countryCode: string;
+  isActive: boolean;
+}
+
+interface TaxSlabRow {
+  id: string;
+  taxConfigVersionId: string;
+  incomeFrom: string;
+  incomeTo?: string | null;
+  taxRate?: string | null;
+  surchargeRate?: string | null;
+  cessRate?: string | null;
+}
+
+interface TaxBoardData {
+  taxConfigurations: TaxConfigurationRow[];
+  taxSlabs: TaxSlabRow[];
+}
+
+interface TaxComputationRow {
+  id: string;
+  fiscalYear: number;
+  taxConfigVersionId: string;
+  taxRegimeChosen?: string | null;
+  grossIncome?: string | null;
+  totalDeductions?: string | null;
+  taxableIncome?: string | null;
+  finalTax?: string | null;
+  tdsPerMonth?: string | null;
+  computedAt: string;
+}
+
+const TAX_BOARD = gql`
+  query TaxBoard($limit: Int! = 20) {
+    taxConfigurations(limit: $limit) {
+      id
+      fiscalYear
+      regime
+      countryCode
+      isActive
+    }
+    taxSlabs(limit: $limit) {
+      id
+      taxConfigVersionId
+      incomeFrom
+      incomeTo
+      taxRate
+      surchargeRate
+      cessRate
+    }
+  }
+`;
+
+const TAX_COMP_Q = gql`
+  query TaxComputationsList($limit: Int! = 10) {
+    taxComputations(limit: $limit) {
+      id
+      fiscalYear
+      taxConfigVersionId
+      taxRegimeChosen
+      grossIncome
+      totalDeductions
+      taxableIncome
+      finalTax
+      tdsPerMonth
+      computedAt
+    }
+  }
+`;
+
+const UPSERT_TAX = gql`
+  mutation UpsertTaxComputation($input: UpsertTaxComputationInput!) {
+    upsertTaxComputation(input: $input) {
+      id
+      fiscalYear
+      taxRegimeChosen
+    }
+  }
+`;
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-IN', {
@@ -18,263 +98,337 @@ const formatCurrency = (amount: number) =>
     maximumFractionDigits: 0,
   }).format(amount);
 
-const getFinancialYears = () => {
-  const current = new Date().getFullYear();
-  const years = [];
-  for (let y = current; y >= current - 5; y--) {
-    years.push({
-      value: `${y}-${(y + 1).toString().slice(-2)}`,
-      label: `FY ${y}-${(y + 1).toString().slice(-2)} (Apr ${y} - Mar ${y + 1})`,
-    });
-  }
-  return years;
-};
-
 const PayrollTaxPage = () => {
-  const { user } = useAuth();
-  const { currentTenant } = useTenant();
-  const { getDeclaredDeductions, setDeclaredDeductions } = useDataStore();
-
-  const [taxRegime, setTaxRegime] = useState<TaxRegime>('new');
-  const [fy, setFy] = useState(() => {
-    const y = new Date().getFullYear();
-    const m = new Date().getMonth();
-    return m < 3 ? `${y - 1}-${String(y).slice(-2)}` : `${y}-${String(y + 1).slice(-2)}`;
-  });
-
-  const existingDeclarations =
-    user && currentTenant
-      ? getDeclaredDeductions(user.id, currentTenant.id, fy)
-      : [];
-
-  const [declared, setDeclared] = useState<DeclaredDeduction[]>([]);
+  const client = useGraphClient('client');
+  const [data, setData] = useState<TaxBoardData | null>(null);
+  const [computations, setComputations] = useState<TaxComputationRow[] | null>(null);
+  const [compError, setCompError] = useState<string | null>(null);
+  const [compLoading, setCompLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedConfigId, setSelectedConfigId] = useState<string>('');
+  const [formYear, setFormYear] = useState(new Date().getFullYear().toString());
+  const [formRegime, setFormRegime] = useState('');
+  const [formGross, setFormGross] = useState('');
+  const [formDed, setFormDed] = useState('');
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formMsg, setFormMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    setDeclared([...existingDeclarations]);
-  }, [fy, taxRegime]);
-
-  const getAmountForSection = (section: string) =>
-    declared.find((d) => d.section === section)?.amount ?? 0;
-
-  const getUploadStatusForSection = (section: string) =>
-    declared.find((d) => d.section === section)?.documentUploaded ?? false;
-
-  const handleAmountChange = (section: string, name: string, amount: number) => {
-    setDeclared((prev) => {
-      const existing = prev.find((d) => d.section === section);
-      const rest = prev.filter((d) => d.section !== section);
-      if (amount <= 0) {
-        return rest;
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await client.request<TaxBoardData>(TAX_BOARD, { limit: 20 });
+        if (!cancelled) {
+          setData(result);
+          const firstActive =
+            result.taxConfigurations.find((config) => config.isActive)?.id ??
+            result.taxConfigurations[0]?.id ??
+            '';
+          setSelectedConfigId(firstActive);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load tax data');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-      return [
-        ...rest,
-        {
-          section,
-          name,
-          amount,
-          documentUploaded: existing?.documentUploaded ?? false,
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [client]);
+
+  useEffect(() => {
+    let c = false;
+    (async () => {
+      try {
+        setCompLoading(true);
+        setCompError(null);
+        const res = await client.request<{ taxComputations: TaxComputationRow[] }>(TAX_COMP_Q, {
+          limit: 10,
+        });
+        if (!c) setComputations(res.taxComputations);
+      } catch (e) {
+        if (!c) {
+          setCompError(
+            e instanceof Error ? e.message : 'Tax declarations need an employee-linked session'
+          );
+        }
+      } finally {
+        if (!c) setCompLoading(false);
+      }
+    })();
+    return () => {
+      c = true;
+    };
+  }, [client]);
+
+  const selectedConfig = useMemo(
+    () => data?.taxConfigurations.find((config) => config.id === selectedConfigId) ?? null,
+    [data, selectedConfigId]
+  );
+
+  const slabs = useMemo(
+    () =>
+      (data?.taxSlabs ?? []).filter(
+        (slab) => !selectedConfigId || slab.taxConfigVersionId === selectedConfigId
+      ),
+    [data, selectedConfigId]
+  );
+
+  const formatOptionalAmount = (value?: string | null) =>
+    value == null ? 'No upper limit' : formatCurrency(Number(value));
+
+  const loadComputations = async () => {
+    const res = await client.request<{ taxComputations: TaxComputationRow[] }>(TAX_COMP_Q, {
+      limit: 10,
+    });
+    setComputations(res.taxComputations);
+  };
+
+  const handleUpsert = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedConfigId) {
+      setFormMsg('Select a tax configuration first.');
+      return;
+    }
+    setFormMsg(null);
+    setFormSubmitting(true);
+    try {
+      const year = Number(formYear);
+      await client.request(UPSERT_TAX, {
+        input: {
+          taxConfigVersionId: selectedConfigId,
+          fiscalYear: year,
+          taxRegimeChosen: formRegime.trim() || null,
+          grossIncome: formGross.trim() || null,
+          totalDeductions: formDed.trim() || null,
+          taxableIncome: null,
+          finalTax: null,
+          tdsPerMonth: null,
         },
-      ];
-    });
+      });
+      setFormMsg('Saved.');
+      await loadComputations();
+    } catch (err) {
+      setFormMsg(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setFormSubmitting(false);
+    }
   };
-
-  const handleUploadClick = (section: string) => {
-    setDeclared((prev) => {
-      const existing = prev.find((d) => d.section === section);
-      if (!existing) return prev;
-      return prev.map((d) =>
-        d.section === section ? { ...d, documentUploaded: true } : d
-      );
-    });
-  };
-
-  const handleSave = () => {
-    if (!user || !currentTenant) return;
-    setDeclaredDeductions(user.id, currentTenant.id, fy, declared);
-    alert('Tax declarations saved successfully!');
-  };
-
-  const fyOptions = getFinancialYears();
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-        Manage Tax
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Tax</h1>
       <p className="text-sm text-gray-600 dark:text-gray-400">
-        {taxRegime === 'old'
-          ? 'Declare your tax-deductible investments and upload supporting documents. These will be used for tax calculation under the Old Regime.'
-          : 'Under the New Regime, only standard deduction applies. No additional declarations needed.'}
+        Live tax configuration and slab data from the tax subgraph. Declaration and proof-upload
+        workflows are still pending.
       </p>
 
+      {error && (
+        <Card>
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </Card>
+      )}
+
       <div className="flex flex-wrap items-end gap-4">
-        <div className="min-w-[140px]">
+        <div className="min-w-[220px]">
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Financial Year
+            Tax configuration
           </label>
           <select
-            value={fy}
-            onChange={(e) => setFy(e.target.value)}
+            value={selectedConfigId}
+            onChange={(e) => setSelectedConfigId(e.target.value)}
             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            disabled={loading || !data?.taxConfigurations?.length}
           >
-            {fyOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
+            {(data?.taxConfigurations ?? []).map((config) => (
+              <option key={config.id} value={config.id}>
+                FY {config.fiscalYear} · {config.regime ?? 'N/A'} · {config.countryCode}
               </option>
             ))}
           </select>
         </div>
-        <div className="min-w-[140px]">
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Tax Regime
-          </label>
-          <select
-            value={taxRegime}
-            onChange={(e) => setTaxRegime(e.target.value as TaxRegime)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-          >
-            <option value="new">New Regime</option>
-            <option value="old">Old Regime</option>
-          </select>
-        </div>
+        {selectedConfig && (
+          <div className="flex flex-wrap gap-2">
+            <Badge variant={selectedConfig.isActive ? 'success' : 'neutral'}>
+              {selectedConfig.isActive ? 'Active' : 'Inactive'}
+            </Badge>
+            <Badge variant="info">{selectedConfig.regime ?? 'N/A'}</Badge>
+            <Badge variant="neutral">{selectedConfig.countryCode}</Badge>
+          </div>
+        )}
       </div>
 
-      {taxRegime === 'old' ? (
-        <>
-          <Card title="Declare Tax Deductions (Old Regime)">
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Enter the amount you have invested/paid for each section. Upload
-              supporting documents (e.g. premium receipt, investment proof) for
-              verification.
-            </p>
-            <div className="space-y-6">
-              {OLD_REGIME_DEDUCTIONS.filter(
-                (s) => s.section !== '10(14)' && s.maxAmount != null
-              ).map((section) => (
-                <div
-                  key={section.section}
-                  className="rounded-lg border border-gray-200 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/30"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                        Section {section.section}
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                        {section.name}
-                      </p>
-                      {section.maxAmount != null && (
-                        <p className="mt-1 text-xs text-gray-500">
-                          Max: {formatCurrency(section.maxAmount)}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="w-32">
-                        <Input
-                          label="Amount (₹)"
-                          type="number"
-                          min={0}
-                          max={section.maxAmount ?? undefined}
-                          value={
-                            getAmountForSection(section.section) || ''
-                          }
-                          onChange={(e) => {
-                            const v = parseFloat(e.target.value) || 0;
-                            handleAmountChange(
-                              section.section,
-                              section.name,
-                              v
-                            );
-                          }}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="block text-xs font-medium text-gray-500">
-                          Document
-                        </label>
-                        {getUploadStatusForSection(section.section) ? (
-                          <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-200">
-                            ✓ Uploaded
-                          </span>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              handleUploadClick(section.section)
-                            }
-                          >
-                            Upload
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6">
-              <Button onClick={handleSave}>Save Declarations</Button>
-            </div>
-          </Card>
+      <Card title="Tax Configurations">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading tax configurations...</p>
+        ) : data?.taxConfigurations?.length ? (
+          <Table
+            data={data.taxConfigurations}
+            keyExtractor={(row) => row.id}
+            columns={[
+              {
+                key: 'fiscalYear',
+                label: 'Fiscal year',
+                render: (row: TaxConfigurationRow) => `FY ${row.fiscalYear}`,
+              },
+              {
+                key: 'regime',
+                label: 'Regime',
+                render: (row: TaxConfigurationRow) => row.regime ?? '—',
+              },
+              {
+                key: 'countryCode',
+                label: 'Country',
+                render: (row: TaxConfigurationRow) => row.countryCode,
+              },
+              {
+                key: 'isActive',
+                label: 'Status',
+                render: (row: TaxConfigurationRow) => (
+                  <Badge variant={row.isActive ? 'success' : 'neutral'}>
+                    {row.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                ),
+              },
+            ]}
+          />
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No tax configurations found.</p>
+        )}
+      </Card>
 
-          <Card title="Available Deductions Reference">
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Sections without a max limit have no cap. Declare in the form
-              above.
-            </p>
-            <div className="space-y-4">
-              {OLD_REGIME_DEDUCTIONS.map((section) => (
-                <div
-                  key={section.section}
-                  className="rounded border border-gray-200 p-3 dark:border-gray-700"
-                >
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">
-                      Section {section.section} – {section.name}
-                    </span>
-                    {section.maxAmount != null && (
-                      <span className="text-gray-500">
-                        Max: {formatCurrency(section.maxAmount)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </>
-      ) : (
-        <Card title="New Regime – Applicable Deductions">
-          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-            Under the new regime, only the following deductions are available.
-            Standard deduction (₹75,000) is applied automatically for salaried
-            employees. No declaration required.
+      <Card title="Tax Slabs">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading tax slabs...</p>
+        ) : slabs.length ? (
+          <Table
+            data={slabs}
+            keyExtractor={(row) => row.id}
+            columns={[
+              {
+                key: 'incomeFrom',
+                label: 'Income from',
+                render: (row: TaxSlabRow) => formatCurrency(Number(row.incomeFrom)),
+              },
+              {
+                key: 'incomeTo',
+                label: 'Income to',
+                render: (row: TaxSlabRow) => formatOptionalAmount(row.incomeTo),
+              },
+              {
+                key: 'taxRate',
+                label: 'Tax rate',
+                render: (row: TaxSlabRow) => (row.taxRate ? `${row.taxRate}%` : '—'),
+              },
+              {
+                key: 'surchargeRate',
+                label: 'Surcharge',
+                render: (row: TaxSlabRow) => (row.surchargeRate ? `${row.surchargeRate}%` : '—'),
+              },
+              {
+                key: 'cessRate',
+                label: 'Cess',
+                render: (row: TaxSlabRow) => (row.cessRate ? `${row.cessRate}%` : '—'),
+              },
+            ]}
+          />
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No tax slabs found for the selected configuration.
           </p>
-          <div className="space-y-4">
-            {NEW_REGIME_DEDUCTIONS.map((section) => (
-              <div
-                key={section.section}
-                className="rounded-lg border border-gray-200 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/30"
-              >
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                  {section.section}
-                </h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                  {section.name}
-                </p>
-                {section.maxAmount != null && (
-                  <p className="mt-1 text-sm text-primary-600 dark:text-primary-400">
-                    Max: {formatCurrency(section.maxAmount)}
-                  </p>
-                )}
-              </div>
-            ))}
+        )}
+      </Card>
+
+      <Card title="Your tax computations (saved)">
+        {compLoading && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading declarations…</p>
+        )}
+        {compError && !compLoading && (
+          <p className="text-sm text-amber-800 dark:text-amber-200">{compError}</p>
+        )}
+        {!compLoading && !compError && computations && computations.length > 0 && (
+          <Table
+            data={computations}
+            keyExtractor={(row) => row.id}
+            columns={[
+              { key: 'fy', label: 'FY', render: (r: TaxComputationRow) => r.fiscalYear },
+              {
+                key: 'regime',
+                label: 'Regime',
+                render: (r: TaxComputationRow) => r.taxRegimeChosen ?? '—',
+              },
+              {
+                key: 'gross',
+                label: 'Gross',
+                render: (r: TaxComputationRow) =>
+                  r.grossIncome ? formatCurrency(Number(r.grossIncome)) : '—',
+              },
+              {
+                key: 'final',
+                label: 'Est. tax',
+                render: (r: TaxComputationRow) =>
+                  r.finalTax ? formatCurrency(Number(r.finalTax)) : '—',
+              },
+            ]}
+          />
+        )}
+        {!compLoading && !compError && computations && computations.length === 0 && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No saved computations yet.</p>
+        )}
+      </Card>
+
+      <Card title="Update declaration (totals)">
+        <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+          Uses the tax configuration selected above. Requires a signed-in employee.
+        </p>
+        <form onSubmit={handleUpsert} className="max-w-lg space-y-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Input
+              label="Fiscal year"
+              value={formYear}
+              onChange={(e) => setFormYear(e.target.value)}
+              inputMode="numeric"
+              fullWidth
+              required
+            />
+            <Input
+              label="Regime (optional)"
+              value={formRegime}
+              onChange={(e) => setFormRegime(e.target.value)}
+              fullWidth
+              placeholder="e.g. NEW_REGIME"
+            />
           </div>
-        </Card>
-      )}
+          <Input
+            label="Gross income (optional)"
+            value={formGross}
+            onChange={(e) => setFormGross(e.target.value)}
+            fullWidth
+            inputMode="decimal"
+            placeholder="e.g. 1200000"
+          />
+          <Input
+            label="Total deductions (optional)"
+            value={formDed}
+            onChange={(e) => setFormDed(e.target.value)}
+            fullWidth
+            inputMode="decimal"
+            placeholder="e.g. 150000"
+          />
+          {formMsg && <p className="text-sm text-gray-600 dark:text-gray-300">{formMsg}</p>}
+          <Button type="submit" variant="primary" disabled={formSubmitting || !selectedConfigId}>
+            {formSubmitting ? 'Saving…' : 'Save'}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 };

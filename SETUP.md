@@ -130,12 +130,14 @@ KabiPay-UI/
 The application comes with pre-configured mock users:
 
 ### Employee Account
+
 - **Name:** John Doe
 - **Email:** john.doe@techcorp.com
 - **Employee ID:** EMP001
 - **Department:** Engineering
 
 ### Admin Account
+
 - **Name:** Jane Smith
 - **Email:** jane.smith@techcorp.com
 - **Employee ID:** EMP002
@@ -146,6 +148,7 @@ Use the "Switch to Admin/Employee" button in the header to toggle between roles.
 ## Theme Support
 
 The application supports both light and dark themes:
+
 - Toggle using the theme button in the header
 - Theme preference is persisted in localStorage
 - Smooth transitions between themes
@@ -153,6 +156,7 @@ The application supports both light and dark themes:
 ## Multi-Tenant Architecture (Frontend)
 
 The application simulates multi-tenancy:
+
 - Tenant context maintains active tenant
 - All data is filtered by tenantId
 - Ready for backend integration
@@ -169,11 +173,13 @@ The application simulates multi-tenancy:
 ## Responsive Design
 
 The application is fully responsive:
+
 - **Desktop** - Full sidebar with expanded layout
 - **Tablet** - Collapsible sidebar
 - **Mobile** - Hidden sidebar with hamburger menu
 
 Breakpoints:
+
 - `sm`: 640px
 - `md`: 768px
 - `lg`: 1024px
@@ -184,6 +190,7 @@ Breakpoints:
 ### ESLint Rules
 
 The project enforces strict ESLint rules:
+
 - Functional components only
 - No inline arrow functions in JSX
 - Destructuring required
@@ -206,6 +213,7 @@ npm run lint -- --fix
 ## Backend Integration (Future)
 
 The application is designed to integrate with:
+
 - **Backend:** Rust
 - **API:** async-graphql
 - **Database:** PostgreSQL
@@ -215,12 +223,14 @@ The application is designed to integrate with:
 ### Mock API Layer
 
 The `useMockApi` hook simulates:
+
 - Loading states
 - Error handling
 - Configurable delays
 - GraphQL-style queries
 
 To replace with real backend:
+
 1. Implement GraphQL client
 2. Update `useMockApi` hook
 3. Add authentication layer
@@ -281,6 +291,7 @@ npm run build
 ## Contributing
 
 When adding new features:
+
 1. Follow existing code structure
 2. Use TypeScript strictly
 3. Follow ESLint rules

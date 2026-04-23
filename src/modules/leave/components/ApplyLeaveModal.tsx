@@ -1,131 +1,135 @@
-import { useState } from 'react';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useTenant } from '../../../contexts/TenantContext';
-import { useDataStore } from '../../../store/DataStoreContext';
+import { FormEvent, useState } from 'react';
+import { gql } from 'graphql-request';
 import Modal from '../../../components/common/Modal';
-import Input from '../../../components/common/Input';
-import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
-import type { LeaveType } from '../../../types';
+import Input from '../../../components/common/Input';
+import { useGraphClient } from '../../../hooks/useGraphClient';
+
+const SUBMIT_LEAVE = gql`
+  mutation SubmitLeaveRequest($input: SubmitLeaveRequestInput!) {
+    submitLeaveRequest(input: $input) {
+      id
+      status
+      fromDate
+      toDate
+      daysRequested
+    }
+  }
+`;
+
+export interface ApplyLeaveTypeOption {
+  id: string;
+  name: string;
+  code: string;
+}
 
 interface ApplyLeaveModalProps {
   isOpen: boolean;
   onClose: () => void;
+  leaveTypes: ApplyLeaveTypeOption[];
+  onSubmitted: () => void;
 }
 
-const ApplyLeaveModal = ({ isOpen, onClose }: ApplyLeaveModalProps) => {
-  const { user } = useAuth();
-  const { currentTenant } = useTenant();
-  const { getLeaveBalances, addLeaveApplication } = useDataStore();
-  const leaveBalances = user ? getLeaveBalances(currentTenant.id, user.id) : [];
+const ApplyLeaveModal = ({ isOpen, onClose, leaveTypes, onSubmitted }: ApplyLeaveModalProps) => {
+  const client = useGraphClient('client');
+  const [leaveTypeId, setLeaveTypeId] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [isHalfDay, setIsHalfDay] = useState(false);
+  const [halfDaySession, setHalfDaySession] = useState('');
+  const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    leaveType: 'casual' as LeaveType,
-    fromDate: '',
-    toDate: '',
-    reason: '',
-  });
-
-  const leaveTypeOptions = leaveBalances.map((lb) => ({
-    value: lb.leaveType,
-    label: `${lb.leaveType.charAt(0).toUpperCase() + lb.leaveType.slice(1)} (${lb.available} available)`,
-  }));
-
-  const calculateDays = () => {
-    if (formData.fromDate && formData.toDate) {
-      const from = new Date(formData.fromDate);
-      const to = new Date(formData.toDate);
-      const diffTime = Math.abs(to.getTime() - from.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      return diffDays;
-    }
-    return 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const days = calculateDays();
-    const selectedBalance = leaveBalances.find(
-      (lb) => lb.leaveType === formData.leaveType
-    );
-
-    if (selectedBalance && days > selectedBalance.available) {
-      alert('Insufficient leave balance!');
+    if (!leaveTypeId || !fromDate || !toDate) {
+      setFormError('Choose a leave type and date range.');
       return;
     }
-
-    if (!user) return;
-
-    addLeaveApplication({
-      tenantId: currentTenant.id,
-      userId: user.id,
-      leaveType: formData.leaveType,
-      fromDate: formData.fromDate,
-      toDate: formData.toDate,
-      days,
-      reason: formData.reason,
-      status: 'pending',
-    });
-
-    setFormData({
-      leaveType: 'casual',
-      fromDate: '',
-      toDate: '',
-      reason: '',
-    });
-    onClose();
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      await client.request(SUBMIT_LEAVE, {
+        input: {
+          leaveTypeId,
+          fromDate,
+          toDate,
+          isHalfDay,
+          halfDaySession: halfDaySession.trim() || null,
+          reason: reason.trim() || null,
+        },
+      });
+      onSubmitted();
+      onClose();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to submit leave request');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Apply for Leave">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Select
-          label="Leave Type"
-          name="leaveType"
-          value={formData.leaveType}
-          onChange={handleChange}
-          options={leaveTypeOptions}
-          required
-          fullWidth
-        />
+        {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Input
-            label="From Date"
-            type="date"
-            name="fromDate"
-            value={formData.fromDate}
-            onChange={handleChange}
-            min={new Date().toISOString().split('T')[0]}
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Leave type
+          </label>
+          <select
+            value={leaveTypeId}
+            onChange={(e) => setLeaveTypeId(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             required
+          >
+            <option value="">Select…</option>
+            {leaveTypes.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({t.code})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input
+            type="date"
+            label="From"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
             fullWidth
+            required
           />
-
           <Input
-            label="To Date"
             type="date"
-            name="toDate"
-            value={formData.toDate}
-            onChange={handleChange}
-            min={formData.fromDate || new Date().toISOString().split('T')[0]}
-            required
+            label="To"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
             fullWidth
+            required
           />
         </div>
 
-        {formData.fromDate && formData.toDate && (
-          <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              Total Days: <span className="font-semibold">{calculateDays()}</span>
-            </p>
-          </div>
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            checked={isHalfDay}
+            onChange={(e) => setIsHalfDay(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          Half day
+        </label>
+
+        {isHalfDay && (
+          <Input
+            label="Session (e.g. FIRST_HALF)"
+            value={halfDaySession}
+            onChange={(e) => setHalfDaySession(e.target.value)}
+            fullWidth
+            placeholder="Optional"
+          />
         )}
 
         <div>
@@ -133,20 +137,19 @@ const ApplyLeaveModal = ({ isOpen, onClose }: ApplyLeaveModalProps) => {
             Reason
           </label>
           <textarea
-            name="reason"
-            value={formData.reason}
-            onChange={handleChange}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
             rows={3}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-            required
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            placeholder="Optional"
           />
         </div>
 
         <div className="flex gap-3">
-          <Button type="submit" variant="primary">
-            Submit Application
+          <Button type="submit" variant="primary" disabled={submitting || !leaveTypes.length}>
+            {submitting ? 'Submitting…' : 'Submit application'}
           </Button>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
         </div>

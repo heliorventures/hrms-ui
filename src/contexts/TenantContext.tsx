@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useMemo, ReactNode } from 'react';
 import { Tenant } from '../types';
-import { mockTenants } from '../mocks/tenants';
+import { useAuth } from './AuthContext';
+import { getAppConfig } from '../config';
 
 interface TenantContextType {
   currentTenant: Tenant;
@@ -15,14 +16,21 @@ interface TenantProviderProps {
 }
 
 export const TenantProvider = ({ children }: TenantProviderProps) => {
-  const [tenants] = useState<Tenant[]>(mockTenants);
-  const [currentTenant, setCurrentTenant] = useState<Tenant>(mockTenants[0]);
+  const { user } = useAuth();
+  const devTenantId = getAppConfig().devTenantId;
 
-  const switchTenant = (tenantId: string) => {
-    const tenant = tenants.find((t) => t.id === tenantId);
-    if (tenant) {
-      setCurrentTenant(tenant);
-    }
+  const { tenants, currentTenant } = useMemo(() => {
+    const id = user?.tenantId ?? devTenantId;
+    const tenant: Tenant = {
+      id,
+      name: user ? 'Organization' : 'KabiPay',
+      companyCode: id.length >= 4 ? id.slice(0, 4).toUpperCase() : id.toUpperCase(),
+    };
+    return { tenants: [tenant], currentTenant: tenant };
+  }, [user, devTenantId]);
+
+  const switchTenant = (_tenantId: string) => {
+    // Multi-tenant switching will use API-backed tenant list when available.
   };
 
   const value = {

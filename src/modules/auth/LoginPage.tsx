@@ -17,13 +17,14 @@ const generateCaptcha = () => {
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loading, error: authError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaCode, setCaptchaCode] = useState(() => generateCaptcha());
   const [errors, setErrors] = useState<{ email?: string; password?: string; captcha?: string }>({});
-  const [submitting, setSubmitting] = useState(false);
+
+  const submitting = loading;
 
   const refreshCaptcha = useCallback(() => {
     setCaptchaCode(generateCaptcha());
@@ -31,7 +32,7 @@ const LoginPage = () => {
     setErrors((e) => ({ ...e, captcha: undefined }));
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { email?: string; password?: string; captcha?: string } = {};
 
@@ -54,12 +55,16 @@ const LoginPage = () => {
       return;
     }
 
-    setSubmitting(true);
     setErrors({});
 
-    login(email.trim());
-    navigate('/dashboard', { replace: true });
-    setSubmitting(false);
+    try {
+      await login(email.trim(), password);
+      navigate('/dashboard', { replace: true });
+    } catch {
+      // AuthContext already populated `authError`; we just rotate the captcha
+      // to defeat a naive password-spray.
+      refreshCaptcha();
+    }
   };
 
   return (
@@ -68,9 +73,7 @@ const LoginPage = () => {
         <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">KabiPay</h1>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              Sign in to your account
-            </p>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Sign in to your account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -153,13 +156,23 @@ const LoginPage = () => {
               />
             </div>
 
+            {authError && (
+              <div
+                role="alert"
+                className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
+              >
+                {authError}
+              </div>
+            )}
+
             <Button type="submit" fullWidth size="lg" disabled={submitting}>
               {submitting ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-            Use a mock user email (e.g. john.doe@techcorp.com). Any password works for demo.
+            Seed credentials: <code>demo@kabipay.local</code> / <code>ChangeMe!123</code>
+            {' — see scripts/seed-demo-data.ps1.'}
           </p>
         </div>
       </div>

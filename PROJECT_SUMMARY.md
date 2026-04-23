@@ -111,6 +111,7 @@ KabiPay-UI/
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js v18 or higher
 - npm or yarn
 
@@ -144,6 +145,7 @@ npm run lint
 ## 🎯 Key Features for Demo
 
 ### For Employee Role:
+
 1. **Dashboard** - Show real-time clock and punch in/out
 2. **Leave Balance** - Visual representation of available leaves
 3. **Apply Leave** - Interactive date picker with auto-calculation
@@ -152,12 +154,14 @@ npm run lint
 6. **Notifications** - Filter and view different types
 
 ### For Admin Role:
+
 1. **Employee Management** - Add/Edit employee with comprehensive form
 2. **Attendance Reports** - View statistics and metrics
 3. **Leave Reports** - Track all leave applications
 4. **Payroll Reports** - Financial summaries
 
 ### Switching Roles:
+
 - Use the "Switch to Admin/Employee" button in the header
 - All navigation and features update automatically
 
@@ -176,17 +180,20 @@ npm run lint
 When ready to integrate with Rust + GraphQL + Postgres:
 
 1. **Update useMockApi Hook**
+
    ```typescript
    // Replace mock implementation with Apollo Client
    import { useQuery } from '@apollo/client';
    ```
 
 2. **Add GraphQL Client**
+
    ```bash
    npm install @apollo/client graphql
    ```
 
 3. **Configure Apollo**
+
    ```typescript
    const client = new ApolloClient({
      uri: import.meta.env.VITE_API_URL,
@@ -241,6 +248,7 @@ When ready to integrate with Rust + GraphQL + Postgres:
 ## 🔐 Role-Based Features
 
 ### Employee Can Access:
+
 - ✅ Dashboard
 - ✅ Attendance & Timesheet
 - ✅ Leave Management
@@ -249,6 +257,7 @@ When ready to integrate with Rust + GraphQL + Postgres:
 - ✅ Notifications
 
 ### Admin Can Access (Additional):
+
 - ✅ Employee Management
 - ✅ Reports & Analytics
 - ✅ All employee features
@@ -292,6 +301,7 @@ If you want to extend the project:
 ## 🆘 Troubleshooting
 
 ### If dev server won't start:
+
 ```bash
 rm -rf node_modules package-lock.json
 npm install
@@ -299,12 +309,14 @@ npm run dev
 ```
 
 ### If build fails:
+
 ```bash
 rm -rf dist
 npm run build
 ```
 
 ### If ESLint shows errors:
+
 ```bash
 npm run lint -- --fix
 ```
@@ -344,6 +356,7 @@ You now have a fully functional, production-quality KabiPay application ready fo
 ---
 
 For any questions or issues, refer to:
+
 - `SETUP.md` for installation help
 - `FEATURES.md` for feature details
 - `README.md` for project overview

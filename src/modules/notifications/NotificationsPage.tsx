@@ -1,55 +1,128 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useMockApi } from '../../hooks/useMockApi';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTenant } from '../../contexts/TenantContext';
-import { mockNotifications } from '../../mocks/notifications';
-import { NotificationType } from '../../types';
+import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { useGraphClient } from '../../hooks/useGraphClient';
+
+type NotificationKind = 'company' | 'personal' | 'system';
+
+interface AnnouncementRow {
+  id: string;
+  title: string;
+  body?: string | null;
+  targetAudience?: string | null;
+  publishAt?: string | null;
+}
+
+interface NotificationRow {
+  id: string;
+  kind?: string | null;
+  title?: string | null;
+  message?: string | null;
+  actionUrl?: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+interface NotificationBoardData {
+  announcements: AnnouncementRow[];
+  notifications: NotificationRow[];
+}
+
+const NOTIFICATION_BOARD = gql`
+  query NotificationBoard($limit: Int! = 20) {
+    announcements(limit: $limit) {
+      id
+      title
+      body
+      targetAudience
+      publishAt
+    }
+    notifications(limit: $limit) {
+      id
+      kind
+      title
+      message
+      actionUrl
+      isRead
+      createdAt
+    }
+  }
+`;
+
+const MARK_READ = gql`
+  mutation MarkNotificationRead($id: ID!) {
+    markNotificationRead(id: $id) {
+      id
+      isRead
+    }
+  }
+`;
+
+const MARK_ALL = gql`
+  mutation MarkAllNotificationsRead {
+    markAllNotificationsRead
+  }
+`;
 
 const NotificationsPage = () => {
-  const { user } = useAuth();
-  const { currentTenant } = useTenant();
+  const client = useGraphClient('client');
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [data, setData] = useState<NotificationBoardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
 
-  const { data: notifications, loading } = useMockApi(
+  const loadBoard = useCallback(async () => {
+    const result = await client.request<NotificationBoardData>(NOTIFICATION_BOARD, {
+      limit: 20,
+    });
+    return result;
+  }, [client]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await loadBoard();
+        if (!cancelled) setData(result);
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load notifications');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadBoard]);
+
+  const filteredNotifications = useMemo(
     () =>
-      mockNotifications
-        .filter(
-          (n) =>
-            n.tenantId === currentTenant.id &&
-            (!n.userId || n.userId === user?.id)
-        )
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    { delay: 400 }
+      filter === 'unread'
+        ? (data?.notifications?.filter((n) => !n.isRead) ?? [])
+        : (data?.notifications ?? []),
+    [data, filter]
   );
 
-  const filteredNotifications =
-    filter === 'unread'
-      ? notifications?.filter((n) => !n.read)
-      : notifications;
-
-  const handleMarkAsRead = (notificationId: string) => {
-    alert(`Notification ${notificationId} marked as read`);
+  const normalizeKind = (kind?: string | null): NotificationKind => {
+    const normalized = (kind ?? '').toLowerCase();
+    if (normalized.includes('company') || normalized.includes('announcement')) return 'company';
+    if (normalized.includes('system')) return 'system';
+    return 'personal';
   };
 
-  const handleMarkAllAsRead = () => {
-    alert('All notifications marked as read');
-  };
-
-  const getTypeIcon = (type: NotificationType) => {
+  const getTypeIcon = (type: NotificationKind) => {
     switch (type) {
       case 'company':
         return (
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -60,12 +133,7 @@ const NotificationsPage = () => {
         );
       case 'personal':
         return (
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -76,12 +144,7 @@ const NotificationsPage = () => {
         );
       case 'system':
         return (
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -99,7 +162,7 @@ const NotificationsPage = () => {
     }
   };
 
-  const getTypeColor = (type: NotificationType) => {
+  const getTypeColor = (type: NotificationKind) => {
     switch (type) {
       case 'company':
         return 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400';
@@ -126,9 +189,7 @@ const NotificationsPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Notifications
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
         <div className="flex gap-3">
           <Button
             variant="outline"
@@ -140,32 +201,84 @@ const NotificationsPage = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleMarkAllAsRead}
+            disabled={actionBusy}
+            onClick={async () => {
+              setActionBusy(true);
+              try {
+                await client.request(MARK_ALL);
+                setData(await loadBoard());
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'Failed to mark all read');
+              } finally {
+                setActionBusy(false);
+              }
+            }}
           >
-            Mark All Read
+            {actionBusy ? 'Working…' : 'Mark all read'}
           </Button>
         </div>
       </div>
 
+      {error && (
+        <Card>
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </Card>
+      )}
+
+      <Card title="Announcements">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading announcements...</p>
+        ) : data?.announcements?.length ? (
+          <div className="space-y-3">
+            {data.announcements.map((announcement) => (
+              <div
+                key={announcement.id}
+                className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      {announcement.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {announcement.body ?? 'No announcement body provided.'}
+                    </p>
+                  </div>
+                  <Badge variant="info">{announcement.targetAudience ?? 'ALL'}</Badge>
+                </div>
+                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                  Publish at:{' '}
+                  {announcement.publishAt
+                    ? new Date(announcement.publishAt).toLocaleString('en-IN')
+                    : 'Immediate'}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No announcements found.</p>
+        )}
+      </Card>
+
       <Card>
         {loading ? (
-          <LoadingSpinner />
-        ) : filteredNotifications && filteredNotifications.length > 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading notifications...</p>
+        ) : filteredNotifications.length > 0 ? (
           <div className="space-y-3">
             {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
                 className={`rounded-lg border p-4 transition-colors ${
-                  notification.read
+                  notification.isRead
                     ? 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
                     : 'border-primary-200 bg-primary-50 dark:border-primary-800 dark:bg-primary-900/20'
                 }`}
               >
                 <div className="flex gap-4">
                   <div
-                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${getTypeColor(notification.type)}`}
+                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${getTypeColor(normalizeKind(notification.kind))}`}
                   >
-                    {getTypeIcon(notification.type)}
+                    {getTypeIcon(normalizeKind(notification.kind))}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -173,18 +286,18 @@ const NotificationsPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
-                            {notification.title}
+                            {notification.title ?? 'Untitled notification'}
                           </h3>
-                          {!notification.read && (
+                          {!notification.isRead && (
                             <span className="h-2 w-2 rounded-full bg-primary-600 dark:bg-primary-400" />
                           )}
                         </div>
                         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                          {notification.message}
+                          {notification.message ?? 'No message body provided.'}
                         </p>
                         <div className="mt-2 flex items-center gap-3">
                           <Badge variant="neutral" size="sm">
-                            {notification.type}
+                            {notification.kind ?? 'personal'}
                           </Badge>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {formatTimeAgo(notification.createdAt)}
@@ -193,17 +306,28 @@ const NotificationsPage = () => {
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        {!notification.read && (
+                        {!notification.isRead && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleMarkAsRead(notification.id)}
+                            disabled={actionBusy}
+                            onClick={async () => {
+                              setActionBusy(true);
+                              try {
+                                await client.request(MARK_READ, { id: notification.id });
+                                setData(await loadBoard());
+                              } catch (e) {
+                                setError(e instanceof Error ? e.message : 'Failed to mark read');
+                              } finally {
+                                setActionBusy(false);
+                              }
+                            }}
                           >
-                            Mark Read
+                            Mark read
                           </Button>
                         )}
-                        {notification.link && (
-                          <Link to={notification.link}>
+                        {notification.actionUrl && (
+                          <Link to={notification.actionUrl}>
                             <Button variant="primary" size="sm">
                               View
                             </Button>
@@ -232,9 +356,7 @@ const NotificationsPage = () => {
               />
             </svg>
             <p className="mt-4 text-gray-500 dark:text-gray-400">
-              {filter === 'unread'
-                ? 'No unread notifications'
-                : 'No notifications found'}
+              {filter === 'unread' ? 'No unread notifications' : 'No notifications found'}
             </p>
           </div>
         )}

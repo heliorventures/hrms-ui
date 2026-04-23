@@ -1,29 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTenant } from '../../contexts/TenantContext';
-import { useMockApi } from '../../hooks/useMockApi';
-import { mockNotifications } from '../../mocks/notifications';
+import type { Notification } from '../../types';
 
 const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
-  const { currentTenant } = useTenant();
   const navigate = useNavigate();
 
-  const { data: notifications } = useMockApi(
-    () =>
-      mockNotifications
-        .filter(
-          (n) =>
-            n.tenantId === currentTenant.id &&
-            (!n.userId || n.userId === user?.id)
-        )
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5),
-    { delay: 200 }
-  );
+  const notifications: Notification[] = [];
 
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 
@@ -75,12 +59,7 @@ const NotificationDropdown = () => {
         className="relative rounded-lg p-2 text-white transition-all hover:bg-white/20"
         aria-label="Notifications"
       >
-        <svg
-          className="h-6 w-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -99,9 +78,7 @@ const NotificationDropdown = () => {
         <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
           <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Notifications
-              </h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
               {unreadCount > 0 && (
                 <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-900 dark:text-red-200">
                   {unreadCount} new
@@ -175,9 +152,7 @@ const NotificationDropdown = () => {
               </div>
             ) : (
               <div className="px-4 py-8 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  No notifications
-                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
               </div>
             )}
           </div>

@@ -18,12 +18,6 @@ import type {
   AttendanceStatus,
   DeclaredDeduction,
 } from '../types';
-import { mockAttendance } from '../mocks/attendance';
-import { mockLeaveApplications, mockLeaveBalances, mockHolidays } from '../mocks/leaves';
-import { mockEmployees } from '../mocks/employees';
-import { mockPayslips, mockSalaryHistory, mockDeclaredDeductionsByFy } from '../mocks/payroll';
-import { mockExpenses, mockTravelRequests } from '../mocks/expenses';
-import { mockNotifications } from '../mocks/notifications';
 
 const STORAGE_KEY = 'kabipay-demo-data';
 
@@ -60,41 +54,20 @@ export interface DemoData {
 }
 
 function getDefaultData(): DemoData {
-  // Convert mock timesheet from attendance to initial timesheet entries
-  const initialTimesheet: TimesheetEntry[] = mockAttendance
-    .filter((a) => a.workHours !== undefined && a.workHours > 0)
-    .map((a) => ({
-      id: `ts-${a.id}`,
-      tenantId: a.tenantId,
-      userId: a.userId,
-      date: a.date,
-      projectId: 'proj-1',
-      projectName: 'Project Alpha',
-      taskDescription: 'General work',
-      hours: a.workHours ?? 0,
-      status: 'approved' as const,
-    }));
-
   return {
-    timesheetEntries: initialTimesheet,
+    timesheetEntries: [],
     attendanceOverrides: {},
     punchRecords: {},
-    declaredDeductions: { ...mockDeclaredDeductionsByFy },
-    leaveApplications: [...mockLeaveApplications],
-    leaveBalances: {
-      'tenant-1': [...mockLeaveBalances],
-      'tenant-1-user-1': [...mockLeaveBalances],
-      'tenant-1-user-2': [...mockLeaveBalances],
-      'tenant-1-user-3': [...mockLeaveBalances],
-      'tenant-1-user-4': [...mockLeaveBalances],
-    },
-    employees: [...mockEmployees],
-    payslips: [...mockPayslips],
-    salaryHistory: [...mockSalaryHistory],
-    expenseClaims: [...mockExpenses],
-    travelRequests: [...mockTravelRequests],
-    notifications: [...mockNotifications],
-    holidays: [...mockHolidays],
+    declaredDeductions: {},
+    leaveApplications: [],
+    leaveBalances: {},
+    employees: [],
+    payslips: [],
+    salaryHistory: [],
+    expenseClaims: [],
+    travelRequests: [],
+    notifications: [],
+    holidays: [],
   };
 }
 
@@ -132,9 +105,7 @@ export function saveData(data: DemoData): void {
 }
 
 function isHoliday(data: DemoData, tenantId: string, date: string): boolean {
-  return data.holidays.some(
-    (h) => h.tenantId === tenantId && h.date === date
-  );
+  return data.holidays.some((h) => h.tenantId === tenantId && h.date === date);
 }
 
 /** Derive attendance from timesheet entries for a user. Full hours=Present, Partial=Half-day, No entry=Absent */

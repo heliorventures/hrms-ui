@@ -18,12 +18,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
           className="rounded-lg p-2 text-white transition-all hover:bg-white/20 lg:hidden"
           aria-label="Toggle sidebar"
         >
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -32,10 +27,8 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
             />
           </svg>
         </button>
-        
-        <h1 className="text-xl font-semibold text-white drop-shadow-md">
-          {currentTenant.name}
-        </h1>
+
+        <h1 className="text-xl font-semibold text-white drop-shadow-md">{currentTenant.name}</h1>
         <GlobalSearch />
       </div>
 

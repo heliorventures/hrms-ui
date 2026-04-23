@@ -1,0 +1,315 @@
+# One query per KabiPay subgraph, kept intentionally shallow so every
+# module shows a "tick" in the connectivity dashboard and the engineering
+# team has a canonical sample document to copy when wiring real screens.
+#
+# Field names here MUST match the Rust DTOs exposed by each subgraph in
+# `kabipay-svc/crates/<svc>/src/resolvers/types.rs` — otherwise the
+# gateway will reject the operation before it ever hits the subgraph.
+
+query ModuleProbeLeaveBoard($limit: Int! = 20) {
+  leaveTypes(limit: $limit) {
+    id
+    name
+    code
+    isPaid
+  }
+  leaveRequests(limit: $limit) {
+    id
+    employeeId
+    status
+    fromDate
+    toDate
+    daysRequested
+  }
+}
+
+query ModuleProbeAttendanceBoard($limit: Int! = 20) {
+  shifts(limit: $limit) {
+    id
+    name
+    startTime
+    endTime
+  }
+  attendance(limit: $limit) {
+    id
+    employeeId
+    workDate
+    checkInTime
+    checkOutTime
+    status
+  }
+}
+
+query ModuleProbePayrollBoard($limit: Int! = 20) {
+  salaryComponents(limit: $limit) {
+    id
+    name
+    code
+    componentType
+  }
+  payrollCycles(limit: $limit) {
+    id
+    name
+    month
+    year
+    status
+    paymentDate
+  }
+}
+
+query ModuleProbeTaxBoard($limit: Int! = 20) {
+  taxConfigurations(limit: $limit) {
+    id
+    fiscalYear
+    regime
+    countryCode
+    isActive
+  }
+  taxSlabs(limit: $limit) {
+    id
+    taxConfigVersionId
+    incomeFrom
+    incomeTo
+    taxRate
+  }
+}
+
+query ModuleProbeBenefitsBoard($limit: Int! = 20) {
+  benefitTypes(limit: $limit) {
+    id
+    name
+    code
+    category
+  }
+  benefitPlans(limit: $limit) {
+    id
+    name
+    benefitTypeId
+    employeeContribution
+    employerContribution
+    isActive
+  }
+}
+
+query ModuleProbeExpenseBoard($limit: Int! = 20) {
+  expenseCategories(limit: $limit) {
+    id
+    name
+    code
+  }
+  expenses(limit: $limit) {
+    id
+    employeeId
+    expenseCategoryId
+    amount
+    status
+    expenseDate
+  }
+}
+
+query ModuleProbeDocument($limit: Int! = 20) {
+  documentTypes(limit: $limit) {
+    id
+    name
+    category
+    isRequired
+  }
+  employeeDocuments(limit: $limit) {
+    id
+    documentTypeId
+    status
+    uploadedAt
+  }
+}
+
+query ModuleProbePayslip($limit: Int! = 5) {
+  payslips(limit: $limit) {
+    id
+    netSalary
+    grossSalary
+    status
+    lines {
+      id
+      amount
+      componentType
+    }
+  }
+}
+
+query ModuleProbeRecruitmentBoard($limit: Int! = 20) {
+  jobPostings(limit: $limit) {
+    id
+    title
+    status
+    employmentType
+    vacancies
+  }
+  applications(limit: $limit) {
+    id
+    jobId
+    candidateName
+    status
+  }
+}
+
+query ModuleProbePerformanceBoard($limit: Int! = 20) {
+  reviewCycles(limit: $limit) {
+    id
+    name
+    status
+    startDate
+    endDate
+  }
+  goals(limit: $limit) {
+    id
+    employeeId
+    title
+    weightage
+    status
+  }
+}
+
+query ModuleProbeLmsBoard($limit: Int! = 20) {
+  skills(limit: $limit) {
+    id
+    name
+    category
+  }
+  courses(limit: $limit) {
+    id
+    title
+    durationMinutes
+    isActive
+  }
+}
+
+query ModuleProbeSuccessionBoard($limit: Int! = 20) {
+  competencies(limit: $limit) {
+    id
+    name
+    category
+  }
+  talentPools(limit: $limit) {
+    id
+    name
+    description
+  }
+}
+
+query ModuleProbeCompensationBoard($limit: Int! = 20) {
+  salaryBands(limit: $limit) {
+    id
+    designationId
+    grade
+    minSalary
+    maxSalary
+    currency
+  }
+  compensationReviewCycles(limit: $limit) {
+    id
+    name
+    year
+    status
+  }
+}
+
+query ModuleProbeAssetsBoard($limit: Int! = 20) {
+  assetCategories(limit: $limit) {
+    id
+    name
+    code
+  }
+  assets(limit: $limit) {
+    id
+    assetCategoryId
+    name
+    assetTag
+    status
+  }
+}
+
+query ModuleProbeGrievanceBoard($limit: Int! = 20) {
+  grievanceCategories(limit: $limit) {
+    id
+    name
+    code
+    isPosh
+  }
+  grievanceCases(limit: $limit) {
+    id
+    subject
+    status
+    priority
+    filedAt
+  }
+}
+
+query ModuleProbeWorkflowBoard($limit: Int! = 20) {
+  workflows(limit: $limit) {
+    id
+    name
+    entityType
+    isActive
+  }
+  workflowInstances(limit: $limit) {
+    id
+    workflowId
+    status
+    entityType
+  }
+}
+
+query ModuleProbeNotificationBoard($limit: Int! = 20) {
+  announcements(limit: $limit) {
+    id
+    title
+    targetAudience
+    publishAt
+  }
+  notifications(limit: $limit) {
+    id
+    kind
+    title
+    isRead
+    createdAt
+  }
+}
+
+query ModuleProbeOpsOverview($limit: Int! = 20) {
+  tenants(limit: $limit) {
+    id
+    name
+    status
+    plan
+    subdomain
+  }
+  modules(limit: $limit) {
+    id
+    code
+    name
+    category
+    isCore
+  }
+  tenantSubscriptions(limit: $limit) {
+    id
+    tenantId
+    moduleId
+    status
+    contractedSeats
+    currentSeatUsage
+  }
+  invoices(limit: $limit) {
+    id
+    tenantId
+    invoiceNumber
+    totalAmount
+    status
+    dueDate
+  }
+  operatorUsers(limit: $limit) {
+    id
+    email
+    fullName
+    isActive
+  }
+}

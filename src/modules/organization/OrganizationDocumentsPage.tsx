@@ -1,82 +1,158 @@
-import { useMockApi } from '../../hooks/useMockApi';
-import { useTenant } from '../../contexts/TenantContext';
-import { mockOrganizationDocuments } from '../../mocks/organizationDocuments';
+import { useEffect, useMemo, useState } from 'react';
+import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Badge from '../../components/common/Badge';
+import Table from '../../components/common/Table';
+import { useGraphClient } from '../../hooks/useGraphClient';
+
+const ORG_DOCS = gql`
+  query OrgDocumentsList($tlim: Int! = 50, $dlim: Int! = 50) {
+    documentTypes(limit: $tlim) {
+      id
+      name
+      category
+      isRequired
+    }
+    employeeDocuments(limit: $dlim) {
+      id
+      documentTypeId
+      status
+      uploadedAt
+      expiryDate
+    }
+  }
+`;
+
+interface DocumentTypeRow {
+  id: string;
+  name: string;
+  category?: string | null;
+  isRequired: boolean;
+}
+
+interface EmployeeDocumentRow {
+  id: string;
+  documentTypeId: string;
+  status: string;
+  uploadedAt: string;
+  expiryDate?: string | null;
+}
 
 const OrganizationDocumentsPage = () => {
-  const { currentTenant } = useTenant();
+  const client = useGraphClient('client');
+  const [types, setTypes] = useState<DocumentTypeRow[]>([]);
+  const [docs, setDocs] = useState<EmployeeDocumentRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: documents, loading } = useMockApi(
-    () =>
-      mockOrganizationDocuments
-        .filter((d) => d.tenantId === currentTenant.id)
-        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)),
-    { delay: 300 }
-  );
+  const typeName = useMemo(() => Object.fromEntries(types.map((t) => [t.id, t.name])), [types]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+  useEffect(() => {
+    let c = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await client.request<{
+          documentTypes: DocumentTypeRow[];
+          employeeDocuments: EmployeeDocumentRow[];
+        }>(ORG_DOCS, { tlim: 50, dlim: 50 });
+        if (!c) {
+          setTypes(res.documentTypes);
+          setDocs(res.employeeDocuments);
+        }
+      } catch (e) {
+        if (!c) {
+          setError(
+            e instanceof Error
+              ? e.message
+              : 'Could not load documents (employee session may be required for uploads list)'
+          );
+        }
+      } finally {
+        if (!c) setLoading(false);
+      }
+    })();
+    return () => {
+      c = true;
+    };
+  }, [client]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Organization Documents
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Organization documents</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Company-wide policies and documents (leave policy, attendance, code of conduct, etc.)
+          Policy types and your uploaded files for this tenant.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {documents?.map((doc) => (
-          <Card key={doc.id} className="flex flex-col">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <span className="inline-block rounded-full bg-primary-100 px-2.5 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900 dark:text-primary-300">
-                  {doc.category}
-                </span>
-                <h3 className="mt-2 font-semibold text-gray-900 dark:text-white">
-                  {doc.title}
-                </h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  {doc.description}
-                </p>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
-                  Published {formatDate(doc.publishedAt)}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                View
-              </button>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {(!documents || documents.length === 0) && (
+      {error && (
         <Card>
-          <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            No organization documents available.
-          </p>
+          <p className="text-sm text-amber-800 dark:text-amber-200">{error}</p>
         </Card>
       )}
+
+      <Card title="Document types">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+        ) : types.length ? (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {types.map((t) => (
+              <div
+                key={t.id}
+                className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-medium text-gray-900 dark:text-white">{t.name}</h3>
+                  {t.isRequired && <Badge variant="warning">Required</Badge>}
+                </div>
+                {t.category && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t.category}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No document types configured.</p>
+        )}
+      </Card>
+
+      <Card title="Your documents">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+        ) : docs.length ? (
+          <Table
+            data={docs}
+            keyExtractor={(r) => r.id}
+            columns={[
+              {
+                key: 'name',
+                label: 'Type',
+                render: (r: EmployeeDocumentRow) => typeName[r.documentTypeId] ?? r.documentTypeId,
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (r: EmployeeDocumentRow) => <Badge variant="info">{r.status}</Badge>,
+              },
+              {
+                key: 'uploadedAt',
+                label: 'Uploaded',
+                render: (r: EmployeeDocumentRow) => new Date(r.uploadedAt).toLocaleString('en-IN'),
+              },
+              {
+                key: 'expiryDate',
+                label: 'Expires',
+                render: (r: EmployeeDocumentRow) =>
+                  r.expiryDate ? new Date(r.expiryDate).toLocaleDateString('en-IN') : '—',
+              },
+            ]}
+          />
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No documents uploaded yet.</p>
+        )}
+      </Card>
     </div>
   );
 };

@@ -9,7 +9,7 @@ module.exports = {
     'plugin:react-hooks/recommended',
     'prettier',
   ],
-  ignorePatterns: ['dist', '.eslintrc.cjs'],
+  ignorePatterns: ['dist', '.eslintrc.cjs', 'src/api/graphql/**'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
@@ -25,7 +25,13 @@ module.exports = {
     },
   },
   rules: {
-    'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    'react-refresh/only-export-components': [
+      'warn',
+      {
+        allowConstantExport: true,
+        allowExportNames: ['useAuth', 'useTenant', 'useTheme', 'useDataStore'],
+      },
+    ],
     'prettier/prettier': 'error',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'react/prop-types': 'off',
@@ -47,7 +53,10 @@ module.exports = {
         unnamedComponents: 'arrow-function',
       },
     ],
-    'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
+    'max-lines-per-function': [
+      'warn',
+      { max: 360, skipBlankLines: true, skipComments: true },
+    ],
     'react/jsx-max-props-per-line': ['error', { maximum: 1, when: 'multiline' }],
     'react/jsx-first-prop-new-line': ['error', 'multiline'],
     'react/jsx-closing-bracket-location': ['error', 'tag-aligned'],

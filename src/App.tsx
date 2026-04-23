@@ -9,13 +9,13 @@ const App = () => {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <TenantProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <TenantProvider>
             <DataStoreProvider>
               <AppRoutes />
             </DataStoreProvider>
-          </AuthProvider>
-        </TenantProvider>
+          </TenantProvider>
+        </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

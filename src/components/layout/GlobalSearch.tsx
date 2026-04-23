@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTenant } from '../../contexts/TenantContext';
-import { mockEmployees } from '../../mocks/employees';
+import type { Employee } from '../../types';
 
 interface SearchPage {
   path: string;
@@ -17,16 +16,27 @@ const SEARCH_PAGES: SearchPage[] = [
   { path: '/payroll', label: 'Payroll', keywords: ['payroll', 'payslip', 'salary'] },
   { path: '/expenses', label: 'Expenses', keywords: ['expenses', 'travel', 'reimbursement'] },
   { path: '/notifications', label: 'Notifications', keywords: ['notifications', 'alerts'] },
-  { path: '/organization/employees', label: 'Organization – Employees', keywords: ['organization', 'employees', 'people'] },
-  { path: '/organization/documents', label: 'Organization – Documents', keywords: ['organization', 'documents', 'policies'] },
-  { path: '/admin/employees', label: 'Admin – Employees', keywords: ['admin', 'employees', 'manage'] },
+  {
+    path: '/organization/employees',
+    label: 'Organization – Employees',
+    keywords: ['organization', 'employees', 'people'],
+  },
+  {
+    path: '/organization/documents',
+    label: 'Organization – Documents',
+    keywords: ['organization', 'documents', 'policies'],
+  },
+  {
+    path: '/admin/employees',
+    label: 'Admin – Employees',
+    keywords: ['admin', 'employees', 'manage'],
+  },
   { path: '/admin/reports', label: 'Admin – Reports', keywords: ['admin', 'reports', 'analytics'] },
   { path: '/profile/settings', label: 'Profile Settings', keywords: ['profile', 'settings'] },
 ];
 
 const GlobalSearch = () => {
   const { role } = useAuth();
-  const { currentTenant } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
   const [query, setQuery] = useState('');
@@ -40,25 +50,11 @@ const GlobalSearch = () => {
     const q = query.trim().toLowerCase();
     return SEARCH_PAGES.filter(
       (p) =>
-        p.label.toLowerCase().includes(q) ||
-        p.keywords.some((k) => k.includes(q) || q.includes(k))
+        p.label.toLowerCase().includes(q) || p.keywords.some((k) => k.includes(q) || q.includes(k))
     );
   }, [query]);
 
-  const matchingEmployees = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.trim().toLowerCase();
-    return mockEmployees
-      .filter((e) => e.tenantId === currentTenant.id)
-      .filter(
-        (e) =>
-          e.name.toLowerCase().includes(q) ||
-          e.department.toLowerCase().includes(q) ||
-          e.designation.toLowerCase().includes(q) ||
-          (e.email && e.email.toLowerCase().includes(q))
-      )
-      .slice(0, 5);
-  }, [query, currentTenant.id]);
+  const matchingEmployees = useMemo((): Employee[] => [], []);
 
   const totalResults = matchingPages.length + matchingEmployees.length;
   const showDropdown = isOpen && (query.length > 0 || matchingPages.length > 0);
@@ -127,7 +123,12 @@ const GlobalSearch = () => {
       <div className="relative">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/70">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
         </span>
         <input
@@ -164,7 +165,12 @@ const GlobalSearch = () => {
                 >
                   <span className="text-gray-400 dark:text-gray-500">
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                   </span>
                   {page.label}
@@ -189,7 +195,12 @@ const GlobalSearch = () => {
                   }`}
                 >
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-xs font-medium text-primary-700 dark:bg-primary-900 dark:text-primary-300">
-                    {emp.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+                    {emp.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-gray-900 dark:text-white">{emp.name}</p>
