@@ -2,6 +2,8 @@
 
 React + TypeScript + Vite client for KabiPay (employee and admin areas). Talks to **kabipay-auth** (REST) and the **kabipay-gateway** GraphQL endpoint.
 
+**Full stack on your machine:** step-by-step Postgres, Liquibase, Rust services, gateway, `config.json`, and verification — see **[LOCAL_SETUP.md](LOCAL_SETUP.md)**.
+
 ## Dependencies
 
 | Requirement | Notes |

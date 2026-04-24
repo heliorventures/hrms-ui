@@ -7,6 +7,7 @@ import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import SubmitTravelModal from './components/SubmitTravelModal';
 
 interface ExpenseCategoryRow {
   id: string;
@@ -78,6 +79,7 @@ const ExpensesPage = () => {
   const [title, setTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [travelOpen, setTravelOpen] = useState(false);
 
   const loadBoard = useCallback(async () => {
     return client.request<ExpenseBoardData>(EXPENSE_BOARD, { limit: 20 });
@@ -205,11 +207,21 @@ const ExpensesPage = () => {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expenses & Travel</h1>
         <div className="flex gap-3">
           <Button onClick={() => setSubmitOpen(true)}>Submit expense</Button>
-          <Button variant="secondary" disabled title="Travel requests are not exposed yet">
+          <Button variant="secondary" onClick={() => setTravelOpen(true)}>
             Request travel
           </Button>
         </div>
       </div>
+
+      <SubmitTravelModal
+        isOpen={travelOpen}
+        onClose={() => setTravelOpen(false)}
+        onSubmitted={() => {
+          void (async () => {
+            setData(await loadBoard());
+          })();
+        }}
+      />
 
       <Modal isOpen={submitOpen} onClose={() => setSubmitOpen(false)} title="Submit expense claim">
         <form onSubmit={handleSubmitExpense} className="space-y-4">

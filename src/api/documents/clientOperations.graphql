@@ -49,6 +49,27 @@ query TaxComputationsList($limit: Int! = 10) {
   }
 }
 
+query TaxProofLines(
+  $employeeId: ID
+  $taxConfigVersionId: ID
+  $fiscalYear: Int
+) {
+  taxProofLines(
+    employeeId: $employeeId
+    taxConfigVersionId: $taxConfigVersionId
+    fiscalYear: $fiscalYear
+  ) {
+    id
+    sectionCode
+    declaredAmount
+    actualAmount
+    status
+    fileStorageId
+    rejectionReason
+    fiscalYear
+  }
+}
+
 query OrgDocumentsList($tlim: Int! = 50, $dlim: Int! = 50) {
   documentTypes(limit: $tlim) {
     id
@@ -82,6 +103,12 @@ query ClientOpsPayslipsList($limit: Int! = 10) {
   }
 }
 
+# India statutory stub: CSV from payslip rows for the payroll cycle (month + calendar year).
+# Requires payroll:statutory_export or HR / tenant admin (see JWT RBAC).
+query IndiaTdsMonthlySummaryCsv($month: Int!, $year: Int!) {
+  indiaTdsMonthlySummaryCsv(month: $month, year: $year)
+}
+
 mutation SubmitLeaveRequest($input: SubmitLeaveRequestInput!) {
   submitLeaveRequest(input: $input) {
     id
@@ -89,6 +116,28 @@ mutation SubmitLeaveRequest($input: SubmitLeaveRequestInput!) {
     fromDate
     toDate
     daysRequested
+    workflowInstanceId
+  }
+}
+
+mutation ApproveLeaveRequest($leaveRequestId: ID!) {
+  approveLeaveRequest(leaveRequestId: $leaveRequestId) {
+    id
+    status
+    employeeId
+    fromDate
+    toDate
+    daysRequested
+    workflowInstanceId
+  }
+}
+
+mutation RejectLeaveRequest($leaveRequestId: ID!, $reason: String) {
+  rejectLeaveRequest(leaveRequestId: $leaveRequestId, reason: $reason) {
+    id
+    status
+    reason
+    workflowInstanceId
   }
 }
 
@@ -97,6 +146,23 @@ mutation SubmitExpense($input: SubmitExpenseInput!) {
     id
     status
     amount
+    title
+  }
+}
+
+mutation ApproveExpense($expenseId: ID!) {
+  approveExpense(expenseId: $expenseId) {
+    id
+    status
+    amount
+    title
+  }
+}
+
+mutation RejectExpense($expenseId: ID!, $reason: String) {
+  rejectExpense(expenseId: $expenseId, reason: $reason) {
+    id
+    status
     title
   }
 }
@@ -112,12 +178,28 @@ mutation MarkAllNotificationsRead {
   markAllNotificationsRead
 }
 
-mutation PunchToday {
-  punchToday {
+mutation PunchToday($input: PunchTodayInput) {
+  punchToday(input: $input) {
     id
     workDate
     checkInTime
     checkOutTime
+    checkInLat
+    checkInLng
+    checkOutLat
+    checkOutLng
+    source
+    status
+  }
+}
+
+mutation AddManualAttendanceSegment($input: AddManualAttendanceSegmentInput!) {
+  addManualAttendanceSegment(input: $input) {
+    id
+    workDate
+    checkInTime
+    checkOutTime
+    source
     status
   }
 }
@@ -141,5 +223,73 @@ mutation UpsertTaxComputation($input: UpsertTaxComputationInput!) {
     id
     fiscalYear
     taxRegimeChosen
+  }
+}
+
+mutation SubmitTaxProofLine($input: SubmitTaxProofLineInput!) {
+  submitTaxProofLine(input: $input) {
+    id
+    status
+    sectionCode
+    declaredAmount
+    actualAmount
+  }
+}
+
+mutation ApproveTaxProofLine($taxProofLineId: ID!) {
+  approveTaxProofLine(taxProofLineId: $taxProofLineId) {
+    id
+    status
+    sectionCode
+  }
+}
+
+mutation RejectTaxProofLine($taxProofLineId: ID!, $reason: String) {
+  rejectTaxProofLine(taxProofLineId: $taxProofLineId, reason: $reason) {
+    id
+    status
+    sectionCode
+  }
+}
+
+mutation CreateEmployee($input: CreateEmployeeInput!) {
+  createEmployee(input: $input) {
+    id
+    employeeCode
+    fullName
+    status
+    dateOfJoining
+  }
+}
+
+mutation UpdateEmployee($input: UpdateEmployeeInput!) {
+  updateEmployee(input: $input) {
+    id
+    employeeCode
+    fullName
+    status
+    dateOfJoining
+    departmentId
+    designationId
+    employmentType
+  }
+}
+
+query OrgDepartments($limit: Int! = 100) {
+  departments(limit: $limit) {
+    id
+    name
+    code
+    parentDepartmentId
+  }
+}
+
+query OrgDesignations($limit: Int! = 100) {
+  designations(limit: $limit) {
+    id
+    title
+    departmentId
+    level
+    grade
   }
 }

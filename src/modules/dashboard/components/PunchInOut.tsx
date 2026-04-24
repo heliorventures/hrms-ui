@@ -6,12 +6,17 @@ import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 
 const PUNCH = gql`
-  mutation PunchToday {
-    punchToday {
+  mutation PunchToday($input: PunchTodayInput) {
+    punchToday(input: $input) {
       id
       workDate
       checkInTime
       checkOutTime
+      checkInLat
+      checkInLng
+      checkOutLat
+      checkOutLng
+      source
       status
     }
   }
@@ -26,12 +31,22 @@ const PUNCH_SUMMARY = gql`
         id
         checkInTime
         checkOutTime
+        checkInLat
+        checkInLng
+        checkOutLat
+        checkOutLng
+        source
         status
       }
       segments {
         id
         checkInTime
         checkOutTime
+        checkInLat
+        checkInLng
+        checkOutLat
+        checkOutLng
+        source
         status
       }
     }
@@ -42,6 +57,11 @@ type AttendanceRow = {
   id: string;
   checkInTime?: string | null;
   checkOutTime?: string | null;
+  checkInLat?: string | null;
+  checkInLng?: string | null;
+  checkOutLat?: string | null;
+  checkOutLng?: string | null;
+  source?: string | null;
   status?: string | null;
 };
 
@@ -52,6 +72,25 @@ type Summary = {
   segments: AttendanceRow[];
 } | null;
 
+function getCurrentPosition(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported in this browser'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 0,
+    });
+  });
+}
+
+function formatCoord(lat?: string | null, lng?: string | null) {
+  if (lat == null || lng == null) return null;
+  return `${lat}, ${lng}`;
+}
+
 const PunchInOut = () => {
   const client = useGraphClient('client');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -60,6 +99,7 @@ const PunchInOut = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(true);
+  const [trackLocation, setTrackLocation] = useState(true);
 
   const loadSummary = useCallback(async () => {
     setLoadingSummary(true);
@@ -115,15 +155,32 @@ const PunchInOut = () => {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await client.request<{ punchToday: AttendanceRow }>(PUNCH);
+      let input: { latitude: number; longitude: number } | null = null;
+      if (trackLocation) {
+        const pos = await getCurrentPosition();
+        input = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+      }
+      const res = await client.request<{ punchToday: AttendanceRow }>(PUNCH, { input });
       setLastPunch(res.punchToday);
       await loadSummary();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Punch failed');
+      setError(
+        e instanceof Error
+          ? e.message
+          : 'Punch failed (if location is required, allow the browser to access it)'
+      );
     } finally {
       setSubmitting(false);
     }
   };
+
+  const lastEventCoords = lastPunch
+    ? lastPunch.checkOutLat && lastPunch.checkOutLng
+      ? `Punch out: ${formatCoord(lastPunch.checkOutLat, lastPunch.checkOutLng)}`
+      : lastPunch.checkInLat && lastPunch.checkInLng
+        ? `Punch in: ${formatCoord(lastPunch.checkInLat, lastPunch.checkInLng)}`
+        : null
+    : null;
 
   return (
     <Card title="Attendance">
@@ -154,11 +211,20 @@ const PunchInOut = () => {
             {summary.segments.length > 0 && (
               <ul className="space-y-1 border-t border-gray-100 pt-2 text-gray-600 dark:border-gray-600 dark:text-gray-300">
                 {summary.segments.map((s, i) => (
-                  <li key={s.id} className="flex justify-between text-xs">
-                    <span>Segment {i + 1}</span>
-                    <span>
-                      {s.checkInTime ?? '—'} → {s.checkOutTime ?? 'open'}
-                    </span>
+                  <li key={s.id} className="text-xs">
+                    <div className="flex justify-between">
+                      <span>Segment {i + 1}</span>
+                      <span>
+                        {s.checkInTime ?? '—'} → {s.checkOutTime ?? 'open'}
+                      </span>
+                    </div>
+                    {(formatCoord(s.checkInLat, s.checkInLng) ||
+                      formatCoord(s.checkOutLat, s.checkOutLng)) && (
+                      <p className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+                        In: {formatCoord(s.checkInLat, s.checkInLng) ?? '—'} · Out:{' '}
+                        {formatCoord(s.checkOutLat, s.checkOutLng) ?? '—'}
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -174,16 +240,38 @@ const PunchInOut = () => {
 
         {lastPunch && (
           <div className="rounded-lg border border-gray-200 p-2 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-300">
-            Last action: In {lastPunch.checkInTime ?? '—'} · Out {lastPunch.checkOutTime ?? '—'}
-            {lastPunch.status && (
-              <span className="ml-2 inline-block">
-                <Badge variant="success">{lastPunch.status}</Badge>
-              </span>
+            <div>
+              In {lastPunch.checkInTime ?? '—'} · Out {lastPunch.checkOutTime ?? '—'}
+              {lastPunch.status && (
+                <span className="ml-2 inline-block">
+                  <Badge variant="success">{lastPunch.status}</Badge>
+                </span>
+              )}
+            </div>
+            {lastPunch.source && (
+              <p className="mt-1 text-gray-500 dark:text-gray-400">Source: {lastPunch.source}</p>
+            )}
+            {lastEventCoords && (
+              <p className="mt-1 font-mono text-[10px] text-gray-500 dark:text-gray-400">
+                {lastEventCoords} (WGS84)
+              </p>
             )}
           </div>
         )}
 
         {error && <p className="text-sm text-amber-800 dark:text-amber-200">{error}</p>}
+
+        <label className="flex cursor-pointer items-center justify-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            checked={trackLocation}
+            onChange={(e) => {
+              setTrackLocation(e.target.checked);
+            }}
+          />
+          Record GPS location (saved with punch in / punch out)
+        </label>
 
         <p className="text-center text-xs text-gray-500 dark:text-gray-400">
           You can punch in and out several times a day. Total time adds up each completed in→out
@@ -194,7 +282,9 @@ const PunchInOut = () => {
           variant="primary"
           fullWidth
           disabled={submitting || loadingSummary}
-          onClick={handlePunch}
+          onClick={() => {
+            void handlePunch();
+          }}
         >
           {buttonLabel}
         </Button>
