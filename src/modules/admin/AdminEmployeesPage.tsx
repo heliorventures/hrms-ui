@@ -19,6 +19,7 @@ interface EmployeeRow {
   dateOfJoining: string;
   departmentId?: string | null;
   designationId?: string | null;
+  reportingManagerId?: string | null;
   userId?: string | null;
 }
 
@@ -39,6 +40,7 @@ const EMPLOYEES_QUERY = gql`
       dateOfJoining
       departmentId
       designationId
+      reportingManagerId
       userId
     }
   }
@@ -112,6 +114,12 @@ const AdminEmployeesPage = () => {
     };
   }, [client]);
 
+  const nameById = useMemo(() => {
+    const m = new Map<string, string>();
+    employees.forEach((e) => m.set(e.id, e.fullName));
+    return m;
+  }, [employees]);
+
   const columns = useMemo(
     () => [
       {
@@ -121,6 +129,14 @@ const AdminEmployeesPage = () => {
       {
         key: 'fullName',
         label: 'Name',
+      },
+      {
+        key: 'reportingManagerId',
+        label: 'Reports to',
+        render: (row: EmployeeRow) =>
+          (row.reportingManagerId && nameById.get(row.reportingManagerId)) ||
+          row.reportingManagerId ||
+          '—',
       },
       {
         key: 'userId',
@@ -174,7 +190,7 @@ const AdminEmployeesPage = () => {
         ),
       },
     ],
-    [deptNames, desigTitles]
+    [deptNames, desigTitles, nameById]
   );
 
   return (
@@ -203,8 +219,9 @@ const AdminEmployeesPage = () => {
       <Card title="Admin notes">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           <strong>Add / Edit</strong> use <code className="text-xs">createEmployee</code> /{' '}
-          <code className="text-xs">updateEmployee</code> with org picks. Editing does not change
-          employee code or date of joining (API does not expose those on update).
+          <code className="text-xs">updateEmployee</code> with org picks and optional{' '}
+          <strong>reporting manager</strong> (cycle-safe on the server). Employee code and date of
+          joining are not editable after create.
         </p>
       </Card>
 

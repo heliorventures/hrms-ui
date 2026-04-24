@@ -57,6 +57,12 @@ const INDIA_TDS_CSV = gql`
   }
 `;
 
+const INDIA_PF_ESI_CSV = gql`
+  query IndiaPfEsiMonthlySummaryCsv($month: Int!, $year: Int!) {
+    indiaPfEsiMonthlySummaryCsv(month: $month, year: $year)
+  }
+`;
+
 const PayrollPage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<PayrollBoardData | null>(null);
@@ -66,6 +72,8 @@ const PayrollPage = () => {
   const [tdsYear, setTdsYear] = useState(() => new Date().getFullYear());
   const [tdsExporting, setTdsExporting] = useState(false);
   const [tdsExportError, setTdsExportError] = useState<string | null>(null);
+  const [pfEsiExporting, setPfEsiExporting] = useState(false);
+  const [pfEsiExportError, setPfEsiExportError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +104,32 @@ const PayrollPage = () => {
     setTdsMonth(c.month);
     setTdsYear(c.year);
   }, [data?.payrollCycles]);
+
+  const downloadIndiaPfEsiCsv = async () => {
+    try {
+      setPfEsiExporting(true);
+      setPfEsiExportError(null);
+      const res = await client.request<{ indiaPfEsiMonthlySummaryCsv: string }>(INDIA_PF_ESI_CSV, {
+        month: tdsMonth,
+        year: tdsYear,
+      });
+      const blob = new Blob([res.indiaPfEsiMonthlySummaryCsv], {
+        type: 'text/csv;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `india-pf-esi-summary-${tdsYear}-${String(tdsMonth).padStart(2, '0')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setPfEsiExportError(
+        e instanceof Error ? e.message : 'Export failed — check payroll permissions and login'
+      );
+    } finally {
+      setPfEsiExporting(false);
+    }
+  };
 
   const downloadIndiaTdsCsv = async () => {
     try {
@@ -256,6 +290,30 @@ const PayrollPage = () => {
         </div>
         {tdsExportError && (
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">{tdsExportError}</p>
+        )}
+      </Card>
+
+      <Card title="India — PF / ESI summary (CSV)">
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+          Second statutory stub (M12): employee + UAN / ESIC identifiers and PF/ESI amounts from each
+          payslip in the selected cycle. Same permission gate as the TDS export. Not an ECR or
+          challan file.
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <button
+            type="button"
+            onClick={() => void downloadIndiaPfEsiCsv()}
+            disabled={pfEsiExporting}
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-400"
+          >
+            {pfEsiExporting ? 'Downloading…' : 'Download PF/ESI CSV'}
+          </button>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            Uses month/year above with the TDS section.
+          </span>
+        </div>
+        {pfEsiExportError && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{pfEsiExportError}</p>
         )}
       </Card>
     </div>

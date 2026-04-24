@@ -6,7 +6,7 @@ import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 
 const SUBMIT_LEAVE = gql`
-  mutation SubmitLeaveRequest($input: SubmitLeaveRequestInput!) {
+  mutation SubmitLeaveRequestUi($input: SubmitLeaveRequestInput!) {
     submitLeaveRequest(input: $input) {
       id
       status

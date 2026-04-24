@@ -7,6 +7,9 @@ import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { useAuth } from '../../contexts/AuthContext';
+import { canApproveExpenseFromAccessToken } from '../../auth/clientJwt';
+import { getClientAccessToken } from '../../auth/tokenStore';
 import SubmitTravelModal from './components/SubmitTravelModal';
 
 interface ExpenseCategoryRow {
@@ -28,9 +31,24 @@ interface ExpenseRow {
   submittedAt: string;
 }
 
+interface TravelRequestRow {
+  id: string;
+  employeeId: string;
+  originLocation?: string | null;
+  destinationLocation?: string | null;
+  fromDate: string;
+  toDate: string;
+  purpose: string;
+  estimatedAmount?: string | null;
+  currency: string;
+  status: string;
+  submittedAt: string;
+}
+
 interface ExpenseBoardData {
   expenseCategories: ExpenseCategoryRow[];
   expenses: ExpenseRow[];
+  travelRequests: TravelRequestRow[];
 }
 
 const EXPENSE_BOARD = gql`
@@ -52,6 +70,19 @@ const EXPENSE_BOARD = gql`
       status
       submittedAt
     }
+    travelRequests(limit: $limit) {
+      id
+      employeeId
+      originLocation
+      destinationLocation
+      fromDate
+      toDate
+      purpose
+      estimatedAmount
+      currency
+      status
+      submittedAt
+    }
   }
 `;
 
@@ -66,7 +97,46 @@ const SUBMIT_EXPENSE = gql`
   }
 `;
 
+const APPROVE_EXPENSE = gql`
+  mutation ApproveExpenseRow($expenseId: ID!) {
+    approveExpense(expenseId: $expenseId) {
+      id
+      status
+    }
+  }
+`;
+
+const REJECT_EXPENSE = gql`
+  mutation RejectExpenseRow($expenseId: ID!, $reason: String) {
+    rejectExpense(expenseId: $expenseId, reason: $reason) {
+      id
+      status
+    }
+  }
+`;
+
+const APPROVE_TRAVEL = gql`
+  mutation ApproveTravelRow($travelRequestId: ID!) {
+    approveTravelRequest(travelRequestId: $travelRequestId) {
+      id
+      status
+    }
+  }
+`;
+
+const REJECT_TRAVEL = gql`
+  mutation RejectTravelRow($travelRequestId: ID!, $reason: String) {
+    rejectTravelRequest(travelRequestId: $travelRequestId, reason: $reason) {
+      id
+      status
+    }
+  }
+`;
+
+// Composite page: expense + travel boards, submit modals, and approver actions.
+// eslint-disable-next-line max-lines-per-function -- single route module
 const ExpensesPage = () => {
+  const { isAuthenticated, user } = useAuth();
   const client = useGraphClient('client');
   const [data, setData] = useState<ExpenseBoardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,6 +150,10 @@ const ExpensesPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [travelOpen, setTravelOpen] = useState(false);
+  const [approverBusy, setApproverBusy] = useState<string | null>(null);
+
+  const canApprove =
+    isAuthenticated && canApproveExpenseFromAccessToken(getClientAccessToken() ?? null);
 
   const loadBoard = useCallback(async () => {
     return client.request<ExpenseBoardData>(EXPENSE_BOARD, { limit: 20 });
@@ -104,7 +178,57 @@ const ExpensesPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [loadBoard]);
+  }, [loadBoard, user?.id]);
+
+  const runApproveExpense = async (expenseId: string) => {
+    setApproverBusy(`e:${expenseId}`);
+    try {
+      await client.request(APPROVE_EXPENSE, { expenseId });
+      setData(await loadBoard());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Approve expense failed');
+    } finally {
+      setApproverBusy(null);
+    }
+  };
+
+  const runRejectExpense = async (expenseId: string) => {
+    const reason = window.prompt('Rejection reason (optional)') ?? undefined;
+    setApproverBusy(`e:${expenseId}`);
+    try {
+      await client.request(REJECT_EXPENSE, { expenseId, reason: reason?.trim() || null });
+      setData(await loadBoard());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Reject expense failed');
+    } finally {
+      setApproverBusy(null);
+    }
+  };
+
+  const runApproveTravel = async (travelRequestId: string) => {
+    setApproverBusy(`t:${travelRequestId}`);
+    try {
+      await client.request(APPROVE_TRAVEL, { travelRequestId });
+      setData(await loadBoard());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Approve travel failed');
+    } finally {
+      setApproverBusy(null);
+    }
+  };
+
+  const runRejectTravel = async (travelRequestId: string) => {
+    const reason = window.prompt('Rejection reason (optional)') ?? undefined;
+    setApproverBusy(`t:${travelRequestId}`);
+    try {
+      await client.request(REJECT_TRAVEL, { travelRequestId, reason: reason?.trim() || null });
+      setData(await loadBoard());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Reject travel failed');
+    } finally {
+      setApproverBusy(null);
+    }
+  };
 
   const handleSubmitExpense = async (e: FormEvent) => {
     e.preventDefault();
@@ -141,6 +265,8 @@ const ExpensesPage = () => {
         return 'success';
       case 'rejected':
         return 'danger';
+      case 'pending':
+        return 'warning';
       case 'submitted':
         return 'warning';
       case 'reimbursed':
@@ -199,6 +325,37 @@ const ExpensesPage = () => {
       label: 'Submitted',
       render: (expense: ExpenseRow) => new Date(expense.submittedAt).toLocaleDateString('en-IN'),
     },
+    ...(canApprove
+      ? [
+          {
+            key: 'approverActions',
+            label: 'Actions',
+            render: (expense: ExpenseRow) =>
+              expense.status.toUpperCase() === 'PENDING' ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    className="!py-1 !px-2 !text-xs"
+                    disabled={approverBusy === `e:${expense.id}`}
+                    onClick={() => void runApproveExpense(expense.id)}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="!py-1 !px-2 !text-xs"
+                    disabled={approverBusy === `e:${expense.id}`}
+                    onClick={() => void runRejectExpense(expense.id)}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              ) : (
+                <span className="text-gray-400">—</span>
+              ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -212,6 +369,13 @@ const ExpensesPage = () => {
           </Button>
         </div>
       </div>
+
+      {canApprove && (
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          You can approve or reject <strong>PENDING</strong> claims and travel requests (
+          <code className="text-xs">expense:approve</code> or HR / tenant admin role).
+        </p>
+      )}
 
       <SubmitTravelModal
         isOpen={travelOpen}
@@ -343,11 +507,88 @@ const ExpensesPage = () => {
         )}
       </Card>
 
-      <Card title="Travel Requests">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Travel request queries/mutations are not exposed by a backend subgraph yet, so this
-          section remains pending while expenses are now live.
-        </p>
+      <Card title="Travel requests">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading travel…</p>
+        ) : data?.travelRequests?.length ? (
+          <Table
+            data={data.travelRequests}
+            columns={[
+              {
+                key: 'purpose',
+                label: 'Trip',
+                render: (t: TravelRequestRow) => (
+                  <span className="max-w-md truncate">
+                    {[t.originLocation, t.destinationLocation].filter(Boolean).join(' → ') ||
+                      t.purpose}
+                  </span>
+                ),
+              },
+              {
+                key: 'dates',
+                label: 'Dates',
+                render: (t: TravelRequestRow) => (
+                  <span>
+                    {t.fromDate} – {t.toDate}
+                  </span>
+                ),
+              },
+              {
+                key: 'estimatedAmount',
+                label: 'Estimate',
+                render: (t: TravelRequestRow) =>
+                  t.estimatedAmount ? formatCurrency(t.estimatedAmount, t.currency) : '—',
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (t: TravelRequestRow) => (
+                  <Badge variant={getExpenseStatusVariant(t.status)}>{t.status}</Badge>
+                ),
+              },
+              {
+                key: 'submittedAt',
+                label: 'Submitted',
+                render: (t: TravelRequestRow) =>
+                  new Date(t.submittedAt).toLocaleDateString('en-IN'),
+              },
+              ...(canApprove
+                ? [
+                    {
+                      key: 'travelApproverActions',
+                      label: 'Actions',
+                      render: (t: TravelRequestRow) =>
+                        t.status.toUpperCase() === 'PENDING' ? (
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              variant="secondary"
+                              className="!py-1 !px-2 !text-xs"
+                              disabled={approverBusy === `t:${t.id}`}
+                              onClick={() => void runApproveTravel(t.id)}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="!py-1 !px-2 !text-xs"
+                              disabled={approverBusy === `t:${t.id}`}
+                              onClick={() => void runRejectTravel(t.id)}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        ),
+                    },
+                  ]
+                : []),
+            ]}
+            keyExtractor={(t) => t.id}
+          />
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No travel requests yet.</p>
+        )}
       </Card>
     </div>
   );

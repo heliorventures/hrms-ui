@@ -34,7 +34,31 @@ const organizationNav: NavItemWithChildren = {
   ),
   children: [
     { path: '/organization/employees', label: 'Employees' },
+    { path: '/organization/org-chart', label: 'Org chart' },
     { path: '/organization/documents', label: 'Documents' },
+  ],
+};
+
+const workplaceNav: NavItemWithChildren = {
+  label: 'Workplace',
+  icon: (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+      />
+    </svg>
+  ),
+  children: [
+    { path: '/workplace/benefits', label: 'Benefits' },
+    { path: '/workplace/recruitment', label: 'Recruitment' },
+    { path: '/workplace/onboarding', label: 'Onboarding' },
+    { path: '/workplace/performance', label: 'Performance' },
+    { path: '/workplace/learning', label: 'Learning' },
+    { path: '/workplace/assets', label: 'Assets' },
+    { path: '/workplace/grievance', label: 'Grievance' },
   ],
 };
 
@@ -58,6 +82,7 @@ const adminNav: NavItemWithChildren = {
   ),
   children: [
     { path: '/admin/employees', label: 'Employees' },
+    { path: '/admin/attendance-policy', label: 'Attendance policy' },
     { path: '/admin/reports', label: 'Reports' },
     { path: '/admin/settings', label: 'Settings' },
   ],
@@ -86,9 +111,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { role } = useAuth();
   const location = useLocation();
   const isOrgPath = location.pathname.startsWith('/organization');
+  const isWorkplacePath = location.pathname.startsWith('/workplace');
   const isPayrollPath = location.pathname.startsWith('/payroll');
   const isAdminPath = location.pathname.startsWith('/admin');
   const [orgExpanded, setOrgExpanded] = useState(isOrgPath);
+  const [workplaceExpanded, setWorkplaceExpanded] = useState(isWorkplacePath);
   const [payrollExpanded, setPayrollExpanded] = useState(isPayrollPath);
   const [adminExpanded, setAdminExpanded] = useState(isAdminPath);
 
@@ -133,6 +160,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       return {
         active: 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md',
         inactive: 'text-gray-700 hover:bg-amber-50 dark:text-gray-300 dark:hover:bg-amber-900/20',
+      };
+    }
+    if (path.startsWith('/workplace')) {
+      return {
+        active: 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-md',
+        inactive: 'text-gray-700 hover:bg-teal-50 dark:text-gray-300 dark:hover:bg-teal-900/20',
       };
     }
     if (path.startsWith('/admin')) {
@@ -223,6 +256,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const filteredNavItems = navItems.filter((item) => !item.adminOnly || role === 'admin');
 
   const showOrgExpanded = orgExpanded || isOrgPath;
+  const showWorkplaceExpanded = workplaceExpanded || isWorkplacePath;
   const showPayrollExpanded = payrollExpanded || isPayrollPath;
   const showAdminExpanded = adminExpanded || isAdminPath;
 
@@ -318,6 +352,57 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                         onClick={onClose}
                         className={({ isActive }) =>
                           `flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200 ${
+                            isActive ? subColors.active : subColors.inactive
+                          }`
+                        }
+                      >
+                        <span>{child.label}</span>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setWorkplaceExpanded(!showWorkplaceExpanded)}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
+                  isWorkplacePath
+                    ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-md'
+                    : 'text-gray-700 hover:bg-teal-50 dark:text-gray-300 dark:hover:bg-teal-900/20'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {workplaceNav.icon}
+                  <span>{workplaceNav.label}</span>
+                </div>
+                <svg
+                  className={`h-4 w-4 shrink-0 transition-transform ${showWorkplaceExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+              {showWorkplaceExpanded && (
+                <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-teal-200 pl-3 dark:border-teal-800">
+                  {workplaceNav.children.map((child) => {
+                    const subColors = getNavItemColors(child.path);
+                    return (
+                      <NavLink
+                        key={child.path}
+                        to={child.path}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                          `flex gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200 ${
                             isActive ? subColors.active : subColors.inactive
                           }`
                         }

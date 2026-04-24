@@ -17,12 +17,13 @@ const UPDATE_EMPLOYEE = gql`
       departmentId
       designationId
       employmentType
+      reportingManagerId
     }
   }
 `;
 
 const ORG_LISTS = gql`
-  query OrgListsForEditEmployee($dlim: Int! = 100, $glim: Int! = 100) {
+  query OrgListsForEditEmployee($dlim: Int! = 100, $glim: Int! = 100, $elim: Int! = 100) {
     departments(limit: $dlim) {
       id
       name
@@ -31,6 +32,11 @@ const ORG_LISTS = gql`
     designations(limit: $glim) {
       id
       title
+    }
+    employees(limit: $elim) {
+      id
+      employeeCode
+      fullName
     }
   }
 `;
@@ -46,6 +52,7 @@ export interface EditEmployeeRow {
   dateOfJoining: string;
   departmentId?: string | null;
   designationId?: string | null;
+  reportingManagerId?: string | null;
 }
 
 interface EditEmployeeModalProps {
@@ -65,8 +72,10 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
   const [employmentType, setEmploymentType] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [designationId, setDesignationId] = useState('');
+  const [reportingManagerId, setReportingManagerId] = useState('');
   const [deptOptions, setDeptOptions] = useState<{ value: string; label: string }[]>([]);
   const [desigOptions, setDesigOptions] = useState<{ value: string; label: string }[]>([]);
+  const [managerOptions, setManagerOptions] = useState<{ value: string; label: string }[]>([]);
   const [orgLoadError, setOrgLoadError] = useState<string | null>(null);
 
   const loadOrg = useCallback(async () => {
@@ -76,7 +85,8 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
       const res = await client.request<{
         departments: { id: string; name: string; code: string }[];
         designations: { id: string; title: string }[];
-      }>(ORG_LISTS, { dlim: 100, glim: 100 });
+        employees: { id: string; employeeCode: string; fullName: string }[];
+      }>(ORG_LISTS, { dlim: 100, glim: 100, elim: 100 });
       setDeptOptions([
         { value: '', label: '— None —' },
         ...(res.departments ?? []).map((d) => ({
@@ -91,10 +101,20 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           label: d.title,
         })),
       ]);
+      const selfId = employee?.id;
+      setManagerOptions([
+        { value: '', label: '— None —' },
+        ...(res.employees ?? [])
+          .filter((em) => em.id !== selfId)
+          .map((em) => ({
+            value: em.id,
+            label: `${em.fullName} (${em.employeeCode})`,
+          })),
+      ]);
     } catch (e) {
       setOrgLoadError(e instanceof Error ? e.message : 'Failed to load org lists');
     }
-  }, [client, isOpen]);
+  }, [client, isOpen, employee?.id]);
 
   useEffect(() => {
     void loadOrg();
@@ -108,6 +128,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     setEmploymentType(employee.employmentType ?? '');
     setDepartmentId(employee.departmentId ?? '');
     setDesignationId(employee.designationId ?? '');
+    setReportingManagerId(employee.reportingManagerId ?? '');
     setFormError(null);
   }, [employee, isOpen]);
 
@@ -139,6 +160,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
       if (designationId) {
         input.designationId = designationId;
       }
+      input.reportingManagerId = reportingManagerId || null;
       await client.request(UPDATE_EMPLOYEE, { input });
       onUpdated();
       onClose();
@@ -229,6 +251,17 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
             fullWidth
           />
         </div>
+        <Select
+          label="Reporting manager"
+          value={reportingManagerId}
+          onChange={(e) => {
+            setReportingManagerId(e.target.value);
+          }}
+          options={
+            managerOptions.length ? managerOptions : [{ value: '', label: '— Loading —' }]
+          }
+          fullWidth
+        />
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? 'Saving…' : 'Save changes'}

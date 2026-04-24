@@ -13,11 +13,20 @@ import NotificationsPage from '../modules/notifications/NotificationsPage';
 import ProfileSettingsPage from '../modules/profile/ProfileSettingsPage';
 import OrganizationEmployeesPage from '../modules/organization/OrganizationEmployeesPage';
 import OrganizationDocumentsPage from '../modules/organization/OrganizationDocumentsPage';
+import OrgChartPage from '../modules/organization/OrgChartPage';
 import EmployeeDetailPage from '../modules/organization/EmployeeDetailPage';
 import AdminEmployeesPage from '../modules/admin/AdminEmployeesPage';
 import AdminReportsPage from '../modules/admin/AdminReportsPage';
 import AdminSettingsPage from '../modules/admin/AdminSettingsPage';
 import ModuleHealth from '../modules/admin/ModuleHealth';
+import AdminAttendancePolicyPage from '../modules/admin/AdminAttendancePolicyPage';
+import BenefitsPage from '../modules/workplace/BenefitsPage';
+import RecruitmentPage from '../modules/workplace/RecruitmentPage';
+import OnboardingPage from '../modules/workplace/OnboardingPage';
+import PerformancePage from '../modules/workplace/PerformancePage';
+import LearningPage from '../modules/workplace/LearningPage';
+import AssetsPage from '../modules/workplace/AssetsPage';
+import GrievancePage from '../modules/workplace/GrievancePage';
 
 const ProtectedLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -51,11 +60,21 @@ const AppRoutes = () => {
         <Route path="profile/settings" element={<ProfileSettingsPage />} />
         <Route path="organization/employees" element={<OrganizationEmployeesPage />} />
         <Route path="organization/employees/:employeeId" element={<EmployeeDetailPage />} />
+        <Route path="organization/org-chart" element={<OrgChartPage />} />
         <Route path="organization/documents" element={<OrganizationDocumentsPage />} />
+
+        <Route path="workplace/benefits" element={<BenefitsPage />} />
+        <Route path="workplace/recruitment" element={<RecruitmentPage />} />
+        <Route path="workplace/onboarding" element={<OnboardingPage />} />
+        <Route path="workplace/performance" element={<PerformancePage />} />
+        <Route path="workplace/learning" element={<LearningPage />} />
+        <Route path="workplace/assets" element={<AssetsPage />} />
+        <Route path="workplace/grievance" element={<GrievancePage />} />
 
         {role === 'admin' && (
           <>
             <Route path="admin/employees" element={<AdminEmployeesPage />} />
+            <Route path="admin/attendance-policy" element={<AdminAttendancePolicyPage />} />
             <Route path="admin/reports" element={<AdminReportsPage />} />
             <Route path="admin/settings" element={<AdminSettingsPage />} />
             <Route path="admin/module-health" element={<ModuleHealth />} />

@@ -14,12 +14,13 @@ const CREATE_EMPLOYEE = gql`
       fullName
       status
       dateOfJoining
+      reportingManagerId
     }
   }
 `;
 
 const ORG_LISTS = gql`
-  query OrgListsForNewEmployee($dlim: Int! = 100, $glim: Int! = 100) {
+  query OrgListsForNewEmployee($dlim: Int! = 100, $glim: Int! = 100, $elim: Int! = 100) {
     departments(limit: $dlim) {
       id
       name
@@ -28,6 +29,11 @@ const ORG_LISTS = gql`
     designations(limit: $glim) {
       id
       title
+    }
+    employees(limit: $elim) {
+      id
+      employeeCode
+      fullName
     }
   }
 `;
@@ -49,8 +55,10 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   const [status, setStatus] = useState('ACTIVE');
   const [departmentId, setDepartmentId] = useState('');
   const [designationId, setDesignationId] = useState('');
+  const [reportingManagerId, setReportingManagerId] = useState('');
   const [deptOptions, setDeptOptions] = useState<{ value: string; label: string }[]>([]);
   const [desigOptions, setDesigOptions] = useState<{ value: string; label: string }[]>([]);
+  const [managerOptions, setManagerOptions] = useState<{ value: string; label: string }[]>([]);
   const [orgLoadError, setOrgLoadError] = useState<string | null>(null);
 
   const loadOrg = useCallback(async () => {
@@ -60,7 +68,8 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       const res = await client.request<{
         departments: { id: string; name: string; code: string }[];
         designations: { id: string; title: string }[];
-      }>(ORG_LISTS, { dlim: 100, glim: 100 });
+        employees: { id: string; employeeCode: string; fullName: string }[];
+      }>(ORG_LISTS, { dlim: 100, glim: 100, elim: 100 });
       setDeptOptions([
         { value: '', label: '— None —' },
         ...(res.departments ?? []).map((d) => ({
@@ -73,6 +82,13 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         ...(res.designations ?? []).map((d) => ({
           value: d.id,
           label: d.title,
+        })),
+      ]);
+      setManagerOptions([
+        { value: '', label: '— None —' },
+        ...(res.employees ?? []).map((em) => ({
+          value: em.id,
+          label: `${em.fullName} (${em.employeeCode})`,
         })),
       ]);
     } catch (e) {
@@ -108,6 +124,9 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       if (designationId) {
         input.designationId = designationId;
       }
+      if (reportingManagerId) {
+        input.reportingManagerId = reportingManagerId;
+      }
       await client.request(CREATE_EMPLOYEE, { input });
       onCreated();
       onClose();
@@ -116,6 +135,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       setLastName('');
       setDepartmentId('');
       setDesignationId('');
+      setReportingManagerId('');
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Create failed');
     } finally {
@@ -201,6 +221,17 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
             fullWidth
           />
         </div>
+        <Select
+          label="Reporting manager"
+          value={reportingManagerId}
+          onChange={(e) => {
+            setReportingManagerId(e.target.value);
+          }}
+          options={
+            managerOptions.length ? managerOptions : [{ value: '', label: '— Loading —' }]
+          }
+          fullWidth
+        />
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? 'Creating…' : 'Create'}

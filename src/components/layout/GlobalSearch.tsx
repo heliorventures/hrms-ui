@@ -17,6 +17,11 @@ const SEARCH_PAGES: SearchPage[] = [
   { path: '/expenses', label: 'Expenses', keywords: ['expenses', 'travel', 'reimbursement'] },
   { path: '/notifications', label: 'Notifications', keywords: ['notifications', 'alerts'] },
   {
+    path: '/organization/org-chart',
+    label: 'Org chart',
+    keywords: ['org chart', 'hierarchy', 'reporting', 'manager'],
+  },
+  {
     path: '/organization/employees',
     label: 'Organization – Employees',
     keywords: ['organization', 'employees', 'people'],

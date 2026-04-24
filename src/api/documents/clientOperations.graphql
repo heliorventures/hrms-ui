@@ -109,6 +109,11 @@ query IndiaTdsMonthlySummaryCsv($month: Int!, $year: Int!) {
   indiaTdsMonthlySummaryCsv(month: $month, year: $year)
 }
 
+# India PF/ESI stub: payslip columns for the payroll cycle (month + calendar year). Same RBAC as TDS CSV.
+query IndiaPfEsiMonthlySummaryCsv($month: Int!, $year: Int!) {
+  indiaPfEsiMonthlySummaryCsv(month: $month, year: $year)
+}
+
 mutation SubmitLeaveRequest($input: SubmitLeaveRequestInput!) {
   submitLeaveRequest(input: $input) {
     id
@@ -164,6 +169,30 @@ mutation RejectExpense($expenseId: ID!, $reason: String) {
     id
     status
     title
+  }
+}
+
+mutation SubmitTravelRequest($input: SubmitTravelRequestInput!) {
+  submitTravelRequest(input: $input) {
+    id
+    status
+    purpose
+    fromDate
+    toDate
+  }
+}
+
+mutation ApproveTravelRequest($travelRequestId: ID!) {
+  approveTravelRequest(travelRequestId: $travelRequestId) {
+    id
+    status
+  }
+}
+
+mutation RejectTravelRequest($travelRequestId: ID!, $reason: String) {
+  rejectTravelRequest(travelRequestId: $travelRequestId, reason: $reason) {
+    id
+    status
   }
 }
 
@@ -259,6 +288,7 @@ mutation CreateEmployee($input: CreateEmployeeInput!) {
     fullName
     status
     dateOfJoining
+    reportingManagerId
   }
 }
 
@@ -272,6 +302,7 @@ mutation UpdateEmployee($input: UpdateEmployeeInput!) {
     departmentId
     designationId
     employmentType
+    reportingManagerId
   }
 }
 
@@ -291,5 +322,16 @@ query OrgDesignations($limit: Int! = 100) {
     departmentId
     level
     grade
+  }
+}
+
+query OrgChart($limit: Int! = 500) {
+  orgChart(limit: $limit) {
+    employeeId
+    employeeCode
+    fullName
+    reportingManagerId
+    departmentName
+    designationTitle
   }
 }
