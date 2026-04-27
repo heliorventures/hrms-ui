@@ -30,6 +30,9 @@ interface ExpenseRow {
   id: string;
   employeeId: string;
   expenseCategoryId: string;
+  travelRequestId?: string | null;
+  /** Present when tenant has an **EXPENSE** workflow (**M32**). */
+  workflowInstanceId?: string | null;
   amount: string;
   currency: string;
   expenseDate: string;
@@ -72,6 +75,7 @@ const ExpensesPage = () => {
   const [currency, setCurrency] = useState('INR');
   const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [title, setTitle] = useState('');
+  const [travelRequestId, setTravelRequestId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [travelOpen, setTravelOpen] = useState(false);
@@ -167,6 +171,7 @@ const ExpensesPage = () => {
     setFormError(null);
     setSubmitting(true);
     try {
+      const tid = travelRequestId.trim();
       await client.request(SubmitExpenseDocument, {
         input: {
           expenseCategoryId: categoryId,
@@ -174,12 +179,14 @@ const ExpensesPage = () => {
           currency: currency.trim() || 'INR',
           expenseDate,
           title: title.trim(),
+          ...(tid ? { travelRequestId: tid } : {}),
         },
       });
       setData(await loadBoard());
       setSubmitOpen(false);
       setTitle('');
       setAmount('');
+      setTravelRequestId('');
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Submit failed');
     } finally {
@@ -230,6 +237,27 @@ const ExpensesPage = () => {
       key: 'title',
       label: 'Title',
       render: (expense: ExpenseRow) => <span className="max-w-xs truncate">{expense.title}</span>,
+    },
+    {
+      key: 'travel',
+      label: 'Trip',
+      render: (expense: ExpenseRow) => (
+        <span className="max-w-[8rem] truncate font-mono text-xs text-gray-500 dark:text-gray-400">
+          {expense.travelRequestId ? `${expense.travelRequestId.slice(0, 8)}…` : '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'workflow',
+      label: 'Approval',
+      render: (expense: ExpenseRow) =>
+        expense.workflowInstanceId ? (
+          <span className="whitespace-nowrap font-mono text-xs text-teal-700 dark:text-teal-300">
+            WF {expense.workflowInstanceId.slice(0, 8)}…
+          </span>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
     },
     {
       key: 'amount',
@@ -301,7 +329,9 @@ const ExpensesPage = () => {
       {canApprove && (
         <p className="text-sm text-gray-600 dark:text-gray-400">
           You can approve or reject <strong>PENDING</strong> claims and travel requests (
-          <code className="text-xs">expense:approve</code> or HR / tenant admin role).
+          <code className="text-xs">expense:approve</code> or HR / tenant admin role). Claims in a
+          multi-step workflow may stay <strong>PENDING</strong> after the first approval until the
+          final step.
         </p>
       )}
 
@@ -367,6 +397,29 @@ const ExpensesPage = () => {
             fullWidth
             required
           />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Link to travel request (optional)
+            </label>
+            <select
+              value={travelRequestId}
+              onChange={(e) => setTravelRequestId(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            >
+              <option value="">— None —</option>
+              {data?.travelRequests
+                ?.filter((t) => (t.status || '').toUpperCase() !== 'REJECTED')
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.destinationLocation ?? t.originLocation ?? 'Trip'} — {t.fromDate} (
+                    {t.id.slice(0, 8)}…)
+                  </option>
+                ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Must be your own trip; the server checks employee match.
+            </p>
+          </div>
           <div className="flex gap-3">
             <Button
               type="submit"

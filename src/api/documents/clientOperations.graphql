@@ -180,6 +180,7 @@ mutation SubmitExpense($input: SubmitExpenseInput!) {
     status
     amount
     title
+    workflowInstanceId
   }
 }
 
@@ -198,6 +199,7 @@ mutation ApproveExpense($expenseId: ID!) {
     status
     amount
     title
+    workflowInstanceId
   }
 }
 
@@ -206,6 +208,7 @@ mutation RejectExpense($expenseId: ID!, $reason: String) {
     id
     status
     title
+    workflowInstanceId
   }
 }
 
@@ -510,6 +513,28 @@ query AdminWorkflowsStepsData($wl: Int! = 30) {
   }
 }
 
+# kabipay-workflow (HR / `workflow:manage` or admin roles)
+mutation AdminCreateWorkflow($input: CreateWorkflowInput!) {
+  createWorkflow(input: $input) {
+    id
+    name
+    entityType
+    isActive
+  }
+}
+
+mutation AdminCreateWorkflowStep($input: CreateWorkflowStepInput!) {
+  createWorkflowStep(input: $input) {
+    id
+    workflowId
+    sequenceOrder
+    stepName
+    approverType
+    canSkip
+    slaHours
+  }
+}
+
 query ClientOpsSeparationsList($limit: Int! = 50) {
   separations(limit: $limit) {
     id
@@ -765,6 +790,8 @@ query ExpenseBoard($limit: Int! = 20) {
     id
     employeeId
     expenseCategoryId
+    travelRequestId
+    workflowInstanceId
     amount
     currency
     expenseDate

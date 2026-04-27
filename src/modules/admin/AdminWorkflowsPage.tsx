@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import {
   AdminWorkflowsDataDocument,
   AdminWorkflowsStepsDataDocument,
+  AdminCreateWorkflowDocument,
+  AdminCreateWorkflowStepDocument,
   type AdminWorkflowsDataQuery,
   type AdminWorkflowsStepsDataQuery,
 } from '../../api/graphql/graphql';
@@ -15,6 +19,19 @@ const AdminWorkflowsPage = () => {
   const [stepsData, setStepsData] = useState<AdminWorkflowsStepsDataQuery | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [wName, setWName] = useState('');
+  const [wEntity, setWEntity] = useState('LEAVE_REQUEST');
+  const [wActive, setWActive] = useState(true);
+  const [wBusy, setWBusy] = useState(false);
+  const [wMsg, setWMsg] = useState<string | null>(null);
+  const [sWorkflowId, setSWorkflowId] = useState('');
+  const [sOrder, setSOrder] = useState(1);
+  const [sName, setSName] = useState('Approve');
+  const [sApprover, setSApprover] = useState('MANAGER');
+  const [sSla, setSSla] = useState<number | null>(48);
+  const [sSkip, setSSkip] = useState(false);
+  const [sBusy, setSBusy] = useState(false);
+  const [sMsg, setSMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const base = await client.request<AdminWorkflowsDataQuery>(AdminWorkflowsDataDocument, {
@@ -31,6 +48,12 @@ const AdminWorkflowsPage = () => {
       return { base, withSteps: null as AdminWorkflowsStepsDataQuery | null };
     }
   }, [client]);
+
+  const refresh = useCallback(async () => {
+    const r = await load();
+    setData(r.base);
+    setStepsData(r.withSteps);
+  }, [load]);
 
   useEffect(() => {
     let c = false;
@@ -53,12 +76,173 @@ const AdminWorkflowsPage = () => {
     };
   }, [load]);
 
+  const onCreateWorkflow = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!wName.trim()) {
+      setWMsg('Name is required');
+      return;
+    }
+    setWMsg(null);
+    setWBusy(true);
+    try {
+      await client.request(AdminCreateWorkflowDocument, {
+        input: { name: wName.trim(), entityType: wEntity.trim() || 'LEAVE_REQUEST', isActive: wActive },
+      });
+      setWName('');
+      await refresh();
+      setWMsg('Workflow created.');
+    } catch (err) {
+      setWMsg(err instanceof Error ? err.message : 'Create failed');
+    } finally {
+      setWBusy(false);
+    }
+  };
+
+  const onCreateStep = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!sWorkflowId.trim() || !sName.trim()) {
+      setSMsg('Workflow id and step name are required');
+      return;
+    }
+    setSMsg(null);
+    setSBusy(true);
+    try {
+      await client.request(AdminCreateWorkflowStepDocument, {
+        input: {
+          workflowId: sWorkflowId.trim(),
+          sequenceOrder: sOrder,
+          stepName: sName.trim(),
+          approverType: sApprover.trim() || null,
+          approverRoleId: null,
+          canSkip: sSkip,
+          slaHours: sSla != null && sSla > 0 ? sSla : null,
+        },
+      });
+      await refresh();
+      setSMsg('Step created.');
+    } catch (err) {
+      setSMsg(err instanceof Error ? err.message : 'Create failed');
+    } finally {
+      setSBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Workflows"
-        description="Definitions (with step order) and in-flight instances. Approver type and SLAs are read from the graph; this page is a read-only board — editing definitions is a future step."
+        description="Definitions, steps, and in-flight instances. Create definitions and steps below (requires HR / tenant admin or workflow:manage). Leave workflows use entity type LEAVE_REQUEST; runtime still lives in kabipay-leave."
       />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title="Create workflow">
+          <form onSubmit={onCreateWorkflow} className="space-y-3">
+            {wMsg && (
+              <p
+                className={
+                  wMsg.startsWith('Workflow') ? 'text-sm text-emerald-600' : 'text-sm text-red-600'
+                }
+              >
+                {wMsg}
+              </p>
+            )}
+            <Input
+              label="Name"
+              value={wName}
+              onChange={(e) => setWName(e.target.value)}
+              fullWidth
+              required
+            />
+            <Input
+              label="Entity type"
+              value={wEntity}
+              onChange={(e) => setWEntity(e.target.value)}
+              fullWidth
+              placeholder="e.g. LEAVE_REQUEST"
+            />
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+              <input
+                type="checkbox"
+                checked={wActive}
+                onChange={(e) => setWActive(e.target.checked)}
+              />
+              Active
+            </label>
+            <Button type="submit" variant="primary" disabled={wBusy}>
+              {wBusy ? 'Creating…' : 'Create workflow'}
+            </Button>
+          </form>
+        </Card>
+        <Card title="Add step">
+          <form onSubmit={onCreateStep} className="space-y-3">
+            {sMsg && (
+              <p
+                className={
+                  sMsg.startsWith('Step') ? 'text-sm text-emerald-600' : 'text-sm text-red-600'
+                }
+              >
+                {sMsg}
+              </p>
+            )}
+            <Input
+              label="Workflow id (UUID)"
+              value={sWorkflowId}
+              onChange={(e) => setSWorkflowId(e.target.value)}
+              fullWidth
+              required
+              className="font-mono text-xs"
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Sequence"
+                type="number"
+                value={String(sOrder)}
+                onChange={(e) => setSOrder(parseInt(e.target.value, 10) || 1)}
+                fullWidth
+                min={1}
+              />
+              <Input
+                label="SLA (hours, optional)"
+                type="number"
+                value={sSla == null ? '' : String(sSla)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === '') setSSla(null);
+                  else {
+                    const n = parseInt(v, 10);
+                    setSSla(Number.isFinite(n) ? n : null);
+                  }
+                }}
+                fullWidth
+              />
+            </div>
+            <Input
+              label="Step name"
+              value={sName}
+              onChange={(e) => setSName(e.target.value)}
+              fullWidth
+              required
+            />
+            <Input
+              label="Approver type"
+              value={sApprover}
+              onChange={(e) => setSApprover(e.target.value)}
+              fullWidth
+              placeholder="e.g. MANAGER, HR"
+            />
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+              <input
+                type="checkbox"
+                checked={sSkip}
+                onChange={(e) => setSSkip(e.target.checked)}
+              />
+              Can skip
+            </label>
+            <Button type="submit" variant="primary" disabled={sBusy}>
+              {sBusy ? 'Saving…' : 'Add step'}
+            </Button>
+          </form>
+        </Card>
+      </div>
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

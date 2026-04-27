@@ -56,7 +56,8 @@ extend input SubmitExpenseInput {
   travelRequestId: ID
 }
 
-# Also expose for selection sets on submit response.
+# Also expose for selection sets on submit response (remove when federated Expense exposes it).
 extend type Expense {
   travelRequestId: ID
+  workflowInstanceId: ID
 }
