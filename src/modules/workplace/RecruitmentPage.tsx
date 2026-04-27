@@ -1,30 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
-
-const QUERY = gql`
-  query WorkplaceRecruitment($jlim: Int! = 30, $alim: Int! = 50) {
-    jobPostings(limit: $jlim) {
-      id
-      title
-      status
-      vacancies
-      employmentType
-      openDate
-      closeDate
-    }
-    applications(limit: $alim) {
-      id
-      jobId
-      candidateName
-      candidateEmail
-      status
-      appliedAt
-    }
-  }
-`;
+import { WorkplaceRecruitmentDocument } from '../../api/graphql/graphql';
 
 const RecruitmentPage = () => {
   const client = useGraphClient('client');
@@ -51,7 +29,7 @@ const RecruitmentPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    return client.request(QUERY, { jlim: 30, alim: 50 });
+    return client.request(WorkplaceRecruitmentDocument, { jlim: 30, alim: 50 });
   }, [client]);
 
   useEffect(() => {

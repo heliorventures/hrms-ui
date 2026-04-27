@@ -1,38 +1,12 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { useGraphClient } from '../../hooks/useGraphClient';
-
-const QUERY = gql`
-  query WorkplaceGrievance($clim: Int! = 30, $calim: Int! = 50) {
-    grievanceCategories(limit: $clim) {
-      id
-      name
-      code
-      isPosh
-    }
-    grievanceCases(limit: $calim) {
-      id
-      subject
-      description
-      status
-      filedAt
-      grievanceCategoryId
-    }
-  }
-`;
-
-const SUBMIT = gql`
-  mutation SubmitGrievance($input: SubmitGrievanceCaseInput!) {
-    submitGrievanceCase(input: $input) {
-      id
-      status
-      subject
-    }
-  }
-`;
+import {
+  WorkplaceGrievanceDocument,
+  SubmitGrievanceCaseDocument,
+} from '../../api/graphql/graphql';
 
 const GrievancePage = () => {
   const client = useGraphClient('client');
@@ -56,7 +30,7 @@ const GrievancePage = () => {
   const [formError, setFormError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    return client.request(QUERY, { clim: 30, calim: 50 });
+    return client.request(WorkplaceGrievanceDocument, { clim: 30, calim: 50 });
   }, [client]);
 
   useEffect(() => {
@@ -67,13 +41,9 @@ const GrievancePage = () => {
         setError(null);
         const r = await load();
         if (!c) {
-          const d = r as {
-            grievanceCategories: typeof categories;
-            grievanceCases: typeof cases;
-          };
-          setCategories(d.grievanceCategories);
-          setCases(d.grievanceCases);
-          setCategoryId((prev) => prev || d.grievanceCategories[0]?.id || '');
+          setCategories(r.grievanceCategories);
+          setCases(r.grievanceCases);
+          setCategoryId((prev) => prev || r.grievanceCategories[0]?.id || '');
         }
       } catch (e) {
         if (!c) setError(e instanceof Error ? e.message : 'Failed to load grievance data');
@@ -95,7 +65,7 @@ const GrievancePage = () => {
     setFormError(null);
     setSubmitting(true);
     try {
-      await client.request(SUBMIT, {
+      await client.request(SubmitGrievanceCaseDocument, {
         input: {
           grievanceCategoryId: categoryId,
           subject: subject.trim(),
@@ -103,8 +73,7 @@ const GrievancePage = () => {
         },
       });
       const r = await load();
-      const d = r as { grievanceCases: typeof cases };
-      setCases(d.grievanceCases);
+      setCases(r.grievanceCases);
       setSubject('');
       setDescription('');
     } catch (err) {

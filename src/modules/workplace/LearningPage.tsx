@@ -1,26 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
-
-const QUERY = gql`
-  query WorkplaceLearning($slim: Int! = 80, $clim: Int! = 80) {
-    skills(limit: $slim) {
-      id
-      name
-      category
-      level
-    }
-    courses(activeOnly: true, limit: $clim) {
-      id
-      title
-      category
-      deliveryMode
-      durationMinutes
-      isMandatory
-    }
-  }
-`;
+import { WorkplaceLearningDocument } from '../../api/graphql/graphql';
 
 const LearningPage = () => {
   const client = useGraphClient('client');
@@ -39,7 +20,7 @@ const LearningPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    return client.request(QUERY, { slim: 80, clim: 80 });
+    return client.request(WorkplaceLearningDocument, { slim: 80, clim: 80 });
   }, [client]);
 
   useEffect(() => {

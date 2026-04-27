@@ -576,3 +576,272 @@ query WorkplaceCompensationData(
     budgetPercentage
   }
 }
+
+# Workplace — grievance, assets, L&D, performance, recruitment, benefits (M13–M22 v1)
+query WorkplaceGrievance($clim: Int! = 30, $calim: Int! = 50) {
+  grievanceCategories(limit: $clim) {
+    id
+    name
+    code
+    isPosh
+  }
+  grievanceCases(limit: $calim) {
+    id
+    subject
+    description
+    status
+    filedAt
+    grievanceCategoryId
+  }
+}
+
+mutation SubmitGrievanceCase($input: SubmitGrievanceCaseInput!) {
+  submitGrievanceCase(input: $input) {
+    id
+    status
+    subject
+  }
+}
+
+query WorkplaceAssets($calim: Int! = 40, $alim: Int! = 100) {
+  assetCategories(limit: $calim) {
+    id
+    name
+    code
+  }
+  assets(limit: $alim) {
+    id
+    name
+    assetCategoryId
+    serialNumber
+    assetTag
+    status
+    purchaseDate
+    purchaseValue
+  }
+}
+
+query WorkplaceLearning($slim: Int! = 80, $clim: Int! = 80) {
+  skills(limit: $slim) {
+    id
+    name
+    category
+    level
+  }
+  courses(activeOnly: true, limit: $clim) {
+    id
+    title
+    category
+    deliveryMode
+    durationMinutes
+    isMandatory
+  }
+}
+
+query WorkplacePerformance($clim: Int! = 20, $glim: Int! = 80) {
+  reviewCycles(limit: $clim) {
+    id
+    name
+    startDate
+    endDate
+    status
+    reviewType
+  }
+  goals(limit: $glim) {
+    id
+    employeeId
+    reviewCycleId
+    title
+    status
+    weightage
+  }
+}
+
+query WorkplaceRecruitment($jlim: Int! = 30, $alim: Int! = 50) {
+  jobPostings(limit: $jlim) {
+    id
+    title
+    status
+    vacancies
+    employmentType
+    openDate
+    closeDate
+  }
+  applications(limit: $alim) {
+    id
+    jobId
+    candidateName
+    candidateEmail
+    status
+    appliedAt
+  }
+}
+
+query WorkplaceBenefits($tlim: Int! = 50, $plim: Int! = 50) {
+  benefitTypes(limit: $tlim) {
+    id
+    name
+    code
+    category
+  }
+  benefitPlans(activeOnly: true, limit: $plim) {
+    id
+    name
+    benefitTypeId
+    employerContribution
+    employeeContribution
+    contributionType
+    isMandatory
+    isActive
+  }
+}
+
+# Expenses, leave, attendance, notifications, dashboard widgets (codegen; §0.2)
+query ExpenseBoard($limit: Int! = 20) {
+  expenseCategories(limit: $limit) {
+    id
+    name
+    code
+    maxAmountPerClaim
+  }
+  expenses(limit: $limit) {
+    id
+    employeeId
+    expenseCategoryId
+    amount
+    currency
+    expenseDate
+    title
+    status
+    submittedAt
+  }
+  travelRequests(limit: $limit) {
+    id
+    employeeId
+    originLocation
+    destinationLocation
+    fromDate
+    toDate
+    purpose
+    estimatedAmount
+    currency
+    status
+    submittedAt
+  }
+}
+
+query LeaveBoard($limit: Int! = 20) {
+  leaveTypes(limit: $limit) {
+    id
+    name
+    code
+    isPaid
+    carryForward
+    requiresDocument
+  }
+  leaveRequests(limit: $limit) {
+    id
+    employeeId
+    fromDate
+    toDate
+    daysRequested
+    status
+    reason
+  }
+}
+
+query AttendanceBoard($limit: Int! = 20) {
+  shifts(limit: $limit) {
+    id
+    name
+    startTime
+    endTime
+    workHours
+    isNightShift
+  }
+  attendance(limit: $limit) {
+    id
+    employeeId
+    workDate
+    checkInTime
+    checkOutTime
+    status
+    source
+    lateMinutes
+  }
+}
+
+query PunchDaySummary {
+  punchDaySummary {
+    workDate
+    totalWorkedMinutes
+    openSegment {
+      id
+      checkInTime
+      checkOutTime
+      checkInLat
+      checkInLng
+      checkOutLat
+      checkOutLng
+      source
+      status
+    }
+    segments {
+      id
+      checkInTime
+      checkOutTime
+      checkInLat
+      checkInLng
+      checkOutLat
+      checkOutLng
+      source
+      status
+    }
+  }
+}
+
+query OnLeaveToday($limit: Int! = 50) {
+  leaveRequests(limit: $limit) {
+    id
+    employeeId
+    fromDate
+    toDate
+    status
+  }
+}
+
+query NotificationBoard($limit: Int! = 20) {
+  announcements(limit: $limit) {
+    id
+    title
+    body
+    targetAudience
+    publishAt
+  }
+  notifications(limit: $limit) {
+    id
+    kind
+    title
+    message
+    actionUrl
+    isRead
+    createdAt
+  }
+}
+
+query ClientOpsNotificationPreview($limit: Int! = 20) {
+  notifications(limit: $limit) {
+    id
+    title
+    message
+    isRead
+  }
+}
+
+query ClientOpsLeaveTypeNames($limit: Int! = 50) {
+  leaveTypes(limit: $limit) {
+    id
+    name
+    code
+  }
+}

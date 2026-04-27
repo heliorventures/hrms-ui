@@ -1,5 +1,4 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
@@ -11,6 +10,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { canApproveExpenseFromAccessToken } from '../../auth/clientJwt';
 import { getClientAccessToken } from '../../auth/tokenStore';
 import SubmitTravelModal from './components/SubmitTravelModal';
+import {
+  ExpenseBoardDocument,
+  SubmitExpenseDocument,
+  ApproveExpenseDocument,
+  RejectExpenseDocument,
+  ApproveTravelRequestDocument,
+  RejectTravelRequestDocument,
+} from '../../api/graphql/graphql';
 
 interface ExpenseCategoryRow {
   id: string;
@@ -51,88 +58,6 @@ interface ExpenseBoardData {
   travelRequests: TravelRequestRow[];
 }
 
-const EXPENSE_BOARD = gql`
-  query ExpenseBoard($limit: Int! = 20) {
-    expenseCategories(limit: $limit) {
-      id
-      name
-      code
-      maxAmountPerClaim
-    }
-    expenses(limit: $limit) {
-      id
-      employeeId
-      expenseCategoryId
-      amount
-      currency
-      expenseDate
-      title
-      status
-      submittedAt
-    }
-    travelRequests(limit: $limit) {
-      id
-      employeeId
-      originLocation
-      destinationLocation
-      fromDate
-      toDate
-      purpose
-      estimatedAmount
-      currency
-      status
-      submittedAt
-    }
-  }
-`;
-
-const SUBMIT_EXPENSE = gql`
-  mutation SubmitExpense($input: SubmitExpenseInput!) {
-    submitExpense(input: $input) {
-      id
-      status
-      amount
-      title
-    }
-  }
-`;
-
-const APPROVE_EXPENSE = gql`
-  mutation ApproveExpenseRow($expenseId: ID!) {
-    approveExpense(expenseId: $expenseId) {
-      id
-      status
-    }
-  }
-`;
-
-const REJECT_EXPENSE = gql`
-  mutation RejectExpenseRow($expenseId: ID!, $reason: String) {
-    rejectExpense(expenseId: $expenseId, reason: $reason) {
-      id
-      status
-    }
-  }
-`;
-
-const APPROVE_TRAVEL = gql`
-  mutation ApproveTravelRow($travelRequestId: ID!) {
-    approveTravelRequest(travelRequestId: $travelRequestId) {
-      id
-      status
-    }
-  }
-`;
-
-const REJECT_TRAVEL = gql`
-  mutation RejectTravelRow($travelRequestId: ID!, $reason: String) {
-    rejectTravelRequest(travelRequestId: $travelRequestId, reason: $reason) {
-      id
-      status
-    }
-  }
-`;
-
 // Composite page: expense + travel boards, submit modals, and approver actions.
 // eslint-disable-next-line max-lines-per-function -- single route module
 const ExpensesPage = () => {
@@ -156,7 +81,7 @@ const ExpensesPage = () => {
     isAuthenticated && canApproveExpenseFromAccessToken(getClientAccessToken() ?? null);
 
   const loadBoard = useCallback(async () => {
-    return client.request<ExpenseBoardData>(EXPENSE_BOARD, { limit: 20 });
+    return client.request<ExpenseBoardData>(ExpenseBoardDocument, { limit: 20 });
   }, [client]);
 
   useEffect(() => {
@@ -183,7 +108,7 @@ const ExpensesPage = () => {
   const runApproveExpense = async (expenseId: string) => {
     setApproverBusy(`e:${expenseId}`);
     try {
-      await client.request(APPROVE_EXPENSE, { expenseId });
+      await client.request(ApproveExpenseDocument, { expenseId });
       setData(await loadBoard());
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Approve expense failed');
@@ -196,7 +121,7 @@ const ExpensesPage = () => {
     const reason = window.prompt('Rejection reason (optional)') ?? undefined;
     setApproverBusy(`e:${expenseId}`);
     try {
-      await client.request(REJECT_EXPENSE, { expenseId, reason: reason?.trim() || null });
+      await client.request(RejectExpenseDocument, { expenseId, reason: reason?.trim() || null });
       setData(await loadBoard());
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Reject expense failed');
@@ -208,7 +133,7 @@ const ExpensesPage = () => {
   const runApproveTravel = async (travelRequestId: string) => {
     setApproverBusy(`t:${travelRequestId}`);
     try {
-      await client.request(APPROVE_TRAVEL, { travelRequestId });
+      await client.request(ApproveTravelRequestDocument, { travelRequestId });
       setData(await loadBoard());
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Approve travel failed');
@@ -221,7 +146,10 @@ const ExpensesPage = () => {
     const reason = window.prompt('Rejection reason (optional)') ?? undefined;
     setApproverBusy(`t:${travelRequestId}`);
     try {
-      await client.request(REJECT_TRAVEL, { travelRequestId, reason: reason?.trim() || null });
+      await client.request(RejectTravelRequestDocument, {
+        travelRequestId,
+        reason: reason?.trim() || null,
+      });
       setData(await loadBoard());
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Reject travel failed');
@@ -239,7 +167,7 @@ const ExpensesPage = () => {
     setFormError(null);
     setSubmitting(true);
     try {
-      await client.request(SUBMIT_EXPENSE, {
+      await client.request(SubmitExpenseDocument, {
         input: {
           expenseCategoryId: categoryId,
           amount: amount.trim(),

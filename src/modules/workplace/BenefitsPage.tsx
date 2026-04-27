@@ -1,28 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
-
-const QUERY = gql`
-  query WorkplaceBenefits($tlim: Int! = 50, $plim: Int! = 50) {
-    benefitTypes(limit: $tlim) {
-      id
-      name
-      code
-      category
-    }
-    benefitPlans(activeOnly: true, limit: $plim) {
-      id
-      name
-      benefitTypeId
-      employerContribution
-      employeeContribution
-      contributionType
-      isMandatory
-      isActive
-    }
-  }
-`;
+import { WorkplaceBenefitsDocument } from '../../api/graphql/graphql';
 
 const BenefitsPage = () => {
   const client = useGraphClient('client');
@@ -43,7 +22,7 @@ const BenefitsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    return client.request(QUERY, { tlim: 50, plim: 50 });
+    return client.request(WorkplaceBenefitsDocument, { tlim: 50, plim: 50 });
   }, [client]);
 
   useEffect(() => {

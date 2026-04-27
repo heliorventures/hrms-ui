@@ -1,20 +1,8 @@
 import { useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../../components/common/Card';
 import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-
-const UPCOMING = gql`
-  query UpcomingHolidaysWidget($fromDate: NaiveDate, $limit: Int! = 12) {
-    upcomingHolidays(fromDate: $fromDate, limit: $limit) {
-      id
-      holidayDate
-      name
-      calendarName
-      holidayType
-    }
-  }
-`;
+import { ClientOpsUpcomingHolidaysDocument } from '../../../api/graphql/graphql';
 
 interface HRow {
   id: string;
@@ -36,9 +24,12 @@ const UpcomingHolidays = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await client.request<{ upcomingHolidays: HRow[] }>(UPCOMING, {
-          limit: 12,
-        });
+        const res = await client.request<{ upcomingHolidays: HRow[] }>(
+          ClientOpsUpcomingHolidaysDocument,
+          {
+            limit: 12,
+          }
+        );
         if (!c) setRows(res.upcomingHolidays);
       } catch (e) {
         if (!c) {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../../components/common/Card';
 import { useGraphClient } from '../../../hooks/useGraphClient';
+import { OnLeaveTodayDocument } from '../../../api/graphql/graphql';
 
 interface LeaveRequestRow {
   id: string;
@@ -15,18 +15,6 @@ interface OnLeaveTodayData {
   leaveRequests: LeaveRequestRow[];
 }
 
-const ON_LEAVE_TODAY = gql`
-  query OnLeaveToday($limit: Int! = 50) {
-    leaveRequests(limit: $limit) {
-      id
-      employeeId
-      fromDate
-      toDate
-      status
-    }
-  }
-`;
-
 const OnLeaveToday = () => {
   const client = useGraphClient('client');
   const [today] = new Date().toISOString().split('T');
@@ -38,7 +26,7 @@ const OnLeaveToday = () => {
     (async () => {
       try {
         setLoading(true);
-        const result = await client.request<OnLeaveTodayData>(ON_LEAVE_TODAY, {
+        const result = await client.request<OnLeaveTodayData>(OnLeaveTodayDocument, {
           limit: 50,
         });
         if (!cancelled) {

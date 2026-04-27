@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../../components/common/Card';
 import { useGraphClient } from '../../../hooks/useGraphClient';
+import { ClientOpsNotificationPreviewDocument } from '../../../api/graphql/graphql';
 
 interface NotificationRow {
   id: string;
@@ -14,17 +14,6 @@ interface NotificationRow {
 interface NotificationPreviewData {
   notifications: NotificationRow[];
 }
-
-const NOTIFICATION_PREVIEW = gql`
-  query NotificationPreview($limit: Int! = 20) {
-    notifications(limit: $limit) {
-      id
-      title
-      message
-      isRead
-    }
-  }
-`;
 
 interface NotificationsPreviewProps {
   fullHeight?: boolean;
@@ -41,7 +30,7 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
     (async () => {
       try {
         setLoading(true);
-        const result = await client.request<NotificationPreviewData>(NOTIFICATION_PREVIEW, {
+        const result = await client.request<NotificationPreviewData>(ClientOpsNotificationPreviewDocument, {
           limit,
         });
         if (!cancelled) {

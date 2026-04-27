@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -7,6 +6,7 @@ import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import TimesheetEntryForm from './components/TimesheetEntryForm';
+import { AttendanceBoardDocument, TimesheetRowsDocument } from '../../api/graphql/graphql';
 
 interface ShiftRow {
   id: string;
@@ -46,42 +46,6 @@ interface TimesheetData {
   timesheetEntries: TimesheetEntryRow[];
 }
 
-const ATTENDANCE_BOARD = gql`
-  query AttendanceBoard($limit: Int! = 20) {
-    shifts(limit: $limit) {
-      id
-      name
-      startTime
-      endTime
-      workHours
-      isNightShift
-    }
-    attendance(limit: $limit) {
-      id
-      employeeId
-      workDate
-      checkInTime
-      checkOutTime
-      status
-      source
-      lateMinutes
-    }
-  }
-`;
-
-const TIMESHEET_Q = gql`
-  query TimesheetOnly($limit: Int! = 50) {
-    timesheetEntries(limit: $limit) {
-      id
-      workDate
-      hoursWorked
-      projectCode
-      description
-      status
-    }
-  }
-`;
-
 const AttendancePage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<AttendanceBoardData | null>(null);
@@ -92,11 +56,11 @@ const AttendancePage = () => {
   const [timesheetOpen, setTimesheetOpen] = useState(false);
 
   const loadBoard = useCallback(async () => {
-    return client.request<AttendanceBoardData>(ATTENDANCE_BOARD, { limit: 20 });
+    return client.request<AttendanceBoardData>(AttendanceBoardDocument, { limit: 20 });
   }, [client]);
 
   const loadTimesheet = useCallback(async () => {
-    const result = await client.request<TimesheetData>(TIMESHEET_Q, { limit: 50 });
+    const result = await client.request<TimesheetData>(TimesheetRowsDocument, { limit: 50 });
     return result.timesheetEntries;
   }, [client]);
 

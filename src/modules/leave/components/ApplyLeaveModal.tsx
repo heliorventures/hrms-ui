@@ -1,21 +1,9 @@
 import { FormEvent, useState } from 'react';
-import { gql } from 'graphql-request';
 import Modal from '../../../components/common/Modal';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-
-const SUBMIT_LEAVE = gql`
-  mutation SubmitLeaveRequestUi($input: SubmitLeaveRequestInput!) {
-    submitLeaveRequest(input: $input) {
-      id
-      status
-      fromDate
-      toDate
-      daysRequested
-    }
-  }
-`;
+import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
 
 export interface ApplyLeaveTypeOption {
   id: string;
@@ -50,7 +38,7 @@ const ApplyLeaveModal = ({ isOpen, onClose, leaveTypes, onSubmitted }: ApplyLeav
     setFormError(null);
     setSubmitting(true);
     try {
-      await client.request(SUBMIT_LEAVE, {
+      await client.request(SubmitLeaveRequestDocument, {
         input: {
           leaveTypeId,
           fromDate,

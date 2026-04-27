@@ -1,21 +1,9 @@
 import { useState } from 'react';
-import { gql } from 'graphql-request';
 import Modal from '../../../components/common/Modal';
 import Input from '../../../components/common/Input';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-
-const SUBMIT = gql`
-  mutation SubmitTravelRequest($input: SubmitTravelRequestInput!) {
-    submitTravelRequest(input: $input) {
-      id
-      status
-      purpose
-      fromDate
-      toDate
-    }
-  }
-`;
+import { SubmitTravelRequestDocument } from '../../../api/graphql/graphql';
 
 interface SubmitTravelModalProps {
   isOpen: boolean;
@@ -43,7 +31,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
     try {
       const purpose = `${formData.fromLocation} → ${formData.toLocation} — ${formData.purpose.trim()}`;
       const est = formData.estimatedCost.trim();
-      await client.request(SUBMIT, {
+      await client.request(SubmitTravelRequestDocument, {
         input: {
           originLocation: formData.fromLocation,
           destinationLocation: formData.toLocation,

@@ -1,28 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
-
-const QUERY = gql`
-  query WorkplacePerformance($clim: Int! = 20, $glim: Int! = 80) {
-    reviewCycles(limit: $clim) {
-      id
-      name
-      startDate
-      endDate
-      status
-      reviewType
-    }
-    goals(limit: $glim) {
-      id
-      employeeId
-      reviewCycleId
-      title
-      status
-      weightage
-    }
-  }
-`;
+import { WorkplacePerformanceDocument } from '../../api/graphql/graphql';
 
 const PerformancePage = () => {
   const client = useGraphClient('client');
@@ -48,7 +27,7 @@ const PerformancePage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    return client.request(QUERY, { clim: 20, glim: 80 });
+    return client.request(WorkplacePerformanceDocument, { clim: 20, glim: 80 });
   }, [client]);
 
   useEffect(() => {

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import ApplyLeaveModal from './components/ApplyLeaveModal';
+import { LeaveBoardDocument } from '../../api/graphql/graphql';
 
 interface LeaveTypeRow {
   id: string;
@@ -31,28 +31,6 @@ interface LeaveBoardData {
   leaveRequests: LeaveRequestRow[];
 }
 
-const LEAVE_BOARD = gql`
-  query LeaveBoard($limit: Int! = 20) {
-    leaveTypes(limit: $limit) {
-      id
-      name
-      code
-      isPaid
-      carryForward
-      requiresDocument
-    }
-    leaveRequests(limit: $limit) {
-      id
-      employeeId
-      fromDate
-      toDate
-      daysRequested
-      status
-      reason
-    }
-  }
-`;
-
 const LeavePage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<LeaveBoardData | null>(null);
@@ -61,7 +39,7 @@ const LeavePage = () => {
   const [applyOpen, setApplyOpen] = useState(false);
 
   const loadBoard = useCallback(async () => {
-    return client.request<LeaveBoardData>(LEAVE_BOARD, { limit: 20 });
+    return client.request<LeaveBoardData>(LeaveBoardDocument, { limit: 20 });
   }, [client]);
 
   useEffect(() => {

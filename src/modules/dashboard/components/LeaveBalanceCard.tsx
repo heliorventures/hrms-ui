@@ -1,32 +1,8 @@
 import { useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../../components/common/Card';
 import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-
-const TYPES = gql`
-  query LeaveTypeNames($limit: Int! = 50) {
-    leaveTypes(limit: $limit) {
-      id
-      name
-      code
-    }
-  }
-`;
-
-const BAL = gql`
-  query LeaveBalancesCard($limit: Int! = 20, $year: Int) {
-    leaveBalances(limit: $limit, year: $year) {
-      id
-      leaveTypeId
-      year
-      balanceDays
-      entitledDays
-      pendingDays
-      usedDays
-    }
-  }
-`;
+import { ClientOpsLeaveTypeNamesDocument, LeaveBalancesDocument } from '../../../api/graphql/graphql';
 
 interface TypeRow {
   id: string;
@@ -57,11 +33,13 @@ const LeaveBalanceCard = () => {
       try {
         setLoading(true);
         setError(null);
-        const ty = await client.request<{ leaveTypes: TypeRow[] }>(TYPES, { limit: 50 });
+        const ty = await client.request<{ leaveTypes: TypeRow[] }>(ClientOpsLeaveTypeNamesDocument, {
+          limit: 50,
+        });
         if (!c) {
           setTypeMap(Object.fromEntries(ty.leaveTypes.map((t) => [t.id, t.name])));
         }
-        const res = await client.request<{ leaveBalances: Row[] }>(BAL, {
+        const res = await client.request<{ leaveBalances: Row[] }>(LeaveBalancesDocument, {
           limit: 20,
           year: new Date().getFullYear(),
         });

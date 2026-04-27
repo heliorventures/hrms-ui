@@ -1,57 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../../components/common/Card';
 import Button from '../../../components/common/Button';
 import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-
-const PUNCH = gql`
-  mutation PunchToday($input: PunchTodayInput) {
-    punchToday(input: $input) {
-      id
-      workDate
-      checkInTime
-      checkOutTime
-      checkInLat
-      checkInLng
-      checkOutLat
-      checkOutLng
-      source
-      status
-    }
-  }
-`;
-
-const PUNCH_SUMMARY = gql`
-  query PunchDaySummary {
-    punchDaySummary {
-      workDate
-      totalWorkedMinutes
-      openSegment {
-        id
-        checkInTime
-        checkOutTime
-        checkInLat
-        checkInLng
-        checkOutLat
-        checkOutLng
-        source
-        status
-      }
-      segments {
-        id
-        checkInTime
-        checkOutTime
-        checkInLat
-        checkInLng
-        checkOutLat
-        checkOutLng
-        source
-        status
-      }
-    }
-  }
-`;
+import { PunchTodayDocument, PunchDaySummaryDocument } from '../../../api/graphql/graphql';
 
 type AttendanceRow = {
   id: string;
@@ -107,7 +59,7 @@ const PunchInOut = () => {
     try {
       const res = await client.request<{
         punchDaySummary: NonNullable<Summary>;
-      }>(PUNCH_SUMMARY);
+      }>(PunchDaySummaryDocument);
       setSummary(res.punchDaySummary);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load punch summary');
@@ -160,7 +112,9 @@ const PunchInOut = () => {
         const pos = await getCurrentPosition();
         input = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
       }
-      const res = await client.request<{ punchToday: AttendanceRow }>(PUNCH, { input });
+      const res = await client.request<{ punchToday: AttendanceRow }>(PunchTodayDocument, {
+        input,
+      });
       setLastPunch(res.punchToday);
       await loadSummary();
     } catch (e) {

@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import {
+  NotificationBoardDocument,
+  MarkNotificationReadDocument,
+  MarkAllNotificationsReadDocument,
+} from '../../api/graphql/graphql';
 
 type NotificationKind = 'company' | 'personal' | 'system';
 
@@ -31,42 +35,6 @@ interface NotificationBoardData {
   notifications: NotificationRow[];
 }
 
-const NOTIFICATION_BOARD = gql`
-  query NotificationBoard($limit: Int! = 20) {
-    announcements(limit: $limit) {
-      id
-      title
-      body
-      targetAudience
-      publishAt
-    }
-    notifications(limit: $limit) {
-      id
-      kind
-      title
-      message
-      actionUrl
-      isRead
-      createdAt
-    }
-  }
-`;
-
-const MARK_READ = gql`
-  mutation MarkNotificationRead($id: ID!) {
-    markNotificationRead(id: $id) {
-      id
-      isRead
-    }
-  }
-`;
-
-const MARK_ALL = gql`
-  mutation MarkAllNotificationsRead {
-    markAllNotificationsRead
-  }
-`;
-
 const NotificationsPage = () => {
   const client = useGraphClient('client');
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -76,7 +44,7 @@ const NotificationsPage = () => {
   const [actionBusy, setActionBusy] = useState(false);
 
   const loadBoard = useCallback(async () => {
-    const result = await client.request<NotificationBoardData>(NOTIFICATION_BOARD, {
+    const result = await client.request<NotificationBoardData>(NotificationBoardDocument, {
       limit: 20,
     });
     return result;
@@ -205,7 +173,7 @@ const NotificationsPage = () => {
             onClick={async () => {
               setActionBusy(true);
               try {
-                await client.request(MARK_ALL);
+                await client.request(MarkAllNotificationsReadDocument);
                 setData(await loadBoard());
               } catch (e) {
                 setError(e instanceof Error ? e.message : 'Failed to mark all read');
@@ -314,7 +282,9 @@ const NotificationsPage = () => {
                             onClick={async () => {
                               setActionBusy(true);
                               try {
-                                await client.request(MARK_READ, { id: notification.id });
+                                await client.request(MarkNotificationReadDocument, {
+                                  id: notification.id,
+                                });
                                 setData(await loadBoard());
                               } catch (e) {
                                 setError(e instanceof Error ? e.message : 'Failed to mark read');

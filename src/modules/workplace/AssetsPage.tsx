@@ -1,27 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
-
-const QUERY = gql`
-  query WorkplaceAssets($calim: Int! = 40, $alim: Int! = 100) {
-    assetCategories(limit: $calim) {
-      id
-      name
-      code
-    }
-    assets(limit: $alim) {
-      id
-      name
-      assetCategoryId
-      serialNumber
-      assetTag
-      status
-      purchaseDate
-      purchaseValue
-    }
-  }
-`;
+import { WorkplaceAssetsDocument } from '../../api/graphql/graphql';
 
 const AssetsPage = () => {
   const client = useGraphClient('client');
@@ -42,7 +22,7 @@ const AssetsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    return client.request(QUERY, { calim: 40, alim: 100 });
+    return client.request(WorkplaceAssetsDocument, { calim: 40, alim: 100 });
   }, [client]);
 
   useEffect(() => {

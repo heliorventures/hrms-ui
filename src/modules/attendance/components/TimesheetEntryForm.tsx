@@ -1,21 +1,9 @@
 import { FormEvent, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../../components/common/Card';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-
-const CREATE_TIMESHEET = gql`
-  mutation CreateTimesheetEntry($input: CreateTimesheetEntryInput!) {
-    createTimesheetEntry(input: $input) {
-      id
-      workDate
-      hoursWorked
-      projectCode
-      status
-    }
-  }
-`;
+import { CreateTimesheetEntryDocument } from '../../../api/graphql/graphql';
 
 interface TimesheetEntryFormProps {
   onClose: () => void;
@@ -40,7 +28,7 @@ const TimesheetEntryForm = ({ onClose, initialDate, onCreated }: TimesheetEntryF
     setFormError(null);
     setSubmitting(true);
     try {
-      await client.request(CREATE_TIMESHEET, {
+      await client.request(CreateTimesheetEntryDocument, {
         input: {
           workDate,
           hoursWorked,
