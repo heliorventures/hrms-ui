@@ -226,6 +226,9 @@ mutation ApproveTravelRequest($travelRequestId: ID!) {
   approveTravelRequest(travelRequestId: $travelRequestId) {
     id
     status
+    approvedBy
+    rejectedBy
+    rejectionReason
   }
 }
 
@@ -233,6 +236,9 @@ mutation RejectTravelRequest($travelRequestId: ID!, $reason: String) {
   rejectTravelRequest(travelRequestId: $travelRequestId, reason: $reason) {
     id
     status
+    approvedBy
+    rejectedBy
+    rejectionReason
   }
 }
 
@@ -450,12 +456,86 @@ query InsightsOutbox($lim: Int! = 50) {
   }
 }
 
+# HR-only (directory): integrations catalogue (ops DB), tenant integrations, webhooks, audit trail (analytics 4029)
+query InsightsIntegrationCatalog($lim: Int! = 100) {
+  integrationConnectors(limit: $lim) {
+    id
+    name
+    code
+    category
+    authType
+    isActive
+  }
+}
+
+query InsightsTenantIntegrations($lim: Int! = 100) {
+  tenantIntegrations(limit: $lim) {
+    id
+    integrationConnectorId
+    isActive
+    connectedAt
+    createdAt
+  }
+}
+
+query InsightsWebhookSubscriptions($lim: Int! = 100) {
+  webhookSubscriptions(limit: $lim) {
+    id
+    eventName
+    endpointUrl
+    secretHash
+    isActive
+    createdAt
+  }
+}
+
+query InsightsAuditLogs($lim: Int! = 200) {
+  auditLogs(limit: $lim) {
+    id
+    userId
+    entityType
+    entityId
+    action
+    beforeJson
+    afterJson
+    ipAddress
+    createdAt
+  }
+}
+
 # Analytics (kabipay-analytics) — requires gateway to include subgraph
 mutation RequeueOutbox($id: ID!) {
   requeueOutboxEvent(id: $id) {
     id
     status
     lastError
+  }
+}
+
+mutation ConnectTenantIntegration($connectorId: ID!) {
+  connectTenantIntegration(connectorId: $connectorId) {
+    id
+    integrationConnectorId
+    isActive
+    connectedAt
+  }
+}
+
+mutation RegisterWebhookSubscription($input: RegisterWebhookInput!) {
+  registerWebhookSubscription(input: $input) {
+    id
+    eventName
+    endpointUrl
+    secretHash
+    isActive
+    createdAt
+  }
+}
+
+mutation SetWebhookSubscriptionActive($id: ID!, $active: Boolean!) {
+  setWebhookSubscriptionActive(id: $id, active: $active) {
+    id
+    isActive
   }
 }
 
@@ -778,6 +858,31 @@ query WorkplaceBenefits($tlim: Int! = 50, $plim: Int! = 50) {
   }
 }
 
+query MyBenefitEnrollments($limit: Int! = 50) {
+  myBenefitEnrollments(limit: $limit) {
+    id
+    benefitPlanId
+    status
+    enrolledOn
+    effectiveFrom
+    effectiveTo
+    employeeContributionAmount
+    employerContributionAmount
+    createdAt
+    updatedAt
+  }
+}
+
+mutation EnrollInBenefitPlan($benefitPlanId: ID!) {
+  enrollInBenefitPlan(benefitPlanId: $benefitPlanId) {
+    id
+    benefitPlanId
+    status
+    effectiveFrom
+    enrolledOn
+  }
+}
+
 # Expenses, leave, attendance, notifications, dashboard widgets (codegen; §0.2)
 query ExpenseBoard($limit: Int! = 20) {
   expenseCategories(limit: $limit) {
@@ -810,6 +915,9 @@ query ExpenseBoard($limit: Int! = 20) {
     estimatedAmount
     currency
     status
+    rejectionReason
+    approvedBy
+    rejectedBy
     submittedAt
   }
 }
