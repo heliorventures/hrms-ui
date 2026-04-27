@@ -1,308 +1,94 @@
-# KabiPay-UI - Setup Guide
+# kabipay-ui — Setup
+
+Quick install and project orientation. For **database + Rust + gateway + config.json**, use **[LOCAL_SETUP.md](LOCAL_SETUP.md)** in the monorepo.
 
 ## Prerequisites
 
-- Node.js (v18 or higher)
-- npm or yarn package manager
+| Tool | Version / notes |
+|------|-----------------|
+| **Node.js** | LTS (v20+ recommended) |
+| **npm** | Included with Node |
+| **Backend (full stack)** | PostgreSQL 16, **kabipay-database**, **kabipay-svc**, **kabipay-gateway** — see sibling repos |
 
-## Installation Steps
-
-### 1. Install Dependencies
+## Install and run
 
 ```bash
-cd KabiPay-UI
+cd kabipay-ui
 npm install
-```
-
-### 2. Start Development Server
-
-```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
-
-### 3. Build for Production
+App: **http://localhost:5173** (Vite default).
 
 ```bash
-npm run build
-```
-
-### 4. Run ESLint
-
-```bash
+npm run build    # production bundle
 npm run lint
-```
-
-## Project Structure
-
-```
-KabiPay-UI/
-├── public/               # Static assets
-├── src/
-│   ├── api/              # GraphQL-style API interfaces (future)
-│   ├── components/
-│   │   ├── common/       # Reusable UI components
-│   │   └── layout/       # Layout components
-│   ├── contexts/         # React contexts (Theme, Auth, Tenant)
-│   ├── hooks/            # Custom hooks (useMockApi)
-│   ├── mocks/            # Mock data for all modules
-│   ├── modules/          # Feature modules
-│   │   ├── admin/        # Admin features
-│   │   ├── attendance/   # Attendance & timesheet
-│   │   ├── dashboard/    # Dashboard
-│   │   ├── expenses/     # Expenses & travel
-│   │   ├── leave/        # Leave management
-│   │   ├── notifications/# Notifications
-│   │   └── payroll/      # Payroll & payslips
-│   ├── routes/           # Route configuration
-│   ├── types/            # TypeScript type definitions
-│   ├── App.tsx           # Root component
-│   ├── main.tsx          # Entry point
-│   └── index.css         # Global styles
-├── index.html
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-├── tailwind.config.js
-├── .eslintrc.cjs
-└── .prettierrc
-```
-
-## Features
-
-### Employee Features
-
-1. **Dashboard**
-   - Real-time clock with punch in/out
-   - Leave balance overview
-   - Recent notifications
-   - Who's on leave today
-   - Upcoming holidays
-
-2. **Attendance & Timesheet**
-   - View attendance history
-   - Submit timesheet entries
-   - Raise correction requests
-   - Track work hours
-
-3. **Leave Management**
-   - View leave balance
-   - Apply for leave
-   - Track leave status
-   - Leave history
-
-4. **Payroll**
-   - View monthly payslips
-   - Detailed salary breakdown
-   - Tax regime information (Old/New)
-   - Historical payslips
-
-5. **Expenses & Travel**
-   - Submit expense claims
-   - Upload bills (UI only)
-   - Create travel requests
-   - Track claim status
-
-6. **Notifications**
-   - Company-wide announcements
-   - Personal notifications
-   - System notifications
-   - Filter unread/all
-
-### Admin Features
-
-1. **Employee Management**
-   - View all employees
-   - Add new employees
-   - Edit employee details
-   - Employee status management
-
-2. **Reports & Analytics**
-   - Attendance reports
-   - Leave reports
-   - Payroll reports
-   - Date range filtering
-   - Employee-specific reports
-
-## Mock Users
-
-The application comes with pre-configured mock users:
-
-### Employee Account
-
-- **Name:** John Doe
-- **Email:** john.doe@techcorp.com
-- **Employee ID:** EMP001
-- **Department:** Engineering
-
-### Admin Account
-
-- **Name:** Jane Smith
-- **Email:** jane.smith@techcorp.com
-- **Employee ID:** EMP002
-- **Department:** Human Resources
-
-Use the "Switch to Admin/Employee" button in the header to toggle between roles.
-
-## Theme Support
-
-The application supports both light and dark themes:
-
-- Toggle using the theme button in the header
-- Theme preference is persisted in localStorage
-- Smooth transitions between themes
-
-## Multi-Tenant Architecture (Frontend)
-
-The application simulates multi-tenancy:
-
-- Tenant context maintains active tenant
-- All data is filtered by tenantId
-- Ready for backend integration
-
-## Technology Stack
-
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **React Router** - Navigation
-- **Context API** - State management
-- **Vite** - Build tool
-
-## Responsive Design
-
-The application is fully responsive:
-
-- **Desktop** - Full sidebar with expanded layout
-- **Tablet** - Collapsible sidebar
-- **Mobile** - Hidden sidebar with hamburger menu
-
-Breakpoints:
-
-- `sm`: 640px
-- `md`: 768px
-- `lg`: 1024px
-- `xl`: 1280px
-
-## Code Quality
-
-### ESLint Rules
-
-The project enforces strict ESLint rules:
-
-- Functional components only
-- No inline arrow functions in JSX
-- Destructuring required
-- Prettier formatting
-- Maximum function length limits
-- Proper prop handling
-
-### Running Linter
-
-```bash
-npm run lint
-```
-
-Fix auto-fixable issues:
-
-```bash
 npm run lint -- --fix
 ```
 
-## Backend Integration (Future)
+## Configuration
 
-The application is designed to integrate with:
+Runtime URLs live in **`public/config.json`** (not `.env` for API):
 
-- **Backend:** Rust
-- **API:** async-graphql
-- **Database:** PostgreSQL
-- **Authentication:** JWT
-- **Architecture:** Multi-tenant
+- `gatewayUrl` — e.g. `http://127.0.0.1:4009/graphql`
+- `authUrl` — e.g. `http://127.0.0.1:4001`
+- `devTenantId` — tenant UUID from `kabipay-svc/scripts/provision-tenant.ps1`
 
-### Mock API Layer
+Optional GraphQL types: **`npm run codegen`** (gateway must be up; reads `gatewayUrl` from `public/config.json`).
 
-The `useMockApi` hook simulates:
+## Project structure
 
-- Loading states
-- Error handling
-- Configurable delays
-- GraphQL-style queries
-
-To replace with real backend:
-
-1. Implement GraphQL client
-2. Update `useMockApi` hook
-3. Add authentication layer
-4. Connect to real API endpoints
-
-## Environment Variables
-
-Create a `.env` file for future backend integration:
-
-```env
-VITE_API_URL=http://localhost:8000/graphql
-VITE_WS_URL=ws://localhost:8000/subscriptions
+```text
+kabipay-ui/
+├── public/                 # Static assets; config.json served as /config.json
+├── src/
+│   ├── api/                # GraphQL client + data loading
+│   ├── components/       # Shared UI (common, layout, …)
+│   ├── modules/          # Feature routes: auth, dashboard, attendance, leave,
+│   │                     # payroll, expenses, notifications, admin, organization,
+│   │                     # profile, workplace (recruitment, performance, LMS, …)
+│   ├── contexts/         # Auth, tenant, theme
+│   ├── hooks/
+│   ├── routes/
+│   └── …
+├── index.html
+├── package.json
+├── vite.config.ts
+├── tailwind.config.js
+├── tsconfig.json
+└── codegen.ts
 ```
 
-## Browser Support
+## Features (summary)
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+Employee: dashboard, attendance/timesheet, leave, payroll, expenses/travel, notifications, profile, organization views.  
+Admin: employees, reports, module health, settings.  
+Workplace: recruitment, onboarding, performance, learning, benefits, assets, grievance (as routed in `src/modules`).
 
-## Development Tips
+Detail: **[FEATURES.md](FEATURES.md)**. Architecture and backend mapping: **[README.md](README.md)**.
 
-1. **Hot Module Replacement (HMR)** - Instant updates without page refresh
-2. **TypeScript** - Type checking during development
-3. **Tailwind IntelliSense** - VSCode extension recommended
-4. **React DevTools** - Browser extension for debugging
+## Stack
+
+- React 18, TypeScript, Vite, Tailwind CSS, React Router  
+- GraphQL via gateway; REST auth  
 
 ## Troubleshooting
 
-### Port Already in Use
+**Port 5173 in use (Windows PowerShell):**
 
-```bash
-# Kill process on port 5173
-# Windows PowerShell:
+```powershell
 Get-Process -Id (Get-NetTCPConnection -LocalPort 5173).OwningProcess | Stop-Process
-
-# Or use a different port:
-npm run dev -- --port 3000
 ```
 
-### Module Not Found
+Or: `npm run dev -- --port 3000`
+
+**Clean install:**
 
 ```bash
-# Clear cache and reinstall
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-### Build Errors
-
-```bash
-# Clean build
-rm -rf dist
-npm run build
-```
-
-## Contributing
-
-When adding new features:
-
-1. Follow existing code structure
-2. Use TypeScript strictly
-3. Follow ESLint rules
-4. Add mock data for new features
-5. Ensure responsive design
-6. Test in both themes
-
 ## License
 
-Proprietary - All rights reserved
-
-## Support
-
-For issues or questions, please contact the development team.
+Proprietary

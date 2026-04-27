@@ -6,9 +6,9 @@ This guide is for developers who clone **all** KabiPay repositories on one machi
 
 ```text
 your-workspace/
-├── kabipay-database/    # Liquibase + Docker Postgres
-├── kabipay-svc/         # Rust: kabipay-auth + subgraphs
-├── kabipay-gateway/     # Node: stitched GraphQL gateway
+├── kabipay-database/    # Liquibase (ops + tenant migrations)
+├── kabipay-svc/         # Rust: kabipay-auth + GraphQL subgraphs + outbox worker
+├── kabipay-gateway/     # Node: federated GraphQL gateway
 └── kabipay-ui/          # This project
 ```
 
@@ -20,10 +20,11 @@ If your paths differ, adjust commands and any script variables that point at `ka
 
 | Tool | Purpose |
 |------|---------|
-| **Docker Desktop** (or compatible engine) | Run PostgreSQL 16 locally from `kabipay-database`. |
-| **Rust** (stable) + **Cargo** | Build and run `kabipay-auth` and subgraph crates. |
-| **Node.js** LTS (v20+) + **npm** | `kabipay-gateway` and this UI. |
-| **PowerShell** (Windows) | Optional but used by helper scripts under `kabipay-svc/scripts`. |
+| **PostgreSQL 16** | Local install, **Docker**, or a cloud provider (**Neon**, Aiven, …). Neon: use the **`*-pooler`** host in `POSTGRES_*` / `DATABASE_URL` to save connections and compute; set `POSTGRES_SSLMODE=require`. |
+| **Rust** (stable) + **Cargo** | Build and run `kabipay-auth`, subgraphs, and optional `kabipay-outbox-worker`. |
+| **Node.js** LTS (v20+) + **npm** | `kabipay-database` (Liquibase scripts), `kabipay-gateway`, and this UI. |
+| **JRE 17** | Used by bundled Liquibase under `kabipay-database` (downloaded into `vendor/` on first migrate if needed). |
+| **PowerShell** (Windows) | Used by `kabipay-svc/scripts` (provision, seed, start-subgraphs). |
 | **Git** | Clone the repos. |
 
 **Hardware:** a full `cargo build --workspace` is heavy; on low-RAM Windows machines build crates one at a time or use `cargo build -j 1` (see `kabipay-svc/README.md`).
@@ -34,9 +35,11 @@ If your paths differ, adjust commands and any script variables that point at `ka
 
 ### 2.1 PostgreSQL
 
-Use a **cloud** service (e.g. Aiven) or a **local** PostgreSQL 16. Put host, port, database name, user, password, and (for providers that need TLS) `POSTGRES_SSLMODE=require` in **`kabipay-database/.env`** (preferred for a standalone `kabipay-database` clone) and/or **`kabipay-svc/.env`**. The same `POSTGRES_*` values must be used for Liquibase and the Rust services (if both files exist, **database** overrides **svc** for overlapping keys).
+Use a **cloud** service (e.g. **Neon**, **Aiven**) or **local** PostgreSQL 16. Put host, port, database name, user, password, and (for TLS) `POSTGRES_SSLMODE=require` in **`kabipay-database/.env`** and/or **`kabipay-svc/.env`**. For **Neon**, use the **pooler** connection string for `DATABASE_URL` and matching `POSTGRES_HOST` / `POSTGRES_PORT` / `POSTGRES_DB` so apps and Liquibase agree. The same values must be used for Liquibase and Rust services (if both files exist, **kabipay-database/.env** overrides **svc** for overlapping keys).
 
-For a local server on `localhost` with a non-default port, set `POSTGRES_PORT` in that `.env` to match.
+You can set a single **`DATABASE_URL`** in **`kabipay-svc/.env`** (e.g. `postgresql://…?sslmode=require`) *and* the split `POSTGRES_*` fields for scripts that build JDBC URLs from host/port/db.
+
+For a local server on `localhost` with a non-default port, set `POSTGRES_PORT` to match.
 
 ### 2.2 Liquibase — ops plane (once per database)
 
@@ -56,7 +59,7 @@ You need at least **one tenant schema** with **tenant-plane** Liquibase applied,
 
 **Recommended (Windows):** from **`kabipay-svc/`**, with Postgres running and DB connection variables in **`kabipay-database/.env` and/or `kabipay-svc/.env`**:
 
-For **cloud (Aiven)**, pass host, port, database, credentials, and `-PostgresSsl` (see `scripts/provision-tenant.ps1` help).
+For **cloud** hosts (Aiven, Neon, …), ensure `.env` has the real host and `POSTGRES_SSLMODE=require` as needed; you can pass **`-PostgresSsl`** to the script if you set host on the command line (see `provision-tenant.ps1` help).
 
 ```powershell
 .\scripts\provision-tenant.ps1 -Name "Demo Co" -Code demo
@@ -92,7 +95,7 @@ copy .env.example .env
 
 Edit **`.env`** so Postgres matches **§2**:
 
-- Prefer **`DATABASE_URL=postgres://…`**, **or** set **`POSTGRES_HOST`**, **`POSTGRES_PORT`**, **`POSTGRES_DB`**, **`POSTGRES_USER`**, **`POSTGRES_PASSWORD`**, and **`POSTGRES_SSLMODE=require`** when your host requires TLS (e.g. Aiven).
+   - Prefer **`DATABASE_URL`** (`postgresql://` or `postgres://` with `sslmode` for managed DBs), **or** set **`POSTGRES_*`** as in `kabipay-svc/.env.example`. For Neon, use the **pooler** endpoint in `DATABASE_URL` when possible.
 
 Set strong values for:
 

@@ -1,494 +1,230 @@
-# KabiPay - Feature Documentation
+# KabiPay UI — Feature documentation (implementation-validated)
 
-## Overview
+This document reflects **what is actually implemented** in `kabipay-ui` as of the last review: routes in `src/routes/AppRoutes.tsx`, data loading via **`graphql-request`** + **`useGraphClient`** (`src/hooks/useGraphClient.ts`, `src/api/client.ts`), and runtime config from **`public/config.json`**. Behavior depends on **kabipay-gateway** + **kabipay-svc** subgraphs being up and on tenant/seed data.
 
-KabiPay is a comprehensive solution for managing employee attendance, leave, payroll, expenses, and more. Built with a modern tech stack and designed with a mobile-first approach, it provides an intuitive interface for both employees and administrators.
+---
 
-## Core Architecture
+## How to read the status column
 
-### Frontend-Only Implementation
+| Status | Meaning |
+|--------|---------|
+| **Implemented** | Wired in UI, used in navigation (or intentional direct URL), calls API or shows real data path. |
+| **Partial** | Screen exists and is functional for a subset of the old spec, or shows IDs instead of labels, or stats are client-side only. |
+| **Present, not linked** | Route exists but no sidebar entry (direct URL only). |
+| **Not in UI** | File may exist on disk but is **not imported** / not reachable. |
+| **Stub / demo** | UI copy or export described as stub; still calls backend where noted. |
 
-- **No Backend:** All functionality works with mock data
-- **GraphQL-Ready:** Designed for easy integration with async-graphql backend
-- **Multi-Tenant:** Frontend simulates multi-tenancy for future scalability
-- **Type-Safe:** Full TypeScript implementation with strict typing
+---
 
-### State Management
+## Validation summary
 
-- **Context API:** For global state (theme, auth, tenant)
-- **React Hooks:** For local component state
-- **Mock API Layer:** Simulates loading states, errors, and delays
+| Area | Route(s) | Primary file(s) | Status | Notes |
+|------|----------|-----------------|--------|-------|
+| Login | `/login` | `modules/auth/LoginPage.tsx` | Implemented | REST `authUrl`; JWT stored for GraphQL. |
+| Dashboard | `/dashboard` | `modules/dashboard/Dashboard.tsx` | Implemented | Composes punch, leave card, on-leave, holidays, notifications preview. |
+| Punch in/out | (widget on dashboard) | `PunchInOut.tsx` | Implemented | `punchToday`, `punchDaySummary`; optional **browser geolocation** (not “mock”). No selfie capture. |
+| Leave balance (dashboard) | (widget) | `LeaveBalanceCard.tsx` | Implemented | `leaveTypes`, `leaveBalances` for current year. |
+| On leave today | (widget) | `OnLeaveToday.tsx` | Partial | Filters approved leave; list shows **employeeId** (UUID), not names/depts. |
+| Upcoming holidays | (widget) | `UpcomingHolidays.tsx` | Implemented | `upcomingHolidays` (date, name, type, calendar). |
+| Notifications preview | (widget) | `NotificationsPreview.tsx` | Implemented | Last 3 or 20; link to `/notifications`. |
+| Attendance | `/attendance` | `AttendancePage.tsx` | Implemented | `shifts`, `attendance`, `timesheetEntries`; add entry via `TimesheetEntryForm`. |
+| Attendance correction | — | `CorrectionRequestModal.tsx` | **Not in UI** | Component exists **but is not imported** on `AttendancePage`. |
+| Leave | `/leave` | `LeavePage.tsx`, `ApplyLeaveModal.tsx` | Implemented | Board + `submitLeaveRequest`. **No** cancel-leave action in UI. |
+| Payroll (overview + CSV) | `/payroll/payslips` | `PayrollPage.tsx` | Implemented | Salary components, cycles, India TDS + PF/ESI CSV exports. |
+| Payroll (pay + tax UI) | `/payroll/pay`, `/payroll/tax` | `PayrollPayPage.tsx`, `PayrollTaxPage.tsx` | Implemented | Payslips with lines, tax configs/slabs/computations (see pages for scope). |
+| Expenses & travel | `/expenses` | `ExpensesPage.tsx`, `SubmitTravelModal.tsx` | Implemented | Full board; submit expense via **GraphQL** (inline modal). `SubmitExpenseModal.tsx` is legacy/alert-based **not used** by this route. |
+| Notifications | `/notifications` | `NotificationsPage.tsx` | Implemented | `announcements` + `notifications`; mark read / mark all; filter all vs unread; `actionUrl` supported. |
+| Profile | `/profile/settings` | `ProfileSettingsPage.tsx`, tabs | Partial | Built from **auth user** + **`getDefaultUserProfile`** (local shaping); **no GraphQL** in `profile/` components. Documents tab uses **static/mock** document UI, not live file API. |
+| Organization | `/organization/*` | `OrganizationEmployeesPage.tsx`, `OrgChartPage.tsx`, etc. | Implemented | Directory, org chart, documents, employee detail — GraphQL per page. |
+| Workplace | `/workplace/*` | `workplace/*.tsx` | Implemented | Benefits, recruitment, onboarding, performance, learning, assets, grievance — list/query + actions per subgraph. |
+| Admin employees | `/admin/employees` | `AdminEmployeesPage.tsx`, modals | Implemented | List + create/update employee mutations. |
+| Admin attendance policy | `/admin/attendance-policy` | `AdminAttendancePolicyPage.tsx` | Implemented | Load/upsert policy via GraphQL. |
+| Admin reports | `/admin/reports` | `AdminReportsPage.tsx` | Partial | One query loads employees, attendance, leaves, cycles, salary components; **client-side** filters (dates, employee). Summary cards; **no** department dimension. |
+| Admin settings | `/admin/settings` | `AdminSettingsPage.tsx` | Partial | “Directory snapshot” table; not a full settings product. |
+| Module health | `/admin/module-health` | `ModuleHealth.tsx` | Present, not linked | GraphQL probe per subgraph; **no** nav item in `Sidebar.tsx` — open URL manually. |
+| Bulk CSV import (employees) | — | — | **Not implemented** | Old doc claim; no import flow found. |
 
-## Feature Breakdown
+---
 
-### 1. Dashboard Module
+## 1. Dashboard (`/dashboard`)
 
-#### Purpose
+**Purpose:** Entry home: quick status, punch, leave snapshot, colleagues on leave, holidays, notification feed.
 
-Central hub for employees to get a quick overview of their work status and important information.
+**Implementation detail**
 
-#### Components
+- **PunchInOut** (`components/PunchInOut.tsx`): Live clock; loads **`punchDaySummary`** (work date, total minutes, segments, open segment). **`punchToday`** mutation with optional `{ latitude, longitude }` when “Record GPS location” is checked — uses **`navigator.geolocation`** (real device/browser location, not mock). Displays segment in/out times and stored coordinates when returned. **No** selfie or camera flow.
+- **LeaveBalanceCard**: **`leaveTypes`** + **`leaveBalances`** (entitled/used/pending/balance per type, current year).
+- **OnLeaveToday**: **`leaveRequests`**; keeps approved requests overlapping “today”. Renders **employee id** strings; does not resolve to employee names (backend could add, UI does not).
+- **UpcomingHolidays**: **`upcomingHolidays`** with `holidayDate`, `name`, `holidayType`, `calendarName` (up to 12).
+- **NotificationsPreview**: **`notifications`** limit 3 (compact) or 20 (tall sidebar); read/unread styling; “View all” → `/notifications`.
 
-- **PunchInOut Widget**
-  - Real-time clock display
-  - Punch in/out button with status indicator
-  - Location tracking (mock)
-  - Selfie requirement indicator for remote work
-- **Leave Balance Cards**
-  - Display all leave types (Casual, Sick, Earned, Comp-off)
-  - Visual representation of available vs used leaves
-  - Quick access to leave application
+**Backend (typical):** attendance, leave, notification subgraphs via gateway.
 
-- **Notifications Preview**
-  - Latest 3 unread notifications
-  - Quick link to full notifications page
-  - Type indicators (company/personal/system)
+---
 
-- **On Leave Today**
-  - List of colleagues on leave
-  - Department information
-  - Leave type display
+## 2. Attendance & timesheet (`/attendance`)
 
-- **Upcoming Holidays**
-  - Next 5 holidays
-  - Holiday type badges (national/regional/company)
-  - Date formatting
+**Implementation detail**
 
-### 2. Attendance & Timesheet Module
+- **Shift templates:** `shifts(limit)` — name, times, night flag, work hours.
+- **Recent attendance:** `attendance(limit)` — work date, check in/out, status, source, late minutes.
+- **Timesheet:** `timesheetEntries(limit)` — date, hours, `projectCode`, description, status. **Add entry** opens modal with **`TimesheetEntryForm`** (GraphQL create — see component).
+- **Correction requests:** `CorrectionRequestModal.tsx` is **not** mounted on `AttendancePage.tsx`. Treat as **unused** until wired.
 
-#### Attendance Tracking
+**Gaps vs old spec:** No date-range picker on the main attendance table (fixed limit query). No in-page correction workflow.
 
-- **Day-wise Attendance List**
-  - Punch in/out times
-  - Work hours calculation
-  - Status badges (present, absent, half-day, leave, holiday)
-  - Date range filtering
+---
 
-- **Correction Requests**
-  - Raise correction for missed punch
-  - Provide reason for correction
-  - Admin approval workflow (UI ready)
+## 3. Leave (`/leave`)
 
-#### Timesheet Management
+**Implementation detail**
 
-- **Entry Form**
-  - Project selection
-  - Task description
-  - Hours worked
-  - Date selection
-  - Draft/submit functionality
+- **Board:** `leaveTypes` + `leaveRequests` with flags (paid, carry forward, document).
+- **Apply:** `ApplyLeaveModal` submits **`submitLeaveRequest`** with selected type, dates, reason.
+- **Table:** Lists requests with status badges; **no** “cancel pending request” button in the table.
 
-- **Approval Flow**
-  - Status tracking (draft, submitted, approved, rejected)
-  - Manager comments (UI ready)
-  - Historical timesheet view
+**Gaps:** Cancellation of pending leave not exposed. Employee column shows raw **employeeId**.
 
-### 3. Leave Management Module
+---
 
-#### Leave Balance
+## 4. Payroll
 
-- **Visual Representation**
-  - Total allocated leaves
-  - Used leaves
-  - Available balance
-  - Progress bars for each leave type
-
-#### Leave Application
+### 4a. `/payroll/payslips` — `PayrollPage.tsx`
 
-- **Application Form**
-  - Leave type selection
-  - Date range picker
-  - Automatic day calculation
-  - Reason for leave
-  - Balance validation
-
-- **Status Tracking**
-  - Pending applications
-  - Approved leaves
-  - Rejected applications with reason
-  - Cancellation option (for pending)
-
-### 4. Payroll Module
-
-#### Payslip View
-
-- **Monthly Payslips**
-  - Card-based layout
-  - Gross salary display
-  - Total deductions
-  - Net salary calculation
-  - Tax regime indicator
-
-#### Detailed Breakdown
-
-- **Earnings**
-  - Basic salary
-  - HRA
-  - Special allowances
-  - Performance bonuses
-  - Other earnings
-
-- **Deductions**
-  - PF contribution
-  - Professional tax
-  - Income tax (based on regime)
-  - Other deductions
-
-- **Tax Regime Support**
-  - Old regime calculation
-  - New regime calculation
-  - Regime comparison (UI ready)
-  - Tax-saving suggestions (UI ready)
-
-### 5. Expenses & Travel Module
-
-#### Expense Claims
-
-- **Submission**
-  - Expense type selection (travel, food, accommodation, supplies, other)
-  - Amount entry
-  - Date selection
-  - Description
-  - Bill upload (UI placeholder)
-
-- **Status Tracking**
-  - Draft claims
-  - Submitted claims
-  - Approved for reimbursement
-  - Rejected with reason
-  - Reimbursed status
-
-#### Travel Requests
-
-- **Request Form**
-  - From/To locations
-  - Travel dates
-  - Purpose of travel
-  - Estimated cost
-  - Multiple travelers (UI ready)
-
-- **Approval Workflow**
-  - Pending requests
-  - Approved travel
-  - Rejected requests
-  - Completed trips
-
-### 6. Notifications Module
-
-#### Types of Notifications
-
-- **Company Notifications**
-  - Company-wide announcements
-  - Policy updates
-  - Holiday announcements
-  - System maintenance notices
-
-- **Personal Notifications**
-  - Leave approval/rejection
-  - Payslip generation
-  - Expense claim updates
-  - Timesheet reminders
-
-- **System Notifications**
-  - Password change reminders
-  - Profile update requests
-  - Mandatory training alerts
-
-#### Features
-
-- **Read/Unread Status**
-  - Visual indicators
-  - Mark as read functionality
-  - Mark all as read option
-
-- **Filtering**
-  - Show all notifications
-  - Show only unread
-  - Filter by type
-
-- **Deep Links**
-  - Navigate to related module
-  - Context preservation
-
-### 7. Admin Module
-
-#### Employee Management
-
-##### Employee List
-
-- **Table View**
-  - Employee ID
-  - Name
-  - Email
-  - Department
-  - Designation
-  - Joining date
-  - Status (active/inactive)
-
-- **Add/Edit Employee**
-  - Personal information
-  - Contact details
-  - Department assignment
-  - Designation
-  - Joining date
-  - Date of birth
-  - Qualification
-  - Address
-  - Status management
-
-##### Bulk Operations (UI Ready)
-
-- Import employees via CSV
-- Export employee data
-- Bulk status updates
-
-#### Reports & Analytics
-
-##### Attendance Reports
-
-- **Metrics**
-  - Total present days
-  - Total absent days
-  - Half days
-  - Average work hours
-  - Department-wise breakdown
-
-- **Filters**
-  - Date range
-  - Employee selection
-  - Department filter
-  - Status filter
-
-##### Leave Reports
-
-- **Metrics**
-  - Total applications
-  - Approved leaves
-  - Pending applications
-  - Rejected applications
-  - Leave type distribution
-
-- **Filters**
-  - Date range
-  - Employee selection
-  - Leave type
-  - Status
-
-##### Payroll Reports
-
-- **Metrics**
-  - Total gross salary
-  - Total net salary
-  - Total deductions
-  - Average salary
-  - Department-wise cost
-
-- **Filters**
-  - Month/year selection
-  - Employee selection
-  - Department filter
-
-## UI/UX Features
-
-### Theme Support
-
-- **Light Theme:** Clean, professional appearance
-- **Dark Theme:** Eye-friendly for extended use
-- **Smooth Transitions:** Seamless theme switching
-- **Persistence:** Theme preference stored in localStorage
-
-### Responsive Design
-
-- **Desktop (lg+)**
-  - Full sidebar always visible
-  - Multi-column layouts
-  - Expanded tables
-  - Rich data visualization
-
-- **Tablet (md)**
-  - Collapsible sidebar
-  - 2-column layouts
-  - Compact tables
-  - Optimized forms
-
-- **Mobile (sm)**
-  - Hidden sidebar with hamburger menu
-  - Single column layouts
-  - Stacked cards
-  - Touch-optimized interactions
-
-### Accessibility
-
-- **Keyboard Navigation:** Full keyboard support
-- **ARIA Labels:** Screen reader compatible
-- **Focus Indicators:** Clear focus states
-- **Color Contrast:** WCAG AA compliant
-
-## Technical Features
-
-### Mock API Layer
-
-```typescript
-const { data, loading, error } = useMockApi(
-  () => mockData.filter(...),
-  { delay: 400 }
-);
-```
-
-Features:
-
-- Configurable delay (simulates network latency)
-- Loading states
-- Error handling
-- Easy transition to real API
-
-### Type Safety
-
-- Full TypeScript coverage
-- Interface definitions for all data structures
-- Type-safe component props
-- GraphQL-compatible types
-
-### Code Quality
-
-- ESLint configuration with strict rules
-- Prettier for consistent formatting
-- Functional components only
-- Proper destructuring
-- No inline arrow functions in JSX
-- Maximum function length limits
-
-## Backend Integration Readiness
-
-### GraphQL Schema Ready
-
-All TypeScript types are designed to match GraphQL schema:
-
-- Query types
-- Mutation input types
-- Subscription types (for real-time updates)
-- Pagination support
-
-### Multi-Tenant Architecture
-
-- Tenant context at root level
-- All data filtered by tenantId
-- Tenant switching capability
-- Isolated data per tenant
-
-### Authentication Ready
-
-- Auth context structure in place
-- Role-based access control
-- Route guards for admin routes
-- JWT token storage (ready)
-
-## Future Enhancements (UI Already Prepared)
-
-1. **Real-time Features**
-   - Live attendance tracking
-   - Real-time notifications
-   - Chat/messaging system
-
-2. **Advanced Analytics**
-   - Charts and graphs
-   - Trend analysis
-   - Predictive insights
-   - Export to PDF/Excel
-
-3. **Mobile App**
-   - React Native version
-   - GPS-based attendance
-   - Camera integration for selfies
-   - Push notifications
-
-4. **Integration Points**
-   - Biometric devices
-   - Payroll software
-   - Calendar systems
-   - Email notifications
-
-5. **AI Features**
-   - Leave pattern analysis
-   - Anomaly detection
-   - Chatbot support
-   - Automated approvals
-
-## Performance Optimizations
-
-- **Code Splitting:** Route-based lazy loading ready
-- **Memoization:** React.memo for heavy components
-- **Virtual Scrolling:** For large lists (ready to implement)
-- **Image Optimization:** Lazy loading for images
-- **Bundle Size:** Optimized with tree shaking
-
-## Security Considerations
-
-- **XSS Protection:** Input sanitization ready
-- **CSRF Tokens:** API integration ready
-- **Rate Limiting:** Frontend implementation ready
-- **Data Encryption:** HTTPS only in production
-- **Session Management:** Timeout handling ready
-
-## Testing Strategy (Ready for Implementation)
-
-- **Unit Tests:** Component testing with Jest
-- **Integration Tests:** Module interaction testing
-- **E2E Tests:** User flow testing with Playwright
-- **Accessibility Tests:** WCAG compliance testing
-
-## Deployment
-
-### Vite Build
-
-```bash
-npm run build
-```
-
-- Optimized production build
-- Asset optimization
-- Code minification
-- Source maps (configurable)
-
-### Hosting Options
-
-- **Static Hosting:** Netlify, Vercel, GitHub Pages
-- **CDN:** CloudFront, Cloudflare
-- **Container:** Docker deployment ready
-- **Server:** Node.js server (SSR ready)
-
-## Documentation
-
-- **SETUP.md:** Installation and setup guide
-- **FEATURES.md:** This file - comprehensive feature list
-- **README.md:** Project overview and quick start
-- **Code Comments:** Inline documentation throughout
-
-## Support & Maintenance
-
-### Code Organization
-
-- Clear module structure
-- Consistent naming conventions
-- Reusable components
-- Centralized configuration
-
-### Scalability
-
-- Component reusability
-- Easy feature addition
-- Modular architecture
-- Clean separation of concerns
-
-### Maintainability
-
-- TypeScript for type safety
-- ESLint for code quality
-- Prettier for consistency
-- Clear file structure
+- **Salary components** and **payroll cycles** from GraphQL.
+- **India statutory CSV (stub):** `indiaTdsMonthlySummaryCsv`, `indiaPfEsiMonthlySummaryCsv` — month/year controls; downloads blob; UI text states permission and “stub” nature.
+
+### 4b. `/payroll/pay` — `PayrollPayPage.tsx`
+
+- Tabs: Salary / Payslip / Income tax.
+- **`payslips`** with **lines** (per component amounts), gross/net/deductions, `taxConfigurations`, `taxSlabs` for context.
+
+### 4c. `/payroll/tax` — `PayrollTaxPage.tsx`
+
+- Tax configuration, slabs, **`taxComputations`** list — full detail in component.
+
+**Gaps vs old marketing copy:** “Regime comparison” and “tax-saving suggestions” are **not** implemented as dedicated flows; tax regime appears via data (e.g. configuration / chosen regime fields) as exposed by subgraphs.
+
+---
+
+## 5. Expenses & travel (`/expenses`)
+
+**Implementation detail**
+
+- Single page: **`expenseCategories`**, **`expenses`**, **`travelRequests`**.
+- **Submit expense:** Inline modal + **`submitExpense`** (category id, amount, currency, date, title) — **not** the old `SubmitExpenseModal` alert demo.
+- **Travel:** `SubmitTravelModal` uses GraphQL **`submitTravelRequest`**.
+- **Approver:** If JWT has expense-approve capability, **`approveExpense` / `rejectExpense`**, **`approveTravelRequest` / `rejectTravelRequest`** (reason via `window.prompt` for reject).
+
+**Gaps:** No receipt **file upload** in the live submit path (category/title/amount/date only). Old `SubmitExpenseModal.tsx` with fake submit is **orphaned** for this route.
+
+---
+
+## 6. Notifications (`/notifications`)
+
+**Implementation detail**
+
+- Query: **`announcements`** + **`notifications`** (kind, title, message, `actionUrl`, read state, `createdAt`).
+- Mutations: **`markNotificationRead`**, **`markAllNotificationsRead`**.
+- Filter: **All** vs **Unread** (client-side on loaded list).
+- Icons map `kind` heuristically (company / personal / system).
+
+**Deep links:** If `actionUrl` is set, UI can use it (see page implementation for link behavior).
+
+---
+
+## 7. Profile (`/profile/settings`)
+
+**Implementation detail:** Tabs (About, Profile, Job, Documents). Data is derived from **`AuthContext`** user and **`getDefaultUserProfile`** — not a live employee GraphQL fetch for the signed-in user’s full HR record. **Documents** presentation is **mock/static** (types in `types` + local state), not wired to document upload/list APIs on this page.
+
+For org-wide **real** employee/document lists, use **Organization** routes below.
+
+---
+
+## 8. Organization (`/organization/...`)
+
+Routes: **employees** list, **employee detail**, **org chart**, **documents** — each uses GraphQL appropriate to directory/org/document subgraphs (see respective files under `modules/organization/`).
+
+---
+
+## 9. Workplace (`/workplace/...`)
+
+| Path | Page | Pattern |
+|------|------|---------|
+| `/workplace/benefits` | `BenefitsPage.tsx` | GraphQL list + detail |
+| `/workplace/recruitment` | `RecruitmentPage.tsx` | Job/application-style queries |
+| `/workplace/onboarding` | `OnboardingPage.tsx` | Checklist list + toggle |
+| `/workplace/performance` | `PerformancePage.tsx` | Cycles/goals style data |
+| `/workplace/learning` | `LearningPage.tsx` | Skills/courses |
+| `/workplace/assets` | `AssetsPage.tsx` | Categories/assets |
+| `/workplace/grievance` | `GrievancePage.tsx` | Categories/cases + submit |
+
+Exact field names and mutations are defined at the top of each file (`gql` blocks).
+
+---
+
+## 10. Admin (role `admin` only)
+
+- **Employees** (`/admin/employees`): Paginated/table list; **CreateEmployeeModal** / **EditEmployeeModal** with **`createEmployee`** / **`updateEmployee`** and org list queries.
+- **Attendance policy** (`/admin/attendance-policy`): Loads policy, **upsert** punch policy mutation.
+- **Reports** (`/admin/reports`): Single combined query; **attendance / leave / payroll** report types with **summary tiles** and filtered tables. Filters: **start date, end date, employee**. Not a full BI export (no department slice, no PDF).
+- **Settings** (`/admin/settings`): Employee snapshot table (codes, status, user link) — operational, not full tenant settings.
+- **Module health** (`/admin/module-health`): Introspection-style query per subgraph to show green/red; **navigate manually** — not in `Sidebar.tsx`.
+
+**Not implemented:** Bulk CSV **import**, bulk export, department-level report filters.
+
+---
+
+## 11. Auth, tenant, and API layer
+
+- **AuthContext** + **TenantContext:** After login, JWT and tenant id drive **`useGraphClient('client')`** headers: `Authorization`, `x-tenant-id` (from user or `devTenantId` from config).
+- **GraphQL client:** `src/api/client.ts` — `GraphQLClient` pointed at `gatewayUrl` from **`/config.json`** (see `src/config.ts` loaded at startup).
+- **Roles:** `admin` unlocks `/admin/*`; employee vs admin sidebar items in `Sidebar.tsx`.
+
+---
+
+## 12. UI / UX (verified)
+
+- **Theme:** `ThemeContext` — `light` / `dark`, persisted in **`localStorage`** (`theme` key), `class` on `document.documentElement`.
+- **Layout:** `AppLayout` + **Sidebar** + **Header**; responsive collapse patterns as implemented in those components.
+- **Accessibility:** Reasonable labels and focus in places; **no** formal WCAG audit — do not treat “WCAG AA everywhere” as validated.
+
+---
+
+## 13. Technical
+
+- **Stack:** React 18, TypeScript, Vite, Tailwind, React Router.
+- **Data:** Primary path is **GraphQL**; `graphql-request` with `gql` template strings.
+- **Lint:** ESLint + Prettier (see repo config).
+
+---
+
+## 14. Intentionally not implemented (or out of date in old docs)
+
+- Employee **bulk CSV import** / export.
+- **Leave cancel** from UI.
+- **Attendance correction** modal (file exists, not routed).
+- **Receipt upload** for expenses on the live submit form.
+- **Selfie** / camera for attendance.
+- **Department**-scoped admin reports (only all-employee or one employee).
+- **Module health** link in sidebar (URL only).
+
+---
+
+## 15. Future enhancements (optional roadmap)
+
+Possible next steps: wire `CorrectionRequestModal`, employee name resolution on dashboard widgets, sidebar link to module health, receipt upload matching backend, automated tests (unit/E2E), stricter a11y audit.
+
+---
+
+## Related docs
+
+- **README.md** — overview and stack.
+- **LOCAL_SETUP.md** — database + services + `config.json`.
+- **SETUP.md** — UI install.
 
 ---
 
 ## Conclusion
 
-KabiPay provides a solid foundation for a production-ready system. With its comprehensive feature set, clean architecture, and backend-ready design, it's prepared for seamless integration with a Rust + GraphQL + PostgreSQL backend while delivering an excellent user experience through a modern, responsive interface.
+The KabiPay UI is **largely aligned** with the federated backend: major routes use **live GraphQL** through the gateway. This file supersedes generic “mock-first” descriptions: treat the **validation summary** and **gaps** sections as the source of truth for product and QA.
