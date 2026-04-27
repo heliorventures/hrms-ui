@@ -52,6 +52,9 @@ interface TravelRequestRow {
   estimatedAmount?: string | null;
   currency: string;
   status: string;
+  rejectionReason?: string | null;
+  approvedBy?: string | null;
+  rejectedBy?: string | null;
   submittedAt: string;
 }
 
@@ -526,6 +529,47 @@ const ExpensesPage = () => {
                 render: (t: TravelRequestRow) => (
                   <Badge variant={getExpenseStatusVariant(t.status)}>{t.status}</Badge>
                 ),
+              },
+              {
+                key: 'decision',
+                label: 'Decision',
+                render: (t: TravelRequestRow) => {
+                  const st = t.status.toUpperCase();
+                  if (st === 'APPROVED') {
+                    return (
+                      <span className="text-xs text-gray-600 dark:text-gray-300">
+                        Approver
+                        {t.approvedBy ? (
+                          <span className="ml-1 font-mono text-emerald-700 dark:text-emerald-400">
+                            {t.approvedBy.slice(0, 8)}…
+                          </span>
+                        ) : (
+                          ' —'
+                        )}
+                      </span>
+                    );
+                  }
+                  if (st === 'REJECTED') {
+                    return (
+                      <div className="max-w-[14rem] space-y-1">
+                        {t.rejectionReason ? (
+                          <p className="text-xs text-red-700 dark:text-red-400">
+                            {t.rejectionReason}
+                          </p>
+                        ) : null}
+                        <p className="text-xs text-gray-500">
+                          By
+                          {t.rejectedBy ? (
+                            <span className="ml-1 font-mono">{t.rejectedBy.slice(0, 8)}…</span>
+                          ) : (
+                            ' —'
+                          )}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return <span className="text-gray-400">—</span>;
+                },
               },
               {
                 key: 'submittedAt',
