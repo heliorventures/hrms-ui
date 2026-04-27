@@ -52,12 +52,9 @@ extend type Query {
 }
 
 # Optional link from expense claim to a travel request (expense subgraph).
+# Remove this input extension when gateway `SubmitExpenseInput` includes `travelRequestId`.
 extend input SubmitExpenseInput {
   travelRequestId: ID
 }
 
-# Also expose for selection sets on submit response (remove when federated Expense exposes it).
-extend type Expense {
-  travelRequestId: ID
-  workflowInstanceId: ID
-}
+# `travelRequestId` / `workflowInstanceId` on `Expense` now come from **kabipay-expense** in the supergraph (M32).
