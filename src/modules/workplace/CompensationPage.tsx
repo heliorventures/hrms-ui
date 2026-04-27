@@ -3,18 +3,18 @@ import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import {
-  WorkplaceCompensationDocument,
-  type WorkplaceCompensationQuery,
+  WorkplaceCompensationDataDocument,
+  type WorkplaceCompensationDataQuery,
 } from '../../api/graphql/graphql';
 
 const CompensationPage = () => {
   const client = useGraphClient('client');
-  const [data, setData] = useState<WorkplaceCompensationQuery | null>(null);
+  const [data, setData] = useState<WorkplaceCompensationDataQuery | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    return client.request(WorkplaceCompensationDocument, { blim: 100, clim: 20, dlim: 200 });
+    return client.request(WorkplaceCompensationDataDocument, { blim: 100, clim: 20, dlim: 200 });
   }, [client]);
 
   useEffect(() => {

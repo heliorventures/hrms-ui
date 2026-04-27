@@ -406,6 +406,50 @@ query InsightsOutbox($lim: Int! = 50) {
     createdAt
     processedAt
     retryCount
+    lastError
+  }
+}
+
+# Analytics (kabipay-analytics) — requires gateway to include subgraph
+mutation RequeueOutbox($id: ID!) {
+  requeueOutboxEvent(id: $id) {
+    id
+    status
+    lastError
+  }
+}
+
+# Onboarding — employee subgraph
+query OnboardingChecklist($limit: Int! = 100) {
+  onboardingChecklist(limit: $limit) {
+    id
+    taskName
+    taskCategory
+    dueDate
+    isCompleted
+  }
+}
+
+mutation SetOnboardingChecklistItem($checklistItemId: ID!, $isCompleted: Boolean!) {
+  setOnboardingChecklistItemCompleted(checklistItemId: $checklistItemId, isCompleted: $isCompleted) {
+    id
+    isCompleted
+  }
+}
+
+# Admin — workflow subgraph
+query AdminWorkflowsData($wl: Int! = 30, $il: Int! = 50) {
+  workflows(limit: $wl) {
+    id
+    name
+    entityType
+    isActive
+  }
+  workflowInstances(limit: $il) {
+    id
+    status
+    entityType
+    entityId
   }
 }
 
@@ -441,6 +485,66 @@ mutation RejectSeparation($separationId: ID!) {
     id
     status
   }
+}
+
+# Onboarding — FNF + clearance (employee subgraph)
+query ClientOpsFnfBySeparation($separationId: ID!) {
+  fnfSettlement(separationId: $separationId) {
+    id
+    separationId
+    leaveEncashment
+    gratuityAmount
+    bonusPayable
+    recoveryAmount
+    netPayable
+    status
+    processedAt
+    createdAt
+  }
+}
+
+query ClientOpsClearanceBySeparation($separationId: ID!) {
+  clearanceChecklist(separationId: $separationId) {
+    id
+    separationId
+    department
+    taskName
+    isCleared
+    clearedAt
+  }
+}
+
+mutation ClientOpsUpsertFnf($input: UpsertFnfSettlementInput!) {
+  upsertFnfSettlement(input: $input) {
+    id
+    leaveEncashment
+    gratuityAmount
+    bonusPayable
+    recoveryAmount
+    netPayable
+    status
+  }
+}
+
+mutation ClientOpsFinalizeFnf($separationId: ID!) {
+  finalizeFnfSettlement(separationId: $separationId) {
+    id
+    status
+    netPayable
+    processedAt
+  }
+}
+
+mutation ClientOpsSetClearanceCleared($clearanceId: ID!, $isCleared: Boolean!) {
+  setClearanceItemCleared(clearanceId: $clearanceId, isCleared: $isCleared) {
+    id
+    isCleared
+    clearedAt
+  }
+}
+
+mutation ClientOpsEnsureOffboarding($separationId: ID!) {
+  ensureSeparationOffboardingArtifacts(separationId: $separationId)
 }
 
 query WorkplaceCompensationData(

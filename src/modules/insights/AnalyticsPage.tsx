@@ -3,11 +3,13 @@ import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 import TabBar from '../../components/common/TabBar';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   InsightsWorkforceDocument,
   InsightsReportsSchedulesDocument,
   InsightsDashboardsDocument,
   InsightsOutboxDocument,
+  RequeueOutboxDocument,
   type InsightsWorkforceQuery,
   type InsightsReportsSchedulesQuery,
   type InsightsDashboardsQuery,
@@ -17,6 +19,7 @@ import {
 type Tab = 'overview' | 'reports' | 'dashboards' | 'outbox';
 
 const AnalyticsPage = () => {
+  const { role } = useAuth();
   const client = useGraphClient('client');
   const [tab, setTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(true);
@@ -26,6 +29,7 @@ const AnalyticsPage = () => {
   const [dash, setDash] = useState<InsightsDashboardsQuery | null>(null);
   const [out, setOut] = useState<InsightsOutboxQuery | null>(null);
   const [outErr, setOutErr] = useState<string | null>(null);
+  const [requeueBusy, setRequeueBusy] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
     setError(null);
@@ -53,6 +57,22 @@ const AnalyticsPage = () => {
     }
   }, [client]);
 
+  const requeue = async (id: string) => {
+    setRequeueBusy(id);
+    setOutErr(null);
+    try {
+      await client.request(RequeueOutboxDocument, { id });
+      const o = await client.request(InsightsOutboxDocument, { lim: 50 });
+      setOut(o);
+    } catch (e) {
+      setOutErr(
+        e instanceof Error ? e.message : 'Requeue failed — deploy latest kabipay-analytics (4029)?'
+      );
+    } finally {
+      setRequeueBusy(null);
+    }
+  };
+
   useEffect(() => {
     let c = false;
     void (async () => {
@@ -74,7 +94,7 @@ const AnalyticsPage = () => {
     <div>
       <PageHeader
         title="Insights"
-        description="Workforce trends, reports, and dashboards. The event queue shows transactional outbox events (e.g. after leave actions) for HR and directory admins."
+        description="Workforce trends, reports, and dashboards. The event queue shows transactional outbox events; HR can requeue failed or stuck processing items after deploying the outbox hardening build."
       />
 
       <TabBar
@@ -240,7 +260,9 @@ const AnalyticsPage = () => {
                     <th className="py-2 pr-3">Aggregate</th>
                     <th className="py-2 pr-3">Status</th>
                     <th className="py-2 pr-3">Created</th>
-                    <th className="py-2">Retries</th>
+                    <th className="py-2 pr-3">Retries</th>
+                    <th className="py-2 pr-3">Last error</th>
+                    {role === 'admin' && <th className="py-2">Action</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -255,14 +277,36 @@ const AnalyticsPage = () => {
                               ? 'text-emerald-600 dark:text-emerald-400'
                               : e.status === 'FAILED'
                                 ? 'text-red-600 dark:text-red-400'
-                                : 'text-amber-600 dark:text-amber-400'
+                                : e.status === 'PENDING' || e.status === 'PROCESSING'
+                                  ? 'text-amber-600 dark:text-amber-400'
+                                  : 'text-gray-600'
                           }
                         >
                           {e.status}
                         </span>
                       </td>
                       <td className="py-2 pr-3 text-gray-500">{String(e.createdAt)}</td>
-                      <td className="py-2">{e.retryCount}</td>
+                      <td className="py-2 pr-3">{e.retryCount}</td>
+                      <td
+                        className="max-w-xs truncate py-2 pr-3 text-xs text-gray-500"
+                        title={e.lastError ?? ''}
+                      >
+                        {e.lastError ?? '—'}
+                      </td>
+                      {role === 'admin' && (
+                        <td className="py-2">
+                          {(e.status === 'FAILED' || e.status === 'PROCESSING') && (
+                            <button
+                              type="button"
+                              className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100"
+                              disabled={requeueBusy === e.id}
+                              onClick={() => void requeue(e.id)}
+                            >
+                              {requeueBusy === e.id ? '…' : 'Requeue'}
+                            </button>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

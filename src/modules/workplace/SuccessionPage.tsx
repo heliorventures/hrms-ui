@@ -3,18 +3,18 @@ import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import {
-  WorkplaceSuccessionDocument,
-  type WorkplaceSuccessionQuery,
+  WorkplaceSuccessionDataDocument,
+  type WorkplaceSuccessionDataQuery,
 } from '../../api/graphql/graphql';
 
 const SuccessionPage = () => {
   const client = useGraphClient('client');
-  const [data, setData] = useState<WorkplaceSuccessionQuery | null>(null);
+  const [data, setData] = useState<WorkplaceSuccessionDataQuery | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    return client.request(WorkplaceSuccessionDocument, { clim: 100, plim: 50 });
+    return client.request(WorkplaceSuccessionDataDocument, { clim: 100, plim: 50 });
   }, [client]);
 
   useEffect(() => {
