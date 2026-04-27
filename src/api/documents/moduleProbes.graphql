@@ -313,3 +313,14 @@ query ModuleProbeOpsOverview($limit: Int! = 20) {
     isActive
   }
 }
+
+query ModuleProbeAnalytics($limit: Int! = 5) {
+  reportDefinitions(limit: $limit) {
+    id
+    name
+  }
+  workforceSnapshots(limit: $limit) {
+    id
+    snapshotDate
+  }
+}

@@ -3,6 +3,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { TenantProvider } from './contexts/TenantContext';
 import { DataStoreProvider } from './store/DataStoreContext';
+import { CommandPaletteProvider } from './components/layout/CommandPaletteContext';
 import AppRoutes from './routes/AppRoutes';
 
 const App = () => {
@@ -12,7 +13,9 @@ const App = () => {
         <AuthProvider>
           <TenantProvider>
             <DataStoreProvider>
-              <AppRoutes />
+              <CommandPaletteProvider>
+                <AppRoutes />
+              </CommandPaletteProvider>
             </DataStoreProvider>
           </TenantProvider>
         </AuthProvider>

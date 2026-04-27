@@ -4,6 +4,10 @@ import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTenant } from '../../contexts/TenantContext';
+import PayslipDocument, { type PayslipDocModel } from './components/PayslipDocument';
+import PayrollMigrationHint from './components/PayrollMigrationHint';
 
 type TabId = 'salary' | 'payslip' | 'incometax';
 
@@ -48,41 +52,13 @@ interface TaxSlabRow {
   taxRate?: string | null;
 }
 
-interface PayrollPayData {
-  salaryComponents: SalaryComponentRow[];
-  payrollCycles: PayrollCycleRow[];
-  taxConfigurations: TaxConfigurationRow[];
-  taxSlabs: TaxSlabRow[];
+interface PayslipRow extends PayslipDocModel {
+  payrollCycleId: string;
 }
 
-interface PayslipLine {
-  id: string;
-  salaryComponentId: string;
-  amount: string;
-  componentType?: string | null;
-}
-
-interface PayslipRow {
-  id: string;
-  netSalary: string;
-  grossSalary: string;
-  totalDeductions: string;
-  status: string;
-  generatedAt: string;
-  lines: PayslipLine[];
-}
-
-const PAYROLL_PAY_QUERY = gql`
-  query PayrollPayData {
-    salaryComponents(limit: 100) {
-      id
-      name
-      code
-      componentType
-      isTaxable
-      isFixed
-      isActive
-    }
+/** Cycles, tax: loads even if salary_component table is missing. */
+const PAYROLL_SHELL_QUERY = gql`
+  query PayrollShell {
     payrollCycles(limit: 100) {
       id
       name
@@ -108,13 +84,36 @@ const PAYROLL_PAY_QUERY = gql`
   }
 `;
 
+const SALARY_COMPONENTS_QUERY = gql`
+  query PayrollSalaryComponents {
+    salaryComponents(limit: 100) {
+      id
+      name
+      code
+      componentType
+      isTaxable
+      isFixed
+      isActive
+    }
+  }
+`;
+
 const PAYSLIPS_Q = gql`
-  query PayslipsList($limit: Int! = 12) {
+  query PayslipsList($limit: Int! = 24) {
     payslips(limit: $limit) {
       id
-      netSalary
+      payrollCycleId
       grossSalary
       totalDeductions
+      netSalary
+      pfEmployee
+      pfEmployer
+      esiEmployee
+      esiEmployer
+      tdsAmount
+      professionalTax
+      uanNumber
+      esicNumber
       status
       generatedAt
       lines {
@@ -134,45 +133,85 @@ const formatCurrency = (amount: number) =>
     maximumFractionDigits: 0,
   }).format(amount);
 
+function isMissingDbRelation(msg: string) {
+  return /does not exist|relation "([^"]+)"|relation '([^']+)'/i.test(msg);
+}
+
+/* eslint-disable max-lines-per-function -- Pay hub: data hooks for salary / payslip / tax */
 const PayrollPayPage = () => {
   const client = useGraphClient('client');
+  const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const [activeTab, setActiveTab] = useState<TabId>('salary');
-  const [data, setData] = useState<PayrollPayData | null>(null);
+  const [payrollCycles, setPayrollCycles] = useState<PayrollCycleRow[] | null>(null);
+  const [taxConfigurations, setTaxConfigurations] = useState<TaxConfigurationRow[] | null>(null);
+  const [taxSlabs, setTaxSlabs] = useState<TaxSlabRow[] | null>(null);
+  const [salaryComponents, setSalaryComponents] = useState<SalaryComponentRow[] | null>(null);
   const [payslips, setPayslips] = useState<PayslipRow[] | null>(null);
   const [payslipError, setPayslipError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingShell, setLoadingShell] = useState(true);
+  const [loadingSalary, setLoadingSalary] = useState(true);
   const [payslipsLoading, setPayslipsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorShell, setErrorShell] = useState<string | null>(null);
+  const [errorSalary, setErrorSalary] = useState<string | null>(null);
+  const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
+    let c = false;
+    void (async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const result = await client.request<PayrollPayData>(PAYROLL_PAY_QUERY);
-        if (!cancelled) setData(result);
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load pay data');
+        setLoadingShell(true);
+        setErrorShell(null);
+        const r = await client.request<{
+          payrollCycles: PayrollCycleRow[];
+          taxConfigurations: TaxConfigurationRow[];
+          taxSlabs: TaxSlabRow[];
+        }>(PAYROLL_SHELL_QUERY);
+        if (!c) {
+          setPayrollCycles(r.payrollCycles);
+          setTaxConfigurations(r.taxConfigurations);
+          setTaxSlabs(r.taxSlabs);
         }
+      } catch (e) {
+        if (!c) setErrorShell(e instanceof Error ? e.message : 'Failed to load payroll metadata');
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!c) setLoadingShell(false);
       }
     })();
     return () => {
-      cancelled = true;
+      c = true;
+    };
+  }, [client]);
+
+  useEffect(() => {
+    let c = false;
+    void (async () => {
+      try {
+        setLoadingSalary(true);
+        setErrorSalary(null);
+        const r = await client.request<{ salaryComponents: SalaryComponentRow[] }>(
+          SALARY_COMPONENTS_QUERY
+        );
+        if (!c) setSalaryComponents(r.salaryComponents);
+      } catch (e) {
+        if (!c) setErrorSalary(e instanceof Error ? e.message : 'Failed to load salary components');
+      } finally {
+        if (!c) setLoadingSalary(false);
+      }
+    })();
+    return () => {
+      c = true;
     };
   }, [client]);
 
   useEffect(() => {
     if (activeTab !== 'payslip') return;
     let c = false;
-    (async () => {
+    void (async () => {
       try {
         setPayslipsLoading(true);
         setPayslipError(null);
-        const res = await client.request<{ payslips: PayslipRow[] }>(PAYSLIPS_Q, { limit: 12 });
+        const res = await client.request<{ payslips: PayslipRow[] }>(PAYSLIPS_Q, { limit: 24 });
         if (!c) setPayslips(res.payslips);
       } catch (e) {
         if (!c) {
@@ -189,38 +228,99 @@ const PayrollPayPage = () => {
     };
   }, [client, activeTab]);
 
+  const cycleById = useMemo(() => {
+    const m = new Map<string, PayrollCycleRow>();
+    (payrollCycles ?? []).forEach((c) => m.set(c.id, c));
+    return m;
+  }, [payrollCycles]);
+
+  const payslipPeriodOptions = useMemo(() => {
+    if (!payslips?.length) return [];
+    const seen = new Set<string>();
+    const out: { cycleId: string; label: string; payslip: PayslipRow; sort: number }[] = [];
+    for (const p of payslips) {
+      if (seen.has(p.payrollCycleId)) continue;
+      const c = cycleById.get(p.payrollCycleId);
+      seen.add(p.payrollCycleId);
+      const label = c
+        ? new Date(c.year, c.month - 1, 1).toLocaleDateString('en-IN', {
+            month: 'long',
+            year: 'numeric',
+          })
+        : p.payrollCycleId.slice(0, 8);
+      const sort = c ? c.year * 100 + c.month : 0;
+      out.push({ cycleId: p.payrollCycleId, label, payslip: p, sort });
+    }
+    out.sort((a, b) => b.sort - a.sort);
+    return out;
+  }, [payslips, cycleById]);
+
+  useEffect(() => {
+    if (payslipPeriodOptions.length && !selectedCycleId) {
+      setSelectedCycleId(payslipPeriodOptions[0].cycleId);
+    }
+  }, [payslipPeriodOptions, selectedCycleId]);
+
+  const activePayslip = useMemo(() => {
+    if (!selectedCycleId) return null;
+    return payslipPeriodOptions.find((o) => o.cycleId === selectedCycleId)?.payslip ?? null;
+  }, [payslipPeriodOptions, selectedCycleId]);
+
+  const compNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    (salaryComponents ?? []).forEach((s) => m.set(s.id, s.name));
+    return m;
+  }, [salaryComponents]);
+
+  const labelForLine = (line: { salaryComponentId: string; componentType?: string | null }) =>
+    compNameById.get(line.salaryComponentId) ??
+    line.componentType ??
+    `Component ${line.salaryComponentId.slice(0, 8)}…`;
+
   const activeTaxConfig = useMemo(
-    () => data?.taxConfigurations.find((config) => config.isActive) ?? null,
-    [data]
+    () => taxConfigurations?.find((x) => x.isActive) ?? null,
+    [taxConfigurations]
   );
   const activeTaxSlabs = useMemo(
     () =>
       activeTaxConfig
-        ? (data?.taxSlabs ?? []).filter((slab) => slab.taxConfigVersionId === activeTaxConfig.id)
+        ? (taxSlabs ?? []).filter((slab) => slab.taxConfigVersionId === activeTaxConfig.id)
         : [],
-    [activeTaxConfig, data]
+    [activeTaxConfig, taxSlabs]
   );
+
+  const showMigrationHint =
+    (errorShell && isMissingDbRelation(errorShell)) ||
+    (errorSalary && isMissingDbRelation(errorSalary));
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Pay</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Pay</h1>
 
-      {error && (
+      {showMigrationHint && <PayrollMigrationHint />}
+
+      {errorShell && !showMigrationHint && (
         <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">{errorShell}</p>
+        </Card>
+      )}
+      {errorSalary && !showMigrationHint && (
+        <Card>
+          <p className="text-sm text-red-600 dark:text-red-400">{errorSalary}</p>
         </Card>
       )}
 
-      <div className="border-b border-gray-200 dark:border-gray-700">
+      <div className="border-b border-slate-200 dark:border-slate-700">
         <nav className="-mb-px flex gap-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setActiveTab(tab.id)}
               className={`border-b-2 py-4 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400'
               }`}
             >
               {tab.label}
@@ -232,13 +332,15 @@ const PayrollPayPage = () => {
       {activeTab === 'salary' && (
         <div className="space-y-6">
           <Card title="Salary Components">
-            {loading ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Loading salary components...
+            {loadingSalary ? (
+              <p className="text-sm text-slate-500">Loading salary components…</p>
+            ) : errorSalary ? (
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Could not load this section.
               </p>
-            ) : data?.salaryComponents?.length ? (
+            ) : salaryComponents?.length ? (
               <Table
-                data={data.salaryComponents}
+                data={salaryComponents}
                 keyExtractor={(row) => row.id}
                 columns={[
                   { key: 'name', label: 'Component' },
@@ -248,7 +350,7 @@ const PayrollPayPage = () => {
                     key: 'flags',
                     label: 'Flags',
                     render: (row: SalaryComponentRow) => (
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <Badge variant={row.isActive ? 'success' : 'neutral'}>
                           {row.isActive ? 'Active' : 'Inactive'}
                         </Badge>
@@ -264,18 +366,16 @@ const PayrollPayPage = () => {
                 ]}
               />
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                No salary components found.
-              </p>
+              <p className="text-sm text-slate-500">No salary components found.</p>
             )}
           </Card>
 
           <Card title="Payroll Cycles">
-            {loading ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Loading payroll cycles...</p>
-            ) : data?.payrollCycles?.length ? (
+            {loadingShell ? (
+              <p className="text-sm text-slate-500">Loading payroll cycles…</p>
+            ) : payrollCycles?.length ? (
               <Table
-                data={data.payrollCycles}
+                data={payrollCycles}
                 keyExtractor={(row) => row.id}
                 columns={[
                   { key: 'name', label: 'Cycle' },
@@ -295,74 +395,96 @@ const PayrollPayPage = () => {
                   },
                   {
                     key: 'paymentDate',
-                    label: 'Payment Date',
+                    label: 'Payment date',
                     render: (row: PayrollCycleRow) =>
                       row.paymentDate ? new Date(row.paymentDate).toLocaleDateString('en-IN') : '—',
                   },
                 ]}
               />
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No payroll cycles found.</p>
+              <p className="text-sm text-slate-500">No payroll cycles found.</p>
             )}
           </Card>
         </div>
       )}
 
       {activeTab === 'payslip' && (
-        <Card title="Payslips">
-          {payslipsLoading && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading payslips…</p>
+        <div className="space-y-4">
+          {payslipsLoading && <p className="text-sm text-slate-500">Loading payslips…</p>}
+
+          {payslipError && !payslipsLoading && isMissingDbRelation(payslipError) && (
+            <Card>
+              <p className="text-sm text-slate-600 dark:text-slate-300">{payslipError}</p>
+              <p className="mt-2 text-sm text-amber-900 dark:text-amber-100">
+                Run tenant migrations (same as for Salary tab) so{' '}
+                <span className="font-mono">payslip</span> exists.
+              </p>
+            </Card>
           )}
-          {payslipError && !payslipsLoading && (
+
+          {payslipError && !payslipsLoading && !isMissingDbRelation(payslipError) && (
             <p className="text-sm text-amber-800 dark:text-amber-200">{payslipError}</p>
           )}
+
           {!payslipsLoading && !payslipError && payslips && payslips.length > 0 && (
-            <div className="space-y-4">
-              {payslips.map((p) => (
-                <div
-                  key={p.id}
-                  className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(p.generatedAt).toLocaleString('en-IN')}
-                    </span>
-                    <Badge variant="info">{p.status}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-700 dark:text-gray-200">
-                    Gross {formatCurrency(Number(p.grossSalary))} · Deductions{' '}
-                    {formatCurrency(Number(p.totalDeductions))} · Net{' '}
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {formatCurrency(Number(p.netSalary))}
-                    </span>
-                  </p>
-                  {p.lines?.length > 0 && (
-                    <ul className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-300">
-                      {p.lines.map((l) => (
-                        <li key={l.id} className="flex justify-between gap-2">
-                          <span>{l.componentType ?? l.salaryComponentId}</span>
-                          <span>{formatCurrency(Number(l.amount))}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+            <>
+              <div className="no-print flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <label
+                    className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300"
+                    htmlFor="payslip-period"
+                  >
+                    Pay period
+                  </label>
+                  <select
+                    id="payslip-period"
+                    className="max-w-sm rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    value={selectedCycleId ?? ''}
+                    onChange={(e) => setSelectedCycleId(e.target.value || null)}
+                  >
+                    {payslipPeriodOptions.map((o) => (
+                      <option key={o.cycleId} value={o.cycleId}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ))}
-            </div>
+              </div>
+
+              {activePayslip && (
+                <PayslipDocument
+                  tenantName={currentTenant.name}
+                  employeeName={user?.name ?? 'Employee'}
+                  employeeCode={user?.employeeId ?? ''}
+                  periodLabel={
+                    cycleById.get(activePayslip.payrollCycleId)
+                      ? new Date(
+                          cycleById.get(activePayslip.payrollCycleId)!.year,
+                          cycleById.get(activePayslip.payrollCycleId)!.month - 1,
+                          1
+                        ).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+                      : '—'
+                  }
+                  labelForLine={labelForLine}
+                  slip={activePayslip}
+                />
+              )}
+            </>
           )}
+
           {!payslipsLoading && !payslipError && payslips && payslips.length === 0 && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No payslips found.</p>
+            <Card>
+              <p className="text-sm text-slate-500">No payslips for your account yet.</p>
+            </Card>
           )}
-        </Card>
+        </div>
       )}
 
       {activeTab === 'incometax' && (
         <div className="space-y-6">
-          <Card title="Active Tax Configuration">
-            {loading ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Loading tax configuration...
-              </p>
+          <Card title="Active tax configuration">
+            {loadingShell ? (
+              <p className="text-sm text-slate-500">Loading…</p>
             ) : activeTaxConfig ? (
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant={activeTaxConfig.isActive ? 'success' : 'neutral'}>
@@ -370,20 +492,18 @@ const PayrollPayPage = () => {
                 </Badge>
                 <Badge variant="info">{activeTaxConfig.regime ?? 'N/A'}</Badge>
                 <Badge variant="neutral">{activeTaxConfig.countryCode}</Badge>
-                <span className="text-sm text-gray-600 dark:text-gray-300">
+                <span className="text-sm text-slate-600 dark:text-slate-300">
                   FY {activeTaxConfig.fiscalYear}
                 </span>
               </div>
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                No active tax configuration found.
-              </p>
+              <p className="text-sm text-slate-500">No active tax configuration found.</p>
             )}
           </Card>
 
-          <Card title="Tax Slabs">
-            {loading ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Loading tax slabs...</p>
+          <Card title="Tax slabs">
+            {loadingShell ? (
+              <p className="text-sm text-slate-500">Loading…</p>
             ) : activeTaxSlabs.length ? (
               <Table
                 data={activeTaxSlabs}
@@ -391,31 +511,31 @@ const PayrollPayPage = () => {
                 columns={[
                   {
                     key: 'incomeFrom',
-                    label: 'Income From',
+                    label: 'Income from',
                     render: (row: TaxSlabRow) => formatCurrency(Number(row.incomeFrom)),
                   },
                   {
                     key: 'incomeTo',
-                    label: 'Income To',
+                    label: 'Income to',
                     render: (row: TaxSlabRow) =>
                       row.incomeTo ? formatCurrency(Number(row.incomeTo)) : 'No upper limit',
                   },
                   {
                     key: 'taxRate',
-                    label: 'Tax Rate',
+                    label: 'Tax rate',
                     render: (row: TaxSlabRow) => (row.taxRate ? `${row.taxRate}%` : '—'),
                   },
                 ]}
               />
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No tax slabs found.</p>
+              <p className="text-sm text-slate-500">No tax slabs found.</p>
             )}
           </Card>
 
-          <Card title="Pending Employee Tax View">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Employee-specific declared deductions, estimated TDS, and payslip-linked tax views are
-              still blocked by missing backend mutations and employee payroll detail queries.
+          <Card title="Employee tax (coming soon)">
+            <p className="text-sm text-slate-500">
+              Declared deductions and estimated TDS from profile will connect here in a later
+              release.
             </p>
           </Card>
         </div>
@@ -423,5 +543,6 @@ const PayrollPayPage = () => {
     </div>
   );
 };
+/* eslint-enable max-lines-per-function */
 
 export default PayrollPayPage;

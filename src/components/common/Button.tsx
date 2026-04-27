@@ -17,17 +17,17 @@ const Button = ({
   ...props
 }: ButtonProps) => {
   const baseClasses =
-    'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 dark:focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantClasses = {
     primary:
-      'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600',
+      'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600',
     secondary:
-      'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 dark:bg-gray-500 dark:hover:bg-gray-600',
+      'bg-slate-600 text-white shadow-sm hover:bg-slate-700 focus:ring-slate-500 dark:bg-slate-500 dark:hover:bg-slate-600',
     outline:
-      'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700',
+      'border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 focus:ring-indigo-500/40 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/80',
     danger:
-      'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-600',
+      'bg-red-600 text-white shadow-sm hover:bg-red-700 focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-600',
   };
 
   const sizeClasses = {

@@ -56,10 +56,10 @@ const NotificationDropdown = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={handleToggle}
-        className="relative rounded-lg p-2 text-white transition-all hover:bg-white/20"
+        className="relative rounded-md p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         aria-label="Notifications"
       >
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

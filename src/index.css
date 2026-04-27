@@ -4,11 +4,14 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+    @apply bg-slate-50 antialiased text-slate-900 dark:bg-slate-950 dark:text-slate-100;
   }
 
-  * {
-    @apply transition-colors duration-200;
+  button,
+  a[href],
+  [role='button'],
+  [role='tab'] {
+    @apply transition-colors duration-150;
   }
 }
 
@@ -20,5 +23,28 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* Payslip: print / Save as PDF — hide app chrome, show only the slip */
+@media print {
+  html.print-payslip body * {
+    visibility: hidden;
+  }
+  html.print-payslip #payslip-print-sheet,
+  html.print-payslip #payslip-print-sheet * {
+    visibility: visible;
+  }
+  html.print-payslip #payslip-print-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+    border: none;
+  }
+  html.print-payslip .no-print {
+    display: none !important;
   }
 }

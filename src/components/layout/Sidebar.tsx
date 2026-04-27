@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { matchesNavFilter, NAV_CATALOG } from '../../navigation/navCatalog';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -54,8 +55,11 @@ const workplaceNav: NavItemWithChildren = {
   children: [
     { path: '/workplace/benefits', label: 'Benefits' },
     { path: '/workplace/recruitment', label: 'Recruitment' },
-    { path: '/workplace/onboarding', label: 'Onboarding' },
+    { path: '/workplace/onboarding', label: 'Onboarding & exit' },
+    { path: '/workplace/workflows', label: 'Workflows' },
     { path: '/workplace/performance', label: 'Performance' },
+    { path: '/workplace/succession', label: 'Succession' },
+    { path: '/workplace/compensation', label: 'Compensation' },
     { path: '/workplace/learning', label: 'Learning' },
     { path: '/workplace/assets', label: 'Assets' },
     { path: '/workplace/grievance', label: 'Grievance' },
@@ -84,9 +88,16 @@ const adminNav: NavItemWithChildren = {
     { path: '/admin/employees', label: 'Employees' },
     { path: '/admin/attendance-policy', label: 'Attendance policy' },
     { path: '/admin/reports', label: 'Reports' },
+    { path: '/admin/module-health', label: 'Service health' },
     { path: '/admin/settings', label: 'Settings' },
   ],
 };
+
+function itemMatchesMenuFilter(query: string, path: string, label: string): boolean {
+  if (!query.trim()) return true;
+  const kws = NAV_CATALOG.find((e) => e.path === path)?.keywords ?? [];
+  return matchesNavFilter(query, label, path, kws);
+}
 
 const payrollNav: NavItemWithChildren = {
   label: 'Payroll',
@@ -107,6 +118,7 @@ const payrollNav: NavItemWithChildren = {
   ],
 };
 
+/* eslint-disable max-lines-per-function -- single sidebar shell: nav groups + mobile overlay */
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { role } = useAuth();
   const location = useLocation();
@@ -114,73 +126,59 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const isWorkplacePath = location.pathname.startsWith('/workplace');
   const isPayrollPath = location.pathname.startsWith('/payroll');
   const isAdminPath = location.pathname.startsWith('/admin');
+  const [menuFilter, setMenuFilter] = useState('');
   const [orgExpanded, setOrgExpanded] = useState(isOrgPath);
   const [workplaceExpanded, setWorkplaceExpanded] = useState(isWorkplacePath);
   const [payrollExpanded, setPayrollExpanded] = useState(isPayrollPath);
   const [adminExpanded, setAdminExpanded] = useState(isAdminPath);
 
-  const getNavItemColors = (path: string) => {
-    if (path === '/dashboard') {
-      return {
-        active: 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md',
-        inactive: 'text-gray-700 hover:bg-blue-50 dark:text-gray-300 dark:hover:bg-blue-900/20',
-      };
-    }
-    if (path === '/attendance') {
-      return {
-        active: 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md',
-        inactive: 'text-gray-700 hover:bg-green-50 dark:text-gray-300 dark:hover:bg-green-900/20',
-      };
-    }
-    if (path === '/leave') {
-      return {
-        active: 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md',
-        inactive: 'text-gray-700 hover:bg-orange-50 dark:text-gray-300 dark:hover:bg-orange-900/20',
-      };
-    }
-    if (path.startsWith('/payroll')) {
-      return {
-        active: 'bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-md',
-        inactive: 'text-gray-700 hover:bg-purple-50 dark:text-gray-300 dark:hover:bg-purple-900/20',
-      };
-    }
-    if (path === '/expenses') {
-      return {
-        active: 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md',
-        inactive: 'text-gray-700 hover:bg-red-50 dark:text-gray-300 dark:hover:bg-red-900/20',
-      };
-    }
-    if (path === '/notifications') {
-      return {
-        active: 'bg-gradient-to-r from-cyan-500 to-teal-600 text-white shadow-md',
-        inactive: 'text-gray-700 hover:bg-cyan-50 dark:text-gray-300 dark:hover:bg-cyan-900/20',
-      };
-    }
-    if (path.startsWith('/organization')) {
-      return {
-        active: 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md',
-        inactive: 'text-gray-700 hover:bg-amber-50 dark:text-gray-300 dark:hover:bg-amber-900/20',
-      };
-    }
-    if (path.startsWith('/workplace')) {
-      return {
-        active: 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-md',
-        inactive: 'text-gray-700 hover:bg-teal-50 dark:text-gray-300 dark:hover:bg-teal-900/20',
-      };
-    }
-    if (path.startsWith('/admin')) {
-      return {
-        active: 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md',
-        inactive: 'text-gray-700 hover:bg-indigo-50 dark:text-gray-300 dark:hover:bg-indigo-900/20',
-      };
-    }
-    return {
-      active: 'bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-200',
-      inactive: 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700',
-    };
+  const filterQ = menuFilter.trim();
+  const filterActive = filterQ.length > 0;
+
+  const orgChildren = useMemo(
+    () => organizationNav.children.filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+    [filterQ]
+  );
+  const workplaceChildren = useMemo(
+    () => workplaceNav.children.filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+    [filterQ]
+  );
+  const payrollChildren = useMemo(
+    () => payrollNav.children.filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+    [filterQ]
+  );
+  const adminChildren = useMemo(
+    () => adminNav.children.filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+    [filterQ]
+  );
+
+  /** Single accent system: neutral nav, clear active state (common on enterprise HRIS shells). */
+  const nav = {
+    item: 'mx-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+    active:
+      'bg-white text-slate-900 shadow-card ring-1 ring-slate-200/90 dark:bg-slate-800 dark:text-white dark:ring-slate-600/90',
+    inactive:
+      'text-slate-600 hover:bg-slate-100/90 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100',
+    sub: 'mx-1 flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
+    groupBtn:
+      'mx-1 flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors',
   };
 
   const navItems: NavItem[] = [
+    {
+      path: '/insights',
+      label: 'Insights',
+      icon: (
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+      ),
+    },
     {
       path: '/dashboard',
       label: 'Dashboard',
@@ -253,12 +251,19 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     },
   ];
 
-  const filteredNavItems = navItems.filter((item) => !item.adminOnly || role === 'admin');
+  const filteredNavItems = useMemo(
+    () =>
+      navItems
+        .filter((item) => !item.adminOnly || role === 'admin')
+        .filter((item) => !filterActive || itemMatchesMenuFilter(filterQ, item.path, item.label)),
+    [filterActive, filterQ, role]
+  );
 
-  const showOrgExpanded = orgExpanded || isOrgPath;
-  const showWorkplaceExpanded = workplaceExpanded || isWorkplacePath;
-  const showPayrollExpanded = payrollExpanded || isPayrollPath;
-  const showAdminExpanded = adminExpanded || isAdminPath;
+  const showOrgExpanded = orgExpanded || isOrgPath || (filterActive && orgChildren.length > 0);
+  const showWorkplaceExpanded =
+    workplaceExpanded || isWorkplacePath || (filterActive && workplaceChildren.length > 0);
+  const showPayrollExpanded = payrollExpanded || isPayrollPath || (filterActive && payrollChildren.length > 0);
+  const showAdminExpanded = adminExpanded || isAdminPath || (filterActive && adminChildren.length > 0);
 
   return (
     <>
@@ -268,18 +273,19 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-30 w-64 transform border-r border-gray-200 
-          bg-gradient-to-b from-gray-50 to-white transition-transform duration-300 ease-in-out dark:border-gray-700 
-          dark:from-gray-800 dark:to-gray-900 lg:static lg:translate-x-0
+          fixed inset-y-0 left-0 z-30 w-64 transform border-r border-slate-200/90 bg-white
+          transition-transform duration-200 ease-out dark:border-slate-700/90 dark:bg-slate-900 lg:static lg:translate-x-0
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center justify-between border-b border-primary-200 bg-gradient-to-r from-primary-600 to-purple-600 px-4 dark:border-gray-700 dark:from-primary-800 dark:to-purple-900">
-            <span className="text-lg font-semibold text-white drop-shadow-md">KabiPay</span>
+          <div className="flex h-14 items-center justify-between border-b border-slate-200/90 px-4 dark:border-slate-700/90">
+            <span className="text-lg font-semibold tracking-tight text-indigo-600 dark:text-indigo-400">
+              KabiPay
+            </span>
             <button
               onClick={onClose}
-              className="rounded-lg p-2 text-white transition-all hover:bg-white/20 lg:hidden"
+              className="rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 lg:hidden"
               aria-label="Close sidebar"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -293,188 +299,210 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             </button>
           </div>
 
-          <nav className="flex-1 space-y-2 overflow-y-auto p-4">
-            {filteredNavItems.map((item) => {
-              const colors = getNavItemColors(item.path);
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                      isActive ? colors.active : colors.inactive
-                    }`
-                  }
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </NavLink>
-              );
-            })}
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setOrgExpanded(!showOrgExpanded)}
-                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
-                  isOrgPath
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-amber-50 dark:text-gray-300 dark:hover:bg-amber-900/20'
-                }`}
+          <div className="border-b border-slate-200/80 px-3 pb-2 pt-1 dark:border-slate-700/80">
+            <div className="relative">
+              <span
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                aria-hidden
               >
-                <div className="flex items-center gap-3">
-                  {organizationNav.icon}
-                  <span>{organizationNav.label}</span>
-                </div>
-                <svg
-                  className={`h-4 w-4 shrink-0 transition-transform ${showOrgExpanded ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-              </button>
-              {showOrgExpanded && (
-                <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-amber-200 pl-3 dark:border-amber-800">
-                  {organizationNav.children.map((child) => {
-                    const subColors = getNavItemColors(child.path);
-                    return (
+              </span>
+              <input
+                type="search"
+                value={menuFilter}
+                onChange={(e) => setMenuFilter(e.target.value)}
+                placeholder="Filter menu, pages…"
+                className="w-full rounded-lg border border-slate-200/90 bg-slate-50/90 py-1.5 pl-8 pr-2 text-xs text-slate-900 shadow-inner placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100"
+                aria-label="Filter sidebar menu"
+              />
+            </div>
+          </div>
+
+          <nav className="flex-1 space-y-1 overflow-y-auto p-2 pt-3">
+            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              Workspace
+            </p>
+            {filteredNavItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={onClose}
+                className={({ isActive }) => `${nav.item} ${isActive ? nav.active : nav.inactive}`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+
+            {(!filterActive || orgChildren.length > 0) && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setOrgExpanded(!showOrgExpanded)}
+                  className={`${nav.groupBtn} ${
+                    isOrgPath
+                      ? 'bg-slate-200/50 font-semibold text-slate-900 dark:bg-slate-800/80 dark:text-slate-100'
+                      : 'text-slate-700 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {organizationNav.icon}
+                    <span>{organizationNav.label}</span>
+                  </div>
+                  <svg
+                    className={`h-4 w-4 shrink-0 transition-transform ${showOrgExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                {showOrgExpanded && orgChildren.length > 0 && (
+                  <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-200/90 pl-2 dark:border-slate-600/80">
+                    {orgChildren.map((child) => (
                       <NavLink
                         key={child.path}
                         to={child.path}
                         onClick={onClose}
                         className={({ isActive }) =>
-                          `flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200 ${
-                            isActive ? subColors.active : subColors.inactive
-                          }`
+                          `${nav.sub} ${isActive ? nav.active : nav.inactive}`
                         }
                       >
                         <span>{child.label}</span>
                       </NavLink>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+                {showOrgExpanded && orgChildren.length === 0 && filterActive && (
+                  <p className="ml-2 mt-1 pl-2 text-xs text-slate-400">No items match</p>
+                )}
+              </div>
+            )}
 
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setWorkplaceExpanded(!showWorkplaceExpanded)}
-                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
-                  isWorkplacePath
-                    ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-teal-50 dark:text-gray-300 dark:hover:bg-teal-900/20'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {workplaceNav.icon}
-                  <span>{workplaceNav.label}</span>
-                </div>
-                <svg
-                  className={`h-4 w-4 shrink-0 transition-transform ${showWorkplaceExpanded ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            {(!filterActive || workplaceChildren.length > 0) && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setWorkplaceExpanded(!showWorkplaceExpanded)}
+                  className={`${nav.groupBtn} ${
+                    isWorkplacePath
+                      ? 'bg-slate-200/50 font-semibold text-slate-900 dark:bg-slate-800/80 dark:text-slate-100'
+                      : 'text-slate-700 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/50'
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-              {showWorkplaceExpanded && (
-                <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-teal-200 pl-3 dark:border-teal-800">
-                  {workplaceNav.children.map((child) => {
-                    const subColors = getNavItemColors(child.path);
-                    return (
+                  <div className="flex items-center gap-3">
+                    {workplaceNav.icon}
+                    <span>{workplaceNav.label}</span>
+                  </div>
+                  <svg
+                    className={`h-4 w-4 shrink-0 transition-transform ${showWorkplaceExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                {showWorkplaceExpanded && workplaceChildren.length > 0 && (
+                  <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-200/90 pl-2 dark:border-slate-600/80">
+                    {workplaceChildren.map((child) => (
                       <NavLink
                         key={child.path}
                         to={child.path}
                         onClick={onClose}
                         className={({ isActive }) =>
-                          `flex gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200 ${
-                            isActive ? subColors.active : subColors.inactive
-                          }`
+                          `${nav.sub} ${isActive ? nav.active : nav.inactive}`
                         }
                       >
                         <span>{child.label}</span>
                       </NavLink>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+                {showWorkplaceExpanded && workplaceChildren.length === 0 && filterActive && (
+                  <p className="ml-2 mt-1 pl-2 text-xs text-slate-400">No items match</p>
+                )}
+              </div>
+            )}
 
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setPayrollExpanded(!showPayrollExpanded)}
-                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
-                  isPayrollPath
-                    ? 'bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-purple-50 dark:text-gray-300 dark:hover:bg-purple-900/20'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {payrollNav.icon}
-                  <span>{payrollNav.label}</span>
-                </div>
-                <svg
-                  className={`h-4 w-4 shrink-0 transition-transform ${showPayrollExpanded ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            {(!filterActive || payrollChildren.length > 0) && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setPayrollExpanded(!showPayrollExpanded)}
+                  className={`${nav.groupBtn} ${
+                    isPayrollPath
+                      ? 'bg-slate-200/50 font-semibold text-slate-900 dark:bg-slate-800/80 dark:text-slate-100'
+                      : 'text-slate-700 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/50'
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-              {showPayrollExpanded && (
-                <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-purple-200 pl-3 dark:border-purple-800">
-                  {payrollNav.children.map((child) => {
-                    const subColors = getNavItemColors(child.path);
-                    return (
+                  <div className="flex items-center gap-3">
+                    {payrollNav.icon}
+                    <span>{payrollNav.label}</span>
+                  </div>
+                  <svg
+                    className={`h-4 w-4 shrink-0 transition-transform ${showPayrollExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                {showPayrollExpanded && payrollChildren.length > 0 && (
+                  <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-200/90 pl-2 dark:border-slate-600/80">
+                    {payrollChildren.map((child) => (
                       <NavLink
                         key={child.path}
                         to={child.path}
                         onClick={onClose}
                         className={({ isActive }) =>
-                          `flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200 ${
-                            isActive ? subColors.active : subColors.inactive
-                          }`
+                          `${nav.sub} ${isActive ? nav.active : nav.inactive}`
                         }
                       >
                         <span>{child.label}</span>
                       </NavLink>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+                {showPayrollExpanded && payrollChildren.length === 0 && filterActive && (
+                  <p className="ml-2 mt-1 pl-2 text-xs text-slate-400">No items match</p>
+                )}
+              </div>
+            )}
 
-            {role === 'admin' && (
+            {role === 'admin' && (!filterActive || adminChildren.length > 0) && (
               <div className="pt-2">
                 <button
                   type="button"
                   onClick={() => setAdminExpanded(!showAdminExpanded)}
-                  className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
+                  className={`${nav.groupBtn} ${
                     isAdminPath
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-indigo-50 dark:text-gray-300 dark:hover:bg-indigo-900/20'
+                      ? 'bg-slate-200/50 font-semibold text-slate-900 dark:bg-slate-800/80 dark:text-slate-100'
+                      : 'text-slate-700 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/50'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -495,26 +523,24 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     />
                   </svg>
                 </button>
-                {showAdminExpanded && (
-                  <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-indigo-200 pl-3 dark:border-indigo-800">
-                    {adminNav.children.map((child) => {
-                      const subColors = getNavItemColors(child.path);
-                      return (
-                        <NavLink
-                          key={child.path}
-                          to={child.path}
-                          onClick={onClose}
-                          className={({ isActive }) =>
-                            `flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200 ${
-                              isActive ? subColors.active : subColors.inactive
-                            }`
-                          }
-                        >
-                          <span>{child.label}</span>
-                        </NavLink>
-                      );
-                    })}
+                {showAdminExpanded && adminChildren.length > 0 && (
+                  <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-200/90 pl-2 dark:border-slate-600/80">
+                    {adminChildren.map((child) => (
+                      <NavLink
+                        key={child.path}
+                        to={child.path}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                          `${nav.sub} ${isActive ? nav.active : nav.inactive}`
+                        }
+                      >
+                        <span>{child.label}</span>
+                      </NavLink>
+                    ))}
                   </div>
+                )}
+                {showAdminExpanded && adminChildren.length === 0 && filterActive && (
+                  <p className="ml-2 mt-1 pl-2 text-xs text-slate-400">No items match</p>
                 )}
               </div>
             )}
@@ -524,5 +550,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     </>
   );
 };
+/* eslint-enable max-lines-per-function */
 
 export default Sidebar;

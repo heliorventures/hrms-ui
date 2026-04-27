@@ -68,12 +68,16 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4 dark:bg-gray-900">
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
       <div className="w-full max-w-md">
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-8 shadow-card-md dark:border-slate-700/80 dark:bg-slate-900/80">
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">KabiPay</h1>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Sign in to your account</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+              KabiPay
+            </h1>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Sign in to your account
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

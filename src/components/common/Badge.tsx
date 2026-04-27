@@ -8,21 +8,25 @@ interface BadgeProps {
 
 const Badge = ({ children, variant = 'neutral', size = 'md' }: BadgeProps) => {
   const variantClasses = {
-    success: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    danger: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    info: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    neutral: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+    success:
+      'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-500/10 dark:bg-emerald-950/50 dark:text-emerald-200 dark:ring-emerald-500/20',
+    warning:
+      'bg-amber-50 text-amber-900 ring-1 ring-amber-500/10 dark:bg-amber-950/50 dark:text-amber-200 dark:ring-amber-500/20',
+    danger:
+      'bg-red-50 text-red-800 ring-1 ring-red-500/10 dark:bg-red-950/40 dark:text-red-200 dark:ring-red-500/20',
+    info: 'bg-sky-50 text-sky-900 ring-1 ring-sky-500/10 dark:bg-sky-950/40 dark:text-sky-200 dark:ring-sky-500/20',
+    neutral:
+      'bg-slate-100 text-slate-700 ring-1 ring-slate-500/5 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-500/10',
   };
 
   const sizeClasses = {
     sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-sm',
+    md: 'px-2.5 py-0.5 text-xs font-medium',
   };
 
   return (
     <span
-      className={`inline-flex items-center rounded-full font-medium ${variantClasses[variant]} ${sizeClasses[size]}`}
+      className={`inline-flex items-center rounded-md font-medium ${variantClasses[variant]} ${sizeClasses[size]}`}
     >
       {children}
     </span>

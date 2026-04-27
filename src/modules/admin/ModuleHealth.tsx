@@ -234,6 +234,20 @@ const PROBES: ProbeConfig[] = [
     previewFields: ['announcements'],
   },
   {
+    key: 'analytics',
+    label: 'Analytics',
+    plane: 'client',
+    query: gql`
+      query AnalyticsHealth {
+        reportDefinitions(limit: 1) {
+          id
+          name
+        }
+      }
+    `,
+    previewFields: ['reportDefinitions'],
+  },
+  {
     key: 'tenant',
     label: 'Tenants (ops)',
     plane: 'operator',

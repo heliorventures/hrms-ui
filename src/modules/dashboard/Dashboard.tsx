@@ -12,18 +12,22 @@ const Dashboard = () => {
   const { currentTenant } = useTenant();
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:gap-6">
-      <div className="flex-1 space-y-6 lg:min-w-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Welcome back, {user?.name}!
+    <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+      <div className="min-w-0 flex-1 space-y-6">
+        <div className="flex flex-col gap-3 border-b border-slate-200/80 pb-5 dark:border-slate-700/80 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+              Welcome back, {user?.name ?? 'there'}
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {currentTenant.name} • {user?.designation}
+            <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
+              {currentTenant.name} · {user?.designation ?? 'Employee'}
             </p>
           </div>
-          <Badge variant="success">{user?.employeeId}</Badge>
+          {user?.employeeId ? (
+            <Badge variant="neutral" size="md">
+              ID {user.employeeId}
+            </Badge>
+          ) : null}
         </div>
 
         <PunchInOut />

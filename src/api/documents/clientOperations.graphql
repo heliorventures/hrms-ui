@@ -335,3 +335,140 @@ query OrgChart($limit: Int! = 500) {
     designationTitle
   }
 }
+
+# Workplace — talent & pay (read v1; kabipay-succession / kabipay-compensation subgraphs)
+query WorkplaceSuccessionData($clim: Int! = 100, $plim: Int! = 50) {
+  competencies(limit: $clim) {
+    id
+    name
+    category
+    description
+  }
+  talentPools(limit: $plim) {
+    id
+    name
+    description
+  }
+}
+
+# Insights (kabipay-analytics subgraph, port 4029)
+query InsightsWorkforce($lim: Int! = 24) {
+  workforceSnapshots(limit: $lim) {
+    id
+    snapshotDate
+    totalHeadcount
+    activeEmployees
+    newJoiners
+    separations
+    openPositions
+    averageTenureMonths
+    attritionRate
+  }
+}
+
+query InsightsReportsSchedules {
+  reportDefinitions(limit: 50) {
+    id
+    name
+    entityType
+    chartType
+    isPublic
+  }
+  reportSchedules(limit: 30) {
+    id
+    frequency
+    isActive
+    deliveryFormat
+  }
+}
+
+query InsightsDashboards {
+  dashboards(limit: 20) {
+    id
+    name
+    description
+    isDefault
+  }
+  dashboardWidgets(limit: 50) {
+    id
+    dashboardId
+    title
+    widgetType
+  }
+}
+
+query InsightsOutbox($lim: Int! = 50) {
+  outboxEvents(limit: $lim) {
+    id
+    eventType
+    aggregateType
+    status
+    createdAt
+    processedAt
+    retryCount
+  }
+}
+
+query ClientOpsSeparationsList($limit: Int! = 50) {
+  separations(limit: $limit) {
+    id
+    separationType
+    resignationDate
+    lastWorkingDate
+    reason
+    status
+    createdAt
+  }
+}
+
+mutation ClientOpsSubmitSeparation($input: SubmitSeparationInput!) {
+  submitSeparation(input: $input) {
+    id
+    status
+    lastWorkingDate
+  }
+}
+
+mutation ApproveSeparation($separationId: ID!) {
+  approveSeparation(separationId: $separationId) {
+    id
+    status
+  }
+}
+
+mutation RejectSeparation($separationId: ID!) {
+  rejectSeparation(separationId: $separationId) {
+    id
+    status
+  }
+}
+
+query WorkplaceCompensationData(
+  $blim: Int! = 100
+  $clim: Int! = 20
+  $dlim: Int! = 200
+) {
+  designations(limit: $dlim) {
+    id
+    title
+  }
+  salaryBands(limit: $blim) {
+    id
+    designationId
+    grade
+    minSalary
+    midSalary
+    maxSalary
+    currency
+    effectiveYear
+  }
+  compensationReviewCycles(limit: $clim) {
+    id
+    name
+    year
+    startDate
+    endDate
+    status
+    budgetPercentage
+  }
+}

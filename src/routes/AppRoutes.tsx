@@ -27,6 +27,10 @@ import PerformancePage from '../modules/workplace/PerformancePage';
 import LearningPage from '../modules/workplace/LearningPage';
 import AssetsPage from '../modules/workplace/AssetsPage';
 import GrievancePage from '../modules/workplace/GrievancePage';
+import SuccessionPage from '../modules/workplace/SuccessionPage';
+import CompensationPage from '../modules/workplace/CompensationPage';
+import AnalyticsPage from '../modules/insights/AnalyticsPage';
+import AdminWorkflowsPage from '../modules/admin/AdminWorkflowsPage';
 
 const ProtectedLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -49,6 +53,7 @@ const AppRoutes = () => {
       <Route path="/" element={<ProtectedLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="insights" element={<AnalyticsPage />} />
         <Route path="attendance" element={<AttendancePage />} />
         <Route path="leave" element={<LeavePage />} />
         <Route path="payroll" element={<Navigate to="/payroll/payslips" replace />} />
@@ -67,9 +72,12 @@ const AppRoutes = () => {
         <Route path="workplace/recruitment" element={<RecruitmentPage />} />
         <Route path="workplace/onboarding" element={<OnboardingPage />} />
         <Route path="workplace/performance" element={<PerformancePage />} />
+        <Route path="workplace/succession" element={<SuccessionPage />} />
+        <Route path="workplace/compensation" element={<CompensationPage />} />
         <Route path="workplace/learning" element={<LearningPage />} />
         <Route path="workplace/assets" element={<AssetsPage />} />
         <Route path="workplace/grievance" element={<GrievancePage />} />
+        <Route path="workplace/workflows" element={<AdminWorkflowsPage />} />
 
         {role === 'admin' && (
           <>
