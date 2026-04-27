@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { ClientOpsEmployeesDirectoryDocument } from '../../api/graphql/graphql';
 
 interface EmployeeRow {
   id: string;
@@ -23,24 +23,6 @@ interface EmployeeRow {
 interface EmployeesData {
   employees: EmployeeRow[];
 }
-
-const EMPLOYEES_QUERY = gql`
-  query EmployeesDirectory($limit: Int! = 100) {
-    employees(limit: $limit) {
-      id
-      employeeCode
-      firstName
-      lastName
-      fullName
-      status
-      employmentType
-      dateOfJoining
-      departmentId
-      designationId
-      userId
-    }
-  }
-`;
 
 const matchSearch = (employee: EmployeeRow, query: string): boolean => {
   if (!query.trim()) return true;
@@ -69,7 +51,9 @@ const OrganizationEmployeesPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await client.request<EmployeesData>(EMPLOYEES_QUERY, { limit: 100 });
+        const result = await client.request<EmployeesData>(ClientOpsEmployeesDirectoryDocument, {
+          limit: 100,
+        });
         if (!cancelled) setEmployees(result.employees ?? []);
       } catch (e) {
         if (!cancelled) {

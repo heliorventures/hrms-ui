@@ -1,46 +1,12 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { useGraphClient } from '../../hooks/useGraphClient';
-
-const LOAD = gql`
-  query AdminAttendancePolicy($slim: Int! = 50) {
-    attendancePunchPolicy {
-      id
-      tenantId
-      isEnforced
-      siteLatitude
-      siteLongitude
-      maxDistanceMeters
-      ipAllowlist
-      updatedAt
-    }
-    shifts(limit: $slim) {
-      id
-      name
-      startTime
-      endTime
-      workHours
-      isNightShift
-    }
-  }
-`;
-
-const UPSERT = gql`
-  mutation UpsertPunchPolicy($input: UpsertAttendancePunchPolicyInput!) {
-    upsertAttendancePunchPolicy(input: $input) {
-      id
-      isEnforced
-      siteLatitude
-      siteLongitude
-      maxDistanceMeters
-      ipAllowlist
-      updatedAt
-    }
-  }
-`;
+import {
+  ClientOpsAdminAttendancePolicyDocument,
+  ClientOpsUpsertAttendancePunchPolicyDocument,
+} from '../../api/graphql/graphql';
 
 const AdminAttendancePolicyPage = () => {
   const client = useGraphClient('client');
@@ -86,7 +52,7 @@ const AdminAttendancePolicyPage = () => {
         updatedAt?: string | null;
       };
       shifts: typeof shifts;
-    }>(LOAD, { slim: 50 });
+    }>(ClientOpsAdminAttendancePolicyDocument, { slim: 50 });
   }, [client]);
 
   useEffect(() => {
@@ -136,7 +102,7 @@ const AdminAttendancePolicyPage = () => {
     }
     setSaving(true);
     try {
-      await client.request(UPSERT, {
+      await client.request(ClientOpsUpsertAttendancePunchPolicyDocument, {
         input: {
           isEnforced,
           siteLatitude: lat,

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
@@ -7,6 +6,7 @@ import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import CreateEmployeeModal from './components/CreateEmployeeModal';
 import EditEmployeeModal, { type EditEmployeeRow } from './components/EditEmployeeModal';
+import { ClientOpsAdminEmployeesDocument, ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
 
 interface EmployeeRow {
   id: string;
@@ -27,38 +27,6 @@ interface EmployeesData {
   employees: EmployeeRow[];
 }
 
-const EMPLOYEES_QUERY = gql`
-  query AdminEmployees($limit: Int! = 100) {
-    employees(limit: $limit) {
-      id
-      employeeCode
-      firstName
-      lastName
-      fullName
-      status
-      employmentType
-      dateOfJoining
-      departmentId
-      designationId
-      reportingManagerId
-      userId
-    }
-  }
-`;
-
-const ORG_LABELS = gql`
-  query AdminOrgLabels($dlim: Int! = 100, $glim: Int! = 100) {
-    departments(limit: $dlim) {
-      id
-      name
-    }
-    designations(limit: $glim) {
-      id
-      title
-    }
-  }
-`;
-
 const AdminEmployeesPage = () => {
   const client = useGraphClient('client');
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
@@ -73,7 +41,9 @@ const AdminEmployeesPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await client.request<EmployeesData>(EMPLOYEES_QUERY, { limit: 100 });
+      const result = await client.request<EmployeesData>(ClientOpsAdminEmployeesDocument, {
+        limit: 100,
+      });
       setEmployees(result.employees ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load employees');
@@ -93,7 +63,7 @@ const AdminEmployeesPage = () => {
         const o = await client.request<{
           departments: { id: string; name: string }[];
           designations: { id: string; title: string }[];
-        }>(ORG_LABELS, { dlim: 100, glim: 100 });
+        }>(ClientOpsAdminOrgLabelsDocument, { dlim: 100, glim: 100 });
         if (cancelled) return;
         const d: Record<string, string> = {};
         o.departments?.forEach((x) => {

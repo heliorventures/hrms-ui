@@ -1,45 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Modal from '../../../components/common/Modal';
 import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-
-const UPDATE_EMPLOYEE = gql`
-  mutation UpdateEmployee($input: UpdateEmployeeInput!) {
-    updateEmployee(input: $input) {
-      id
-      employeeCode
-      fullName
-      status
-      dateOfJoining
-      departmentId
-      designationId
-      employmentType
-      reportingManagerId
-    }
-  }
-`;
-
-const ORG_LISTS = gql`
-  query OrgListsForEditEmployee($dlim: Int! = 100, $glim: Int! = 100, $elim: Int! = 100) {
-    departments(limit: $dlim) {
-      id
-      name
-      code
-    }
-    designations(limit: $glim) {
-      id
-      title
-    }
-    employees(limit: $elim) {
-      id
-      employeeCode
-      fullName
-    }
-  }
-`;
+import {
+  UpdateEmployeeDocument,
+  ClientOpsOrgListsForEmployeeModalDocument,
+  type UpdateEmployeeInput,
+} from '../../../api/graphql/graphql';
 
 export interface EditEmployeeRow {
   id: string;
@@ -86,7 +55,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         departments: { id: string; name: string; code: string }[];
         designations: { id: string; title: string }[];
         employees: { id: string; employeeCode: string; fullName: string }[];
-      }>(ORG_LISTS, { dlim: 100, glim: 100, elim: 100 });
+      }>(ClientOpsOrgListsForEmployeeModalDocument, { dlim: 100, glim: 100, elim: 100 });
       setDeptOptions([
         { value: '', label: '— None —' },
         ...(res.departments ?? []).map((d) => ({
@@ -161,7 +130,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         input.designationId = designationId;
       }
       input.reportingManagerId = reportingManagerId || null;
-      await client.request(UPDATE_EMPLOYEE, { input });
+      await client.request(UpdateEmployeeDocument, { input: input as UpdateEmployeeInput });
       onUpdated();
       onClose();
     } catch (err) {

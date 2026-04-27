@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { ClientOpsAdminSettingsEmployeesDocument } from '../../api/graphql/graphql';
 
 interface EmployeeRow {
   id: string;
@@ -18,19 +18,6 @@ interface EmployeeSettingsData {
   employees: EmployeeRow[];
 }
 
-const EMPLOYEE_SETTINGS_QUERY = gql`
-  query AdminSettingsEmployees($limit: Int! = 100) {
-    employees(limit: $limit) {
-      id
-      employeeCode
-      fullName
-      status
-      employmentType
-      userId
-    }
-  }
-`;
-
 const AdminSettingsPage = () => {
   const client = useGraphClient('client');
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
@@ -43,9 +30,12 @@ const AdminSettingsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await client.request<EmployeeSettingsData>(EMPLOYEE_SETTINGS_QUERY, {
-          limit: 100,
-        });
+        const result = await client.request<EmployeeSettingsData>(
+          ClientOpsAdminSettingsEmployeesDocument,
+          {
+            limit: 100,
+          }
+        );
         if (!cancelled) setEmployees(result.employees ?? []);
       } catch (e) {
         if (!cancelled) {

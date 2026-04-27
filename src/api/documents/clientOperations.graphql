@@ -845,3 +845,270 @@ query ClientOpsLeaveTypeNames($limit: Int! = 50) {
     code
   }
 }
+
+# Payroll / tax / admin / org (§0.2 codegen — batch 3)
+query PayrollBoard($limit: Int! = 20) {
+  salaryComponents(limit: $limit) {
+    id
+    name
+    code
+    componentType
+    isTaxable
+    isFixed
+    isActive
+  }
+  payrollCycles(limit: $limit) {
+    id
+    name
+    month
+    year
+    status
+    paymentDate
+  }
+}
+
+query PayrollShell {
+  payrollCycles(limit: 100) {
+    id
+    name
+    month
+    year
+    status
+    paymentDate
+  }
+  taxConfigurations(limit: 100) {
+    id
+    fiscalYear
+    regime
+    countryCode
+    isActive
+  }
+  taxSlabs(limit: 100) {
+    id
+    taxConfigVersionId
+    incomeFrom
+    incomeTo
+    taxRate
+  }
+}
+
+query PayrollSalaryComponents {
+  salaryComponents(limit: 100) {
+    id
+    name
+    code
+    componentType
+    isTaxable
+    isFixed
+    isActive
+  }
+}
+
+query ClientOpsPayslipsForPayrollHub($limit: Int! = 24) {
+  payslips(limit: $limit) {
+    id
+    payrollCycleId
+    grossSalary
+    totalDeductions
+    netSalary
+    pfEmployee
+    pfEmployer
+    esiEmployee
+    esiEmployer
+    tdsAmount
+    professionalTax
+    uanNumber
+    esicNumber
+    status
+    generatedAt
+    lines {
+      id
+      salaryComponentId
+      amount
+      componentType
+    }
+  }
+}
+
+query ClientOpsPayrollTaxBoard($limit: Int! = 20) {
+  taxConfigurations(limit: $limit) {
+    id
+    fiscalYear
+    regime
+    countryCode
+    isActive
+  }
+  taxSlabs(limit: $limit) {
+    id
+    taxConfigVersionId
+    incomeFrom
+    incomeTo
+    taxRate
+    surchargeRate
+    cessRate
+  }
+}
+
+query ClientOpsAdminEmployees($limit: Int! = 100) {
+  employees(limit: $limit) {
+    id
+    employeeCode
+    firstName
+    lastName
+    fullName
+    status
+    employmentType
+    dateOfJoining
+    departmentId
+    designationId
+    reportingManagerId
+    userId
+  }
+}
+
+query ClientOpsAdminOrgLabels($dlim: Int! = 100, $glim: Int! = 100) {
+  departments(limit: $dlim) {
+    id
+    name
+  }
+  designations(limit: $glim) {
+    id
+    title
+  }
+}
+
+query ClientOpsOrgListsForEmployeeModal(
+  $dlim: Int! = 100
+  $glim: Int! = 100
+  $elim: Int! = 100
+) {
+  departments(limit: $dlim) {
+    id
+    name
+    code
+  }
+  designations(limit: $glim) {
+    id
+    title
+  }
+  employees(limit: $elim) {
+    id
+    employeeCode
+    fullName
+  }
+}
+
+query ClientOpsAdminAttendancePolicy($slim: Int! = 50) {
+  attendancePunchPolicy {
+    id
+    tenantId
+    isEnforced
+    siteLatitude
+    siteLongitude
+    maxDistanceMeters
+    ipAllowlist
+    updatedAt
+  }
+  shifts(limit: $slim) {
+    id
+    name
+    startTime
+    endTime
+    workHours
+    isNightShift
+  }
+}
+
+mutation ClientOpsUpsertAttendancePunchPolicy($input: UpsertAttendancePunchPolicyInput!) {
+  upsertAttendancePunchPolicy(input: $input) {
+    id
+    isEnforced
+    siteLatitude
+    siteLongitude
+    maxDistanceMeters
+    ipAllowlist
+    updatedAt
+  }
+}
+
+query ClientOpsEmployeesDirectory($limit: Int! = 100) {
+  employees(limit: $limit) {
+    id
+    employeeCode
+    firstName
+    lastName
+    fullName
+    status
+    employmentType
+    dateOfJoining
+    departmentId
+    designationId
+    userId
+  }
+}
+
+query ClientOpsEmployeeDetail($id: ID!) {
+  employee(id: $id) {
+    id
+    employeeCode
+    firstName
+    lastName
+    fullName
+    status
+    employmentType
+    dateOfJoining
+    departmentId
+    designationId
+    userId
+    createdAt
+    updatedAt
+  }
+}
+
+query ClientOpsAdminSettingsEmployees($limit: Int! = 100) {
+  employees(limit: $limit) {
+    id
+    employeeCode
+    fullName
+    status
+    employmentType
+    userId
+  }
+}
+
+query ClientOpsAdminReportsData {
+  employees(limit: 100) {
+    id
+    employeeCode
+    fullName
+  }
+  attendance(limit: 100) {
+    id
+    employeeId
+    workDate
+    status
+    checkInTime
+    checkOutTime
+  }
+  leaveRequests(limit: 100) {
+    id
+    employeeId
+    fromDate
+    toDate
+    status
+  }
+  payrollCycles(limit: 100) {
+    id
+    name
+    month
+    year
+    status
+    paymentDate
+  }
+  salaryComponents(limit: 100) {
+    id
+    componentType
+    isActive
+    isTaxable
+  }
+}

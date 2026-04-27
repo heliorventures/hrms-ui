@@ -1,27 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
-
-const ORG_DOCS = gql`
-  query OrgDocumentsList($tlim: Int! = 50, $dlim: Int! = 50) {
-    documentTypes(limit: $tlim) {
-      id
-      name
-      category
-      isRequired
-    }
-    employeeDocuments(limit: $dlim) {
-      id
-      documentTypeId
-      status
-      uploadedAt
-      expiryDate
-    }
-  }
-`;
+import { OrgDocumentsListDocument } from '../../api/graphql/graphql';
 
 interface DocumentTypeRow {
   id: string;
@@ -56,7 +38,7 @@ const OrganizationDocumentsPage = () => {
         const res = await client.request<{
           documentTypes: DocumentTypeRow[];
           employeeDocuments: EmployeeDocumentRow[];
-        }>(ORG_DOCS, { tlim: 50, dlim: 50 });
+        }>(OrgDocumentsListDocument, { tlim: 50, dlim: 50 });
         if (!c) {
           setTypes(res.documentTypes);
           setDocs(res.employeeDocuments);

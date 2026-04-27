@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import {
+  PayrollBoardDocument,
+  IndiaTdsMonthlySummaryCsvDocument,
+  IndiaPfEsiMonthlySummaryCsvDocument,
+} from '../../api/graphql/graphql';
 
 interface SalaryComponentRow {
   id: string;
@@ -29,40 +33,6 @@ interface PayrollBoardData {
   payrollCycles: PayrollCycleRow[];
 }
 
-const PAYROLL_BOARD = gql`
-  query PayrollBoard($limit: Int! = 20) {
-    salaryComponents(limit: $limit) {
-      id
-      name
-      code
-      componentType
-      isTaxable
-      isFixed
-      isActive
-    }
-    payrollCycles(limit: $limit) {
-      id
-      name
-      month
-      year
-      status
-      paymentDate
-    }
-  }
-`;
-
-const INDIA_TDS_CSV = gql`
-  query IndiaTdsMonthlySummaryCsv($month: Int!, $year: Int!) {
-    indiaTdsMonthlySummaryCsv(month: $month, year: $year)
-  }
-`;
-
-const INDIA_PF_ESI_CSV = gql`
-  query IndiaPfEsiMonthlySummaryCsv($month: Int!, $year: Int!) {
-    indiaPfEsiMonthlySummaryCsv(month: $month, year: $year)
-  }
-`;
-
 const PayrollPage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<PayrollBoardData | null>(null);
@@ -81,7 +51,7 @@ const PayrollPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await client.request<PayrollBoardData>(PAYROLL_BOARD, {
+        const result = await client.request<PayrollBoardData>(PayrollBoardDocument, {
           limit: 20,
         });
         if (!cancelled) setData(result);
@@ -109,10 +79,13 @@ const PayrollPage = () => {
     try {
       setPfEsiExporting(true);
       setPfEsiExportError(null);
-      const res = await client.request<{ indiaPfEsiMonthlySummaryCsv: string }>(INDIA_PF_ESI_CSV, {
-        month: tdsMonth,
-        year: tdsYear,
-      });
+      const res = await client.request<{ indiaPfEsiMonthlySummaryCsv: string }>(
+        IndiaPfEsiMonthlySummaryCsvDocument,
+        {
+          month: tdsMonth,
+          year: tdsYear,
+        }
+      );
       const blob = new Blob([res.indiaPfEsiMonthlySummaryCsv], {
         type: 'text/csv;charset=utf-8',
       });
@@ -135,10 +108,13 @@ const PayrollPage = () => {
     try {
       setTdsExporting(true);
       setTdsExportError(null);
-      const res = await client.request<{ indiaTdsMonthlySummaryCsv: string }>(INDIA_TDS_CSV, {
-        month: tdsMonth,
-        year: tdsYear,
-      });
+      const res = await client.request<{ indiaTdsMonthlySummaryCsv: string }>(
+        IndiaTdsMonthlySummaryCsvDocument,
+        {
+          month: tdsMonth,
+          year: tdsYear,
+        }
+      );
       const blob = new Blob([res.indiaTdsMonthlySummaryCsv], {
         type: 'text/csv;charset=utf-8',
       });

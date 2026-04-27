@@ -1,11 +1,15 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import {
+  ClientOpsPayrollTaxBoardDocument,
+  TaxComputationsListDocument,
+  UpsertTaxComputationDocument,
+} from '../../api/graphql/graphql';
 
 interface TaxConfigurationRow {
   id: string;
@@ -43,54 +47,6 @@ interface TaxComputationRow {
   computedAt: string;
 }
 
-const TAX_BOARD = gql`
-  query TaxBoard($limit: Int! = 20) {
-    taxConfigurations(limit: $limit) {
-      id
-      fiscalYear
-      regime
-      countryCode
-      isActive
-    }
-    taxSlabs(limit: $limit) {
-      id
-      taxConfigVersionId
-      incomeFrom
-      incomeTo
-      taxRate
-      surchargeRate
-      cessRate
-    }
-  }
-`;
-
-const TAX_COMP_Q = gql`
-  query TaxComputationsList($limit: Int! = 10) {
-    taxComputations(limit: $limit) {
-      id
-      fiscalYear
-      taxConfigVersionId
-      taxRegimeChosen
-      grossIncome
-      totalDeductions
-      taxableIncome
-      finalTax
-      tdsPerMonth
-      computedAt
-    }
-  }
-`;
-
-const UPSERT_TAX = gql`
-  mutation UpsertTaxComputation($input: UpsertTaxComputationInput!) {
-    upsertTaxComputation(input: $input) {
-      id
-      fiscalYear
-      taxRegimeChosen
-    }
-  }
-`;
-
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -120,7 +76,9 @@ const PayrollTaxPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await client.request<TaxBoardData>(TAX_BOARD, { limit: 20 });
+        const result = await client.request<TaxBoardData>(ClientOpsPayrollTaxBoardDocument, {
+          limit: 20,
+        });
         if (!cancelled) {
           setData(result);
           const firstActive =
@@ -150,9 +108,12 @@ const PayrollTaxPage = () => {
       try {
         setCompLoading(true);
         setCompError(null);
-        const res = await client.request<{ taxComputations: TaxComputationRow[] }>(TAX_COMP_Q, {
-          limit: 10,
-        });
+        const res = await client.request<{ taxComputations: TaxComputationRow[] }>(
+          TaxComputationsListDocument,
+          {
+            limit: 10,
+          }
+        );
         if (!c) setComputations(res.taxComputations);
       } catch (e) {
         if (!c) {
@@ -186,9 +147,10 @@ const PayrollTaxPage = () => {
     value == null ? 'No upper limit' : formatCurrency(Number(value));
 
   const loadComputations = async () => {
-    const res = await client.request<{ taxComputations: TaxComputationRow[] }>(TAX_COMP_Q, {
-      limit: 10,
-    });
+    const res = await client.request<{ taxComputations: TaxComputationRow[] }>(
+      TaxComputationsListDocument,
+      { limit: 10 }
+    );
     setComputations(res.taxComputations);
   };
 
@@ -202,7 +164,7 @@ const PayrollTaxPage = () => {
     setFormSubmitting(true);
     try {
       const year = Number(formYear);
-      await client.request(UPSERT_TAX, {
+      await client.request(UpsertTaxComputationDocument, {
         input: {
           taxConfigVersionId: selectedConfigId,
           fiscalYear: year,

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { ClientOpsAdminReportsDataDocument } from '../../api/graphql/graphql';
 
 interface EmployeeRow {
   id: string;
@@ -53,45 +53,6 @@ interface ReportsData {
   salaryComponents: SalaryComponentRow[];
 }
 
-const REPORTS_QUERY = gql`
-  query AdminReportsData {
-    employees(limit: 100) {
-      id
-      employeeCode
-      fullName
-    }
-    attendance(limit: 100) {
-      id
-      employeeId
-      workDate
-      status
-      checkInTime
-      checkOutTime
-    }
-    leaveRequests(limit: 100) {
-      id
-      employeeId
-      fromDate
-      toDate
-      status
-    }
-    payrollCycles(limit: 100) {
-      id
-      name
-      month
-      year
-      status
-      paymentDate
-    }
-    salaryComponents(limit: 100) {
-      id
-      componentType
-      isActive
-      isTaxable
-    }
-  }
-`;
-
 const AdminReportsPage = () => {
   const client = useGraphClient('client');
   const [reportType, setReportType] = useState<'attendance' | 'leave' | 'payroll'>('attendance');
@@ -110,7 +71,7 @@ const AdminReportsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await client.request<ReportsData>(REPORTS_QUERY);
+        const result = await client.request<ReportsData>(ClientOpsAdminReportsDataDocument);
         if (!cancelled) setData(result);
       } catch (e) {
         if (!cancelled) {

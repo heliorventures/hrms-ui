@@ -1,42 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { gql } from 'graphql-request';
 import Modal from '../../../components/common/Modal';
 import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-
-const CREATE_EMPLOYEE = gql`
-  mutation CreateEmployee($input: CreateEmployeeInput!) {
-    createEmployee(input: $input) {
-      id
-      employeeCode
-      fullName
-      status
-      dateOfJoining
-      reportingManagerId
-    }
-  }
-`;
-
-const ORG_LISTS = gql`
-  query OrgListsForNewEmployee($dlim: Int! = 100, $glim: Int! = 100, $elim: Int! = 100) {
-    departments(limit: $dlim) {
-      id
-      name
-      code
-    }
-    designations(limit: $glim) {
-      id
-      title
-    }
-    employees(limit: $elim) {
-      id
-      employeeCode
-      fullName
-    }
-  }
-`;
+import {
+  CreateEmployeeDocument,
+  ClientOpsOrgListsForEmployeeModalDocument,
+  type CreateEmployeeInput,
+} from '../../../api/graphql/graphql';
 
 interface CreateEmployeeModalProps {
   isOpen: boolean;
@@ -69,7 +41,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         departments: { id: string; name: string; code: string }[];
         designations: { id: string; title: string }[];
         employees: { id: string; employeeCode: string; fullName: string }[];
-      }>(ORG_LISTS, { dlim: 100, glim: 100, elim: 100 });
+      }>(ClientOpsOrgListsForEmployeeModalDocument, { dlim: 100, glim: 100, elim: 100 });
       setDeptOptions([
         { value: '', label: '— None —' },
         ...(res.departments ?? []).map((d) => ({
@@ -127,7 +99,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       if (reportingManagerId) {
         input.reportingManagerId = reportingManagerId;
       }
-      await client.request(CREATE_EMPLOYEE, { input });
+      await client.request(CreateEmployeeDocument, { input: input as CreateEmployeeInput });
       onCreated();
       onClose();
       setEmployeeCode('');

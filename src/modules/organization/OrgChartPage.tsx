@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { OrgChartDocument } from '../../api/graphql/graphql';
 
 export interface OrgChartRow {
   employeeId: string;
@@ -16,19 +16,6 @@ export interface OrgChartRow {
 interface OrgChartData {
   orgChart: OrgChartRow[];
 }
-
-const ORG_CHART_Q = gql`
-  query OrgChart($limit: Int! = 500) {
-    orgChart(limit: $limit) {
-      employeeId
-      employeeCode
-      fullName
-      reportingManagerId
-      departmentName
-      designationTitle
-    }
-  }
-`;
 
 interface TreeProps {
   row: OrgChartRow;
@@ -92,7 +79,7 @@ const OrgChartPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await client.request<OrgChartData>(ORG_CHART_Q, { limit: 500 });
+        const res = await client.request<OrgChartData>(OrgChartDocument, { limit: 500 });
         if (!cancelled) setRows(res.orgChart);
       } catch (e) {
         if (!cancelled) {

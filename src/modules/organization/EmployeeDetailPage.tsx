@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { ClientOpsEmployeeDetailDocument } from '../../api/graphql/graphql';
 
 interface EmployeeRow {
   id: string;
@@ -25,26 +25,6 @@ interface EmployeeDetailData {
   employee: EmployeeRow | null;
 }
 
-const EMPLOYEE_DETAIL_QUERY = gql`
-  query EmployeeDetail($id: ID!) {
-    employee(id: $id) {
-      id
-      employeeCode
-      firstName
-      lastName
-      fullName
-      status
-      employmentType
-      dateOfJoining
-      departmentId
-      designationId
-      userId
-      createdAt
-      updatedAt
-    }
-  }
-`;
-
 const EmployeeDetailPage = () => {
   const { employeeId } = useParams<{ employeeId: string }>();
   const client = useGraphClient('client');
@@ -59,7 +39,7 @@ const EmployeeDetailPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await client.request<EmployeeDetailData>(EMPLOYEE_DETAIL_QUERY, {
+        const result = await client.request<EmployeeDetailData>(ClientOpsEmployeeDetailDocument, {
           id: employeeId,
         });
         if (!cancelled) setEmployee(result.employee ?? null);

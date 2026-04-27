@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { gql } from 'graphql-request';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
@@ -8,6 +7,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import PayslipDocument, { type PayslipDocModel } from './components/PayslipDocument';
 import PayrollMigrationHint from './components/PayrollMigrationHint';
+import {
+  PayrollShellDocument,
+  PayrollSalaryComponentsDocument,
+  ClientOpsPayslipsForPayrollHubDocument,
+} from '../../api/graphql/graphql';
 
 type TabId = 'salary' | 'payslip' | 'incometax';
 
@@ -56,76 +60,6 @@ interface PayslipRow extends PayslipDocModel {
   payrollCycleId: string;
 }
 
-/** Cycles, tax: loads even if salary_component table is missing. */
-const PAYROLL_SHELL_QUERY = gql`
-  query PayrollShell {
-    payrollCycles(limit: 100) {
-      id
-      name
-      month
-      year
-      status
-      paymentDate
-    }
-    taxConfigurations(limit: 100) {
-      id
-      fiscalYear
-      regime
-      countryCode
-      isActive
-    }
-    taxSlabs(limit: 100) {
-      id
-      taxConfigVersionId
-      incomeFrom
-      incomeTo
-      taxRate
-    }
-  }
-`;
-
-const SALARY_COMPONENTS_QUERY = gql`
-  query PayrollSalaryComponents {
-    salaryComponents(limit: 100) {
-      id
-      name
-      code
-      componentType
-      isTaxable
-      isFixed
-      isActive
-    }
-  }
-`;
-
-const PAYSLIPS_Q = gql`
-  query PayslipsList($limit: Int! = 24) {
-    payslips(limit: $limit) {
-      id
-      payrollCycleId
-      grossSalary
-      totalDeductions
-      netSalary
-      pfEmployee
-      pfEmployer
-      esiEmployee
-      esiEmployer
-      tdsAmount
-      professionalTax
-      uanNumber
-      esicNumber
-      status
-      generatedAt
-      lines {
-        id
-        salaryComponentId
-        amount
-        componentType
-      }
-    }
-  }
-`;
-
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -166,7 +100,7 @@ const PayrollPayPage = () => {
           payrollCycles: PayrollCycleRow[];
           taxConfigurations: TaxConfigurationRow[];
           taxSlabs: TaxSlabRow[];
-        }>(PAYROLL_SHELL_QUERY);
+        }>(PayrollShellDocument);
         if (!c) {
           setPayrollCycles(r.payrollCycles);
           setTaxConfigurations(r.taxConfigurations);
@@ -190,7 +124,7 @@ const PayrollPayPage = () => {
         setLoadingSalary(true);
         setErrorSalary(null);
         const r = await client.request<{ salaryComponents: SalaryComponentRow[] }>(
-          SALARY_COMPONENTS_QUERY
+          PayrollSalaryComponentsDocument
         );
         if (!c) setSalaryComponents(r.salaryComponents);
       } catch (e) {
@@ -211,7 +145,10 @@ const PayrollPayPage = () => {
       try {
         setPayslipsLoading(true);
         setPayslipError(null);
-        const res = await client.request<{ payslips: PayslipRow[] }>(PAYSLIPS_Q, { limit: 24 });
+        const res = await client.request<{ payslips: PayslipRow[] }>(
+          ClientOpsPayslipsForPayrollHubDocument,
+          { limit: 24 }
+        );
         if (!c) setPayslips(res.payslips);
       } catch (e) {
         if (!c) {
