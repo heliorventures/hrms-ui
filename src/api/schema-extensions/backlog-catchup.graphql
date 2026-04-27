@@ -50,3 +50,25 @@ extend type Query {
   workflowsWithSteps(limit: Int! = 50): [WorkflowWithSteps!]!
   workflowSteps(workflowId: ID!): [WorkflowStep!]!
 }
+
+# kabipay-analytics — merged for codegen until gateway includes federation update
+type WebhookDeliveryLogRow {
+  id: ID!
+  webhookSubscriptionId: ID!
+  eventName: String
+  payloadJson: String
+  httpStatus: Int
+  responseBody: String
+  isSuccess: Boolean!
+  attemptNumber: Int!
+  deliveredAt: DateTime!
+  createdAt: DateTime!
+}
+
+extend type Query {
+  webhookDeliveryLogs(limit: Int! = 100): [WebhookDeliveryLogRow!]!
+}
+
+extend type Mutation {
+  deleteWorkflowStep(stepId: ID!): Boolean!
+}

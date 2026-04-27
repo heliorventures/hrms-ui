@@ -13,6 +13,7 @@ import {
   InsightsIntegrationCatalogDocument,
   InsightsTenantIntegrationsDocument,
   InsightsWebhookSubscriptionsDocument,
+  InsightsWebhookDeliveryLogsDocument,
   InsightsAuditLogsDocument,
   ConnectTenantIntegrationDocument,
   RegisterWebhookSubscriptionDocument,
@@ -24,6 +25,7 @@ import {
   type InsightsIntegrationCatalogQuery,
   type InsightsTenantIntegrationsQuery,
   type InsightsWebhookSubscriptionsQuery,
+  type InsightsWebhookDeliveryLogsQuery,
   type InsightsAuditLogsQuery,
 } from '../../api/graphql/graphql';
 
@@ -46,6 +48,7 @@ const AnalyticsPage = () => {
   const [icat, setIcat] = useState<InsightsIntegrationCatalogQuery | null>(null);
   const [tint, setTint] = useState<InsightsTenantIntegrationsQuery | null>(null);
   const [wsubs, setWsubs] = useState<InsightsWebhookSubscriptionsQuery | null>(null);
+  const [whDel, setWhDel] = useState<InsightsWebhookDeliveryLogsQuery | null>(null);
   const [aud, setAud] = useState<InsightsAuditLogsQuery | null>(null);
   const [intLoading, setIntLoading] = useState(false);
   const [connectBusy, setConnectBusy] = useState<string | null>(null);
@@ -85,20 +88,23 @@ const AnalyticsPage = () => {
     setIntegrationsErr(null);
     setIntLoading(true);
     try {
-      const [a, b, c, d] = await Promise.all([
+      const [a, b, c, d, e] = await Promise.all([
         client.request(InsightsIntegrationCatalogDocument, { lim: 100 }),
         client.request(InsightsTenantIntegrationsDocument, { lim: 100 }),
         client.request(InsightsWebhookSubscriptionsDocument, { lim: 100 }),
+        client.request(InsightsWebhookDeliveryLogsDocument, { lim: 80 }),
         client.request(InsightsAuditLogsDocument, { lim: 80 }),
       ]);
       setIcat(a);
       setTint(b);
       setWsubs(c);
-      setAud(d);
+      setWhDel(d);
+      setAud(e);
     } catch (e) {
       setIcat(null);
       setTint(null);
       setWsubs(null);
+      setWhDel(null);
       setAud(null);
       setIntegrationsErr(
         e instanceof Error &&
@@ -601,6 +607,51 @@ const AnalyticsPage = () => {
                   </div>
                 ) : integrationsErr ? null : (
                   <p className="text-sm text-gray-500">No webhook subscriptions.</p>
+                )}
+              </Card>
+
+              <Card title="Webhook deliveries (recent)">
+                {whDel?.webhookDeliveryLogs?.length ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b uppercase text-gray-500">
+                          <th className="py-2 pr-2">Delivered</th>
+                          <th className="py-2 pr-2">Event</th>
+                          <th className="py-2 pr-2">Sub</th>
+                          <th className="py-2 pr-2">HTTP</th>
+                          <th className="py-2 pr-2">OK</th>
+                          <th className="py-2">Response</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {whDel.webhookDeliveryLogs.map((row) => {
+                          const resp =
+                            row.responseBody && row.responseBody.length > 120
+                              ? `${row.responseBody.slice(0, 120)}…`
+                              : (row.responseBody ?? '—');
+                          return (
+                            <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700">
+                              <td className="py-2 pr-2 whitespace-nowrap text-gray-500">
+                                {String(row.deliveredAt)}
+                              </td>
+                              <td className="py-2 pr-2">{row.eventName ?? '—'}</td>
+                              <td className="max-w-[7rem] truncate py-2 pr-2 font-mono" title={row.webhookSubscriptionId}>
+                                {row.webhookSubscriptionId.slice(0, 8)}…
+                              </td>
+                              <td className="py-2 pr-2">{row.httpStatus ?? '—'}</td>
+                              <td className="py-2 pr-2">{row.isSuccess ? 'yes' : 'no'}</td>
+                              <td className="max-w-md truncate py-2" title={row.responseBody ?? ''}>
+                                {resp}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : integrationsErr ? null : (
+                  <p className="text-sm text-gray-500">No delivery attempts logged yet.</p>
                 )}
               </Card>
 

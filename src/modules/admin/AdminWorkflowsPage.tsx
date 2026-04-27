@@ -9,6 +9,7 @@ import {
   AdminWorkflowsStepsDataDocument,
   AdminCreateWorkflowDocument,
   AdminCreateWorkflowStepDocument,
+  AdminDeleteWorkflowStepDocument,
   type AdminWorkflowsDataQuery,
   type AdminWorkflowsStepsDataQuery,
 } from '../../api/graphql/graphql';
@@ -32,6 +33,7 @@ const AdminWorkflowsPage = () => {
   const [sSkip, setSSkip] = useState(false);
   const [sBusy, setSBusy] = useState(false);
   const [sMsg, setSMsg] = useState<string | null>(null);
+  const [delStepBusy, setDelStepBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const base = await client.request<AdminWorkflowsDataQuery>(AdminWorkflowsDataDocument, {
@@ -95,6 +97,21 @@ const AdminWorkflowsPage = () => {
       setWMsg(err instanceof Error ? err.message : 'Create failed');
     } finally {
       setWBusy(false);
+    }
+  };
+
+  const onDeleteStep = async (stepId: string) => {
+    if (!stepId.trim()) return;
+    setDelStepBusy(stepId);
+    setSMsg(null);
+    try {
+      await client.request(AdminDeleteWorkflowStepDocument, { stepId: stepId.trim() });
+      await refresh();
+      setSMsg('Step removed.');
+    } catch (err) {
+      setSMsg(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      setDelStepBusy(null);
     }
   };
 
@@ -262,15 +279,28 @@ const AdminWorkflowsPage = () => {
                 {row.steps?.length > 0 ? (
                   <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
                     {row.steps.map((s) => (
-                      <li key={s.id}>
-                        <span className="font-medium">{s.sequenceOrder}.</span> {s.stepName}
-                        {s.approverType ? (
-                          <span className="text-slate-500"> · {s.approverType}</span>
-                        ) : null}
-                        {s.slaHours != null ? (
-                          <span className="text-slate-500"> · SLA {s.slaHours}h</span>
-                        ) : null}
-                        {s.canSkip ? <span className="text-amber-600"> · can skip</span> : null}
+                      <li key={s.id} className="flex flex-wrap items-baseline gap-2">
+                        <span>
+                          <span className="font-medium">{s.sequenceOrder}.</span> {s.stepName}
+                          {s.approverType ? (
+                            <span className="text-slate-500"> · {s.approverType}</span>
+                          ) : null}
+                          {s.slaHours != null ? (
+                            <span className="text-slate-500"> · SLA {s.slaHours}h</span>
+                          ) : null}
+                          {s.canSkip ? <span className="text-amber-600"> · can skip</span> : null}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={delStepBusy === s.id}
+                          className="text-xs text-red-600 underline underline-offset-2 hover:text-red-700 disabled:opacity-50 dark:text-red-400"
+                          onClick={() => void onDeleteStep(s.id)}
+                          title={
+                            delStepBusy === s.id ? 'Removing…' : 'Remove step (blocked if approvals ran on this step)'
+                          }
+                        >
+                          {delStepBusy === s.id ? 'Removing…' : 'Remove'}
+                        </button>
                       </li>
                     ))}
                   </ol>
