@@ -50,11 +50,3 @@ extend type Query {
   workflowsWithSteps(limit: Int! = 50): [WorkflowWithSteps!]!
   workflowSteps(workflowId: ID!): [WorkflowStep!]!
 }
-
-# Optional link from expense claim to a travel request (expense subgraph).
-# Remove this input extension when gateway `SubmitExpenseInput` includes `travelRequestId`.
-extend input SubmitExpenseInput {
-  travelRequestId: ID
-}
-
-# `travelRequestId` / `workflowInstanceId` on `Expense` now come from **kabipay-expense** in the supergraph (M32).
