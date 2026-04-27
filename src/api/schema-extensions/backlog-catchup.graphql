@@ -1,0 +1,62 @@
+# Merged for graphql-codegen; trim when the federated supergraph already exposes these.
+scalar DateTime
+
+type PayrollArrear {
+  id: ID!
+  tenantId: ID!
+  employeeId: ID!
+  amount: String!
+  reason: String
+  status: String!
+  appliedPayrollCycleId: ID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input CreatePayrollArrearInput {
+  employeeId: ID!
+  amount: String!
+  reason: String
+}
+
+extend type Query {
+  payrollArrears(limit: Int! = 100): [PayrollArrear!]!
+}
+
+extend type Mutation {
+  createPayrollArrear(input: CreatePayrollArrearInput!): PayrollArrear!
+}
+
+type WorkflowStep {
+  id: ID!
+  tenantId: ID!
+  workflowId: ID!
+  sequenceOrder: Int!
+  stepName: String!
+  approverType: String
+  approverRoleId: ID
+  canSkip: Boolean!
+  slaHours: Int
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type WorkflowWithSteps {
+  workflow: Workflow!
+  steps: [WorkflowStep!]!
+}
+
+extend type Query {
+  workflowsWithSteps(limit: Int! = 50): [WorkflowWithSteps!]!
+  workflowSteps(workflowId: ID!): [WorkflowStep!]!
+}
+
+# Optional link from expense claim to a travel request (expense subgraph).
+extend input SubmitExpenseInput {
+  travelRequestId: ID
+}
+
+# Also expose for selection sets on submit response.
+extend type Expense {
+  travelRequestId: ID
+}

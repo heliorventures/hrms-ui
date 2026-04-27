@@ -1,0 +1,8 @@
+# Merged for graphql-codegen when the supergraph lags. Do not re-declare
+# `CreatePayrollCycleInput` or `createPayrollCycle` — the gateway (kabipay-payroll)
+# owns those; re-defining `paymentDate` with a different scalar breaks schema merge
+# (e.g. `Date` vs `NaiveDate`).
+
+extend type Query {
+  payrollBankTransferCsv(month: Int!, year: Int!): String!
+}

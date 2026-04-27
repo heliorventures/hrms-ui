@@ -114,6 +114,34 @@ query IndiaPfEsiMonthlySummaryCsv($month: Int!, $year: Int!) {
   indiaPfEsiMonthlySummaryCsv(month: $month, year: $year)
 }
 
+# Net pay + primary employee_bank per payslip in the selected cycle (month/year). HR / statutory_export.
+query PayrollBankTransferCsv($month: Int!, $year: Int!) {
+  payrollBankTransferCsv(month: $month, year: $year)
+}
+
+# v1 pay run — HR / statutory_export; generates missing payslips from employment_history + BASIC line
+mutation RunPayrollForCycle($payrollCycleId: ID!) {
+  runPayrollForCycle(payrollCycleId: $payrollCycleId) {
+    id
+    status
+    month
+    year
+    name
+  }
+}
+
+# DRAFT cycle for a calendar month; rejected if a cycle for that month/year already exists.
+mutation CreatePayrollCycle($input: CreatePayrollCycleInput!) {
+  createPayrollCycle(input: $input) {
+    id
+    status
+    month
+    year
+    name
+    paymentDate
+  }
+}
+
 mutation SubmitLeaveRequest($input: SubmitLeaveRequestInput!) {
   submitLeaveRequest(input: $input) {
     id
@@ -152,6 +180,15 @@ mutation SubmitExpense($input: SubmitExpenseInput!) {
     status
     amount
     title
+  }
+}
+
+mutation CreatePayrollArrear($input: CreatePayrollArrearInput!) {
+  createPayrollArrear(input: $input) {
+    id
+    employeeId
+    amount
+    status
   }
 }
 
@@ -437,7 +474,7 @@ mutation SetOnboardingChecklistItem($checklistItemId: ID!, $isCompleted: Boolean
   }
 }
 
-# Admin — workflow subgraph
+# Admin — workflow subgraph (workflows + instances: safe on older gateways)
 query AdminWorkflowsData($wl: Int! = 30, $il: Int! = 50) {
   workflows(limit: $wl) {
     id
@@ -450,6 +487,26 @@ query AdminWorkflowsData($wl: Int! = 30, $il: Int! = 50) {
     status
     entityType
     entityId
+  }
+}
+
+# Optional second request — when kabipay-workflow exposes `workflowsWithSteps` (fails harmlessly if not).
+query AdminWorkflowsStepsData($wl: Int! = 30) {
+  workflowsWithSteps(limit: $wl) {
+    workflow {
+      id
+      name
+      entityType
+      isActive
+    }
+    steps {
+      id
+      sequenceOrder
+      stepName
+      approverType
+      canSkip
+      slaHours
+    }
   }
 }
 
@@ -864,6 +921,18 @@ query PayrollBoard($limit: Int! = 20) {
     year
     status
     paymentDate
+  }
+}
+
+# Optional — when kabipay-payroll exposes `payrollArrears` (fetched in a follow-up request in the UI).
+query PayrollArrearsList($limit: Int! = 100) {
+  payrollArrears(limit: $limit) {
+    id
+    employeeId
+    amount
+    reason
+    status
+    createdAt
   }
 }
 

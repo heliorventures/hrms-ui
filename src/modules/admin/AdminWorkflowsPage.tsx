@@ -4,17 +4,32 @@ import PageHeader from '../../components/common/PageHeader';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import {
   AdminWorkflowsDataDocument,
+  AdminWorkflowsStepsDataDocument,
   type AdminWorkflowsDataQuery,
+  type AdminWorkflowsStepsDataQuery,
 } from '../../api/graphql/graphql';
 
 const AdminWorkflowsPage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<AdminWorkflowsDataQuery | null>(null);
+  const [stepsData, setStepsData] = useState<AdminWorkflowsStepsDataQuery | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    return client.request(AdminWorkflowsDataDocument, { wl: 30, il: 50 });
+    const base = await client.request<AdminWorkflowsDataQuery>(AdminWorkflowsDataDocument, {
+      wl: 30,
+      il: 50,
+    });
+    try {
+      const withSteps = await client.request<AdminWorkflowsStepsDataQuery>(
+        AdminWorkflowsStepsDataDocument,
+        { wl: 30 },
+      );
+      return { base, withSteps };
+    } catch {
+      return { base, withSteps: null as AdminWorkflowsStepsDataQuery | null };
+    }
   }, [client]);
 
   useEffect(() => {
@@ -24,7 +39,9 @@ const AdminWorkflowsPage = () => {
         setLoading(true);
         setError(null);
         const r = await load();
-        if (!c) setData(r);
+        if (c) return;
+        setData(r.base);
+        setStepsData(r.withSteps);
       } catch (e) {
         if (!c) setError(e instanceof Error ? e.message : 'Failed to load workflows');
       } finally {
@@ -40,23 +57,56 @@ const AdminWorkflowsPage = () => {
     <div className="space-y-6">
       <PageHeader
         title="Workflows"
-        description="Definitions and in-flight instances (e.g. leave approval). Step rules are configured in the system; a visual designer may follow in a later release."
+        description="Definitions (with step order) and in-flight instances. Approver type and SLAs are read from the graph; this page is a read-only board — editing definitions is a future step."
       />
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="Definitions">
+      <Card title="Definitions & steps">
         {loading ? (
           <p className="text-sm text-gray-500">Loading…</p>
-        ) : data?.workflows?.length ? (
+        ) : stepsData?.workflowsWithSteps && stepsData.workflowsWithSteps.length > 0 ? (
+          <ul className="divide-y divide-slate-200 dark:divide-slate-700/80">
+            {stepsData.workflowsWithSteps.map((row) => (
+              <li key={row.workflow.id} className="py-3 first:pt-0">
+                <p className="font-medium text-slate-900 dark:text-white">{row.workflow.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {row.workflow.entityType ?? '—'} · {row.workflow.isActive ? 'active' : 'inactive'}
+                </p>
+                {row.steps?.length > 0 ? (
+                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
+                    {row.steps.map((s) => (
+                      <li key={s.id}>
+                        <span className="font-medium">{s.sequenceOrder}.</span> {s.stepName}
+                        {s.approverType ? (
+                          <span className="text-slate-500"> · {s.approverType}</span>
+                        ) : null}
+                        {s.slaHours != null ? (
+                          <span className="text-slate-500"> · SLA {s.slaHours}h</span>
+                        ) : null}
+                        {s.canSkip ? <span className="text-amber-600"> · can skip</span> : null}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="mt-1 text-xs text-slate-500">No steps in graph.</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : data?.workflows && data.workflows.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700/80">
             {data.workflows.map((w) => (
               <li key={w.id} className="py-3 first:pt-0">
                 <p className="font-medium text-slate-900 dark:text-white">{w.name}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {w.entityType ?? '—'} · {w.isActive ? 'active' : 'inactive'}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Step list requires a gateway with <span className="font-mono">workflowsWithSteps</span> from
+                  kabipay-workflow. Restart the gateway / subgraph after upgrade.
                 </p>
               </li>
             ))}

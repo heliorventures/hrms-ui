@@ -19,8 +19,15 @@ function gatewayUrlFromPublicConfig(): string {
 /** Optional override when running codegen without the same tree (e.g. CI). */
 const schemaUrl = process.env.CODEGEN_SCHEMA_URL ?? gatewayUrlFromPublicConfig();
 
+/** Local extensions (e.g. new mutations before gateway is restarted) merged with gateway schema. */
+const schema: CodegenConfig['schema'] = [
+  schemaUrl,
+  join(__dirname, 'src', 'api', 'schema-extensions', 'payroll-run.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'backlog-catchup.graphql'),
+];
+
 const config: CodegenConfig = {
-  schema: schemaUrl,
+  schema,
   documents: ['src/**/*.graphql', 'src/**/*.{ts,tsx}'],
   ignoreNoDocuments: true,
   generates: {
