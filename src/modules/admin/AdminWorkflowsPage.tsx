@@ -10,9 +10,11 @@ import {
   AdminCreateWorkflowDocument,
   AdminCreateWorkflowStepDocument,
   AdminDeleteWorkflowStepDocument,
+  AdminReorderWorkflowStepsDocument,
   type AdminWorkflowsDataQuery,
   type AdminWorkflowsStepsDataQuery,
 } from '../../api/graphql/graphql';
+import WorkflowDesignerSteps from './WorkflowDesignerSteps';
 
 const AdminWorkflowsPage = () => {
   const client = useGraphClient('client');
@@ -34,6 +36,7 @@ const AdminWorkflowsPage = () => {
   const [sBusy, setSBusy] = useState(false);
   const [sMsg, setSMsg] = useState<string | null>(null);
   const [delStepBusy, setDelStepBusy] = useState<string | null>(null);
+  const [reorderBusyWfId, setReorderBusyWfId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const base = await client.request<AdminWorkflowsDataQuery>(AdminWorkflowsDataDocument, {
@@ -43,7 +46,7 @@ const AdminWorkflowsPage = () => {
     try {
       const withSteps = await client.request<AdminWorkflowsStepsDataQuery>(
         AdminWorkflowsStepsDataDocument,
-        { wl: 30 },
+        { wl: 30 }
       );
       return { base, withSteps };
     } catch {
@@ -88,7 +91,11 @@ const AdminWorkflowsPage = () => {
     setWBusy(true);
     try {
       await client.request(AdminCreateWorkflowDocument, {
-        input: { name: wName.trim(), entityType: wEntity.trim() || 'LEAVE_REQUEST', isActive: wActive },
+        input: {
+          name: wName.trim(),
+          entityType: wEntity.trim() || 'LEAVE_REQUEST',
+          isActive: wActive,
+        },
       });
       setWName('');
       await refresh();
@@ -112,6 +119,25 @@ const AdminWorkflowsPage = () => {
       setSMsg(err instanceof Error ? err.message : 'Delete failed');
     } finally {
       setDelStepBusy(null);
+    }
+  };
+
+  const onReorderSteps = async (workflowId: string, orderedStepIds: string[]) => {
+    if (!orderedStepIds.length) return;
+    setReorderBusyWfId(workflowId);
+    setSMsg(null);
+    try {
+      await client.request(AdminReorderWorkflowStepsDocument, {
+        workflowId,
+        stepIdsOrdered: orderedStepIds,
+      });
+      await refresh();
+      setSMsg('Steps reordered.');
+    } catch (err) {
+      setSMsg(err instanceof Error ? err.message : 'Reorder failed');
+      throw err;
+    } finally {
+      setReorderBusyWfId(null);
     }
   };
 
@@ -148,7 +174,7 @@ const AdminWorkflowsPage = () => {
     <div className="space-y-6">
       <PageHeader
         title="Workflows"
-        description="Definitions, steps, and in-flight instances. Create definitions and steps below (requires HR / tenant admin or workflow:manage). Leave workflows use entity type LEAVE_REQUEST; runtime still lives in kabipay-leave."
+        description="Definitions, steps, and in-flight instances. Create definitions and drag steps to reorder (requires HR / tenant admin or workflow:manage). Leave workflows use entity type LEAVE_REQUEST; runtime still lives in kabipay-leave."
       />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Create workflow">
@@ -247,11 +273,7 @@ const AdminWorkflowsPage = () => {
               placeholder="e.g. MANAGER, HR"
             />
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-              <input
-                type="checkbox"
-                checked={sSkip}
-                onChange={(e) => setSSkip(e.target.checked)}
-              />
+              <input type="checkbox" checked={sSkip} onChange={(e) => setSSkip(e.target.checked)} />
               Can skip
             </label>
             <Button type="submit" variant="primary" disabled={sBusy}>
@@ -277,33 +299,14 @@ const AdminWorkflowsPage = () => {
                   {row.workflow.entityType ?? '—'} · {row.workflow.isActive ? 'active' : 'inactive'}
                 </p>
                 {row.steps?.length > 0 ? (
-                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
-                    {row.steps.map((s) => (
-                      <li key={s.id} className="flex flex-wrap items-baseline gap-2">
-                        <span>
-                          <span className="font-medium">{s.sequenceOrder}.</span> {s.stepName}
-                          {s.approverType ? (
-                            <span className="text-slate-500"> · {s.approverType}</span>
-                          ) : null}
-                          {s.slaHours != null ? (
-                            <span className="text-slate-500"> · SLA {s.slaHours}h</span>
-                          ) : null}
-                          {s.canSkip ? <span className="text-amber-600"> · can skip</span> : null}
-                        </span>
-                        <button
-                          type="button"
-                          disabled={delStepBusy === s.id}
-                          className="text-xs text-red-600 underline underline-offset-2 hover:text-red-700 disabled:opacity-50 dark:text-red-400"
-                          onClick={() => void onDeleteStep(s.id)}
-                          title={
-                            delStepBusy === s.id ? 'Removing…' : 'Remove step (blocked if approvals ran on this step)'
-                          }
-                        >
-                          {delStepBusy === s.id ? 'Removing…' : 'Remove'}
-                        </button>
-                      </li>
-                    ))}
-                  </ol>
+                  <WorkflowDesignerSteps
+                    workflowId={row.workflow.id}
+                    steps={row.steps}
+                    onReorder={onReorderSteps}
+                    reorderBusy={reorderBusyWfId === row.workflow.id}
+                    delStepBusy={delStepBusy}
+                    onDeleteStep={onDeleteStep}
+                  />
                 ) : (
                   <p className="mt-1 text-xs text-slate-500">No steps in graph.</p>
                 )}
@@ -319,8 +322,9 @@ const AdminWorkflowsPage = () => {
                   {w.entityType ?? '—'} · {w.isActive ? 'active' : 'inactive'}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Step list requires a gateway with <span className="font-mono">workflowsWithSteps</span> from
-                  kabipay-workflow. Restart the gateway / subgraph after upgrade.
+                  Step list requires a gateway with{' '}
+                  <span className="font-mono">workflowsWithSteps</span> from kabipay-workflow.
+                  Restart the gateway / subgraph after upgrade.
                 </p>
               </li>
             ))}

@@ -71,4 +71,5 @@ extend type Query {
 
 extend type Mutation {
   deleteWorkflowStep(stepId: ID!): Boolean!
+  reorderWorkflowSteps(workflowId: ID!, stepIdsOrdered: [ID!]!): [WorkflowStep!]!
 }

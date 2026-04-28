@@ -634,6 +634,18 @@ mutation AdminDeleteWorkflowStep($stepId: ID!) {
   deleteWorkflowStep(stepId: $stepId)
 }
 
+mutation AdminReorderWorkflowSteps($workflowId: ID!, $stepIdsOrdered: [ID!]!) {
+  reorderWorkflowSteps(workflowId: $workflowId, stepIdsOrdered: $stepIdsOrdered) {
+    id
+    workflowId
+    sequenceOrder
+    stepName
+    approverType
+    canSkip
+    slaHours
+  }
+}
+
 query ClientOpsSeparationsList($limit: Int! = 50) {
   separations(limit: $limit) {
     id
