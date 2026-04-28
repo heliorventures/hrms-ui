@@ -119,6 +119,36 @@ query PayrollBankTransferCsv($month: Int!, $year: Int!) {
   payrollBankTransferCsv(month: $month, year: $year)
 }
 
+# India NEFT-style bulk credit prep (same cycle as month/year above). HR / statutory_export.
+query PayrollIndiaBulkNeftCreditCsv($month: Int!, $year: Int!) {
+  payrollIndiaBulkNeftCreditCsv(month: $month, year: $year)
+}
+
+# India FY employee totals from all payslips in that financial year (April–March). HR / statutory_export.
+query IndiaFyPayrollEmployeeTotalsCsv($fyStartYear: Int!) {
+  indiaFyPayrollEmployeeTotalsCsv(fyStartYear: $fyStartYear)
+}
+
+# Same measures as FY totals, scoped to FY quarter Q1 (Apr–Jun) … Q4 (Jan–Mar next year). HR / statutory_export.
+query IndiaFyQuarterPayrollEmployeeTotalsCsv($fyStartYear: Int!, $quarter: Int!) {
+  indiaFyQuarterPayrollEmployeeTotalsCsv(fyStartYear: $fyStartYear, quarter: $quarter)
+}
+
+# Form 16 Part B–oriented column names; placeholders for employer TAN/name — not a certificate PDF.
+query IndiaForm16PartBFyPrepStubCsv($fyStartYear: Int!) {
+  indiaForm16PartBFyPrepStubCsv(fyStartYear: $fyStartYear)
+}
+
+# Form 24Q salary payment month stub (not TRACES upload). Same month/year as TDS section.
+query IndiaForm24qSalaryPaymentMonthlyStubCsv($month: Int!, $year: Int!) {
+  indiaForm24qSalaryPaymentMonthlyStubCsv(month: $month, year: $year)
+}
+
+# EPFO ECR-style contribution prep (not official ECR file). Same month/year as TDS section.
+query IndiaEpfMonthlyEcrPrepStubCsv($month: Int!, $year: Int!) {
+  indiaEpfMonthlyEcrPrepStubCsv(month: $month, year: $year)
+}
+
 # v1 pay run — HR / statutory_export; generates missing payslips from employment_history + BASIC line
 mutation RunPayrollForCycle($payrollCycleId: ID!) {
   runPayrollForCycle(payrollCycleId: $payrollCycleId) {

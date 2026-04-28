@@ -14,6 +14,10 @@ your-workspace/
 
 If your paths differ, adjust commands and any script variables that point at `kabipay-database`.
 
+### Setup order (TL;DR)
+
+Work through **§2 → §5** in order: **ops migrations** → **provision tenant** (and optional **seed**) → **`kabipay-svc/.env`** → **`cargo build`** → **run auth** → **run subgraphs** → **gateway `.env` + `npm run dev`** → **`kabipay-ui/public/config.json` + `npm run dev`**. Smoke checks and ports: **§6–§7**.
+
 ---
 
 ## 1. Prerequisites
@@ -22,6 +26,7 @@ If your paths differ, adjust commands and any script variables that point at `ka
 |------|---------|
 | **PostgreSQL 16** | Local install, **Docker**, or a cloud provider (**Neon**, Aiven, …). Neon: use the **`*-pooler`** host in `POSTGRES_*` / `DATABASE_URL` to save connections and compute; set `POSTGRES_SSLMODE=require`. |
 | **Rust** (stable) + **Cargo** | Build and run `kabipay-auth`, subgraphs, and optional `kabipay-outbox-worker`. |
+| **Windows: MSVC C++ build tools** | Default Rust host **`x86_64-pc-windows-msvc`** needs Microsoft’s **`link.exe`**. Install **[Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)** with workload **Desktop development with C++** (MSVC + Windows SDK). Without this, `cargo build` may fail with **linker `link.exe` not found**. Alternative: `rustup default stable-x86_64-pc-windows-gnu` + a MinGW linker (more setup). |
 | **Node.js** LTS (v20+) + **npm** | `kabipay-database` (Liquibase scripts), `kabipay-gateway`, and this UI. |
 | **JRE 17** | Used by bundled Liquibase under `kabipay-database` (downloaded into `vendor/` on first migrate if needed). |
 | **PowerShell** (Windows) | Used by `kabipay-svc/scripts` (provision, seed, start-subgraphs). |
@@ -112,6 +117,8 @@ cargo build --workspace
 ```
 
 If the workspace build fails on memory, build per crate or use `-j 1` (see `kabipay-svc/README.md`).
+
+If Cargo fails with **`link.exe` not found** on Windows, install **Visual Studio Build Tools** → **Desktop development with C++** so MSVC **`link.exe`** is available (see **§1** Prerequisites). **Next:** **§3.3** run **`kabipay-auth`**.
 
 ### 3.3 Run auth (REST)
 
@@ -232,6 +239,7 @@ Subgraph names ↔ ports match **`kabipay-gateway/src/subgraphs.ts`** (operator 
 
 | Symptom | Things to check |
 |---------|------------------|
+| Cargo **`link.exe` not found** (Windows) | Install **Visual Studio Build Tools** with workload **Desktop development with C++** (MSVC + Windows SDK). `rustc -vV` → **`host: x86_64-pc-windows-msvc`**. Optionally build from **x64 Native Tools Command Prompt for VS** if PATH still misses **`link.exe`**. Alternative: gnu toolchain (**`stable-x86_64-pc-windows-gnu`**) + MinGW linker — more fiddly than MSVC. |
 | Liquibase cannot connect | **`.env`** (database and/or svc), `npm run migrate-ops` JDBC URL, and TLS (`sslmode`) must match the server. |
 | `provision-tenant.ps1` fails “kabipay-database not found” | Run from `kabipay-svc` with **`kabipay-database`** as a sibling directory, or edit `$DatabaseDir` in the script. |
 | Gateway shows 0 subgraphs | Subgraphs not running, wrong **`KABIPAY_SUBGRAPH_BASE_URL`**, or firewall blocking `127.0.0.1` ports. |

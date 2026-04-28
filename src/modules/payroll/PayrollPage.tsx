@@ -8,9 +8,15 @@ import {
   PayrollBoardDocument,
   IndiaTdsMonthlySummaryCsvDocument,
   IndiaPfEsiMonthlySummaryCsvDocument,
+  IndiaForm24qSalaryPaymentMonthlyStubCsvDocument,
+  IndiaEpfMonthlyEcrPrepStubCsvDocument,
   RunPayrollForCycleDocument,
   CreatePayrollCycleDocument,
   PayrollBankTransferCsvDocument,
+  PayrollIndiaBulkNeftCreditCsvDocument,
+  IndiaFyPayrollEmployeeTotalsCsvDocument,
+  IndiaFyQuarterPayrollEmployeeTotalsCsvDocument,
+  IndiaForm16PartBFyPrepStubCsvDocument,
   CreatePayrollArrearDocument,
   PayrollArrearsListDocument,
 } from '../../api/graphql/graphql';
@@ -50,6 +56,13 @@ interface PayrollBoardData {
   payrollArrears?: PayrollArrearRow[];
 }
 
+/** India FY start calendar year (April–March), e.g. April 2026 → 2026. */
+function indiaFyStartYearFromDate(d = new Date()) {
+  const month = d.getMonth() + 1;
+  const y = d.getFullYear();
+  return month >= 4 ? y : y - 1;
+}
+
 const PayrollPage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<PayrollBoardData | null>(null);
@@ -61,8 +74,22 @@ const PayrollPage = () => {
   const [tdsExportError, setTdsExportError] = useState<string | null>(null);
   const [pfEsiExporting, setPfEsiExporting] = useState(false);
   const [pfEsiExportError, setPfEsiExportError] = useState<string | null>(null);
+  const [form24qExporting, setForm24qExporting] = useState(false);
+  const [form24qExportError, setForm24qExportError] = useState<string | null>(null);
+  const [epfEcrExporting, setEpfEcrExporting] = useState(false);
+  const [epfEcrExportError, setEpfEcrExportError] = useState<string | null>(null);
   const [bankExporting, setBankExporting] = useState(false);
   const [bankExportError, setBankExportError] = useState<string | null>(null);
+  const [neftExporting, setNeftExporting] = useState(false);
+  const [neftExportError, setNeftExportError] = useState<string | null>(null);
+  const [fyStartYear, setFyStartYear] = useState(() => indiaFyStartYearFromDate());
+  const [fyQuarter, setFyQuarter] = useState(1);
+  const [fyExporting, setFyExporting] = useState(false);
+  const [fyExportError, setFyExportError] = useState<string | null>(null);
+  const [fyQuarterExporting, setFyQuarterExporting] = useState(false);
+  const [fyQuarterExportError, setFyQuarterExportError] = useState<string | null>(null);
+  const [form16Exporting, setForm16Exporting] = useState(false);
+  const [form16ExportError, setForm16ExportError] = useState<string | null>(null);
   const [runBusy, setRunBusy] = useState<string | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [runOk, setRunOk] = useState<string | null>(null);
@@ -212,6 +239,63 @@ const PayrollPage = () => {
     }
   };
 
+  const downloadIndiaForm24qStubCsv = async () => {
+    try {
+      setForm24qExporting(true);
+      setForm24qExportError(null);
+      const res = await client.request<{
+        indiaForm24qSalaryPaymentMonthlyStubCsv: string;
+      }>(IndiaForm24qSalaryPaymentMonthlyStubCsvDocument, {
+        month: tdsMonth,
+        year: tdsYear,
+      });
+      const blob = new Blob([res.indiaForm24qSalaryPaymentMonthlyStubCsv], {
+        type: 'text/csv;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `india-form24q-salary-month-stub-${tdsYear}-${String(tdsMonth).padStart(2, '0')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setForm24qExportError(
+        e instanceof Error ? e.message : 'Export failed — check payroll permissions and login'
+      );
+    } finally {
+      setForm24qExporting(false);
+    }
+  };
+
+  const downloadIndiaEpfEcrPrepStubCsv = async () => {
+    try {
+      setEpfEcrExporting(true);
+      setEpfEcrExportError(null);
+      const res = await client.request<{ indiaEpfMonthlyEcrPrepStubCsv: string }>(
+        IndiaEpfMonthlyEcrPrepStubCsvDocument,
+        {
+          month: tdsMonth,
+          year: tdsYear,
+        }
+      );
+      const blob = new Blob([res.indiaEpfMonthlyEcrPrepStubCsv], {
+        type: 'text/csv;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `india-epf-ecr-prep-stub-${tdsYear}-${String(tdsMonth).padStart(2, '0')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setEpfEcrExportError(
+        e instanceof Error ? e.message : 'Export failed — check payroll permissions and login'
+      );
+    } finally {
+      setEpfEcrExporting(false);
+    }
+  };
+
   const downloadIndiaTdsCsv = async () => {
     try {
       setTdsExporting(true);
@@ -267,6 +351,119 @@ const PayrollPage = () => {
       );
     } finally {
       setBankExporting(false);
+    }
+  };
+
+  const downloadPayrollIndiaBulkNeftCreditCsv = async () => {
+    try {
+      setNeftExporting(true);
+      setNeftExportError(null);
+      const res = await client.request<{ payrollIndiaBulkNeftCreditCsv: string }>(
+        PayrollIndiaBulkNeftCreditCsvDocument,
+        {
+          month: tdsMonth,
+          year: tdsYear,
+        }
+      );
+      const blob = new Blob([res.payrollIndiaBulkNeftCreditCsv], {
+        type: 'text/csv;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `payroll-india-bulk-neft-credit-${tdsYear}-${String(tdsMonth).padStart(2, '0')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setNeftExportError(
+        e instanceof Error ? e.message : 'Export failed — check payroll permissions and login'
+      );
+    } finally {
+      setNeftExporting(false);
+    }
+  };
+
+  const downloadIndiaFyPayrollEmployeeTotalsCsv = async () => {
+    try {
+      setFyExporting(true);
+      setFyExportError(null);
+      const res = await client.request<{ indiaFyPayrollEmployeeTotalsCsv: string }>(
+        IndiaFyPayrollEmployeeTotalsCsvDocument,
+        {
+          fyStartYear,
+        }
+      );
+      const blob = new Blob([res.indiaFyPayrollEmployeeTotalsCsv], {
+        type: 'text/csv;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `india-fy-employee-payroll-totals-FY${fyStartYear}-${fyStartYear + 1}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setFyExportError(
+        e instanceof Error ? e.message : 'Export failed — check payroll permissions and login'
+      );
+    } finally {
+      setFyExporting(false);
+    }
+  };
+
+  const downloadIndiaFyQuarterPayrollEmployeeTotalsCsv = async () => {
+    try {
+      setFyQuarterExporting(true);
+      setFyQuarterExportError(null);
+      const res = await client.request<{
+        indiaFyQuarterPayrollEmployeeTotalsCsv: string;
+      }>(IndiaFyQuarterPayrollEmployeeTotalsCsvDocument, {
+        fyStartYear,
+        quarter: fyQuarter,
+      });
+      const blob = new Blob([res.indiaFyQuarterPayrollEmployeeTotalsCsv], {
+        type: 'text/csv;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `india-fy${fyStartYear}-Q${fyQuarter}-employee-payroll-totals.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setFyQuarterExportError(
+        e instanceof Error ? e.message : 'Export failed — check payroll permissions and login'
+      );
+    } finally {
+      setFyQuarterExporting(false);
+    }
+  };
+
+  const downloadIndiaForm16PartBFyPrepStubCsv = async () => {
+    try {
+      setForm16Exporting(true);
+      setForm16ExportError(null);
+      const res = await client.request<{ indiaForm16PartBFyPrepStubCsv: string }>(
+        IndiaForm16PartBFyPrepStubCsvDocument,
+        {
+          fyStartYear,
+        }
+      );
+      const blob = new Blob([res.indiaForm16PartBFyPrepStubCsv], {
+        type: 'text/csv;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `india-form16-partb-fy-prep-stub-FY${fyStartYear}-${fyStartYear + 1}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setForm16ExportError(
+        e instanceof Error ? e.message : 'Export failed — check payroll permissions and login'
+      );
+    } finally {
+      setForm16Exporting(false);
     }
   };
 
@@ -595,6 +792,52 @@ const PayrollPage = () => {
         )}
       </Card>
 
+      <Card title="India — Form 24Q salary payment month (stub CSV)">
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+          Reconciliation-oriented rows per payslip: India FY of the pay month, PAN, gross as a notional
+          Section&nbsp;<strong>192</strong> salary base, and <strong>TDS</strong> withheld ({''}
+          from&nbsp;payslip). Trailing columns can list employer TAN/name when{' '}
+          <span className="font-mono text-xs">KABIPAY_PAYROLL_EMPLOYER_TAN</span> /{' '}
+          <span className="font-mono text-xs">KABIPAY_PAYROLL_EMPLOYER_LEGAL_NAME</span> are set on the payroll
+          service. Not TRACES <strong>Form&nbsp;24Q</strong> upload or Annex&nbsp;II layout — use for internal
+          checks only. Same permission gate; month/year matches the TDS section above.
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <button
+            type="button"
+            onClick={() => void downloadIndiaForm24qStubCsv()}
+            disabled={form24qExporting}
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-400"
+          >
+            {form24qExporting ? 'Downloading…' : 'Download Form 24Q month stub CSV'}
+          </button>
+        </div>
+        {form24qExportError && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{form24qExportError}</p>
+        )}
+      </Card>
+
+      <Card title="India — EPFO ECR contribution prep (stub CSV)">
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+          UAN, member name, PAY month/year, EPF wage (<span className="font-mono text-xs">min(gross, ₹15k)</span>),{' '}
+          employee and employer PF from the payslip — for reconciling before remittance. Not the official
+          Unified EPF <strong>ECR</strong> file format. Same gate; month/year matches the TDS section.
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <button
+            type="button"
+            onClick={() => void downloadIndiaEpfEcrPrepStubCsv()}
+            disabled={epfEcrExporting}
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-400"
+          >
+            {epfEcrExporting ? 'Downloading…' : 'Download EPF ECR prep stub CSV'}
+          </button>
+        </div>
+        {epfEcrExportError && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{epfEcrExportError}</p>
+        )}
+      </Card>
+
       <Card title="Payroll — bank transfer list (CSV)">
         <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
           One row per payslip in the selected cycle: <span className="font-medium">net salary</span>{' '}
@@ -617,6 +860,102 @@ const PayrollPage = () => {
         </div>
         {bankExportError && (
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">{bankExportError}</p>
+        )}
+      </Card>
+
+      <Card title="India — bulk NEFT credit prep (CSV)">
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+          Same cycle and net pay as the bank transfer list, with columns aimed at common multi-row NEFT
+          salary uploads (IFSC, account, narration, optional value date from the cycle’s payment date).
+          Not an NPCI NACH mandate file or a bank binary template. Same permission gate; uses month/year
+          in the TDS section above.
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <button
+            type="button"
+            onClick={() => void downloadPayrollIndiaBulkNeftCreditCsv()}
+            disabled={neftExporting}
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-400"
+          >
+            {neftExporting ? 'Downloading…' : 'Download bulk NEFT prep CSV'}
+          </button>
+        </div>
+        {neftExportError && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{neftExportError}</p>
+        )}
+      </Card>
+
+      <Card title="India FY — employee payroll totals (CSV)">
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+          Aggregates payslips in payroll cycles whose India financial year matches the selected start year
+          (April through the following March). Sums gross, deductions, net, TDS, PF/ESI employee, and PT.
+          Optional <strong>FY quarter</strong> narrows to Q1 Apr–Jun … Q4 Jan–Mar (next calendar year).
+          Form&nbsp;16 Part&nbsp;B variant uses spreadsheet-friendly column labels; employer TAN/name come from
+          env <span className="font-mono text-xs">KABIPAY_PAYROLL_EMPLOYER_TAN</span> /{' '}
+          <span className="font-mono text-xs">KABIPAY_PAYROLL_EMPLOYER_LEGAL_NAME</span> when set on the payroll
+          service — prep only, not a certificate.
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-gray-600 dark:text-gray-400">India FY start year</span>
+            <input
+              type="number"
+              min={2000}
+              max={2199}
+              className="w-32 rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              value={fyStartYear}
+              onChange={(ev) => setFyStartYear(Number(ev.target.value) || fyStartYear)}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-gray-600 dark:text-gray-400">FY quarter</span>
+            <select
+              className="min-w-[12rem] rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              value={fyQuarter}
+              onChange={(ev) => setFyQuarter(Number(ev.target.value) || 1)}
+            >
+              <option value={1}>Q1 Apr–Jun</option>
+              <option value={2}>Q2 Jul–Sep</option>
+              <option value={3}>Q3 Oct–Dec</option>
+              <option value={4}>Q4 Jan–Mar</option>
+            </select>
+          </label>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            e.g. 2025 for FY 2025–26 (Apr 2025–Mar 2026).
+          </span>
+          <button
+            type="button"
+            onClick={() => void downloadIndiaFyPayrollEmployeeTotalsCsv()}
+            disabled={fyExporting}
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-400"
+          >
+            {fyExporting ? 'Downloading…' : 'Download FY totals CSV'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void downloadIndiaFyQuarterPayrollEmployeeTotalsCsv()}
+            disabled={fyQuarterExporting}
+            className="rounded-md border border-primary-600 px-4 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 disabled:opacity-50 dark:border-primary-400 dark:text-primary-300 dark:hover:bg-gray-800"
+          >
+            {fyQuarterExporting ? 'Downloading…' : 'Download FY quarter totals CSV'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void downloadIndiaForm16PartBFyPrepStubCsv()}
+            disabled={form16Exporting}
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-800"
+          >
+            {form16Exporting ? 'Downloading…' : 'Form 16 Part B prep (FY stub) CSV'}
+          </button>
+        </div>
+        {fyExportError && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{fyExportError}</p>
+        )}
+        {fyQuarterExportError && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{fyQuarterExportError}</p>
+        )}
+        {form16ExportError && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{form16ExportError}</p>
         )}
       </Card>
     </div>

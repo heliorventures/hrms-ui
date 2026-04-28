@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
+import { useAuth } from '@/contexts/AuthContext';
+import Input from '@/components/common/Input';
+import Button from '@/components/common/Button';
 
 const CAPTCHA_LENGTH = 5;
 const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -15,9 +15,9 @@ const generateCaptcha = () => {
   return result;
 };
 
-const LoginPage = () => {
+const OpsLoginPage = () => {
   const navigate = useNavigate();
-  const { login, loading, error: authError } = useAuth();
+  const { loginOps, loading, opsError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
@@ -36,12 +36,8 @@ const LoginPage = () => {
     e.preventDefault();
     const newErrors: { email?: string; password?: string; captcha?: string } = {};
 
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    }
-    if (!password) {
-      newErrors.password = 'Password is required';
-    }
+    if (!email.trim()) newErrors.email = 'Email is required';
+    if (!password) newErrors.password = 'Password is required';
     const captchaNormalized = captchaInput.trim().toUpperCase();
     if (captchaNormalized !== captchaCode) {
       newErrors.captcha = 'Captcha verification failed. Please try again.';
@@ -49,20 +45,16 @@ const LoginPage = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      if (newErrors.captcha) {
-        refreshCaptcha();
-      }
+      if (newErrors.captcha) refreshCaptcha();
       return;
     }
 
     setErrors({});
 
     try {
-      await login(email.trim(), password);
-      navigate('/dashboard', { replace: true });
+      await loginOps(email.trim(), password);
+      navigate('/ops/tenants', { replace: true });
     } catch {
-      // AuthContext already populated `authError`; we just rotate the captcha
-      // to defeat a naive password-spray.
       refreshCaptcha();
     }
   };
@@ -73,10 +65,10 @@ const LoginPage = () => {
         <div className="rounded-2xl border border-slate-200/90 bg-white p-8 shadow-card-md dark:border-slate-700/80 dark:bg-slate-900/80">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              KabiPay
+              Operator console
             </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Sign in to your account
+              Platform sign-in (kabipay-ops)
             </p>
           </div>
 
@@ -89,7 +81,7 @@ const LoginPage = () => {
                 setEmail(e.target.value);
                 setErrors((err) => ({ ...err, email: undefined }));
               }}
-              placeholder="e.g. john.doe@techcorp.com"
+              placeholder="ops-admin@kabipay.local"
               error={errors.email}
               fullWidth
               autoComplete="email"
@@ -103,7 +95,7 @@ const LoginPage = () => {
                 setPassword(e.target.value);
                 setErrors((err) => ({ ...err, password: undefined }));
               }}
-              placeholder="Enter your password"
+              placeholder="Password"
               error={errors.password}
               fullWidth
               autoComplete="current-password"
@@ -120,10 +112,7 @@ const LoginPage = () => {
                 >
                   <span
                     className="select-none text-xl font-bold tracking-[0.4em] text-gray-700 dark:text-gray-200"
-                    style={{
-                      letterSpacing: '0.35em',
-                      fontFamily: 'monospace',
-                    }}
+                    style={{ letterSpacing: '0.35em', fontFamily: 'monospace' }}
                   >
                     {captchaCode}
                   </span>
@@ -160,31 +149,32 @@ const LoginPage = () => {
               />
             </div>
 
-            {authError && (
+            {opsError && (
               <div
                 role="alert"
                 className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
               >
-                {authError}
+                {opsError}
               </div>
             )}
 
             <Button type="submit" fullWidth size="lg" disabled={submitting}>
-              {submitting ? 'Signing in...' : 'Sign in'}
+              {submitting ? 'Signing in...' : 'Sign in to console'}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-            Seed credentials: <code>demo@kabipay.local</code> / <code>ChangeMe!123</code>
-            {' — see scripts/seed-demo-data.ps1.'}
+            Demo ops user: <code>ops-admin@kabipay.local</code> / <code>ChangeMe!123</code>
+            {' — run '}
+            <code className="text-[0.65rem]">seed-demo-data.ps1</code>.
           </p>
 
           <p className="mt-4 text-center text-sm">
             <Link
-              to="/ops/login"
+              to="/login"
               className="text-indigo-600 hover:underline dark:text-indigo-400"
             >
-              Operator console sign-in
+              Employee app sign-in
             </Link>
           </p>
         </div>
@@ -193,4 +183,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default OpsLoginPage;

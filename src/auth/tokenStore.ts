@@ -65,3 +65,15 @@ export function clearAllTokens() {
   setClientRefreshToken(null);
   setOperatorRefreshToken(null);
 }
+
+/** Clear only the tenant (employee) app session. */
+export function clearClientSession() {
+  clientAccessToken = null;
+  setClientRefreshToken(null);
+}
+
+/** Clear only the operator console session. */
+export function clearOperatorSession() {
+  operatorAccessToken = null;
+  setOperatorRefreshToken(null);
+}

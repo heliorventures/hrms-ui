@@ -2,6 +2,13 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AppLayout from '../components/layout/AppLayout';
 import LoginPage from '../modules/auth/LoginPage';
+import OpsLoginPage from '../modules/ops/OpsLoginPage';
+import OpsLayout from '../modules/ops/OpsLayout';
+import OpsTenantsPage from '../modules/ops/OpsTenantsPage';
+import OpsModulesPage from '../modules/ops/OpsModulesPage';
+import OpsBillingPage from '../modules/ops/OpsBillingPage';
+import OpsOperatorsPage from '../modules/ops/OpsOperatorsPage';
+import OpsFeatureFlagsPage from '../modules/ops/OpsFeatureFlagsPage';
 import Dashboard from '../modules/dashboard/Dashboard';
 import AttendancePage from '../modules/attendance/AttendancePage';
 import LeavePage from '../modules/leave/LeavePage';
@@ -40,8 +47,16 @@ const ProtectedLayout = () => {
   return <AppLayout />;
 };
 
+const OpsProtectedLayout = () => {
+  const { isOpsAuthenticated } = useAuth();
+  if (!isOpsAuthenticated) {
+    return <Navigate to="/ops/login" replace />;
+  }
+  return <OpsLayout />;
+};
+
 const AppRoutes = () => {
-  const { role, isAuthenticated } = useAuth();
+  const { role, isAuthenticated, isOpsAuthenticated } = useAuth();
 
   return (
     <Routes>
@@ -49,6 +64,22 @@ const AppRoutes = () => {
         path="/login"
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
       />
+      <Route
+        path="/ops/login"
+        element={
+          isOpsAuthenticated ? <Navigate to="/ops/tenants" replace /> : <OpsLoginPage />
+        }
+      />
+
+      <Route path="/ops" element={<OpsProtectedLayout />}>
+        <Route index element={<Navigate to="/ops/tenants" replace />} />
+        <Route path="tenants" element={<OpsTenantsPage />} />
+        <Route path="modules" element={<OpsModulesPage />} />
+        <Route path="billing" element={<OpsBillingPage />} />
+        <Route path="operators" element={<OpsOperatorsPage />} />
+        <Route path="feature-flags" element={<OpsFeatureFlagsPage />} />
+        <Route path="*" element={<Navigate to="/ops/tenants" replace />} />
+      </Route>
 
       <Route path="/" element={<ProtectedLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />

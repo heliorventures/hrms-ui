@@ -5,4 +5,10 @@
 
 extend type Query {
   payrollBankTransferCsv(month: Int!, year: Int!): String!
+  payrollIndiaBulkNeftCreditCsv(month: Int!, year: Int!): String!
+  indiaFyPayrollEmployeeTotalsCsv(fyStartYear: Int!): String!
+  indiaFyQuarterPayrollEmployeeTotalsCsv(fyStartYear: Int!, quarter: Int!): String!
+  indiaForm16PartBFyPrepStubCsv(fyStartYear: Int!): String!
+  indiaForm24qSalaryPaymentMonthlyStubCsv(month: Int!, year: Int!): String!
+  indiaEpfMonthlyEcrPrepStubCsv(month: Int!, year: Int!): String!
 }

@@ -1,6 +1,6 @@
 # kabipay-ui — Setup
 
-Quick install and project orientation. For **database + Rust + gateway + config.json**, use **[LOCAL_SETUP.md](LOCAL_SETUP.md)** in the monorepo.
+Quick install and project orientation. For **database + Rust + gateway + config.json**, use **[LOCAL_SETUP.md](LOCAL_SETUP.md)** (includes **Windows MSVC** / **`link.exe`** prerequisites for `cargo build`, full-stack order, and troubleshooting).
 
 ## Prerequisites
 
