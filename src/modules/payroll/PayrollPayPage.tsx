@@ -11,7 +11,9 @@ import {
   PayrollShellDocument,
   PayrollSalaryComponentsDocument,
   ClientOpsPayslipsForPayrollHubDocument,
+  PayrollComplianceSettingDocument,
 } from '../../api/graphql/graphql';
+import type { PayrollComplianceSettingQuery } from '../../api/graphql/graphql';
 
 type TabId = 'salary' | 'payslip' | 'incometax';
 
@@ -89,6 +91,8 @@ const PayrollPayPage = () => {
   const [errorShell, setErrorShell] = useState<string | null>(null);
   const [errorSalary, setErrorSalary] = useState<string | null>(null);
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
+  const [payslipBranding, setPayslipBranding] =
+    useState<PayrollComplianceSettingQuery['payrollComplianceSetting']>(null);
 
   useEffect(() => {
     let c = false;
@@ -162,6 +166,23 @@ const PayrollPayPage = () => {
     })();
     return () => {
       c = true;
+    };
+  }, [client, activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'payslip')
+      return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const q = await client.request<PayrollComplianceSettingQuery>(PayrollComplianceSettingDocument);
+        if (!cancelled) setPayslipBranding(q.payrollComplianceSetting ?? null);
+      } catch {
+        if (!cancelled) setPayslipBranding(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
   }, [client, activeTab]);
 
@@ -391,6 +412,7 @@ const PayrollPayPage = () => {
               {activePayslip && (
                 <PayslipDocument
                   tenantName={currentTenant.name}
+                  companyHeaderName={payslipBranding?.payslipHeaderTitle}
                   employeeName={user?.name ?? 'Employee'}
                   employeeCode={user?.employeeId ?? ''}
                   periodLabel={

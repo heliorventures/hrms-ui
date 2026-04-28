@@ -19,6 +19,9 @@ import {
   IndiaForm16PartBFyPrepStubCsvDocument,
   CreatePayrollArrearDocument,
   PayrollArrearsListDocument,
+  PayrollComplianceSettingDocument,
+  UpsertPayrollComplianceSettingDocument,
+  type PayrollComplianceSettingQuery,
 } from '../../api/graphql/graphql';
 
 interface SalaryComponentRow {
@@ -109,6 +112,15 @@ const PayrollPage = () => {
   const [arrearBusy, setArrearBusy] = useState(false);
   const [arrearError, setArrearError] = useState<string | null>(null);
   const [arrearOk, setArrearOk] = useState<string | null>(null);
+  const [employerTanInput, setEmployerTanInput] = useState('');
+  const [employerLegalNameInput, setEmployerLegalNameInput] = useState('');
+  const [baseComponentInput, setBaseComponentInput] = useState('BASIC');
+  const [arrearComponentInput, setArrearComponentInput] = useState('ARREAR');
+  const [payslipHeaderInput, setPayslipHeaderInput] = useState('');
+  const [payslipLogoIdInput, setPayslipLogoIdInput] = useState('');
+  const [complianceSaveBusy, setComplianceSaveBusy] = useState(false);
+  const [complianceSaveError, setComplianceSaveError] = useState<string | null>(null);
+  const [complianceSaveOk, setComplianceSaveOk] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -127,6 +139,24 @@ const PayrollPage = () => {
         merged = { ...result, payrollArrears: [] };
       }
       setData(merged);
+      try {
+        const cs =
+          await client.request<PayrollComplianceSettingQuery>(PayrollComplianceSettingDocument);
+        const row = cs.payrollComplianceSetting;
+        setEmployerTanInput(row?.employerTan?.trim() ?? '');
+        setEmployerLegalNameInput(row?.employerLegalName?.trim() ?? '');
+        setBaseComponentInput(row?.baseSalaryComponentCode?.trim() || 'BASIC');
+        setArrearComponentInput(row?.arrearSalaryComponentCode?.trim() || 'ARREAR');
+        setPayslipHeaderInput(row?.payslipHeaderTitle?.trim() ?? '');
+        setPayslipLogoIdInput(row?.payslipLogoFileStorageId?.trim() ?? '');
+      } catch {
+        setEmployerTanInput('');
+        setEmployerLegalNameInput('');
+        setBaseComponentInput('BASIC');
+        setArrearComponentInput('ARREAR');
+        setPayslipHeaderInput('');
+        setPayslipLogoIdInput('');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load payroll data');
     } finally {
@@ -137,6 +167,43 @@ const PayrollPage = () => {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  const savePayrollCompliance = useCallback(async () => {
+    setComplianceSaveBusy(true);
+    setComplianceSaveError(null);
+    setComplianceSaveOk(null);
+    try {
+      await client.request(UpsertPayrollComplianceSettingDocument, {
+        input: {
+          employerTan: employerTanInput.trim() || null,
+          employerLegalName: employerLegalNameInput.trim() || null,
+          baseSalaryComponentCode: baseComponentInput.trim() || null,
+          arrearSalaryComponentCode: arrearComponentInput.trim() || null,
+          payslipHeaderTitle: payslipHeaderInput.trim() || null,
+          payslipLogoFileStorageId: payslipLogoIdInput.trim() || null,
+        },
+      });
+      setComplianceSaveOk(
+        'Payroll compliance settings saved (CSV placeholders, component codes, payslip header/logo).'
+      );
+      await loadData();
+    } catch (e) {
+      setComplianceSaveError(
+        e instanceof Error ? e.message : 'Could not save — check payroll statutory permissions'
+      );
+    } finally {
+      setComplianceSaveBusy(false);
+    }
+  }, [
+    arrearComponentInput,
+    baseComponentInput,
+    client,
+    employerLegalNameInput,
+    employerTanInput,
+    loadData,
+    payslipHeaderInput,
+    payslipLogoIdInput,
+  ]);
 
   const createCycle = useCallback(async () => {
     setCreateBusy(true);
@@ -192,7 +259,9 @@ const PayrollPage = () => {
       setRunOk(null);
       try {
         await client.request(RunPayrollForCycleDocument, { payrollCycleId });
-        setRunOk('Pay run completed — cycle is PROCESSED (v1 engine: employment history + BASIC line).');
+        setRunOk(
+          'Pay run completed — cycle is PROCESSED (v1: employment salary + arrears mapped to tenant component codes).'
+        );
         await loadData();
       } catch (e) {
         setRunError(e instanceof Error ? e.message : 'Pay run failed');
@@ -481,6 +550,90 @@ const PayrollPage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
+
+      <Card title="Employer branding & statutory (India)">
+        <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
+          Employer TAN / name drive Form 24Q / Form 16 CSV columns (empty → env fallback on the payroll
+          process). <strong className="font-medium">Pay run</strong> posts one line against the{' '}
+          <span className="font-mono">baseSalaryComponentCode</span> earning component (employment
+          salary); arrear payouts use <span className="font-mono">arrearSalaryComponentCode</span>.
+          Payslip PDF rendering can use header title + logo ID when wired. Requires payroll statutory
+          export role.
+        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <label className="min-w-[12rem] flex flex-col gap-1 text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Employer TAN</span>
+            <input
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              value={employerTanInput}
+              onChange={(ev) => setEmployerTanInput(ev.target.value)}
+              placeholder="e.g. BDEL12345R"
+              autoComplete="off"
+            />
+          </label>
+          <label className="min-w-[16rem] flex flex-1 flex-col gap-1 text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Employer legal name</span>
+            <input
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              value={employerLegalNameInput}
+              onChange={(ev) => setEmployerLegalNameInput(ev.target.value)}
+              placeholder="Registered name as per TAN"
+              autoComplete="organization"
+            />
+          </label>
+          <label className="min-w-[8rem] flex flex-col gap-1 text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Base earning code</span>
+            <input
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              value={baseComponentInput}
+              onChange={(ev) => setBaseComponentInput(ev.target.value)}
+              placeholder="BASIC"
+            />
+          </label>
+          <label className="min-w-[8rem] flex flex-col gap-1 text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Arrear earning code</span>
+            <input
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              value={arrearComponentInput}
+              onChange={(ev) => setArrearComponentInput(ev.target.value)}
+              placeholder="ARREAR"
+            />
+          </label>
+          <label className="min-w-[14rem] flex flex-col gap-1 text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Payslip header (display name)</span>
+            <input
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              value={payslipHeaderInput}
+              onChange={(ev) => setPayslipHeaderInput(ev.target.value)}
+              placeholder="Company name as on payslip"
+            />
+          </label>
+          <label className="min-w-[16rem] flex flex-col gap-1 text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Logo file UUID (optional)</span>
+            <input
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-xs text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              value={payslipLogoIdInput}
+              onChange={(ev) => setPayslipLogoIdInput(ev.target.value)}
+              placeholder="file_storage.id after HR upload"
+            />
+          </label>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={complianceSaveBusy || loading}
+            onClick={() => void savePayrollCompliance()}
+          >
+            {complianceSaveBusy ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
+        {complianceSaveError && (
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{complianceSaveError}</p>
+        )}
+        {complianceSaveOk && !complianceSaveError && (
+          <p className="mt-2 text-sm text-green-700 dark:text-green-400">{complianceSaveOk}</p>
+        )}
+      </Card>
 
       <Card title="PENDING payroll arrears (back-pay)">
         <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">

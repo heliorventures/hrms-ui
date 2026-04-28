@@ -144,6 +144,73 @@ query IndiaForm24qSalaryPaymentMonthlyStubCsv($month: Int!, $year: Int!) {
   indiaForm24qSalaryPaymentMonthlyStubCsv(month: $month, year: $year)
 }
 
+# Employer TAN / legal name + pay-run component codes + payslip header/logo (stored per tenant; env fallback).
+query PayrollComplianceSetting {
+  payrollComplianceSetting {
+    employerTan
+    employerLegalName
+    baseSalaryComponentCode
+    arrearSalaryComponentCode
+    payslipHeaderTitle
+    payslipLogoFileStorageId
+  }
+}
+
+mutation UpsertPayrollComplianceSetting($input: UpsertPayrollComplianceSettingInput!) {
+  upsertPayrollComplianceSetting(input: $input) {
+    employerTan
+    employerLegalName
+    baseSalaryComponentCode
+    arrearSalaryComponentCode
+    payslipHeaderTitle
+    payslipLogoFileStorageId
+  }
+}
+
+query TaxSectionDefinitions($activeOnly: Boolean = true, $limit: Int = 100) {
+  taxSectionDefinitions(activeOnly: $activeOnly, limit: $limit) {
+    id
+    sectionCode
+    sectionLabel
+    regimeScope
+    countryCode
+    displayOrder
+    isActive
+    maxDeductionAmount
+  }
+}
+
+mutation UpsertTaxSectionDefinition($input: UpsertTaxSectionDefinitionInput!) {
+  upsertTaxSectionDefinition(input: $input) {
+    id
+    sectionCode
+    sectionLabel
+    regimeScope
+  }
+}
+
+mutation UpsertTaxConfigurationVersion($input: UpsertTaxConfigurationVersionInput!) {
+  upsertTaxConfigurationVersion(input: $input) {
+    id
+    fiscalYear
+    regime
+    countryCode
+    isActive
+  }
+}
+
+mutation UpsertTaxSlab($input: UpsertTaxSlabInput!) {
+  upsertTaxSlab(input: $input) {
+    id
+    taxConfigVersionId
+    incomeFrom
+    incomeTo
+    taxRate
+    surchargeRate
+    cessRate
+  }
+}
+
 # EPFO ECR-style contribution prep (not official ECR file). Same month/year as TDS section.
 query IndiaEpfMonthlyEcrPrepStubCsv($month: Int!, $year: Int!) {
   indiaEpfMonthlyEcrPrepStubCsv(month: $month, year: $year)

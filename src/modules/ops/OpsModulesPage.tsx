@@ -181,7 +181,7 @@ const OpsModulesPage = () => {
     <div className="space-y-4">
       <PageHeader
         title="Modules & subscriptions"
-        description="Catalog toggles and per-tenant module subscriptions (GraphQL mutations on kabipay-tenant)."
+        description="Catalog toggles and per-tenant module subscriptions (GraphQL mutations on kabipay-ops)."
         actions={
           <div className="flex flex-wrap gap-2">
             <button

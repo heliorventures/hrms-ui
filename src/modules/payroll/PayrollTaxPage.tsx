@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -8,7 +8,11 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import {
   ClientOpsPayrollTaxBoardDocument,
   TaxComputationsListDocument,
+  TaxSectionDefinitionsDocument,
   UpsertTaxComputationDocument,
+  UpsertTaxConfigurationVersionDocument,
+  UpsertTaxSectionDefinitionDocument,
+  UpsertTaxSlabDocument,
 } from '../../api/graphql/graphql';
 
 interface TaxConfigurationRow {
@@ -32,6 +36,17 @@ interface TaxSlabRow {
 interface TaxBoardData {
   taxConfigurations: TaxConfigurationRow[];
   taxSlabs: TaxSlabRow[];
+}
+
+interface TaxSectionDefRow {
+  id: string;
+  sectionCode: string;
+  sectionLabel: string;
+  regimeScope?: string | null;
+  countryCode: string;
+  displayOrder: number;
+  isActive: boolean;
+  maxDeductionAmount?: string | null;
 }
 
 interface TaxComputationRow {
@@ -69,38 +84,125 @@ const PayrollTaxPage = () => {
   const [formDed, setFormDed] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formMsg, setFormMsg] = useState<string | null>(null);
+  const [taxSections, setTaxSections] = useState<TaxSectionDefRow[]>([]);
+  const [taxSectionsError, setTaxSectionsError] = useState<string | null>(null);
+  const [secCode, setSecCode] = useState('80C');
+  const [secLabel, setSecLabel] = useState('Section 80C (ELSS/PPF etc.)');
+  const [secRegime, setSecRegime] = useState('ALL');
+  const [secMax, setSecMax] = useState('');
+  const [secBusy, setSecBusy] = useState(false);
+  const [secMsg, setSecMsg] = useState<string | null>(null);
+  const [cfgUpsertBusy, setCfgUpsertBusy] = useState(false);
+  const [cfgUpsertMsg, setCfgUpsertMsg] = useState<string | null>(null);
+  const [cfgFy, setCfgFy] = useState(new Date().getFullYear().toString());
+  const [cfgRegime, setCfgRegime] = useState('NEW_REGIME');
+  const [cfgCountry, setCfgCountry] = useState('IN');
+  const [cfgActive, setCfgActive] = useState(true);
+  const [slabBusy, setSlabBusy] = useState(false);
+  const [slabMsg, setSlabMsg] = useState<string | null>(null);
+  const [slabFrom, setSlabFrom] = useState('0');
+  const [slabTo, setSlabTo] = useState('');
+  const [slabRate, setSlabRate] = useState('5');
+  const [slabSurcharge, setSlabSurcharge] = useState('');
+  const [slabCess, setSlabCess] = useState('4');
+
+  const loadTaxBoard = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await client.request<TaxBoardData>(ClientOpsPayrollTaxBoardDocument, {
+        limit: 20,
+      });
+      setData(result);
+      const list = result.taxConfigurations;
+      const firstActive =
+        list.find((config) => config.isActive)?.id ?? list[0]?.id ?? '';
+      setSelectedConfigId((prev) =>
+        prev && list.some((c) => c.id === prev) ? prev : firstActive
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load tax data');
+    } finally {
+      setLoading(false);
+    }
+  }, [client]);
+
+  const loadTaxSections = useCallback(async () => {
+    try {
+      setTaxSectionsError(null);
+      const res = await client.request<{ taxSectionDefinitions: TaxSectionDefRow[] }>(
+        TaxSectionDefinitionsDocument,
+        { activeOnly: false, limit: 200 }
+      );
+      setTaxSections(res.taxSectionDefinitions);
+    } catch (e) {
+      setTaxSectionsError(
+        e instanceof Error ? e.message : 'Could not load tax sections (needs tax catalog + permission).'
+      );
+      setTaxSections([]);
+    }
+  }, [client]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await client.request<TaxBoardData>(ClientOpsPayrollTaxBoardDocument, {
-          limit: 20,
-        });
-        if (!cancelled) {
-          setData(result);
-          const firstActive =
-            result.taxConfigurations.find((config) => config.isActive)?.id ??
-            result.taxConfigurations[0]?.id ??
-            '';
-          setSelectedConfigId(firstActive);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load tax data');
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [client]);
+    void loadTaxBoard();
+  }, [loadTaxBoard]);
+
+  const handleUpsertTaxConfiguration = async (e: FormEvent) => {
+    e.preventDefault();
+    setCfgUpsertBusy(true);
+    setCfgUpsertMsg(null);
+    try {
+      const fy = Number(cfgFy);
+      if (Number.isNaN(fy))
+        throw new Error('Invalid fiscal year');
+      await client.request(UpsertTaxConfigurationVersionDocument, {
+        input: {
+          fiscalYear: fy,
+          regime: cfgRegime.trim() || null,
+          countryCode: cfgCountry.trim() || 'IN',
+          isActive: cfgActive,
+        },
+      });
+      setCfgUpsertMsg('Tax configuration version saved.');
+      await loadTaxBoard();
+    } catch (err) {
+      setCfgUpsertMsg(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setCfgUpsertBusy(false);
+    }
+  };
+
+  const handleUpsertSlab = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedConfigId) {
+      setSlabMsg('Select a tax configuration in the dropdown above first.');
+      return;
+    }
+    setSlabBusy(true);
+    setSlabMsg(null);
+    try {
+      await client.request(UpsertTaxSlabDocument, {
+        input: {
+          taxConfigVersionId: selectedConfigId,
+          incomeFrom: slabFrom.trim(),
+          incomeTo: slabTo.trim() || null,
+          taxRate: slabRate.trim() || null,
+          surchargeRate: slabSurcharge.trim() || null,
+          cessRate: slabCess.trim() || null,
+        },
+      });
+      setSlabMsg('Slab saved.');
+      await loadTaxBoard();
+    } catch (err) {
+      setSlabMsg(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setSlabBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadTaxSections();
+  }, [loadTaxSections]);
 
   useEffect(() => {
     let c = false;
@@ -152,6 +254,34 @@ const PayrollTaxPage = () => {
       { limit: 10 }
     );
     setComputations(res.taxComputations);
+  };
+
+  const handleUpsertTaxSection = async (e: FormEvent) => {
+    e.preventDefault();
+    setSecBusy(true);
+    setSecMsg(null);
+    try {
+      await client.request(UpsertTaxSectionDefinitionDocument, {
+        input: {
+          sectionCode: secCode.trim().toUpperCase(),
+          sectionLabel: secLabel.trim(),
+          regimeScope:
+            secRegime.trim().toUpperCase() === 'ALL'
+              ? null
+              : secRegime.trim().toUpperCase() || null,
+          countryCode: 'IN',
+          displayOrder: 0,
+          isActive: true,
+          maxDeductionAmount: secMax.trim() || null,
+        },
+      });
+      setSecMsg('Section saved.');
+      await loadTaxSections();
+    } catch (err) {
+      setSecMsg(err instanceof Error ? err.message : 'Save failed (needs tax:approve / HR)');
+    } finally {
+      setSecBusy(false);
+    }
   };
 
   const handleUpsert = async (e: FormEvent) => {
@@ -267,6 +397,78 @@ const PayrollTaxPage = () => {
         )}
       </Card>
 
+      <Card title="Income tax deduction sections (catalog)">
+        <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
+          Maintain allowed <span className="font-mono">sectionCode</span> labels for proofs (employee
+          declarations align with Income Tax slabs by <strong>tax configuration regime</strong> — old
+          vs new — see table above). Use regime scope <span className="font-mono">OLD</span>,{' '}
+          <span className="font-mono">NEW</span>, or leave empty / <span className="font-mono">ALL</span>{' '}
+          for both. Requires <span className="font-mono">tax:approve</span> or HR admin.
+        </p>
+        {taxSectionsError && (
+          <p className="mb-2 text-sm text-amber-800 dark:text-amber-200">{taxSectionsError}</p>
+        )}
+        {taxSections.length > 0 && (
+          <div className="mb-4 overflow-x-auto">
+            <Table
+              data={taxSections}
+              keyExtractor={(r) => r.id}
+              columns={[
+                { key: 'sectionCode', label: 'Code', render: (r) => r.sectionCode },
+                { key: 'sectionLabel', label: 'Label', render: (r) => r.sectionLabel },
+                {
+                  key: 'regimeScope',
+                  label: 'Regime',
+                  render: (r) => r.regimeScope ?? 'ALL',
+                },
+                {
+                  key: 'maxDeductionAmount',
+                  label: 'Cap (₹)',
+                  render: (r) => r.maxDeductionAmount ?? '—',
+                },
+                {
+                  key: 'isActive',
+                  label: 'Active',
+                  render: (r) => (r.isActive ? 'Yes' : 'No'),
+                },
+              ]}
+            />
+          </div>
+        )}
+        <form className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end" onSubmit={handleUpsertTaxSection}>
+          <Input
+            label="Section code"
+            value={secCode}
+            onChange={(e) => setSecCode(e.target.value)}
+            placeholder="80C"
+          />
+          <div className="min-w-[14rem] flex-1">
+            <Input
+              label="Label"
+              value={secLabel}
+              onChange={(e) => setSecLabel(e.target.value)}
+              placeholder="Description for employees"
+            />
+          </div>
+          <Input
+            label="Regime (OLD / NEW / ALL)"
+            value={secRegime}
+            onChange={(e) => setSecRegime(e.target.value)}
+            placeholder="ALL"
+          />
+          <Input
+            label="Max deduction (₹, optional)"
+            value={secMax}
+            onChange={(e) => setSecMax(e.target.value)}
+            placeholder="150000"
+          />
+          <Button type="submit" variant="secondary" size="sm" disabled={secBusy}>
+            {secBusy ? 'Saving…' : 'Upsert section'}
+          </Button>
+        </form>
+        {secMsg && <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{secMsg}</p>}
+      </Card>
+
       <Card title="Tax Slabs">
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading tax slabs...</p>
@@ -307,6 +509,80 @@ const PayrollTaxPage = () => {
             No tax slabs found for the selected configuration.
           </p>
         )}
+      </Card>
+
+      <Card title="HR admin — tax versions & slabs">
+        <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+          Create a <strong>tax configuration version</strong> per fiscal year and regime (e.g. duplicate
+          FY with <span className="font-mono">OLD_REGIME</span> vs{' '}
+          <span className="font-mono">NEW_REGIME</span>). Then add <strong>slabs</strong> for the version selected in
+          the dropdown at the top of the page. Requires <span className="font-mono">tax:approve</span> or HR
+          admin.
+        </p>
+        <form
+          className="mb-6 flex flex-wrap items-end gap-3 border-b border-gray-200 pb-6 dark:border-gray-600"
+          onSubmit={handleUpsertTaxConfiguration}
+        >
+          <Input label="Fiscal year (start)" value={cfgFy} onChange={(e) => setCfgFy(e.target.value)} />
+          <Input
+            label="Regime label"
+            value={cfgRegime}
+            onChange={(e) => setCfgRegime(e.target.value)}
+            placeholder="NEW_REGIME"
+          />
+          <Input
+            label="Country"
+            value={cfgCountry}
+            onChange={(e) => setCfgCountry(e.target.value)}
+            placeholder="IN"
+          />
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={cfgActive}
+              onChange={(e) => setCfgActive(e.target.checked)}
+            />
+            Active
+          </label>
+          <Button type="submit" variant="secondary" size="sm" disabled={cfgUpsertBusy}>
+            {cfgUpsertBusy ? 'Saving…' : 'Save tax version'}
+          </Button>
+        </form>
+        {cfgUpsertMsg && (
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">{cfgUpsertMsg}</p>
+        )}
+
+        <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+          Add slab for the <strong>selected</strong> configuration (top of page).
+        </p>
+        <form className="flex flex-wrap items-end gap-3" onSubmit={handleUpsertSlab}>
+          <Input
+            label="Income from (₹)"
+            value={slabFrom}
+            onChange={(e) => setSlabFrom(e.target.value)}
+          />
+          <Input
+            label="Income to (optional)"
+            value={slabTo}
+            onChange={(e) => setSlabTo(e.target.value)}
+            placeholder="empty = no upper limit"
+          />
+          <Input
+            label="Tax rate %"
+            value={slabRate}
+            onChange={(e) => setSlabRate(e.target.value)}
+          />
+          <Input
+            label="Surcharge %"
+            value={slabSurcharge}
+            onChange={(e) => setSlabSurcharge(e.target.value)}
+          />
+          <Input label="Cess %" value={slabCess} onChange={(e) => setSlabCess(e.target.value)} />
+          <Button type="submit" variant="primary" size="sm" disabled={slabBusy}>
+            {slabBusy ? 'Saving…' : 'Save slab'}
+          </Button>
+        </form>
+        {slabMsg && <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{slabMsg}</p>}
       </Card>
 
       <Card title="Your tax computations (saved)">

@@ -23,13 +23,14 @@ const schemaUrl = process.env.CODEGEN_SCHEMA_URL ?? gatewayUrlFromPublicConfig()
 const schema: CodegenConfig['schema'] = [
   schemaUrl,
   join(__dirname, 'src', 'api', 'schema-extensions', 'payroll-run.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'tax-admin.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'backlog-catchup.graphql'),
 ];
 
 const config: CodegenConfig = {
   schema,
-  // `opsGraph.ts` targets operator-gateway fields that may be absent from the client-stitched schema;
-  // validating it breaks `npm run codegen` for mainline UI. Ops pages import it at runtime only.
+  // Ops console uses hand-written `opsGraph.ts` (operator JWT) so tenant-only codegen runs stay simple.
+  // The stitched gateway schema includes ops types; ops pages validate at runtime against the gateway.
   documents: [
     'src/**/*.graphql',
     'src/**/*.{ts,tsx}',

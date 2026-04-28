@@ -205,3 +205,69 @@ export const OPS_OPERATOR_ROLES = gql`
     }
   }
 `;
+
+export const OPS_BILLING_CYCLES = gql`
+  query OpsBillingCycles($tenantId: ID, $limit: Int) {
+    billingCycles(tenantId: $tenantId, limit: $limit) {
+      id
+      tenantId
+      periodStart
+      periodEnd
+      frequency
+      status
+      createdAt
+    }
+  }
+`;
+
+export const OPS_CREATE_INVOICE = gql`
+  mutation OpsCreateInvoice($input: CreateInvoiceInput!) {
+    createInvoice(input: $input) {
+      id
+      invoiceNumber
+      totalAmount
+      currency
+      status
+      tenantId
+    }
+  }
+`;
+
+export const OPS_RECORD_PAYMENT = gql`
+  mutation OpsRecordPayment($input: RecordPaymentInput!) {
+    recordPayment(input: $input) {
+      id
+      invoiceId
+      amount
+      status
+      paidAt
+    }
+  }
+`;
+
+export const OPS_CREATE_OPERATOR_USER = gql`
+  mutation OpsCreateOperatorUser($input: CreateOperatorUserInput!) {
+    createOperatorUser(input: $input) {
+      id
+      email
+      fullName
+      isActive
+    }
+  }
+`;
+
+export const OPS_OPERATOR_ROLES_FOR_USER = gql`
+  query OpsOperatorRolesForUser($operatorUserId: ID!) {
+    operatorRolesForUser(operatorUserId: $operatorUserId) {
+      id
+      code
+      name
+    }
+  }
+`;
+
+export const OPS_SET_OPERATOR_USER_ROLES = gql`
+  mutation OpsSetOperatorUserRoles($operatorUserId: ID!, $roleIds: [ID!]!) {
+    setOperatorUserRoles(operatorUserId: $operatorUserId, roleIds: $roleIds)
+  }
+`;

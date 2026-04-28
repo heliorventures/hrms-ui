@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import Button from '../../../components/common/Button';
+import { downloadPayslipPdf } from '../utils/payslipPdf';
 
 export type PayslipLine = {
   id: string;
@@ -28,6 +29,8 @@ export type PayslipDocModel = {
 
 type PayslipDocumentProps = {
   tenantName: string;
+  /** From `payroll_compliance_setting.payslipHeaderTitle` when configured. */
+  companyHeaderName?: string | null;
   employeeName: string;
   employeeCode: string;
   periodLabel: string;
@@ -50,6 +53,7 @@ const fmt = (n: string) => {
  */
 const PayslipDocument = ({
   tenantName,
+  companyHeaderName,
   employeeName,
   employeeCode,
   periodLabel,
@@ -57,6 +61,7 @@ const PayslipDocument = ({
   slip,
 }: PayslipDocumentProps) => {
   const sheetRef = useRef<HTMLDivElement>(null);
+  const headerTitle = companyHeaderName?.trim() || tenantName;
 
   const onPrint = useCallback(() => {
     document.documentElement.classList.add('print-payslip');
@@ -65,9 +70,31 @@ const PayslipDocument = ({
     window.print();
   }, []);
 
+  const onDownloadPdf = useCallback(() => {
+    downloadPayslipPdf(
+      {
+        companyLine: headerTitle,
+        periodLabel,
+        employeeName,
+        employeeCode,
+      },
+      slip,
+      (line) =>
+        labelForLine({
+          id: line.id ?? line.salaryComponentId,
+          salaryComponentId: line.salaryComponentId,
+          amount: line.amount,
+          componentType: line.componentType,
+        })
+    );
+  }, [employeeCode, employeeName, headerTitle, labelForLine, periodLabel, slip]);
+
   return (
     <div>
       <div className="no-print mb-4 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <Button type="button" variant="secondary" onClick={onDownloadPdf}>
+          Download PDF
+        </Button>
         <Button type="button" variant="primary" onClick={onPrint}>
           Print / Save as PDF
         </Button>
@@ -82,7 +109,7 @@ const PayslipDocument = ({
         className="mx-auto w-full max-w-[210mm] border border-slate-200/90 bg-white p-8 text-slate-900 shadow-card print:border-0 print:shadow-none sm:p-10 dark:border-slate-600 dark:bg-white dark:text-slate-900"
       >
         <div className="border-b-2 border-indigo-600 pb-3">
-          <p className="text-lg font-bold tracking-tight text-indigo-800">{tenantName}</p>
+          <p className="text-lg font-bold tracking-tight text-indigo-800">{headerTitle}</p>
           <p className="text-sm font-medium text-slate-600">Payslip — {periodLabel}</p>
         </div>
 

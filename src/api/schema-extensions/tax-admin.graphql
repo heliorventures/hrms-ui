@@ -1,0 +1,55 @@
+# Merged for graphql-codegen when kabipay-tax supergraph omits newer fields.
+
+type TaxSectionDefinition {
+  id: ID!
+  tenantId: ID!
+  sectionCode: String!
+  sectionLabel: String!
+  regimeScope: String
+  countryCode: String!
+  displayOrder: Int!
+  isActive: Boolean!
+  maxDeductionAmount: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+extend type Query {
+  taxSectionDefinitions(activeOnly: Boolean = true, limit: Int = 100): [TaxSectionDefinition!]!
+}
+
+input UpsertTaxSectionDefinitionInput {
+  sectionCode: String!
+  sectionLabel: String!
+  regimeScope: String
+  countryCode: String
+  displayOrder: Int
+  isActive: Boolean
+  maxDeductionAmount: String
+}
+
+input UpsertTaxConfigurationVersionInput {
+  id: ID
+  fiscalYear: Int!
+  regime: String
+  countryCode: String!
+  isActive: Boolean!
+}
+
+input UpsertTaxSlabInput {
+  id: ID
+  taxConfigVersionId: ID!
+  incomeFrom: String!
+  incomeTo: String
+  taxRate: String
+  surchargeRate: String
+  cessRate: String
+}
+
+extend type Mutation {
+  upsertTaxSectionDefinition(input: UpsertTaxSectionDefinitionInput!): TaxSectionDefinition!
+  upsertTaxConfigurationVersion(
+    input: UpsertTaxConfigurationVersionInput!
+  ): TaxConfigurationVersion!
+  upsertTaxSlab(input: UpsertTaxSlabInput!): TaxSlab!
+}

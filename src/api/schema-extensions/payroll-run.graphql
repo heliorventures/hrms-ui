@@ -3,7 +3,26 @@
 # owns those; re-defining `paymentDate` with a different scalar breaks schema merge
 # (e.g. `Date` vs `NaiveDate`).
 
+type PayrollComplianceSetting {
+  employerTan: String
+  employerLegalName: String
+  baseSalaryComponentCode: String!
+  arrearSalaryComponentCode: String!
+  payslipHeaderTitle: String
+  payslipLogoFileStorageId: ID
+}
+
+input UpsertPayrollComplianceSettingInput {
+  employerTan: String
+  employerLegalName: String
+  baseSalaryComponentCode: String
+  arrearSalaryComponentCode: String
+  payslipHeaderTitle: String
+  payslipLogoFileStorageId: ID
+}
+
 extend type Query {
+  payrollComplianceSetting: PayrollComplianceSetting
   payrollBankTransferCsv(month: Int!, year: Int!): String!
   payrollIndiaBulkNeftCreditCsv(month: Int!, year: Int!): String!
   indiaFyPayrollEmployeeTotalsCsv(fyStartYear: Int!): String!
@@ -11,4 +30,10 @@ extend type Query {
   indiaForm16PartBFyPrepStubCsv(fyStartYear: Int!): String!
   indiaForm24qSalaryPaymentMonthlyStubCsv(month: Int!, year: Int!): String!
   indiaEpfMonthlyEcrPrepStubCsv(month: Int!, year: Int!): String!
+}
+
+extend type Mutation {
+  upsertPayrollComplianceSetting(
+    input: UpsertPayrollComplianceSettingInput!
+  ): PayrollComplianceSetting!
 }

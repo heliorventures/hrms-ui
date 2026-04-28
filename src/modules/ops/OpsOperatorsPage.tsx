@@ -2,8 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import Card from '@/components/common/Card';
 import Table from '@/components/common/Table';
 import PageHeader from '@/components/common/PageHeader';
+import Input from '@/components/common/Input';
+import Button from '@/components/common/Button';
+import Modal from '@/components/common/Modal';
 import { useGraphClient } from '@/hooks/useGraphClient';
-import { OPS_OPERATOR_ROLES, OPS_OPERATOR_USERS } from './opsGraph';
+import {
+  OPS_CREATE_OPERATOR_USER,
+  OPS_OPERATOR_ROLES,
+  OPS_OPERATOR_ROLES_FOR_USER,
+  OPS_OPERATOR_USERS,
+  OPS_SET_OPERATOR_USER_ROLES,
+} from './opsGraph';
 
 type OpUserRow = {
   id: string;
@@ -28,6 +37,20 @@ const OpsOperatorsPage = () => {
   const [roles, setRoles] = useState<OpRoleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const [rolesSubject, setRolesSubject] = useState<OpUserRow | null>(null);
+  const [rolesModalLoading, setRolesModalLoading] = useState(false);
+  const [roleChecks, setRoleChecks] = useState<Record<string, boolean>>({});
+  const [rolesSaving, setRolesSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,27 +73,135 @@ const OpsOperatorsPage = () => {
     void load();
   }, [load]);
 
+  const openCreate = () => {
+    setActionError(null);
+    setEmail('');
+    setPassword('');
+    setFullName('');
+    setPhone('');
+    setCreateOpen(true);
+  };
+
+  const onCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim() || !fullName.trim()) return;
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await client.request(OPS_CREATE_OPERATOR_USER, {
+        input: {
+          email: email.trim(),
+          password,
+          fullName: fullName.trim(),
+          phone: phone.trim() || undefined,
+        },
+      });
+      setToast('Operator user created. Use “Edit roles” on the user row to grant ADMIN / SUPPORT (or other roles).');
+      setCreateOpen(false);
+      setPassword('');
+      await load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Create user failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openRolesEditor = async (user: OpUserRow) => {
+    setActionError(null);
+    setRolesSubject(user);
+    setRoleChecks({});
+    setRolesModalLoading(true);
+    try {
+      const data = await client.request<{ operatorRolesForUser: { id: string }[] }>(
+        OPS_OPERATOR_ROLES_FOR_USER,
+        { operatorUserId: user.id },
+      );
+      const assigned = new Set((data.operatorRolesForUser ?? []).map((x) => x.id));
+      const next: Record<string, boolean> = {};
+      for (const role of roles) {
+        next[role.id] = assigned.has(role.id);
+      }
+      setRoleChecks(next);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to load roles for user');
+      setRolesSubject(null);
+    } finally {
+      setRolesModalLoading(false);
+    }
+  };
+
+  const closeRolesEditor = () => {
+    setRolesSubject(null);
+    setRoleChecks({});
+  };
+
+  const onSaveRoles = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rolesSubject) return;
+    setRolesSaving(true);
+    setActionError(null);
+    try {
+      const roleIds = Object.entries(roleChecks)
+        .filter(([, on]) => on)
+        .map(([id]) => id);
+      await client.request(OPS_SET_OPERATOR_USER_ROLES, {
+        operatorUserId: rolesSubject.id,
+        roleIds,
+      });
+      setToast(`Roles updated for ${rolesSubject.email}.`);
+      closeRolesEditor();
+      await load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to save roles');
+    } finally {
+      setRolesSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Operator users"
-        description="Platform staff (read-only here). Demo: ops-admin@kabipay.local — add more rows via SQL or a future invite API."
+        description="Platform staff: create accounts (Argon2 on server) and assign roles via kabipay_ops.operator_user_role."
         actions={
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            Refresh
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="primary" onClick={openCreate}>
+              Add operator user
+            </Button>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              Refresh
+            </button>
+          </div>
         }
       />
 
+      {toast && (
+        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+          {toast}
+          <button
+            type="button"
+            className="ml-2 text-emerald-700 underline dark:text-emerald-300"
+            onClick={() => setToast(null)}
+          >
+            Dismiss
+          </button>
+        </p>
+      )}
+      {actionError && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          {actionError}
+        </p>
+      )}
+
       <Card title="Note">
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Operator accounts are not yet created from this UI. Use{' '}
-          <code className="text-xs">seed-demo-data.ps1</code> or insert into{' '}
-          <code className="text-xs">kabipay_ops.operator_user</code> with an Argon2id hash.
+          Demo sign-in: <code className="text-xs">ops-admin@kabipay.local</code> from seed data. JWT permissions follow
+          roles assigned below (e.g. ADMIN, SUPPORT).
         </p>
       </Card>
 
@@ -81,9 +212,83 @@ const OpsOperatorsPage = () => {
         </p>
       )}
 
+      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} title="New operator user" size="md">
+        <form onSubmit={onCreateUser} className="space-y-3">
+          <p className="text-xs text-slate-500 dark:text-slate-400">Password must be at least 8 characters.</p>
+          <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth />
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            fullWidth
+            autoComplete="new-password"
+          />
+          <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required fullWidth />
+          <Input label="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} fullWidth />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" disabled={submitting}>
+              {submitting ? 'Creating…' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={!!rolesSubject}
+        onClose={closeRolesEditor}
+        title={rolesSubject ? `Roles — ${rolesSubject.email}` : 'Roles'}
+        size="md"
+      >
+        {rolesModalLoading && <p className="text-sm text-slate-500">Loading current roles…</p>}
+        {!rolesModalLoading && rolesSubject && (
+          <form onSubmit={onSaveRoles} className="space-y-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Checked roles replace all assignments for this user (you can clear every box to remove all roles).
+            </p>
+            <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-3 dark:border-slate-600">
+              {roles.length === 0 ? (
+                <p className="text-sm text-slate-500">No roles defined in catalog.</p>
+              ) : (
+                roles.map((role) => (
+                  <label key={role.id} className="flex cursor-pointer items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={roleChecks[role.id] ?? false}
+                      onChange={(e) =>
+                        setRoleChecks((prev) => ({
+                          ...prev,
+                          [role.id]: e.target.checked,
+                        }))
+                      }
+                    />
+                    <span>
+                      <span className="font-mono text-xs">{role.code}</span> — {role.name}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="secondary" onClick={closeRolesEditor}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" disabled={rolesSaving || roles.length === 0}>
+                {rolesSaving ? 'Saving…' : 'Save roles'}
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
       {!loading && !error && (
         <>
-          <Card title="Roles">
+          <Card title="Roles (catalog)">
             <Table<OpRoleRow>
               data={roles}
               keyExtractor={(r) => r.id}
@@ -108,6 +313,15 @@ const OpsOperatorsPage = () => {
                   render: (r) => (r.isActive ? 'Yes' : 'No'),
                 },
                 { key: 'lastLoginAt', label: 'Last login', render: (r) => r.lastLoginAt ?? '—' },
+                {
+                  key: 'id',
+                  label: '',
+                  render: (r) => (
+                    <Button type="button" variant="outline" size="sm" onClick={() => void openRolesEditor(r)}>
+                      Edit roles
+                    </Button>
+                  ),
+                },
               ]}
             />
           </Card>
