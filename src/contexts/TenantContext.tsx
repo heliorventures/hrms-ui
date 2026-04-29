@@ -20,7 +20,9 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
   const devTenantId = getAppConfig().devTenantId;
 
   const { tenants, currentTenant } = useMemo(() => {
-    const id = user?.tenantId ?? devTenantId;
+    // In local dev we pin to config.devTenantId so stale sessions/tokens
+    // cannot accidentally switch the UI to another tenant schema.
+    const id = devTenantId || user?.tenantId || '';
     const tenant: Tenant = {
       id,
       name: user ? 'Organization' : 'KabiPay',

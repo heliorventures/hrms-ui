@@ -99,6 +99,13 @@ function isMissingDbRelation(msg: string) {
   return /does not exist|relation "([^"]+)"|relation '([^']+)'/i.test(msg);
 }
 
+function isMissingPayrollCoreTable(msg: string) {
+  if (!isMissingDbRelation(msg)) return false;
+  return /salary_component|payslip|payroll_cycle|payslip_component|payroll_compliance_setting/i.test(
+    msg
+  );
+}
+
 /* eslint-disable max-lines-per-function -- Pay hub: data hooks for salary / payslip / tax */
 const PayrollPayPage = () => {
   const client = useGraphClient('client');
@@ -506,14 +513,14 @@ const PayrollPayPage = () => {
   }
 
   const showMigrationHint =
-    (errorShell && isMissingDbRelation(errorShell)) ||
-    (errorSalary && isMissingDbRelation(errorSalary));
+    (errorShell && isMissingPayrollCoreTable(errorShell)) ||
+    (errorSalary && isMissingPayrollCoreTable(errorSalary));
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Pay</h1>
 
-      {showMigrationHint && <PayrollMigrationHint />}
+      {showMigrationHint && <PayrollMigrationHint tenantId={currentTenant?.id} />}
 
       {errorShell && !showMigrationHint && (
         <Card>
@@ -628,17 +635,20 @@ const PayrollPayPage = () => {
         <div className="space-y-4">
           {payslipsLoading && <p className="text-sm text-slate-500">Loading payslips…</p>}
 
-          {payslipError && !payslipsLoading && isMissingDbRelation(payslipError) && (
+          {payslipError && !payslipsLoading && isMissingPayrollCoreTable(payslipError) && (
             <Card>
               <p className="text-sm text-slate-600 dark:text-slate-300">{payslipError}</p>
               <p className="mt-2 text-sm text-amber-900 dark:text-amber-100">
                 Run tenant migrations (same as for Salary tab) so{' '}
                 <span className="font-mono">payslip</span> exists.
               </p>
+              <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+                Active tenant: <span className="font-mono">{currentTenant?.id}</span>
+              </p>
             </Card>
           )}
 
-          {payslipError && !payslipsLoading && !isMissingDbRelation(payslipError) && (
+          {payslipError && !payslipsLoading && !isMissingPayrollCoreTable(payslipError) && (
             <p className="text-sm text-amber-800 dark:text-amber-200">{payslipError}</p>
           )}
 
