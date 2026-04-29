@@ -75,14 +75,40 @@ function defaultTenantId(): string | undefined {
   return v.length > 0 ? v : undefined;
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split('.');
+  if (parts.length < 2) return null;
+  try {
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64.padEnd(Math.ceil(b64.length / 4) * 4, '=');
+    const json = atob(padded);
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function roleFromClientAccessToken(access: string): UserRole {
+  const payload = decodeJwtPayload(access);
+  const rolesRaw = payload?.roles;
+  const roles = Array.isArray(rolesRaw)
+    ? rolesRaw.filter((r): r is string => typeof r === 'string').map((r) => r.toUpperCase())
+    : [];
+  const hasAdminRole = roles.some((r) =>
+    ['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN', 'PAYROLL_ADMIN', 'ADMIN'].includes(r)
+  );
+  return hasAdminRole ? 'admin' : 'employee';
+}
+
 /** User shape from client JWT claims when no separate profile API has run yet. */
 function userFromClientTokenPair(pair: TokenPair): User {
+  const role = roleFromClientAccessToken(pair.access);
   return {
     id: pair.userId,
     tenantId: pair.tenantId ?? '',
     name: pair.email.split('@')[0],
     email: pair.email,
-    role: 'employee',
+    role,
     employeeId: '',
     department: '',
     designation: '',

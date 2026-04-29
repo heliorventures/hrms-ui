@@ -156,6 +156,11 @@ query PayrollComplianceSetting {
   }
 }
 
+# Signed GET URL (kabipay-employee /files/employee-document) for the tenant payslip logo only.
+query PayslipLogoSignedReadUrl($fileStorageId: ID!, $ttlSeconds: Int = 600) {
+  payslipLogoSignedReadUrl(fileStorageId: $fileStorageId, ttlSeconds: $ttlSeconds)
+}
+
 mutation UpsertPayrollComplianceSetting($input: UpsertPayrollComplianceSettingInput!) {
   upsertPayrollComplianceSetting(input: $input) {
     employerTan
@@ -1442,5 +1447,27 @@ query ClientOpsAdminReportsData {
     componentType
     isActive
     isTaxable
+  }
+}
+
+query PayrollEmploymentHistory($employeeId: ID!, $limit: Int! = 48) {
+  employmentHistoryRecords(employeeId: $employeeId, limit: $limit) {
+    id
+    monthlySalary
+    effectiveFrom
+    effectiveTo
+    changeReason
+    changedBy
+    updatedAt
+  }
+}
+
+mutation PayrollSetEmployeeCompensation($input: SetEmployeeCompensationInput!) {
+  setEmployeeCompensation(input: $input) {
+    id
+    monthlySalary
+    effectiveFrom
+    changeReason
+    updatedAt
   }
 }

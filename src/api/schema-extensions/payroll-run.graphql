@@ -23,6 +23,7 @@ input UpsertPayrollComplianceSettingInput {
 
 extend type Query {
   payrollComplianceSetting: PayrollComplianceSetting
+  payslipLogoSignedReadUrl(fileStorageId: ID!, ttlSeconds: Int = 600): String!
   payrollBankTransferCsv(month: Int!, year: Int!): String!
   payrollIndiaBulkNeftCreditCsv(month: Int!, year: Int!): String!
   indiaFyPayrollEmployeeTotalsCsv(fyStartYear: Int!): String!

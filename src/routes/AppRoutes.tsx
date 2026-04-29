@@ -15,6 +15,7 @@ import LeavePage from '../modules/leave/LeavePage';
 import PayrollPage from '../modules/payroll/PayrollPage';
 import PayrollPayPage from '../modules/payroll/PayrollPayPage';
 import PayrollTaxPage from '../modules/payroll/PayrollTaxPage';
+import PayrollCompensationPage from '../modules/payroll/PayrollCompensationPage';
 import ExpensesPage from '../modules/expenses/ExpensesPage';
 import NotificationsPage from '../modules/notifications/NotificationsPage';
 import ProfileSettingsPage from '../modules/profile/ProfileSettingsPage';
@@ -55,6 +56,12 @@ const OpsProtectedLayout = () => {
   return <OpsLayout />;
 };
 
+const PayrollAdminRoute = ({ children }: { children: JSX.Element }) => {
+  const { role } = useAuth();
+  if (role !== 'admin') return <Navigate to="/payroll/pay" replace />;
+  return children;
+};
+
 const AppRoutes = () => {
   const { role, isAuthenticated, isOpsAuthenticated } = useAuth();
 
@@ -90,7 +97,22 @@ const AppRoutes = () => {
         <Route path="payroll" element={<Navigate to="/payroll/payslips" replace />} />
         <Route path="payroll/payslips" element={<PayrollPage />} />
         <Route path="payroll/pay" element={<PayrollPayPage />} />
-        <Route path="payroll/tax" element={<PayrollTaxPage />} />
+        <Route
+          path="payroll/tax"
+          element={
+            <PayrollAdminRoute>
+              <PayrollTaxPage />
+            </PayrollAdminRoute>
+          }
+        />
+        <Route
+          path="payroll/compensation"
+          element={
+            <PayrollAdminRoute>
+              <PayrollCompensationPage />
+            </PayrollAdminRoute>
+          }
+        />
         <Route path="expenses" element={<ExpensesPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="profile/settings" element={<ProfileSettingsPage />} />

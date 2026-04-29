@@ -4,6 +4,7 @@ import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   PayrollBoardDocument,
   IndiaTdsMonthlySummaryCsvDocument,
@@ -23,6 +24,7 @@ import {
   UpsertPayrollComplianceSettingDocument,
   type PayrollComplianceSettingQuery,
 } from '../../api/graphql/graphql';
+import { indiaFyStartYearFromDate } from './utils/indiaFy';
 
 interface SalaryComponentRow {
   id: string;
@@ -59,15 +61,10 @@ interface PayrollBoardData {
   payrollArrears?: PayrollArrearRow[];
 }
 
-/** India FY start calendar year (April–March), e.g. April 2026 → 2026. */
-function indiaFyStartYearFromDate(d = new Date()) {
-  const month = d.getMonth() + 1;
-  const y = d.getFullYear();
-  return month >= 4 ? y : y - 1;
-}
-
 const PayrollPage = () => {
   const client = useGraphClient('client');
+  const { role } = useAuth();
+  const isPayrollAdmin = role === 'admin';
   const [data, setData] = useState<PayrollBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -545,20 +542,34 @@ const PayrollPage = () => {
         </p>
       </div>
 
+      {isPayrollAdmin && (
+        <Card className="border-amber-200/90 bg-amber-50/80 dark:border-amber-800/80 dark:bg-amber-950/30">
+          <p className="text-sm leading-relaxed text-amber-950 dark:text-amber-100">
+            India <strong>TDS · PF · ESI · 24Q · Form&nbsp;16 · NEFT</strong> CSVs below are
+            reconciliation <strong>stubs</strong> for internal checks — they are <strong>not</strong>{' '}
+            TRACES uploads, ECR/binary files, bank-spec NACH, or statutory filed returns. Use
+            certified payroll/accounting tooling for compliance submissions.
+          </p>
+        </Card>
+      )}
+
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
 
+      {isPayrollAdmin && (
+        <>
       <Card title="Employer branding & statutory (India)">
         <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
           Employer TAN / name drive Form 24Q / Form 16 CSV columns (empty → env fallback on the payroll
           process). <strong className="font-medium">Pay run</strong> posts one line against the{' '}
           <span className="font-mono">baseSalaryComponentCode</span> earning component (employment
           salary); arrear payouts use <span className="font-mono">arrearSalaryComponentCode</span>.
-          Payslip PDF rendering can use header title + logo ID when wired. Requires payroll statutory
-          export role.
+          Payslip PDF supports raster logos (<strong>PNG</strong>/<strong>JPEG</strong>{' '}
+          directly; <strong>WebP</strong>/<strong>SVG</strong> are rasterized in-browser for PDF).
+          Requires payroll statutory export role.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <label className="min-w-[12rem] flex flex-col gap-1 text-sm">
@@ -1111,6 +1122,8 @@ const PayrollPage = () => {
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">{form16ExportError}</p>
         )}
       </Card>
+        </>
+      )}
     </div>
   );
 };

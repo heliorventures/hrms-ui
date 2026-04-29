@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import Button from '../../../components/common/Button';
-import { downloadPayslipPdf } from '../utils/payslipPdf';
+import { downloadPayslipPdf, loadLogoDataUrlForPdf } from '../utils/payslipPdf';
 
 export type PayslipLine = {
   id: string;
@@ -31,6 +31,8 @@ type PayslipDocumentProps = {
   tenantName: string;
   /** From `payroll_compliance_setting.payslipHeaderTitle` when configured. */
   companyHeaderName?: string | null;
+  /** HMAC URL from `payslipLogoSignedReadUrl` when tenant configured a logo. */
+  payslipLogoReadUrl?: string | null;
   employeeName: string;
   employeeCode: string;
   periodLabel: string;
@@ -54,6 +56,7 @@ const fmt = (n: string) => {
 const PayslipDocument = ({
   tenantName,
   companyHeaderName,
+  payslipLogoReadUrl,
   employeeName,
   employeeCode,
   periodLabel,
@@ -70,13 +73,18 @@ const PayslipDocument = ({
     window.print();
   }, []);
 
-  const onDownloadPdf = useCallback(() => {
-    downloadPayslipPdf(
+  const onDownloadPdf = useCallback(async () => {
+    let logoForPdf: { dataUrl: string; format: 'PNG' | 'JPEG' } | null = null;
+    if (payslipLogoReadUrl) {
+      logoForPdf = await loadLogoDataUrlForPdf(payslipLogoReadUrl);
+    }
+    await downloadPayslipPdf(
       {
         companyLine: headerTitle,
         periodLabel,
         employeeName,
         employeeCode,
+        logoForPdf,
       },
       slip,
       (line) =>
@@ -87,7 +95,15 @@ const PayslipDocument = ({
           componentType: line.componentType,
         })
     );
-  }, [employeeCode, employeeName, headerTitle, labelForLine, periodLabel, slip]);
+  }, [
+    employeeCode,
+    employeeName,
+    headerTitle,
+    labelForLine,
+    payslipLogoReadUrl,
+    periodLabel,
+    slip,
+  ]);
 
   return (
     <div>
@@ -108,9 +124,18 @@ const PayslipDocument = ({
         id="payslip-print-sheet"
         className="mx-auto w-full max-w-[210mm] border border-slate-200/90 bg-white p-8 text-slate-900 shadow-card print:border-0 print:shadow-none sm:p-10 dark:border-slate-600 dark:bg-white dark:text-slate-900"
       >
-        <div className="border-b-2 border-indigo-600 pb-3">
-          <p className="text-lg font-bold tracking-tight text-indigo-800">{headerTitle}</p>
-          <p className="text-sm font-medium text-slate-600">Payslip — {periodLabel}</p>
+        <div className="flex flex-wrap items-center gap-3 border-b-2 border-indigo-600 pb-3">
+          {payslipLogoReadUrl ? (
+            <img
+              src={payslipLogoReadUrl}
+              alt=""
+              className="h-10 max-w-[140px] object-contain"
+            />
+          ) : null}
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-bold tracking-tight text-indigo-800">{headerTitle}</p>
+            <p className="text-sm font-medium text-slate-600">Payslip — {periodLabel}</p>
+          </div>
         </div>
 
         <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">

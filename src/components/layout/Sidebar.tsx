@@ -113,10 +113,15 @@ const payrollNav: NavItemWithChildren = {
   ),
   children: [
     { path: '/payroll/payslips', label: 'Payslips' },
-    { path: '/payroll/pay', label: 'Pay' },
-    { path: '/payroll/tax', label: 'Tax' },
+    { path: '/payroll/compensation', label: 'Compensation setup' },
+    { path: '/payroll/pay', label: 'Income tax (self)' },
+    { path: '/payroll/tax', label: 'Tax admin' },
   ],
 };
+
+function isPayrollAdminPath(path: string): boolean {
+  return path === '/payroll/compensation' || path === '/payroll/tax';
+}
 
 /* eslint-disable max-lines-per-function -- single sidebar shell: nav groups + mobile overlay */
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
@@ -144,8 +149,15 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     [filterQ]
   );
   const payrollChildren = useMemo(
-    () => payrollNav.children.filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
-    [filterQ]
+    () =>
+      payrollNav.children.filter((c) => {
+        if (role !== 'admin' && isPayrollAdminPath(c.path)) return false;
+        if (role !== 'admin' && c.path === '/payroll/pay') {
+          return itemMatchesMenuFilter(filterQ, c.path, 'Income tax');
+        }
+        return itemMatchesMenuFilter(filterQ, c.path, c.label);
+      }),
+    [filterQ, role]
   );
   const adminChildren = useMemo(
     () => adminNav.children.filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
