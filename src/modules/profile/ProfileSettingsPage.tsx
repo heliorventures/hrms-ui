@@ -9,14 +9,16 @@ import ProfileTab from './components/ProfileTab';
 import JobDetailsTab from './components/JobDetailsTab';
 import DocumentsTab from './components/DocumentsTab';
 import SecurityTab from './components/SecurityTab';
+import NotificationsTab from './components/NotificationsTab';
 
-type TabId = 'about' | 'profile' | 'job' | 'documents' | 'security';
+type TabId = 'about' | 'profile' | 'job' | 'documents' | 'notifications' | 'security';
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'about', label: 'About' },
   { id: 'profile', label: 'Profile' },
   { id: 'job', label: 'Job Details' },
   { id: 'documents', label: 'Documents' },
+  { id: 'notifications', label: 'Notifications' },
   { id: 'security', label: 'Security' },
 ];
 
@@ -123,6 +125,7 @@ const ProfileSettingsPage = () => {
       {activeTab === 'profile' && <ProfileTab data={data} />}
       {activeTab === 'job' && <JobDetailsTab data={data} />}
       {activeTab === 'documents' && <DocumentsTab />}
+      {activeTab === 'notifications' && <NotificationsTab />}
       {activeTab === 'security' && (
         <SecurityTab
           onPasswordChanged={async () => {

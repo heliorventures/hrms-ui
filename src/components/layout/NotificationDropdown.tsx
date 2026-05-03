@@ -20,11 +20,13 @@ const NotificationDropdown = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<BoardNotification[]>([]);
+  const [serverUnread, setServerUnread] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated) {
       setNotifications([]);
+      setServerUnread(0);
       return;
     }
     setLoadError(null);
@@ -33,9 +35,11 @@ const NotificationDropdown = () => {
         limit: PREVIEW_LIMIT,
       });
       setNotifications(data.notifications ?? []);
+      setServerUnread(data.unreadNotificationCount ?? 0);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Failed to load notifications');
       setNotifications([]);
+      setServerUnread(0);
     }
   }, [client, isAuthenticated]);
 
@@ -52,7 +56,7 @@ const NotificationDropdown = () => {
     }
   }, [isOpen, isAuthenticated, fetchNotifications]);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadCount = serverUnread;
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
@@ -65,6 +69,7 @@ const NotificationDropdown = () => {
         setNotifications((prev) =>
           prev.map((x) => (x.id === n.id ? { ...x, isRead: true } : x))
         );
+        setServerUnread((u) => Math.max(0, u - 1));
       }
     } catch {
       /* still navigate */

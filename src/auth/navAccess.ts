@@ -13,15 +13,12 @@ export type NavAccessOptions = {
 };
 
 function canApproveLeaveForNav(opts: NavAccessOptions): boolean {
-  return (
-    opts.can('leave:approve') || hasBroadDataScopeForResource(opts.clientSession, 'leave')
-  );
+  return opts.can('leave:approve') || hasBroadDataScopeForResource(opts.clientSession, 'leave');
 }
 
 function canApproveTimesheetForNav(opts: NavAccessOptions): boolean {
   return (
-    opts.can('timesheet:approve') ||
-    hasBroadDataScopeForResource(opts.clientSession, 'timesheet')
+    opts.can('timesheet:approve') || hasBroadDataScopeForResource(opts.clientSession, 'timesheet')
   );
 }
 
@@ -33,6 +30,16 @@ function canUseHrWorkbench(opts: NavAccessOptions): boolean {
     canApproveTimesheetForNav(opts) ||
     opts.can('timesheet:manage')
   );
+}
+
+function hasHrAdminLikeRole(opts: NavAccessOptions): boolean {
+  const roles = opts.clientSession?.jwtRoles ?? [];
+  return roles.some((r) => ['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN'].includes(r.toUpperCase()));
+}
+
+/** Announcements, direct in-app notifications, and admin notification edits (`notification:manage` or privileged JWT roles). */
+export function canManageNotifications(opts: NavAccessOptions): boolean {
+  return opts.can('notification:manage') || hasHrAdminLikeRole(opts);
 }
 
 /** Sidebar / deep-link guard for admin, HR workbench, workplace feature routes, and gated paths. */
@@ -64,6 +71,10 @@ export function canAccessTenantPath(path: string, opts: NavAccessOptions): boole
         return opts.can('timesheet:manage') || opts.can('attendance:punch_policy');
       case '/admin/leave-settings':
         return opts.can('leave:manage');
+      case '/admin/expense-categories':
+        return opts.can('expense:manage');
+      case '/admin/notifications':
+        return canManageNotifications(opts);
       case '/admin/reports':
         return opts.can('payroll:statutory_export') || opts.can('employee:write');
       case '/admin/access':

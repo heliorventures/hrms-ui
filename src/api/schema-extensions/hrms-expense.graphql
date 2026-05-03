@@ -1,0 +1,72 @@
+# Expense configuration, policy, payment lifecycle (kabipay-expense). Merged until gateway introspection exposes them.
+
+extend type Expense {
+  approvedAmount: String
+  paymentStatus: String!
+  paidAt: DateTime
+  paymentReference: String
+  receiptFileStorageId: ID
+}
+
+input UpsertExpenseCategoryAdminInput {
+  id: ID
+  name: String!
+  code: String!
+  maxAmountPerClaim: String
+}
+
+input UpsertExpensePolicyAdminInput {
+  id: ID
+  expenseCategoryId: ID!
+  applicableTo: String!
+  departmentId: ID
+  designationId: ID
+  roleId: ID
+  limitPerDay: String
+  limitPerMonth: String
+  maxAmountPerClaim: String
+  receiptRequired: Boolean!
+  approvalRequired: Boolean!
+}
+
+extend type Query {
+  expenseSubmissionHints(expenseCategoryId: ID!): ExpenseSubmissionHints!
+  expensePoliciesForAdmin(expenseCategoryId: ID!): [ExpensePolicy!]!
+}
+
+extend type Mutation {
+  upsertExpenseCategoryAdmin(input: UpsertExpenseCategoryAdminInput!): ExpenseCategory!
+  deleteExpenseCategoryAdmin(expenseCategoryId: ID!): Boolean!
+  approveExpense(expenseId: ID!, approvedAmount: String): Expense!
+  markExpensePaymentStatus(
+    expenseId: ID!
+    paymentStatus: String!
+    paymentReference: String
+  ): Expense!
+  upsertExpensePolicyAdmin(input: UpsertExpensePolicyAdminInput!): ExpensePolicy!
+  deleteExpensePolicyAdmin(expensePolicyId: ID!): Boolean!
+}
+
+type ExpenseSubmissionHints {
+  expenseCategoryId: ID!
+  maxAmountPerClaim: String
+  receiptRequired: Boolean!
+  limitPerMonth: String
+}
+
+type ExpensePolicy {
+  id: ID!
+  tenantId: ID!
+  expenseCategoryId: ID!
+  applicableTo: String!
+  departmentId: ID
+  designationId: ID
+  roleId: ID
+  limitPerDay: String
+  limitPerMonth: String
+  maxAmountPerClaim: String
+  receiptRequired: Boolean!
+  approvalRequired: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}

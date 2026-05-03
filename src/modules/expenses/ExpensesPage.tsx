@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
@@ -8,17 +9,19 @@ import Input from '../../components/common/Input';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { hasBroadDataScopeForResource } from '../../auth/approvalScope';
 import { useAuth } from '../../contexts/AuthContext';
-import { canApproveExpenseFromAccessToken } from '../../auth/clientJwt';
+import { canApproveExpenseFromAccessToken, canMarkExpensePaymentFromAccessToken } from '../../auth/clientJwt';
 import { getClientAccessToken } from '../../auth/tokenStore';
 import SubmitTravelModal from './components/SubmitTravelModal';
 import RejectReasonModal from './components/RejectReasonModal';
 import {
-  ExpenseBoardDocument,
-  SubmitExpenseDocument,
   ApproveExpenseDocument,
-  RejectExpenseDocument,
   ApproveTravelRequestDocument,
+  ExpenseBoardDocument,
+  ExpenseSubmissionHintsDocument,
+  MarkExpensePaymentStatusDocument,
+  RejectExpenseDocument,
   RejectTravelRequestDocument,
+  SubmitExpenseDocument,
 } from '../../api/graphql/graphql';
 
 interface ExpenseCategoryRow {
@@ -41,6 +44,11 @@ interface ExpenseRow {
   title: string;
   status: string;
   submittedAt: string;
+  approvedAmount?: string | null;
+  paymentStatus?: string | null;
+  paidAt?: string | null;
+  paymentReference?: string | null;
+  receiptFileStorageId?: string | null;
 }
 
 interface TravelRequestRow {
@@ -58,6 +66,7 @@ interface TravelRequestRow {
   approvedBy?: string | null;
   rejectedBy?: string | null;
   submittedAt: string;
+  workflowInstanceId?: string | null;
 }
 
 interface ExpenseBoardData {
@@ -68,7 +77,7 @@ interface ExpenseBoardData {
 
 // eslint-disable-next-line max-lines-per-function -- single route module
 const ExpensesPage = () => {
-  const { isAuthenticated, user, clientSession } = useAuth();
+  const { isAuthenticated, user, clientSession, can } = useAuth();
   const client = useGraphClient('client');
   const [data, setData] = useState<ExpenseBoardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,11 +96,25 @@ const ExpensesPage = () => {
   const [rejectTarget, setRejectTarget] = useState<
     null | { kind: 'expense'; id: string } | { kind: 'travel'; id: string }
   >(null);
+  const [submissionHints, setSubmissionHints] = useState<{
+    maxAmountPerClaim?: string | null;
+    receiptRequired: boolean;
+    limitPerMonth?: string | null;
+  } | null>(null);
+  const [receiptFileStorageId, setReceiptFileStorageId] = useState('');
+  const [approveTarget, setApproveTarget] = useState<
+    null | { id: string; claimAmount: string; currency: string; draftApprove: string }
+  >(null);
 
   const token = getClientAccessToken();
   const canApprove =
     isAuthenticated &&
     (canApproveExpenseFromAccessToken(token ?? null) ||
+      hasBroadDataScopeForResource(clientSession, 'expense'));
+
+  const canMarkExpensePayment =
+    isAuthenticated &&
+    (canMarkExpensePaymentFromAccessToken(token ?? null) ||
       hasBroadDataScopeForResource(clientSession, 'expense'));
 
   const loadBoard = useCallback(async () => {
@@ -119,13 +142,73 @@ const ExpensesPage = () => {
     };
   }, [loadBoard, user?.id]);
 
-  const runApproveExpense = async (expenseId: string) => {
-    setApproverBusy(`e:${expenseId}`);
+  useEffect(() => {
+    if (!submitOpen || !categoryId.trim()) {
+      setSubmissionHints(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        type H = {
+          expenseSubmissionHints: {
+            maxAmountPerClaim?: string | null;
+            receiptRequired: boolean;
+            limitPerMonth?: string | null;
+          };
+        };
+        const r = await client.request<H>(ExpenseSubmissionHintsDocument, {
+          expenseCategoryId: categoryId,
+        });
+        if (!cancelled) setSubmissionHints(r.expenseSubmissionHints);
+      } catch {
+        if (!cancelled) setSubmissionHints(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [submitOpen, categoryId, client]);
+
+  const openApproveExpenseModal = (row: ExpenseRow) => {
+    setApproveTarget({
+      id: row.id,
+      claimAmount: row.amount,
+      currency: row.currency,
+      draftApprove: row.amount,
+    });
+  };
+
+  const confirmApproveExpense = async () => {
+    if (!approveTarget) return;
+    setApproverBusy(`e:${approveTarget.id}`);
     try {
-      await client.request(ApproveExpenseDocument, { expenseId });
+      const d = approveTarget.draftApprove.trim();
+      const same = d === approveTarget.claimAmount.trim();
+      await client.request(ApproveExpenseDocument, {
+        expenseId: approveTarget.id,
+        ...(same ? {} : { approvedAmount: d }),
+      });
       setData(await loadBoard());
+      setApproveTarget(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Approve expense failed');
+    } finally {
+      setApproverBusy(null);
+    }
+  };
+
+  const runMarkExpensePaid = async (expenseId: string) => {
+    setApproverBusy(`pay:${expenseId}`);
+    try {
+      await client.request(MarkExpensePaymentStatusDocument, {
+        expenseId,
+        paymentStatus: 'PAID',
+        paymentReference: undefined,
+      });
+      setData(await loadBoard());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Update payment failed');
     } finally {
       setApproverBusy(null);
     }
@@ -183,6 +266,7 @@ const ExpensesPage = () => {
     setSubmitting(true);
     try {
       const tid = travelRequestId.trim();
+      const rec = receiptFileStorageId.trim();
       await client.request(SubmitExpenseDocument, {
         input: {
           expenseCategoryId: categoryId,
@@ -191,6 +275,7 @@ const ExpensesPage = () => {
           expenseDate,
           title: title.trim(),
           ...(tid ? { travelRequestId: tid } : {}),
+          ...(rec ? { receiptFileStorageId: rec } : {}),
         },
       });
       setData(await loadBoard());
@@ -198,6 +283,8 @@ const ExpensesPage = () => {
       setTitle('');
       setAmount('');
       setTravelRequestId('');
+      setReceiptFileStorageId('');
+      setSubmissionHints(null);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Submit failed');
     } finally {
@@ -213,6 +300,8 @@ const ExpensesPage = () => {
         return 'danger';
       case 'pending':
         return 'warning';
+      case 'partial_approved':
+        return 'info';
       case 'submitted':
         return 'warning';
       case 'reimbursed':
@@ -276,6 +365,27 @@ const ExpensesPage = () => {
       render: (expense: ExpenseRow) => formatCurrency(expense.amount, expense.currency),
     },
     {
+      key: 'approved',
+      label: 'Approved',
+      render: (expense: ExpenseRow) =>
+        expense.approvedAmount ? (
+          <span className="text-sm tabular-nums">
+            {formatCurrency(expense.approvedAmount, expense.currency)}
+          </span>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
+    },
+    {
+      key: 'paymentStatus',
+      label: 'Payment',
+      render: (expense: ExpenseRow) => (
+        <span className="whitespace-nowrap text-xs font-medium uppercase tracking-wide text-gray-700 dark:text-gray-300">
+          {expense.paymentStatus ?? '—'}
+        </span>
+      ),
+    },
+    {
       key: 'expenseDate',
       label: 'Date',
       render: (expense: ExpenseRow) => new Date(expense.expenseDate).toLocaleDateString('en-IN'),
@@ -292,34 +402,56 @@ const ExpensesPage = () => {
       label: 'Submitted',
       render: (expense: ExpenseRow) => new Date(expense.submittedAt).toLocaleDateString('en-IN'),
     },
-    ...(canApprove
+    ...(canApprove || canMarkExpensePayment
       ? [
           {
             key: 'approverActions',
             label: 'Actions',
-            render: (expense: ExpenseRow) =>
-              expense.status.toUpperCase() === 'PENDING' ? (
+            render: (expense: ExpenseRow) => {
+              const st = expense.status.toUpperCase();
+              const pending = st === 'PENDING';
+              const financiallyDone = st === 'APPROVED' || st === 'PARTIAL_APPROVED';
+              const pay = (expense.paymentStatus || 'NONE').toUpperCase();
+              const showMarkPaid =
+                financiallyDone && pay !== 'PAID' && canMarkExpensePayment;
+              if (!pending && !showMarkPaid) {
+                return <span className="text-gray-400">—</span>;
+              }
+              return (
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="secondary"
-                    className="!py-1 !px-2 !text-xs"
-                    disabled={approverBusy === `e:${expense.id}`}
-                    onClick={() => void runApproveExpense(expense.id)}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="!py-1 !px-2 !text-xs"
-                    disabled={approverBusy === `e:${expense.id}`}
-                    onClick={() => setRejectTarget({ kind: 'expense', id: expense.id })}
-                  >
-                    Reject
-                  </Button>
+                  {pending && canApprove ? (
+                    <>
+                      <Button
+                        variant="secondary"
+                        className="!py-1 !px-2 !text-xs"
+                        disabled={approverBusy === `e:${expense.id}`}
+                        onClick={() => openApproveExpenseModal(expense)}
+                      >
+                        Approve…
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="!py-1 !px-2 !text-xs"
+                        disabled={approverBusy === `e:${expense.id}`}
+                        onClick={() => setRejectTarget({ kind: 'expense', id: expense.id })}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  ) : null}
+                  {showMarkPaid ? (
+                    <Button
+                      variant="secondary"
+                      className="!py-1 !px-2 !text-xs"
+                      disabled={approverBusy === `pay:${expense.id}`}
+                      onClick={() => void runMarkExpensePaid(expense.id)}
+                    >
+                      Mark paid
+                    </Button>
+                  ) : null}
                 </div>
-              ) : (
-                <span className="text-gray-400">—</span>
-              ),
+              );
+            },
           },
         ]
       : []),
@@ -327,9 +459,16 @@ const ExpensesPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expenses & Travel</h1>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {can('expense:manage') ? (
+            <Link to="/admin/expense-categories">
+              <Button type="button" variant="outline">
+                Configure categories
+              </Button>
+            </Link>
+          ) : null}
           <Button onClick={() => setSubmitOpen(true)}>Submit expense</Button>
           <Button variant="secondary" onClick={() => setTravelOpen(true)}>
             Request travel
@@ -341,19 +480,62 @@ const ExpensesPage = () => {
         <p className="text-sm text-gray-600 dark:text-gray-400">
           You may see approval actions if you have <code className="text-xs">expense:approve</code>,
           <strong> TEAM</strong> list scope for expenses/travel, or an elevated legacy token.
-          Multi-step workflows require the <strong>reporting manager</strong> first, then the{' '}
-          <strong>HR role</strong> on the next step — the server rejects out-of-sequence approvers.
+          Multi-step workflows normally require your <strong>reporting manager</strong> first, then
+          a second line such as the <strong>accounting role</strong> ({' '}
+          <span className="font-mono text-xs">TRAVEL_REQUEST</span> /
+          <span className="font-mono text-xs"> EXPENSE</span> workflows) — out-of-order approvers
+          are rejected server-side.
         </p>
       )}
 
       <RejectReasonModal
         isOpen={rejectTarget !== null}
-        title={
-          rejectTarget?.kind === 'travel' ? 'Reject travel request' : 'Reject expense claim'
-        }
+        title={rejectTarget?.kind === 'travel' ? 'Reject travel request' : 'Reject expense claim'}
         onClose={() => setRejectTarget(null)}
         onConfirm={runRejectFromModal}
       />
+
+      <Modal
+        isOpen={approveTarget !== null}
+        onClose={() => setApproveTarget(null)}
+        title="Approve expense claim"
+      >
+        {approveTarget ? (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Claimed{' '}
+              <strong>{formatCurrency(approveTarget.claimAmount, approveTarget.currency)}</strong>.
+              Adjust the reimbursable amount on the final approval step only (partial approval sets
+              status <span className="font-mono text-xs">PARTIAL_APPROVED</span>).
+            </p>
+            <Input
+              label="Approve amount"
+              value={approveTarget.draftApprove}
+              onChange={(e) =>
+                setApproveTarget((prev) =>
+                  prev ? { ...prev, draftApprove: e.target.value } : prev
+                )
+              }
+              fullWidth
+              inputMode="decimal"
+              required
+            />
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="primary"
+                disabled={!!approverBusy}
+                onClick={() => void confirmApproveExpense()}
+              >
+                Submit approval
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setApproveTarget(null)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       <SubmitTravelModal
         isOpen={travelOpen}
@@ -386,6 +568,27 @@ const ExpensesPage = () => {
               ))}
             </select>
           </div>
+          {submissionHints ? (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300">
+              {submissionHints.maxAmountPerClaim ? (
+                <p>
+                  Max per claim:{' '}
+                  <strong>{formatCurrency(submissionHints.maxAmountPerClaim, currency.trim() || 'INR')}</strong>
+                </p>
+              ) : null}
+              {submissionHints.limitPerMonth ? (
+                <p className={submissionHints.maxAmountPerClaim ? 'mt-1' : ''}>
+                  Monthly limit (category):{' '}
+                  <strong>{formatCurrency(submissionHints.limitPerMonth, currency.trim() || 'INR')}</strong>
+                </p>
+              ) : null}
+              {submissionHints.receiptRequired ? (
+                <p className="mt-1 font-medium text-amber-900 dark:text-amber-200">
+                  A receipt attachment (file storage id) is required for this category.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <Input
             label="Title"
             value={title}
@@ -416,6 +619,13 @@ const ExpensesPage = () => {
             onChange={(e) => setExpenseDate(e.target.value)}
             fullWidth
             required
+          />
+          <Input
+            label="Receipt file ID (optional)"
+            value={receiptFileStorageId}
+            onChange={(e) => setReceiptFileStorageId(e.target.value)}
+            fullWidth
+            placeholder="Uploaded file UUID when policy requires receipt"
           />
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -535,10 +745,22 @@ const ExpensesPage = () => {
                 ),
               },
               {
-                key: 'estimatedAmount',
+                key: 'estimate',
                 label: 'Estimate',
                 render: (t: TravelRequestRow) =>
                   t.estimatedAmount ? formatCurrency(t.estimatedAmount, t.currency) : '—',
+              },
+              {
+                key: 'workflow',
+                label: 'Approval',
+                render: (t: TravelRequestRow) =>
+                  t.workflowInstanceId ? (
+                    <span className="whitespace-nowrap font-mono text-xs text-teal-700 dark:text-teal-300">
+                      WF {t.workflowInstanceId.slice(0, 8)}…
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">—</span>
+                  ),
               },
               {
                 key: 'status',

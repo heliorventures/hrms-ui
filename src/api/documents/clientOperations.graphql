@@ -486,6 +486,8 @@ mutation SubmitExpense($input: SubmitExpenseInput!) {
     amount
     title
     workflowInstanceId
+    paymentStatus
+    receiptFileStorageId
   }
 }
 
@@ -498,13 +500,31 @@ mutation CreatePayrollArrear($input: CreatePayrollArrearInput!) {
   }
 }
 
-mutation ApproveExpense($expenseId: ID!) {
-  approveExpense(expenseId: $expenseId) {
+mutation ApproveExpense($expenseId: ID!, $approvedAmount: String) {
+  approveExpense(expenseId: $expenseId, approvedAmount: $approvedAmount) {
     id
     status
     amount
     title
     workflowInstanceId
+    approvedAmount
+    paymentStatus
+  }
+}
+
+mutation MarkExpensePaymentStatus($expenseId: ID!, $paymentStatus: String!, $paymentReference: String) {
+  markExpensePaymentStatus(
+    expenseId: $expenseId
+    paymentStatus: $paymentStatus
+    paymentReference: $paymentReference
+  ) {
+    id
+    status
+    amount
+    approvedAmount
+    paymentStatus
+    paidAt
+    paymentReference
   }
 }
 
@@ -514,6 +534,7 @@ mutation RejectExpense($expenseId: ID!, $reason: String) {
     status
     title
     workflowInstanceId
+    paymentStatus
   }
 }
 
@@ -524,6 +545,7 @@ mutation SubmitTravelRequest($input: SubmitTravelRequestInput!) {
     purpose
     fromDate
     toDate
+    workflowInstanceId
   }
 }
 
@@ -534,6 +556,7 @@ mutation ApproveTravelRequest($travelRequestId: ID!) {
     approvedBy
     rejectedBy
     rejectionReason
+    workflowInstanceId
   }
 }
 
@@ -544,6 +567,80 @@ mutation RejectTravelRequest($travelRequestId: ID!, $reason: String) {
     approvedBy
     rejectedBy
     rejectionReason
+    workflowInstanceId
+  }
+}
+
+mutation UpsertExpenseCategoryAdmin($input: UpsertExpenseCategoryAdminInput!) {
+  upsertExpenseCategoryAdmin(input: $input) {
+    id
+    name
+    code
+    maxAmountPerClaim
+    createdAt
+    updatedAt
+  }
+}
+
+mutation DeleteExpenseCategoryAdmin($expenseCategoryId: ID!) {
+  deleteExpenseCategoryAdmin(expenseCategoryId: $expenseCategoryId)
+}
+
+mutation UpsertExpensePolicyAdmin($input: UpsertExpensePolicyAdminInput!) {
+  upsertExpensePolicyAdmin(input: $input) {
+    id
+    tenantId
+    expenseCategoryId
+    applicableTo
+    departmentId
+    designationId
+    roleId
+    limitPerDay
+    limitPerMonth
+    maxAmountPerClaim
+    receiptRequired
+    approvalRequired
+    createdAt
+    updatedAt
+  }
+}
+
+mutation DeleteExpensePolicyAdmin($expensePolicyId: ID!) {
+  deleteExpensePolicyAdmin(expensePolicyId: $expensePolicyId)
+}
+
+query ExpenseSubmissionHints($expenseCategoryId: ID!) {
+  expenseSubmissionHints(expenseCategoryId: $expenseCategoryId) {
+    expenseCategoryId
+    maxAmountPerClaim
+    receiptRequired
+    limitPerMonth
+  }
+}
+
+query ExpensePoliciesForAdmin($expenseCategoryId: ID!) {
+  expensePoliciesForAdmin(expenseCategoryId: $expenseCategoryId) {
+    id
+    applicableTo
+    departmentId
+    designationId
+    roleId
+    limitPerDay
+    limitPerMonth
+    maxAmountPerClaim
+    receiptRequired
+    approvalRequired
+  }
+}
+
+query AdminExpenseCategories($limit: Int! = 100) {
+  expenseCategories(limit: $limit) {
+    id
+    name
+    code
+    maxAmountPerClaim
+    createdAt
+    updatedAt
   }
 }
 
@@ -673,6 +770,15 @@ query OrgDesignations($limit: Int! = 100) {
     departmentId
     level
     grade
+  }
+}
+
+query ExpenseAssignableRoles($limit: Int! = 250) {
+  expenseAssignableRoles(limit: $limit) {
+    id
+    name
+    description
+    isSystemRole
   }
 }
 
@@ -1244,6 +1350,11 @@ query ExpenseBoard($limit: Int! = 20) {
     title
     status
     submittedAt
+    approvedAmount
+    paymentStatus
+    paidAt
+    paymentReference
+    receiptFileStorageId
   }
   travelRequests(limit: $limit) {
     id
@@ -1259,6 +1370,7 @@ query ExpenseBoard($limit: Int! = 20) {
     rejectionReason
     approvedBy
     rejectedBy
+    workflowInstanceId
     submittedAt
   }
 }
@@ -1508,12 +1620,19 @@ query OnLeaveToday($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50) 
 }
 
 query NotificationBoard($limit: Int! = 20) {
+  unreadNotificationCount
   announcements(limit: $limit) {
     id
     title
     body
     targetAudience
+    targetDepartmentId
+    targetLocationId
+    postSource
     publishAt
+    expiresAt
+    imageReadUrl
+    documentReadUrl
   }
   notifications(limit: $limit) {
     id
@@ -1526,7 +1645,105 @@ query NotificationBoard($limit: Int! = 20) {
   }
 }
 
+query MyNotificationPreferences {
+  myNotificationPreferences {
+    inAppEnabled
+    announcementsEnabled
+    mutedTopics
+  }
+}
+
+mutation UpdateNotificationPreferences($input: UpdateNotificationPreferencesInput!) {
+  updateNotificationPreferences(input: $input) {
+    inAppEnabled
+    announcementsEnabled
+    mutedTopics
+  }
+}
+
+query AdminNotificationsConsole(
+  $annLim: Int! = 100
+  $notLim: Int! = 150
+  $empLim: Int! = 200
+  $deptLim: Int! = 50
+) {
+  adminAnnouncements(limit: $annLim) {
+    id
+    title
+    body
+    targetAudience
+    targetDepartmentId
+    targetLocationId
+    postSource
+    publishAt
+    expiresAt
+    createdAt
+    imageReadUrl
+    documentReadUrl
+  }
+  adminNotifications(limit: $notLim) {
+    id
+    userId
+    kind
+    title
+    message
+    actionUrl
+    isRead
+    createdAt
+  }
+  employees(limit: $empLim) {
+    id
+    fullName
+    userId
+    linkedUserEmail
+  }
+  departments(limit: $deptLim) {
+    id
+    name
+  }
+}
+
+mutation UpdateAnnouncement($input: UpdateAnnouncementInput!) {
+  updateAnnouncement(input: $input) {
+    id
+    title
+    postSource
+  }
+}
+
+mutation DeleteAnnouncement($id: ID!) {
+  deleteAnnouncement(id: $id)
+}
+
+mutation CreateDirectNotifications($input: CreateDirectNotificationsInput!) {
+  createDirectNotifications(input: $input)
+}
+
+mutation UpdateNotificationAdmin($input: UpdateNotificationAdminInput!) {
+  updateNotificationAdmin(input: $input) {
+    id
+    title
+    message
+  }
+}
+
+mutation DeleteNotificationAdmin($id: ID!) {
+  deleteNotificationAdmin(id: $id)
+}
+
+mutation CreateAnnouncement($input: CreateAnnouncementInput!) {
+  createAnnouncement(input: $input) {
+    id
+    title
+    body
+    postSource
+    imageReadUrl
+    documentReadUrl
+  }
+}
+
 query ClientOpsNotificationPreview($limit: Int! = 20) {
+  unreadNotificationCount
   notifications(limit: $limit) {
     id
     title

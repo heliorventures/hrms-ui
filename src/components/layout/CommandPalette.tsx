@@ -66,7 +66,11 @@ const CommandPalette = () => {
 
   const peopleMatch = useMemo(() => {
     const canHrPeek =
-      can('employee:write') || can('role:manage') || can('leave:approve') || can('leave:manage');
+      can('employee:write') ||
+      can('role:manage') ||
+      can('leave:approve') ||
+      can('leave:manage') ||
+      can('expense:manage');
     if (!canHrPeek || !currentTenant?.id) return [];
     if (!q.trim() || q.length < 2) return [];
     const list = getEmployees(currentTenant.id);
@@ -176,7 +180,13 @@ const CommandPalette = () => {
         <div className="border-b border-slate-200/80 bg-gradient-to-r from-indigo-50/90 via-white to-violet-50/80 px-4 py-3 dark:border-slate-700 dark:from-slate-800/90 dark:via-slate-900 dark:to-violet-950/40">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600/10 text-indigo-600 dark:text-indigo-300">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -213,7 +223,9 @@ const CommandPalette = () => {
 
         <div ref={listRef} className="max-h-[min(50vh,420px)] overflow-y-auto px-2 pb-2">
           {rows.length === 0 && (
-            <p className="px-3 py-6 text-center text-sm text-slate-500">No matches — try other words.</p>
+            <p className="px-3 py-6 text-center text-sm text-slate-500">
+              No matches — try other words.
+            </p>
           )}
 
           {rows.map((row, i) => {
@@ -288,8 +300,8 @@ const CommandPalette = () => {
 
           <p className="mt-1 px-2 pb-1 text-center text-[10px] text-slate-400">
             <kbd className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">↑</kbd>{' '}
-            <kbd className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">↓</kbd> navigate ·{' '}
-            <kbd className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">⏎</kbd> open
+            <kbd className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">↓</kbd> navigate
+            · <kbd className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">⏎</kbd> open
           </p>
         </div>
       </div>

@@ -89,6 +89,8 @@ const adminNav: NavItemWithChildren = {
     { path: '/admin/attendance-policy', label: 'Attendance policy' },
     { path: '/admin/timesheet-settings', label: 'Timesheet settings' },
     { path: '/admin/leave-settings', label: 'Leave settings' },
+    { path: '/admin/expense-categories', label: 'Expense categories' },
+    { path: '/admin/notifications', label: 'Notifications' },
     { path: '/admin/reports', label: 'Reports' },
     { path: '/admin/access', label: 'Roles & permissions' },
     { path: '/admin/module-health', label: 'Service health' },
@@ -206,8 +208,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const hrSidebarFilterHit = useMemo(
     () =>
-      filterActive &&
-      hrNav.children.some((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+      filterActive && hrNav.children.some((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
     [filterActive, filterQ]
   );
   const showHrSidebarSection = hrChildren.length > 0 || hrSidebarFilterHit;

@@ -12,12 +12,26 @@ export type NavCatalogEntry = {
 };
 
 export const NAV_CATALOG: NavCatalogEntry[] = [
-  { path: '/dashboard', label: 'Dashboard', group: 'Home', keywords: ['home', 'start', 'overview'] },
+  {
+    path: '/dashboard',
+    label: 'Dashboard',
+    group: 'Home',
+    keywords: ['home', 'start', 'overview'],
+  },
   {
     path: '/insights',
     label: 'Insights',
     group: 'Analytics',
-    keywords: ['analytics', 'reports', 'workforce', 'charts', 'data', 'metrics', 'hr insights', 'ai'],
+    keywords: [
+      'analytics',
+      'reports',
+      'workforce',
+      'charts',
+      'data',
+      'metrics',
+      'hr insights',
+      'ai',
+    ],
   },
   {
     path: '/attendance',
@@ -75,14 +89,54 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
     keywords: ['tax slabs', 'tax configuration', 'tds approval', 'hr tax tools'],
     adminOnly: true,
   },
-  { path: '/expenses', label: 'Expenses & travel', group: 'Money', keywords: ['reimbursement', 'claim', 'travel', 'bills', 'tickets'] },
-  { path: '/notifications', label: 'Notifications', group: 'Home', keywords: ['alerts', 'inbox', 'messages', 'reminders'] },
-  { path: '/profile/settings', label: 'Profile & settings', group: 'You', keywords: ['account', 'preferences', 'me', 'password', 'my profile'] },
-  { path: '/organization/employees', label: 'Organization — people', group: 'People', keywords: ['directory', 'roster', 'staff', 'colleagues', 'team', 'org'] },
-  { path: '/organization/org-chart', label: 'Organization — org chart', group: 'People', keywords: ['hierarchy', 'reporting', 'manager', 'tree', 'structure'] },
-  { path: '/organization/documents', label: 'Organization — documents', group: 'People', keywords: ['policies', 'handbook', 'files', 'hr documents'] },
-  { path: '/workplace/benefits', label: 'Benefits', group: 'Workplace', keywords: ['insurance', 'health', 'plans', 'perks'] },
-  { path: '/workplace/recruitment', label: 'Recruitment', group: 'Workplace', keywords: ['hiring', 'jobs', 'candidates', 'applications', 'careers'] },
+  {
+    path: '/expenses',
+    label: 'Expenses & travel',
+    group: 'Money',
+    keywords: ['reimbursement', 'claim', 'travel', 'bills', 'tickets'],
+  },
+  {
+    path: '/notifications',
+    label: 'Notifications',
+    group: 'Home',
+    keywords: ['alerts', 'inbox', 'messages', 'reminders'],
+  },
+  {
+    path: '/profile/settings',
+    label: 'Profile & settings',
+    group: 'You',
+    keywords: ['account', 'preferences', 'me', 'password', 'my profile'],
+  },
+  {
+    path: '/organization/employees',
+    label: 'Organization — people',
+    group: 'People',
+    keywords: ['directory', 'roster', 'staff', 'colleagues', 'team', 'org'],
+  },
+  {
+    path: '/organization/org-chart',
+    label: 'Organization — org chart',
+    group: 'People',
+    keywords: ['hierarchy', 'reporting', 'manager', 'tree', 'structure'],
+  },
+  {
+    path: '/organization/documents',
+    label: 'Organization — documents',
+    group: 'People',
+    keywords: ['policies', 'handbook', 'files', 'hr documents'],
+  },
+  {
+    path: '/workplace/benefits',
+    label: 'Benefits',
+    group: 'Workplace',
+    keywords: ['insurance', 'health', 'plans', 'perks'],
+  },
+  {
+    path: '/workplace/recruitment',
+    label: 'Recruitment',
+    group: 'Workplace',
+    keywords: ['hiring', 'jobs', 'candidates', 'applications', 'careers'],
+  },
   {
     path: '/workplace/onboarding',
     label: 'Onboarding & exit',
@@ -100,7 +154,12 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
       'exit',
     ],
   },
-  { path: '/workplace/workflows', label: 'Workflows', group: 'Workplace', keywords: ['approvals', 'routing', 'leave approval', 'process'] },
+  {
+    path: '/workplace/workflows',
+    label: 'Workflows',
+    group: 'Workplace',
+    keywords: ['approvals', 'routing', 'leave approval', 'process'],
+  },
   {
     path: '/hr',
     label: 'HR — workbench',
@@ -131,11 +190,36 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
     group: 'HR',
     keywords: ['project whitelist', 'timesheet projects', 'assign projects', 'hours'],
   },
-  { path: '/workplace/performance', label: 'Performance', group: 'Workplace', keywords: ['goals', 'reviews', 'okr', 'appraisal', '1:1'] },
-  { path: '/workplace/succession', label: 'Succession', group: 'Workplace', keywords: ['talent', 'pipeline', 'bench', 'competency'] },
-  { path: '/workplace/compensation', label: 'Compensation', group: 'Workplace', keywords: ['bands', 'grade', 'salary structure', 'review cycle'] },
-  { path: '/workplace/learning', label: 'Learning', group: 'Workplace', keywords: ['lms', 'courses', 'training', 'skills', 'education'] },
-  { path: '/workplace/assets', label: 'Assets', group: 'Workplace', keywords: ['laptop', 'equipment', 'inventory', 'it'] },
+  {
+    path: '/workplace/performance',
+    label: 'Performance',
+    group: 'Workplace',
+    keywords: ['goals', 'reviews', 'okr', 'appraisal', '1:1'],
+  },
+  {
+    path: '/workplace/succession',
+    label: 'Succession',
+    group: 'Workplace',
+    keywords: ['talent', 'pipeline', 'bench', 'competency'],
+  },
+  {
+    path: '/workplace/compensation',
+    label: 'Compensation',
+    group: 'Workplace',
+    keywords: ['bands', 'grade', 'salary structure', 'review cycle'],
+  },
+  {
+    path: '/workplace/learning',
+    label: 'Learning',
+    group: 'Workplace',
+    keywords: ['lms', 'courses', 'training', 'skills', 'education'],
+  },
+  {
+    path: '/workplace/assets',
+    label: 'Assets',
+    group: 'Workplace',
+    keywords: ['laptop', 'equipment', 'inventory', 'it'],
+  },
   {
     path: '/workplace/grievance',
     label: 'Grievance & speak up',
@@ -180,7 +264,34 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
     path: '/admin/leave-settings',
     label: 'Admin — leave settings',
     group: 'Admin',
-    keywords: ['leave types', 'policies', 'balances', 'holidays', 'calendar', 'pto config', 'hr leave', 'leave policy', 'provision'],
+    keywords: [
+      'leave types',
+      'policies',
+      'balances',
+      'holidays',
+      'calendar',
+      'pto config',
+      'hr leave',
+      'leave policy',
+      'provision',
+    ],
+    adminOnly: true,
+  },
+  {
+    path: '/admin/expense-categories',
+    label: 'Admin — expense categories',
+    group: 'Admin',
+    keywords: [
+      'travel expense',
+      'meal allowance',
+      'claim types',
+      'expense category',
+      'expense policy',
+      'caps',
+      'receipt rule',
+      'expense type',
+      'reimbursement',
+    ],
     adminOnly: true,
   },
   {
@@ -190,8 +301,20 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
     keywords: ['rbac', 'roles', 'permissions', 'access matrix', 'security', 'scopes'],
     adminOnly: true,
   },
-  { path: '/admin/reports', label: 'Admin — reports', group: 'Admin', keywords: ['export', 'compliance', 'hr reports'], adminOnly: true },
-  { path: '/admin/settings', label: 'Admin — settings', group: 'Admin', keywords: ['tenant', 'configuration', 'roles'], adminOnly: true },
+  {
+    path: '/admin/reports',
+    label: 'Admin — reports',
+    group: 'Admin',
+    keywords: ['export', 'compliance', 'hr reports'],
+    adminOnly: true,
+  },
+  {
+    path: '/admin/settings',
+    label: 'Admin — settings',
+    group: 'Admin',
+    keywords: ['tenant', 'configuration', 'roles'],
+    adminOnly: true,
+  },
   {
     path: '/admin/module-health',
     label: 'Admin — service health',
@@ -201,7 +324,12 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
   },
 ];
 
-export function matchesNavFilter(query: string, label: string, path: string, keywords: string[] = []): boolean {
+export function matchesNavFilter(
+  query: string,
+  label: string,
+  path: string,
+  keywords: string[] = []
+): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
   const blob = [label, path, ...keywords].join(' ').toLowerCase();

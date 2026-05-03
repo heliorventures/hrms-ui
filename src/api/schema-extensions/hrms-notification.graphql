@@ -1,0 +1,99 @@
+# kabipay-notification subgraph — merged for codegen when gateway introspection lags.
+
+input CreateAnnouncementInput {
+  title: String!
+  body: String
+  targetAudience: String
+  targetDepartmentId: ID
+  targetLocationId: ID
+  targetRoleCode: String
+  publishAt: DateTime
+  expiresAt: DateTime
+  employeePost: Boolean = true
+  imageFileName: String
+  imageMimeType: String
+  imageContentBase64: String
+  documentFileName: String
+  documentMimeType: String
+  documentContentBase64: String
+}
+
+input UpdateAnnouncementInput {
+  id: ID!
+  title: String
+  body: String
+  targetAudience: String
+  targetDepartmentId: ID
+  targetLocationId: ID
+  clearTargetDepartment: Boolean = false
+  clearTargetLocation: Boolean = false
+  targetRoleCode: String
+  clearRoleAudience: Boolean = false
+  publishAt: DateTime
+  expiresAt: DateTime
+  clearPublishAt: Boolean = false
+  clearExpiresAt: Boolean = false
+  imageFileName: String
+  imageMimeType: String
+  imageContentBase64: String
+  documentFileName: String
+  documentMimeType: String
+  documentContentBase64: String
+  clearImage: Boolean = false
+  clearDocument: Boolean = false
+}
+
+input CreateDirectNotificationsInput {
+  userIds: [ID!]!
+  kind: String
+  title: String
+  message: String
+  actionUrl: String
+}
+
+input UpdateNotificationAdminInput {
+  id: ID!
+  kind: String
+  title: String
+  message: String
+  actionUrl: String
+}
+
+type NotificationPreferences {
+  inAppEnabled: Boolean!
+  announcementsEnabled: Boolean!
+  mutedTopics: [String!]!
+}
+
+input UpdateNotificationPreferencesInput {
+  inAppEnabled: Boolean!
+  announcementsEnabled: Boolean!
+  mutedTopics: [String!]!
+}
+
+extend type Announcement {
+  postSource: String!
+  targetDepartmentId: ID
+  targetLocationId: ID
+  imageFileStorageId: ID
+  documentFileStorageId: ID
+  imageReadUrl: String
+  documentReadUrl: String
+}
+
+extend type Query {
+  adminAnnouncements(limit: Int = 100): [Announcement!]!
+  adminNotifications(limit: Int = 100): [Notification!]!
+  unreadNotificationCount: Int!
+  myNotificationPreferences: NotificationPreferences!
+}
+
+extend type Mutation {
+  createAnnouncement(input: CreateAnnouncementInput!): Announcement!
+  updateAnnouncement(input: UpdateAnnouncementInput!): Announcement!
+  deleteAnnouncement(id: ID!): Boolean!
+  createDirectNotifications(input: CreateDirectNotificationsInput!): Int!
+  updateNotificationAdmin(input: UpdateNotificationAdminInput!): Notification!
+  deleteNotificationAdmin(id: ID!): Boolean!
+  updateNotificationPreferences(input: UpdateNotificationPreferencesInput!): NotificationPreferences!
+}

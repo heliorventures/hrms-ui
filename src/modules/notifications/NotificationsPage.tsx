@@ -4,11 +4,16 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { useAuth } from '../../contexts/AuthContext';
+import { canManageNotifications } from '../../auth/navAccess';
 import {
   NotificationBoardDocument,
   MarkNotificationReadDocument,
   MarkAllNotificationsReadDocument,
+  OrgDepartmentsDocument,
+  type OrgDepartmentsQuery,
 } from '../../api/graphql/graphql';
+import CreateAnnouncementModal from './CreateAnnouncementModal';
 
 type NotificationKind = 'company' | 'personal' | 'system';
 
@@ -17,7 +22,13 @@ interface AnnouncementRow {
   title: string;
   body?: string | null;
   targetAudience?: string | null;
+  targetDepartmentId?: string | null;
+  targetLocationId?: string | null;
   publishAt?: string | null;
+  expiresAt?: string | null;
+  postSource?: string | null;
+  imageReadUrl?: string | null;
+  documentReadUrl?: string | null;
 }
 
 interface NotificationRow {
@@ -35,19 +46,48 @@ interface NotificationBoardData {
   notifications: NotificationRow[];
 }
 
+const shortId = (id: string | null | undefined, len = 8) => {
+  if (!id) return '';
+  const t = id.replace(/-/g, '');
+  return t.length <= len ? id : `${t.slice(0, len)}…`;
+};
+
 const NotificationsPage = () => {
   const client = useGraphClient('client');
+  const { can, clientSession } = useAuth();
+  const navOpts = useMemo(() => ({ can, clientSession }), [can, clientSession]);
+  const showAdminNotifLink = canManageNotifications(navOpts);
+  const [deptNameById, setDeptNameById] = useState<Map<string, string>>(new Map());
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [data, setData] = useState<NotificationBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
 
   const loadBoard = useCallback(async () => {
     const result = await client.request<NotificationBoardData>(NotificationBoardDocument, {
       limit: 20,
     });
     return result;
+  }, [client]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const r = await client.request<OrgDepartmentsQuery>(OrgDepartmentsDocument, { limit: 100 });
+        if (cancelled) return;
+        const m = new Map<string, string>();
+        for (const d of r.departments ?? []) m.set(d.id, d.name);
+        setDeptNameById(m);
+      } catch {
+        if (!cancelled) setDeptNameById(new Map());
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [client]);
 
   useEffect(() => {
@@ -156,9 +196,34 @@ const NotificationsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
-        <div className="flex gap-3">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+          <p className="mt-1 text-sm">
+            <Link
+              to="/profile/settings"
+              className="text-primary-600 hover:underline dark:text-primary-400"
+            >
+              Notification preferences
+            </Link>
+            <span className="text-gray-500 dark:text-gray-400">
+              {' '}
+              — mute categories or turn off bulletin.
+            </span>
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {showAdminNotifLink ? (
+            <Link
+              to="/admin/notifications"
+              className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-offset-2 focus:ring-offset-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/80 dark:focus:ring-offset-slate-900"
+            >
+              Admin console
+            </Link>
+          ) : null}
+          <Button variant="primary" size="sm" onClick={() => setComposeOpen(true)}>
+            New announcement
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -187,13 +252,23 @@ const NotificationsPage = () => {
         </div>
       </div>
 
+      <CreateAnnouncementModal
+        isOpen={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        onCreated={() => void loadBoard().then((r) => setData(r))}
+      />
+
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
 
-      <Card title="Announcements">
+      <Card title="Public announcements">
+        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+          Company updates, celebrations, and posts shared with everyone. Your personal alerts (leave,
+          expenses, attendance) appear below.
+        </p>
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading announcements...</p>
         ) : data?.announcements?.length ? (
@@ -211,14 +286,68 @@ const NotificationsPage = () => {
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                       {announcement.body ?? 'No announcement body provided.'}
                     </p>
+                    {announcement.imageReadUrl && (
+                      <div className="mt-3">
+                        <img
+                          src={announcement.imageReadUrl}
+                          alt=""
+                          className="max-h-48 max-w-full rounded-md border border-gray-200 object-contain dark:border-gray-600"
+                        />
+                      </div>
+                    )}
+                    {announcement.documentReadUrl && (
+                      <div className="mt-2">
+                        <a
+                          href={announcement.documentReadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary-600 hover:underline dark:text-primary-400"
+                        >
+                          View attachment
+                        </a>
+                      </div>
+                    )}
                   </div>
-                  <Badge variant="info">{announcement.targetAudience ?? 'ALL'}</Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge variant="info">{announcement.targetAudience ?? 'ALL'}</Badge>
+                    {announcement.postSource && (
+                      <Badge variant="neutral" size="sm">
+                        {announcement.postSource === 'employee_post' ? 'Team post' : 'Company'}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
+                {(announcement.targetDepartmentId ||
+                  announcement.targetLocationId ||
+                  (announcement.targetAudience?.startsWith('ROLE:') ?? false)) && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {announcement.targetDepartmentId ? (
+                      <Badge variant="neutral" size="sm">
+                        Dept{' '}
+                        {deptNameById.get(announcement.targetDepartmentId) ??
+                          shortId(announcement.targetDepartmentId)}
+                      </Badge>
+                    ) : null}
+                    {announcement.targetLocationId ? (
+                      <Badge variant="neutral" size="sm">
+                        Location {shortId(announcement.targetLocationId)}
+                      </Badge>
+                    ) : null}
+                    {announcement.targetAudience?.startsWith('ROLE:') ? (
+                      <Badge variant="neutral" size="sm">
+                        Role {announcement.targetAudience.slice('ROLE:'.length)}
+                      </Badge>
+                    ) : null}
+                  </div>
+                )}
                 <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
                   Publish at:{' '}
                   {announcement.publishAt
                     ? new Date(announcement.publishAt).toLocaleString('en-IN')
                     : 'Immediate'}
+                  {announcement.expiresAt
+                    ? ` · Expires ${new Date(announcement.expiresAt).toLocaleString('en-IN')}`
+                    : ''}
                 </p>
               </div>
             ))}
@@ -228,7 +357,7 @@ const NotificationsPage = () => {
         )}
       </Card>
 
-      <Card>
+      <Card title="Your private notifications">
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading notifications...</p>
         ) : filteredNotifications.length > 0 ? (

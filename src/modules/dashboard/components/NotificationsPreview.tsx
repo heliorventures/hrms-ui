@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Card from '../../../components/common/Card';
+import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { ClientOpsNotificationPreviewDocument } from '../../../api/graphql/graphql';
+import CreateAnnouncementModal from '../../notifications/CreateAnnouncementModal';
 
 interface NotificationRow {
   id: string;
@@ -24,6 +26,7 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
   const limit = fullHeight ? 20 : 3;
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [composeOpen, setComposeOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,14 +63,19 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
   }
 
   const header = (
-    <div className="mb-4 flex shrink-0 items-center justify-between">
+    <div className="mb-4 flex shrink-0 items-center justify-between gap-2">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Notifications</h3>
-      <Link
-        to="/notifications"
-        className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
-      >
-        View all
-      </Link>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => setComposeOpen(true)}>
+          Post
+        </Button>
+        <Link
+          to="/notifications"
+          className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
+        >
+          View all
+        </Link>
+      </div>
     </div>
   );
 
@@ -125,18 +133,24 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
 
   if (fullHeight) {
     return (
-      <Card className="flex h-full flex-col overflow-hidden">
-        {header}
-        <div className="flex-1 min-h-0 overflow-y-auto">{listContent}</div>
-      </Card>
+      <>
+        <CreateAnnouncementModal isOpen={composeOpen} onClose={() => setComposeOpen(false)} />
+        <Card className="flex h-full flex-col overflow-hidden">
+          {header}
+          <div className="flex-1 min-h-0 overflow-y-auto">{listContent}</div>
+        </Card>
+      </>
     );
   }
 
   return (
-    <Card>
-      {header}
-      {listContent}
-    </Card>
+    <>
+      <CreateAnnouncementModal isOpen={composeOpen} onClose={() => setComposeOpen(false)} />
+      <Card>
+        {header}
+        {listContent}
+      </Card>
+    </>
   );
 };
 

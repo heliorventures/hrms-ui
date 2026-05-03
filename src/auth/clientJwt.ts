@@ -12,3 +12,13 @@ export function canApproveExpenseFromAccessToken(accessToken: string | null): bo
 export function canApproveExpenseFromStoredClientToken(): boolean {
   return canApproveExpenseFromAccessToken(getClientAccessToken());
 }
+
+/** Aligns loosely with `ClientClaims::can_mark_expense_payment` (pay or approve permission on JWT). */
+export function canMarkExpensePaymentFromAccessToken(accessToken: string | null): boolean {
+  if (!accessToken) return false;
+  const session = parseClientAccessToken(accessToken);
+  if (!session) return false;
+  return (
+    session.permissions.has('expense:pay') || session.permissions.has('expense:approve')
+  );
+}

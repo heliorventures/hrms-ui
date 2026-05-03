@@ -1,6 +1,7 @@
 # RBAC admin + HR shell (employee subgraph). Merge until gateway introspection includes these fields.
 
 extend type Query {
+  expenseAssignableRoles(limit: Int = 100): [TenantDirectoryRole!]!
   tenantDirectoryUsers(limit: Int = 100): [TenantDirectoryUser!]!
   tenantDirectoryRoles(limit: Int = 100): [TenantDirectoryRole!]!
   tenantCatalogPermissions(limit: Int = 300): [TenantCatalogPermission!]!

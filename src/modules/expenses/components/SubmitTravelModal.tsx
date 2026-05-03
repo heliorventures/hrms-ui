@@ -142,7 +142,10 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
         </div>
 
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Creates a <strong>pending travel request</strong> (same approver RBAC as expenses).
+          Creates a <strong>pending travel request</strong>. When your tenant configures a{' '}
+          <span className="font-mono">TRAVEL_REQUEST</span> workflow, approval follows{' '}
+          <strong>manager first</strong>, then designated roles such as <strong>accounting</strong>{' '}
+          (fallback single-step routing still applies without a workflow).
         </p>
 
         <div className="flex gap-3">

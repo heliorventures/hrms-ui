@@ -34,6 +34,8 @@ import ModuleHealth from '../modules/admin/ModuleHealth';
 import AdminAttendancePolicyPage from '../modules/admin/AdminAttendancePolicyPage';
 import AdminHrTimesheetSettingsPage from '../modules/admin/AdminHrTimesheetSettingsPage';
 import AdminLeaveSettingsPage from '../modules/admin/AdminLeaveSettingsPage';
+import AdminExpenseCategoriesPage from '../modules/admin/AdminExpenseCategoriesPage';
+import AdminNotificationsPage from '../modules/admin/AdminNotificationsPage';
 import BenefitsPage from '../modules/workplace/BenefitsPage';
 import RecruitmentPage from '../modules/workplace/RecruitmentPage';
 import OnboardingPage from '../modules/workplace/OnboardingPage';
@@ -308,6 +310,22 @@ const AppRoutes = () => {
           element={
             <TenantPermissionRoute tenantPath="/admin/leave-settings">
               <AdminLeaveSettingsPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="admin/expense-categories"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/expense-categories">
+              <AdminExpenseCategoriesPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="admin/notifications"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/notifications">
+              <AdminNotificationsPage />
             </TenantPermissionRoute>
           }
         />
