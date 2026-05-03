@@ -18,11 +18,20 @@ function canApproveLeaveForNav(opts: NavAccessOptions): boolean {
   );
 }
 
+function canApproveTimesheetForNav(opts: NavAccessOptions): boolean {
+  return (
+    opts.can('timesheet:approve') ||
+    hasBroadDataScopeForResource(opts.clientSession, 'timesheet')
+  );
+}
+
 function canUseHrWorkbench(opts: NavAccessOptions): boolean {
   return (
     opts.can('employee:write') ||
     canApproveLeaveForNav(opts) ||
-    opts.can('leave:manage')
+    opts.can('leave:manage') ||
+    canApproveTimesheetForNav(opts) ||
+    opts.can('timesheet:manage')
   );
 }
 
@@ -36,6 +45,10 @@ export function canAccessTenantPath(path: string, opts: NavAccessOptions): boole
         return opts.can('employee:write');
       case '/hr/leaves':
         return canApproveLeaveForNav(opts) || opts.can('leave:manage');
+      case '/hr/timesheets':
+        return canApproveTimesheetForNav(opts);
+      case '/hr/timesheet-assignments':
+        return opts.can('timesheet:manage') || canApproveTimesheetForNav(opts);
       default:
         return false;
     }
@@ -47,6 +60,8 @@ export function canAccessTenantPath(path: string, opts: NavAccessOptions): boole
         return opts.can('employee:write');
       case '/admin/attendance-policy':
         return opts.can('attendance:punch_policy');
+      case '/admin/timesheet-settings':
+        return opts.can('timesheet:manage') || opts.can('attendance:punch_policy');
       case '/admin/leave-settings':
         return opts.can('leave:manage');
       case '/admin/reports':

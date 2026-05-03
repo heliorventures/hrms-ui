@@ -12,6 +12,7 @@ import OpsOperatorsPage from '../modules/ops/OpsOperatorsPage';
 import OpsFeatureFlagsPage from '../modules/ops/OpsFeatureFlagsPage';
 import Dashboard from '../modules/dashboard/Dashboard';
 import AttendancePage from '../modules/attendance/AttendancePage';
+import TimesheetPage from '../modules/timesheet/TimesheetPage';
 import LeavePage from '../modules/leave/LeavePage';
 import LeaveHolidaysPage from '../modules/leave/LeaveHolidaysPage';
 import LeaveTeamCalendarPage from '../modules/leave/LeaveTeamCalendarPage';
@@ -31,6 +32,7 @@ import AdminReportsPage from '../modules/admin/AdminReportsPage';
 import AdminSettingsPage from '../modules/admin/AdminSettingsPage';
 import ModuleHealth from '../modules/admin/ModuleHealth';
 import AdminAttendancePolicyPage from '../modules/admin/AdminAttendancePolicyPage';
+import AdminHrTimesheetSettingsPage from '../modules/admin/AdminHrTimesheetSettingsPage';
 import AdminLeaveSettingsPage from '../modules/admin/AdminLeaveSettingsPage';
 import BenefitsPage from '../modules/workplace/BenefitsPage';
 import RecruitmentPage from '../modules/workplace/RecruitmentPage';
@@ -46,6 +48,8 @@ import AdminWorkflowsPage from '../modules/admin/AdminWorkflowsPage';
 import HrHomePage from '../modules/hr/HrHomePage';
 import HrAccessManagementPage from '../modules/hr/HrAccessManagementPage';
 import HrLeavesPage from '../modules/hr/HrLeavesPage';
+import HrTimesheetsPage from '../modules/hr/HrTimesheetsPage';
+import HrTimesheetProjectAssignmentsPage from '../modules/hr/HrTimesheetProjectAssignmentsPage';
 
 const ProtectedLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -130,6 +134,7 @@ const AppRoutes = () => {
           }
         />
         <Route path="attendance" element={<AttendancePage />} />
+        <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="leave/holidays" element={<LeaveHolidaysPage />} />
         <Route path="leave/team-calendar" element={<LeaveTeamCalendarPage />} />
         <Route path="leave" element={<LeavePage />} />
@@ -266,6 +271,22 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="hr/timesheets"
+          element={
+            <TenantPermissionRoute tenantPath="/hr/timesheets">
+              <HrTimesheetsPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="hr/timesheet-assignments"
+          element={
+            <TenantPermissionRoute tenantPath="/hr/timesheet-assignments">
+              <HrTimesheetProjectAssignmentsPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
           path="hr/leave-settings"
           element={
             <TenantPermissionRoute tenantPath="/admin/leave-settings">
@@ -304,6 +325,14 @@ const AppRoutes = () => {
           element={
             <TenantPermissionRoute tenantPath="/admin/attendance-policy">
               <AdminAttendancePolicyPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="admin/timesheet-settings"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/timesheet-settings">
+              <AdminHrTimesheetSettingsPage />
             </TenantPermissionRoute>
           }
         />

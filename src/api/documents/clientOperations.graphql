@@ -23,7 +23,7 @@ query ClientOpsUpcomingHolidays($fromDate: NaiveDate, $limit: Int! = 15) {
   }
 }
 
-query TimesheetRows($limit: Int! = 50) {
+query TimesheetRows($limit: Int! = 500) {
   timesheetEntries(limit: $limit) {
     id
     workDate
@@ -31,7 +31,115 @@ query TimesheetRows($limit: Int! = 50) {
     projectCode
     description
     status
+    batchId
   }
+}
+
+mutation SubmitTimesheetWeek($weekStartDate: NaiveDate!) {
+  submitTimesheetWeek(weekStartDate: $weekStartDate) {
+    id
+    employeeId
+    weekStartDate
+    status
+    workflowInstanceId
+    submittedAt
+  }
+}
+
+mutation UpdateTimesheetEntry($input: UpdateTimesheetEntryInput!) {
+  updateTimesheetEntry(input: $input) {
+    id
+    workDate
+    hoursWorked
+    projectCode
+    description
+    status
+    batchId
+  }
+}
+
+query TimesheetProjects($limit: Int! = 100) {
+  timesheetProjects(limit: $limit) {
+    code
+    name
+  }
+}
+
+query TimesheetProjectsForEmployee($limit: Int! = 100, $employeeId: ID) {
+  timesheetProjectsForEmployee(limit: $limit, employeeId: $employeeId) {
+    code
+    name
+  }
+}
+
+query EmployeeTimesheetProjectCodes($employeeId: ID!) {
+  employeeTimesheetProjectCodes(employeeId: $employeeId)
+}
+
+mutation SetEmployeeTimesheetProjects($employeeId: ID!, $projectCodes: [String!]!) {
+  setEmployeeTimesheetProjects(employeeId: $employeeId, projectCodes: $projectCodes)
+}
+
+query TimesheetTaskTypes($projectCode: String!) {
+  timesheetTaskTypes(projectCode: $projectCode)
+}
+
+query AttendanceAdjustmentPolicy {
+  attendanceAdjustmentPolicy {
+    maxSelfAdjustDays
+  }
+}
+
+query TimesheetLockPolicy {
+  timesheetLockPolicy {
+    editableWeekSpan
+    lockApprovedEntries
+  }
+}
+
+query TimesheetWeekBatches($status: String, $limit: Int! = 80) {
+  timesheetWeekBatches(status: $status, limit: $limit) {
+    id
+    employeeId
+    weekStartDate
+    status
+    submittedAt
+    workflowInstanceId
+  }
+}
+
+mutation ApproveTimesheetWeekBatch($id: ID!) {
+  approveTimesheetWeekBatch(id: $id) {
+    id
+    status
+    employeeId
+    weekStartDate
+  }
+}
+
+mutation RejectTimesheetWeekBatch($id: ID!, $rejectionReason: String) {
+  rejectTimesheetWeekBatch(id: $id, rejectionReason: $rejectionReason)
+}
+
+mutation UpsertAttendanceAdjustmentPolicyHr($input: UpsertAttendanceAdjustmentPolicyInput!) {
+  upsertAttendanceAdjustmentPolicy(input: $input) {
+    maxSelfAdjustDays
+  }
+}
+
+mutation UpsertTimesheetLockPolicyHr($input: UpsertTimesheetLockPolicyInput!) {
+  upsertTimesheetLockPolicy(input: $input) {
+    editableWeekSpan
+    lockApprovedEntries
+  }
+}
+
+mutation UpsertTimesheetProjectHr($code: String!, $name: String!, $displayOrder: Int) {
+  upsertTimesheetProject(code: $code, name: $name, displayOrder: $displayOrder)
+}
+
+mutation UpsertTimesheetTaskTypesHr($projectCode: String!, $taskCodes: [String!]!) {
+  upsertTimesheetTaskTypes(projectCode: $projectCode, taskCodes: $taskCodes)
 }
 
 query TaxComputationsList($limit: Int! = 10) {
@@ -1317,7 +1425,7 @@ query HolidaysInCalendar($calendarId: ID!, $limit: Int! = 200) {
   }
 }
 
-query AttendanceBoard($limit: Int! = 20) {
+query AttendanceBoard($limit: Int! = 400) {
   shifts(limit: $limit) {
     id
     name
@@ -1332,6 +1440,10 @@ query AttendanceBoard($limit: Int! = 20) {
     workDate
     checkInTime
     checkOutTime
+    checkInLat
+    checkInLng
+    checkOutLat
+    checkOutLng
     status
     source
     lateMinutes
@@ -1555,6 +1667,10 @@ query ClientOpsAdminEmployees($limit: Int! = 100) {
     designationId
     reportingManagerId
     userId
+    departmentName
+    designationTitle
+    linkedUserEmail
+    reportingManagerName
   }
 }
 
@@ -1635,7 +1751,12 @@ query ClientOpsEmployeesDirectory($limit: Int! = 100) {
     dateOfJoining
     departmentId
     designationId
+    reportingManagerId
     userId
+    departmentName
+    designationTitle
+    linkedUserEmail
+    reportingManagerName
   }
 }
 
@@ -1651,7 +1772,12 @@ query ClientOpsEmployeeDetail($id: ID!) {
     dateOfJoining
     departmentId
     designationId
+    reportingManagerId
     userId
+    departmentName
+    designationTitle
+    linkedUserEmail
+    reportingManagerName
     createdAt
     updatedAt
   }
@@ -1665,6 +1791,13 @@ query ClientOpsAdminSettingsEmployees($limit: Int! = 100) {
     status
     employmentType
     userId
+    departmentId
+    designationId
+    reportingManagerId
+    departmentName
+    designationTitle
+    linkedUserEmail
+    reportingManagerName
   }
 }
 

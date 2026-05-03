@@ -2,10 +2,17 @@ import { ClientError } from 'graphql-request';
 
 /** Maps GraphQL / DB-ish errors to short copy suitable for end users. */
 export function graphQlUserMessage(err: unknown): string {
-  let raw = '';
   if (err instanceof ClientError) {
     const msgs = err.response.errors?.map((e) => e.message).filter(Boolean) ?? [];
-    raw = msgs.join(' ').trim() || err.message;
+    const joined = msgs.join(' ').trim();
+    if (joined) {
+      return joined.length > 400 ? `${joined.slice(0, 397)}…` : joined;
+    }
+  }
+
+  let raw = '';
+  if (err instanceof ClientError) {
+    raw = err.message;
   } else if (err instanceof Error) {
     raw = err.message;
   } else {

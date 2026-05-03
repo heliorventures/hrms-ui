@@ -1,0 +1,74 @@
+# Merged for graphql-codegen until the stitched gateway introspection includes kabipay-attendance HRMS updates.
+
+scalar NaiveDate
+scalar DateTime
+
+extend type TimesheetEntry {
+  batchId: ID
+}
+
+type TimesheetWeekBatch {
+  id: ID!
+  tenantId: ID!
+  employeeId: ID!
+  weekStartDate: NaiveDate!
+  status: String!
+  workflowInstanceId: ID
+  submittedAt: DateTime
+  rejectionReason: String
+}
+
+type AttendanceAdjustmentPolicy {
+  maxSelfAdjustDays: Int!
+}
+
+type TimesheetLockPolicy {
+  editableWeekSpan: Int!
+  lockApprovedEntries: Boolean!
+}
+
+type TimesheetProjectOption {
+  code: String!
+  name: String!
+}
+
+input UpdateTimesheetEntryInput {
+  id: ID!
+  workDate: NaiveDate!
+  hoursWorked: String!
+  projectCode: String
+  description: String
+}
+
+input UpsertAttendanceAdjustmentPolicyInput {
+  maxSelfAdjustDays: Int!
+}
+
+input UpsertTimesheetLockPolicyInput {
+  editableWeekSpan: Int!
+  lockApprovedEntries: Boolean!
+}
+
+extend type Query {
+  timesheetProjects(limit: Int): [TimesheetProjectOption!]!
+  """Projects the employee may log against (JWT employee when employeeId omitted)."""
+  timesheetProjectsForEmployee(employeeId: ID, limit: Int): [TimesheetProjectOption!]!
+  """Whitelist only; empty means full catalog is allowed for that employee."""
+  employeeTimesheetProjectCodes(employeeId: ID!): [String!]!
+  timesheetTaskTypes(projectCode: String!): [String!]!
+  attendanceAdjustmentPolicy: AttendanceAdjustmentPolicy!
+  timesheetLockPolicy: TimesheetLockPolicy!
+  timesheetWeekBatches(status: String, limit: Int): [TimesheetWeekBatch!]!
+}
+
+extend type Mutation {
+  submitTimesheetWeek(weekStartDate: NaiveDate!): TimesheetWeekBatch!
+  updateTimesheetEntry(input: UpdateTimesheetEntryInput!): TimesheetEntry!
+  approveTimesheetWeekBatch(id: ID!): TimesheetWeekBatch!
+  rejectTimesheetWeekBatch(id: ID!, rejectionReason: String): Boolean!
+  upsertAttendanceAdjustmentPolicy(input: UpsertAttendanceAdjustmentPolicyInput!): AttendanceAdjustmentPolicy!
+  upsertTimesheetLockPolicy(input: UpsertTimesheetLockPolicyInput!): TimesheetLockPolicy!
+  upsertTimesheetProject(code: String!, name: String!, displayOrder: Int): Boolean!
+  upsertTimesheetTaskTypes(projectCode: String!, taskCodes: [String!]!): Boolean!
+  setEmployeeTimesheetProjects(employeeId: ID!, projectCodes: [String!]!): Boolean!
+}

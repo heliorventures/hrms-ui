@@ -26,6 +26,7 @@ const schema: CodegenConfig['schema'] = [
   join(__dirname, 'src', 'api', 'schema-extensions', 'tax-admin.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'backlog-catchup.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-rbac.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-timesheet-attendance.graphql'),
 ];
 
 const config: CodegenConfig = {

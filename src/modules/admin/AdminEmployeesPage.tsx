@@ -21,6 +21,10 @@ interface EmployeeRow {
   designationId?: string | null;
   reportingManagerId?: string | null;
   userId?: string | null;
+  departmentName?: string | null;
+  designationTitle?: string | null;
+  linkedUserEmail?: string | null;
+  reportingManagerName?: string | null;
 }
 
 interface EmployeesData {
@@ -104,6 +108,7 @@ const AdminEmployeesPage = () => {
         key: 'reportingManagerId',
         label: 'Reports to',
         render: (row: EmployeeRow) =>
+          row.reportingManagerName ||
           (row.reportingManagerId && nameById.get(row.reportingManagerId)) ||
           row.reportingManagerId ||
           '—',
@@ -111,12 +116,14 @@ const AdminEmployeesPage = () => {
       {
         key: 'userId',
         label: 'Linked User',
-        render: (employee: EmployeeRow) => employee.userId ?? '—',
+        render: (employee: EmployeeRow) =>
+          employee.linkedUserEmail ?? employee.userId ?? '—',
       },
       {
         key: 'departmentId',
         label: 'Department',
         render: (employee: EmployeeRow) =>
+          employee.departmentName ||
           (employee.departmentId && deptNames[employee.departmentId]) ||
           employee.departmentId ||
           '—',
@@ -125,6 +132,7 @@ const AdminEmployeesPage = () => {
         key: 'designationId',
         label: 'Designation',
         render: (employee: EmployeeRow) =>
+          employee.designationTitle ||
           (employee.designationId && desigTitles[employee.designationId]) ||
           employee.designationId ||
           '—',

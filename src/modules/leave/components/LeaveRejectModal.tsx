@@ -4,6 +4,7 @@ import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { RejectLeaveRequestDocument } from '../../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 interface LeaveRejectModalProps {
   isOpen: boolean;
@@ -47,7 +48,7 @@ const LeaveRejectModal = ({
       onRejected();
       handleClose();
     } catch (ex) {
-      setErr(ex instanceof Error ? ex.message : 'Reject failed');
+      setErr(graphQlUserMessage(ex));
     } finally {
       setBusy(false);
     }

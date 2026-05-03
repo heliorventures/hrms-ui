@@ -17,6 +17,11 @@ interface EmployeeRow {
   departmentId?: string | null;
   designationId?: string | null;
   userId?: string | null;
+  reportingManagerId?: string | null;
+  departmentName?: string | null;
+  designationTitle?: string | null;
+  linkedUserEmail?: string | null;
+  reportingManagerName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -106,10 +111,11 @@ const EmployeeDetailPage = () => {
               </div>
               <div>
                 <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-                  Linked User
+                  Linked login
                 </p>
                 <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                  {employee.userId ?? '-'}
+                  {employee.linkedUserEmail ??
+                    (employee.userId ? 'Linked account (email unavailable)' : '—')}
                 </p>
               </div>
               <div>
@@ -164,22 +170,67 @@ const EmployeeDetailPage = () => {
             </div>
           </Card>
 
+          <Card title="Job">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                  Department
+                </p>
+                <p className="mt-1 font-medium text-gray-900 dark:text-white">
+                  {employee.departmentName ?? '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                  Designation
+                </p>
+                <p className="mt-1 font-medium text-gray-900 dark:text-white">
+                  {employee.designationTitle ?? '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                  Reports to
+                </p>
+                <p className="mt-1 font-medium text-gray-900 dark:text-white">
+                  {employee.reportingManagerName ?? '—'}
+                </p>
+              </div>
+            </div>
+          </Card>
+
           <Card title="System References">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
                   Department ID
                 </p>
-                <p className="mt-1 font-medium break-all text-gray-900 dark:text-white">
-                  {employee.departmentId ?? '-'}
+                <p className="mt-1 font-mono text-xs break-all text-gray-700 dark:text-gray-300">
+                  {employee.departmentId ?? '—'}
                 </p>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
                   Designation ID
                 </p>
-                <p className="mt-1 font-medium break-all text-gray-900 dark:text-white">
-                  {employee.designationId ?? '-'}
+                <p className="mt-1 font-mono text-xs break-all text-gray-700 dark:text-gray-300">
+                  {employee.designationId ?? '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                  Reporting manager ID
+                </p>
+                <p className="mt-1 font-mono text-xs break-all text-gray-700 dark:text-gray-300">
+                  {employee.reportingManagerId ?? '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                  Linked user ID
+                </p>
+                <p className="mt-1 font-mono text-xs break-all text-gray-700 dark:text-gray-300">
+                  {employee.userId ?? '—'}
                 </p>
               </div>
               <div>

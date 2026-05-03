@@ -9,6 +9,9 @@ import {
 } from '../../auth/leaveApprovalUi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { useFlashToast } from '../../hooks/useFlashToast';
+import FlashToastBar from '../../components/common/FlashToastBar';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import ApplyLeaveModal from './components/ApplyLeaveModal';
 import LeaveRejectModal from './components/LeaveRejectModal';
 import LeaveRequestsTableSection from './components/LeaveRequestsTableSection';
@@ -34,6 +37,7 @@ type ApproveLeaveRequestMutation = {
 const LeavePage = () => {
   const { can, clientSession } = useAuth();
   const client = useGraphClient('client');
+  const flash = useFlashToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const [orgChartRows, setOrgChartRows] = useState<OrgChartQuery['orgChart']>([]);
@@ -169,43 +173,66 @@ const LeavePage = () => {
 
   const silentRefreshBoard = useCallback(async () => {
     try {
-      setError(null);
       setData(await loadBoard());
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to refresh');
+      const msg = graphQlUserMessage(e);
+      setError(msg);
+      flash.show(msg, 'error');
     }
-  }, [loadBoard]);
+  }, [loadBoard, flash.show]);
 
   const handleApprove = async (leaveRequestId: string) => {
     setApproveBusyId(leaveRequestId);
     setApproveWorkflowNotice(null);
+    setError(null);
     try {
       const res = await client.request<ApproveLeaveRequestMutation>(ApproveLeaveRequestDocument, {
         leaveRequestId,
       });
-      await silentRefreshBoard();
       const st = res.approveLeaveRequest?.status?.toLowerCase() ?? '';
-      setApproveWorkflowNotice(
-        st === 'pending'
-          ? 'Approval was accepted; if this row still shows Pending, choose Refresh.'
-          : null
-      );
+      const pendingMsg =
+        'Approval was recorded but status is still Pending — another workflow step may apply, or refresh the list.';
+      setApproveWorkflowNotice(st === 'pending' ? pendingMsg : null);
+      if (st === 'pending') {
+        flash.show(pendingMsg, 'info');
+      } else {
+        flash.show('Leave request approved.', 'success');
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Approve failed');
+      const msg = graphQlUserMessage(e);
+      setError(msg);
+      flash.show(msg, 'error');
     } finally {
       setApproveBusyId(null);
+    }
+    try {
+      setData(await loadBoard());
+    } catch (e) {
+      const msg = graphQlUserMessage(e);
+      setError(msg);
+      flash.show(`Could not refresh leave list: ${msg}`, 'error');
     }
   };
 
   const handleCancelOwn = async (leaveRequestId: string) => {
     setCancelBusyId(leaveRequestId);
+    setError(null);
     try {
       await client.request(CancelLeaveRequestDocument, { leaveRequestId });
-      await silentRefreshBoard();
+      flash.show('Leave request cancelled.', 'success');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Cancel failed');
+      const msg = graphQlUserMessage(e);
+      setError(msg);
+      flash.show(msg, 'error');
     } finally {
       setCancelBusyId(null);
+    }
+    try {
+      setData(await loadBoard());
+    } catch (e) {
+      const msg = graphQlUserMessage(e);
+      setError(msg);
+      flash.show(`Could not refresh leave list: ${msg}`, 'error');
     }
   };
 
@@ -323,6 +350,8 @@ const LeavePage = () => {
         leaveRequestId={rejectLeaveId}
         onClose={() => setRejectLeaveId(null)}
         onRejected={async () => {
+          setError(null);
+          flash.show('Leave request rejected.', 'success');
           await silentRefreshBoard();
         }}
       />
@@ -600,6 +629,7 @@ const LeavePage = () => {
           </ul>
         )}
       </Modal>
+      <FlashToastBar toast={flash.flash} onDismiss={flash.clear} />
     </div>
   );
 };

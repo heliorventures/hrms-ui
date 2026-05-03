@@ -17,7 +17,12 @@ interface EmployeeRow {
   dateOfJoining: string;
   departmentId?: string | null;
   designationId?: string | null;
+  reportingManagerId?: string | null;
   userId?: string | null;
+  departmentName?: string | null;
+  designationTitle?: string | null;
+  linkedUserEmail?: string | null;
+  reportingManagerName?: string | null;
 }
 
 interface EmployeesData {
@@ -32,6 +37,10 @@ const matchSearch = (employee: EmployeeRow, query: string): boolean => {
     employee.employeeCode,
     employee.status,
     employee.employmentType ?? '',
+    employee.departmentName ?? '',
+    employee.designationTitle ?? '',
+    employee.linkedUserEmail ?? '',
+    employee.reportingManagerName ?? '',
     employee.departmentId ?? '',
     employee.designationId ?? '',
   ].filter(Boolean);
@@ -132,10 +141,10 @@ const OrganizationEmployeesPage = () => {
               <dl className="mt-4 space-y-2 border-t border-gray-200 pt-4 dark:border-gray-700">
                 <div>
                   <dt className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-                    Email
+                    Linked login
                   </dt>
                   <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
-                    {employee.userId ?? 'Not linked'}
+                    {employee.linkedUserEmail ?? (employee.userId ? 'Linked (no email visible)' : 'Not linked')}
                   </dd>
                 </div>
                 <div>
@@ -143,7 +152,7 @@ const OrganizationEmployeesPage = () => {
                     Department
                   </dt>
                   <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
-                    {employee.departmentId ?? '—'}
+                    {employee.departmentName ?? '—'}
                   </dd>
                 </div>
                 <div>
@@ -151,7 +160,15 @@ const OrganizationEmployeesPage = () => {
                     Designation
                   </dt>
                   <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
-                    {employee.designationId ?? '—'}
+                    {employee.designationTitle ?? '—'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                    Reports to
+                  </dt>
+                  <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
+                    {employee.reportingManagerName ?? '—'}
                   </dd>
                 </div>
                 <div>

@@ -23,7 +23,13 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
     path: '/attendance',
     label: 'Attendance',
     group: 'Time',
-    keywords: ['time', 'punch', 'clock', 'timesheet', 'swipe', 'present'],
+    keywords: ['time', 'punch', 'clock', 'swipe', 'present', 'location', 'regularize'],
+  },
+  {
+    path: '/timesheet',
+    label: 'Timesheet',
+    group: 'Time',
+    keywords: ['hours', 'project', 'weekly', 'submit', 'approve', 'csv', 'billing'],
   },
   {
     path: '/leave',
@@ -113,6 +119,18 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
     group: 'HR',
     keywords: ['pending leave', 'approve leave', 'reject', 'queue', 'inbox'],
   },
+  {
+    path: '/hr/timesheets',
+    label: 'HR — timesheet approvals',
+    group: 'HR',
+    keywords: ['weekly hours', 'approve timesheet', 'reject timesheet', 'pending timesheet'],
+  },
+  {
+    path: '/hr/timesheet-assignments',
+    label: 'HR — timesheet project access',
+    group: 'HR',
+    keywords: ['project whitelist', 'timesheet projects', 'assign projects', 'hours'],
+  },
   { path: '/workplace/performance', label: 'Performance', group: 'Workplace', keywords: ['goals', 'reviews', 'okr', 'appraisal', '1:1'] },
   { path: '/workplace/succession', label: 'Succession', group: 'Workplace', keywords: ['talent', 'pipeline', 'bench', 'competency'] },
   { path: '/workplace/compensation', label: 'Compensation', group: 'Workplace', keywords: ['bands', 'grade', 'salary structure', 'review cycle'] },
@@ -149,6 +167,13 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
     label: 'Admin — attendance policy',
     group: 'Admin',
     keywords: ['policy', 'shifts', 'rules', 'geo'],
+    adminOnly: true,
+  },
+  {
+    path: '/admin/timesheet-settings',
+    label: 'Admin — timesheet settings',
+    group: 'Admin',
+    keywords: ['projects', 'tasks', 'lock policy', 'editable weeks', 'adjustment window'],
     adminOnly: true,
   },
   {
