@@ -3,17 +3,29 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Select from '../../components/common/Select';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   EmployeeTimesheetProjectCodesDocument,
   OrgChartDocument,
   SetEmployeeTimesheetProjectsDocument,
   TimesheetProjectsDocument,
+  ViewerEmployeeIdDocument,
   type OrgChartQuery,
+  type ViewerEmployeeIdQuery,
 } from '../../api/graphql/graphql';
 
 const HrTimesheetProjectAssignmentsPage = () => {
+  const { can, clientSession } = useAuth();
   const client = useGraphClient('client');
+  /** Matches subgraph `orgChart`: ALL employee scope or elevated HR-style permissions. */
+  const seesCompanyWideEmployeeDirectory = useMemo(() => {
+    const empScope = clientSession?.resourceScopes?.employee?.trim().toUpperCase();
+    if (empScope === 'ALL') return true;
+    return can('timesheet:manage') || can('employee:write');
+  }, [can, clientSession]);
+
   const [orgRows, setOrgRows] = useState<NonNullable<OrgChartQuery['orgChart']>>([]);
+  const [viewerEmpId, setViewerEmpId] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<{ code: string; name: string }[]>([]);
   const [employeeId, setEmployeeId] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -23,13 +35,32 @@ const HrTimesheetProjectAssignmentsPage = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const assigneeRows = useMemo(() => {
+    const rows = [...(orgRows ?? [])];
+    rows.sort((a, b) =>
+      (a.fullName ?? '').localeCompare(b.fullName ?? '', undefined, { sensitivity: 'base' })
+    );
+
+    if (seesCompanyWideEmployeeDirectory) {
+      return rows;
+    }
+
+    const vid = viewerEmpId?.trim();
+    if (vid) {
+      return rows.filter((r) => r.employeeId !== vid);
+    }
+    return rows;
+  }, [orgRows, seesCompanyWideEmployeeDirectory, viewerEmpId]);
+
   const reloadBase = useCallback(async () => {
-    const [orgR, catR] = await Promise.all([
+    const [orgR, catR, viewerR] = await Promise.all([
       client.request<OrgChartQuery>(OrgChartDocument, { limit: 500 }),
       client.request(TimesheetProjectsDocument, { limit: 200 }),
+      client.request<ViewerEmployeeIdQuery>(ViewerEmployeeIdDocument).catch(() => null),
     ]);
     setOrgRows(orgR.orgChart ?? []);
     setCatalog(catR.timesheetProjects ?? []);
+    setViewerEmpId(viewerR?.viewerEmployeeId?.trim() || null);
   }, [client]);
 
   useEffect(() => {
@@ -51,6 +82,15 @@ const HrTimesheetProjectAssignmentsPage = () => {
       cancelled = true;
     };
   }, [reloadBase]);
+
+  useEffect(() => {
+    const allowed = new Set(assigneeRows.map((r) => r.employeeId));
+    if (employeeId.trim() && !allowed.has(employeeId.trim())) {
+      setEmployeeId('');
+      setSelected(new Set());
+      setMessage(null);
+    }
+  }, [assigneeRows, employeeId]);
 
   useEffect(() => {
     if (!employeeId.trim()) {
@@ -81,17 +121,14 @@ const HrTimesheetProjectAssignmentsPage = () => {
   }, [client, employeeId]);
 
   const employeeOptions = useMemo(() => {
-    const rows = [...(orgRows ?? [])].sort((a, b) =>
-      (a.fullName ?? '').localeCompare(b.fullName ?? '', undefined, { sensitivity: 'base' })
-    );
     return [
       { value: '', label: loading ? 'Loading…' : '— Select employee —' },
-      ...rows.map((r) => ({
+      ...assigneeRows.map((r) => ({
         value: r.employeeId,
         label: `${r.fullName}${r.employeeCode ? ` (${r.employeeCode})` : ''}`,
       })),
     ];
-  }, [orgRows, loading]);
+  }, [assigneeRows, loading]);
 
   const toggleCode = (code: string) => {
     const u = code.trim().toUpperCase();
@@ -133,6 +170,18 @@ const HrTimesheetProjectAssignmentsPage = () => {
           Restrict which projects an employee can log hours against. Leave none selected and save to allow{' '}
           <strong>all</strong> active catalog projects.
         </p>
+        {!seesCompanyWideEmployeeDirectory && (
+          <p className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
+            Your employee list follows <strong>org chart visibility</strong>: everyone who reports to you (directly or
+            indirectly) appears here—excluding yourself. Users with <span className="font-mono">timesheet:manage</span>{' '}
+            or <span className="font-mono">employee:write</span> see the whole company directory.
+          </p>
+        )}
+        {seesCompanyWideEmployeeDirectory && (
+          <p className="mb-4 rounded-lg border border-emerald-200/80 bg-emerald-50/90 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
+            HR / admin directory access: <strong>all employees</strong> in scope are listed—same source as the org chart.
+          </p>
+        )}
         {loading ? (
           <p className="text-sm text-gray-500">Loading…</p>
         ) : (
@@ -165,7 +214,9 @@ const HrTimesheetProjectAssignmentsPage = () => {
                     )}
                     <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                       {catalog.length === 0 ? (
-                        <p className="text-sm text-gray-500">No projects in catalog — add them under Admin → Timesheet settings.</p>
+                        <p className="text-sm text-gray-500">
+                          No projects in catalog — add them under Admin → Timesheet settings.
+                        </p>
                       ) : (
                         catalog.map((p) => {
                           const u = p.code.trim().toUpperCase();

@@ -687,6 +687,11 @@ query OrgChart($limit: Int! = 500) {
   }
 }
 
+# Canonical viewer employee UUID (leave subgraph); avoids pulling full LeaveBoard on HR screens.
+query ViewerEmployeeId {
+  viewerEmployeeId
+}
+
 # Workplace — talent & pay (read v1; kabipay-succession / kabipay-compensation subgraphs)
 query WorkplaceSuccessionData($clim: Int! = 100, $plim: Int! = 50) {
   competencies(limit: $clim) {

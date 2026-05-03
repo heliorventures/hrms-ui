@@ -2,74 +2,78 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { OrgChartDocument } from '../../api/graphql/graphql';
+import { OrgChartDocument, type OrgChartQuery } from '../../api/graphql/graphql';
+import {
+  buildOrgChartChildMap,
+  findOrgChartRoots,
+  type OrgChartRowLite,
+} from '../../utils/orgChartTree';
 
-export interface OrgChartRow {
-  employeeId: string;
-  employeeCode: string;
-  fullName: string;
-  reportingManagerId: string | null;
-  departmentName: string | null;
-  designationTitle: string | null;
-}
-
-interface OrgChartData {
-  orgChart: OrgChartRow[];
-}
-
-interface TreeProps {
-  row: OrgChartRow;
-  childrenByManager: Map<string, OrgChartRow[]>;
-  depth: number;
-}
-
-const TreeBranch = ({ row, childrenByManager, depth }: TreeProps) => {
-  const kids = childrenByManager.get(row.employeeId) ?? [];
-  const pad = Math.min(depth * 1.25, 20);
+function EmployeeNodeCard({ row }: { row: OrgChartRowLite }) {
+  const meta = [row.designationTitle, row.departmentName].filter(Boolean).join(' · ');
   return (
-    <li className="list-none">
-      <div
-        style={{ marginLeft: `${pad}rem` }}
-        className="mb-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800/80"
+    <div className="relative z-[1] min-w-[10.5rem] max-w-[13rem] rounded-xl border border-slate-200 bg-white px-3 py-2 text-center shadow-sm dark:border-slate-600 dark:bg-slate-800">
+      <Link
+        to={`/organization/employees/${row.employeeId}`}
+        className="text-sm font-semibold text-primary-600 hover:underline dark:text-primary-400"
       >
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div>
-            <Link
-              to={`/organization/employees/${row.employeeId}`}
-              className="font-semibold text-primary-600 hover:underline dark:text-primary-400"
-            >
-              {row.fullName}
-            </Link>
-            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-              {row.employeeCode}
-            </span>
-          </div>
-        </div>
-        {(row.designationTitle || row.departmentName) && (
-          <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
-            {[row.designationTitle, row.departmentName].filter(Boolean).join(' · ')}
-          </p>
-        )}
-      </div>
-      {kids.length > 0 && (
-        <ul className="space-y-0 border-l border-gray-200 pl-2 dark:border-gray-600">
-          {kids.map((c) => (
-            <TreeBranch
-              key={c.employeeId}
-              row={c}
-              childrenByManager={childrenByManager}
-              depth={depth + 1}
-            />
-          ))}
-        </ul>
-      )}
-    </li>
+        {row.fullName}
+      </Link>
+      <div className="mt-0.5 font-mono text-[10px] text-slate-500 dark:text-slate-400">{row.employeeCode}</div>
+      {meta ? (
+        <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-slate-600 dark:text-slate-300">{meta}</p>
+      ) : null}
+    </div>
   );
-};
+}
+
+/**
+ * Top-down tree: parent centered above a row of children with simple connector lines.
+ */
+function OrgSubtree({
+  row,
+  childMap,
+}: {
+  row: OrgChartRowLite;
+  childMap: Map<string, OrgChartRowLite[]>;
+}) {
+  const kids = childMap.get(row.employeeId) ?? [];
+  if (kids.length === 0) {
+    return <EmployeeNodeCard row={row} />;
+  }
+
+  return (
+    <div className="flex flex-col items-center">
+      <EmployeeNodeCard row={row} />
+      <div className="flex w-full flex-col items-center">
+        <div className="h-5 w-px shrink-0 bg-slate-400 dark:bg-slate-500" aria-hidden />
+        <div className="relative flex w-full flex-row flex-wrap items-start justify-center gap-x-10 gap-y-10 px-2 py-2 md:gap-x-14">
+          {/* sibling connector rail */}
+          {kids.length > 1 && (
+            <div
+              className="pointer-events-none absolute top-0 left-1/2 hidden h-px -translate-x-1/2 bg-slate-400 md:block dark:bg-slate-500"
+              style={{
+                width: `min(calc(100% - 4rem), ${(kids.length - 1) * 14}rem)`,
+              }}
+              aria-hidden
+            />
+          )}
+          {kids.map((child) => (
+            <div key={child.employeeId} className="relative flex flex-col items-center">
+              <div className="mb-0 h-5 w-px shrink-0 bg-slate-400 md:hidden dark:bg-slate-500" aria-hidden />
+              <div className="hidden h-5 w-px shrink-0 bg-slate-400 md:block dark:bg-slate-500" aria-hidden />
+              <OrgSubtree row={child} childMap={childMap} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const OrgChartPage = () => {
   const client = useGraphClient('client');
-  const [rows, setRows] = useState<OrgChartRow[] | null>(null);
+  const [rows, setRows] = useState<OrgChartRowLite[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,8 +83,8 @@ const OrgChartPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await client.request<OrgChartData>(OrgChartDocument, { limit: 500 });
-        if (!cancelled) setRows(res.orgChart);
+        const res = await client.request<OrgChartQuery>(OrgChartDocument, { limit: 500 });
+        if (!cancelled) setRows((res.orgChart ?? []) as OrgChartRowLite[]);
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Failed to load org chart');
@@ -94,39 +98,18 @@ const OrgChartPage = () => {
     };
   }, [client]);
 
-  const { roots, childrenByManager } = useMemo(() => {
-    if (!rows?.length) {
-      return { roots: [] as OrgChartRow[], childrenByManager: new Map<string, OrgChartRow[]>() };
-    }
-    const byId = new Map(rows.map((r) => [r.employeeId, r]));
-    const childMap = new Map<string, OrgChartRow[]>();
-    for (const r of rows) {
-      const mid = r.reportingManagerId;
-      if (mid && byId.has(mid)) {
-        const list = childMap.get(mid) ?? [];
-        list.push(r);
-        childMap.set(mid, list);
-      }
-    }
-    for (const [, list] of childMap) {
-      list.sort((a, b) => a.employeeCode.localeCompare(b.employeeCode));
-    }
-    const rootList = rows.filter((r) => {
-      if (!r.reportingManagerId) return true;
-      return !byId.has(r.reportingManagerId);
-    });
-    rootList.sort((a, b) => a.employeeCode.localeCompare(b.employeeCode));
-    return { roots: rootList, childrenByManager: childMap };
-  }, [rows]);
+  const childMap = useMemo(() => (rows?.length ? buildOrgChartChildMap(rows) : new Map()), [rows]);
+
+  const roots = useMemo(() => (rows?.length ? findOrgChartRoots(rows) : []), [rows]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Org chart</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Read-only reporting hierarchy from <span className="font-mono text-xs">reportingManagerId</span>.
-          Visibility follows your <span className="font-mono text-xs">employee</span> data scope (same as the
-          employee directory).
+          Reporting hierarchy from <span className="font-mono text-xs">reportingManagerId</span>, shown as a top-down
+          tree. Visibility follows your <span className="font-mono text-xs">employee</span> data scope (same as the
+          directory).
         </p>
       </div>
 
@@ -141,16 +124,13 @@ const OrgChartPage = () => {
           </p>
         )}
         {!loading && !error && roots.length > 0 && (
-          <ul className="space-y-1">
-            {roots.map((r) => (
-              <TreeBranch
-                key={r.employeeId}
-                row={r}
-                childrenByManager={childrenByManager}
-                depth={0}
-              />
-            ))}
-          </ul>
+          <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-slate-50/80 p-6 dark:border-slate-700 dark:bg-slate-900/40">
+            <div className="flex min-w-max flex-row items-start justify-center gap-16 pb-4">
+              {roots.map((r) => (
+                <OrgSubtree key={r.employeeId} row={r} childMap={childMap} />
+              ))}
+            </div>
+          </div>
         )}
       </Card>
     </div>
