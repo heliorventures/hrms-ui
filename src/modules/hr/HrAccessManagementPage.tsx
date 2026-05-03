@@ -237,7 +237,7 @@ const HrAccessManagementPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Roles & access</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Roles & permissions</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Manage tenant RBAC. Changes to roles or permissions require users to obtain a fresh token
           (sign out / in) to apply.

@@ -63,8 +63,8 @@ interface PayrollBoardData {
 
 const PayrollPage = () => {
   const client = useGraphClient('client');
-  const { isElevated } = useAuth();
-  const isPayrollAdmin = isElevated;
+  const { canAny } = useAuth();
+  const isPayrollAdmin = canAny(['employee:write', 'payroll:statutory_export']);
   const [data, setData] = useState<PayrollBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

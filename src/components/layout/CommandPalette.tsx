@@ -26,18 +26,13 @@ const CommandPalette = () => {
   const { isOpen, close } = useCommandPalette();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isElevated, can, clientSession, showTenantAdminNav, showHrNav } = useAuth();
-  const jwtPermissionCount = clientSession?.permissions.size ?? 0;
+  const { can, clientSession } = useAuth();
   const tenantNavOpts = useMemo(
     () => ({
-      isElevated,
       can,
-      jwtPermissionCount,
-      showTenantAdminNav,
-      showHrNav,
       clientSession,
     }),
-    [isElevated, can, jwtPermissionCount, showTenantAdminNav, showHrNav, clientSession]
+    [can, clientSession]
   );
   const { currentTenant } = useTenant();
   const { getEmployees } = useDataStore();
@@ -48,12 +43,8 @@ const CommandPalette = () => {
   const listRef = useRef<HTMLDivElement>(null);
 
   const catalog = useMemo(
-    () =>
-      NAV_CATALOG.filter((e) => {
-        if (e.adminOnly && !showTenantAdminNav) return false;
-        return canAccessTenantPath(e.path, tenantNavOpts);
-      }),
-    [showTenantAdminNav, tenantNavOpts]
+    () => NAV_CATALOG.filter((e) => canAccessTenantPath(e.path, tenantNavOpts)),
+    [tenantNavOpts]
   );
 
   const filteredNav = useMemo(() => {
@@ -74,7 +65,9 @@ const CommandPalette = () => {
   }, [catalog, q]);
 
   const peopleMatch = useMemo(() => {
-    if ((!showHrNav && !showTenantAdminNav) || !currentTenant?.id) return [];
+    const canHrPeek =
+      can('employee:write') || can('role:manage') || can('leave:approve') || can('leave:manage');
+    if (!canHrPeek || !currentTenant?.id) return [];
     if (!q.trim() || q.length < 2) return [];
     const list = getEmployees(currentTenant.id);
     const t = q.toLowerCase();
@@ -86,7 +79,7 @@ const CommandPalette = () => {
           em.employeeId.toLowerCase().includes(t)
       )
       .slice(0, 8);
-  }, [getEmployees, currentTenant?.id, q, showHrNav, showTenantAdminNav]);
+  }, [getEmployees, currentTenant?.id, q, can]);
 
   const rows: Row[] = useMemo(() => {
     const p: Row[] = peopleMatch.map((emp) => ({ kind: 'person' as const, emp }));

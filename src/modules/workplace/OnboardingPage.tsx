@@ -32,7 +32,8 @@ type ClearanceItemRow = ClientOpsClearanceBySeparationQuery['clearanceChecklist'
 type MainTab = 'join' | 'exit';
 
 const OnboardingPage = () => {
-  const { isElevated } = useAuth();
+  const { can } = useAuth();
+  const canManageOnboarding = can('onboarding:manage') || can('employee:write');
   const client = useGraphClient('client');
   const [mainTab, setMainTab] = useState<MainTab>('join');
   const [items, setItems] = useState<Item[]>([]);
@@ -411,7 +412,7 @@ const OnboardingPage = () => {
                             {openObId === s.id ? 'Hide' : 'Clearance & FNF'}
                           </Button>
                         )}
-                        {isElevated && s.status === 'PENDING' && (
+                        {canManageOnboarding && s.status === 'PENDING' && (
                           <div className="flex shrink-0 gap-2">
                             <Button
                               variant="primary"
@@ -443,12 +444,12 @@ const OnboardingPage = () => {
                               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Department clearance
                               </p>
-                              {obCl.length === 0 && isElevated && !obLoading && (
+                              {obCl.length === 0 && canManageOnboarding && !obLoading && (
                                 <p className="mb-2 text-sm text-amber-700 dark:text-amber-300">
                                   If this was approved before FNF was enabled, create rows once.
                                 </p>
                               )}
-                              {obCl.length === 0 && isElevated && (
+                              {obCl.length === 0 && canManageOnboarding && (
                                 <Button
                                   variant="secondary"
                                   disabled={ensureBusy}
@@ -473,7 +474,7 @@ const OnboardingPage = () => {
                                           — {c.taskName}
                                         </span>
                                       </span>
-                                      {isElevated ? (
+                                      {canManageOnboarding ? (
                                         <label className="flex items-center gap-2 text-xs">
                                           <input
                                             type="checkbox"
@@ -507,13 +508,13 @@ const OnboardingPage = () => {
                               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Full &amp; final (FNF)
                               </p>
-                              {obFnf == null && !obLoading && isElevated ? (
+                              {obFnf == null && !obLoading && canManageOnboarding ? (
                                 <p className="text-sm text-slate-500">
                                   No FNF row yet. Use the create button in clearance above, or records
                                   are created automatically when HR approves a pending request.
                                 </p>
                               ) : null}
-                              {obFnf == null && !obLoading && !isElevated ? (
+                              {obFnf == null && !obLoading && !canManageOnboarding ? (
                                 <p className="text-sm text-slate-500">
                                   HR will publish your full &amp; final details here after
                                   processing.
@@ -530,7 +531,7 @@ const OnboardingPage = () => {
                                       ? ` · processed ${obFnf.processedAt}`
                                       : ''}
                                   </p>
-                                  {isElevated && obFnf.status === 'DRAFT' && (
+                                  {canManageOnboarding && obFnf.status === 'DRAFT' && (
                                     <div className="grid gap-2 sm:grid-cols-2">
                                       {(
                                         [
@@ -558,7 +559,7 @@ const OnboardingPage = () => {
                                       ))}
                                     </div>
                                   )}
-                                  {isElevated && obFnf.status === 'DRAFT' && (
+                                  {canManageOnboarding && obFnf.status === 'DRAFT' && (
                                     <div className="flex flex-wrap gap-2">
                                       <Button
                                         variant="primary"
@@ -576,7 +577,7 @@ const OnboardingPage = () => {
                                       </Button>
                                     </div>
                                   )}
-                                  {!isElevated && (
+                                  {!canManageOnboarding && (
                                     <p className="text-sm text-slate-600 dark:text-slate-300">
                                       FNF is managed by HR. Your net payable (if any) will appear
                                       here.

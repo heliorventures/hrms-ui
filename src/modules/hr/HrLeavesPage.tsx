@@ -30,7 +30,7 @@ const HR_LEAVE_LIMIT = 120;
 
 const HrLeavesPage = () => {
   const navigate = useNavigate();
-  const { can, clientSession, showHrNav, showTenantAdminNav, hasJwtRole } = useAuth();
+  const { can, clientSession } = useAuth();
   const client = useGraphClient('client');
 
   const [data, setData] = useState<LeaveBoardQuery | null>(null);
@@ -176,12 +176,9 @@ const HrLeavesPage = () => {
       showLeaveApprovalColumn({
         can,
         clientSession,
-        showHrNav,
-        showTenantAdminNav,
-        hasJwtRole,
         managesDirectReports,
       }),
-    [can, clientSession, showHrNav, showTenantAdminNav, hasJwtRole, managesDirectReports]
+    [can, clientSession, managesDirectReports]
   );
 
   const canApproveRowForTable = useCallback(
@@ -191,12 +188,9 @@ const HrLeavesPage = () => {
         viewerEmployeeId: viewerId,
         can,
         clientSession,
-        showHrNav,
-        showTenantAdminNav,
-        hasJwtRole,
         directReportIds,
       }),
-    [viewerId, can, clientSession, showHrNav, showTenantAdminNav, hasJwtRole, directReportIds]
+    [viewerId, can, clientSession, directReportIds]
   );
 
   const pendingCount = useMemo(() => {
@@ -272,7 +266,7 @@ const HrLeavesPage = () => {
           <Button
             variant="outline"
             type="button"
-            onClick={() => void navigate('/hr/leave-settings')}
+            onClick={() => void navigate('/admin/leave-settings')}
           >
             Leave & holidays setup
           </Button>

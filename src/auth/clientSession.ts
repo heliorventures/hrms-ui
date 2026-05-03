@@ -4,7 +4,7 @@
 
 export type ClientPersona = 'ADMIN' | 'HR' | 'EMPLOYEE';
 
-/** Full tenant-administrator shell (configuration, ops-style admin nav). */
+/** Full tenant-administrator persona bucket — JWT label only (navigation uses permissions). */
 const TENANT_ADMIN_SHELL_ROLES = new Set([
   'TENANT_ADMIN',
   'ORG_ADMIN',
@@ -12,16 +12,8 @@ const TENANT_ADMIN_SHELL_ROLES = new Set([
   'ADMIN',
 ]);
 
-/** HR workbench (`/hr/*`) — people operations without full tenant-admin shell. */
+/** HR workbench (`/hr/*`) — used only for JWT persona label (`derivePersonaFromJwtRoles`). */
 const HR_SHELL_ROLES = new Set(['HR_ADMIN', 'HR', 'HR_MANAGER', 'PEOPLE_OPS']);
-
-/**
- * Any legacy elevated role (admin or HR). Used only where we still need a single “not employee” bucket.
- */
-const ANY_ELEVATED_ROLE_NAMES = new Set([
-  ...TENANT_ADMIN_SHELL_ROLES,
-  ...HR_SHELL_ROLES,
-]);
 
 interface ClientJwtPayload {
   roles?: string[];
@@ -47,24 +39,6 @@ export function derivePersonaFromJwtRoles(jwtRoles: string[]): ClientPersona {
   if (upper.some((r) => TENANT_ADMIN_SHELL_ROLES.has(r))) return 'ADMIN';
   if (upper.some((r) => HR_SHELL_ROLES.has(r))) return 'HR';
   return 'EMPLOYEE';
-}
-
-/** True when JWT should see **Admin** sidebar (`/admin/*`, payroll admin, …). */
-export function deriveShowTenantAdminNav(jwtRoles: string[]): boolean {
-  const upper = jwtRoles.map((r) => r.trim().toUpperCase()).filter(Boolean);
-  return upper.some((r) => TENANT_ADMIN_SHELL_ROLES.has(r));
-}
-
-/** True when JWT should see **HR** sidebar (`/hr/*`). Tenant admins may use both. */
-export function deriveShowHrNav(jwtRoles: string[]): boolean {
-  const upper = jwtRoles.map((r) => r.trim().toUpperCase()).filter(Boolean);
-  return upper.some((r) => HR_SHELL_ROLES.has(r));
-}
-
-/** Elevated for legacy “admin vs employee” UX (`User.role`, payroll self-service gates, …). */
-export function deriveLegacyElevated(jwtRoles: string[]): boolean {
-  const upper = jwtRoles.map((r) => r.trim().toUpperCase()).filter(Boolean);
-  return upper.some((r) => ANY_ELEVATED_ROLE_NAMES.has(r));
 }
 
 export interface ParsedClientSession {

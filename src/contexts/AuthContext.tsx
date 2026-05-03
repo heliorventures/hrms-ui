@@ -21,8 +21,6 @@ import {
 import {
   parseClientAccessToken,
   personaToLegacyUserRole,
-  deriveShowHrNav,
-  deriveShowTenantAdminNav,
   type ClientPersona,
   type ParsedClientSession,
 } from '../auth/clientSession';
@@ -61,13 +59,9 @@ interface AuthContextType {
   opsUser: OpsUser | null;
   /** Legacy UI role: `admin` when JWT maps to tenant admin **or** HR persona. */
   role: UserRole;
-  /** JWT-derived persona: tenant admin, HR workbench, or employee. */
+  /** JWT-derived persona (from role names on token) — display / dev switch only; gates use `can()`. */
   persona: ClientPersona;
-  /** Configuration / ops-style **Admin** sidebar (`/admin/*`). */
-  showTenantAdminNav: boolean;
-  /** **HR** workbench sidebar (`/hr/*`). */
-  showHrNav: boolean;
-  /** True when JWT maps to `ADMIN` | `HR` persona (not plain employee). */
+  /** True when UI legacy role is `admin` (persona or dev switcher) — not used for RBAC screens. */
   isElevated: boolean;
   /** Permission from current client access token (`resource:action`). */
   can: (permission: string) => boolean;
@@ -148,11 +142,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [opsError, setOpsError] = useState<string | null>(null);
 
   const persona = clientSession?.persona ?? 'EMPLOYEE';
-  const showTenantAdminNav = clientSession
-    ? deriveShowTenantAdminNav(clientSession.jwtRoles)
-    : false;
-  const showHrNav = clientSession ? deriveShowHrNav(clientSession.jwtRoles) : false;
-  /** Nav / route gates: follows `user.role` (JWT by default; dev switch may override locally). */
+  /** Legacy “admin shell” flag for a few non-RBAC UI toggles only (persona + dev role switch). */
   const isElevated = user != null && user.role !== 'employee';
 
   const can = useCallback(
@@ -341,8 +331,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       opsUser,
       role,
       persona,
-      showTenantAdminNav,
-      showHrNav,
       isElevated,
       can,
       canAny,
@@ -366,8 +354,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       opsUser,
       role,
       persona,
-      showTenantAdminNav,
-      showHrNav,
       isElevated,
       can,
       canAny,

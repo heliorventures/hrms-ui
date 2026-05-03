@@ -68,7 +68,7 @@ interface ExpenseBoardData {
 
 // eslint-disable-next-line max-lines-per-function -- single route module
 const ExpensesPage = () => {
-  const { isAuthenticated, user, isElevated, clientSession } = useAuth();
+  const { isAuthenticated, user, clientSession } = useAuth();
   const client = useGraphClient('client');
   const [data, setData] = useState<ExpenseBoardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,12 +88,10 @@ const ExpensesPage = () => {
     null | { kind: 'expense'; id: string } | { kind: 'travel'; id: string }
   >(null);
 
-  const jwtPermCount = clientSession?.permissions.size ?? 0;
   const token = getClientAccessToken();
   const canApprove =
     isAuthenticated &&
     (canApproveExpenseFromAccessToken(token ?? null) ||
-      (isElevated && jwtPermCount === 0) ||
       hasBroadDataScopeForResource(clientSession, 'expense'));
 
   const loadBoard = useCallback(async () => {

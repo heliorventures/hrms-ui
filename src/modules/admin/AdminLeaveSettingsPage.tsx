@@ -490,9 +490,8 @@ const AdminLeaveSettingsPage = () => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave configuration</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Manage master leave types, per-type policies (annual or monthly accrual), employee balances, and public holiday
-            calendars. HR opens <span className="font-mono text-xs">/hr/leave-settings</span>; tenant admins also use{' '}
-            <span className="font-mono text-xs">/admin/leave-settings</span>. Requires{' '}
-            <span className="font-mono text-xs">leave:manage</span> or HR / tenant admin role.
+            calendars at <span className="font-mono text-xs">/admin/leave-settings</span>. Requires{' '}
+            <span className="font-mono text-xs">leave:manage</span> (tenant admin / HR configuration role).
           </p>
         </div>
         <Button variant="outline" type="button" onClick={() => void refresh()} disabled={loading}>

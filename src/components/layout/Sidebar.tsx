@@ -13,7 +13,6 @@ interface NavItem {
   path: string;
   label: string;
   icon: JSX.Element;
-  adminOnly?: boolean;
 }
 
 interface NavItemWithChildren {
@@ -90,6 +89,7 @@ const adminNav: NavItemWithChildren = {
     { path: '/admin/attendance-policy', label: 'Attendance policy' },
     { path: '/admin/leave-settings', label: 'Leave settings' },
     { path: '/admin/reports', label: 'Reports' },
+    { path: '/admin/access', label: 'Roles & permissions' },
     { path: '/admin/module-health', label: 'Service health' },
     { path: '/admin/settings', label: 'Settings' },
   ],
@@ -117,8 +117,6 @@ const hrNav: NavItemWithChildren = {
     { path: '/hr', label: 'Overview' },
     { path: '/hr/people', label: 'People admin' },
     { path: '/hr/leaves', label: 'Leave approvals' },
-    { path: '/hr/leave-settings', label: 'Leave & holidays setup' },
-    { path: '/hr/access', label: 'Roles & access' },
   ],
 };
 
@@ -142,24 +140,15 @@ const payrollNav: NavItemWithChildren = {
   ],
 };
 
-function isPayrollAdminPath(path: string): boolean {
-  return path === '/payroll/compensation' || path === '/payroll/tax';
-}
-
 /* eslint-disable max-lines-per-function -- single sidebar shell: nav groups + mobile overlay */
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
-  const { isElevated, can, clientSession, showTenantAdminNav, showHrNav } = useAuth();
-  const jwtPermissionCount = clientSession?.permissions.size ?? 0;
+  const { can, clientSession } = useAuth();
   const tenantNavOpts = useMemo(
     () => ({
-      isElevated,
       can,
-      jwtPermissionCount,
-      showTenantAdminNav,
-      showHrNav,
       clientSession,
     }),
-    [isElevated, can, jwtPermissionCount, showTenantAdminNav, showHrNav, clientSession]
+    [can, clientSession]
   );
   const location = useLocation();
   const isOrgPath = location.pathname.startsWith('/organization');
@@ -191,13 +180,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const payrollChildren = useMemo(
     () =>
       payrollNav.children.filter((c) => {
-        if (!showTenantAdminNav && isPayrollAdminPath(c.path)) return false;
-        if (!isElevated && c.path === '/payroll/pay') {
-          return itemMatchesMenuFilter(filterQ, c.path, 'Income tax');
-        }
+        if (c.path === '/payroll/tax' && !can('tax:approve')) return false;
+        if (c.path === '/payroll/compensation' && !can('employee:write')) return false;
         return itemMatchesMenuFilter(filterQ, c.path, c.label);
       }),
-    [filterQ, isElevated, showTenantAdminNav]
+    [filterQ, can]
   );
   const hrChildren = useMemo(
     () =>
@@ -213,6 +200,22 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         .filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
     [filterQ, tenantNavOpts]
   );
+
+  const hrSidebarFilterHit = useMemo(
+    () =>
+      filterActive &&
+      hrNav.children.some((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+    [filterActive, filterQ]
+  );
+  const showHrSidebarSection = hrChildren.length > 0 || hrSidebarFilterHit;
+
+  const adminSidebarFilterHit = useMemo(
+    () =>
+      filterActive &&
+      adminNav.children.some((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+    [filterActive, filterQ]
+  );
+  const showAdminSidebarSection = adminChildren.length > 0 || adminSidebarFilterHit;
 
   /** Single accent system: neutral nav, clear active state (common on enterprise HRIS shells). */
   const nav = {
@@ -316,9 +319,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const filteredNavItems = useMemo(
     () =>
       navItems
-        .filter((item) => !item.adminOnly || isElevated)
+        .filter((item) => canAccessTenantPath(item.path, tenantNavOpts))
         .filter((item) => !filterActive || itemMatchesMenuFilter(filterQ, item.path, item.label)),
-    [filterActive, filterQ, isElevated]
+    [filterActive, filterQ, tenantNavOpts]
   );
 
   const showOrgExpanded = orgExpanded || isOrgPath || (filterActive && orgChildren.length > 0);
@@ -559,8 +562,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               </div>
             )}
 
-            {(showHrNav || showTenantAdminNav) &&
-              (!filterActive || hrChildren.length > 0) && (
+            {showHrSidebarSection && (
               <div className="pt-2">
                 <button
                   type="button"
@@ -611,7 +613,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               </div>
             )}
 
-            {showTenantAdminNav && (filterActive || adminChildren.length > 0) && (
+            {showAdminSidebarSection && (
               <div className="pt-2">
                 <button
                   type="button"

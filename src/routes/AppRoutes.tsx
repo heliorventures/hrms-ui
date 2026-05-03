@@ -63,9 +63,15 @@ const OpsProtectedLayout = () => {
   return <OpsLayout />;
 };
 
-const PayrollAdminRoute = ({ children }: { children: JSX.Element }) => {
-  const { showTenantAdminNav } = useAuth();
-  if (!showTenantAdminNav) return <Navigate to="/payroll/pay" replace />;
+const PayrollPermissionRoute = ({
+  children,
+  anyOf,
+}: {
+  children: JSX.Element;
+  anyOf: readonly string[];
+}) => {
+  const { canAny } = useAuth();
+  if (!canAny(anyOf)) return <Navigate to="/payroll/payslips" replace />;
   return children;
 };
 
@@ -76,15 +82,10 @@ const TenantPermissionRoute = ({
   tenantPath: string;
   children: JSX.Element;
 }) => {
-  const { isElevated, can, clientSession, showTenantAdminNav, showHrNav } = useAuth();
-  const jwtPermissionCount = clientSession?.permissions.size ?? 0;
+  const { can, clientSession } = useAuth();
   if (
     !canAccessTenantPath(tenantPath, {
-      isElevated,
       can,
-      jwtPermissionCount,
-      showTenantAdminNav,
-      showHrNav,
       clientSession,
     })
   ) {
@@ -94,7 +95,7 @@ const TenantPermissionRoute = ({
 };
 
 const AppRoutes = () => {
-  const { showTenantAdminNav, isAuthenticated, isOpsAuthenticated } = useAuth();
+  const { isAuthenticated, isOpsAuthenticated } = useAuth();
 
   return (
     <Routes>
@@ -120,7 +121,14 @@ const AppRoutes = () => {
       <Route path="/" element={<ProtectedLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="insights" element={<AnalyticsPage />} />
+        <Route
+          path="insights"
+          element={
+            <TenantPermissionRoute tenantPath="/insights">
+              <AnalyticsPage />
+            </TenantPermissionRoute>
+          }
+        />
         <Route path="attendance" element={<AttendancePage />} />
         <Route path="leave/holidays" element={<LeaveHolidaysPage />} />
         <Route path="leave/team-calendar" element={<LeaveTeamCalendarPage />} />
@@ -131,17 +139,17 @@ const AppRoutes = () => {
         <Route
           path="payroll/tax"
           element={
-            <PayrollAdminRoute>
+            <PayrollPermissionRoute anyOf={['tax:approve']}>
               <PayrollTaxPage />
-            </PayrollAdminRoute>
+            </PayrollPermissionRoute>
           }
         />
         <Route
           path="payroll/compensation"
           element={
-            <PayrollAdminRoute>
+            <PayrollPermissionRoute anyOf={['employee:write']}>
               <PayrollCompensationPage />
-            </PayrollAdminRoute>
+            </PayrollPermissionRoute>
           }
         />
         <Route path="expenses" element={<ExpensesPage />} />
@@ -152,15 +160,78 @@ const AppRoutes = () => {
         <Route path="organization/org-chart" element={<OrgChartPage />} />
         <Route path="organization/documents" element={<OrganizationDocumentsPage />} />
 
-        <Route path="workplace/benefits" element={<BenefitsPage />} />
-        <Route path="workplace/recruitment" element={<RecruitmentPage />} />
-        <Route path="workplace/onboarding" element={<OnboardingPage />} />
-        <Route path="workplace/performance" element={<PerformancePage />} />
-        <Route path="workplace/succession" element={<SuccessionPage />} />
-        <Route path="workplace/compensation" element={<CompensationPage />} />
-        <Route path="workplace/learning" element={<LearningPage />} />
-        <Route path="workplace/assets" element={<AssetsPage />} />
-        <Route path="workplace/grievance" element={<GrievancePage />} />
+        <Route
+          path="workplace/benefits"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/benefits">
+              <BenefitsPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="workplace/recruitment"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/recruitment">
+              <RecruitmentPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="workplace/onboarding"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/onboarding">
+              <OnboardingPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="workplace/performance"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/performance">
+              <PerformancePage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="workplace/succession"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/succession">
+              <SuccessionPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="workplace/compensation"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/compensation">
+              <CompensationPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="workplace/learning"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/learning">
+              <LearningPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="workplace/assets"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/assets">
+              <AssetsPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="workplace/grievance"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/grievance">
+              <GrievancePage />
+            </TenantPermissionRoute>
+          }
+        />
         <Route
           path="workplace/workflows"
           element={
@@ -197,16 +268,16 @@ const AppRoutes = () => {
         <Route
           path="hr/leave-settings"
           element={
-            <TenantPermissionRoute tenantPath="/hr/leave-settings">
-              <AdminLeaveSettingsPage />
+            <TenantPermissionRoute tenantPath="/admin/leave-settings">
+              <Navigate to="/admin/leave-settings" replace />
             </TenantPermissionRoute>
           }
         />
         <Route
           path="hr/access"
           element={
-            <TenantPermissionRoute tenantPath="/hr/access">
-              <HrAccessManagementPage />
+            <TenantPermissionRoute tenantPath="/admin/access">
+              <Navigate to="/admin/access" replace />
             </TenantPermissionRoute>
           }
         />
@@ -220,50 +291,54 @@ const AppRoutes = () => {
           }
         />
 
-        {showTenantAdminNav && (
-          <>
-            <Route
-              path="admin/employees"
-              element={
-                <TenantPermissionRoute tenantPath="/admin/employees">
-                  <AdminEmployeesPage />
-                </TenantPermissionRoute>
-              }
-            />
-            <Route
-              path="admin/attendance-policy"
-              element={
-                <TenantPermissionRoute tenantPath="/admin/attendance-policy">
-                  <AdminAttendancePolicyPage />
-                </TenantPermissionRoute>
-              }
-            />
-            <Route
-              path="admin/reports"
-              element={
-                <TenantPermissionRoute tenantPath="/admin/reports">
-                  <AdminReportsPage />
-                </TenantPermissionRoute>
-              }
-            />
-            <Route
-              path="admin/settings"
-              element={
-                <TenantPermissionRoute tenantPath="/admin/settings">
-                  <AdminSettingsPage />
-                </TenantPermissionRoute>
-              }
-            />
-            <Route
-              path="admin/module-health"
-              element={
-                <TenantPermissionRoute tenantPath="/admin/module-health">
-                  <ModuleHealth />
-                </TenantPermissionRoute>
-              }
-            />
-          </>
-        )}
+        <Route
+          path="admin/employees"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/employees">
+              <AdminEmployeesPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="admin/attendance-policy"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/attendance-policy">
+              <AdminAttendancePolicyPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="admin/reports"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/reports">
+              <AdminReportsPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="admin/access"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/access">
+              <HrAccessManagementPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="admin/settings"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/settings">
+              <AdminSettingsPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="admin/module-health"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/module-health">
+              <ModuleHealth />
+            </TenantPermissionRoute>
+          }
+        />
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

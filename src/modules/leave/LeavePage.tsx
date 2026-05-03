@@ -27,7 +27,7 @@ import {
 } from '../../api/graphql/graphql';
 
 const LeavePage = () => {
-  const { can, clientSession, showHrNav, showTenantAdminNav, hasJwtRole } = useAuth();
+  const { can, clientSession } = useAuth();
   const client = useGraphClient('client');
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
@@ -220,12 +220,9 @@ const LeavePage = () => {
       showLeaveApprovalColumn({
         can,
         clientSession,
-        showHrNav,
-        showTenantAdminNav,
-        hasJwtRole,
         managesDirectReports,
       }),
-    [can, clientSession, showHrNav, showTenantAdminNav, hasJwtRole, managesDirectReports]
+    [can, clientSession, managesDirectReports]
   );
 
   const canApproveRowForTable = useCallback(
@@ -235,12 +232,9 @@ const LeavePage = () => {
         viewerEmployeeId: viewerId,
         can,
         clientSession,
-        showHrNav,
-        showTenantAdminNav,
-        hasJwtRole,
         directReportIds,
       }),
-    [viewerId, can, clientSession, showHrNav, showTenantAdminNav, hasJwtRole, directReportIds]
+    [viewerId, can, clientSession, directReportIds]
   );
 
   const hideEmployeeColumn = useMemo(() => {
@@ -411,12 +405,12 @@ const LeavePage = () => {
           </ul>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No holidays scheduled ahead — HR can add calendars under{' '}
-            <span className="font-mono text-xs">HR → Leave & holidays setup</span>
-            {(showHrNav && hasJwtRole('HR_ADMIN')) || showTenantAdminNav ? (
+            No holidays scheduled ahead — admins can add calendars under{' '}
+            <span className="font-mono text-xs">Admin → Leave settings</span>
+            {can('leave:manage') ? (
               <>
                 {' '}
-                (<span className="font-mono text-xs">/hr/leave-settings</span>)
+                (<span className="font-mono text-xs">/admin/leave-settings</span>)
               </>
             ) : null}
             .
