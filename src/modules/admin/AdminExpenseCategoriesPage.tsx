@@ -14,17 +14,13 @@ import {
   AdminExpenseCategoriesDocument,
   DeleteExpenseCategoryAdminDocument,
   DeleteExpensePolicyAdminDocument,
-  ExpenseAssignableRolesDocument,
   ExpensePoliciesForAdminDocument,
-  OrgDepartmentsDocument,
-  OrgDesignationsDocument,
+  ExpensePolicyDirectoryDocument,
   UpsertExpenseCategoryAdminDocument,
   UpsertExpensePolicyAdminDocument,
   type AdminExpenseCategoriesQuery,
-  type ExpenseAssignableRolesQuery,
   type ExpensePoliciesForAdminQuery,
-  type OrgDepartmentsQuery,
-  type OrgDesignationsQuery,
+  type ExpensePolicyDirectoryQuery,
 } from '../../api/graphql/graphql';
 
 type CategoryRow = AdminExpenseCategoriesQuery['expenseCategories'][number];
@@ -76,17 +72,15 @@ const AdminExpenseCategoriesPage = () => {
   const [policySaving, setPolicySaving] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
 
-  type PolicyDeptRow = OrgDepartmentsQuery['departments'][number];
-  type PolicyDesRow = OrgDesignationsQuery['designations'][number];
-  type PolicyRoleRow = ExpenseAssignableRolesQuery['expenseAssignableRoles'][number];
+  type PolicyDeptRow = ExpensePolicyDirectoryQuery['departments'][number];
+  type PolicyDesRow = ExpensePolicyDirectoryQuery['designations'][number];
+  type PolicyRoleRow = ExpensePolicyDirectoryQuery['expenseAssignableRoles'][number];
 
   const [policyPickerBusy, setPolicyPickerBusy] = useState(false);
   const [policyPickerDepartments, setPolicyPickerDepartments] = useState<PolicyDeptRow[]>([]);
   const [policyPickerDesignations, setPolicyPickerDesignations] = useState<PolicyDesRow[]>([]);
   const [policyPickerRoles, setPolicyPickerRoles] = useState<PolicyRoleRow[]>([]);
-  const [policyPickerDeptError, setPolicyPickerDeptError] = useState<string | null>(null);
-  const [policyPickerDesError, setPolicyPickerDesError] = useState<string | null>(null);
-  const [policyPickerRoleError, setPolicyPickerRoleError] = useState<string | null>(null);
+  const [policyPickerOrgError, setPolicyPickerOrgError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const r = await client.request<AdminExpenseCategoriesQuery>(AdminExpenseCategoriesDocument, {
@@ -165,53 +159,29 @@ const AdminExpenseCategoriesPage = () => {
       setPolicyPickerDepartments([]);
       setPolicyPickerDesignations([]);
       setPolicyPickerRoles([]);
-      setPolicyPickerDeptError(null);
-      setPolicyPickerDesError(null);
-      setPolicyPickerRoleError(null);
+      setPolicyPickerOrgError(null);
       setPolicyPickerBusy(false);
       return;
     }
 
     let cancelled = false;
-    setPolicyPickerDeptError(null);
-    setPolicyPickerDesError(null);
-    setPolicyPickerRoleError(null);
+    setPolicyPickerOrgError(null);
     setPolicyPickerBusy(true);
     void (async () => {
       try {
-        const settled = await Promise.allSettled([
-          client.request<OrgDepartmentsQuery>(OrgDepartmentsDocument, { limit: 320 }),
-          client.request<OrgDesignationsQuery>(OrgDesignationsDocument, { limit: 320 }),
-          client.request<ExpenseAssignableRolesQuery>(ExpenseAssignableRolesDocument, {
-            limit: 320,
-          }),
-        ]);
+        const r = await client.request<ExpensePolicyDirectoryQuery>(ExpensePolicyDirectoryDocument, {
+          lim: 320,
+        });
         if (cancelled) return;
-
-        const [dr, sr, rr] = settled;
-
-        if (dr.status === 'fulfilled') {
-          setPolicyPickerDepartments(dr.value.departments ?? []);
-          setPolicyPickerDeptError(null);
-        } else {
+        setPolicyPickerDepartments(r.departments ?? []);
+        setPolicyPickerDesignations(r.designations ?? []);
+        setPolicyPickerRoles(r.expenseAssignableRoles ?? []);
+      } catch (e) {
+        if (!cancelled) {
           setPolicyPickerDepartments([]);
-          setPolicyPickerDeptError(graphQlUserMessage(dr.reason));
-        }
-
-        if (sr.status === 'fulfilled') {
-          setPolicyPickerDesignations(sr.value.designations ?? []);
-          setPolicyPickerDesError(null);
-        } else {
           setPolicyPickerDesignations([]);
-          setPolicyPickerDesError(graphQlUserMessage(sr.reason));
-        }
-
-        if (rr.status === 'fulfilled') {
-          setPolicyPickerRoles(rr.value.expenseAssignableRoles ?? []);
-          setPolicyPickerRoleError(null);
-        } else {
           setPolicyPickerRoles([]);
-          setPolicyPickerRoleError(graphQlUserMessage(rr.reason));
+          setPolicyPickerOrgError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setPolicyPickerBusy(false);
@@ -753,12 +723,12 @@ const AdminExpenseCategoriesPage = () => {
               Loading org directory for pickers…
             </p>
           ) : null}
+          {policyPickerOrgError ? (
+            <p className="text-xs text-amber-700 dark:text-amber-400">{policyPickerOrgError}</p>
+          ) : null}
           {policyForm.applicableTo === 'DEPARTMENT' ? (
             <>
-              {policyPickerDeptError ? (
-                <p className="text-xs text-amber-700 dark:text-amber-400">{policyPickerDeptError}</p>
-              ) : null}
-              {policyPickerDeptError && policyPickerDepartments.length === 0 ? (
+              {policyPickerOrgError && policyPickerDepartments.length === 0 ? (
                 <Input
                   label="Department ID (paste UUID)"
                   value={policyForm.departmentId}
@@ -784,10 +754,7 @@ const AdminExpenseCategoriesPage = () => {
           ) : null}
           {policyForm.applicableTo === 'DESIGNATION' ? (
             <>
-              {policyPickerDesError ? (
-                <p className="text-xs text-amber-700 dark:text-amber-400">{policyPickerDesError}</p>
-              ) : null}
-              {policyPickerDesError && policyPickerDesignations.length === 0 ? (
+              {policyPickerOrgError && policyPickerDesignations.length === 0 ? (
                 <Input
                   label="Designation ID (paste UUID)"
                   value={policyForm.designationId}
@@ -813,10 +780,7 @@ const AdminExpenseCategoriesPage = () => {
           ) : null}
           {policyForm.applicableTo === 'ROLE' ? (
             <>
-              {policyPickerRoleError ? (
-                <p className="text-xs text-amber-700 dark:text-amber-400">{policyPickerRoleError}</p>
-              ) : null}
-              {policyPickerRoleError && policyPickerRoles.length === 0 ? (
+              {policyPickerOrgError && policyPickerRoles.length === 0 ? (
                 <Input
                   label="Role ID (paste UUID)"
                   value={policyForm.roleId}

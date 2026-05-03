@@ -764,18 +764,21 @@ query OrgDepartments($limit: Int! = 100) {
   }
 }
 
-query OrgDesignations($limit: Int! = 100) {
-  designations(limit: $limit) {
+# Single round-trip for `/admin/expense-categories` policy modal (notifications still use **`OrgDepartments`** only).
+query ExpensePolicyDirectory($lim: Int! = 320) {
+  departments(limit: $lim) {
+    id
+    name
+    code
+    parentDepartmentId
+  }
+  designations(limit: $lim) {
     id
     title
     departmentId
     level
-    grade
   }
-}
-
-query ExpenseAssignableRoles($limit: Int! = 250) {
-  expenseAssignableRoles(limit: $limit) {
+  expenseAssignableRoles(limit: $lim) {
     id
     name
     description
@@ -814,99 +817,8 @@ query WorkplaceSuccessionData($clim: Int! = 100, $plim: Int! = 50) {
   }
 }
 
-# Insights (kabipay-analytics subgraph, port 4029)
-query InsightsWorkforce($lim: Int! = 24) {
-  workforceSnapshots(limit: $lim) {
-    id
-    snapshotDate
-    totalHeadcount
-    activeEmployees
-    newJoiners
-    separations
-    openPositions
-    averageTenureMonths
-    attritionRate
-  }
-}
-
-query InsightsReportsSchedules {
-  reportDefinitions(limit: 50) {
-    id
-    name
-    entityType
-    chartType
-    isPublic
-  }
-  reportSchedules(limit: 30) {
-    id
-    frequency
-    isActive
-    deliveryFormat
-  }
-}
-
-query InsightsDashboards {
-  dashboards(limit: 20) {
-    id
-    name
-    description
-    isDefault
-  }
-  dashboardWidgets(limit: 50) {
-    id
-    dashboardId
-    title
-    widgetType
-  }
-}
-
-query InsightsOutbox($lim: Int! = 50) {
-  outboxEvents(limit: $lim) {
-    id
-    eventType
-    aggregateType
-    status
-    createdAt
-    processedAt
-    retryCount
-    lastError
-  }
-}
-
-# HR-only (directory): integrations catalogue (ops DB), tenant integrations, webhooks, audit trail (analytics 4029)
-query InsightsIntegrationCatalog($lim: Int! = 100) {
-  integrationConnectors(limit: $lim) {
-    id
-    name
-    code
-    category
-    authType
-    isActive
-  }
-}
-
-query InsightsTenantIntegrations($lim: Int! = 100) {
-  tenantIntegrations(limit: $lim) {
-    id
-    integrationConnectorId
-    isActive
-    connectedAt
-    createdAt
-  }
-}
-
-query InsightsWebhookSubscriptions($lim: Int! = 100) {
-  webhookSubscriptions(limit: $lim) {
-    id
-    eventName
-    endpointUrl
-    secretHash
-    isActive
-    createdAt
-  }
-}
-
-query InsightsWebhookDeliveryLogs($lim: Int! = 100) {
+# Webhook delivery attempts (schema extension in codegen; succeeds when gateway exposes the field)
+query AnalyticsWebhookDeliveryLogs($lim: Int! = 80) {
   webhookDeliveryLogs(limit: $lim) {
     id
     webhookSubscriptionId
@@ -918,56 +830,6 @@ query InsightsWebhookDeliveryLogs($lim: Int! = 100) {
     attemptNumber
     deliveredAt
     createdAt
-  }
-}
-
-query InsightsAuditLogs($lim: Int! = 200) {
-  auditLogs(limit: $lim) {
-    id
-    userId
-    entityType
-    entityId
-    action
-    beforeJson
-    afterJson
-    ipAddress
-    createdAt
-  }
-}
-
-# Analytics (kabipay-analytics) — requires gateway to include subgraph
-mutation RequeueOutbox($id: ID!) {
-  requeueOutboxEvent(id: $id) {
-    id
-    status
-    lastError
-  }
-}
-
-mutation ConnectTenantIntegration($connectorId: ID!) {
-  connectTenantIntegration(connectorId: $connectorId) {
-    id
-    integrationConnectorId
-    isActive
-    connectedAt
-  }
-}
-
-mutation RegisterWebhookSubscription($input: RegisterWebhookInput!) {
-  registerWebhookSubscription(input: $input) {
-    id
-    eventName
-    endpointUrl
-    secretHash
-    isActive
-    createdAt
-  }
-}
-
-mutation SetWebhookSubscriptionActive($id: ID!, $active: Boolean!) {
-  setWebhookSubscriptionActive(id: $id, active: $active) {
-    id
-    isActive
   }
 }
 

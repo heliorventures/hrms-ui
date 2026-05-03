@@ -315,12 +315,8 @@ query ModuleProbeOpsOverview($limit: Int! = 20) {
 }
 
 query ModuleProbeAnalytics($limit: Int! = 5) {
-  reportDefinitions(limit: $limit) {
+  webhookDeliveryLogs(limit: $limit) {
     id
-    name
-  }
-  workforceSnapshots(limit: $limit) {
-    id
-    snapshotDate
+    eventName
   }
 }

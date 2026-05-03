@@ -22,6 +22,7 @@ import {
   RejectExpenseDocument,
   RejectTravelRequestDocument,
   SubmitExpenseDocument,
+  type ExpenseSubmissionHintsQuery,
 } from '../../api/graphql/graphql';
 
 interface ExpenseCategoryRow {
@@ -96,12 +97,9 @@ const ExpensesPage = () => {
   const [rejectTarget, setRejectTarget] = useState<
     null | { kind: 'expense'; id: string } | { kind: 'travel'; id: string }
   >(null);
-  const [submissionHints, setSubmissionHints] = useState<{
-    maxAmountPerClaim?: string | null;
-    receiptRequired: boolean;
-    limitPerMonth?: string | null;
-    limitPerDay?: string | null;
-  } | null>(null);
+  type SubmissionHints =
+    ExpenseSubmissionHintsQuery['expenseSubmissionHints'];
+  const [submissionHints, setSubmissionHints] = useState<SubmissionHints | null>(null);
   const [receiptFileStorageId, setReceiptFileStorageId] = useState('');
   const [approveTarget, setApproveTarget] = useState<
     null | { id: string; claimAmount: string; currency: string; draftApprove: string }
@@ -151,15 +149,7 @@ const ExpensesPage = () => {
     let cancelled = false;
     (async () => {
       try {
-        type H = {
-          expenseSubmissionHints: {
-            maxAmountPerClaim?: string | null;
-            receiptRequired: boolean;
-            limitPerMonth?: string | null;
-            limitPerDay?: string | null;
-          };
-        };
-        const r = await client.request<H>(ExpenseSubmissionHintsDocument, {
+        const r = await client.request<ExpenseSubmissionHintsQuery>(ExpenseSubmissionHintsDocument, {
           expenseCategoryId: categoryId,
         });
         if (!cancelled) setSubmissionHints(r.expenseSubmissionHints);

@@ -239,13 +239,12 @@ const PROBES: ProbeConfig[] = [
     plane: 'client',
     query: gql`
       query AnalyticsHealth {
-        reportDefinitions(limit: 1) {
+        webhookDeliveryLogs(limit: 1) {
           id
-          name
         }
       }
     `,
-    previewFields: ['reportDefinitions'],
+    previewFields: ['webhookDeliveryLogs'],
   },
   {
     key: 'tenant',
