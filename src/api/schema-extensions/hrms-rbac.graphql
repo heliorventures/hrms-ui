@@ -1,0 +1,49 @@
+# RBAC admin + HR shell (employee subgraph). Merge until gateway introspection includes these fields.
+
+extend type Query {
+  tenantDirectoryUsers(limit: Int = 100): [TenantDirectoryUser!]!
+  tenantDirectoryRoles(limit: Int = 100): [TenantDirectoryRole!]!
+  tenantCatalogPermissions(limit: Int = 300): [TenantCatalogPermission!]!
+  permissionIdsForRole(roleId: ID!): [ID!]!
+  roleIdsForUser(userId: ID!): [ID!]!
+  permissionScopesForRole(roleId: ID!): [TenantPermissionScopeAssignment!]!
+}
+
+extend type Mutation {
+  setRolePermissions(roleId: ID!, permissionIds: [ID!]!): Boolean!
+  setUserRoles(userId: ID!, roleIds: [ID!]!): Boolean!
+  setRolePermissionScopes(roleId: ID!, scopes: [PermissionScopeAssignmentInput!]!): Boolean!
+}
+
+type TenantDirectoryUser {
+  id: ID!
+  email: String!
+  isActive: Boolean!
+}
+
+type TenantDirectoryRole {
+  id: ID!
+  name: String!
+  description: String
+  isSystemRole: Boolean!
+}
+
+type TenantCatalogPermission {
+  id: ID!
+  resource: String!
+  action: String!
+  description: String
+}
+
+type TenantPermissionScopeAssignment {
+  id: ID!
+  resource: String!
+  action: String!
+  scopeType: String!
+}
+
+input PermissionScopeAssignmentInput {
+  resource: String!
+  action: String!
+  scopeType: String!
+}

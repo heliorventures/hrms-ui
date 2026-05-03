@@ -6,10 +6,12 @@ import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { hasBroadDataScopeForResource } from '../../auth/approvalScope';
 import { useAuth } from '../../contexts/AuthContext';
 import { canApproveExpenseFromAccessToken } from '../../auth/clientJwt';
 import { getClientAccessToken } from '../../auth/tokenStore';
 import SubmitTravelModal from './components/SubmitTravelModal';
+import RejectReasonModal from './components/RejectReasonModal';
 import {
   ExpenseBoardDocument,
   SubmitExpenseDocument,
@@ -64,10 +66,9 @@ interface ExpenseBoardData {
   travelRequests: TravelRequestRow[];
 }
 
-// Composite page: expense + travel boards, submit modals, and approver actions.
 // eslint-disable-next-line max-lines-per-function -- single route module
 const ExpensesPage = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isElevated, clientSession } = useAuth();
   const client = useGraphClient('client');
   const [data, setData] = useState<ExpenseBoardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,9 +84,17 @@ const ExpensesPage = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [travelOpen, setTravelOpen] = useState(false);
   const [approverBusy, setApproverBusy] = useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<
+    null | { kind: 'expense'; id: string } | { kind: 'travel'; id: string }
+  >(null);
 
+  const jwtPermCount = clientSession?.permissions.size ?? 0;
+  const token = getClientAccessToken();
   const canApprove =
-    isAuthenticated && canApproveExpenseFromAccessToken(getClientAccessToken() ?? null);
+    isAuthenticated &&
+    (canApproveExpenseFromAccessToken(token ?? null) ||
+      (isElevated && jwtPermCount === 0) ||
+      hasBroadDataScopeForResource(clientSession, 'expense'));
 
   const loadBoard = useCallback(async () => {
     return client.request<ExpenseBoardData>(ExpenseBoardDocument, { limit: 20 });
@@ -124,18 +133,35 @@ const ExpensesPage = () => {
     }
   };
 
-  const runRejectExpense = async (expenseId: string) => {
-    const reason = window.prompt('Rejection reason (optional)') ?? undefined;
-    setApproverBusy(`e:${expenseId}`);
-    try {
-      await client.request(RejectExpenseDocument, { expenseId, reason: reason?.trim() || null });
-      setData(await loadBoard());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Reject expense failed');
-    } finally {
-      setApproverBusy(null);
-    }
-  };
+  const runRejectFromModal = useCallback(
+    async (reason: string | null) => {
+      const target = rejectTarget;
+      if (!target) return;
+      const busyKey = target.kind === 'expense' ? `e:${target.id}` : `t:${target.id}`;
+      setApproverBusy(busyKey);
+      try {
+        if (target.kind === 'expense') {
+          await client.request(RejectExpenseDocument, {
+            expenseId: target.id,
+            reason,
+          });
+        } else {
+          await client.request(RejectTravelRequestDocument, {
+            travelRequestId: target.id,
+            reason,
+          });
+        }
+        setData(await loadBoard());
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Reject failed';
+        setError(msg);
+        throw e;
+      } finally {
+        setApproverBusy(null);
+      }
+    },
+    [rejectTarget, client, loadBoard]
+  );
 
   const runApproveTravel = async (travelRequestId: string) => {
     setApproverBusy(`t:${travelRequestId}`);
@@ -144,22 +170,6 @@ const ExpensesPage = () => {
       setData(await loadBoard());
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Approve travel failed');
-    } finally {
-      setApproverBusy(null);
-    }
-  };
-
-  const runRejectTravel = async (travelRequestId: string) => {
-    const reason = window.prompt('Rejection reason (optional)') ?? undefined;
-    setApproverBusy(`t:${travelRequestId}`);
-    try {
-      await client.request(RejectTravelRequestDocument, {
-        travelRequestId,
-        reason: reason?.trim() || null,
-      });
-      setData(await loadBoard());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Reject travel failed');
     } finally {
       setApproverBusy(null);
     }
@@ -304,7 +314,7 @@ const ExpensesPage = () => {
                     variant="outline"
                     className="!py-1 !px-2 !text-xs"
                     disabled={approverBusy === `e:${expense.id}`}
-                    onClick={() => void runRejectExpense(expense.id)}
+                    onClick={() => setRejectTarget({ kind: 'expense', id: expense.id })}
                   >
                     Reject
                   </Button>
@@ -331,12 +341,21 @@ const ExpensesPage = () => {
 
       {canApprove && (
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          You can approve or reject <strong>PENDING</strong> claims and travel requests (
-          <code className="text-xs">expense:approve</code> or HR / tenant admin role). Claims in a
-          multi-step workflow may stay <strong>PENDING</strong> after the first approval until the
-          final step.
+          You may see approval actions if you have <code className="text-xs">expense:approve</code>,
+          <strong> TEAM</strong> list scope for expenses/travel, or an elevated legacy token.
+          Multi-step workflows require the <strong>reporting manager</strong> first, then the{' '}
+          <strong>HR role</strong> on the next step — the server rejects out-of-sequence approvers.
         </p>
       )}
+
+      <RejectReasonModal
+        isOpen={rejectTarget !== null}
+        title={
+          rejectTarget?.kind === 'travel' ? 'Reject travel request' : 'Reject expense claim'
+        }
+        onClose={() => setRejectTarget(null)}
+        onConfirm={runRejectFromModal}
+      />
 
       <SubmitTravelModal
         isOpen={travelOpen}
@@ -597,7 +616,7 @@ const ExpensesPage = () => {
                               variant="outline"
                               className="!py-1 !px-2 !text-xs"
                               disabled={approverBusy === `t:${t.id}`}
-                              onClick={() => void runRejectTravel(t.id)}
+                              onClick={() => setRejectTarget({ kind: 'travel', id: t.id })}
                             >
                               Reject
                             </Button>

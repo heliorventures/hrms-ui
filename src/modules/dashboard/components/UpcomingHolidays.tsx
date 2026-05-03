@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Card from '../../../components/common/Card';
 import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
@@ -78,6 +79,14 @@ const UpcomingHolidays = () => {
       {!loading && !error && rows && rows.length === 0 && (
         <p className="text-sm text-gray-500 dark:text-gray-400">No upcoming holidays in range.</p>
       )}
+      <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
+        <Link
+          to="/leave/holidays"
+          className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+        >
+          Show all holidays →
+        </Link>
+      </div>
     </Card>
   );
 };

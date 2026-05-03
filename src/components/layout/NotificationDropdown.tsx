@@ -1,23 +1,81 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { Notification } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import {
+  NotificationBoardDocument,
+  MarkNotificationReadDocument,
+  type NotificationBoardQuery,
+} from '../../api/graphql/graphql';
+
+type BoardNotification = NotificationBoardQuery['notifications'][number];
+
+const PREVIEW_LIMIT = 15;
+const REFRESH_MS = 60_000;
 
 const NotificationDropdown = () => {
+  const { isAuthenticated } = useAuth();
+  const client = useGraphClient('client');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState<BoardNotification[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const notifications: Notification[] = [];
+  const fetchNotifications = useCallback(async () => {
+    if (!isAuthenticated) {
+      setNotifications([]);
+      return;
+    }
+    setLoadError(null);
+    try {
+      const data = await client.request<NotificationBoardQuery>(NotificationBoardDocument, {
+        limit: PREVIEW_LIMIT,
+      });
+      setNotifications(data.notifications ?? []);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : 'Failed to load notifications');
+      setNotifications([]);
+    }
+  }, [client, isAuthenticated]);
 
-  const unreadCount = notifications?.filter((n) => !n.read).length || 0;
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    void fetchNotifications();
+    const t = setInterval(() => void fetchNotifications(), REFRESH_MS);
+    return () => clearInterval(t);
+  }, [isAuthenticated, fetchNotifications]);
+
+  useEffect(() => {
+    if (isOpen && isAuthenticated) {
+      void fetchNotifications();
+    }
+  }, [isOpen, isAuthenticated, fetchNotifications]);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleNotificationClick = (link?: string) => {
-    if (link) {
-      navigate(link);
+  const handleNotificationClick = async (n: BoardNotification) => {
+    try {
+      if (!n.isRead) {
+        await client.request(MarkNotificationReadDocument, { id: n.id });
+        setNotifications((prev) =>
+          prev.map((x) => (x.id === n.id ? { ...x, isRead: true } : x))
+        );
+      }
+    } catch {
+      /* still navigate */
+    }
+    const url = n.actionUrl?.trim();
+    if (url) {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        navigate(url.startsWith('/') ? url : `/${url}`);
+      }
     }
     setIsOpen(false);
   };
@@ -28,33 +86,30 @@ const NotificationDropdown = () => {
         setIsOpen(false);
       }
     };
-
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
-    }
-    if (diffInMinutes < 1440) {
-      return `${Math.floor(diffInMinutes / 60)}h ago`;
-    }
+    if (diffInMinutes < 1) return 'just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
         onClick={handleToggle}
         className="relative rounded-md p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         aria-label="Notifications"
@@ -88,26 +143,30 @@ const NotificationDropdown = () => {
           </div>
 
           <div className="max-h-96 overflow-y-auto">
-            {notifications && notifications.length > 0 ? (
+            {loadError && (
+              <p className="px-4 py-3 text-xs text-amber-700 dark:text-amber-300">{loadError}</p>
+            )}
+            {!loadError && notifications.length > 0 ? (
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {notifications.map((notification) => (
                   <button
                     key={notification.id}
-                    onClick={() => handleNotificationClick(notification.link)}
+                    type="button"
+                    onClick={() => void handleNotificationClick(notification)}
                     className="w-full px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   >
                     <div className="flex gap-3">
                       <div className="flex-shrink-0">
                         <div
                           className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                            notification.read
+                            notification.isRead
                               ? 'bg-gray-100 dark:bg-gray-700'
                               : 'bg-primary-100 dark:bg-primary-900'
                           }`}
                         >
                           <svg
                             className={`h-5 w-5 ${
-                              notification.read
+                              notification.isRead
                                 ? 'text-gray-600 dark:text-gray-400'
                                 : 'text-primary-600 dark:text-primary-400'
                             }`}
@@ -124,26 +183,26 @@ const NotificationDropdown = () => {
                           </svg>
                         </div>
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p
                           className={`text-sm font-medium ${
-                            notification.read
+                            notification.isRead
                               ? 'text-gray-700 dark:text-gray-300'
                               : 'text-gray-900 dark:text-white'
                           }`}
                         >
-                          {notification.title}
+                          {notification.title ?? 'Notification'}
                         </p>
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                          {notification.message}
+                        <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
+                          {notification.message ?? '—'}
                         </p>
                         <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                          {formatDate(notification.createdAt)}
+                          {formatDate(String(notification.createdAt))}
                         </p>
                       </div>
-                      {!notification.read && (
+                      {!notification.isRead && (
                         <div className="flex-shrink-0">
-                          <div className="h-2 w-2 rounded-full bg-primary-600"></div>
+                          <div className="h-2 w-2 rounded-full bg-primary-600" />
                         </div>
                       )}
                     </div>
@@ -151,9 +210,11 @@ const NotificationDropdown = () => {
                 ))}
               </div>
             ) : (
-              <div className="px-4 py-8 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
-              </div>
+              !loadError && (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
+                </div>
+              )
             )}
           </div>
 

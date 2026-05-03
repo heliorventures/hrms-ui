@@ -1,11 +1,28 @@
-import { Outlet } from 'react-router-dom';
 import { useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { DialogProvider } from '../../contexts/DialogContext';
+import { useIdleLogout } from '../../hooks/useIdleLogout';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import CommandPalette from './CommandPalette';
 
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+
 const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  useIdleLogout({
+    enabled: isAuthenticated,
+    timeoutMs: IDLE_TIMEOUT_MS,
+    onIdle: () => {
+      void logout().finally(() => {
+        navigate('/login', { replace: true });
+      });
+    },
+  });
 
   const handleToggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -20,7 +37,9 @@ const AppLayout = () => {
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-7 lg:px-8">
-            <Outlet />
+            <DialogProvider>
+              <Outlet />
+            </DialogProvider>
           </div>
         </main>
       </div>

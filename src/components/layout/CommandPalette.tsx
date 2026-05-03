@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { canAccessTenantPath } from '../../auth/navAccess';
 import { useTenant } from '../../contexts/TenantContext';
 import { useDataStore } from '../../store/DataStoreContext';
 import { NAV_CATALOG, type NavCatalogEntry } from '../../navigation/navCatalog';
@@ -25,7 +26,19 @@ const CommandPalette = () => {
   const { isOpen, close } = useCommandPalette();
   const navigate = useNavigate();
   const location = useLocation();
-  const { role } = useAuth();
+  const { isElevated, can, clientSession, showTenantAdminNav, showHrNav } = useAuth();
+  const jwtPermissionCount = clientSession?.permissions.size ?? 0;
+  const tenantNavOpts = useMemo(
+    () => ({
+      isElevated,
+      can,
+      jwtPermissionCount,
+      showTenantAdminNav,
+      showHrNav,
+      clientSession,
+    }),
+    [isElevated, can, jwtPermissionCount, showTenantAdminNav, showHrNav, clientSession]
+  );
   const { currentTenant } = useTenant();
   const { getEmployees } = useDataStore();
   const [q, setQ] = useState('');
@@ -35,8 +48,12 @@ const CommandPalette = () => {
   const listRef = useRef<HTMLDivElement>(null);
 
   const catalog = useMemo(
-    () => NAV_CATALOG.filter((e) => !e.adminOnly || role === 'admin'),
-    [role]
+    () =>
+      NAV_CATALOG.filter((e) => {
+        if (e.adminOnly && !showTenantAdminNav) return false;
+        return canAccessTenantPath(e.path, tenantNavOpts);
+      }),
+    [showTenantAdminNav, tenantNavOpts]
   );
 
   const filteredNav = useMemo(() => {
@@ -57,7 +74,7 @@ const CommandPalette = () => {
   }, [catalog, q]);
 
   const peopleMatch = useMemo(() => {
-    if (role !== 'admin' || !currentTenant?.id) return [];
+    if ((!showHrNav && !showTenantAdminNav) || !currentTenant?.id) return [];
     if (!q.trim() || q.length < 2) return [];
     const list = getEmployees(currentTenant.id);
     const t = q.toLowerCase();
@@ -69,7 +86,7 @@ const CommandPalette = () => {
           em.employeeId.toLowerCase().includes(t)
       )
       .slice(0, 8);
-  }, [getEmployees, currentTenant?.id, q, role]);
+  }, [getEmployees, currentTenant?.id, q, showHrNav, showTenantAdminNav]);
 
   const rows: Row[] = useMemo(() => {
     const p: Row[] = peopleMatch.map((emp) => ({ kind: 'person' as const, emp }));

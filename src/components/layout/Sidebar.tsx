@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { canAccessTenantPath } from '../../auth/navAccess';
 import { matchesNavFilter, NAV_CATALOG } from '../../navigation/navCatalog';
 
 interface SidebarProps {
@@ -87,6 +88,7 @@ const adminNav: NavItemWithChildren = {
   children: [
     { path: '/admin/employees', label: 'Employees' },
     { path: '/admin/attendance-policy', label: 'Attendance policy' },
+    { path: '/admin/leave-settings', label: 'Leave settings' },
     { path: '/admin/reports', label: 'Reports' },
     { path: '/admin/module-health', label: 'Service health' },
     { path: '/admin/settings', label: 'Settings' },
@@ -98,6 +100,27 @@ function itemMatchesMenuFilter(query: string, path: string, label: string): bool
   const kws = NAV_CATALOG.find((e) => e.path === path)?.keywords ?? [];
   return matchesNavFilter(query, label, path, kws);
 }
+
+const hrNav: NavItemWithChildren = {
+  label: 'HR',
+  icon: (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197l-.003.003"
+      />
+    </svg>
+  ),
+  children: [
+    { path: '/hr', label: 'Overview' },
+    { path: '/hr/people', label: 'People admin' },
+    { path: '/hr/leaves', label: 'Leave approvals' },
+    { path: '/hr/leave-settings', label: 'Leave & holidays setup' },
+    { path: '/hr/access', label: 'Roles & access' },
+  ],
+};
 
 const payrollNav: NavItemWithChildren = {
   label: 'Payroll',
@@ -125,17 +148,31 @@ function isPayrollAdminPath(path: string): boolean {
 
 /* eslint-disable max-lines-per-function -- single sidebar shell: nav groups + mobile overlay */
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
-  const { role } = useAuth();
+  const { isElevated, can, clientSession, showTenantAdminNav, showHrNav } = useAuth();
+  const jwtPermissionCount = clientSession?.permissions.size ?? 0;
+  const tenantNavOpts = useMemo(
+    () => ({
+      isElevated,
+      can,
+      jwtPermissionCount,
+      showTenantAdminNav,
+      showHrNav,
+      clientSession,
+    }),
+    [isElevated, can, jwtPermissionCount, showTenantAdminNav, showHrNav, clientSession]
+  );
   const location = useLocation();
   const isOrgPath = location.pathname.startsWith('/organization');
   const isWorkplacePath = location.pathname.startsWith('/workplace');
   const isPayrollPath = location.pathname.startsWith('/payroll');
   const isAdminPath = location.pathname.startsWith('/admin');
+  const isHrPath = location.pathname.startsWith('/hr');
   const [menuFilter, setMenuFilter] = useState('');
   const [orgExpanded, setOrgExpanded] = useState(isOrgPath);
   const [workplaceExpanded, setWorkplaceExpanded] = useState(isWorkplacePath);
   const [payrollExpanded, setPayrollExpanded] = useState(isPayrollPath);
   const [adminExpanded, setAdminExpanded] = useState(isAdminPath);
+  const [hrExpanded, setHrExpanded] = useState(isHrPath);
 
   const filterQ = menuFilter.trim();
   const filterActive = filterQ.length > 0;
@@ -145,23 +182,36 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     [filterQ]
   );
   const workplaceChildren = useMemo(
-    () => workplaceNav.children.filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
-    [filterQ]
+    () =>
+      workplaceNav.children
+        .filter((c) => canAccessTenantPath(c.path, tenantNavOpts))
+        .filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+    [filterQ, tenantNavOpts]
   );
   const payrollChildren = useMemo(
     () =>
       payrollNav.children.filter((c) => {
-        if (role !== 'admin' && isPayrollAdminPath(c.path)) return false;
-        if (role !== 'admin' && c.path === '/payroll/pay') {
+        if (!showTenantAdminNav && isPayrollAdminPath(c.path)) return false;
+        if (!isElevated && c.path === '/payroll/pay') {
           return itemMatchesMenuFilter(filterQ, c.path, 'Income tax');
         }
         return itemMatchesMenuFilter(filterQ, c.path, c.label);
       }),
-    [filterQ, role]
+    [filterQ, isElevated, showTenantAdminNav]
+  );
+  const hrChildren = useMemo(
+    () =>
+      hrNav.children
+        .filter((c) => canAccessTenantPath(c.path, tenantNavOpts))
+        .filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+    [filterQ, tenantNavOpts]
   );
   const adminChildren = useMemo(
-    () => adminNav.children.filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
-    [filterQ]
+    () =>
+      adminNav.children
+        .filter((c) => canAccessTenantPath(c.path, tenantNavOpts))
+        .filter((c) => itemMatchesMenuFilter(filterQ, c.path, c.label)),
+    [filterQ, tenantNavOpts]
   );
 
   /** Single accent system: neutral nav, clear active state (common on enterprise HRIS shells). */
@@ -266,16 +316,19 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const filteredNavItems = useMemo(
     () =>
       navItems
-        .filter((item) => !item.adminOnly || role === 'admin')
+        .filter((item) => !item.adminOnly || isElevated)
         .filter((item) => !filterActive || itemMatchesMenuFilter(filterQ, item.path, item.label)),
-    [filterActive, filterQ, role]
+    [filterActive, filterQ, isElevated]
   );
 
   const showOrgExpanded = orgExpanded || isOrgPath || (filterActive && orgChildren.length > 0);
   const showWorkplaceExpanded =
     workplaceExpanded || isWorkplacePath || (filterActive && workplaceChildren.length > 0);
-  const showPayrollExpanded = payrollExpanded || isPayrollPath || (filterActive && payrollChildren.length > 0);
-  const showAdminExpanded = adminExpanded || isAdminPath || (filterActive && adminChildren.length > 0);
+  const showPayrollExpanded =
+    payrollExpanded || isPayrollPath || (filterActive && payrollChildren.length > 0);
+  const showHrExpanded = hrExpanded || isHrPath || (filterActive && hrChildren.length > 0);
+  const showAdminExpanded =
+    adminExpanded || isAdminPath || (filterActive && adminChildren.length > 0);
 
   return (
     <>
@@ -506,7 +559,59 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               </div>
             )}
 
-            {role === 'admin' && (!filterActive || adminChildren.length > 0) && (
+            {(showHrNav || showTenantAdminNav) &&
+              (!filterActive || hrChildren.length > 0) && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setHrExpanded(!showHrExpanded)}
+                  className={`${nav.groupBtn} ${
+                    isHrPath
+                      ? 'bg-slate-200/50 font-semibold text-slate-900 dark:bg-slate-800/80 dark:text-slate-100'
+                      : 'text-slate-700 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-800/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {hrNav.icon}
+                    <span>{hrNav.label}</span>
+                  </div>
+                  <svg
+                    className={`h-4 w-4 shrink-0 transition-transform ${showHrExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                {showHrExpanded && hrChildren.length > 0 && (
+                  <div className="ml-2 mt-1 space-y-0.5 border-l border-slate-200/90 pl-2 dark:border-slate-600/80">
+                    {hrChildren.map((child) => (
+                      <NavLink
+                        key={child.path}
+                        to={child.path}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                          `${nav.sub} ${isActive ? nav.active : nav.inactive}`
+                        }
+                      >
+                        <span>{child.label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+                {showHrExpanded && hrChildren.length === 0 && filterActive && (
+                  <p className="ml-2 mt-1 pl-2 text-xs text-slate-400">No items match</p>
+                )}
+              </div>
+            )}
+
+            {showTenantAdminNav && (filterActive || adminChildren.length > 0) && (
               <div className="pt-2">
                 <button
                   type="button"

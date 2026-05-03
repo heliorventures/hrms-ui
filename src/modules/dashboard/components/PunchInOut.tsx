@@ -4,6 +4,7 @@ import Button from '../../../components/common/Button';
 import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { PunchTodayDocument, PunchDaySummaryDocument } from '../../../api/graphql/graphql';
+import { formatBackendTime } from '../../../utils/timeFormat';
 
 type AttendanceRow = {
   id: string;
@@ -169,7 +170,8 @@ const PunchInOut = () => {
                     <div className="flex justify-between">
                       <span>Segment {i + 1}</span>
                       <span>
-                        {s.checkInTime ?? '—'} → {s.checkOutTime ?? 'open'}
+                        {formatBackendTime(s.checkInTime ?? null)} →{' '}
+                        {s.checkOutTime ? formatBackendTime(s.checkOutTime) : 'open'}
                       </span>
                     </div>
                     {(formatCoord(s.checkInLat, s.checkInLng) ||
@@ -185,8 +187,8 @@ const PunchInOut = () => {
             )}
             {summary.openSegment && (
               <p className="text-xs text-amber-800 dark:text-amber-200">
-                Open: checked in at {summary.openSegment.checkInTime} — tap &quot;Punch out&quot; to
-                close this block.
+                Open: checked in at {formatBackendTime(summary.openSegment.checkInTime)} — tap
+                &quot;Punch out&quot; to close this block.
               </p>
             )}
           </div>
@@ -195,7 +197,8 @@ const PunchInOut = () => {
         {lastPunch && (
           <div className="rounded-lg border border-gray-200 p-2 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-300">
             <div>
-              In {lastPunch.checkInTime ?? '—'} · Out {lastPunch.checkOutTime ?? '—'}
+              In {formatBackendTime(lastPunch.checkInTime)} · Out{' '}
+              {formatBackendTime(lastPunch.checkOutTime)}
               {lastPunch.status && (
                 <span className="ml-2 inline-block">
                   <Badge variant="success">{lastPunch.status}</Badge>

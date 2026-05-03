@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { getDefaultUserProfile } from '../../profile/defaultUserProfile';
@@ -7,18 +8,21 @@ import AboutTab from './components/AboutTab';
 import ProfileTab from './components/ProfileTab';
 import JobDetailsTab from './components/JobDetailsTab';
 import DocumentsTab from './components/DocumentsTab';
+import SecurityTab from './components/SecurityTab';
 
-type TabId = 'about' | 'profile' | 'job' | 'documents';
+type TabId = 'about' | 'profile' | 'job' | 'documents' | 'security';
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'about', label: 'About' },
   { id: 'profile', label: 'Profile' },
   { id: 'job', label: 'Job Details' },
   { id: 'documents', label: 'Documents' },
+  { id: 'security', label: 'Security' },
 ];
 
 const ProfileSettingsPage = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { currentTenant } = useTenant();
   const [activeTab, setActiveTab] = useState<TabId>('about');
 
@@ -119,6 +123,14 @@ const ProfileSettingsPage = () => {
       {activeTab === 'profile' && <ProfileTab data={data} />}
       {activeTab === 'job' && <JobDetailsTab data={data} />}
       {activeTab === 'documents' && <DocumentsTab />}
+      {activeTab === 'security' && (
+        <SecurityTab
+          onPasswordChanged={async () => {
+            await logout();
+            navigate('/login', { replace: true });
+          }}
+        />
+      )}
     </div>
   );
 };

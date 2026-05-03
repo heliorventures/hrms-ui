@@ -32,7 +32,7 @@ import {
 type Tab = 'overview' | 'reports' | 'dashboards' | 'outbox' | 'integrations';
 
 const AnalyticsPage = () => {
-  const { role } = useAuth();
+  const { isElevated } = useAuth();
   const client = useGraphClient('client');
   const [tab, setTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(true);
@@ -390,7 +390,7 @@ const AnalyticsPage = () => {
                     <th className="py-2 pr-3">Created</th>
                     <th className="py-2 pr-3">Retries</th>
                     <th className="py-2 pr-3">Last error</th>
-                    {role === 'admin' && <th className="py-2">Action</th>}
+                    {isElevated && <th className="py-2">Action</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -421,7 +421,7 @@ const AnalyticsPage = () => {
                       >
                         {e.lastError ?? '—'}
                       </td>
-                      {role === 'admin' && (
+                      {isElevated && (
                         <td className="py-2">
                           {(e.status === 'FAILED' || e.status === 'PROCESSING') && (
                             <button

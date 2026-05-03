@@ -6,7 +6,8 @@ import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import TimesheetEntryForm from './components/TimesheetEntryForm';
-import { AttendanceBoardDocument, TimesheetRowsDocument } from '../../api/graphql/graphql';
+import { AttendanceBoardDocument, DeleteTimesheetEntryDocument, TimesheetRowsDocument } from '../../api/graphql/graphql';
+import { formatBackendTime } from '../../utils/timeFormat';
 
 interface ShiftRow {
   id: string;
@@ -46,6 +47,11 @@ interface TimesheetData {
   timesheetEntries: TimesheetEntryRow[];
 }
 
+function timesheetEntryCanDelete(status: string): boolean {
+  const s = status.trim().toUpperCase();
+  return s === 'DRAFT' || s === 'REJECTED';
+}
+
 const AttendancePage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<AttendanceBoardData | null>(null);
@@ -54,6 +60,7 @@ const AttendancePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [timesheetError, setTimesheetError] = useState<string | null>(null);
   const [timesheetOpen, setTimesheetOpen] = useState(false);
+  const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null);
 
   const loadBoard = useCallback(async () => {
     return client.request<AttendanceBoardData>(AttendanceBoardDocument, { limit: 20 });
@@ -63,6 +70,19 @@ const AttendancePage = () => {
     const result = await client.request<TimesheetData>(TimesheetRowsDocument, { limit: 50 });
     return result.timesheetEntries;
   }, [client]);
+
+  const handleDeleteTimesheetEntry = async (row: TimesheetEntryRow) => {
+    if (!timesheetEntryCanDelete(row.status)) return;
+    setDeleteBusyId(row.id);
+    try {
+      await client.request(DeleteTimesheetEntryDocument, { id: row.id });
+      setTimesheet(await loadTimesheet());
+    } catch (e) {
+      setTimesheetError(e instanceof Error ? e.message : 'Delete failed');
+    } finally {
+      setDeleteBusyId(null);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -150,12 +170,10 @@ const AttendancePage = () => {
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">{shift.name}</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {shift.startTime ?? '—'} to {shift.endTime ?? '—'}
+                      {formatBackendTime(shift.startTime ?? null)} to{' '}
+                      {formatBackendTime(shift.endTime ?? null)}
                     </p>
                   </div>
-                  <Badge variant={shift.isNightShift ? 'warning' : 'info'}>
-                    {shift.isNightShift ? 'Night' : 'Day'}
-                  </Badge>
                 </div>
                 <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
                   Work hours: {shift.workHours ?? '—'}
@@ -189,12 +207,12 @@ const AttendancePage = () => {
               {
                 key: 'checkInTime',
                 label: 'Check in',
-                render: (row: AttendanceRow) => row.checkInTime ?? '—',
+                render: (row: AttendanceRow) => formatBackendTime(row.checkInTime ?? null),
               },
               {
                 key: 'checkOutTime',
                 label: 'Check out',
-                render: (row: AttendanceRow) => row.checkOutTime ?? '—',
+                render: (row: AttendanceRow) => formatBackendTime(row.checkOutTime ?? null),
               },
               {
                 key: 'status',
@@ -256,6 +274,24 @@ const AttendancePage = () => {
                 key: 'status',
                 label: 'Status',
                 render: (row: TimesheetEntryRow) => <Badge variant="info">{row.status}</Badge>,
+              },
+              {
+                key: 'actions',
+                label: '',
+                render: (row: TimesheetEntryRow) =>
+                  timesheetEntryCanDelete(row.status) ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="!py-1 !text-xs text-red-600 dark:text-red-400"
+                      disabled={deleteBusyId === row.id}
+                      onClick={() => void handleDeleteTimesheetEntry(row)}
+                    >
+                      {deleteBusyId === row.id ? 'Removing…' : 'Delete'}
+                    </Button>
+                  ) : (
+                    '—'
+                  ),
               },
             ]}
           />

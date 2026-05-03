@@ -200,7 +200,6 @@ const AdminAttendancePolicyPage = () => {
                 <p className="text-xs text-gray-500">
                   {s.startTime ?? '—'} – {s.endTime ?? '—'}
                   {s.workHours != null ? ` · ${s.workHours}h` : ''}
-                  {s.isNightShift ? ' · night' : ''}
                 </p>
               </li>
             ))}

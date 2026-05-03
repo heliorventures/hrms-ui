@@ -41,10 +41,18 @@ function authBaseUrl(): string {
   return getAppConfig().authUrl;
 }
 
-async function postJson<TOut>(path: string, body: unknown): Promise<TOut> {
+async function postJson<TOut>(
+  path: string,
+  body: unknown,
+  extraHeaders?: Record<string, string>
+): Promise<TOut> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...extraHeaders,
+  };
   const res = await fetch(`${authBaseUrl()}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   });
   if (res.status === 204) {
@@ -108,4 +116,17 @@ export interface IntrospectResult {
 
 export async function introspect(token: string): Promise<IntrospectResult> {
   return postJson<IntrospectResult>('/auth/introspect', { token });
+}
+
+/** Requires a valid client access token (`Authorization: Bearer` on the wire). */
+export async function changeClientPassword(
+  accessToken: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  await postJson<void>(
+    '/auth/client/change-password',
+    { currentPassword, newPassword },
+    { Authorization: `Bearer ${accessToken}` }
+  );
 }

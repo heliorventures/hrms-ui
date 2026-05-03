@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Card from '../../../components/common/Card';
 import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
@@ -62,7 +63,11 @@ const LeaveBalanceCard = () => {
   }, [client]);
 
   return (
-    <Card title="Leave balance">
+    <Link
+      to="/leave#leave-requests"
+      className="block rounded-xl outline-none ring-offset-2 ring-offset-slate-50 transition hover:opacity-[0.98] focus-visible:ring-2 focus-visible:ring-indigo-500 dark:ring-offset-slate-950"
+    >
+      <Card title="Leave balance">
       {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}
       {error && !loading && <p className="text-sm text-amber-800 dark:text-amber-200">{error}</p>}
       {!loading && !error && rows && rows.length > 0 && (
@@ -88,7 +93,11 @@ const LeaveBalanceCard = () => {
       {!loading && !error && rows && rows.length === 0 && (
         <p className="text-sm text-gray-500 dark:text-gray-400">No leave balance rows yet.</p>
       )}
+      <p className="mt-3 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+        Open leave center →
+      </p>
     </Card>
+    </Link>
   );
 };
 

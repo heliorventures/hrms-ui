@@ -276,6 +276,101 @@ mutation RejectLeaveRequest($leaveRequestId: ID!, $reason: String) {
   }
 }
 
+mutation CancelLeaveRequest($leaveRequestId: ID!) {
+  cancelLeaveRequest(leaveRequestId: $leaveRequestId) {
+    id
+    status
+    employeeId
+  }
+}
+
+mutation UpsertLeaveTypeAdmin($input: UpsertLeaveTypeInput!) {
+  upsertLeaveType(input: $input) {
+    id
+    name
+    code
+    isPaid
+    carryForward
+    sandwichRule
+    halfDayAllowed
+    requiresDocument
+  }
+}
+
+mutation DeleteLeaveTypeAdmin($leaveTypeId: ID!) {
+  deleteLeaveType(leaveTypeId: $leaveTypeId) {
+    id
+    name
+    code
+  }
+}
+
+mutation UpsertLeavePolicyAdmin($input: UpsertLeavePolicyInput!) {
+  upsertLeavePolicy(input: $input) {
+    id
+    leaveTypeId
+    annualEntitlement
+    accrualFrequency
+    accrualDays
+    maxConsecutiveDays
+    minNoticeDays
+  }
+}
+
+mutation DeleteLeavePolicyAdmin($leavePolicyId: ID!) {
+  deleteLeavePolicy(leavePolicyId: $leavePolicyId)
+}
+
+mutation UpsertLeaveBalanceAdmin($input: UpsertLeaveBalanceInput!) {
+  upsertLeaveBalance(input: $input) {
+    id
+    employeeId
+    leaveTypeId
+    year
+    entitledDays
+    balanceDays
+    pendingDays
+    usedDays
+  }
+}
+
+mutation AdjustLeaveBalanceEntitlementAdmin($input: AdjustLeaveBalanceEntitlementInput!) {
+  adjustLeaveBalanceEntitlement(input: $input) {
+    id
+    entitledDays
+    balanceDays
+  }
+}
+
+mutation ProvisionLeaveBalancesFromPolicies($year: Int!) {
+  provisionLeaveBalancesFromPolicies(year: $year)
+}
+
+mutation UpsertHolidayCalendarAdmin($input: UpsertHolidayCalendarInput!) {
+  upsertHolidayCalendar(input: $input) {
+    id
+    name
+    year
+  }
+}
+
+mutation DeleteHolidayCalendarAdmin($calendarId: ID!) {
+  deleteHolidayCalendar(calendarId: $calendarId)
+}
+
+mutation UpsertHolidayDayAdmin($input: UpsertHolidayDayInput!) {
+  upsertHolidayDay(input: $input) {
+    id
+    calendarId
+    holidayDate
+    name
+  }
+}
+
+mutation DeleteHolidayDayAdmin($holidayId: ID!) {
+  deleteHolidayDay(holidayId: $holidayId)
+}
+
 mutation SubmitExpense($input: SubmitExpenseInput!) {
   submitExpense(input: $input) {
     id
@@ -1055,7 +1150,26 @@ query ExpenseBoard($limit: Int! = 20) {
   }
 }
 
-query LeaveBoard($limit: Int! = 20) {
+query LeaveBoard($limit: Int! = 20, $balanceYear: Int) {
+  viewerEmployeeId
+  upcomingHolidays(limit: 100) {
+    id
+    calendarId
+    calendarName
+    holidayDate
+    name
+    holidayType
+  }
+  leavePolicies(limit: 50) {
+    id
+    leaveTypeId
+    applicableTo
+    annualEntitlement
+    accrualFrequency
+    accrualDays
+    maxConsecutiveDays
+    minNoticeDays
+  }
   leaveTypes(limit: $limit) {
     id
     name
@@ -1063,15 +1177,143 @@ query LeaveBoard($limit: Int! = 20) {
     isPaid
     carryForward
     requiresDocument
+    halfDayAllowed
+    sandwichRule
   }
   leaveRequests(limit: $limit) {
     id
     employeeId
+    leaveTypeId
     fromDate
     toDate
     daysRequested
     status
     reason
+    rejectionReason
+    isHalfDay
+    halfDaySession
+    appliedAt
+    workflowInstanceId
+    supportingDocumentReference
+  }
+  leaveBalances(limit: $limit, year: $balanceYear) {
+    id
+    leaveTypeId
+    year
+    entitledDays
+    usedDays
+    pendingDays
+    balanceDays
+    carriedForwardDays
+  }
+}
+
+query AllCompanyHolidays($fromDate: NaiveDate!, $limit: Int! = 400) {
+  upcomingHolidays(fromDate: $fromDate, limit: $limit) {
+    id
+    holidayDate
+    name
+    calendarName
+    holidayType
+  }
+}
+
+query HrLeaveCalendar(
+  $reqLim: Int! = 400
+  $orgLim: Int! = 500
+  $typeLim: Int! = 80
+  $holidayFrom: NaiveDate!
+  $holidayLimit: Int! = 400
+) {
+  leaveRequests(limit: $reqLim) {
+    id
+    employeeId
+    leaveTypeId
+    fromDate
+    toDate
+    status
+    isHalfDay
+    halfDaySession
+  }
+  orgChart(limit: $orgLim) {
+    employeeId
+    fullName
+    employeeCode
+  }
+  leaveTypes(limit: $typeLim) {
+    id
+    name
+    code
+  }
+  upcomingHolidays(fromDate: $holidayFrom, limit: $holidayLimit) {
+    id
+    holidayDate
+    name
+    calendarName
+  }
+}
+
+query LeaveWorkflowTrailQuery($leaveRequestId: ID!) {
+  leaveRequestWorkflowTrail(leaveRequestId: $leaveRequestId) {
+    workflowStepName
+    action
+    remarks
+    actedAt
+    performedByUserId
+  }
+}
+
+query AdminLeaveConsole($limit: Int! = 80, $policyLimit: Int! = 150, $calendarYear: Int!) {
+  employees(limit: 100) {
+    id
+    employeeCode
+    fullName
+  }
+  leaveTypes(limit: $limit) {
+    id
+    tenantId
+    name
+    code
+    isPaid
+    carryForward
+    maxCarryForwardDays
+    sandwichRule
+    halfDayAllowed
+    requiresDocument
+    createdAt
+    updatedAt
+  }
+  leavePolicies(limit: $policyLimit) {
+    id
+    tenantId
+    leaveTypeId
+    applicableTo
+    annualEntitlement
+    accrualFrequency
+    accrualDays
+    maxConsecutiveDays
+    minNoticeDays
+    createdAt
+    updatedAt
+  }
+  holidayCalendars(year: $calendarYear, limit: 24) {
+    id
+    tenantId
+    locationId
+    name
+    year
+    createdAt
+    updatedAt
+  }
+}
+
+query HolidaysInCalendar($calendarId: ID!, $limit: Int! = 200) {
+  holidaysInCalendar(calendarId: $calendarId, limit: $limit) {
+    id
+    calendarId
+    holidayDate
+    name
+    holidayType
   }
 }
 
@@ -1125,13 +1367,26 @@ query PunchDaySummary {
   }
 }
 
-query OnLeaveToday($limit: Int! = 50) {
+query OnLeaveToday($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50) {
   leaveRequests(limit: $limit) {
     id
     employeeId
+    leaveTypeId
     fromDate
     toDate
     status
+    isHalfDay
+    halfDaySession
+  }
+  leaveTypes(limit: $typeLim) {
+    id
+    name
+    code
+  }
+  orgChart(limit: $orgLim) {
+    employeeId
+    fullName
+    employeeCode
   }
 }
 
@@ -1470,4 +1725,53 @@ mutation PayrollSetEmployeeCompensation($input: SetEmployeeCompensationInput!) {
     changeReason
     updatedAt
   }
+}
+
+query RbacAdminBoard($uLim: Int! = 120, $rLim: Int! = 80, $pLim: Int! = 400) {
+  tenantDirectoryUsers(limit: $uLim) {
+    id
+    email
+    isActive
+  }
+  tenantDirectoryRoles(limit: $rLim) {
+    id
+    name
+    description
+    isSystemRole
+  }
+  tenantCatalogPermissions(limit: $pLim) {
+    id
+    resource
+    action
+    description
+  }
+}
+
+query PermissionIdsForRole($roleId: ID!) {
+  permissionIdsForRole(roleId: $roleId)
+}
+
+query RoleIdsForUser($userId: ID!) {
+  roleIdsForUser(userId: $userId)
+}
+
+query PermissionScopesForRole($roleId: ID!) {
+  permissionScopesForRole(roleId: $roleId) {
+    id
+    resource
+    action
+    scopeType
+  }
+}
+
+mutation SetRolePermissions($roleId: ID!, $permissionIds: [ID!]!) {
+  setRolePermissions(roleId: $roleId, permissionIds: $permissionIds)
+}
+
+mutation SetUserRoles($userId: ID!, $roleIds: [ID!]!) {
+  setUserRoles(userId: $userId, roleIds: $roleIds)
+}
+
+mutation SetRolePermissionScopes($roleId: ID!, $scopes: [PermissionScopeAssignmentInput!]!) {
+  setRolePermissionScopes(roleId: $roleId, scopes: $scopes)
 }

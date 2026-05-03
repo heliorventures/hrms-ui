@@ -1,5 +1,6 @@
 // Core types for the KabiPay application
 
+/** Client-plane role for legacy UI checks (`admin` = any elevated tenant role from JWT). */
 export type UserRole = 'employee' | 'admin';
 
 export type AttendanceStatus = 'present' | 'absent' | 'half-day' | 'leave' | 'holiday';

@@ -19,6 +19,14 @@ import {
   type TokenPair,
 } from '../auth/authClient';
 import {
+  parseClientAccessToken,
+  personaToLegacyUserRole,
+  deriveShowHrNav,
+  deriveShowTenantAdminNav,
+  type ClientPersona,
+  type ParsedClientSession,
+} from '../auth/clientSession';
+import {
   clearClientSession,
   clearOperatorSession,
   getClientRefreshToken,
@@ -41,10 +49,33 @@ interface LoginOptions {
   tenantId?: string;
 }
 
+const emptySession = (): ParsedClientSession => ({
+  jwtRoles: [],
+  permissions: new Set(),
+  resourceScopes: {},
+  persona: 'EMPLOYEE',
+});
+
 interface AuthContextType {
   user: User | null;
   opsUser: OpsUser | null;
+  /** Legacy UI role: `admin` when JWT maps to tenant admin **or** HR persona. */
   role: UserRole;
+  /** JWT-derived persona: tenant admin, HR workbench, or employee. */
+  persona: ClientPersona;
+  /** Configuration / ops-style **Admin** sidebar (`/admin/*`). */
+  showTenantAdminNav: boolean;
+  /** **HR** workbench sidebar (`/hr/*`). */
+  showHrNav: boolean;
+  /** True when JWT maps to `ADMIN` | `HR` persona (not plain employee). */
+  isElevated: boolean;
+  /** Permission from current client access token (`resource:action`). */
+  can: (permission: string) => boolean;
+  canAny: (permissions: readonly string[]) => boolean;
+  hasJwtRole: (roleName: string) => boolean;
+  hasAnyJwtRole: (roleNames: readonly string[]) => boolean;
+  /** Parsed client session from JWT; empty when logged out. */
+  clientSession: ParsedClientSession | null;
   /** Tenant (employee) app session. */
   isAuthenticated: boolean;
   /** Operator console session (platform / kabipay-ops JWT). */
@@ -57,6 +88,10 @@ interface AuthContextType {
   error: string | null;
   /** Latest operator login/refresh error; cleared on a successful operator attempt. */
   opsError: string | null;
+  /**
+   * Insecure dev-only UI toggle; does not change the JWT.
+   * Enable with `VITE_ENABLE_DEV_ROLE_SWITCH=true` in dev.
+   */
   switchRole: (role: UserRole) => void;
   login: (email: string, password: string, opts?: LoginOptions) => Promise<void>;
   loginOps: (email: string, password: string) => Promise<void>;
@@ -75,38 +110,16 @@ function defaultTenantId(): string | undefined {
   return v.length > 0 ? v : undefined;
 }
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  const parts = token.split('.');
-  if (parts.length < 2) return null;
-  try {
-    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padded = b64.padEnd(Math.ceil(b64.length / 4) * 4, '=');
-    const json = atob(padded);
-    return JSON.parse(json) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function roleFromClientAccessToken(access: string): UserRole {
-  const payload = decodeJwtPayload(access);
-  const rolesRaw = payload?.roles;
-  const roles = Array.isArray(rolesRaw)
-    ? rolesRaw.filter((r): r is string => typeof r === 'string').map((r) => r.toUpperCase())
-    : [];
-  const hasAdminRole = roles.some((r) =>
-    ['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN', 'PAYROLL_ADMIN', 'ADMIN'].includes(r)
-  );
-  return hasAdminRole ? 'admin' : 'employee';
+function devRoleSwitchEnabled(): boolean {
+  return import.meta.env.DEV === true && import.meta.env.VITE_ENABLE_DEV_ROLE_SWITCH === 'true';
 }
 
 /** User shape from client JWT claims when no separate profile API has run yet. */
-function userFromClientTokenPair(pair: TokenPair): User {
-  const role = roleFromClientAccessToken(pair.access);
+function userFromClientTokenPair(pair: TokenPair, role: UserRole): User {
   return {
     id: pair.userId,
     tenantId: pair.tenantId ?? '',
-    name: pair.email.split('@')[0],
+    name: ((pair.email ?? '') as string).split('@')[0],
     email: pair.email,
     role,
     employeeId: '',
@@ -128,17 +141,52 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [opsUser, setOpsUser] = useState<OpsUser | null>(null);
   const [role, setRole] = useState<UserRole>('employee');
+  const [clientSession, setClientSession] = useState<ParsedClientSession | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opsError, setOpsError] = useState<string | null>(null);
 
+  const persona = clientSession?.persona ?? 'EMPLOYEE';
+  const showTenantAdminNav = clientSession
+    ? deriveShowTenantAdminNav(clientSession.jwtRoles)
+    : false;
+  const showHrNav = clientSession ? deriveShowHrNav(clientSession.jwtRoles) : false;
+  /** Nav / route gates: follows `user.role` (JWT by default; dev switch may override locally). */
+  const isElevated = user != null && user.role !== 'employee';
+
+  const can = useCallback(
+    (permission: string) => clientSession?.permissions.has(permission) ?? false,
+    [clientSession]
+  );
+
+  const canAny = useCallback(
+    (permissions: readonly string[]) => permissions.some((p) => can(p)),
+    [can]
+  );
+
+  const hasJwtRole = useCallback(
+    (roleName: string) => {
+      const u = roleName.trim().toUpperCase();
+      return clientSession?.jwtRoles.some((r) => r.trim().toUpperCase() === u) ?? false;
+    },
+    [clientSession]
+  );
+
+  const hasAnyJwtRole = useCallback(
+    (roleNames: readonly string[]) => roleNames.some((n) => hasJwtRole(n)),
+    [hasJwtRole]
+  );
+
   const applyTokens = useCallback((pair: TokenPair) => {
     setClientAccessToken(pair.access);
     setClientRefreshToken(pair.refresh);
-    const u = userFromClientTokenPair(pair);
+    const session = parseClientAccessToken(pair.access) ?? emptySession();
+    setClientSession(session);
+    const legacyRole = personaToLegacyUserRole(session.persona);
+    const u = userFromClientTokenPair(pair, legacyRole);
     setUser(u);
-    setRole(u.role);
+    setRole(legacyRole);
     setTenantId(pair.tenantId ?? null);
     setError(null);
   }, []);
@@ -263,6 +311,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(null);
     setTenantId(null);
     setRole('employee');
+    setClientSession(null);
     setError(null);
   }, []);
 
@@ -281,6 +330,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const switchRole = useCallback((newRole: UserRole) => {
+    if (!devRoleSwitchEnabled()) return;
     setRole(newRole);
     setUser((prev) => (prev ? { ...prev, role: newRole } : null));
   }, []);
@@ -290,6 +340,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       user,
       opsUser,
       role,
+      persona,
+      showTenantAdminNav,
+      showHrNav,
+      isElevated,
+      can,
+      canAny,
+      hasJwtRole,
+      hasAnyJwtRole,
+      clientSession,
       isAuthenticated: !!user,
       isOpsAuthenticated: !!opsUser,
       tenantId,
@@ -306,6 +365,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       user,
       opsUser,
       role,
+      persona,
+      showTenantAdminNav,
+      showHrNav,
+      isElevated,
+      can,
+      canAny,
+      hasJwtRole,
+      hasAnyJwtRole,
+      clientSession,
       tenantId,
       loading,
       error,

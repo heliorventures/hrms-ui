@@ -3,6 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 
+function devRoleSwitchEnabled(): boolean {
+  return import.meta.env.DEV === true && import.meta.env.VITE_ENABLE_DEV_ROLE_SWITCH === 'true';
+}
+
 const ProfileDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -41,6 +45,8 @@ const ProfileDropdown = () => {
       .join('')
       .toUpperCase()
       .slice(0, 2) || 'U';
+
+  const showDevRoleSwitch = devRoleSwitchEnabled();
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -134,25 +140,27 @@ const ProfileDropdown = () => {
             Theme: {theme === 'light' ? 'Dark' : 'Light'} mode
           </button>
 
-          <button
-            onClick={handleRoleSwitch}
-            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            <svg
-              className="h-5 w-5 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {showDevRoleSwitch && (
+            <button
+              onClick={handleRoleSwitch}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-amber-800 hover:bg-amber-50 dark:text-amber-200 dark:hover:bg-amber-900/20"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-              />
-            </svg>
-            Switch to {role === 'employee' ? 'Admin' : 'Employee'}
-          </button>
+              <svg
+                className="h-5 w-5 text-amber-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                />
+              </svg>
+              Dev: switch to {role === 'employee' ? 'Admin' : 'Employee'}
+            </button>
+          )}
 
           <div className="border-t border-gray-200 dark:border-gray-700" />
           <button

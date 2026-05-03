@@ -1,33 +1,148 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Modal from '../../../components/common/Modal';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
+import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
+
+/** Calendar days from local midnight today → start date (0 = today). */
+function calendarDaysBeforeLeaveStart(fromDateStr: string): number {
+  const [y, m, d] = fromDateStr.split('-').map(Number);
+  if (!y || !m || !d) return NaN;
+  const from = new Date(y, m - 1, d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  from.setHours(0, 0, 0, 0);
+  return Math.round((from.getTime() - today.getTime()) / 86400000);
+}
 
 export interface ApplyLeaveTypeOption {
   id: string;
   name: string;
   code: string;
+  halfDayAllowed?: boolean;
+  requiresDocument?: boolean;
+  sandwichRule?: boolean;
+}
+
+export type ApplyLeavePolicyRow = LeaveBoardQuery['leavePolicies'][number];
+export type ApplyHolidayRow = LeaveBoardQuery['upcomingHolidays'][number];
+export type ApplyBalanceRow = LeaveBoardQuery['leaveBalances'][number];
+
+function holidayDateIso(h: ApplyHolidayRow): string {
+  const v = h.holidayDate as string;
+  return typeof v === 'string' ? v.slice(0, 10) : '';
+}
+
+/** Mirrors backend `compute_requested_days` for policy/balance hints (half-day = 0.5). */
+function requestedLeaveDays(
+  from: string,
+  to: string,
+  half: boolean,
+  sandwichRule: boolean,
+  holidays: ApplyHolidayRow[]
+): number {
+  if (half) return 0.5;
+  const [fy, fm, fd] = from.split('-').map(Number);
+  const [ty, tm, td] = to.split('-').map(Number);
+  const start = new Date(fy, fm - 1, fd);
+  const end = new Date(ty, tm - 1, td);
+  if (sandwichRule) {
+    return Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+  }
+  const holidaySet = new Set(
+    holidays
+      .map(holidayDateIso)
+      .filter((d) => d && d >= from && d <= to)
+  );
+  let count = 0;
+  const cur = new Date(start);
+  while (cur <= end) {
+    const dow = cur.getDay();
+    const iso = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(
+      cur.getDate()
+    ).padStart(2, '0')}`;
+    if (dow !== 0 && dow !== 6 && !holidaySet.has(iso)) {
+      count += 1;
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+  return count;
 }
 
 interface ApplyLeaveModalProps {
   isOpen: boolean;
   onClose: () => void;
   leaveTypes: ApplyLeaveTypeOption[];
+  leavePolicies: ApplyLeavePolicyRow[];
+  upcomingHolidays: ApplyHolidayRow[];
+  leaveBalances: ApplyBalanceRow[];
   onSubmitted: () => void;
 }
 
-const ApplyLeaveModal = ({ isOpen, onClose, leaveTypes, onSubmitted }: ApplyLeaveModalProps) => {
+const ApplyLeaveModal = ({
+  isOpen,
+  onClose,
+  leaveTypes,
+  leavePolicies,
+  upcomingHolidays,
+  leaveBalances,
+  onSubmitted,
+}: ApplyLeaveModalProps) => {
   const client = useGraphClient('client');
   const [leaveTypeId, setLeaveTypeId] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [isHalfDay, setIsHalfDay] = useState(false);
-  const [halfDaySession, setHalfDaySession] = useState('');
+  const [halfDaySession, setHalfDaySession] = useState<'FIRST_HALF' | 'SECOND_HALF' | ''>('');
   const [reason, setReason] = useState('');
+  const [supportingDocRef, setSupportingDocRef] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const selectedType = useMemo(
+    () => leaveTypes.find((t) => t.id === leaveTypeId),
+    [leaveTypes, leaveTypeId]
+  );
+
+  const policyForType = useMemo(
+    () => leavePolicies.find((p) => p.leaveTypeId === leaveTypeId),
+    [leavePolicies, leaveTypeId]
+  );
+
+  const balanceForType = useMemo(
+    () => leaveBalances.find((b) => b.leaveTypeId === leaveTypeId),
+    [leaveBalances, leaveTypeId]
+  );
+
+  const halfDayAllowed = selectedType?.halfDayAllowed !== false;
+  const requiresDocument = selectedType?.requiresDocument === true;
+  const isMultiDay = Boolean(fromDate && toDate && fromDate !== toDate);
+  const halfDayEligible = halfDayAllowed && !isMultiDay;
+
+  useEffect(() => {
+    if (!halfDayAllowed || isMultiDay) {
+      setIsHalfDay(false);
+      setHalfDaySession('');
+    }
+  }, [halfDayAllowed, isMultiDay, leaveTypeId]);
+
+  const resetForm = () => {
+    setLeaveTypeId('');
+    setFromDate('');
+    setToDate('');
+    setIsHalfDay(false);
+    setHalfDaySession('');
+    setReason('');
+    setSupportingDocRef('');
+    setFormError(null);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,6 +150,58 @@ const ApplyLeaveModal = ({ isOpen, onClose, leaveTypes, onSubmitted }: ApplyLeav
       setFormError('Choose a leave type and date range.');
       return;
     }
+    const reasonTrim = reason.trim();
+    if (!reasonTrim) {
+      setFormError('Reason is required.');
+      return;
+    }
+    if (requiresDocument && !supportingDocRef.trim()) {
+      setFormError('This leave type requires a document reference (link or ticket ID).');
+      return;
+    }
+    if (isHalfDay && !halfDaySession) {
+      setFormError('Choose first half or second half for a half-day leave.');
+      return;
+    }
+
+    const leadDays = calendarDaysBeforeLeaveStart(fromDate);
+    if (
+      !Number.isNaN(leadDays) &&
+      policyForType?.minNoticeDays != null &&
+      policyForType.minNoticeDays > 0 &&
+      leadDays < policyForType.minNoticeDays
+    ) {
+      setFormError(
+        `Policy requires at least ${policyForType.minNoticeDays} calendar day(s) between today and the first leave day.`
+      );
+      return;
+    }
+
+    const sandwichOn = selectedType?.sandwichRule === true;
+    const reqDays = requestedLeaveDays(
+      fromDate,
+      toDate,
+      halfDayEligible && isHalfDay,
+      sandwichOn,
+      upcomingHolidays
+    );
+    if (!sandwichOn && reqDays <= 0 && !(halfDayEligible && isHalfDay)) {
+      setFormError(
+        'No chargeable working days in this range (weekends and holidays only). Adjust dates or choose another leave type.'
+      );
+      return;
+    }
+    if (
+      policyForType?.maxConsecutiveDays != null &&
+      policyForType.maxConsecutiveDays > 0 &&
+      reqDays > policyForType.maxConsecutiveDays
+    ) {
+      setFormError(
+        `Policy allows at most ${policyForType.maxConsecutiveDays} consecutive day(s) for this leave type (this request is ${reqDays} day(s)).`
+      );
+      return;
+    }
+
     setFormError(null);
     setSubmitting(true);
     try {
@@ -43,12 +210,14 @@ const ApplyLeaveModal = ({ isOpen, onClose, leaveTypes, onSubmitted }: ApplyLeav
           leaveTypeId,
           fromDate,
           toDate,
-          isHalfDay,
-          halfDaySession: halfDaySession.trim() || null,
-          reason: reason.trim() || null,
+          isHalfDay: halfDayEligible && isHalfDay,
+          halfDaySession: halfDayEligible && isHalfDay && halfDaySession ? halfDaySession : null,
+          reason: reasonTrim,
+          supportingDocumentReference: supportingDocRef.trim() || null,
         },
       });
       onSubmitted();
+      resetForm();
       onClose();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to submit leave request');
@@ -58,7 +227,7 @@ const ApplyLeaveModal = ({ isOpen, onClose, leaveTypes, onSubmitted }: ApplyLeav
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Apply for Leave">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Apply for Leave">
       <form onSubmit={handleSubmit} className="space-y-4">
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
@@ -81,6 +250,76 @@ const ApplyLeaveModal = ({ isOpen, onClose, leaveTypes, onSubmitted }: ApplyLeav
           </select>
         </div>
 
+        {leaveTypeId && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-300">
+            <p className="font-medium text-gray-900 dark:text-white">Context</p>
+            <ul className="mt-2 list-inside list-disc space-y-1">
+              <li>
+                Available balance (this year):{' '}
+                <span className="font-mono">{balanceForType?.balanceDays ?? '—'}</span> days
+              </li>
+              {policyForType ? (
+                <>
+                  {policyForType.annualEntitlement != null && (
+                    <li>Policy annual entitlement: {policyForType.annualEntitlement} days</li>
+                  )}
+                  {policyForType.accrualFrequency && (
+                    <li>
+                      Accrual: {policyForType.accrualFrequency}
+                      {policyForType.accrualDays ? ` (${policyForType.accrualDays} days)` : ''}
+                    </li>
+                  )}
+                  {policyForType.maxConsecutiveDays != null && (
+                    <li>Max consecutive: {policyForType.maxConsecutiveDays} days</li>
+                  )}
+                  {policyForType.minNoticeDays != null && (
+                    <li>Min notice: {policyForType.minNoticeDays} days</li>
+                  )}
+                </>
+              ) : (
+                <li>No published policy row for this type — check with HR.</li>
+              )}
+              {requiresDocument && (
+                <li className="font-medium text-amber-800 dark:text-amber-200">
+                  Document reference required when submitting.
+                </li>
+              )}
+              {selectedType?.sandwichRule ? (
+                <li className="font-medium text-amber-800 dark:text-amber-200">
+                  Sandwich rule is on: charged days follow the full calendar span between from and to
+                  (weekends in between count).
+                </li>
+              ) : (
+                <li className="text-gray-600 dark:text-gray-400">
+                  Sandwich rule is off: charged days are weekdays only, excluding public holidays on
+                  tenant calendars (same rule the server applies).
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        {upcomingHolidays.length > 0 && (
+          <div>
+            <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Upcoming holidays
+            </p>
+            <ul className="max-h-28 overflow-y-auto rounded border border-gray-200 text-xs dark:border-gray-600">
+              {upcomingHolidays.slice(0, 12).map((h) => (
+                <li
+                  key={h.id}
+                  className="flex justify-between border-b border-gray-100 px-2 py-1 last:border-0 dark:border-gray-800"
+                >
+                  <span>{h.name}</span>
+                  <span className="font-mono text-gray-500">
+                    {new Date(h.holidayDate).toLocaleDateString('en-IN')} · {h.calendarName}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
             type="date"
@@ -100,44 +339,84 @@ const ApplyLeaveModal = ({ isOpen, onClose, leaveTypes, onSubmitted }: ApplyLeav
           />
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        <label
+          className={`flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 ${
+            !halfDayEligible ? 'cursor-not-allowed opacity-60' : ''
+          }`}
+        >
           <input
             type="checkbox"
-            checked={isHalfDay}
-            onChange={(e) => setIsHalfDay(e.target.checked)}
+            checked={halfDayEligible && isHalfDay}
+            disabled={!halfDayEligible}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setIsHalfDay(on);
+              if (!on) setHalfDaySession('');
+            }}
             className="rounded border-gray-300"
           />
           Half day
+          {!halfDayAllowed && (
+            <span className="text-xs text-gray-500">(not allowed for this leave type)</span>
+          )}
+          {isMultiDay && halfDayAllowed && (
+            <span className="text-xs text-gray-500">(not available for multi-day range)</span>
+          )}
         </label>
 
-        {isHalfDay && (
-          <Input
-            label="Session (e.g. FIRST_HALF)"
-            value={halfDaySession}
-            onChange={(e) => setHalfDaySession(e.target.value)}
-            fullWidth
-            placeholder="Optional"
-          />
+        {halfDayEligible && isHalfDay && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Session <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={halfDaySession}
+              onChange={(e) =>
+                setHalfDaySession(e.target.value as 'FIRST_HALF' | 'SECOND_HALF' | '')
+              }
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              required
+            >
+              <option value="">Select…</option>
+              <option value="FIRST_HALF">First half</option>
+              <option value="SECOND_HALF">Second half</option>
+            </select>
+          </div>
         )}
 
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Reason
+            Reason <span className="text-red-500">*</span>
           </label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
+            required
             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            placeholder="Optional"
+            placeholder="Brief reason for leave"
           />
         </div>
+
+        {(requiresDocument || supportingDocRef.trim()) && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Supporting document reference {requiresDocument && <span className="text-red-500">*</span>}
+            </label>
+            <Input
+              value={supportingDocRef}
+              onChange={(e) => setSupportingDocRef(e.target.value)}
+              fullWidth
+              placeholder="Link to uploaded file or ticket / reference ID"
+            />
+          </div>
+        )}
 
         <div className="flex gap-3">
           <Button type="submit" variant="primary" disabled={submitting || !leaveTypes.length}>
             {submitting ? 'Submitting…' : 'Submit application'}
           </Button>
-          <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
+          <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
             Cancel
           </Button>
         </div>

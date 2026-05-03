@@ -1,9 +1,10 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Card from '../../../components/common/Card';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { CreateTimesheetEntryDocument } from '../../../api/graphql/graphql';
+import { clampIsoDateToRange, timesheetWeekRangeIso } from '../../../utils/timesheetWeek';
 
 interface TimesheetEntryFormProps {
   onClose: () => void;
@@ -11,12 +12,30 @@ interface TimesheetEntryFormProps {
   onCreated: () => void;
 }
 
+function localTodayIso(): string {
+  const n = new Date();
+  const y = n.getFullYear();
+  const m = String(n.getMonth() + 1).padStart(2, '0');
+  const d = String(n.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 const TimesheetEntryForm = ({ onClose, initialDate, onCreated }: TimesheetEntryFormProps) => {
   const client = useGraphClient('client');
-  const today = new Date().toISOString().slice(0, 10);
-  const [workDate, setWorkDate] = useState(
-    initialDate ? new Date(initialDate).toISOString().slice(0, 10) : today
+  const refDay = useMemo(
+    () => (initialDate ? new Date(initialDate) : new Date()),
+    [initialDate]
   );
+  const { start: weekMin, end: weekMax } = useMemo(
+    () => timesheetWeekRangeIso(refDay),
+    [refDay]
+  );
+  const defaultWorkDate = clampIsoDateToRange(localTodayIso(), weekMin, weekMax);
+  const [workDate, setWorkDate] = useState(defaultWorkDate);
+
+  useEffect(() => {
+    setWorkDate((prev) => clampIsoDateToRange(prev, weekMin, weekMax));
+  }, [weekMin, weekMax]);
   const [hoursWorked, setHoursWorked] = useState('8');
   const [projectCode, setProjectCode] = useState('');
   const [description, setDescription] = useState('');
@@ -54,10 +73,15 @@ const TimesheetEntryForm = ({ onClose, initialDate, onCreated }: TimesheetEntryF
           type="date"
           label="Work date"
           value={workDate}
+          min={weekMin}
+          max={weekMax}
           onChange={(e) => setWorkDate(e.target.value)}
           fullWidth
           required
         />
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Choose a date in the current week (Monday–Sunday, local calendar).
+        </p>
         <Input
           label="Hours"
           value={hoursWorked}

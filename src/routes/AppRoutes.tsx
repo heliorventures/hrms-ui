@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { canAccessTenantPath } from '../auth/navAccess';
 import AppLayout from '../components/layout/AppLayout';
 import LoginPage from '../modules/auth/LoginPage';
 import OpsLoginPage from '../modules/ops/OpsLoginPage';
@@ -12,6 +13,8 @@ import OpsFeatureFlagsPage from '../modules/ops/OpsFeatureFlagsPage';
 import Dashboard from '../modules/dashboard/Dashboard';
 import AttendancePage from '../modules/attendance/AttendancePage';
 import LeavePage from '../modules/leave/LeavePage';
+import LeaveHolidaysPage from '../modules/leave/LeaveHolidaysPage';
+import LeaveTeamCalendarPage from '../modules/leave/LeaveTeamCalendarPage';
 import PayrollPage from '../modules/payroll/PayrollPage';
 import PayrollPayPage from '../modules/payroll/PayrollPayPage';
 import PayrollTaxPage from '../modules/payroll/PayrollTaxPage';
@@ -28,6 +31,7 @@ import AdminReportsPage from '../modules/admin/AdminReportsPage';
 import AdminSettingsPage from '../modules/admin/AdminSettingsPage';
 import ModuleHealth from '../modules/admin/ModuleHealth';
 import AdminAttendancePolicyPage from '../modules/admin/AdminAttendancePolicyPage';
+import AdminLeaveSettingsPage from '../modules/admin/AdminLeaveSettingsPage';
 import BenefitsPage from '../modules/workplace/BenefitsPage';
 import RecruitmentPage from '../modules/workplace/RecruitmentPage';
 import OnboardingPage from '../modules/workplace/OnboardingPage';
@@ -39,6 +43,9 @@ import SuccessionPage from '../modules/workplace/SuccessionPage';
 import CompensationPage from '../modules/workplace/CompensationPage';
 import AnalyticsPage from '../modules/insights/AnalyticsPage';
 import AdminWorkflowsPage from '../modules/admin/AdminWorkflowsPage';
+import HrHomePage from '../modules/hr/HrHomePage';
+import HrAccessManagementPage from '../modules/hr/HrAccessManagementPage';
+import HrLeavesPage from '../modules/hr/HrLeavesPage';
 
 const ProtectedLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -57,13 +64,37 @@ const OpsProtectedLayout = () => {
 };
 
 const PayrollAdminRoute = ({ children }: { children: JSX.Element }) => {
-  const { role } = useAuth();
-  if (role !== 'admin') return <Navigate to="/payroll/pay" replace />;
+  const { showTenantAdminNav } = useAuth();
+  if (!showTenantAdminNav) return <Navigate to="/payroll/pay" replace />;
+  return children;
+};
+
+const TenantPermissionRoute = ({
+  tenantPath,
+  children,
+}: {
+  tenantPath: string;
+  children: JSX.Element;
+}) => {
+  const { isElevated, can, clientSession, showTenantAdminNav, showHrNav } = useAuth();
+  const jwtPermissionCount = clientSession?.permissions.size ?? 0;
+  if (
+    !canAccessTenantPath(tenantPath, {
+      isElevated,
+      can,
+      jwtPermissionCount,
+      showTenantAdminNav,
+      showHrNav,
+      clientSession,
+    })
+  ) {
+    return <Navigate to="/dashboard" replace />;
+  }
   return children;
 };
 
 const AppRoutes = () => {
-  const { role, isAuthenticated, isOpsAuthenticated } = useAuth();
+  const { showTenantAdminNav, isAuthenticated, isOpsAuthenticated } = useAuth();
 
   return (
     <Routes>
@@ -73,9 +104,7 @@ const AppRoutes = () => {
       />
       <Route
         path="/ops/login"
-        element={
-          isOpsAuthenticated ? <Navigate to="/ops/tenants" replace /> : <OpsLoginPage />
-        }
+        element={isOpsAuthenticated ? <Navigate to="/ops/tenants" replace /> : <OpsLoginPage />}
       />
 
       <Route path="/ops" element={<OpsProtectedLayout />}>
@@ -93,6 +122,8 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="insights" element={<AnalyticsPage />} />
         <Route path="attendance" element={<AttendancePage />} />
+        <Route path="leave/holidays" element={<LeaveHolidaysPage />} />
+        <Route path="leave/team-calendar" element={<LeaveTeamCalendarPage />} />
         <Route path="leave" element={<LeavePage />} />
         <Route path="payroll" element={<Navigate to="/payroll/payslips" replace />} />
         <Route path="payroll/payslips" element={<PayrollPage />} />
@@ -130,15 +161,107 @@ const AppRoutes = () => {
         <Route path="workplace/learning" element={<LearningPage />} />
         <Route path="workplace/assets" element={<AssetsPage />} />
         <Route path="workplace/grievance" element={<GrievancePage />} />
-        <Route path="workplace/workflows" element={<AdminWorkflowsPage />} />
+        <Route
+          path="workplace/workflows"
+          element={
+            <TenantPermissionRoute tenantPath="/workplace/workflows">
+              <AdminWorkflowsPage />
+            </TenantPermissionRoute>
+          }
+        />
 
-        {role === 'admin' && (
+        <Route
+          path="hr"
+          element={
+            <TenantPermissionRoute tenantPath="/hr">
+              <HrHomePage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="hr/people"
+          element={
+            <TenantPermissionRoute tenantPath="/hr/people">
+              <AdminEmployeesPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="hr/leaves"
+          element={
+            <TenantPermissionRoute tenantPath="/hr/leaves">
+              <HrLeavesPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="hr/leave-settings"
+          element={
+            <TenantPermissionRoute tenantPath="/hr/leave-settings">
+              <AdminLeaveSettingsPage />
+            </TenantPermissionRoute>
+          }
+        />
+        <Route
+          path="hr/access"
+          element={
+            <TenantPermissionRoute tenantPath="/hr/access">
+              <HrAccessManagementPage />
+            </TenantPermissionRoute>
+          }
+        />
+
+        <Route
+          path="admin/leave-settings"
+          element={
+            <TenantPermissionRoute tenantPath="/admin/leave-settings">
+              <AdminLeaveSettingsPage />
+            </TenantPermissionRoute>
+          }
+        />
+
+        {showTenantAdminNav && (
           <>
-            <Route path="admin/employees" element={<AdminEmployeesPage />} />
-            <Route path="admin/attendance-policy" element={<AdminAttendancePolicyPage />} />
-            <Route path="admin/reports" element={<AdminReportsPage />} />
-            <Route path="admin/settings" element={<AdminSettingsPage />} />
-            <Route path="admin/module-health" element={<ModuleHealth />} />
+            <Route
+              path="admin/employees"
+              element={
+                <TenantPermissionRoute tenantPath="/admin/employees">
+                  <AdminEmployeesPage />
+                </TenantPermissionRoute>
+              }
+            />
+            <Route
+              path="admin/attendance-policy"
+              element={
+                <TenantPermissionRoute tenantPath="/admin/attendance-policy">
+                  <AdminAttendancePolicyPage />
+                </TenantPermissionRoute>
+              }
+            />
+            <Route
+              path="admin/reports"
+              element={
+                <TenantPermissionRoute tenantPath="/admin/reports">
+                  <AdminReportsPage />
+                </TenantPermissionRoute>
+              }
+            />
+            <Route
+              path="admin/settings"
+              element={
+                <TenantPermissionRoute tenantPath="/admin/settings">
+                  <AdminSettingsPage />
+                </TenantPermissionRoute>
+              }
+            />
+            <Route
+              path="admin/module-health"
+              element={
+                <TenantPermissionRoute tenantPath="/admin/module-health">
+                  <ModuleHealth />
+                </TenantPermissionRoute>
+              }
+            />
           </>
         )}
 

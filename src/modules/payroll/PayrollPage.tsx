@@ -63,8 +63,8 @@ interface PayrollBoardData {
 
 const PayrollPage = () => {
   const client = useGraphClient('client');
-  const { role } = useAuth();
-  const isPayrollAdmin = role === 'admin';
+  const { isElevated } = useAuth();
+  const isPayrollAdmin = isElevated;
   const [data, setData] = useState<PayrollBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
