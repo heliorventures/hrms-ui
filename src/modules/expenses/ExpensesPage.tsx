@@ -100,6 +100,7 @@ const ExpensesPage = () => {
     maxAmountPerClaim?: string | null;
     receiptRequired: boolean;
     limitPerMonth?: string | null;
+    limitPerDay?: string | null;
   } | null>(null);
   const [receiptFileStorageId, setReceiptFileStorageId] = useState('');
   const [approveTarget, setApproveTarget] = useState<
@@ -155,6 +156,7 @@ const ExpensesPage = () => {
             maxAmountPerClaim?: string | null;
             receiptRequired: boolean;
             limitPerMonth?: string | null;
+            limitPerDay?: string | null;
           };
         };
         const r = await client.request<H>(ExpenseSubmissionHintsDocument, {
@@ -580,6 +582,19 @@ const ExpensesPage = () => {
                 <p className={submissionHints.maxAmountPerClaim ? 'mt-1' : ''}>
                   Monthly limit (category):{' '}
                   <strong>{formatCurrency(submissionHints.limitPerMonth, currency.trim() || 'INR')}</strong>
+                </p>
+              ) : null}
+              {submissionHints.limitPerDay ? (
+                <p
+                  className={
+                    submissionHints.maxAmountPerClaim || submissionHints.limitPerMonth ? 'mt-1' : ''
+                  }
+                >
+                  Daily limit (policy):{' '}
+                  <strong>{formatCurrency(submissionHints.limitPerDay, currency.trim() || 'INR')}</strong>{' '}
+                  <span className="font-normal text-gray-600 dark:text-gray-400">
+                    (included in max per claim when lower)
+                  </span>
                 </p>
               ) : null}
               {submissionHints.receiptRequired ? (

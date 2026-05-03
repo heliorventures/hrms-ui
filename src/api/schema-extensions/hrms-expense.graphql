@@ -52,6 +52,8 @@ type ExpenseSubmissionHints {
   maxAmountPerClaim: String
   receiptRequired: Boolean!
   limitPerMonth: String
+  """Policy per-day ceiling for the matched tier (may also tighten max per claim)."""
+  limitPerDay: String
 }
 
 type ExpensePolicy {
