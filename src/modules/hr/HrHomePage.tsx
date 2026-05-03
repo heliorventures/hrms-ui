@@ -1,7 +1,14 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { canAccessTenantPath } from '../../auth/navAccess';
 import Card from '../../components/common/Card';
+import { useAuth } from '../../contexts/AuthContext';
 
 const HrHomePage = () => {
+  const { can, clientSession } = useAuth();
+  const navOpts = useMemo(() => ({ can, clientSession }), [can, clientSession]);
+  const canConfigureLeaveSettings = canAccessTenantPath('/admin/leave-settings', navOpts);
+
   return (
     <div className="space-y-6">
       <div>
@@ -27,8 +34,20 @@ const HrHomePage = () => {
         <Card title="Leave">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Self-service apply and balances on <span className="font-mono text-xs">/leave</span>; HR-focused
-            approval queue with employee names. Leave types, policies, and holidays are configured under{' '}
-            <span className="font-mono text-xs">Admin → Leave settings</span>.
+            approval queue with employee names.
+            {canConfigureLeaveSettings ? (
+              <>
+                {' '}
+                Leave types, policies, and holidays are configured under{' '}
+                <span className="font-mono text-xs">Admin → Leave settings</span>.
+              </>
+            ) : (
+              <>
+                {' '}
+                Configuration of leave types and holidays requires{' '}
+                <span className="font-mono text-xs">leave:manage</span> (tenant admin / HR).
+              </>
+            )}
           </p>
           <div className="mt-3 flex flex-wrap gap-3 text-sm font-medium">
             <Link
@@ -43,12 +62,14 @@ const HrHomePage = () => {
             >
               Approval queue →
             </Link>
-            <Link
-              className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-              to="/admin/leave-settings"
-            >
-              Leave types, policies, balances & holidays →
-            </Link>
+            {canConfigureLeaveSettings ? (
+              <Link
+                className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                to="/admin/leave-settings"
+              >
+                Leave types, policies, balances & holidays →
+              </Link>
+            ) : null}
           </div>
         </Card>
         <Card title="Workflows">

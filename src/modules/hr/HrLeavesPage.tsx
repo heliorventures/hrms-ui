@@ -6,6 +6,7 @@ import {
   canApproveLeaveRequestRow,
   showLeaveApprovalColumn,
 } from '../../auth/leaveApprovalUi';
+import { canAccessTenantPath } from '../../auth/navAccess';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import ApplyLeaveModal from '../leave/components/ApplyLeaveModal';
@@ -26,6 +27,11 @@ import {
 
 type LeaveFilter = 'pending' | 'all' | 'approved' | 'rejected' | 'cancelled';
 
+/** Mutation payload shape for `ApproveLeaveRequestDocument` (codegen types optional). */
+type ApproveLeaveRequestMutation = {
+  approveLeaveRequest: { status: string };
+};
+
 const HR_LEAVE_LIMIT = 120;
 
 const HrLeavesPage = () => {
@@ -33,11 +39,21 @@ const HrLeavesPage = () => {
   const { can, clientSession } = useAuth();
   const client = useGraphClient('client');
 
+  const canConfigureLeaveSettings = useMemo(
+    () =>
+      canAccessTenantPath('/admin/leave-settings', {
+        can,
+        clientSession,
+      }),
+    [can, clientSession]
+  );
+
   const [data, setData] = useState<LeaveBoardQuery | null>(null);
   const [orgChartRows, setOrgChartRows] = useState<OrgChartQuery['orgChart']>([]);
   const [orgLabels, setOrgLabels] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
   const [filter, setFilter] = useState<LeaveFilter>('pending');
   const [applyOpen, setApplyOpen] = useState(false);
   const [rejectLeaveId, setRejectLeaveId] = useState<string | null>(null);
@@ -128,9 +144,18 @@ const HrLeavesPage = () => {
 
   const handleApprove = async (leaveRequestId: string) => {
     setApproveBusyId(leaveRequestId);
+    setApproveWorkflowNotice(null);
     try {
-      await client.request(ApproveLeaveRequestDocument, { leaveRequestId });
+      const res = await client.request<ApproveLeaveRequestMutation>(ApproveLeaveRequestDocument, {
+        leaveRequestId,
+      });
       await silentRefreshBoard();
+      const st = res.approveLeaveRequest?.status?.toLowerCase() ?? '';
+      setApproveWorkflowNotice(
+        st === 'pending'
+          ? 'Approval was accepted; if this row still shows Pending, choose Refresh.'
+          : null
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Approve failed');
     } finally {
@@ -263,13 +288,15 @@ const HrLeavesPage = () => {
           >
             {loading ? 'Refreshing…' : 'Refresh'}
           </Button>
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => void navigate('/admin/leave-settings')}
-          >
-            Leave & holidays setup
-          </Button>
+          {canConfigureLeaveSettings ? (
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => void navigate('/admin/leave-settings')}
+            >
+              Leave & holidays setup
+            </Button>
+          ) : null}
           <Button variant="primary" type="button" onClick={() => setApplyOpen(true)} disabled={loading}>
             Apply for leave
           </Button>
@@ -300,6 +327,12 @@ const HrLeavesPage = () => {
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </Card>
+      )}
+
+      {approveWorkflowNotice && (
+        <Card>
+          <p className="text-sm text-sky-800 dark:text-sky-200">{approveWorkflowNotice}</p>
         </Card>
       )}
 

@@ -26,6 +26,11 @@ import {
   type OrgChartQuery,
 } from '../../api/graphql/graphql';
 
+/** Mutation payload shape for `ApproveLeaveRequestDocument`. */
+type ApproveLeaveRequestMutation = {
+  approveLeaveRequest: { status: string };
+};
+
 const LeavePage = () => {
   const { can, clientSession } = useAuth();
   const client = useGraphClient('client');
@@ -36,6 +41,7 @@ const LeavePage = () => {
   const [orgLabels, setOrgLabels] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
   const [applyOpen, setApplyOpen] = useState(false);
   const [rejectLeaveId, setRejectLeaveId] = useState<string | null>(null);
   const [approveBusyId, setApproveBusyId] = useState<string | null>(null);
@@ -172,9 +178,18 @@ const LeavePage = () => {
 
   const handleApprove = async (leaveRequestId: string) => {
     setApproveBusyId(leaveRequestId);
+    setApproveWorkflowNotice(null);
     try {
-      await client.request(ApproveLeaveRequestDocument, { leaveRequestId });
+      const res = await client.request<ApproveLeaveRequestMutation>(ApproveLeaveRequestDocument, {
+        leaveRequestId,
+      });
       await silentRefreshBoard();
+      const st = res.approveLeaveRequest?.status?.toLowerCase() ?? '';
+      setApproveWorkflowNotice(
+        st === 'pending'
+          ? 'Approval was accepted; if this row still shows Pending, choose Refresh.'
+          : null
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Approve failed');
     } finally {
@@ -315,6 +330,12 @@ const LeavePage = () => {
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </Card>
+      )}
+
+      {approveWorkflowNotice && (
+        <Card>
+          <p className="text-sm text-sky-800 dark:text-sky-200">{approveWorkflowNotice}</p>
         </Card>
       )}
 

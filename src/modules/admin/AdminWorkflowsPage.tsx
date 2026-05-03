@@ -174,7 +174,7 @@ const AdminWorkflowsPage = () => {
     <div className="space-y-6">
       <PageHeader
         title="Workflows"
-        description="Definitions, steps, and in-flight instances. Create definitions and drag steps to reorder (requires HR / tenant admin or workflow:manage). Leave workflows use entity type LEAVE_REQUEST; runtime still lives in kabipay-leave."
+        description="Definitions, steps, and in-flight instances. Leave: use approver type REPORTING_MANAGER_OR_ROLE plus approverRoleId (HR role) for one-step manager-or-HR approval; runtime enforcement is in kabipay-leave."
       />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Create workflow">
@@ -270,7 +270,7 @@ const AdminWorkflowsPage = () => {
               value={sApprover}
               onChange={(e) => setSApprover(e.target.value)}
               fullWidth
-              placeholder="e.g. MANAGER, HR"
+              placeholder="REPORTING_MANAGER | ROLE | REPORTING_MANAGER_OR_ROLE (+ role id)"
             />
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
               <input type="checkbox" checked={sSkip} onChange={(e) => setSSkip(e.target.checked)} />
