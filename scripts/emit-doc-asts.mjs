@@ -54,6 +54,8 @@ const expenseBoard = `query ExpenseBoard($limit: Int! = 20) {
     expenseDate
     title
     status
+    pendingApprovalStage
+    viewerMayApprove
     submittedAt
   }
   travelRequests(limit: $limit) {
@@ -67,6 +69,8 @@ const expenseBoard = `query ExpenseBoard($limit: Int! = 20) {
     estimatedAmount
     currency
     status
+    pendingApprovalStage
+    viewerMayApprove
     submittedAt
   }
 }`;

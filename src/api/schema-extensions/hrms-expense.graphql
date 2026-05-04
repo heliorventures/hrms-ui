@@ -6,6 +6,15 @@ extend type Expense {
   paidAt: DateTime
   paymentReference: String
   receiptFileStorageId: ID
+  """Configured workflow step title when status is PENDING and a multi-step workflow is waiting (from `workflow_step.step_name`)."""
+  pendingApprovalStage: String
+  """True when the signed-in user may approve or reject this claim at the current workflow step (or legacy permission when no workflow)."""
+  viewerMayApprove: Boolean!
+}
+
+extend type TravelRequest {
+  pendingApprovalStage: String
+  viewerMayApprove: Boolean!
 }
 
 input UpsertExpenseCategoryAdminInput {

@@ -755,6 +755,67 @@ mutation UpdateEmployee($input: UpdateEmployeeInput!) {
   }
 }
 
+mutation UpdateEmployeePersonalProfile($input: UpdateEmployeePersonalProfileInput!) {
+  updateEmployeePersonalProfile(input: $input) {
+    id
+    firstName
+    lastName
+    fullName
+    dateOfBirth
+    gender
+    nationality
+    bloodGroup
+    emergencyContactName
+    emergencyContactPhone
+    emergencyContactRelation
+  }
+}
+
+mutation UpsertEmployeePrimaryBank($input: UpsertEmployeePrimaryBankInput!) {
+  upsertEmployeePrimaryBank(input: $input) {
+    id
+    bankName
+    accountNumberMasked
+    ifscCode
+    accountType
+    isVerified
+  }
+}
+
+mutation UpsertEmployeePrimaryPan($input: UpsertEmployeePrimaryPanInput!) {
+  upsertEmployeePrimaryPan(input: $input) {
+    id
+    maskedPan
+    isVerified
+  }
+}
+
+mutation UpsertEmployeePrimaryAadhaar($input: UpsertEmployeePrimaryAadhaarInput!) {
+  upsertEmployeePrimaryAadhaar(input: $input) {
+    id
+    maskedAadhaar
+    isVerified
+  }
+}
+
+mutation UploadEmployeeDocumentProfile($input: UploadEmployeeDocumentInput!) {
+  uploadEmployeeDocument(input: $input) {
+    id
+    status
+    documentTypeId
+    originalFileName
+    documentTypeName
+    uploadedAt
+  }
+}
+
+mutation ResolveEmployeeDocument($employeeDocumentId: ID!, $approved: Boolean!) {
+  resolveEmployeeDocument(employeeDocumentId: $employeeDocumentId, approved: $approved) {
+    id
+    status
+  }
+}
+
 query OrgDepartments($limit: Int! = 100) {
   departments(limit: $limit) {
     id
@@ -1212,6 +1273,8 @@ query ExpenseBoard($limit: Int! = 20) {
     expenseDate
     title
     status
+    pendingApprovalStage
+    viewerMayApprove
     submittedAt
     approvedAmount
     paymentStatus
@@ -1230,6 +1293,8 @@ query ExpenseBoard($limit: Int! = 20) {
     estimatedAmount
     currency
     status
+    pendingApprovalStage
+    viewerMayApprove
     rejectionReason
     approvedBy
     rejectedBy
@@ -1855,6 +1920,13 @@ query ClientOpsEmployeeDetail($id: ID!) {
     status
     employmentType
     dateOfJoining
+    dateOfBirth
+    gender
+    nationality
+    bloodGroup
+    emergencyContactName
+    emergencyContactPhone
+    emergencyContactRelation
     departmentId
     designationId
     reportingManagerId
@@ -1865,6 +1937,79 @@ query ClientOpsEmployeeDetail($id: ID!) {
     reportingManagerName
     createdAt
     updatedAt
+  }
+}
+
+query EmployeeProfileBundle($employeeId: ID!) {
+  employee(id: $employeeId) {
+    id
+    employeeCode
+    firstName
+    lastName
+    fullName
+    status
+    employmentType
+    dateOfJoining
+    dateOfBirth
+    gender
+    nationality
+    bloodGroup
+    emergencyContactName
+    emergencyContactPhone
+    emergencyContactRelation
+    departmentId
+    designationId
+    reportingManagerId
+    userId
+    departmentName
+    designationTitle
+    linkedUserEmail
+    reportingManagerName
+    createdAt
+    updatedAt
+  }
+  employeeDocuments(employeeId: $employeeId, limit: 50) {
+    id
+    documentTypeId
+    status
+    uploadedAt
+    originalFileName
+    uploadedByUserId
+    documentTypeName
+    documentTypeCategory
+  }
+  documentTypes(limit: 100) {
+    id
+    name
+    category
+  }
+  employmentHistoryRecords(employeeId: $employeeId, limit: 48) {
+    id
+    monthlySalary
+    effectiveFrom
+    effectiveTo
+    changeReason
+    updatedAt
+  }
+  employeePrimaryBank(employeeId: $employeeId) {
+    id
+    bankName
+    accountNumberMasked
+    ifscCode
+    accountType
+    isVerified
+  }
+  employeeIdentityProfile(employeeId: $employeeId) {
+    pan {
+      id
+      maskedPan
+      isVerified
+    }
+    aadhaar {
+      id
+      maskedAadhaar
+      isVerified
+    }
   }
 }
 

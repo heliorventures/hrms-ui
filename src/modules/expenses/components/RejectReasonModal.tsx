@@ -2,6 +2,7 @@ import { FormEvent, useState } from 'react';
 import Modal from '../../../components/common/Modal';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 export interface RejectReasonModalProps {
   isOpen: boolean;
@@ -42,7 +43,7 @@ const RejectReasonModal = ({
       await onConfirm(r.length > 0 ? r : null);
       handleClose();
     } catch (ex) {
-      setErr(ex instanceof Error ? ex.message : 'Request failed');
+      setErr(graphQlUserMessage(ex));
     } finally {
       setBusy(false);
     }

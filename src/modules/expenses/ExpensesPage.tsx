@@ -11,6 +11,7 @@ import { hasBroadDataScopeForResource } from '../../auth/approvalScope';
 import { useAuth } from '../../contexts/AuthContext';
 import { canApproveExpenseFromAccessToken, canMarkExpensePaymentFromAccessToken } from '../../auth/clientJwt';
 import { getClientAccessToken } from '../../auth/tokenStore';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import SubmitTravelModal from './components/SubmitTravelModal';
 import RejectReasonModal from './components/RejectReasonModal';
 import {
@@ -22,7 +23,10 @@ import {
   RejectExpenseDocument,
   RejectTravelRequestDocument,
   SubmitExpenseDocument,
+  type ApproveExpenseMutation,
+  type ApproveTravelRequestMutation,
   type ExpenseSubmissionHintsQuery,
+  type MarkExpensePaymentStatusMutation,
 } from '../../api/graphql/graphql';
 
 interface ExpenseCategoryRow {
@@ -44,6 +48,10 @@ interface ExpenseRow {
   expenseDate: string;
   title: string;
   status: string;
+  /** Workflow step name while PENDING and multi-step approval is in progress. */
+  pendingApprovalStage?: string | null;
+  /** False when PENDING but this user is not the current step approver (e.g. waiting on HR). */
+  viewerMayApprove: boolean;
   submittedAt: string;
   approvedAmount?: string | null;
   paymentStatus?: string | null;
@@ -63,6 +71,8 @@ interface TravelRequestRow {
   estimatedAmount?: string | null;
   currency: string;
   status: string;
+  pendingApprovalStage?: string | null;
+  viewerMayApprove: boolean;
   rejectionReason?: string | null;
   approvedBy?: string | null;
   rejectedBy?: string | null;
@@ -76,13 +86,18 @@ interface ExpenseBoardData {
   travelRequests: TravelRequestRow[];
 }
 
+type PageNotice = {
+  variant: 'error' | 'info' | 'success';
+  message: string;
+};
+
 // eslint-disable-next-line max-lines-per-function -- single route module
 const ExpensesPage = () => {
   const { isAuthenticated, user, clientSession, can } = useAuth();
   const client = useGraphClient('client');
   const [data, setData] = useState<ExpenseBoardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [pageNotice, setPageNotice] = useState<PageNotice | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [amount, setAmount] = useState('');
@@ -104,6 +119,7 @@ const ExpensesPage = () => {
   const [approveTarget, setApproveTarget] = useState<
     null | { id: string; claimAmount: string; currency: string; draftApprove: string }
   >(null);
+  const [approveModalError, setApproveModalError] = useState<string | null>(null);
 
   const token = getClientAccessToken();
   const canApprove =
@@ -125,12 +141,15 @@ const ExpensesPage = () => {
     (async () => {
       try {
         setLoading(true);
-        setError(null);
+        setPageNotice(null);
         const result = await loadBoard();
         if (!cancelled) setData(result);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load expense data');
+          setPageNotice({
+            variant: 'error',
+            message: graphQlUserMessage(e),
+          });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -163,6 +182,7 @@ const ExpensesPage = () => {
   }, [submitOpen, categoryId, client]);
 
   const openApproveExpenseModal = (row: ExpenseRow) => {
+    setApproveModalError(null);
     setApproveTarget({
       id: row.id,
       claimAmount: row.amount,
@@ -173,18 +193,40 @@ const ExpensesPage = () => {
 
   const confirmApproveExpense = async () => {
     if (!approveTarget) return;
+    setApproveModalError(null);
     setApproverBusy(`e:${approveTarget.id}`);
     try {
       const d = approveTarget.draftApprove.trim();
       const same = d === approveTarget.claimAmount.trim();
-      await client.request(ApproveExpenseDocument, {
+      const result = await client.request<ApproveExpenseMutation>(ApproveExpenseDocument, {
         expenseId: approveTarget.id,
         ...(same ? {} : { approvedAmount: d }),
       });
+      const exp = result.approveExpense;
       setData(await loadBoard());
       setApproveTarget(null);
+
+      const st = exp.status.toUpperCase();
+      if (st === 'PENDING' && exp.workflowInstanceId) {
+        setPageNotice({
+          variant: 'info',
+          message:
+            'Your approval was saved. This claim still shows Pending because multi-step approval is in progress — another approver must complete the workflow before it becomes fully approved.',
+        });
+      } else if (st === 'PARTIAL_APPROVED') {
+        setPageNotice({
+          variant: 'success',
+          message:
+            'Partial approval recorded. The reimbursable amount is now the approved amount shown in the table.',
+        });
+      } else if (st === 'APPROVED') {
+        setPageNotice({
+          variant: 'success',
+          message: 'Expense claim fully approved.',
+        });
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Approve expense failed');
+      setApproveModalError(graphQlUserMessage(e));
     } finally {
       setApproverBusy(null);
     }
@@ -193,14 +235,18 @@ const ExpensesPage = () => {
   const runMarkExpensePaid = async (expenseId: string) => {
     setApproverBusy(`pay:${expenseId}`);
     try {
-      await client.request(MarkExpensePaymentStatusDocument, {
+      await client.request<MarkExpensePaymentStatusMutation>(MarkExpensePaymentStatusDocument, {
         expenseId,
         paymentStatus: 'PAID',
         paymentReference: undefined,
       });
       setData(await loadBoard());
+      setPageNotice({ variant: 'success', message: 'Payment marked as paid.' });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Update payment failed');
+      setPageNotice({
+        variant: 'error',
+        message: graphQlUserMessage(e),
+      });
     } finally {
       setApproverBusy(null);
     }
@@ -226,9 +272,7 @@ const ExpensesPage = () => {
         }
         setData(await loadBoard());
       } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Reject failed';
-        setError(msg);
-        throw e;
+        throw new Error(graphQlUserMessage(e));
       } finally {
         setApproverBusy(null);
       }
@@ -239,10 +283,26 @@ const ExpensesPage = () => {
   const runApproveTravel = async (travelRequestId: string) => {
     setApproverBusy(`t:${travelRequestId}`);
     try {
-      await client.request(ApproveTravelRequestDocument, { travelRequestId });
+      const result = await client.request<ApproveTravelRequestMutation>(ApproveTravelRequestDocument, {
+        travelRequestId,
+      });
+      const t = result.approveTravelRequest;
       setData(await loadBoard());
+      const st = t.status.toUpperCase();
+      if (st === 'PENDING' && t.workflowInstanceId) {
+        setPageNotice({
+          variant: 'info',
+          message:
+            'Your approval was saved. This travel request still shows Pending until the next approver in the workflow completes their step.',
+        });
+      } else if (st === 'APPROVED') {
+        setPageNotice({ variant: 'success', message: 'Travel request approved.' });
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Approve travel failed');
+      setPageNotice({
+        variant: 'error',
+        message: graphQlUserMessage(e),
+      });
     } finally {
       setApproverBusy(null);
     }
@@ -278,7 +338,7 @@ const ExpensesPage = () => {
       setReceiptFileStorageId('');
       setSubmissionHints(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Submit failed');
+      setFormError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -386,7 +446,17 @@ const ExpensesPage = () => {
       key: 'status',
       label: 'Status',
       render: (expense: ExpenseRow) => (
-        <Badge variant={getExpenseStatusVariant(expense.status)}>{expense.status}</Badge>
+        <div className="flex flex-col gap-1">
+          <Badge variant={getExpenseStatusVariant(expense.status)}>{expense.status}</Badge>
+          {expense.pendingApprovalStage ? (
+            <span
+              className="max-w-[12rem] text-xs leading-snug text-sky-800 dark:text-sky-200"
+              title={expense.pendingApprovalStage}
+            >
+              Awaiting: {expense.pendingApprovalStage}
+            </span>
+          ) : null}
+        </div>
       ),
     },
     {
@@ -406,12 +476,18 @@ const ExpensesPage = () => {
               const pay = (expense.paymentStatus || 'NONE').toUpperCase();
               const showMarkPaid =
                 financiallyDone && pay !== 'PAID' && canMarkExpensePayment;
+              const mayAct = expense.viewerMayApprove === true;
               if (!pending && !showMarkPaid) {
                 return <span className="text-gray-400">—</span>;
               }
               return (
-                <div className="flex flex-wrap gap-2">
-                  {pending && canApprove ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  {pending && canApprove && !mayAct ? (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Awaiting another approver
+                    </span>
+                  ) : null}
+                  {pending && canApprove && mayAct ? (
                     <>
                       <Button
                         variant="secondary"
@@ -468,6 +544,29 @@ const ExpensesPage = () => {
         </div>
       </div>
 
+      {pageNotice ? (
+        <div
+          role={pageNotice.variant === 'error' ? 'alert' : 'status'}
+          className={
+            pageNotice.variant === 'error'
+              ? 'flex gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100'
+              : pageNotice.variant === 'success'
+                ? 'flex gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100'
+                : 'flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-900/45 dark:bg-amber-950/35 dark:text-amber-100'
+          }
+        >
+          <p className="min-w-0 flex-1 leading-relaxed">{pageNotice.message}</p>
+          <button
+            type="button"
+            className="shrink-0 rounded-md px-2 py-0.5 text-sm font-medium opacity-70 hover:bg-black/10 hover:opacity-100 dark:hover:bg-white/10"
+            onClick={() => setPageNotice(null)}
+            aria-label="Dismiss notification"
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
+
       {canApprove && (
         <p className="text-sm text-gray-600 dark:text-gray-400">
           You may see approval actions if you have <code className="text-xs">expense:approve</code>,
@@ -476,7 +575,8 @@ const ExpensesPage = () => {
           a second line such as the <strong>accounting role</strong> ({' '}
           <span className="font-mono text-xs">TRAVEL_REQUEST</span> /
           <span className="font-mono text-xs"> EXPENSE</span> workflows) — out-of-order approvers
-          are rejected server-side.
+          are rejected server-side. After you approve, the row shows the <strong>next</strong> workflow
+          stage; your Approve/Reject actions stay hidden until another request needs you.
         </p>
       )}
 
@@ -489,11 +589,23 @@ const ExpensesPage = () => {
 
       <Modal
         isOpen={approveTarget !== null}
-        onClose={() => setApproveTarget(null)}
+        onClose={() => {
+          if (approverBusy) return;
+          setApproveModalError(null);
+          setApproveTarget(null);
+        }}
         title="Approve expense claim"
       >
         {approveTarget ? (
           <div className="space-y-4">
+            {approveModalError ? (
+              <p
+                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100"
+                role="alert"
+              >
+                {approveModalError}
+              </p>
+            ) : null}
             <p className="text-sm text-gray-700 dark:text-gray-300">
               Claimed{' '}
               <strong>{formatCurrency(approveTarget.claimAmount, approveTarget.currency)}</strong>.
@@ -519,9 +631,17 @@ const ExpensesPage = () => {
                 disabled={!!approverBusy}
                 onClick={() => void confirmApproveExpense()}
               >
-                Submit approval
+                {approverBusy ? 'Submitting…' : 'Submit approval'}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setApproveTarget(null)}>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!!approverBusy}
+                onClick={() => {
+                  setApproveModalError(null);
+                  setApproveTarget(null);
+                }}
+              >
                 Cancel
               </Button>
             </div>
@@ -670,12 +790,6 @@ const ExpensesPage = () => {
         </form>
       </Modal>
 
-      {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
-      )}
-
       <Card title="Expense Categories">
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading categories...</p>
@@ -771,7 +885,17 @@ const ExpensesPage = () => {
                 key: 'status',
                 label: 'Status',
                 render: (t: TravelRequestRow) => (
-                  <Badge variant={getExpenseStatusVariant(t.status)}>{t.status}</Badge>
+                  <div className="flex flex-col gap-1">
+                    <Badge variant={getExpenseStatusVariant(t.status)}>{t.status}</Badge>
+                    {t.pendingApprovalStage ? (
+                      <span
+                        className="max-w-[12rem] text-xs leading-snug text-sky-800 dark:text-sky-200"
+                        title={t.pendingApprovalStage}
+                      >
+                        Awaiting: {t.pendingApprovalStage}
+                      </span>
+                    ) : null}
+                  </div>
                 ),
               },
               {
@@ -826,8 +950,20 @@ const ExpensesPage = () => {
                     {
                       key: 'travelApproverActions',
                       label: 'Actions',
-                      render: (t: TravelRequestRow) =>
-                        t.status.toUpperCase() === 'PENDING' ? (
+                      render: (t: TravelRequestRow) => {
+                        const pending = t.status.toUpperCase() === 'PENDING';
+                        const mayAct = t.viewerMayApprove === true;
+                        if (!pending) {
+                          return <span className="text-gray-400">—</span>;
+                        }
+                        if (!mayAct) {
+                          return (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              Awaiting another approver
+                            </span>
+                          );
+                        }
+                        return (
                           <div className="flex flex-wrap gap-2">
                             <Button
                               variant="secondary"
@@ -846,9 +982,8 @@ const ExpensesPage = () => {
                               Reject
                             </Button>
                           </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        ),
+                        );
+                      },
                     },
                   ]
                 : []),

@@ -1,0 +1,97 @@
+# Employee profile + HR document workflow (kabipay-employee). Merged for codegen when gateway is behind.
+
+extend type Employee {
+  dateOfBirth: NaiveDate
+  gender: String
+  nationality: String
+  bloodGroup: String
+  emergencyContactName: String
+  emergencyContactPhone: String
+  emergencyContactRelation: String
+}
+
+extend type EmployeeDocument {
+  originalFileName: String
+  uploadedByUserId: ID
+  documentTypeName: String
+  documentTypeCategory: String
+}
+
+extend type Query {
+  employeePrimaryBank(employeeId: ID!): EmployeeBankAccount
+  employeeIdentityProfile(employeeId: ID!): EmployeeIdentityProfile!
+}
+
+type EmployeeBankAccount {
+  id: ID!
+  bankName: String!
+  accountNumberMasked: String!
+  ifscCode: String!
+  accountType: String
+  isVerified: Boolean!
+}
+
+type EmployeePanRecord {
+  id: ID!
+  maskedPan: String!
+  isVerified: Boolean!
+}
+
+type EmployeeAadhaarRecord {
+  id: ID!
+  maskedAadhaar: String!
+  isVerified: Boolean!
+}
+
+type EmployeeIdentityProfile {
+  pan: EmployeePanRecord
+  aadhaar: EmployeeAadhaarRecord
+}
+
+input UpdateEmployeePersonalProfileInput {
+  employeeId: ID!
+  firstName: String
+  lastName: String
+  dateOfBirth: NaiveDate
+  gender: String
+  nationality: String
+  bloodGroup: String
+  emergencyContactName: String
+  emergencyContactPhone: String
+  emergencyContactRelation: String
+}
+
+input UpsertEmployeePrimaryBankInput {
+  employeeId: ID!
+  bankName: String!
+  accountNumber: String!
+  ifscCode: String!
+  accountType: String
+}
+
+input UpsertEmployeePrimaryPanInput {
+  employeeId: ID!
+  panNumber: String!
+}
+
+input UpsertEmployeePrimaryAadhaarInput {
+  employeeId: ID!
+  aadhaarNumber: String!
+}
+
+input UploadEmployeeDocumentInput {
+  employeeId: ID!
+  documentTypeId: ID!
+  fileName: String!
+  mimeType: String
+  contentBase64: String!
+}
+
+extend type Mutation {
+  updateEmployeePersonalProfile(input: UpdateEmployeePersonalProfileInput!): Employee!
+  upsertEmployeePrimaryBank(input: UpsertEmployeePrimaryBankInput!): EmployeeBankAccount!
+  upsertEmployeePrimaryPan(input: UpsertEmployeePrimaryPanInput!): EmployeePanRecord!
+  upsertEmployeePrimaryAadhaar(input: UpsertEmployeePrimaryAadhaarInput!): EmployeeAadhaarRecord!
+  uploadEmployeeDocument(input: UploadEmployeeDocumentInput!): EmployeeDocument!
+  resolveEmployeeDocument(employeeDocumentId: ID!, approved: Boolean!): EmployeeDocument!
+}
