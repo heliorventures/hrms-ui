@@ -95,19 +95,35 @@ const LoginPage = () => {
               autoComplete="email"
             />
 
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setErrors((err) => ({ ...err, password: undefined }));
-              }}
-              placeholder="Enter your password"
-              error={errors.password}
-              fullWidth
-              autoComplete="current-password"
-            />
+            <div>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <label
+                  htmlFor="login-password"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <Input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setErrors((err) => ({ ...err, password: undefined }));
+                }}
+                placeholder="Enter your password"
+                error={errors.password}
+                fullWidth
+                autoComplete="current-password"
+              />
+            </div>
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -173,20 +189,6 @@ const LoginPage = () => {
               {submitting ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
-
-          <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-            Seed credentials: <code>demo@kabipay.local</code> / <code>ChangeMe!123</code>
-            {' — see scripts/seed-demo-data.ps1.'}
-          </p>
-
-          <p className="mt-4 text-center text-sm">
-            <Link
-              to="/ops/login"
-              className="text-indigo-600 hover:underline dark:text-indigo-400"
-            >
-              Operator console sign-in
-            </Link>
-          </p>
         </div>
       </div>
     </div>

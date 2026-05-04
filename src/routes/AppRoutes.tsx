@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { canAccessTenantPath } from '../auth/navAccess';
 import AppLayout from '../components/layout/AppLayout';
 import LoginPage from '../modules/auth/LoginPage';
+import ForgotPasswordPage from '../modules/auth/ForgotPasswordPage';
 import OpsLoginPage from '../modules/ops/OpsLoginPage';
 import OpsLayout from '../modules/ops/OpsLayout';
 import OpsTenantsPage from '../modules/ops/OpsTenantsPage';
@@ -108,6 +109,10 @@ const AppRoutes = () => {
       <Route
         path="/login"
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+      />
+      <Route
+        path="/forgot-password"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />}
       />
       <Route
         path="/ops/login"
