@@ -16,8 +16,25 @@ function gatewayUrlFromPublicConfig(): string {
   return u.replace(/\/$/, '');
 }
 
-/** Optional override when running codegen without the same tree (e.g. CI). */
-const schemaUrl = process.env.CODEGEN_SCHEMA_URL ?? gatewayUrlFromPublicConfig();
+/**
+ * Optional override when running codegen without the same tree (e.g. CI).
+ * Use an empty/unset variable to always use `public/config.json` (PowerShell keeps env vars —
+ * run `Remove-Item Env:CODEGEN_SCHEMA_URL` if a stale override breaks schema load).
+ */
+const schemaUrlOverride = process.env.CODEGEN_SCHEMA_URL?.trim();
+const schemaUrl =
+  schemaUrlOverride && schemaUrlOverride.length > 0
+    ? schemaUrlOverride
+    : gatewayUrlFromPublicConfig();
+if (
+  schemaUrlOverride &&
+  schemaUrlOverride.length > 0 &&
+  !/^https?:\/\//i.test(schemaUrlOverride)
+) {
+  throw new Error(
+    `CODEGEN_SCHEMA_URL must start with http:// or https:// (got "${schemaUrlOverride}"). Remove it to use gatewayUrl from public/config.json.`,
+  );
+}
 
 /** Local extensions (e.g. new mutations before gateway is restarted) merged with gateway schema. */
 const schema: CodegenConfig['schema'] = [

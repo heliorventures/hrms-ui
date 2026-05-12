@@ -105,6 +105,8 @@ query TimesheetWeekBatches($status: String, $limit: Int! = 80) {
     status
     submittedAt
     workflowInstanceId
+    pendingApprovalStage
+    viewerMayApprove
   }
 }
 
@@ -114,6 +116,7 @@ mutation ApproveTimesheetWeekBatch($id: ID!) {
     status
     employeeId
     weekStartDate
+    workflowInstanceId
   }
 }
 

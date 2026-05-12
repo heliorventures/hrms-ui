@@ -16,6 +16,10 @@ type TimesheetWeekBatch {
   workflowInstanceId: ID
   submittedAt: DateTime
   rejectionReason: String
+  """Configured workflow step title when status is PENDING and a workflow is in progress."""
+  pendingApprovalStage: String
+  """True when this user may approve/reject now (parity with expense/travel inbox fields)."""
+  viewerMayApprove: Boolean!
 }
 
 type AttendanceAdjustmentPolicy {
