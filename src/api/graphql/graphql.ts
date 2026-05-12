@@ -321,6 +321,8 @@ export type CreateEmployeeInput = {
   employmentType?: InputMaybe<Scalars['String']['input']>;
   firstName: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
+  /** Creates a tenant login with provisional password ChangeMe!123 (TODO: replace with invite / reset flow). */
+  loginEmail?: InputMaybe<Scalars['String']['input']>;
   /** Must be another active employee in the tenant; cannot be self (enforced after id is chosen). */
   reportingManagerId?: InputMaybe<Scalars['ID']['input']>;
   /** Defaults to `ACTIVE` when omitted. */

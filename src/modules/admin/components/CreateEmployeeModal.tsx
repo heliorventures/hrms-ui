@@ -28,6 +28,8 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   const [departmentId, setDepartmentId] = useState('');
   const [designationId, setDesignationId] = useState('');
   const [reportingManagerId, setReportingManagerId] = useState('');
+  /** Login email for new tenant user (optional). TODO(invite-flow): replace provisional password UX with invite / reset. */
+  const [loginEmail, setLoginEmail] = useState('');
   const [deptOptions, setDeptOptions] = useState<{ value: string; label: string }[]>([]);
   const [desigOptions, setDesigOptions] = useState<{ value: string; label: string }[]>([]);
   const [managerOptions, setManagerOptions] = useState<{ value: string; label: string }[]>([]);
@@ -99,6 +101,10 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       if (reportingManagerId) {
         input.reportingManagerId = reportingManagerId;
       }
+      const le = loginEmail.trim();
+      if (le) {
+        input.loginEmail = le;
+      }
       await client.request(CreateEmployeeDocument, { input: input as CreateEmployeeInput });
       onCreated();
       onClose();
@@ -108,6 +114,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       setDepartmentId('');
       setDesignationId('');
       setReportingManagerId('');
+      setLoginEmail('');
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Create failed');
     } finally {
@@ -204,6 +211,23 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
           }
           fullWidth
         />
+        <Input
+          type="email"
+          label="Login email (optional)"
+          value={loginEmail}
+          onChange={(e) => {
+            setLoginEmail(e.target.value);
+          }}
+          fullWidth
+          placeholder="new.hire@company.com"
+          aria-description="If set, creates an account with provisional password ChangeMe!123 until invite flow ships."
+        />
+        <p className="text-xs text-neutral-600 dark:text-neutral-400">
+          {/* TODO(invite-flow): remove provisional-password hint when enrolment uses invite links or admin reset */}
+          When provided, the employee can sign in with this email and provisional password{' '}
+          <code className="rounded bg-neutral-100 px-1 dark:bg-neutral-800">ChangeMe!123</code>{' '}
+          (they should change it after first login once change-password or reset exists).
+        </p>
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? 'Creating…' : 'Create'}
