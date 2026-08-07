@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Card from '../../../components/common/Card';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
   MyNotificationPreferencesDocument,
   UpdateNotificationPreferencesDocument,
@@ -41,7 +42,7 @@ const NotificationsTab = () => {
         setError(null);
         await load();
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load preferences');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }
@@ -73,7 +74,7 @@ const NotificationsTab = () => {
       });
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Save failed');
+      setError(graphQlUserMessage(e));
     } finally {
       setSaving(false);
     }

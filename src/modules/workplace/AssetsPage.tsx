@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { WorkplaceAssetsDocument } from '../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 const AssetsPage = () => {
   const client = useGraphClient('client');
@@ -34,7 +35,7 @@ const AssetsPage = () => {
         const r = await load();
         if (!c) setData(r as typeof data);
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load assets');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }

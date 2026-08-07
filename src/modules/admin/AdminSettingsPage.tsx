@@ -4,6 +4,7 @@ import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { ClientOpsAdminSettingsEmployeesDocument } from '../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 interface EmployeeRow {
   id: string;
@@ -39,7 +40,7 @@ const AdminSettingsPage = () => {
         if (!cancelled) setEmployees(result.employees ?? []);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load admin settings data');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoading(false);

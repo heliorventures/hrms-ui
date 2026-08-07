@@ -4,6 +4,7 @@ import Card from '../../../components/common/Card';
 import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { ClientOpsLeaveTypeNamesDocument, LeaveBalancesDocument } from '../../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 interface TypeRow {
   id: string;
@@ -48,9 +49,7 @@ const LeaveBalanceCard = () => {
       } catch (e) {
         if (!c) {
           setError(
-            e instanceof Error
-              ? e.message
-              : 'Sign in with an employee-linked account to see balances'
+            graphQlUserMessage(e)
           );
         }
       } finally {

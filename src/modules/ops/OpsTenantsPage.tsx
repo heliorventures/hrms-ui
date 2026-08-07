@@ -6,6 +6,7 @@ import PageHeader from '@/components/common/PageHeader';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { useGraphClient } from '@/hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   OPS_PROVISION_TENANT,
   OPS_RUN_TENANT_MIGRATIONS,
@@ -54,7 +55,7 @@ const OpsTenantsPage = () => {
       const data = await client.request<{ tenants: TenantRow[] }>(OPS_TENANTS, { limit: 200 });
       setRows(data.tenants ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load tenants');
+      setError(graphQlUserMessage(e));
     } finally {
       setLoading(false);
     }
@@ -98,7 +99,7 @@ const OpsTenantsPage = () => {
       setPvSchema('');
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Provision failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setPvSubmitting(false);
     }
@@ -118,7 +119,7 @@ const OpsTenantsPage = () => {
       setToast(`Migrations finished. Status: ${res.runTenantMigrations.tenant.status}.${res.runTenantMigrations.detail ? ` ${res.runTenantMigrations.detail}` : ''}`);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Migrations failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusyId(null);
     }
@@ -150,7 +151,7 @@ const OpsTenantsPage = () => {
       setEditRow(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setEdSubmitting(false);
     }

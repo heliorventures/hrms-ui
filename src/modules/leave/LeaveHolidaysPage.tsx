@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   AllCompanyHolidaysDocument,
   type AllCompanyHolidaysQuery,
@@ -40,7 +41,7 @@ const LeaveHolidaysPage = () => {
         setError(null);
         await load();
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load holidays');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }

@@ -3,6 +3,7 @@ import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { WorkplaceRecruitmentDocument } from '../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 const RecruitmentPage = () => {
   const client = useGraphClient('client');
@@ -41,7 +42,7 @@ const RecruitmentPage = () => {
         const r = await load();
         if (!c) setData(r as typeof data);
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load recruitment');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }

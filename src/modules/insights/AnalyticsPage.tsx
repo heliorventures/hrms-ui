@@ -3,6 +3,7 @@ import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 import TabBar from '../../components/common/TabBar';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   AnalyticsWebhookDeliveryLogsDocument,
   WorkplaceSuccessionDataDocument,
@@ -36,7 +37,7 @@ const AnalyticsPage = () => {
       setDeliveries(data);
     } catch (e) {
       setDeliveries(null);
-      setWhErr(e instanceof Error ? e.message : 'Could not load webhook deliveries.');
+      setWhErr(graphQlUserMessage(e));
     }
   }, [client]);
 
@@ -48,7 +49,7 @@ const AnalyticsPage = () => {
         setError(null);
         await loadWorkplace();
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load workplace data');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }

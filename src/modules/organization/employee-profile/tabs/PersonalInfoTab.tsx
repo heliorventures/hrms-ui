@@ -7,6 +7,7 @@ import Input from '../../../../components/common/Input';
 import Button from '../../../../components/common/Button';
 import { UpdateEmployeePersonalProfileDocument } from '../../../../api/graphql/graphql';
 import { toDateInputValue } from '../../../../utils/dateInput';
+import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 
 interface PersonalInfoTabProps {
   employeeId: string;
@@ -79,7 +80,7 @@ export function PersonalInfoTab({
       window.setTimeout(() => setSavedFlash(false), 2400);
       onSaved?.();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Save failed');
+      setError(graphQlUserMessage(e));
     } finally {
       setSaving(false);
     }

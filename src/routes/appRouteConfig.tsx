@@ -61,8 +61,8 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   { path: 'leave/team-calendar', element: <LeaveTeamCalendarPage /> },
   { path: 'leave', element: <LeavePage /> },
   { path: 'payroll', element: <Navigate to="/payroll/payslips" replace /> },
-  { path: 'payroll/payslips', element: <PayrollPage /> },
-  { path: 'payroll/pay', element: <PayrollPayPage /> },
+  { path: 'payroll/payslips', payrollCapability: 'route.payroll.admin', element: <PayrollPage /> },
+  { path: 'payroll/pay', payrollCapability: 'route.payroll.self', element: <PayrollPayPage /> },
   { path: 'payroll/tax', payrollCapability: 'route.payroll.tax', element: <PayrollTaxPage /> },
   {
     path: 'payroll/compensation',

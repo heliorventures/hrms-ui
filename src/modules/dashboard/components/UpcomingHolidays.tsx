@@ -4,6 +4,7 @@ import Card from '../../../components/common/Card';
 import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { ClientOpsUpcomingHolidaysDocument } from '../../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 interface HRow {
   id: string;
@@ -34,7 +35,7 @@ const UpcomingHolidays = () => {
         if (!c) setRows(res.upcomingHolidays);
       } catch (e) {
         if (!c) {
-          setError(e instanceof Error ? e.message : 'Failed to load holidays');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!c) setLoading(false);

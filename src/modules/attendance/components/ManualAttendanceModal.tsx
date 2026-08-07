@@ -4,6 +4,7 @@ import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { AddManualAttendanceSegmentDocument } from '../../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 export interface ManualAttendanceModalProps {
   isOpen: boolean;
@@ -47,7 +48,7 @@ const ManualAttendanceModal = ({
       onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save adjustment');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }

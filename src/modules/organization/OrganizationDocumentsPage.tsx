@@ -4,6 +4,7 @@ import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { OrgDocumentsListDocument } from '../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 interface DocumentTypeRow {
   id: string;
@@ -46,9 +47,7 @@ const OrganizationDocumentsPage = () => {
       } catch (e) {
         if (!c) {
           setError(
-            e instanceof Error
-              ? e.message
-              : 'Could not load documents (employee session may be required for uploads list)'
+            graphQlUserMessage(e)
           );
         }
       } finally {

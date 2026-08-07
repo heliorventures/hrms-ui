@@ -6,6 +6,7 @@ import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import Modal from '@/components/common/Modal';
 import { useGraphClient } from '@/hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   OPS_CREATE_OPERATOR_USER,
   OPS_OPERATOR_ROLES,
@@ -63,7 +64,7 @@ const OpsOperatorsPage = () => {
       setUsers(u.operatorUsers ?? []);
       setRoles(r.operatorRoles ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load operator data');
+      setError(graphQlUserMessage(e));
     } finally {
       setLoading(false);
     }
@@ -101,7 +102,7 @@ const OpsOperatorsPage = () => {
       setPassword('');
       await load();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Create user failed');
+      setActionError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -124,7 +125,7 @@ const OpsOperatorsPage = () => {
       }
       setRoleChecks(next);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to load roles for user');
+      setActionError(graphQlUserMessage(err));
       setRolesSubject(null);
     } finally {
       setRolesModalLoading(false);
@@ -153,7 +154,7 @@ const OpsOperatorsPage = () => {
       closeRolesEditor();
       await load();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to save roles');
+      setActionError(graphQlUserMessage(err));
     } finally {
       setRolesSaving(false);
     }

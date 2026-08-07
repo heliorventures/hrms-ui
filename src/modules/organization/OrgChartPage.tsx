@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { OrgChartDocument, type OrgChartQuery } from '../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   buildOrgChartChildMap,
   findOrgChartRoots,
@@ -87,7 +88,7 @@ const OrgChartPage = () => {
         if (!cancelled) setRows((res.orgChart ?? []) as OrgChartRowLite[]);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load org chart');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoading(false);

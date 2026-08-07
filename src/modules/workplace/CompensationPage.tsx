@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   WorkplaceCompensationDataDocument,
   type WorkplaceCompensationDataQuery,
@@ -26,7 +27,7 @@ const CompensationPage = () => {
         const r = await load();
         if (!c) setData(r);
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load compensation data');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }

@@ -3,6 +3,7 @@ import Modal from '../../../../components/common/Modal';
 import Button from '../../../../components/common/Button';
 import Select from '../../../../components/common/Select';
 import type { DocumentCategory, TenantDocumentTypeOption } from '../types';
+import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -117,7 +118,7 @@ export function UploadModal({
       setFile(null);
       resetAndClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }

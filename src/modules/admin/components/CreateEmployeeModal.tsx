@@ -5,6 +5,7 @@ import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { toDateInputValue } from '../../../utils/dateInput';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
   CreateEmployeeDocument,
   ClientOpsOrgListsForEmployeeModalDocument,
@@ -67,7 +68,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         })),
       ]);
     } catch (e) {
-      setOrgLoadError(e instanceof Error ? e.message : 'Failed to load org lists');
+      setOrgLoadError(graphQlUserMessage(e));
     }
   }, [client, isOpen]);
 
@@ -117,7 +118,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       setReportingManagerId('');
       setLoginEmail('');
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Create failed');
+      setFormError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }

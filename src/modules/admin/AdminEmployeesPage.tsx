@@ -7,6 +7,7 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import CreateEmployeeModal from './components/CreateEmployeeModal';
 import EditEmployeeModal, { type EditEmployeeRow } from './components/EditEmployeeModal';
 import { ClientOpsAdminEmployeesDocument, ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 interface EmployeeRow {
   id: string;
@@ -50,7 +51,7 @@ const AdminEmployeesPage = () => {
       });
       setEmployees(result.employees ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load employees');
+      setError(graphQlUserMessage(e));
     } finally {
       setLoading(false);
     }

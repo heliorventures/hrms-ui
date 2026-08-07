@@ -8,6 +8,7 @@ import { VerificationBadge } from '../components/StatusBadge';
 import Button from '../../../../components/common/Button';
 import Input from '../../../../components/common/Input';
 import { UploadModal } from '../components/UploadModal';
+import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import {
   UploadEmployeeDocumentProfileDocument,
   UpsertEmployeePrimaryAadhaarDocument,
@@ -70,7 +71,7 @@ export function IdentityTab({
       setPanInput('');
       onChanged?.();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save PAN');
+      setError(graphQlUserMessage(e));
     } finally {
       setPanSaving(false);
     }
@@ -86,7 +87,7 @@ export function IdentityTab({
       setAadhaarInput('');
       onChanged?.();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save Aadhaar');
+      setError(graphQlUserMessage(e));
     } finally {
       setAadhaarSaving(false);
     }

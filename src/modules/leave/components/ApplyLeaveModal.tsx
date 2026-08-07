@@ -5,6 +5,7 @@ import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
 import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 /** Calendar days from local midnight today → start date (0 = today). */
 function calendarDaysBeforeLeaveStart(fromDateStr: string): number {
@@ -220,7 +221,7 @@ const ApplyLeaveModal = ({
       resetForm();
       onClose();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Failed to submit leave request');
+      setFormError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }

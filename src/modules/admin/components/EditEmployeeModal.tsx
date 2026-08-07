@@ -4,6 +4,7 @@ import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
   UpdateEmployeeDocument,
   ClientOpsOrgListsForEmployeeModalDocument,
@@ -81,7 +82,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           })),
       ]);
     } catch (e) {
-      setOrgLoadError(e instanceof Error ? e.message : 'Failed to load org lists');
+      setOrgLoadError(graphQlUserMessage(e));
     }
   }, [client, isOpen, employee?.id]);
 
@@ -134,7 +135,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
       onUpdated();
       onClose();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Update failed');
+      setFormError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }

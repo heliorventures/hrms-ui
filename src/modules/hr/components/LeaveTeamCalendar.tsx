@@ -3,6 +3,7 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { HrLeaveCalendarDocument, type HrLeaveCalendarQuery } from '../../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 const MAX_EMPLOYEES = 45;
 
@@ -94,7 +95,7 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
         setError(null);
         await load();
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load calendar');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }

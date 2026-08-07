@@ -3,6 +3,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   ClientOpsAdminEmployeesDocument,
   PayrollEmploymentHistoryDocument,
@@ -54,7 +55,7 @@ const PayrollCompensationPage = () => {
       });
       setEmployees(result.employees ?? []);
     } catch (e) {
-      setEmpError(e instanceof Error ? e.message : 'Failed to load employees');
+      setEmpError(graphQlUserMessage(e));
     } finally {
       setEmpLoading(false);
     }
@@ -80,7 +81,7 @@ const PayrollCompensationPage = () => {
         setHistory(result.employmentHistoryRecords ?? []);
       } catch (e) {
         setHistory([]);
-        setHistError(e instanceof Error ? e.message : 'Failed to load compensation history');
+        setHistError(graphQlUserMessage(e));
       } finally {
         setHistLoading(false);
       }
@@ -124,7 +125,7 @@ const PayrollCompensationPage = () => {
       setChangeReason('');
       void loadHistory(selectedId);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Save failed');
+      setSaveError(graphQlUserMessage(err));
     } finally {
       setSaveBusy(false);
     }

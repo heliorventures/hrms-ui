@@ -29,7 +29,9 @@ export type Capability =
   | 'route.hr.timesheetAssignments'
   | 'route.hr.timesheets'
   | 'route.insights'
+  | 'route.payroll.admin'
   | 'route.payroll.compensation'
+  | 'route.payroll.self'
   | 'route.payroll.tax'
   | 'route.workplace.assets'
   | 'route.workplace.benefits'
@@ -150,6 +152,13 @@ export function createPermissionService(
       case 'route.admin.employees':
       case 'route.payroll.compensation':
         return canPermission(PERMISSIONS.employeeWrite);
+      case 'route.payroll.admin':
+        return (
+          canPermission(PERMISSIONS.payrollStatutoryExport) ||
+          canPermission(PERMISSIONS.employeeWrite)
+        );
+      case 'route.payroll.self':
+        return session != null;
       case 'route.hr.leaves':
         return canApproveLeave(session) || canPermission(PERMISSIONS.leaveManage);
       case 'route.hr.timesheets':
@@ -183,7 +192,7 @@ export function createPermissionService(
 
   const canRoute = (path: string): boolean => {
     const capability = ROUTE_CAPABILITIES[path];
-    return capability ? canCapability(capability) : true;
+    return capability ? canCapability(capability) : false;
   };
 
   return {
@@ -212,6 +221,8 @@ export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
   '/hr/timesheet-assignments': 'route.hr.timesheetAssignments',
   '/hr/timesheets': 'route.hr.timesheets',
   '/insights': 'route.insights',
+  '/payroll/pay': 'route.payroll.self',
+  '/payroll/payslips': 'route.payroll.admin',
   '/payroll/compensation': 'route.payroll.compensation',
   '/payroll/tax': 'route.payroll.tax',
   '/workplace/assets': 'route.workplace.assets',

@@ -5,6 +5,7 @@ import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { PunchTodayDocument, PunchDaySummaryDocument } from '../../../api/graphql/graphql';
 import { formatBackendTime } from '../../../utils/timeFormat';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 type AttendanceRow = {
   id: string;
@@ -63,7 +64,7 @@ const PunchInOut = () => {
       }>(PunchDaySummaryDocument);
       setSummary(res.punchDaySummary);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load punch summary');
+      setError(graphQlUserMessage(e));
       setSummary(null);
     } finally {
       setLoadingSummary(false);
@@ -120,9 +121,7 @@ const PunchInOut = () => {
       await loadSummary();
     } catch (e) {
       setError(
-        e instanceof Error
-          ? e.message
-          : 'Punch failed (if location is required, allow the browser to access it)'
+        graphQlUserMessage(e)
       );
     } finally {
       setSubmitting(false);

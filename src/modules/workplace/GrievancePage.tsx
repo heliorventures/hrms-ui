@@ -3,6 +3,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   WorkplaceGrievanceDocument,
   SubmitGrievanceCaseDocument,
@@ -46,7 +47,7 @@ const GrievancePage = () => {
           setCategoryId((prev) => prev || r.grievanceCategories[0]?.id || '');
         }
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load grievance data');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }
@@ -77,7 +78,7 @@ const GrievancePage = () => {
       setSubject('');
       setDescription('');
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Submit failed');
+      setFormError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }

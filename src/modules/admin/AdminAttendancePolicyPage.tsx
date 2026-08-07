@@ -3,6 +3,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   ClientOpsAdminAttendancePolicyDocument,
   ClientOpsUpsertAttendancePunchPolicyDocument,
@@ -72,7 +73,7 @@ const AdminAttendancePolicyPage = () => {
         setMaxDistanceMeters(p.maxDistanceMeters != null ? String(p.maxDistanceMeters) : '');
         setIpAllowlist(p.ipAllowlist ?? '');
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load policy');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }
@@ -114,7 +115,7 @@ const AdminAttendancePolicyPage = () => {
       const r = await load();
       if (r.attendancePunchPolicy) setPolicy(r.attendancePunchPolicy);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Save failed');
+      setFormError(graphQlUserMessage(err));
     } finally {
       setSaving(false);
     }

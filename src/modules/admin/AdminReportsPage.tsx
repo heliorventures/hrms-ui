@@ -5,6 +5,7 @@ import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { ClientOpsAdminReportsDataDocument } from '../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 interface EmployeeRow {
   id: string;
@@ -75,7 +76,7 @@ const AdminReportsPage = () => {
         if (!cancelled) setData(result);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load report data');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoading(false);

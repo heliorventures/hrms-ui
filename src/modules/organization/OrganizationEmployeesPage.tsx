@@ -5,6 +5,7 @@ import Input from '../../components/common/Input';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { ClientOpsEmployeesDirectoryDocument } from '../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 interface EmployeeRow {
   id: string;
@@ -66,7 +67,7 @@ const OrganizationEmployeesPage = () => {
         if (!cancelled) setEmployees(result.employees ?? []);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load employees');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoading(false);

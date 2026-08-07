@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   NotificationBoardDocument,
   MarkNotificationReadDocument,
@@ -37,7 +38,7 @@ const NotificationDropdown = () => {
       setNotifications(data.notifications ?? []);
       setServerUnread(data.unreadNotificationCount ?? 0);
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : 'Failed to load notifications');
+      setLoadError(graphQlUserMessage(e));
       setNotifications([]);
       setServerUnread(0);
     }

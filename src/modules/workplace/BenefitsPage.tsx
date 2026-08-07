@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   WorkplaceBenefitsDocument,
   MyBenefitEnrollmentsDocument,
@@ -80,7 +81,7 @@ const BenefitsPage = () => {
         setError(null);
         await load();
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load benefits');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }
@@ -90,21 +91,14 @@ const BenefitsPage = () => {
     };
   }, [load]);
 
-  const enrollIn = async (benefitPlanId: string, planName: string) => {
+  const enrollIn = async (benefitPlanId: string) => {
     setEnrollBusyId(benefitPlanId);
     setError(null);
     try {
       await client.request(EnrollInBenefitPlanDocument, { benefitPlanId });
       await load();
     } catch (e) {
-      const msg =
-        e instanceof Error
-          ? e.message.includes('already enrolled') ||
-            e.message.toLowerCase().includes('conflict')
-            ? `You are already enrolled in ${planName}.`
-            : e.message
-          : 'Enrollment failed.';
-      setError(msg);
+      setError(graphQlUserMessage(e));
     } finally {
       setEnrollBusyId(null);
     }
@@ -202,7 +196,7 @@ const BenefitsPage = () => {
                       type="button"
                       className="shrink-0 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-800 hover:bg-indigo-50 disabled:opacity-60 dark:border-indigo-800 dark:bg-gray-800 dark:text-indigo-200 dark:hover:bg-indigo-950/60"
                       disabled={enrollBusyId === p.id}
-                      onClick={() => void enrollIn(p.id, p.name)}
+                      onClick={() => void enrollIn(p.id)}
                     >
                       {enrollBusyId === p.id ? 'Enrolling…' : 'Enroll'}
                     </button>

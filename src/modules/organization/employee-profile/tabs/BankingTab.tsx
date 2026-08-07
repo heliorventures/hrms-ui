@@ -8,6 +8,7 @@ import { VerificationBadge } from '../components/StatusBadge';
 import Input from '../../../../components/common/Input';
 import Button from '../../../../components/common/Button';
 import { UpsertEmployeePrimaryBankDocument } from '../../../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 
 interface BankingTabProps {
   employeeId: string;
@@ -53,7 +54,7 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
       setAccountNumber('');
       onSaved?.();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save bank details');
+      setError(graphQlUserMessage(e));
     } finally {
       setSaving(false);
     }

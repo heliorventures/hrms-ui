@@ -1,8 +1,9 @@
 import { FormEvent, useState } from 'react';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
-import { AuthError, changeClientPassword } from '../../../auth/authClient';
+import { changeClientPassword } from '../../../auth/authClient';
 import { getClientAccessToken } from '../../../auth/tokenStore';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 interface SecurityTabProps {
   onPasswordChanged: () => void | Promise<void>;
@@ -41,7 +42,7 @@ const SecurityTab = ({ onPasswordChanged }: SecurityTabProps) => {
       setConfirmPassword('');
       await onPasswordChanged();
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : 'Could not change password.');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }

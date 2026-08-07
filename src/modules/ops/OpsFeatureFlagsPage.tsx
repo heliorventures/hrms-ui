@@ -7,6 +7,7 @@ import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { useGraphClient } from '@/hooks/useGraphClient';
 import { OPS_FEATURE_FLAGS, OPS_TENANTS, OPS_UPSERT_FEATURE_FLAG } from './opsGraph';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 type TenantOpt = { id: string; name: string };
 
@@ -39,7 +40,7 @@ const OpsFeatureFlagsPage = () => {
       setTenants(list);
       setTenantId((prev) => prev || (list[0]?.id ?? ''));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load tenants');
+      setError(graphQlUserMessage(e));
     }
   }, [client]);
 
@@ -57,7 +58,7 @@ const OpsFeatureFlagsPage = () => {
       });
       setFlags(d.featureFlags ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load flags');
+      setError(graphQlUserMessage(e));
     } finally {
       setLoading(false);
     }
@@ -92,7 +93,7 @@ const OpsFeatureFlagsPage = () => {
       setToast('Feature flag saved.');
       await loadFlags();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setSaving(false);
     }
@@ -111,7 +112,7 @@ const OpsFeatureFlagsPage = () => {
       setToast(`Updated “${row.featureName}”.`);
       await loadFlags();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setSaving(false);
     }

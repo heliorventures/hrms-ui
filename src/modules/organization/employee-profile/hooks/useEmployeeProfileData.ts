@@ -5,6 +5,7 @@ import { EmployeeProfileBundleDocument } from '../../../../api/graphql/graphql';
 import type { EmployeeProfileModel, TenantDocumentTypeOption } from '../types';
 import { mapBundleToEmployeeProfileModel } from '../lib/mapBundleToModel';
 import { buildEmployeeProfileModel } from '../mock/buildProfileModel';
+import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 
 export function useEmployeeProfileData(
   client: GraphQLClient,
@@ -72,7 +73,7 @@ export function useEmployeeProfileData(
         if (!cancelled) {
           setModel(null);
           setDocumentTypes([]);
-          setError(e instanceof Error ? e.message : 'Failed to load employee');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoading(false);

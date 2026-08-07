@@ -15,6 +15,7 @@ import {
   type AdminWorkflowsStepsDataQuery,
 } from '../../api/graphql/graphql';
 import WorkflowDesignerSteps from './WorkflowDesignerSteps';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 const AdminWorkflowsPage = () => {
   const client = useGraphClient('client');
@@ -71,7 +72,7 @@ const AdminWorkflowsPage = () => {
         setData(r.base);
         setStepsData(r.withSteps);
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load workflows');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }
@@ -101,7 +102,7 @@ const AdminWorkflowsPage = () => {
       await refresh();
       setWMsg('Workflow created.');
     } catch (err) {
-      setWMsg(err instanceof Error ? err.message : 'Create failed');
+      setWMsg(graphQlUserMessage(err));
     } finally {
       setWBusy(false);
     }
@@ -116,7 +117,7 @@ const AdminWorkflowsPage = () => {
       await refresh();
       setSMsg('Step removed.');
     } catch (err) {
-      setSMsg(err instanceof Error ? err.message : 'Delete failed');
+      setSMsg(graphQlUserMessage(err));
     } finally {
       setDelStepBusy(null);
     }
@@ -134,7 +135,7 @@ const AdminWorkflowsPage = () => {
       await refresh();
       setSMsg('Steps reordered.');
     } catch (err) {
-      setSMsg(err instanceof Error ? err.message : 'Reorder failed');
+      setSMsg(graphQlUserMessage(err));
       throw err;
     } finally {
       setReorderBusyWfId(null);
@@ -164,7 +165,7 @@ const AdminWorkflowsPage = () => {
       await refresh();
       setSMsg('Step created.');
     } catch (err) {
-      setSMsg(err instanceof Error ? err.message : 'Create failed');
+      setSMsg(graphQlUserMessage(err));
     } finally {
       setSBusy(false);
     }

@@ -6,6 +6,7 @@ import Modal from '../../components/common/Modal';
 import Input from '../../components/common/Input';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   ApproveTimesheetWeekBatchDocument,
   OrgChartDocument,
@@ -66,7 +67,7 @@ const HrTimesheetsPage = () => {
         await Promise.all([loadOrg(), loadBatches()]);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load timesheet approvals');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -81,7 +82,7 @@ const HrTimesheetsPage = () => {
     try {
       await loadBatches();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Refresh failed');
+      setError(graphQlUserMessage(e));
     }
   }, [loadBatches]);
 
@@ -100,7 +101,7 @@ const HrTimesheetsPage = () => {
       }
       await silentRefresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Approve failed');
+      setError(graphQlUserMessage(e));
     } finally {
       setBusyId(null);
     }
@@ -120,7 +121,7 @@ const HrTimesheetsPage = () => {
       setRejectReason('');
       await silentRefresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Reject failed');
+      setError(graphQlUserMessage(e));
     } finally {
       setBusyId(null);
     }
