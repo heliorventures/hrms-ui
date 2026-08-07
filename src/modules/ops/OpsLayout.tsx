@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { APP_BRAND } from '@/constants/brand';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -23,7 +24,7 @@ const OpsLayout = () => {
       <aside className="flex w-56 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="border-b border-slate-200 px-4 py-4 dark:border-slate-800">
           <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-            KabiPay
+            {APP_BRAND.productName}
           </p>
           <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">Operator console</p>
         </div>

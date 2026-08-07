@@ -4,6 +4,8 @@ import Button from '../../components/common/Button';
 import Select from '../../components/common/Select';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useAuth } from '../../contexts/AuthContext';
+import { createPermissionService } from '../../auth/permissionService';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   EmployeeTimesheetProjectCodesDocument,
   OrgChartDocument,
@@ -15,14 +17,18 @@ import {
 } from '../../api/graphql/graphql';
 
 const HrTimesheetProjectAssignmentsPage = () => {
-  const { can, clientSession } = useAuth();
+  const { clientSession } = useAuth();
   const client = useGraphClient('client');
   /** Matches subgraph `orgChart`: ALL employee scope or elevated HR-style permissions. */
   const seesCompanyWideEmployeeDirectory = useMemo(() => {
     const empScope = clientSession?.resourceScopes?.employee?.trim().toUpperCase();
     if (empScope === 'ALL') return true;
-    return can('timesheet:manage') || can('employee:write');
-  }, [can, clientSession]);
+    const permissions = createPermissionService(clientSession);
+    return (
+      permissions.canCapability('action.timesheet.manage') ||
+      permissions.canCapability('route.hr.people')
+    );
+  }, [clientSession]);
 
   const [orgRows, setOrgRows] = useState<NonNullable<OrgChartQuery['orgChart']>>([]);
   const [viewerEmpId, setViewerEmpId] = useState<string | null>(null);
@@ -72,7 +78,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
         await reloadBase();
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -109,7 +115,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
       } catch (e) {
         if (!cancelled) {
           setSelected(new Set());
-          setError(e instanceof Error ? e.message : 'Could not load assignments');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoadingCodes(false);
@@ -155,7 +161,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
       });
       setMessage('Saved. Empty selection means all catalog projects are allowed.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setSaving(false);
     }

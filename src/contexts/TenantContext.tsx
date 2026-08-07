@@ -1,11 +1,21 @@
-import { createContext, useContext, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { Tenant } from '../types';
 import { useAuth } from './AuthContext';
 import { getAppConfig } from '../config';
+import { resolveTenantBySlug, type ResolvedTenant } from '../auth/authClient';
+import { APP_BRAND } from '../constants/brand';
+import { graphQlUserMessage } from '../utils/graphqlUserMessage';
+
+type TenantResolutionStatus = 'marketing' | 'resolving' | 'resolved' | 'not-found' | 'error';
+const TENANT_SLUG_SESSION_KEY = 'heliorhrms.tenantSlug';
 
 interface TenantContextType {
   currentTenant: Tenant;
   tenants: Tenant[];
+  tenantSlug: string | null;
+  resolutionStatus: TenantResolutionStatus;
+  resolutionError: string | null;
+  requiresTenant: boolean;
   switchTenant: (tenantId: string) => void;
 }
 
@@ -15,29 +25,126 @@ interface TenantProviderProps {
   children: ReactNode;
 }
 
+function emptyTenant(): Tenant {
+  return {
+    id: '',
+    name: APP_BRAND.productName,
+    companyCode: 'HELIOR',
+  };
+}
+
+function tenantFromResolved(row: ResolvedTenant): Tenant {
+  return {
+    id: row.id,
+    name: row.name,
+    companyCode: row.subdomain.slice(0, 4).toUpperCase(),
+    logoUrl: row.logoUrl,
+    status: row.status,
+    slug: row.subdomain,
+    primaryColor: row.primaryColor,
+  };
+}
+
+function isLocalHost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+}
+
+function slugFromPath(pathname: string): string | null {
+  const [scope, slug] = pathname.split('/').filter(Boolean);
+  if (scope !== 't' || !slug) return null;
+  return slug.toLowerCase();
+}
+
+function slugFromHost(hostname: string): string | null {
+  const host = hostname.toLowerCase();
+  if (isLocalHost(host)) {
+    return getAppConfig().devTenantSlug ?? sessionStorage.getItem(TENANT_SLUG_SESSION_KEY);
+  }
+
+  const configuredBase = getAppConfig().tenantBaseDomain;
+  if (configuredBase && host.endsWith(`.${configuredBase}`)) {
+    const slug = host.slice(0, -(configuredBase.length + 1)).split('.').pop();
+    return slug && slug !== 'www' && slug !== 'app' ? slug : null;
+  }
+
+  const [subdomain] = host.split('.');
+  if (host.split('.').length >= 3 && subdomain !== 'www' && subdomain !== 'app') {
+    return subdomain;
+  }
+  return null;
+}
+
+function detectTenantSlug(): string | null {
+  const pathSlug = slugFromPath(window.location.pathname);
+  if (pathSlug) {
+    sessionStorage.setItem(TENANT_SLUG_SESSION_KEY, pathSlug);
+    return pathSlug;
+  }
+  return slugFromHost(window.location.hostname);
+}
+
 export const TenantProvider = ({ children }: TenantProviderProps) => {
   const { user } = useAuth();
-  const devTenantId = getAppConfig().devTenantId;
+  const tenantSlug = useMemo(() => detectTenantSlug(), []);
+  const [resolvedTenant, setResolvedTenant] = useState<Tenant | null>(null);
+  const [resolutionStatus, setResolutionStatus] = useState<TenantResolutionStatus>(
+    tenantSlug ? 'resolving' : 'marketing'
+  );
+  const [resolutionError, setResolutionError] = useState<string | null>(null);
 
-  const { tenants, currentTenant } = useMemo(() => {
-    // In local dev we pin to config.devTenantId so stale sessions/tokens
-    // cannot accidentally switch the UI to another tenant schema.
-    const id = devTenantId || user?.tenantId || '';
-    const tenant: Tenant = {
-      id,
-      name: user ? 'Organization' : 'KabiPay',
-      companyCode: id.length >= 4 ? id.slice(0, 4).toUpperCase() : id.toUpperCase(),
+  useEffect(() => {
+    if (!tenantSlug) {
+      setResolvedTenant(null);
+      setResolutionStatus('marketing');
+      setResolutionError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setResolutionStatus('resolving');
+    setResolutionError(null);
+    void (async () => {
+      try {
+        const row = await resolveTenantBySlug(tenantSlug);
+        if (cancelled) return;
+        setResolvedTenant(tenantFromResolved(row));
+        setResolutionStatus('resolved');
+      } catch (err) {
+        if (cancelled) return;
+        setResolvedTenant(null);
+        setResolutionStatus('not-found');
+        setResolutionError(graphQlUserMessage(err));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
     };
-    return { tenants: [tenant], currentTenant: tenant };
-  }, [user, devTenantId]);
+  }, [tenantSlug]);
+
+  const currentTenant = useMemo<Tenant>(() => {
+    if (resolvedTenant) return resolvedTenant;
+    if (user?.tenantId) {
+      return {
+        id: user.tenantId,
+        name: 'Organization',
+        companyCode: user.tenantId.slice(0, 4).toUpperCase(),
+      };
+    }
+    return emptyTenant();
+  }, [resolvedTenant, user?.tenantId]);
 
   const switchTenant = (_tenantId: string) => {
-    // Multi-tenant switching will use API-backed tenant list when available.
+    // Tenant switching is intentionally disabled until the API provides a scoped tenant list.
   };
 
   const value = {
     currentTenant,
-    tenants,
+    tenants: currentTenant.id ? [currentTenant] : [],
+    tenantSlug,
+    resolutionStatus,
+    resolutionError,
+    requiresTenant: tenantSlug !== null,
     switchTenant,
   };
 

@@ -18,6 +18,15 @@ export interface TokenPair {
   userId: string;
 }
 
+export interface ResolvedTenant {
+  id: string;
+  name: string;
+  status: string;
+  subdomain: string;
+  logoUrl?: string;
+  primaryColor?: string;
+}
+
 export interface AuthErrorPayload {
   error: {
     code: string;
@@ -75,6 +84,36 @@ async function postJson<TOut>(
     throw new AuthError(res.status, err.code, err.message);
   }
   return parsed as TOut;
+}
+
+async function getJson<TOut>(path: string): Promise<TOut> {
+  const res = await fetch(`${authBaseUrl()}${path}`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+  const raw = await res.text();
+  let parsed: unknown = undefined;
+  if (raw.length > 0) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = { error: { code: 'BAD_RESPONSE', message: raw } };
+    }
+  }
+  if (!res.ok) {
+    const err = (parsed as AuthErrorPayload | undefined)?.error ?? {
+      code: 'UNKNOWN',
+      message: res.statusText,
+    };
+    throw new AuthError(res.status, err.code, err.message);
+  }
+  return parsed as TOut;
+}
+
+export async function resolveTenantBySlug(slug: string): Promise<ResolvedTenant> {
+  return getJson<ResolvedTenant>(`/auth/client/tenants/${encodeURIComponent(slug)}`);
 }
 
 export async function loginClient(

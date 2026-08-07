@@ -1,55 +1,103 @@
 import { ClientError } from 'graphql-request';
 
-/** Maps GraphQL / DB-ish errors to short copy suitable for end users. */
-export function graphQlUserMessage(err: unknown): string {
-  if (err instanceof ClientError) {
-    const msgs = err.response.errors?.map((e) => e.message).filter(Boolean) ?? [];
-    const joined = msgs.join(' ').trim();
-    if (joined) {
-      return joined.length > 400 ? `${joined.slice(0, 397)}…` : joined;
-    }
+const FALLBACK_MESSAGE = 'Something went wrong. Please try again.';
+
+function codeToMessage(code: string): string | null {
+  switch (code.toUpperCase()) {
+    case 'BAD_USER_INPUT':
+    case 'VALIDATION_ERROR':
+    case 'INVALID_JSON':
+      return 'Check the entered details and try again.';
+    case 'CONFLICT':
+      return 'This record conflicts with an existing value.';
+    case 'FORBIDDEN':
+      return 'You do not have permission to do this.';
+    case 'UNAUTHENTICATED':
+      return 'Your session has expired. Sign in again.';
+    case 'NOT_FOUND':
+    case 'TENANT_NOT_FOUND':
+      return 'The requested record could not be found.';
+    case 'MODULE_NOT_SUBSCRIBED':
+      return 'This feature is not enabled for your organization.';
+    case 'SEAT_LIMIT_REACHED':
+      return 'The seat limit has been reached for this feature.';
+    case 'TENANT_SUSPENDED':
+      return 'This organization workspace is not active.';
+    case 'DATABASE_ERROR':
+    case 'INTERNAL_ERROR':
+      return 'We could not complete this action right now. Please try again in a moment.';
+    default:
+      return null;
   }
+}
 
-  let raw = '';
-  if (err instanceof ClientError) {
-    raw = err.message;
-  } else if (err instanceof Error) {
-    raw = err.message;
-  } else {
-    return 'Something went wrong. Please try again.';
-  }
-
-  const s = raw.trim();
-  const lower = s.toLowerCase();
-
+function rawTextToMessage(raw: string): string {
+  const lower = raw.toLowerCase();
   if (
     lower.includes('duplicate key') ||
     lower.includes('unique constraint') ||
     lower.includes('already exists')
   ) {
-    return 'This record already exists or conflicts with an existing value.';
+    return 'This record conflicts with an existing value.';
   }
   if (lower.includes('foreign key') || lower.includes('violates foreign key constraint')) {
     return 'That reference is invalid or the related record was removed.';
   }
+  if (lower.includes('permission') || lower.includes('forbidden') || lower.includes('not authorized')) {
+    return 'You do not have permission to do this.';
+  }
+  if (lower.includes('unauthenticated') || lower.includes('unauthorised') || lower.includes('unauthorized')) {
+    return 'Your session has expired. Sign in again.';
+  }
+  if (lower.includes('not found') || lower.includes('does not exist')) {
+    return 'The requested record could not be found.';
+  }
   if (
     lower.includes('sqlx') ||
     lower.includes('postgres') ||
+    lower.includes('database') ||
+    lower.includes('relation') ||
     lower.includes('deadlock') ||
     lower.includes('connection refused') ||
     lower.includes('pool timed out')
   ) {
     return 'We could not complete this action right now. Please try again in a moment.';
   }
-  if (lower.includes('permission') || lower.includes('forbidden') || lower.includes('not authorized')) {
-    return 'You do not have permission to do this.';
-  }
-  if (lower.includes('not found') || lower.includes('does not exist')) {
-    return 'The item you were updating could not be found. Refresh and try again.';
+  return FALLBACK_MESSAGE;
+}
+
+function errorCode(err: unknown): string | null {
+  if (err instanceof ClientError) {
+    const graphqlCode = err.response.errors?.find((item) => {
+      const code = item.extensions?.code;
+      return typeof code === 'string' && code.length > 0;
+    })?.extensions?.code;
+    if (typeof graphqlCode === 'string') return graphqlCode;
   }
 
-  if (s.length > 220) {
-    return 'Something went wrong. Please check your input and try again.';
+  if (err !== null && typeof err === 'object' && 'code' in err) {
+    const code = (err as { code?: unknown }).code;
+    if (typeof code === 'string') return code;
   }
-  return s;
+  return null;
 }
+
+export function graphQlUserMessage(err: unknown): string {
+  const code = errorCode(err);
+  if (code) {
+    return codeToMessage(code) ?? FALLBACK_MESSAGE;
+  }
+
+  if (err instanceof ClientError) {
+    const joined = err.response.errors?.map((item) => item.message).join(' ') ?? err.message;
+    return rawTextToMessage(joined);
+  }
+
+  if (err instanceof Error) {
+    return rawTextToMessage(err.message);
+  }
+
+  return FALLBACK_MESSAGE;
+}
+
+export const toUserMessage = graphQlUserMessage;

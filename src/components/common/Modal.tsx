@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useId, useRef } from 'react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -9,6 +9,9 @@ interface ModalProps {
 }
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) => {
+  const titleId = useId();
+  const previousOverflow = useRef<string | null>(null);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -18,12 +21,16 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
+      previousOverflow.current = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      if (previousOverflow.current !== null) {
+        document.body.style.overflow = previousOverflow.current;
+        previousOverflow.current = null;
+      }
     };
   }, [isOpen, onClose]);
 
@@ -44,10 +51,19 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
       <div
         className={`w-full ${sizeClasses[size]} rounded-lg bg-white shadow-xl dark:bg-gray-800`}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
       >
         <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+          <h2
+            id={titleId}
+            className="text-lg font-semibold text-gray-900 dark:text-white"
+          >
+            {title}
+          </h2>
           <button
+            type="button"
             onClick={onClose}
             className="rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
             aria-label="Close modal"

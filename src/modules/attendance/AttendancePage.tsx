@@ -6,6 +6,8 @@ import Button from '../../components/common/Button';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useAuth } from '../../contexts/AuthContext';
+import { createPermissionService } from '../../auth/permissionService';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   AttendanceAdjustmentPolicyDocument,
   AttendanceBoardDocument,
@@ -18,39 +20,7 @@ import {
 } from '../../utils/attendanceDuration';
 import { isoDateRangeContains, monthBoundsIso, parseIsoDate, toIsoDate } from '../../utils/calendarRange';
 import ManualAttendanceModal from './components/ManualAttendanceModal';
-
-interface ShiftRow {
-  id: string;
-  name: string;
-  startTime?: string | null;
-  endTime?: string | null;
-  workHours?: number | null;
-  isNightShift: boolean;
-}
-
-interface AttendanceRow {
-  id: string;
-  employeeId: string;
-  workDate: string;
-  checkInTime?: string | null;
-  checkOutTime?: string | null;
-  checkInLat?: string | null;
-  checkInLng?: string | null;
-  checkOutLat?: string | null;
-  checkOutLng?: string | null;
-  status?: string | null;
-  source?: string | null;
-  lateMinutes?: number | null;
-}
-
-interface FlatSegmentRow extends AttendanceRow {
-  segmentMinutes: number | null;
-}
-
-interface AttendanceBoardData {
-  shifts: ShiftRow[];
-  attendance: AttendanceRow[];
-}
+import type { AttendanceBoardData, FlatSegmentRow } from './types';
 
 function calendarDaysBetweenWorkAndToday(workIso: string): number {
   const a = parseIsoDate(workIso);
@@ -62,8 +32,10 @@ function calendarDaysBetweenWorkAndToday(workIso: string): number {
 
 const AttendancePage = () => {
   const client = useGraphClient('client');
-  const { can } = useAuth();
-  const canRegularize = can('attendance:regularize');
+  const { clientSession } = useAuth();
+  const canRegularize = createPermissionService(clientSession).canCapability(
+    'action.attendance.regularize'
+  );
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -103,7 +75,7 @@ const AttendancePage = () => {
         if (!cancelled) setBoard(b);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load attendance');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -119,7 +91,7 @@ const AttendancePage = () => {
       const b = await loadBoard();
       setBoard(b);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Refresh failed');
+      setError(graphQlUserMessage(e));
     }
   }, [loadBoard]);
 

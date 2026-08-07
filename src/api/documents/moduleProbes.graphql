@@ -1,4 +1,4 @@
-# One query per KabiPay subgraph, kept intentionally shallow so every
+# One query per HeliorHRMS subgraph, kept intentionally shallow so every
 # module shows a "tick" in the connectivity dashboard and the engineering
 # team has a canonical sample document to copy when wiring real screens.
 #

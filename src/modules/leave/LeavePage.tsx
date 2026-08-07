@@ -8,6 +8,7 @@ import {
   showLeaveApprovalColumn,
 } from '../../auth/leaveApprovalUi';
 import { useAuth } from '../../contexts/AuthContext';
+import { createPermissionService } from '../../auth/permissionService';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useFlashToast } from '../../hooks/useFlashToast';
 import FlashToastBar from '../../components/common/FlashToastBar';
@@ -36,6 +37,7 @@ type ApproveLeaveRequestMutation = {
 
 const LeavePage = () => {
   const { can, clientSession } = useAuth();
+  const permissions = createPermissionService(clientSession);
   const client = useGraphClient('client');
   const flash = useFlashToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -123,7 +125,7 @@ const LeavePage = () => {
         }
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load leave data');
+          setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -165,7 +167,7 @@ const LeavePage = () => {
       setOrgLabels(orgData.labels);
       setOrgChartRows(orgData.rows);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to refresh');
+      setError(graphQlUserMessage(e));
     } finally {
       setLoading(false);
     }
@@ -304,7 +306,7 @@ const LeavePage = () => {
       });
       setTrailRows(r.leaveRequestWorkflowTrail);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load workflow history');
+      setError(graphQlUserMessage(e));
       setTrailForId(null);
       setTrailSummaryRow(null);
     } finally {
@@ -457,7 +459,7 @@ const LeavePage = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             No holidays scheduled ahead — admins can add calendars under{' '}
             <span className="font-mono text-xs">Admin → Leave settings</span>
-            {can('leave:manage') ? (
+            {permissions.canCapability('action.leave.manage') ? (
               <>
                 {' '}
                 (<span className="font-mono text-xs">/admin/leave-settings</span>)

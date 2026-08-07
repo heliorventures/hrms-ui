@@ -1,0 +1,34 @@
+export const PERMISSIONS = {
+  analyticsRead: 'analytics:read',
+  assetsManage: 'assets:manage',
+  attendancePunchPolicy: 'attendance:punch_policy',
+  attendanceRegularize: 'attendance:regularize',
+  benefitsManage: 'benefits:manage',
+  benefitsSelf: 'benefits:self',
+  compensationManage: 'compensation:manage',
+  employeeWrite: 'employee:write',
+  expenseApprove: 'expense:approve',
+  expenseManage: 'expense:manage',
+  expensePay: 'expense:pay',
+  grievanceManage: 'grievance:manage',
+  grievanceSelf: 'grievance:self',
+  leaveApprove: 'leave:approve',
+  leaveManage: 'leave:manage',
+  learningManage: 'learning:manage',
+  notificationManage: 'notification:manage',
+  onboardingManage: 'onboarding:manage',
+  onboardingSelf: 'onboarding:self',
+  payrollStatutoryExport: 'payroll:statutory_export',
+  performanceManage: 'performance:manage',
+  recruitmentManage: 'recruitment:manage',
+  roleManage: 'role:manage',
+  successionManage: 'succession:manage',
+  taxApprove: 'tax:approve',
+  timesheetApprove: 'timesheet:approve',
+  timesheetManage: 'timesheet:manage',
+  workflowManage: 'workflow:manage',
+} as const;
+
+export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+export const HR_ADMIN_ROLE_CODES = ['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN'] as const;

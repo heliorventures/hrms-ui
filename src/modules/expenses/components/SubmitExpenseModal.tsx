@@ -1,127 +1,219 @@
-import { useState } from 'react';
-import Modal from '../../../components/common/Modal';
-import Input from '../../../components/common/Input';
-import Select from '../../../components/common/Select';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Button from '../../../components/common/Button';
-import { ExpenseType } from '../../../types';
+import Input from '../../../components/common/Input';
+import Modal from '../../../components/common/Modal';
+import Select from '../../../components/common/Select';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import { EXPENSE_DEFAULT_CURRENCY } from '../constants';
+import { formatCurrency } from '../utils/formatters';
+import type {
+  ExpenseCategoryRow,
+  ExpenseSubmissionHints,
+  SubmitExpenseInput,
+  TravelRequestRow,
+} from '../types';
 
 interface SubmitExpenseModalProps {
+  categories: ExpenseCategoryRow[];
   isOpen: boolean;
+  loading: boolean;
+  submissionHints: ExpenseSubmissionHints | null;
+  submitting: boolean;
+  travelRequests: TravelRequestRow[];
+  onCategoryChange: (expenseCategoryId: string) => void;
   onClose: () => void;
+  onSubmit: (input: SubmitExpenseInput) => Promise<void>;
 }
 
-const SubmitExpenseModal = ({ isOpen, onClose }: SubmitExpenseModalProps) => {
-  const [formData, setFormData] = useState({
-    type: 'travel' as ExpenseType,
-    amount: '',
-    date: new Date().toISOString().split('T')[0],
-    description: '',
-  });
+const initialExpenseDate = () => new Date().toISOString().slice(0, 10);
 
-  const expenseTypeOptions = [
-    { value: 'travel', label: 'Travel' },
-    { value: 'food', label: 'Food & Meals' },
-    { value: 'accommodation', label: 'Accommodation' },
-    { value: 'supplies', label: 'Office Supplies' },
-    { value: 'other', label: 'Other' },
-  ];
+const SubmitExpenseModal = ({
+  categories,
+  isOpen,
+  loading,
+  submissionHints,
+  submitting,
+  travelRequests,
+  onCategoryChange,
+  onClose,
+  onSubmit,
+}: SubmitExpenseModalProps) => {
+  const [categoryId, setCategoryId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState(EXPENSE_DEFAULT_CURRENCY);
+  const [expenseDate, setExpenseDate] = useState(() => initialExpenseDate());
+  const [title, setTitle] = useState('');
+  const [travelRequestId, setTravelRequestId] = useState('');
+  const [receiptFileStorageId, setReceiptFileStorageId] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert('Expense claim submitted successfully!');
+  const categoryOptions = useMemo(
+    () => [
+      { value: '', label: 'Select category' },
+      ...categories.map((category) => ({
+        value: category.id,
+        label: `${category.name} (${category.code})`,
+      })),
+    ],
+    [categories]
+  );
+
+  const travelOptions = useMemo(
+    () => [
+      { value: '', label: 'No linked trip' },
+      ...travelRequests
+        .filter((row) => row.status.toUpperCase() !== 'REJECTED')
+        .map((row) => ({
+          value: row.id,
+          label: `${row.destinationLocation ?? row.originLocation ?? 'Trip'} - ${row.fromDate}`,
+        })),
+    ],
+    [travelRequests]
+  );
+
+  useEffect(() => {
+    if (isOpen) onCategoryChange(categoryId);
+  }, [categoryId, isOpen, onCategoryChange]);
+
+  const reset = () => {
+    setCategoryId('');
+    setAmount('');
+    setCurrency(EXPENSE_DEFAULT_CURRENCY);
+    setExpenseDate(initialExpenseDate());
+    setTitle('');
+    setTravelRequestId('');
+    setReceiptFileStorageId('');
+    setFormError(null);
+  };
+
+  const close = () => {
+    reset();
     onClose();
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!categoryId || !title.trim() || !amount.trim()) {
+      setFormError('Category, title, and amount are required.');
+      return;
+    }
+    setFormError(null);
+    try {
+      await onSubmit({
+        expenseCategoryId: categoryId,
+        amount: amount.trim(),
+        currency: currency.trim() || EXPENSE_DEFAULT_CURRENCY,
+        expenseDate,
+        title: title.trim(),
+        ...(travelRequestId.trim() ? { travelRequestId: travelRequestId.trim() } : {}),
+        ...(receiptFileStorageId.trim()
+          ? { receiptFileStorageId: receiptFileStorageId.trim() }
+          : {}),
+      });
+      close();
+    } catch (err) {
+      setFormError(graphQlUserMessage(err));
+    }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Submit Expense Claim">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Select
-            label="Expense Type"
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            options={expenseTypeOptions}
-            required
-            fullWidth
-          />
-
-          <Input
-            label="Amount (₹)"
-            type="number"
-            name="amount"
-            value={formData.amount}
-            onChange={handleChange}
-            min="0"
-            step="0.01"
-            required
-            fullWidth
-          />
-        </div>
-
-        <Input
-          label="Date"
-          type="date"
-          name="date"
-          value={formData.date}
-          onChange={handleChange}
-          max={new Date().toISOString().split('T')[0]}
+    <Modal
+      isOpen={isOpen}
+      onClose={close}
+      title="Submit expense claim"
+    >
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-4"
+      >
+        {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
+        <Select
+          label="Category"
+          value={categoryId}
+          onChange={(event) => setCategoryId(event.target.value)}
+          options={categoryOptions}
           required
           fullWidth
         />
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Description
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={3}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+        {submissionHints ? (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300">
+            {submissionHints.maxAmountPerClaim ? (
+              <p>
+                Max per claim:{' '}
+                <strong>{formatCurrency(submissionHints.maxAmountPerClaim, currency)}</strong>
+              </p>
+            ) : null}
+            {submissionHints.limitPerMonth ? (
+              <p className="mt-1">
+                Monthly limit:{' '}
+                <strong>{formatCurrency(submissionHints.limitPerMonth, currency)}</strong>
+              </p>
+            ) : null}
+            {submissionHints.receiptRequired ? (
+              <p className="mt-1 font-medium text-amber-900 dark:text-amber-200">
+                Receipt file ID is required for this category.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        <Input
+          label="Title"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          fullWidth
+          required
+        />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input
+            label="Amount"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            fullWidth
             required
+            inputMode="decimal"
+          />
+          <Input
+            label="Currency"
+            value={currency}
+            onChange={(event) => setCurrency(event.target.value)}
+            fullWidth
           />
         </div>
-
-        <div className="rounded-lg border border-gray-300 p-4 dark:border-gray-600">
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Upload Bill (Optional)
-          </label>
-          <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 dark:border-gray-600 dark:bg-gray-700">
-            <div className="text-center">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                Click to upload bill image
-              </p>
-            </div>
-          </div>
-        </div>
-
+        <Input
+          type="date"
+          label="Expense date"
+          value={expenseDate}
+          onChange={(event) => setExpenseDate(event.target.value)}
+          fullWidth
+          required
+        />
+        <Input
+          label="Receipt file ID"
+          value={receiptFileStorageId}
+          onChange={(event) => setReceiptFileStorageId(event.target.value)}
+          fullWidth
+          placeholder="Uploaded file UUID when required"
+        />
+        <Select
+          label="Linked travel request"
+          value={travelRequestId}
+          onChange={(event) => setTravelRequestId(event.target.value)}
+          options={travelOptions}
+          fullWidth
+        />
         <div className="flex gap-3">
-          <Button type="submit" variant="primary">
-            Submit Claim
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={submitting || loading || categories.length === 0}
+          >
+            {submitting ? 'Submitting...' : 'Submit'}
           </Button>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={close}
+          >
             Cancel
           </Button>
         </div>

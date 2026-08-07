@@ -6,10 +6,14 @@
 export interface AppConfig {
   /** Federated GraphQL HTTP endpoint; include path e.g. `/graphql`. */
   gatewayUrl: string;
-  /** kabipay-auth REST base URL; no trailing slash. */
+  /** Auth REST base URL; no trailing slash. */
   authUrl: string;
-  /** Default tenant for dev login and GraphQL `x-tenant-id` when unauthenticated. */
-  devTenantId: string;
+  /** Optional local-dev tenant id. Production code must not fall back to this. */
+  devTenantId?: string;
+  /** Optional local-dev tenant slug used only when running Vite locally. */
+  devTenantSlug?: string;
+  /** Optional base domain for tenant subdomain extraction, e.g. heliorhrms.com. */
+  tenantBaseDomain?: string;
 }
 
 let cached: AppConfig | null = null;
@@ -22,21 +26,30 @@ function validate(raw: unknown): AppConfig {
   if (raw === null || typeof raw !== 'object') {
     throw new Error('config.json: expected an object at the top level');
   }
-  const { gatewayUrl, authUrl, devTenantId } = raw as Record<string, unknown>;
+  const { gatewayUrl, authUrl, devTenantId, devTenantSlug, tenantBaseDomain } = raw as Record<
+    string,
+    unknown
+  >;
   if (typeof gatewayUrl !== 'string' || !gatewayUrl.trim()) {
     throw new Error('config.json: "gatewayUrl" is required and must be a non-empty string');
   }
   if (typeof authUrl !== 'string' || !authUrl.trim()) {
     throw new Error('config.json: "authUrl" is required and must be a non-empty string');
   }
-  if (typeof devTenantId !== 'string' || !devTenantId.trim()) {
-    throw new Error('config.json: "devTenantId" is required and must be a non-empty string');
-  }
-  return {
+  const config: AppConfig = {
     gatewayUrl: trimSlash(gatewayUrl.trim()),
     authUrl: trimSlash(authUrl.trim()),
-    devTenantId: devTenantId.trim(),
   };
+  if (typeof devTenantId === 'string' && devTenantId.trim()) {
+    config.devTenantId = devTenantId.trim();
+  }
+  if (typeof devTenantSlug === 'string' && devTenantSlug.trim()) {
+    config.devTenantSlug = devTenantSlug.trim().toLowerCase();
+  }
+  if (typeof tenantBaseDomain === 'string' && tenantBaseDomain.trim()) {
+    config.tenantBaseDomain = tenantBaseDomain.trim().toLowerCase();
+  }
+  return config;
 }
 
 /**

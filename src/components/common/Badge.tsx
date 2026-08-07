@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-interface BadgeProps {
+export interface BadgeProps {
   children: ReactNode;
   variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral';
   size?: 'sm' | 'md';

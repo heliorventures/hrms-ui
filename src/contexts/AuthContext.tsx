@@ -35,6 +35,7 @@ import {
   setOperatorRefreshToken,
 } from '../auth/tokenStore';
 import { getAppConfig } from '../config';
+import { graphQlUserMessage } from '../utils/graphqlUserMessage';
 
 export interface OpsUser {
   id: string;
@@ -100,8 +101,9 @@ interface AuthProviderProps {
 }
 
 function defaultTenantId(): string | undefined {
+  if (import.meta.env.DEV !== true) return undefined;
   const v = getAppConfig().devTenantId;
-  return v.length > 0 ? v : undefined;
+  return v && v.length > 0 ? v : undefined;
 }
 
 function devRoleSwitchEnabled(): boolean {
@@ -234,7 +236,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       const tenant = opts.tenantId ?? defaultTenantId();
       if (!tenant) {
-        setError('No tenant configured. Set devTenantId in public/config.json or pass tenantId.');
+        setError('Open your organization sign-in link before logging in.');
         throw new Error('missing tenantId');
       }
       setLoading(true);
@@ -244,11 +246,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } catch (e) {
         if (e instanceof AuthError) {
           const friendly =
-            e.code === 'UNAUTHENTICATED' ? 'Email or password is incorrect.' : e.message;
+            e.code === 'UNAUTHENTICATED' ? 'Email or password is incorrect.' : graphQlUserMessage(e);
           setError(friendly);
         } else if (e instanceof TypeError) {
           setError(
-            `Cannot reach auth service. Is kabipay-auth running on ${getAppConfig().authUrl}?`
+            `Cannot reach the authentication service at ${getAppConfig().authUrl}.`
           );
         } else {
           setError('Login failed. Please try again.');
@@ -271,11 +273,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } catch (e) {
         if (e instanceof AuthError) {
           const friendly =
-            e.code === 'UNAUTHENTICATED' ? 'Email or password is incorrect.' : e.message;
+            e.code === 'UNAUTHENTICATED' ? 'Email or password is incorrect.' : graphQlUserMessage(e);
           setOpsError(friendly);
         } else if (e instanceof TypeError) {
           setOpsError(
-            `Cannot reach auth service. Is kabipay-auth running on ${getAppConfig().authUrl}?`
+            `Cannot reach the authentication service at ${getAppConfig().authUrl}.`
           );
         } else {
           setOpsError('Login failed. Please try again.');

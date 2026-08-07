@@ -53,9 +53,18 @@ module.exports = {
         unnamedComponents: 'arrow-function',
       },
     ],
-    'max-lines-per-function': [
-      'warn',
-      { max: 360, skipBlankLines: true, skipComments: true },
+    'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
+    'max-lines-per-function': ['error', { max: 180, skipBlankLines: true, skipComments: true }],
+    complexity: ['error', { max: 12 }],
+    'max-depth': ['error', 4],
+    'max-statements': ['error', 60],
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector:
+          "CallExpression[callee.name=/^set.*Error$/] ConditionalExpression MemberExpression[property.name='message']",
+        message: 'Use graphQlUserMessage/toUserMessage before showing errors in the UI.',
+      },
     ],
     'react/jsx-max-props-per-line': ['error', { maximum: 1, when: 'multiline' }],
     'react/jsx-first-prop-new-line': ['error', 'multiline'],

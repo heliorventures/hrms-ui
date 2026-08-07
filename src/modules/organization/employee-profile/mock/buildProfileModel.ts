@@ -138,7 +138,7 @@ export function buildEmployeeProfileModel(core: CoreEmployeeRecord): EmployeePro
     },
     {
       id: `${core.id}-wx-2`,
-      company: 'KabiPay (current org)',
+      company: 'HeliorHRMS (current org)',
       role: desig,
       startDate: core.dateOfJoining,
       endDate: null,

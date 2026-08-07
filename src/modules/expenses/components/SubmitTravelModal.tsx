@@ -4,6 +4,8 @@ import Input from '../../../components/common/Input';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { SubmitTravelRequestDocument } from '../../../api/graphql/graphql';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import { EXPENSE_DEFAULT_CURRENCY } from '../constants';
 
 interface SubmitTravelModalProps {
   isOpen: boolean;
@@ -13,6 +15,7 @@ interface SubmitTravelModalProps {
 
 const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalProps) => {
   const client = useGraphClient('client');
+  const minTravelDate = new Date().toISOString().slice(0, 10);
   const [formData, setFormData] = useState({
     fromLocation: '',
     toLocation: '',
@@ -39,7 +42,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
           toDate: formData.toDate,
           purpose,
           estimatedAmount: est === '' ? null : String(Number.parseFloat(est).toFixed(2)),
-          currency: 'INR',
+          currency: EXPENSE_DEFAULT_CURRENCY,
         },
       });
       onSubmitted?.();
@@ -53,7 +56,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
         estimatedCost: '',
       });
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Submit failed');
+      setSubmitError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -98,7 +101,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
             name="fromDate"
             value={formData.fromDate}
             onChange={handleChange}
-            min={new Date().toISOString().split('T')[0]}
+            min={minTravelDate}
             required
             fullWidth
           />
@@ -109,7 +112,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
             name="toDate"
             value={formData.toDate}
             onChange={handleChange}
-            min={formData.fromDate || new Date().toISOString().split('T')[0]}
+            min={formData.fromDate || minTravelDate}
             required
             fullWidth
           />

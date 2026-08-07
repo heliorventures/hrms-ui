@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTenant } from '../../contexts/TenantContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import { APP_BRAND } from '../../constants/brand';
 
 const CAPTCHA_LENGTH = 5;
 const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -18,6 +20,7 @@ const generateCaptcha = () => {
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login, loading, error: authError } = useAuth();
+  const { currentTenant, resolutionStatus, resolutionError } = useTenant();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
@@ -58,7 +61,7 @@ const LoginPage = () => {
     setErrors({});
 
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, { tenantId: currentTenant.id });
       navigate('/dashboard', { replace: true });
     } catch {
       // AuthContext already populated `authError`; we just rotate the captcha
@@ -73,10 +76,10 @@ const LoginPage = () => {
         <div className="rounded-2xl border border-slate-200/90 bg-white p-8 shadow-card-md dark:border-slate-700/80 dark:bg-slate-900/80">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              KabiPay
+              {APP_BRAND.productName}
             </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Sign in to your account
+              Sign in to {currentTenant.id ? currentTenant.name : 'your organization'}
             </p>
           </div>
 
@@ -176,6 +179,15 @@ const LoginPage = () => {
               />
             </div>
 
+            {resolutionStatus === 'not-found' && (
+              <div
+                role="alert"
+                className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-100"
+              >
+                {resolutionError ?? 'We could not find this organization.'}
+              </div>
+            )}
+
             {authError && (
               <div
                 role="alert"
@@ -185,7 +197,12 @@ const LoginPage = () => {
               </div>
             )}
 
-            <Button type="submit" fullWidth size="lg" disabled={submitting}>
+            <Button
+              type="submit"
+              fullWidth
+              size="lg"
+              disabled={submitting || !currentTenant.id || resolutionStatus !== 'resolved'}
+            >
               {submitting ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>

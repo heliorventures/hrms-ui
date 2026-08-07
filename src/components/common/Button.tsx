@@ -14,6 +14,7 @@ const Button = ({
   fullWidth = false,
   className = '',
   disabled,
+  type = 'button',
   ...props
 }: ButtonProps) => {
   const baseClasses =
@@ -42,6 +43,7 @@ const Button = ({
     <button
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${widthClass} ${className}`}
       disabled={disabled}
+      type={type}
       {...props}
     >
       {children}

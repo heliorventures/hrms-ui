@@ -1,4 +1,4 @@
-// Core types for the KabiPay application
+// Core types for the HeliorHRMS application
 
 /** Client-plane role for legacy UI checks (`admin` = any elevated tenant role from JWT). */
 export type UserRole = 'employee' | 'admin';
@@ -42,6 +42,9 @@ export interface Tenant {
   name: string;
   companyCode: string;
   logoUrl?: string;
+  status?: string;
+  slug?: string;
+  primaryColor?: string;
 }
 
 export interface AttendanceRecord {

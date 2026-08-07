@@ -28,6 +28,7 @@ import { GrowthTimelineTab } from './tabs/GrowthTimelineTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { EmploymentManagementTab } from './tabs/EmploymentManagementTab';
 import Button from '../../../components/common/Button';
+import { createPermissionService } from '../../../auth/permissionService';
 
 const TAB_DEFS: ProfileTabDef[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -47,8 +48,8 @@ interface EmployeeProfileShellProps {
 
 export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) {
   const client = useGraphClient('client');
-  const { can } = useAuth();
-  const isHr = can('employee:write');
+  const { clientSession } = useAuth();
+  const isHr = createPermissionService(clientSession).canCapability('route.hr.people');
   const showSalary = isHr;
 
   const { loading, error, model, documentTypes, refetch } = useEmployeeProfileData(client, employeeId);

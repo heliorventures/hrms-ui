@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { createGraphClient, type KabiPayGraphPlane } from '@/api/client';
+import { createGraphClient, type HeliorGraphPlane } from '@/api/client';
 import { useTenant } from '@/contexts/TenantContext';
 
 /**
@@ -8,7 +8,7 @@ import { useTenant } from '@/contexts/TenantContext';
  * token. Use this instead of `createGraphClient` directly inside
  * React components so tenant switches propagate automatically.
  */
-export function useGraphClient(plane: KabiPayGraphPlane = 'client') {
+export function useGraphClient(plane: HeliorGraphPlane = 'client') {
   const { currentTenant } = useTenant();
   return useMemo(
     () => createGraphClient(plane, { tenantId: currentTenant?.id }),

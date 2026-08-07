@@ -5,6 +5,8 @@ import Button from '../../components/common/Button';
 import TabBar from '../../components/common/TabBar';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useAuth } from '../../contexts/AuthContext';
+import { createPermissionService } from '../../auth/permissionService';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   OnboardingChecklistDocument,
   SetOnboardingChecklistItemDocument,
@@ -32,8 +34,9 @@ type ClearanceItemRow = ClientOpsClearanceBySeparationQuery['clearanceChecklist'
 type MainTab = 'join' | 'exit';
 
 const OnboardingPage = () => {
-  const { can } = useAuth();
-  const canManageOnboarding = can('onboarding:manage') || can('employee:write');
+  const { clientSession } = useAuth();
+  const permissionService = createPermissionService(clientSession);
+  const canManageOnboarding = permissionService.canCapability('action.onboarding.manage');
   const client = useGraphClient('client');
   const [mainTab, setMainTab] = useState<MainTab>('join');
   const [items, setItems] = useState<Item[]>([]);
@@ -92,7 +95,7 @@ const OnboardingPage = () => {
           setFnfForm({ le: '', g: '', b: '', r: '' });
         }
       } catch (e) {
-        setObErr(e instanceof Error ? e.message : 'Failed to load offboarding data');
+        setObErr(graphQlUserMessage(e));
         setObFnf(null);
         setObCl([]);
       } finally {
@@ -121,7 +124,7 @@ const OnboardingPage = () => {
           setSeps(sp);
         }
       } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load');
+        if (!c) setError(graphQlUserMessage(e));
       } finally {
         if (!c) setLoading(false);
       }
@@ -137,7 +140,7 @@ const OnboardingPage = () => {
       await client.request(SetOnboardingChecklistItemDocument, { checklistItemId: id, isCompleted: next });
       setItems(await loadChecklist());
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Update failed');
+      setError(graphQlUserMessage(e));
     } finally {
       setBusyId(null);
     }
@@ -154,7 +157,7 @@ const OnboardingPage = () => {
       }
       setSeps(await loadSep());
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Action failed');
+      setError(graphQlUserMessage(e));
     } finally {
       setActionId(null);
     }
@@ -175,7 +178,7 @@ const OnboardingPage = () => {
       });
       await loadOffboardingDetail(separationId);
     } catch (e) {
-      setObErr(e instanceof Error ? e.message : 'Save failed');
+      setObErr(graphQlUserMessage(e));
     } finally {
       setFnfBusy(false);
     }
@@ -189,7 +192,7 @@ const OnboardingPage = () => {
       await client.request(ClientOpsFinalizeFnfDocument, { separationId });
       await loadOffboardingDetail(separationId);
     } catch (e) {
-      setObErr(e instanceof Error ? e.message : 'Finalize failed');
+      setObErr(graphQlUserMessage(e));
     } finally {
       setFnfBusy(false);
     }
@@ -202,7 +205,7 @@ const OnboardingPage = () => {
       await client.request(ClientOpsEnsureOffboardingDocument, { separationId });
       await loadOffboardingDetail(separationId);
     } catch (e) {
-      setObErr(e instanceof Error ? e.message : 'Failed to create rows');
+      setObErr(graphQlUserMessage(e));
     } finally {
       setEnsureBusy(false);
     }
@@ -218,7 +221,7 @@ const OnboardingPage = () => {
       });
       await loadOffboardingDetail(separationId);
     } catch (e) {
-      setObErr(e instanceof Error ? e.message : 'Update failed');
+      setObErr(graphQlUserMessage(e));
     } finally {
       setClBusy(null);
     }
@@ -244,7 +247,7 @@ const OnboardingPage = () => {
       setReason('');
       setResignDay('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Submit failed');
+      setError(graphQlUserMessage(e));
     } finally {
       setSubmitBusy(false);
     }

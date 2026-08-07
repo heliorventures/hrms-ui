@@ -2,7 +2,7 @@ import { GraphQLClient } from 'graphql-request';
 import { getAppConfig } from '@/config';
 import { getClientAccessToken, getOperatorAccessToken } from '@/auth/tokenStore';
 
-export type KabiPayGraphPlane = 'client' | 'operator';
+export type HeliorGraphPlane = 'client' | 'operator';
 
 const TENANT_HEADER = 'x-tenant-id';
 
@@ -11,28 +11,21 @@ function graphqlHttpUrl() {
   return getAppConfig().gatewayUrl;
 }
 
-function devTenantIdFromConfig(): string | undefined {
-  const v = getAppConfig().devTenantId;
-  return v.length > 0 ? v : undefined;
-}
-
 /**
  * Build HTTP headers for an outgoing GraphQL request.
  *
  * `Authorization` comes from the in-memory token store; `x-tenant-id` is
- * read from the runtime-supplied `tenantId` (if any) or falls back to
- * `config.devTenantId` so the dev experience works before auth
- * is fully wired.
+ * read from the runtime-supplied tenant context. Production requests must not
+ * fall back to a config tenant.
  */
-function buildHeaders(plane: KabiPayGraphPlane, tenantId?: string): Record<string, string> {
+function buildHeaders(plane: HeliorGraphPlane, tenantId?: string): Record<string, string> {
   const headers: Record<string, string> = {};
   const token = plane === 'operator' ? getOperatorAccessToken() : getClientAccessToken();
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  const resolvedTenant = tenantId ?? devTenantIdFromConfig();
-  if (resolvedTenant && plane === 'client') {
-    headers[TENANT_HEADER] = resolvedTenant;
+  if (tenantId && plane === 'client') {
+    headers[TENANT_HEADER] = tenantId;
   }
   return headers;
 }
@@ -42,7 +35,7 @@ export interface GraphClientOptions {
 }
 
 export function createGraphClient(
-  plane: KabiPayGraphPlane = 'client',
+  plane: HeliorGraphPlane = 'client',
   opts: GraphClientOptions = {}
 ) {
   return new GraphQLClient(graphqlHttpUrl(), {

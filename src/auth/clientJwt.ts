@@ -1,12 +1,13 @@
 import { getClientAccessToken } from './tokenStore';
 import { parseClientAccessToken } from './clientSession';
+import { PERMISSIONS } from './permissions';
 
 /** Same rule as `ClientClaims::can_approve_expense`: effective `expense:approve` on the JWT. */
 export function canApproveExpenseFromAccessToken(accessToken: string | null): boolean {
   if (!accessToken) return false;
   const session = parseClientAccessToken(accessToken);
   if (!session) return false;
-  return session.permissions.has('expense:approve');
+  return session.permissions.has(PERMISSIONS.expenseApprove);
 }
 
 export function canApproveExpenseFromStoredClientToken(): boolean {
@@ -19,6 +20,7 @@ export function canMarkExpensePaymentFromAccessToken(accessToken: string | null)
   const session = parseClientAccessToken(accessToken);
   if (!session) return false;
   return (
-    session.permissions.has('expense:pay') || session.permissions.has('expense:approve')
+    session.permissions.has(PERMISSIONS.expensePay) ||
+    session.permissions.has(PERMISSIONS.expenseApprove)
   );
 }

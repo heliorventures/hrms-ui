@@ -1,5 +1,4 @@
 {
   "gatewayUrl": "http://127.0.0.1:4009/graphql",
-  "authUrl": "http://127.0.0.1:4001",
-  "devTenantId": "e6d4fc13-feb8-52a0-93bd-f66c795969b1"
+  "authUrl": "http://127.0.0.1:4001"
 }

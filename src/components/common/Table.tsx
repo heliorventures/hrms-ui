@@ -10,9 +10,23 @@ interface TableProps<T> {
   data: T[];
   columns: TableColumn<T>[];
   keyExtractor: (item: T) => string;
+  emptyMessage?: string;
+  errorMessage?: string | null;
+  loading?: boolean;
+  loadingMessage?: string;
 }
 
-const Table = <T,>({ data, columns, keyExtractor }: TableProps<T>) => {
+const Table = <T,>({
+  data,
+  columns,
+  keyExtractor,
+  emptyMessage = 'No records found.',
+  errorMessage = null,
+  loading = false,
+  loadingMessage = 'Loading...',
+}: TableProps<T>) => {
+  const colSpan = Math.max(columns.length, 1);
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -29,18 +43,53 @@ const Table = <T,>({ data, columns, keyExtractor }: TableProps<T>) => {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-          {data.map((item) => (
-            <tr key={keyExtractor(item)} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-              {columns.map((column) => (
-                <td
-                  key={column.key as string}
-                  className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100"
-                >
-                  {column.render ? column.render(item) : String(item[column.key as keyof T])}
-                </td>
-              ))}
+          {loading && (
+            <tr>
+              <td
+                colSpan={colSpan}
+                className="px-6 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+              >
+                {loadingMessage}
+              </td>
             </tr>
-          ))}
+          )}
+          {!loading && errorMessage && (
+            <tr>
+              <td
+                colSpan={colSpan}
+                className="px-6 py-6 text-center text-sm text-red-600 dark:text-red-300"
+              >
+                {errorMessage}
+              </td>
+            </tr>
+          )}
+          {!loading && !errorMessage && data.length === 0 && (
+            <tr>
+              <td
+                colSpan={colSpan}
+                className="px-6 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+              >
+                {emptyMessage}
+              </td>
+            </tr>
+          )}
+          {!loading &&
+            !errorMessage &&
+            data.map((item) => (
+              <tr
+                key={keyExtractor(item)}
+                className="hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                {columns.map((column) => (
+                  <td
+                    key={column.key as string}
+                    className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100"
+                  >
+                    {column.render ? column.render(item) : String(item[column.key as keyof T])}
+                  </td>
+                ))}
+              </tr>
+            ))}
         </tbody>
       </table>
     </div>

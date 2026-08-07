@@ -5,6 +5,8 @@ import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { createPermissionService } from '../../auth/permissionService';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   AttendanceAdjustmentPolicyDocument,
   TimesheetLockPolicyDocument,
@@ -17,10 +19,11 @@ import {
 } from '../../api/graphql/graphql';
 
 const AdminHrTimesheetSettingsPage = () => {
-  const { can } = useAuth();
+  const { clientSession } = useAuth();
   const client = useGraphClient('client');
-  const canManageCatalog = can('timesheet:manage');
-  const canPolicyWide = can('timesheet:manage') || can('attendance:punch_policy');
+  const permissions = createPermissionService(clientSession);
+  const canManageCatalog = permissions.canCapability('action.timesheet.manage');
+  const canPolicyWide = permissions.canCapability('route.admin.timesheetSettings');
 
   const [maxSelfDays, setMaxSelfDays] = useState('14');
   const [editableWeekSpan, setEditableWeekSpan] = useState('4');
@@ -99,7 +102,7 @@ const AdminHrTimesheetSettingsPage = () => {
       });
       setMessage('Attendance adjustment policy saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }
@@ -120,7 +123,7 @@ const AdminHrTimesheetSettingsPage = () => {
       });
       setMessage('Timesheet lock policy saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }
@@ -143,7 +146,7 @@ const AdminHrTimesheetSettingsPage = () => {
       await reloadProjects();
       setMessage('Project saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }
@@ -166,7 +169,7 @@ const AdminHrTimesheetSettingsPage = () => {
       });
       setMessage(`Task list saved for ${taskProjectCode.trim()}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }

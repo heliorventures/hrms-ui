@@ -1,15 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
+import Input from '@/components/common/Input';
+import { APP_BRAND } from '@/constants/brand';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CAPTCHA_LENGTH = 5;
 const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 const generateCaptcha = () => {
   let result = '';
-  for (let i = 0; i < CAPTCHA_LENGTH; i++) {
+  for (let i = 0; i < CAPTCHA_LENGTH; i += 1) {
     result += CAPTCHA_CHARS.charAt(Math.floor(Math.random() * CAPTCHA_CHARS.length));
   }
   return result;
@@ -24,33 +25,27 @@ const OpsLoginPage = () => {
   const [captchaCode, setCaptchaCode] = useState(() => generateCaptcha());
   const [errors, setErrors] = useState<{ email?: string; password?: string; captcha?: string }>({});
 
-  const submitting = loading;
-
   const refreshCaptcha = useCallback(() => {
     setCaptchaCode(generateCaptcha());
     setCaptchaInput('');
-    setErrors((e) => ({ ...e, captcha: undefined }));
+    setErrors((prev) => ({ ...prev, captcha: undefined }));
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const newErrors: { email?: string; password?: string; captcha?: string } = {};
-
-    if (!email.trim()) newErrors.email = 'Email is required';
-    if (!password) newErrors.password = 'Password is required';
-    const captchaNormalized = captchaInput.trim().toUpperCase();
-    if (captchaNormalized !== captchaCode) {
-      newErrors.captcha = 'Captcha verification failed. Please try again.';
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const nextErrors: { email?: string; password?: string; captcha?: string } = {};
+    if (!email.trim()) nextErrors.email = 'Email is required';
+    if (!password) nextErrors.password = 'Password is required';
+    if (captchaInput.trim().toUpperCase() !== captchaCode) {
+      nextErrors.captcha = 'Captcha verification failed. Please try again.';
     }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      if (newErrors.captcha) refreshCaptcha();
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      if (nextErrors.captcha) refreshCaptcha();
       return;
     }
 
     setErrors({});
-
     try {
       await loginOps(email.trim(), password);
       navigate('/ops/tenants', { replace: true });
@@ -62,26 +57,29 @@ const OpsLoginPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-8 shadow-card-md dark:border-slate-700/80 dark:bg-slate-900/80">
+        <div className="rounded-lg border border-slate-200/90 bg-white p-8 shadow-card-md dark:border-slate-700/80 dark:bg-slate-900/80">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Operator console
             </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Platform sign-in (kabipay-ops)
+              Platform sign-in for {APP_BRAND.productName}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5"
+          >
             <Input
               label="Email"
               type="email"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setErrors((err) => ({ ...err, email: undefined }));
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setErrors((prev) => ({ ...prev, email: undefined }));
               }}
-              placeholder="ops-admin@kabipay.local"
+              placeholder="ops-admin@heliorhrms.local"
               error={errors.email}
               fullWidth
               autoComplete="email"
@@ -91,9 +89,9 @@ const OpsLoginPage = () => {
               label="Password"
               type="password"
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setErrors((err) => ({ ...err, password: undefined }));
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setErrors((prev) => ({ ...prev, password: undefined }));
               }}
               placeholder="Password"
               error={errors.password}
@@ -110,10 +108,7 @@ const OpsLoginPage = () => {
                   className="flex flex-1 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700"
                   aria-hidden
                 >
-                  <span
-                    className="select-none text-xl font-bold tracking-[0.4em] text-gray-700 dark:text-gray-200"
-                    style={{ letterSpacing: '0.35em', fontFamily: 'monospace' }}
-                  >
+                  <span className="select-none font-mono text-xl font-bold tracking-widest text-gray-700 dark:text-gray-200">
                     {captchaCode}
                   </span>
                 </div>
@@ -123,22 +118,15 @@ const OpsLoginPage = () => {
                   className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                   title="Refresh captcha"
                 >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
+                  Refresh
                 </button>
               </div>
               <Input
                 type="text"
                 value={captchaInput}
-                onChange={(e) => {
-                  setCaptchaInput(e.target.value.toUpperCase());
-                  setErrors((err) => ({ ...err, captcha: undefined }));
+                onChange={(event) => {
+                  setCaptchaInput(event.target.value.toUpperCase());
+                  setErrors((prev) => ({ ...prev, captcha: undefined }));
                 }}
                 placeholder="Enter the code above"
                 error={errors.captcha}
@@ -149,32 +137,31 @@ const OpsLoginPage = () => {
               />
             </div>
 
-            {opsError && (
+            {opsError ? (
               <div
                 role="alert"
                 className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
               >
                 {opsError}
               </div>
-            )}
+            ) : null}
 
-            <Button type="submit" fullWidth size="lg" disabled={submitting}>
-              {submitting ? 'Signing in...' : 'Sign in to console'}
+            <Button
+              type="submit"
+              fullWidth
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Sign in to console'}
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-            Demo ops user: <code>ops-admin@kabipay.local</code> / <code>ChangeMe!123</code>
-            {' — run '}
-            <code className="text-[0.65rem]">seed-demo-data.ps1</code>.
-          </p>
-
-          <p className="mt-4 text-center text-sm">
+          <p className="mt-6 text-center text-sm">
             <Link
-              to="/login"
+              to="/"
               className="text-indigo-600 hover:underline dark:text-indigo-400"
             >
-              Employee app sign-in
+              Back to {APP_BRAND.productName}
             </Link>
           </p>
         </div>

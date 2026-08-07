@@ -1,7 +1,7 @@
 /**
  * Module Health panel.
  *
- * Probes every federated KabiPay subgraph via the stitching gateway.
+ * Probes every federated HeliorHRMS subgraph via the stitching gateway.
  * Useful to confirm the full path — UI → gateway → subgraph → tenant DB
  * — after standing up `kabipay-gateway` and the Rust services.
  *
@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { gql } from 'graphql-request';
 import { useGraphClient } from '@/hooks/useGraphClient';
+import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
 
 interface ProbeConfig {
   key: string;
@@ -328,7 +329,7 @@ const ModuleHealth = () => {
             ...prev,
             [probe.key]: {
               status: 'error',
-              message: (err as Error).message.slice(0, 180),
+              message: graphQlUserMessage(err),
             },
           }));
         }
@@ -355,7 +356,7 @@ const ModuleHealth = () => {
         <div>
           <h1 className="text-2xl font-semibold">Module Health</h1>
           <p className="text-sm text-gray-500">
-            Live introspection of every KabiPay subgraph through the stitching gateway. Tenant-plane
+            Live introspection of every HeliorHRMS subgraph through the stitching gateway. Tenant-plane
             queries use the current tenant id; ops-plane queries use the operator plane headers.
           </p>
         </div>

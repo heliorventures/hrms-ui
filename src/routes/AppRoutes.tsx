@@ -1,11 +1,10 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { canAccessTenantPath } from '../auth/navAccess';
-import AppLayout from '../components/layout/AppLayout';
+import { useTenant } from '../contexts/TenantContext';
 import LoginPage from '../modules/auth/LoginPage';
 import ForgotPasswordPage from '../modules/auth/ForgotPasswordPage';
+import MarketingPage from '../modules/public/MarketingPage';
 import OpsLoginPage from '../modules/ops/OpsLoginPage';
-import OpsLayout from '../modules/ops/OpsLayout';
 import OpsTenantsPage from '../modules/ops/OpsTenantsPage';
 import OpsModulesPage from '../modules/ops/OpsModulesPage';
 import OpsBillingPage from '../modules/ops/OpsBillingPage';
@@ -53,56 +52,63 @@ import HrAccessManagementPage from '../modules/hr/HrAccessManagementPage';
 import HrLeavesPage from '../modules/hr/HrLeavesPage';
 import HrTimesheetsPage from '../modules/hr/HrTimesheetsPage';
 import HrTimesheetProjectAssignmentsPage from '../modules/hr/HrTimesheetProjectAssignmentsPage';
-
-const ProtectedLayout = () => {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  return <AppLayout />;
-};
-
-const OpsProtectedLayout = () => {
-  const { isOpsAuthenticated } = useAuth();
-  if (!isOpsAuthenticated) {
-    return <Navigate to="/ops/login" replace />;
-  }
-  return <OpsLayout />;
-};
-
-const PayrollPermissionRoute = ({
-  children,
-  anyOf,
-}: {
-  children: JSX.Element;
-  anyOf: readonly string[];
-}) => {
-  const { canAny } = useAuth();
-  if (!canAny(anyOf)) return <Navigate to="/payroll/payslips" replace />;
-  return children;
-};
-
-const TenantPermissionRoute = ({
-  tenantPath,
-  children,
-}: {
-  tenantPath: string;
-  children: JSX.Element;
-}) => {
-  const { can, clientSession } = useAuth();
-  if (
-    !canAccessTenantPath(tenantPath, {
-      can,
-      clientSession,
-    })
-  ) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  return children;
-};
+import {
+  OpsProtectedLayout,
+  PayrollPermissionRoute,
+  ProtectedLayout,
+  TenantNotFoundPage,
+  TenantPermissionRoute,
+  TenantResolvingPage,
+} from './RouteGuards';
 
 const AppRoutes = () => {
   const { isAuthenticated, isOpsAuthenticated } = useAuth();
+  const { resolutionStatus, resolutionError } = useTenant();
+  const location = useLocation();
+
+  const tenantPathMatch = location.pathname.match(/^\/t\/[^/]+(?<rest>\/.*)?$/);
+  if (tenantPathMatch && resolutionStatus === 'resolved') {
+    return <Navigate to={tenantPathMatch.groups?.rest ?? '/login'} replace />;
+  }
+
+  if (resolutionStatus === 'marketing') {
+    return (
+      <Routes>
+        <Route
+          path="/ops/login"
+          element={isOpsAuthenticated ? <Navigate to="/ops/tenants" replace /> : <OpsLoginPage />}
+        />
+        <Route path="/ops" element={<OpsProtectedLayout />}>
+          <Route index element={<Navigate to="/ops/tenants" replace />} />
+          <Route path="tenants" element={<OpsTenantsPage />} />
+          <Route path="modules" element={<OpsModulesPage />} />
+          <Route path="billing" element={<OpsBillingPage />} />
+          <Route path="operators" element={<OpsOperatorsPage />} />
+          <Route path="feature-flags" element={<OpsFeatureFlagsPage />} />
+          <Route path="*" element={<Navigate to="/ops/tenants" replace />} />
+        </Route>
+        <Route path="*" element={<MarketingPage />} />
+      </Routes>
+    );
+  }
+
+  if (resolutionStatus === 'resolving') {
+    return (
+      <Routes>
+        <Route path="/ops/login" element={<OpsLoginPage />} />
+        <Route path="*" element={<TenantResolvingPage />} />
+      </Routes>
+    );
+  }
+
+  if (resolutionStatus === 'not-found' || resolutionStatus === 'error') {
+    return (
+      <Routes>
+        <Route path="/ops/login" element={<OpsLoginPage />} />
+        <Route path="*" element={<TenantNotFoundPage message={resolutionError} />} />
+      </Routes>
+    );
+  }
 
   return (
     <Routes>
@@ -151,7 +157,7 @@ const AppRoutes = () => {
         <Route
           path="payroll/tax"
           element={
-            <PayrollPermissionRoute anyOf={['tax:approve']}>
+            <PayrollPermissionRoute capability="route.payroll.tax">
               <PayrollTaxPage />
             </PayrollPermissionRoute>
           }
@@ -159,7 +165,7 @@ const AppRoutes = () => {
         <Route
           path="payroll/compensation"
           element={
-            <PayrollPermissionRoute anyOf={['employee:write']}>
+            <PayrollPermissionRoute capability="route.payroll.compensation">
               <PayrollCompensationPage />
             </PayrollPermissionRoute>
           }
