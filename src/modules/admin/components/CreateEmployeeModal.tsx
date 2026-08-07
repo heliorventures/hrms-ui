@@ -4,6 +4,7 @@ import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
+import { toDateInputValue } from '../../../utils/dateInput';
 import {
   CreateEmployeeDocument,
   ClientOpsOrgListsForEmployeeModalDocument,
@@ -23,7 +24,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   const [employeeCode, setEmployeeCode] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [dateOfJoining, setDateOfJoining] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dateOfJoining, setDateOfJoining] = useState(() => toDateInputValue());
   const [status, setStatus] = useState('ACTIVE');
   const [departmentId, setDepartmentId] = useState('');
   const [designationId, setDesignationId] = useState('');

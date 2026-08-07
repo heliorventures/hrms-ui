@@ -5,28 +5,13 @@ import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { canManageNotifications } from '../../auth/navAccess';
+import { fileToBase64 } from '../../utils/fileEncoding';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   CreateAnnouncementDocument,
   OrgDepartmentsDocument,
   type OrgDepartmentsQuery,
 } from '../../api/graphql/graphql';
-
-async function fileToBase64Content(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const r = reader.result;
-      if (typeof r !== 'string') {
-        reject(new Error('Could not read file'));
-        return;
-      }
-      const comma = r.indexOf(',');
-      resolve(comma >= 0 ? r.slice(comma + 1) : r);
-    };
-    reader.onerror = () => reject(reader.error ?? new Error('read failed'));
-    reader.readAsDataURL(file);
-  });
-}
 
 interface CreateAnnouncementModalProps {
   isOpen: boolean;
@@ -107,18 +92,20 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
       let imageFileName: string | null = null;
       let imageMimeType: string | null = null;
       if (imageFile) {
-        imageContentBase64 = await fileToBase64Content(imageFile);
-        imageFileName = imageFile.name;
-        imageMimeType = imageFile.type || null;
+        const image = await fileToBase64(imageFile);
+        imageContentBase64 = image.b64;
+        imageFileName = image.name;
+        imageMimeType = image.mime;
       }
 
       let documentContentBase64: string | null = null;
       let documentFileName: string | null = null;
       let documentMimeType: string | null = null;
       if (documentFile) {
-        documentContentBase64 = await fileToBase64Content(documentFile);
-        documentFileName = documentFile.name;
-        documentMimeType = documentFile.type || null;
+        const document = await fileToBase64(documentFile);
+        documentContentBase64 = document.b64;
+        documentFileName = document.name;
+        documentMimeType = document.mime;
       }
 
       const roleTrim = annRole.trim();
@@ -149,7 +136,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
       reset();
       onClose();
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Failed to publish');
+      setSubmitError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }

@@ -3,6 +3,7 @@ import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Select from '../../../components/common/Select';
+import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { EXPENSE_DEFAULT_CURRENCY } from '../constants';
 import { formatCurrency } from '../utils/formatters';
@@ -25,8 +26,6 @@ interface SubmitExpenseModalProps {
   onSubmit: (input: SubmitExpenseInput) => Promise<void>;
 }
 
-const initialExpenseDate = () => new Date().toISOString().slice(0, 10);
-
 const SubmitExpenseModal = ({
   categories,
   isOpen,
@@ -41,7 +40,7 @@ const SubmitExpenseModal = ({
   const [categoryId, setCategoryId] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState(EXPENSE_DEFAULT_CURRENCY);
-  const [expenseDate, setExpenseDate] = useState(() => initialExpenseDate());
+  const [expenseDate, setExpenseDate] = useState(() => toDateInputValue());
   const [title, setTitle] = useState('');
   const [travelRequestId, setTravelRequestId] = useState('');
   const [receiptFileStorageId, setReceiptFileStorageId] = useState('');
@@ -79,7 +78,7 @@ const SubmitExpenseModal = ({
     setCategoryId('');
     setAmount('');
     setCurrency(EXPENSE_DEFAULT_CURRENCY);
-    setExpenseDate(initialExpenseDate());
+    setExpenseDate(toDateInputValue());
     setTitle('');
     setTravelRequestId('');
     setReceiptFileStorageId('');

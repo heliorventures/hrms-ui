@@ -5,6 +5,14 @@ import PageHeader from '@/components/common/PageHeader';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { useGraphClient } from '@/hooks/useGraphClient';
+import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
+import {
+  SUBSCRIPTION_OVERAGE_OPTIONS,
+  SUBSCRIPTION_STATUS_OPTIONS,
+  type ModuleRow,
+  type SubRow,
+  type TenantRow,
+} from './moduleTypes';
 import {
   OPS_MODULES,
   OPS_REMOVE_SUBSCRIPTION,
@@ -13,32 +21,6 @@ import {
   OPS_TENANTS,
   OPS_UPSERT_SUBSCRIPTION,
 } from './opsGraph';
-
-type ModuleRow = {
-  id: string;
-  code: string;
-  name: string;
-  category?: string | null;
-  isActive: boolean;
-  isCore: boolean;
-};
-
-type TenantRow = { id: string; name: string };
-
-type SubRow = {
-  id: string;
-  tenantId: string;
-  moduleId: string;
-  status: string;
-  activatedAt?: string | null;
-  expiresAt?: string | null;
-  contractedSeats: number;
-  currentSeatUsage: number;
-  overagePolicy: string;
-};
-
-const STATUS_OPTIONS = ['PENDING', 'ACTIVE', 'SUSPENDED', 'CANCELLED', 'EXPIRED'];
-const OVERAGE_OPTIONS = ['BLOCK', 'ALLOW', 'NOTIFY'];
 
 const OpsModulesPage = () => {
   const client = useGraphClient('operator');
@@ -76,7 +58,7 @@ const OpsModulesPage = () => {
       setTenants(t.tenants ?? []);
       setSubs(s.tenantSubscriptions ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load');
+      setError(graphQlUserMessage(e));
     } finally {
       setLoading(false);
     }
@@ -140,7 +122,7 @@ const OpsModulesPage = () => {
       setSubOpen(false);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setSubSubmitting(false);
     }
@@ -156,7 +138,7 @@ const OpsModulesPage = () => {
       setToast('Subscription removed.');
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Remove failed');
+      setError(graphQlUserMessage(err));
     }
   };
 
@@ -171,7 +153,7 @@ const OpsModulesPage = () => {
       setToast(`Module ${m.code} is now ${!m.isActive ? 'active' : 'inactive'}.`);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setModBusy(null);
     }
@@ -282,7 +264,7 @@ const OpsModulesPage = () => {
                   value={subStatus}
                   onChange={(e) => setSubStatus(e.target.value)}
                 >
-                  {STATUS_OPTIONS.map((s) => (
+                  {SUBSCRIPTION_STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
@@ -296,7 +278,7 @@ const OpsModulesPage = () => {
                   value={subOverage}
                   onChange={(e) => setSubOverage(e.target.value)}
                 >
-                  {OVERAGE_OPTIONS.map((s) => (
+                  {SUBSCRIPTION_OVERAGE_OPTIONS.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>

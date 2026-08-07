@@ -6,6 +6,7 @@ import type { PersonalInfoFields } from '../types';
 import Input from '../../../../components/common/Input';
 import Button from '../../../../components/common/Button';
 import { UpdateEmployeePersonalProfileDocument } from '../../../../api/graphql/graphql';
+import { toDateInputValue } from '../../../../utils/dateInput';
 
 interface PersonalInfoTabProps {
   employeeId: string;
@@ -22,7 +23,7 @@ function ymdFromValue(isoOrYmd: string): string {
   try {
     const d = new Date(isoOrYmd);
     if (Number.isNaN(d.getTime())) return '';
-    return d.toISOString().slice(0, 10);
+    return toDateInputValue(d);
   } catch {
     return '';
   }

@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { fileToBase64 } from '../../utils/fileEncoding';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import AnnouncementEditorForm from './components/AnnouncementEditorForm';
+import DirectNotificationComposer from './components/DirectNotificationComposer';
 import {
   AdminNotificationsConsoleDocument,
   CreateAnnouncementDocument,
@@ -15,23 +18,6 @@ import {
 } from '../../api/graphql/graphql';
 
 type ConsoleData = AdminNotificationsConsoleQuery;
-
-async function fileToBase64(file: File): Promise<{ b64: string; name: string; mime: string | null }> {
-  const b64 = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => {
-      const s = r.result;
-      if (typeof s !== 'string') reject(new Error('read failed'));
-      else {
-        const i = s.indexOf(',');
-        resolve(i >= 0 ? s.slice(i + 1) : s);
-      }
-    };
-    r.onerror = () => reject(r.error);
-    r.readAsDataURL(file);
-  });
-  return { b64, name: file.name, mime: file.type || null };
-}
 
 const AdminNotificationsPage = () => {
   const client = useGraphClient('client');
@@ -50,7 +36,6 @@ const AdminNotificationsPage = () => {
   const [employeePost, setEmployeePost] = useState(false);
   const [annImage, setAnnImage] = useState<File | null>(null);
   const [annDoc, setAnnDoc] = useState<File | null>(null);
-
   const [editId, setEditId] = useState<string | null>(null);
 
   const [selUsers, setSelUsers] = useState<string[]>([]);
@@ -60,46 +45,45 @@ const AdminNotificationsPage = () => {
   const [dnUrl, setDnUrl] = useState('');
 
   const load = useCallback(async () => {
-    const r = await client.request<ConsoleData>(AdminNotificationsConsoleDocument, {});
-    return r;
+    return client.request<ConsoleData>(AdminNotificationsConsoleDocument, {});
   }, [client]);
 
   useEffect(() => {
-    let c = false;
+    let cancelled = false;
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const r = await load();
-        if (!c) setData(r);
-      } catch (e) {
-        if (!c) setError(e instanceof Error ? e.message : 'Failed to load');
+        const response = await load();
+        if (!cancelled) setData(response);
+      } catch (err) {
+        if (!cancelled) setError(graphQlUserMessage(err));
       } finally {
-        if (!c) setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
-      c = true;
+      cancelled = true;
     };
   }, [load]);
 
   const employeesWithUser = useMemo(
-    () => (data?.employees ?? []).filter((e) => e.userId),
+    () => (data?.employees ?? []).filter((employee) => employee.userId),
     [data]
   );
 
   const startEdit = (id: string) => {
-    const a = data?.adminAnnouncements.find((x) => x.id === id);
-    if (!a) return;
+    const announcement = data?.adminAnnouncements.find((item) => item.id === id);
+    if (!announcement) return;
     setEditId(id);
-    setAnnTitle(a.title);
-    setAnnBody(a.body ?? '');
-    setAnnDept(a.targetDepartmentId ?? '');
-    setAnnLoc(a.targetLocationId ?? '');
+    setAnnTitle(announcement.title);
+    setAnnBody(announcement.body ?? '');
+    setAnnDept(announcement.targetDepartmentId ?? '');
+    setAnnLoc(announcement.targetLocationId ?? '');
     setAnnRole('');
-    setAnnPublish(a.publishAt ? String(a.publishAt).slice(0, 16) : '');
-    setAnnExpire(a.expiresAt ? String(a.expiresAt).slice(0, 16) : '');
-    setEmployeePost(a.postSource === 'employee_post');
+    setAnnPublish(announcement.publishAt ? String(announcement.publishAt).slice(0, 16) : '');
+    setAnnExpire(announcement.expiresAt ? String(announcement.expiresAt).slice(0, 16) : '');
+    setEmployeePost(announcement.postSource === 'employee_post');
   };
 
   const cancelEdit = () => {
@@ -116,61 +100,51 @@ const AdminNotificationsPage = () => {
     setAnnDoc(null);
   };
 
-  const publishAnnouncement = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const readAnnouncementFiles = async () => {
+    const image = annImage ? await fileToBase64(annImage) : null;
+    const document = annDoc ? await fileToBase64(annDoc) : null;
+    return {
+      imageFileName: image?.name ?? null,
+      imageMimeType: image?.mime ?? null,
+      imageContentBase64: image?.b64 ?? null,
+      documentFileName: document?.name ?? null,
+      documentMimeType: document?.mime ?? null,
+      documentContentBase64: document?.b64 ?? null,
+    };
+  };
+
+  const publishAnnouncement = async (event: React.FormEvent) => {
+    event.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      let imageFileName: string | null = null;
-      let imageMimeType: string | null = null;
-      let imageContentBase64: string | null = null;
-      if (annImage) {
-        const u = await fileToBase64(annImage);
-        imageFileName = u.name;
-        imageMimeType = u.mime;
-        imageContentBase64 = u.b64;
-      }
-      let documentFileName: string | null = null;
-      let documentMimeType: string | null = null;
-      let documentContentBase64: string | null = null;
-      if (annDoc) {
-        const u = await fileToBase64(annDoc);
-        documentFileName = u.name;
-        documentMimeType = u.mime;
-        documentContentBase64 = u.b64;
-      }
-
+      const attachments = await readAnnouncementFiles();
       const publishAt = annPublish ? new Date(annPublish).toISOString() : null;
       const expiresAt = annExpire ? new Date(annExpire).toISOString() : null;
 
-        const ex = data?.adminAnnouncements.find((x) => x.id === editId);
-        if (editId) {
-          await client.request(UpdateAnnouncementDocument, {
-            input: {
-              id: editId,
-              title: annTitle.trim(),
-              body: annBody.trim() === '' ? null : annBody.trim(),
-              targetDepartmentId: annDept.trim() === '' ? null : annDept.trim(),
-              targetLocationId: annLoc.trim() === '' ? null : annLoc.trim(),
-              clearTargetDepartment: Boolean(ex?.targetDepartmentId) && annDept.trim() === '',
-              clearTargetLocation: Boolean(ex?.targetLocationId) && annLoc.trim() === '',
-              targetRoleCode: annRole.trim() === '' ? null : annRole.trim(),
-              clearRoleAudience:
-                Boolean(ex?.targetAudience?.startsWith('ROLE:')) && annRole.trim() === '',
-              publishAt,
-              expiresAt,
-              clearPublishAt: !annPublish,
-              clearExpiresAt: !annExpire,
-              imageFileName,
-              imageMimeType,
-              imageContentBase64,
-              documentFileName,
-              documentMimeType,
-              documentContentBase64,
-              clearImage: false,
-              clearDocument: false,
-            },
-          });
+      if (editId) {
+        const existing = data?.adminAnnouncements.find((item) => item.id === editId);
+        await client.request(UpdateAnnouncementDocument, {
+          input: {
+            id: editId,
+            title: annTitle.trim(),
+            body: annBody.trim() === '' ? null : annBody.trim(),
+            targetDepartmentId: annDept.trim() === '' ? null : annDept.trim(),
+            targetLocationId: annLoc.trim() === '' ? null : annLoc.trim(),
+            clearTargetDepartment: Boolean(existing?.targetDepartmentId) && annDept.trim() === '',
+            clearTargetLocation: Boolean(existing?.targetLocationId) && annLoc.trim() === '',
+            targetRoleCode: annRole.trim() === '' ? null : annRole.trim(),
+            clearRoleAudience:
+              Boolean(existing?.targetAudience?.startsWith('ROLE:')) && annRole.trim() === '',
+            publishAt,
+            expiresAt,
+            clearPublishAt: !annPublish,
+            clearExpiresAt: !annExpire,
+            clearImage: false,
+            clearDocument: false,
+            ...attachments,
+          },
+        });
       } else {
         await client.request(CreateAnnouncementDocument, {
           input: {
@@ -182,19 +156,14 @@ const AdminNotificationsPage = () => {
             publishAt,
             expiresAt,
             employeePost,
-            imageFileName,
-            imageMimeType,
-            imageContentBase64,
-            documentFileName,
-            documentMimeType,
-            documentContentBase64,
+            ...attachments,
           },
         });
       }
       cancelEdit();
       setData(await load());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }
@@ -207,14 +176,14 @@ const AdminNotificationsPage = () => {
       await client.request(DeleteAnnouncementDocument, { id });
       setData(await load());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Delete failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }
   };
 
-  const sendDirect = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendDirect = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (selUsers.length === 0) {
       setError('Select at least one user');
       return;
@@ -237,7 +206,7 @@ const AdminNotificationsPage = () => {
       setSelUsers([]);
       setData(await load());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Send failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }
@@ -250,7 +219,7 @@ const AdminNotificationsPage = () => {
       await client.request(DeleteNotificationAdminDocument, { id });
       setData(await load());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Delete failed');
+      setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
     }
@@ -260,7 +229,7 @@ const AdminNotificationsPage = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notification admin</h1>
       <p className="text-sm text-gray-600 dark:text-gray-400">
-        Manage announcements (including audience and schedule) and send private in-app notifications to selected users.
+        Manage announcements and send private in-app notifications to selected users.
       </p>
 
       {error && (
@@ -271,154 +240,86 @@ const AdminNotificationsPage = () => {
 
       <Card title={editId ? 'Edit announcement' : 'New announcement (HR)'}>
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : (
-          <form onSubmit={(e) => void publishAnnouncement(e)} className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {editId && (
-                <Button type="button" variant="outline" size="sm" onClick={cancelEdit} disabled={busy}>
-                  Cancel edit
-                </Button>
-              )}
-            </div>
-            <Input label="Title" value={annTitle} onChange={(e) => setAnnTitle(e.target.value)} required fullWidth />
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Body</label>
-              <textarea
-                value={annBody}
-                onChange={(e) => setAnnBody(e.target.value)}
-                rows={3}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              />
-            </div>
-            {!editId && (
-              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={employeePost}
-                  onChange={(e) => setEmployeePost(e.target.checked)}
-                  className="rounded border-gray-300"
-                />
-                Employee-style post (unchecked = company announcement)
-              </label>
-            )}
-            <div>
-              <label className="mb-1 block text-sm font-medium">Department</label>
-              <select
-                value={annDept}
-                onChange={(e) => setAnnDept(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">— All departments —</option>
-                {(data?.departments ?? []).map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Input
-              label="Location id (optional UUID)"
-              value={annLoc}
-              onChange={(e) => setAnnLoc(e.target.value)}
-              fullWidth
-            />
-            <Input
-              label="Target role code (e.g. HR_ADMIN → audience ROLE:HR_ADMIN)"
-              value={annRole}
-              onChange={(e) => setAnnRole(e.target.value)}
-              fullWidth
-            />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium">Publish at</label>
-                <input
-                  type="datetime-local"
-                  value={annPublish}
-                  onChange={(e) => setAnnPublish(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">Expires at</label>
-                <input
-                  type="datetime-local"
-                  value={annExpire}
-                  onChange={(e) => setAnnExpire(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Image</label>
-              <input type="file" accept="image/*" onChange={(e) => setAnnImage(e.target.files?.[0] ?? null)} className="mt-1 block w-full text-sm" />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Document</label>
-              <input type="file" onChange={(e) => setAnnDoc(e.target.files?.[0] ?? null)} className="mt-1 block w-full text-sm" />
-            </div>
-            <Button type="submit" variant="primary" disabled={busy}>
-              {busy ? 'Saving…' : editId ? 'Update announcement' : 'Create announcement'}
-            </Button>
-          </form>
+          <AnnouncementEditorForm
+            body={annBody}
+            busy={busy}
+            departmentId={annDept}
+            departments={data?.departments ?? []}
+            documentFile={annDoc}
+            employeePost={employeePost}
+            expiresAt={annExpire}
+            imageFile={annImage}
+            isEditing={Boolean(editId)}
+            locationId={annLoc}
+            publishAt={annPublish}
+            roleCode={annRole}
+            title={annTitle}
+            onBodyChange={setAnnBody}
+            onCancelEdit={cancelEdit}
+            onDepartmentChange={setAnnDept}
+            onDocumentChange={setAnnDoc}
+            onEmployeePostChange={setEmployeePost}
+            onExpiresAtChange={setAnnExpire}
+            onImageChange={setAnnImage}
+            onLocationChange={setAnnLoc}
+            onPublishAtChange={setAnnPublish}
+            onRoleCodeChange={setAnnRole}
+            onSubmit={(submitEvent) => void publishAnnouncement(submitEvent)}
+            onTitleChange={setAnnTitle}
+          />
         )}
       </Card>
 
       <Card title="Direct notifications to users">
-        <form onSubmit={(e) => void sendDirect(e)} className="space-y-3">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Recipients (linked user)</label>
-            <select
-              multiple
-              size={6}
-              value={selUsers}
-              onChange={(e) => {
-                const o = [...e.target.selectedOptions].map((x) => x.value);
-                setSelUsers(o);
-              }}
-              className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            >
-              {employeesWithUser.map((em) => (
-                <option key={em.id} value={em.userId!}>
-                  {em.fullName} {em.linkedUserEmail ? `(${em.linkedUserEmail})` : ''}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple.</p>
-          </div>
-          <Input label="Kind" value={dnKind} onChange={(e) => setDnKind(e.target.value)} fullWidth />
-          <Input label="Title" value={dnTitle} onChange={(e) => setDnTitle(e.target.value)} fullWidth />
-          <Input label="Message" value={dnMessage} onChange={(e) => setDnMessage(e.target.value)} fullWidth />
-          <Input label="Action URL" value={dnUrl} onChange={(e) => setDnUrl(e.target.value)} fullWidth />
-          <Button type="submit" variant="primary" disabled={busy}>
-            Send
-          </Button>
-        </form>
+        <DirectNotificationComposer
+          busy={busy}
+          employees={employeesWithUser}
+          kind={dnKind}
+          message={dnMessage}
+          selectedUserIds={selUsers}
+          title={dnTitle}
+          url={dnUrl}
+          onKindChange={setDnKind}
+          onMessageChange={setDnMessage}
+          onSelectedUserIdsChange={setSelUsers}
+          onSubmit={(submitEvent) => void sendDirect(submitEvent)}
+          onTitleChange={setDnTitle}
+          onUrlChange={setDnUrl}
+        />
       </Card>
 
       <Card title="Recent announcements">
         <div className="space-y-2">
-          {(data?.adminAnnouncements ?? []).map((a) => (
+          {(data?.adminAnnouncements ?? []).map((announcement) => (
             <div
-              key={a.id}
+              key={announcement.id}
               className="flex flex-wrap items-start justify-between gap-2 rounded border border-gray-200 p-3 dark:border-gray-700"
             >
               <div className="min-w-0">
-                <p className="font-medium text-gray-900 dark:text-white">{a.title}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{announcement.title}</p>
                 <p className="text-xs text-gray-500">
-                  {a.postSource} · {a.publishAt ? new Date(a.publishAt).toLocaleString() : '—'}
+                  {announcement.postSource} -{' '}
+                  {announcement.publishAt ? new Date(announcement.publishAt).toLocaleString() : '-'}
                 </p>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {a.targetDepartmentId && <Badge size="sm">Dept</Badge>}
-                  {a.targetLocationId && <Badge size="sm">Loc</Badge>}
-                  {a.targetAudience?.startsWith('ROLE:') && <Badge size="sm">Role</Badge>}
+                  {announcement.targetDepartmentId && <Badge size="sm">Dept</Badge>}
+                  {announcement.targetLocationId && <Badge size="sm">Loc</Badge>}
+                  {announcement.targetAudience?.startsWith('ROLE:') && <Badge size="sm">Role</Badge>}
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button type="button" size="sm" variant="outline" onClick={() => startEdit(a.id)} disabled={busy}>
+                <Button type="button" size="sm" variant="outline" onClick={() => startEdit(announcement.id)} disabled={busy}>
                   Edit
                 </Button>
-                <Button type="button" size="sm" variant="outline" onClick={() => void removeAnnouncement(a.id)} disabled={busy}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void removeAnnouncement(announcement.id)}
+                  disabled={busy}
+                >
                   Delete
                 </Button>
               </div>
@@ -429,18 +330,24 @@ const AdminNotificationsPage = () => {
 
       <Card title="Recent in-app notifications (tenant)">
         <div className="max-h-96 space-y-2 overflow-y-auto text-sm">
-          {(data?.adminNotifications ?? []).map((n) => (
+          {(data?.adminNotifications ?? []).map((notification) => (
             <div
-              key={n.id}
+              key={notification.id}
               className="flex items-start justify-between gap-2 rounded border border-gray-100 p-2 dark:border-gray-800"
             >
               <div className="min-w-0">
-                <p className="font-medium">{n.title ?? '—'}</p>
+                <p className="font-medium">{notification.title ?? '-'}</p>
                 <p className="text-xs text-gray-500">
-                  user {n.userId.slice(0, 8)}… · {n.kind ?? '—'}
+                  user {notification.userId.slice(0, 8)}... - {notification.kind ?? '-'}
                 </p>
               </div>
-              <Button type="button" size="sm" variant="outline" onClick={() => void removeInAppRow(n.id)} disabled={busy}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void removeInAppRow(notification.id)}
+                disabled={busy}
+              >
                 Delete
               </Button>
             </div>

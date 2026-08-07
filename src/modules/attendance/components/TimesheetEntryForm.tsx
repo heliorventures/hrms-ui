@@ -4,6 +4,7 @@ import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import { useGraphClient } from '../../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
   CreateTimesheetEntryDocument,
   TimesheetProjectsForEmployeeDocument,
@@ -148,7 +149,7 @@ const TimesheetEntryForm = ({
       onSaved();
       onClose();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Failed to save entry');
+      setFormError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }

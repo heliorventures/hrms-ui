@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { AttendanceRecord } from '../../../types';
+import { toDateInputValue } from '../../../utils/dateInput';
 
 interface AttendanceCalendarProps {
   attendance: AttendanceRecord[];
@@ -52,10 +53,11 @@ const AttendanceCalendar = ({
     // Previous month padding
     for (let i = 0; i < startPad; i++) {
       const d = new Date(year, month - 1, -startPad + i + 1);
+      const date = toDateInputValue(d);
       days.push({
-        date: d.toISOString().split('T')[0],
+        date,
         isCurrentMonth: false,
-        record: attendanceByDate.get(d.toISOString().split('T')[0]),
+        record: attendanceByDate.get(date),
       });
     }
 
@@ -73,10 +75,11 @@ const AttendanceCalendar = ({
     const remaining = 42 - days.length;
     for (let i = 1; i <= remaining; i++) {
       const d = new Date(year, month, i);
+      const date = toDateInputValue(d);
       days.push({
-        date: d.toISOString().split('T')[0],
+        date,
         isCurrentMonth: false,
-        record: attendanceByDate.get(d.toISOString().split('T')[0]),
+        record: attendanceByDate.get(date),
       });
     }
 

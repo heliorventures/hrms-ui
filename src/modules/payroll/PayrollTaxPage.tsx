@@ -5,6 +5,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   ClientOpsPayrollTaxBoardDocument,
   TaxComputationsListDocument,
@@ -121,7 +122,7 @@ const PayrollTaxPage = () => {
         prev && list.some((c) => c.id === prev) ? prev : firstActive
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load tax data');
+      setError(graphQlUserMessage(e));
     } finally {
       setLoading(false);
     }
@@ -136,9 +137,7 @@ const PayrollTaxPage = () => {
       );
       setTaxSections(res.taxSectionDefinitions);
     } catch (e) {
-      setTaxSectionsError(
-        e instanceof Error ? e.message : 'Could not load tax sections (needs tax catalog + permission).'
-      );
+      setTaxSectionsError(graphQlUserMessage(e));
       setTaxSections([]);
     }
   }, [client]);
@@ -166,7 +165,7 @@ const PayrollTaxPage = () => {
       setCfgUpsertMsg('Tax configuration version saved.');
       await loadTaxBoard();
     } catch (err) {
-      setCfgUpsertMsg(err instanceof Error ? err.message : 'Save failed');
+      setCfgUpsertMsg(graphQlUserMessage(err));
     } finally {
       setCfgUpsertBusy(false);
     }
@@ -194,7 +193,7 @@ const PayrollTaxPage = () => {
       setSlabMsg('Slab saved.');
       await loadTaxBoard();
     } catch (err) {
-      setSlabMsg(err instanceof Error ? err.message : 'Save failed');
+      setSlabMsg(graphQlUserMessage(err));
     } finally {
       setSlabBusy(false);
     }
@@ -218,11 +217,7 @@ const PayrollTaxPage = () => {
         );
         if (!c) setComputations(res.taxComputations);
       } catch (e) {
-        if (!c) {
-          setCompError(
-            e instanceof Error ? e.message : 'Tax declarations need an employee-linked session'
-          );
-        }
+        if (!c) setCompError(graphQlUserMessage(e));
       } finally {
         if (!c) setCompLoading(false);
       }
@@ -278,7 +273,7 @@ const PayrollTaxPage = () => {
       setSecMsg('Section saved.');
       await loadTaxSections();
     } catch (err) {
-      setSecMsg(err instanceof Error ? err.message : 'Save failed (needs tax:approve / HR)');
+      setSecMsg(graphQlUserMessage(err));
     } finally {
       setSecBusy(false);
     }
@@ -309,7 +304,7 @@ const PayrollTaxPage = () => {
       setFormMsg('Saved.');
       await loadComputations();
     } catch (err) {
-      setFormMsg(err instanceof Error ? err.message : 'Save failed');
+      setFormMsg(graphQlUserMessage(err));
     } finally {
       setFormSubmitting(false);
     }

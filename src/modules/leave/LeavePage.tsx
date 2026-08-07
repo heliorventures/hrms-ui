@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import Card from '../../components/common/Card';
-import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
+import FlashToastBar from '../../components/common/FlashToastBar';
 import {
   canApproveLeaveRequestRow,
   showLeaveApprovalColumn,
 } from '../../auth/leaveApprovalUi';
-import { useAuth } from '../../contexts/AuthContext';
 import { createPermissionService } from '../../auth/permissionService';
+import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useFlashToast } from '../../hooks/useFlashToast';
-import FlashToastBar from '../../components/common/FlashToastBar';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import AllHolidaysModal from './components/AllHolidaysModal';
 import ApplyLeaveModal from './components/ApplyLeaveModal';
+import HolidaySummaryCard from './components/HolidaySummaryCard';
+import LeaveBalancesCard from './components/LeaveBalancesCard';
 import LeaveRejectModal from './components/LeaveRejectModal';
 import LeaveRequestsTableSection from './components/LeaveRequestsTableSection';
-import Modal from '../../components/common/Modal';
+import LeaveTypesCard from './components/LeaveTypesCard';
+import LeaveWorkflowTrailModal from './components/LeaveWorkflowTrailModal';
 import {
   AllCompanyHolidaysDocument,
   ApproveLeaveRequestDocument,
@@ -30,10 +33,13 @@ import {
   type OrgChartQuery,
 } from '../../api/graphql/graphql';
 
-/** Mutation payload shape for `ApproveLeaveRequestDocument`. */
 type ApproveLeaveRequestMutation = {
   approveLeaveRequest: { status: string };
 };
+
+const BOARD_LIMIT = 20;
+const ORG_CHART_LIMIT = 500;
+const HOLIDAY_LIMIT = 450;
 
 const LeavePage = () => {
   const { can, clientSession } = useAuth();
@@ -52,10 +58,7 @@ const LeavePage = () => {
   const [rejectLeaveId, setRejectLeaveId] = useState<string | null>(null);
   const [approveBusyId, setApproveBusyId] = useState<string | null>(null);
   const [cancelBusyId, setCancelBusyId] = useState<string | null>(null);
-  const [trailForId, setTrailForId] = useState<string | null>(null);
-  const [trailSummaryRow, setTrailSummaryRow] = useState<LeaveBoardQuery['leaveRequests'][number] | null>(
-    null
-  );
+  const [trailSummaryRow, setTrailSummaryRow] = useState<LeaveBoardQuery['leaveRequests'][number] | null>(null);
   const [trailLoading, setTrailLoading] = useState(false);
   const [trailRows, setTrailRows] =
     useState<LeaveWorkflowTrailQueryQuery['leaveRequestWorkflowTrail']>([]);
@@ -67,28 +70,27 @@ const LeavePage = () => {
   const [balanceYear, setBalanceYear] = useState(defaultYear);
 
   const yearChoices = useMemo(() => {
-    const ys: number[] = [];
-    for (let y = defaultYear - 2; y <= defaultYear + 1; y++) ys.push(y);
-    return ys;
+    const years: number[] = [];
+    for (let year = defaultYear - 2; year <= defaultYear + 1; year += 1) years.push(year);
+    return years;
   }, [defaultYear]);
 
-  const loadBoard = useCallback(async () => {
-    return client.request<LeaveBoardQuery>(LeaveBoardDocument, {
-      limit: 20,
-      balanceYear,
-    });
-  }, [client, balanceYear]);
+  const loadBoard = useCallback(
+    () => client.request<LeaveBoardQuery>(LeaveBoardDocument, { limit: BOARD_LIMIT, balanceYear }),
+    [client, balanceYear]
+  );
 
   const loadOrgChart = useCallback(async () => {
-    const r = await client.request<OrgChartQuery>(OrgChartDocument, { limit: 500 });
-    const m = new Map<string, string>();
-    for (const row of r.orgChart ?? []) {
-      m.set(
-        row.employeeId,
-        `${row.fullName}${row.employeeCode ? ` (${row.employeeCode})` : ''}`
-      );
-    }
-    return { labels: m, rows: r.orgChart ?? [] };
+    const response = await client.request<OrgChartQuery>(OrgChartDocument, { limit: ORG_CHART_LIMIT });
+    return {
+      labels: new Map(
+        (response.orgChart ?? []).map((row) => [
+          row.employeeId,
+          `${row.fullName}${row.employeeCode ? ` (${row.employeeCode})` : ''}`,
+        ])
+      ),
+      rows: response.orgChart ?? [],
+    };
   }, [client]);
 
   useEffect(() => {
@@ -111,43 +113,37 @@ const LeavePage = () => {
     }
   }, [loading, location.hash]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const [result, orgData] = await Promise.all([loadBoard(), loadOrgChart()]);
-        if (!cancelled) {
-          setData(result);
-          setOrgLabels(orgData.labels);
-          setOrgChartRows(orgData.rows);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setError(graphQlUserMessage(e));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const refreshBoard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [result, orgData] = await Promise.all([loadBoard(), loadOrgChart()]);
+      setData(result);
+      setOrgLabels(orgData.labels);
+      setOrgChartRows(orgData.rows);
+    } catch (err) {
+      setError(graphQlUserMessage(err));
+    } finally {
+      setLoading(false);
+    }
   }, [loadBoard, loadOrgChart]);
+
+  useEffect(() => {
+    void refreshBoard();
+  }, [refreshBoard]);
 
   useEffect(() => {
     if (!allHolOpen) return;
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         setAllHolLoading(true);
-        const y = new Date().getFullYear();
-        const r = await client.request<AllCompanyHolidaysQuery>(AllCompanyHolidaysDocument, {
-          fromDate: `${y}-01-01`,
-          limit: 450,
+        const year = new Date().getFullYear();
+        const response = await client.request<AllCompanyHolidaysQuery>(AllCompanyHolidaysDocument, {
+          fromDate: `${year}-01-01`,
+          limit: HOLIDAY_LIMIT,
         });
-        if (!cancelled) setAllHolRows(r.upcomingHolidays ?? []);
+        if (!cancelled) setAllHolRows(response.upcomingHolidays ?? []);
       } catch {
         if (!cancelled) setAllHolRows([]);
       } finally {
@@ -159,61 +155,47 @@ const LeavePage = () => {
     };
   }, [allHolOpen, client]);
 
-  const refreshBoard = async () => {
-    setLoading(true);
-    try {
-      const [result, orgData] = await Promise.all([loadBoard(), loadOrgChart()]);
-      setData(result);
-      setOrgLabels(orgData.labels);
-      setOrgChartRows(orgData.rows);
-    } catch (e) {
-      setError(graphQlUserMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const silentRefreshBoard = useCallback(async () => {
     try {
       setData(await loadBoard());
-    } catch (e) {
-      const msg = graphQlUserMessage(e);
-      setError(msg);
-      flash.show(msg, 'error');
+    } catch (err) {
+      const message = graphQlUserMessage(err);
+      setError(message);
+      flash.show(message, 'error');
     }
   }, [loadBoard, flash.show]);
+
+  const refreshAfterMutation = async () => {
+    try {
+      setData(await loadBoard());
+    } catch (err) {
+      const message = graphQlUserMessage(err);
+      setError(message);
+      flash.show(`Could not refresh leave list: ${message}`, 'error');
+    }
+  };
 
   const handleApprove = async (leaveRequestId: string) => {
     setApproveBusyId(leaveRequestId);
     setApproveWorkflowNotice(null);
     setError(null);
     try {
-      const res = await client.request<ApproveLeaveRequestMutation>(ApproveLeaveRequestDocument, {
+      const result = await client.request<ApproveLeaveRequestMutation>(ApproveLeaveRequestDocument, {
         leaveRequestId,
       });
-      const st = res.approveLeaveRequest?.status?.toLowerCase() ?? '';
-      const pendingMsg =
-        'Approval was recorded but status is still Pending — another workflow step may apply, or refresh the list.';
-      setApproveWorkflowNotice(st === 'pending' ? pendingMsg : null);
-      if (st === 'pending') {
-        flash.show(pendingMsg, 'info');
-      } else {
-        flash.show('Leave request approved.', 'success');
-      }
-    } catch (e) {
-      const msg = graphQlUserMessage(e);
-      setError(msg);
-      flash.show(msg, 'error');
+      const status = result.approveLeaveRequest?.status?.toLowerCase() ?? '';
+      const pendingMessage =
+        'Approval was recorded, but another workflow step may still be pending.';
+      setApproveWorkflowNotice(status === 'pending' ? pendingMessage : null);
+      flash.show(status === 'pending' ? pendingMessage : 'Leave request approved.', status === 'pending' ? 'info' : 'success');
+    } catch (err) {
+      const message = graphQlUserMessage(err);
+      setError(message);
+      flash.show(message, 'error');
     } finally {
       setApproveBusyId(null);
     }
-    try {
-      setData(await loadBoard());
-    } catch (e) {
-      const msg = graphQlUserMessage(e);
-      setError(msg);
-      flash.show(`Could not refresh leave list: ${msg}`, 'error');
-    }
+    await refreshAfterMutation();
   };
 
   const handleCancelOwn = async (leaveRequestId: string) => {
@@ -222,51 +204,35 @@ const LeavePage = () => {
     try {
       await client.request(CancelLeaveRequestDocument, { leaveRequestId });
       flash.show('Leave request cancelled.', 'success');
-    } catch (e) {
-      const msg = graphQlUserMessage(e);
-      setError(msg);
-      flash.show(msg, 'error');
+    } catch (err) {
+      const message = graphQlUserMessage(err);
+      setError(message);
+      flash.show(message, 'error');
     } finally {
       setCancelBusyId(null);
     }
-    try {
-      setData(await loadBoard());
-    } catch (e) {
-      const msg = graphQlUserMessage(e);
-      setError(msg);
-      flash.show(`Could not refresh leave list: ${msg}`, 'error');
-    }
+    await refreshAfterMutation();
   };
 
-  const leaveTypeNameById = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const t of data?.leaveTypes ?? []) {
-      m.set(t.id, t.name);
-    }
-    return m;
-  }, [data?.leaveTypes]);
+  const leaveTypeNameById = useMemo(
+    () => new Map((data?.leaveTypes ?? []).map((leaveType) => [leaveType.id, leaveType.name])),
+    [data?.leaveTypes]
+  );
 
   const viewerId = data?.viewerEmployeeId;
 
   const directReportIds = useMemo(() => {
     if (!viewerId) return new Set<string>();
-    const s = new Set<string>();
-    for (const row of orgChartRows) {
-      if (row.reportingManagerId === viewerId) s.add(row.employeeId);
-    }
-    return s;
+    return new Set(
+      orgChartRows
+        .filter((row) => row.reportingManagerId === viewerId)
+        .map((row) => row.employeeId)
+    );
   }, [viewerId, orgChartRows]);
 
-  const managesDirectReports = directReportIds.size > 0;
-
   const showApprovalColumn = useMemo(
-    () =>
-      showLeaveApprovalColumn({
-        can,
-        clientSession,
-        managesDirectReports,
-      }),
-    [can, clientSession, managesDirectReports]
+    () => showLeaveApprovalColumn({ can, clientSession, managesDirectReports: directReportIds.size > 0 }),
+    [can, clientSession, directReportIds]
   );
 
   const canApproveRowForTable = useCallback(
@@ -282,32 +248,29 @@ const LeavePage = () => {
   );
 
   const hideEmployeeColumn = useMemo(() => {
-    const reqs = data?.leaveRequests ?? [];
-    const vid = data?.viewerEmployeeId;
-    if (!vid || reqs.length === 0) return false;
-    if (showApprovalColumn) return false;
-    return reqs.every((r) => r.employeeId === vid);
-  }, [data?.leaveRequests, data?.viewerEmployeeId, showApprovalColumn]);
+    const requests = data?.leaveRequests ?? [];
+    if (!viewerId || requests.length === 0 || showApprovalColumn) return false;
+    return requests.every((request) => request.employeeId === viewerId);
+  }, [data?.leaveRequests, viewerId, showApprovalColumn]);
 
   const employeeLabel = useCallback(
-    (employeeId: string) => orgLabels.get(employeeId) ?? `${employeeId.slice(0, 8)}…`,
+    (employeeId: string) => orgLabels.get(employeeId) ?? `${employeeId.slice(0, 8)}...`,
     [orgLabels]
   );
 
   const openWorkflowTrail = async (row: LeaveBoardQuery['leaveRequests'][number]) => {
     setTrailSummaryRow(row);
-    setTrailForId(row.id);
     setTrailLoading(true);
     setTrailRows([]);
     setError(null);
     try {
-      const r = await client.request<LeaveWorkflowTrailQueryQuery>(LeaveWorkflowTrailQueryDocument, {
-        leaveRequestId: row.id,
-      });
-      setTrailRows(r.leaveRequestWorkflowTrail);
-    } catch (e) {
-      setError(graphQlUserMessage(e));
-      setTrailForId(null);
+      const response = await client.request<LeaveWorkflowTrailQueryQuery>(
+        LeaveWorkflowTrailQueryDocument,
+        { leaveRequestId: row.id }
+      );
+      setTrailRows(response.leaveRequestWorkflowTrail);
+    } catch (err) {
+      setError(graphQlUserMessage(err));
       setTrailSummaryRow(null);
     } finally {
       setTrailLoading(false);
@@ -320,14 +283,12 @@ const LeavePage = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave Management</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Live data from the leave subgraph through the gateway. When a workflow is configured,
-            only the <strong>reporting manager</strong> can act at the first step;{' '}
-            <strong>HR</strong> (role on the next step) completes approval — the API enforces this.
+            Live leave balances, policies, holidays, requests, and approval workflow actions.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" type="button" onClick={() => void refreshBoard()} disabled={loading}>
-            {loading ? 'Refreshing…' : 'Refresh'}
+            {loading ? 'Refreshing...' : 'Refresh'}
           </Button>
           <Button variant="primary" type="button" onClick={() => setApplyOpen(true)} disabled={loading}>
             Apply for leave
@@ -337,14 +298,12 @@ const LeavePage = () => {
 
       <ApplyLeaveModal
         isOpen={applyOpen}
-        onClose={() => setApplyOpen(false)}
-        leaveTypes={data?.leaveTypes ?? []}
-        leavePolicies={data?.leavePolicies ?? []}
-        upcomingHolidays={data?.upcomingHolidays ?? []}
         leaveBalances={data?.leaveBalances ?? []}
-        onSubmitted={async () => {
-          await refreshBoard();
-        }}
+        leavePolicies={data?.leavePolicies ?? []}
+        leaveTypes={data?.leaveTypes ?? []}
+        upcomingHolidays={data?.upcomingHolidays ?? []}
+        onClose={() => setApplyOpen(false)}
+        onSubmitted={refreshBoard}
       />
 
       <LeaveRejectModal
@@ -363,274 +322,69 @@ const LeavePage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-
       {approveWorkflowNotice && (
         <Card>
           <p className="text-sm text-sky-800 dark:text-sky-200">{approveWorkflowNotice}</p>
         </Card>
       )}
 
-      <Card
-        title={
-          <span className="flex flex-wrap items-center justify-between gap-3">
-            <span>Leave balances ({balanceYear})</span>
-            <label className="flex items-center gap-2 text-xs font-normal text-gray-600 dark:text-gray-400">
-              Year
-              <select
-                value={balanceYear}
-                onChange={(e) => setBalanceYear(Number(e.target.value))}
-                disabled={loading}
-                className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm font-medium text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              >
-                {yearChoices.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </span>
-        }
-      >
-        {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading balances…</p>
-        ) : data?.leaveBalances?.length ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Type</th>
-                  <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Available</th>
-                  <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Pending</th>
-                  <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Used</th>
-                  <th className="py-2 font-medium text-gray-700 dark:text-gray-300">Entitled</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.leaveBalances.map((b) => (
-                  <tr
-                    key={b.id}
-                    className="border-b border-gray-100 dark:border-gray-800 last:border-0"
-                  >
-                    <td className="py-2 pr-4 text-gray-900 dark:text-white">
-                      {leaveTypeNameById.get(b.leaveTypeId) ?? b.leaveTypeId.slice(0, 8)}
-                    </td>
-                    <td className="py-2 pr-4 font-mono text-xs">{b.balanceDays}</td>
-                    <td className="py-2 pr-4 font-mono text-xs">{b.pendingDays}</td>
-                    <td className="py-2 pr-4 font-mono text-xs">{b.usedDays}</td>
-                    <td className="py-2 font-mono text-xs">{b.entitledDays}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            No leave balances for this year — HR may need to provision balances.
-          </p>
-        )}
-      </Card>
-
-      <Card
-        title={
-          <span className="flex flex-wrap items-center justify-between gap-2">
-            <span>Upcoming public holidays</span>
-            <Button variant="outline" type="button" className="!py-1 !text-xs" onClick={() => setAllHolOpen(true)}>
-              View all (this year)
-            </Button>
-          </span>
-        }
-      >
-        {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
-        ) : data?.upcomingHolidays?.length ? (
-          <ul className="divide-y divide-gray-100 text-sm dark:divide-gray-800">
-            {data.upcomingHolidays.slice(0, 14).map((h) => (
-              <li key={h.id} className="flex flex-wrap justify-between gap-2 py-2">
-                <span className="font-medium text-gray-900 dark:text-white">{h.name}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(h.holidayDate).toLocaleDateString('en-IN')} · {h.calendarName}
-                  {h.holidayType ? ` · ${h.holidayType}` : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            No holidays scheduled ahead — admins can add calendars under{' '}
-            <span className="font-mono text-xs">Admin → Leave settings</span>
-            {permissions.canCapability('action.leave.manage') ? (
-              <>
-                {' '}
-                (<span className="font-mono text-xs">/admin/leave-settings</span>)
-              </>
-            ) : null}
-            .
-          </p>
-        )}
-      </Card>
-
-      <Card title="Leave Types">
-        {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading leave types…</p>
-        ) : data?.leaveTypes?.length ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {data.leaveTypes.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{item.name}</h3>
-                    <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      {item.code}
-                    </p>
-                  </div>
-                  <Badge variant={item.isPaid ? 'success' : 'neutral'}>
-                    {item.isPaid ? 'Paid' : 'Unpaid'}
-                  </Badge>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                  <Badge variant={item.carryForward ? 'info' : 'neutral'}>
-                    {item.carryForward ? 'Carry forward' : 'No carry forward'}
-                  </Badge>
-                  <Badge variant={item.requiresDocument ? 'warning' : 'neutral'}>
-                    {item.requiresDocument ? 'Document required' : 'No document'}
-                  </Badge>
-                  <Badge variant={item.halfDayAllowed ? 'info' : 'neutral'}>
-                    {item.halfDayAllowed ? 'Half-day allowed' : 'Full days only'}
-                  </Badge>
-                  {item.sandwichRule ? <Badge variant="warning">Sandwich rule</Badge> : null}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No leave types found.</p>
-        )}
-      </Card>
+      <LeaveBalancesCard
+        balanceYear={balanceYear}
+        balances={data?.leaveBalances ?? []}
+        leaveTypeNameById={leaveTypeNameById}
+        loading={loading}
+        yearChoices={yearChoices}
+        onYearChange={setBalanceYear}
+      />
+      <HolidaySummaryCard
+        canManageLeave={permissions.canCapability('action.leave.manage')}
+        holidays={data?.upcomingHolidays ?? []}
+        loading={loading}
+        onViewAll={() => setAllHolOpen(true)}
+      />
+      <LeaveTypesCard leaveTypes={data?.leaveTypes ?? []} loading={loading} />
 
       <Card id="leave-requests-section" title="Recent Leave Requests">
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading leave requests…</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading leave requests...</p>
         ) : (
           <LeaveRequestsTableSection
-            rows={data?.leaveRequests ?? []}
-            leaveTypeNameById={leaveTypeNameById}
-            employeeLabel={hideEmployeeColumn ? undefined : employeeLabel}
-            hideEmployeeColumn={hideEmployeeColumn}
-            showApprovalColumn={showApprovalColumn}
-            canApproveRow={canApproveRowForTable}
-            viewerId={viewerId}
             approveBusyId={approveBusyId}
+            canApproveRow={canApproveRowForTable}
             cancelBusyId={cancelBusyId}
+            employeeLabel={hideEmployeeColumn ? undefined : employeeLabel}
+            emptyLabel="No leave requests found."
+            hideEmployeeColumn={hideEmployeeColumn}
+            leaveTypeNameById={leaveTypeNameById}
+            rows={data?.leaveRequests ?? []}
+            showApprovalColumn={showApprovalColumn}
+            viewerId={viewerId}
             onApprove={handleApprove}
-            onRejectClick={setRejectLeaveId}
             onCancelOwn={handleCancelOwn}
             onOpenTrail={openWorkflowTrail}
-            emptyLabel="No leave requests found."
+            onRejectClick={setRejectLeaveId}
           />
         )}
       </Card>
 
-      <Modal
-        isOpen={trailForId != null}
+      <LeaveWorkflowTrailModal
+        employeeLabel={employeeLabel}
+        isOpen={trailSummaryRow != null}
+        leaveTypeNameById={leaveTypeNameById}
+        loading={trailLoading}
+        rows={trailRows}
+        summaryRow={trailSummaryRow}
         onClose={() => {
-          setTrailForId(null);
           setTrailSummaryRow(null);
           setTrailRows([]);
         }}
-        title="Leave request history"
-        size="lg"
-      >
-        {trailSummaryRow && (
-          <div className="mb-4 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
-            <p className="font-medium text-gray-900 dark:text-white">
-              {employeeLabel(trailSummaryRow.employeeId)} ·{' '}
-              {leaveTypeNameById.get(trailSummaryRow.leaveTypeId) ?? 'Leave'}
-            </p>
-            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-              {new Date(trailSummaryRow.fromDate).toLocaleDateString('en-IN')} →{' '}
-              {new Date(trailSummaryRow.toDate).toLocaleDateString('en-IN')} · {trailSummaryRow.daysRequested}{' '}
-              day(s) · <span className="capitalize">{trailSummaryRow.status}</span>
-            </p>
-            {trailSummaryRow.reason ? (
-              <p className="mt-2 text-xs text-gray-700 dark:text-gray-300">
-                <span className="font-semibold">Reason:</span> {trailSummaryRow.reason}
-              </p>
-            ) : null}
-            {trailSummaryRow.rejectionReason ? (
-              <p className="mt-1 text-xs text-red-700 dark:text-red-300">
-                <span className="font-semibold">Rejection:</span> {trailSummaryRow.rejectionReason}
-              </p>
-            ) : null}
-            {trailSummaryRow.workflowInstanceId ? (
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                Workflow instance attached — steps appear below when recorded.
-              </p>
-            ) : (
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                No workflow instance on this request (single-step approval or legacy). Approval/rejection is still enforced
-                by the server.
-              </p>
-            )}
-          </div>
-        )}
-        {trailLoading ? (
-          <p className="text-sm text-gray-500">Loading workflow steps…</p>
-        ) : trailRows.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            No workflow step actions recorded yet. If this request is pending inside a workflow, actions appear here after
-            each step.
-          </p>
-        ) : (
-          <ul className="space-y-3 text-sm">
-            {trailRows.map((step, i) => (
-              <li
-                key={`${step.actedAt}-${i}`}
-                className="rounded border border-gray-200 p-3 dark:border-gray-700"
-              >
-                <div className="font-medium text-gray-900 dark:text-white">{step.workflowStepName}</div>
-                <div className="text-xs text-gray-500">
-                  {step.action}
-                  {step.performedByUserId ? ` · user ${step.performedByUserId.slice(0, 8)}…` : ''}
-                </div>
-                <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                  {new Date(step.actedAt).toLocaleString()}
-                </div>
-                {step.remarks ? (
-                  <p className="mt-2 text-xs text-gray-700 dark:text-gray-300">{step.remarks}</p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Modal>
-
-      <Modal
+      />
+      <AllHolidaysModal
+        holidays={allHolRows}
         isOpen={allHolOpen}
+        loading={allHolLoading}
         onClose={() => setAllHolOpen(false)}
-        title="Company holidays (this calendar year)"
-      >
-        {allHolLoading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
-        ) : allHolRows.length === 0 ? (
-          <p className="text-sm text-gray-500">No holidays returned for this year.</p>
-        ) : (
-          <ul className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto text-sm dark:divide-gray-800">
-            {allHolRows.map((h) => (
-              <li key={h.id} className="flex flex-wrap justify-between gap-2 py-2">
-                <span className="font-medium text-gray-900 dark:text-white">{h.name}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(h.holidayDate).toLocaleDateString('en-IN')} · {h.calendarName}
-                  {h.holidayType ? ` · ${h.holidayType}` : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Modal>
+      />
       <FlashToastBar toast={flash.flash} onDismiss={flash.clear} />
     </div>
   );

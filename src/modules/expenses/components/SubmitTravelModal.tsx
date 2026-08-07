@@ -4,6 +4,7 @@ import Input from '../../../components/common/Input';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { SubmitTravelRequestDocument } from '../../../api/graphql/graphql';
+import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { EXPENSE_DEFAULT_CURRENCY } from '../constants';
 
@@ -15,7 +16,7 @@ interface SubmitTravelModalProps {
 
 const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalProps) => {
   const client = useGraphClient('client');
-  const minTravelDate = new Date().toISOString().slice(0, 10);
+  const minTravelDate = toDateInputValue();
   const [formData, setFormData] = useState({
     fromLocation: '',
     toLocation: '',

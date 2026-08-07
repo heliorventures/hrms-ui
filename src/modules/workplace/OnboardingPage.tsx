@@ -1,37 +1,40 @@
 import { useCallback, useEffect, useState } from 'react';
 import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
-import Button from '../../components/common/Button';
 import TabBar from '../../components/common/TabBar';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { createPermissionService } from '../../auth/permissionService';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import ExitRequestCard from './components/ExitRequestCard';
+import OnboardingChecklistCard from './components/OnboardingChecklistCard';
+import SeparationRequestsCard from './components/SeparationRequestsCard';
 import {
-  OnboardingChecklistDocument,
-  SetOnboardingChecklistItemDocument,
-  ClientOpsSeparationsListDocument,
-  ClientOpsSubmitSeparationDocument,
   ApproveSeparationDocument,
-  RejectSeparationDocument,
-  ClientOpsFnfBySeparationDocument,
   ClientOpsClearanceBySeparationDocument,
-  ClientOpsUpsertFnfDocument,
-  ClientOpsFinalizeFnfDocument,
-  ClientOpsSetClearanceClearedDocument,
+  ClientOpsClearanceBySeparationQuery,
   ClientOpsEnsureOffboardingDocument,
-  type OnboardingChecklistQuery,
-  type ClientOpsSeparationsListQuery,
-  type ClientOpsFnfBySeparationQuery,
-  type ClientOpsClearanceBySeparationQuery,
+  ClientOpsFinalizeFnfDocument,
+  ClientOpsFnfBySeparationDocument,
+  ClientOpsSeparationsListDocument,
+  ClientOpsSetClearanceClearedDocument,
+  ClientOpsSubmitSeparationDocument,
+  ClientOpsUpsertFnfDocument,
+  OnboardingChecklistDocument,
+  RejectSeparationDocument,
+  SetOnboardingChecklistItemDocument,
 } from '../../api/graphql/graphql';
-
-type Item = OnboardingChecklistQuery['onboardingChecklist'][number];
-type SeparationRow = ClientOpsSeparationsListQuery['separations'][number];
-type FnfSettlementRow = NonNullable<ClientOpsFnfBySeparationQuery['fnfSettlement']>;
-type ClearanceItemRow = ClientOpsClearanceBySeparationQuery['clearanceChecklist'][number];
+import type {
+  ChecklistItem,
+  ClearanceItemRow,
+  FnfFormState,
+  FnfSettlementRow,
+  SeparationRow,
+} from './onboardingTypes';
 
 type MainTab = 'join' | 'exit';
+
+const EMPTY_FNF_FORM: FnfFormState = { le: '', g: '', b: '', r: '' };
 
 const OnboardingPage = () => {
   const { clientSession } = useAuth();
@@ -39,37 +42,35 @@ const OnboardingPage = () => {
   const canManageOnboarding = permissionService.canCapability('action.onboarding.manage');
   const client = useGraphClient('client');
   const [mainTab, setMainTab] = useState<MainTab>('join');
-  const [items, setItems] = useState<Item[]>([]);
-  const [seps, setSeps] = useState<SeparationRow[]>([]);
+  const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [separations, setSeparations] = useState<SeparationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-
   const [sepType, setSepType] = useState('RESIGNATION');
   const [lastDay, setLastDay] = useState('');
   const [resignDay, setResignDay] = useState('');
   const [reason, setReason] = useState('');
   const [submitBusy, setSubmitBusy] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
-
   const [openObId, setOpenObId] = useState<string | null>(null);
   const [obFnf, setObFnf] = useState<FnfSettlementRow | null>(null);
   const [obCl, setObCl] = useState<ClearanceItemRow[]>([]);
   const [obLoading, setObLoading] = useState(false);
   const [obErr, setObErr] = useState<string | null>(null);
-  const [fnfForm, setFnfForm] = useState({ le: '', g: '', b: '', r: '' });
+  const [fnfForm, setFnfForm] = useState<FnfFormState>(EMPTY_FNF_FORM);
   const [fnfBusy, setFnfBusy] = useState(false);
   const [clBusy, setClBusy] = useState<string | null>(null);
   const [ensureBusy, setEnsureBusy] = useState(false);
 
   const loadChecklist = useCallback(async () => {
-    const r = await client.request(OnboardingChecklistDocument, { limit: 100 });
-    return r.onboardingChecklist;
+    const response = await client.request(OnboardingChecklistDocument, { limit: 100 });
+    return response.onboardingChecklist;
   }, [client]);
 
-  const loadSep = useCallback(async () => {
-    const r = await client.request(ClientOpsSeparationsListDocument, { limit: 50 });
-    return r.separations;
+  const loadSeparations = useCallback(async () => {
+    const response = await client.request(ClientOpsSeparationsListDocument, { limit: 50 });
+    return response.separations;
   }, [client]);
 
   const loadOffboardingDetail = useCallback(
@@ -77,25 +78,28 @@ const OnboardingPage = () => {
       setObLoading(true);
       setObErr(null);
       try {
-        const [a, c] = await Promise.all([
+        const [fnfResponse, clearanceResponse] = await Promise.all([
           client.request(ClientOpsFnfBySeparationDocument, { separationId }),
-          client.request(ClientOpsClearanceBySeparationDocument, { separationId }),
+          client.request<ClientOpsClearanceBySeparationQuery>(
+            ClientOpsClearanceBySeparationDocument,
+            { separationId }
+          ),
         ]);
-        const f = a.fnfSettlement;
-        setObFnf(f ?? null);
-        setObCl(c.clearanceChecklist);
-        if (f) {
-          setFnfForm({
-            le: f.leaveEncashment ?? '',
-            g: f.gratuityAmount ?? '',
-            b: f.bonusPayable ?? '',
-            r: f.recoveryAmount ?? '',
-          });
-        } else {
-          setFnfForm({ le: '', g: '', b: '', r: '' });
-        }
-      } catch (e) {
-        setObErr(graphQlUserMessage(e));
+        const settlement = fnfResponse.fnfSettlement;
+        setObFnf(settlement ?? null);
+        setObCl(clearanceResponse.clearanceChecklist);
+        setFnfForm(
+          settlement
+            ? {
+                le: settlement.leaveEncashment ?? '',
+                g: settlement.gratuityAmount ?? '',
+                b: settlement.bonusPayable ?? '',
+                r: settlement.recoveryAmount ?? '',
+              }
+            : EMPTY_FNF_FORM
+        );
+      } catch (err) {
+        setObErr(graphQlUserMessage(err));
         setObFnf(null);
         setObCl([]);
       } finally {
@@ -106,41 +110,38 @@ const OnboardingPage = () => {
   );
 
   useEffect(() => {
-    if (!openObId) {
-      return;
-    }
-    void loadOffboardingDetail(openObId);
+    if (openObId) void loadOffboardingDetail(openObId);
   }, [openObId, loadOffboardingDetail]);
 
   useEffect(() => {
-    let c = false;
+    let cancelled = false;
     void (async () => {
       try {
         setLoading(true);
         setError(null);
-        const [cl, sp] = await Promise.all([loadChecklist(), loadSep()]);
-        if (!c) {
-          setItems(cl);
-          setSeps(sp);
+        const [checklist, separationRows] = await Promise.all([loadChecklist(), loadSeparations()]);
+        if (!cancelled) {
+          setItems(checklist);
+          setSeparations(separationRows);
         }
-      } catch (e) {
-        if (!c) setError(graphQlUserMessage(e));
+      } catch (err) {
+        if (!cancelled) setError(graphQlUserMessage(err));
       } finally {
-        if (!c) setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
-      c = true;
+      cancelled = true;
     };
-  }, [loadChecklist, loadSep]);
+  }, [loadChecklist, loadSeparations]);
 
-  const toggle = async (id: string, next: boolean) => {
+  const toggleChecklist = async (id: string, next: boolean) => {
     setBusyId(id);
     try {
       await client.request(SetOnboardingChecklistItemDocument, { checklistItemId: id, isCompleted: next });
       setItems(await loadChecklist());
-    } catch (e) {
-      setError(graphQlUserMessage(e));
+    } catch (err) {
+      setError(graphQlUserMessage(err));
     } finally {
       setBusyId(null);
     }
@@ -150,14 +151,12 @@ const OnboardingPage = () => {
     setActionId(id);
     setError(null);
     try {
-      if (approve) {
-        await client.request(ApproveSeparationDocument, { separationId: id });
-      } else {
-        await client.request(RejectSeparationDocument, { separationId: id });
-      }
-      setSeps(await loadSep());
-    } catch (e) {
-      setError(graphQlUserMessage(e));
+      await client.request(approve ? ApproveSeparationDocument : RejectSeparationDocument, {
+        separationId: id,
+      });
+      setSeparations(await loadSeparations());
+    } catch (err) {
+      setError(graphQlUserMessage(err));
     } finally {
       setActionId(null);
     }
@@ -177,8 +176,8 @@ const OnboardingPage = () => {
         },
       });
       await loadOffboardingDetail(separationId);
-    } catch (e) {
-      setObErr(graphQlUserMessage(e));
+    } catch (err) {
+      setObErr(graphQlUserMessage(err));
     } finally {
       setFnfBusy(false);
     }
@@ -191,8 +190,8 @@ const OnboardingPage = () => {
     try {
       await client.request(ClientOpsFinalizeFnfDocument, { separationId });
       await loadOffboardingDetail(separationId);
-    } catch (e) {
-      setObErr(graphQlUserMessage(e));
+    } catch (err) {
+      setObErr(graphQlUserMessage(err));
     } finally {
       setFnfBusy(false);
     }
@@ -204,8 +203,8 @@ const OnboardingPage = () => {
     try {
       await client.request(ClientOpsEnsureOffboardingDocument, { separationId });
       await loadOffboardingDetail(separationId);
-    } catch (e) {
-      setObErr(graphQlUserMessage(e));
+    } catch (err) {
+      setObErr(graphQlUserMessage(err));
     } finally {
       setEnsureBusy(false);
     }
@@ -215,13 +214,10 @@ const OnboardingPage = () => {
     setClBusy(clearanceId);
     setObErr(null);
     try {
-      await client.request(ClientOpsSetClearanceClearedDocument, {
-        clearanceId,
-        isCleared: next,
-      });
+      await client.request(ClientOpsSetClearanceClearedDocument, { clearanceId, isCleared: next });
       await loadOffboardingDetail(separationId);
-    } catch (e) {
-      setObErr(graphQlUserMessage(e));
+    } catch (err) {
+      setObErr(graphQlUserMessage(err));
     } finally {
       setClBusy(null);
     }
@@ -243,11 +239,11 @@ const OnboardingPage = () => {
           reason: reason.trim() || null,
         },
       });
-      setSeps(await loadSep());
+      setSeparations(await loadSeparations());
       setReason('');
       setResignDay('');
-    } catch (e) {
-      setError(graphQlUserMessage(e));
+    } catch (err) {
+      setError(graphQlUserMessage(err));
     } finally {
       setSubmitBusy(false);
     }
@@ -257,7 +253,7 @@ const OnboardingPage = () => {
     <div className="space-y-6">
       <PageHeader
         title="Onboarding & exit"
-        description="Complete joining tasks; file exit requests, HR approval, then department clearance and full and final (FNF) settlement after approval."
+        description="Complete joining tasks; file exit requests, HR approval, department clearance, and FNF settlement."
       />
 
       <TabBar
@@ -275,331 +271,51 @@ const OnboardingPage = () => {
         </Card>
       )}
 
-      {mainTab === 'join' && (
-        <Card title="Checklist">
-          {loading ? (
-            <p className="text-sm text-gray-500">Loading…</p>
-          ) : items.length ? (
-            <ul className="space-y-3">
-              {items.map((it) => (
-                <li
-                  key={it.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200/90 bg-slate-50/40 p-3 dark:border-slate-600 dark:bg-slate-800/30"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{it.taskName}</p>
-                    <p className="text-xs text-gray-500">
-                      {it.taskCategory ?? 'General'}
-                      {it.dueDate != null ? ` · due ${String(it.dueDate)}` : ''}
-                    </p>
-                  </div>
-                  <Button
-                    variant={it.isCompleted ? 'secondary' : 'primary'}
-                    disabled={busyId === it.id}
-                    onClick={() => void toggle(it.id, !it.isCompleted)}
-                  >
-                    {busyId === it.id ? '…' : it.isCompleted ? 'Mark incomplete' : 'Mark done'}
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500">No onboarding tasks for your profile.</p>
-          )}
-        </Card>
-      )}
-
-      {mainTab === 'exit' && (
+      {mainTab === 'join' ? (
+        <OnboardingChecklistCard
+          busyId={busyId}
+          items={items}
+          loading={loading}
+          onToggle={(id, next) => void toggleChecklist(id, next)}
+        />
+      ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card title="New exit request">
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                  Type
-                </label>
-                <select
-                  value={sepType}
-                  onChange={(e) => setSepType(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800/80"
-                >
-                  <option value="RESIGNATION">Resignation</option>
-                  <option value="RETIREMENT">Retirement</option>
-                  <option value="END_OF_CONTRACT">End of contract</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                  Last working day <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={lastDay}
-                  onChange={(e) => setLastDay(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800/80"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                  Resignation submitted on (optional)
-                </label>
-                <input
-                  type="date"
-                  value={resignDay}
-                  onChange={(e) => setResignDay(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800/80"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
-                  Notes
-                </label>
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  rows={3}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800/80"
-                  placeholder="Optional context for HR"
-                />
-              </div>
-              <Button variant="primary" disabled={submitBusy} onClick={() => void submitExit()}>
-                {submitBusy ? 'Submitting…' : 'Submit request'}
-              </Button>
-            </div>
-          </Card>
-          <Card title="Your requests">
-            {loading ? (
-              <p className="text-sm text-gray-500">Loading…</p>
-            ) : seps.length ? (
-              <ul className="space-y-3">
-                {seps.map((s) => (
-                  <li
-                    key={s.id}
-                    className="rounded-lg border border-slate-200/90 bg-slate-50/30 p-3 dark:border-slate-600 dark:bg-slate-800/30"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {s.separationType} ·{' '}
-                          <span
-                            className={
-                              s.status === 'APPROVED'
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : s.status === 'REJECTED'
-                                  ? 'text-red-600 dark:text-red-400'
-                                  : 'text-amber-600 dark:text-amber-400'
-                            }
-                          >
-                            {s.status}
-                          </span>
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          LWD {String(s.lastWorkingDate)}
-                          {s.resignationDate != null
-                            ? ` · submitted ${String(s.resignationDate)}`
-                            : ''}
-                        </p>
-                        {s.reason ? (
-                          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                            {s.reason}
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        {s.status === 'APPROVED' && (
-                          <Button
-                            variant="secondary"
-                            onClick={() => {
-                              setOpenObId((cur) => (cur === s.id ? null : s.id));
-                            }}
-                          >
-                            {openObId === s.id ? 'Hide' : 'Clearance & FNF'}
-                          </Button>
-                        )}
-                        {canManageOnboarding && s.status === 'PENDING' && (
-                          <div className="flex shrink-0 gap-2">
-                            <Button
-                              variant="primary"
-                              disabled={actionId === s.id}
-                              onClick={() => void hrAction(s.id, true)}
-                            >
-                              {actionId === s.id ? '…' : 'Approve'}
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              disabled={actionId === s.id}
-                              onClick={() => void hrAction(s.id, false)}
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {s.status === 'APPROVED' && openObId === s.id && (
-                      <div className="mt-3 border-t border-slate-200/90 pt-3 dark:border-slate-600">
-                        {obLoading && openObId === s.id ? (
-                          <p className="text-sm text-gray-500">Loading clearance & FNF…</p>
-                        ) : obErr && openObId === s.id ? (
-                          <p className="text-sm text-red-600 dark:text-red-400">{obErr}</p>
-                        ) : (
-                          <div className="space-y-4">
-                            <div>
-                              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Department clearance
-                              </p>
-                              {obCl.length === 0 && canManageOnboarding && !obLoading && (
-                                <p className="mb-2 text-sm text-amber-700 dark:text-amber-300">
-                                  If this was approved before FNF was enabled, create rows once.
-                                </p>
-                              )}
-                              {obCl.length === 0 && canManageOnboarding && (
-                                <Button
-                                  variant="secondary"
-                                  disabled={ensureBusy}
-                                  onClick={() => void ensureOffboardingRows(s.id)}
-                                >
-                                  {ensureBusy ? '…' : 'Create clearance & FNF records'}
-                                </Button>
-                              )}
-                              {obCl.length ? (
-                                <ul className="space-y-2">
-                                  {obCl.map((c) => (
-                                    <li
-                                      key={c.id}
-                                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-200/80 bg-white/50 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900/40"
-                                    >
-                                      <span>
-                                        <span className="font-medium text-slate-800 dark:text-slate-100">
-                                          {c.department}
-                                        </span>
-                                        <span className="text-slate-600 dark:text-slate-300">
-                                          {' '}
-                                          — {c.taskName}
-                                        </span>
-                                      </span>
-                                      {canManageOnboarding ? (
-                                        <label className="flex items-center gap-2 text-xs">
-                                          <input
-                                            type="checkbox"
-                                            checked={c.isCleared}
-                                            disabled={clBusy === c.id}
-                                            onChange={(e) =>
-                                              void toggleClearance(s.id, c.id, e.target.checked)
-                                            }
-                                          />
-                                          Cleared
-                                        </label>
-                                      ) : (
-                                        <span
-                                          className={
-                                            c.isCleared
-                                              ? 'text-xs text-emerald-600'
-                                              : 'text-xs text-amber-600'
-                                          }
-                                        >
-                                          {c.isCleared ? 'Cleared' : 'Pending'}
-                                        </span>
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-sm text-slate-500">No clearance rows (re-open after sync).</p>
-                              )}
-                            </div>
-                            <div>
-                              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Full &amp; final (FNF)
-                              </p>
-                              {obFnf == null && !obLoading && canManageOnboarding ? (
-                                <p className="text-sm text-slate-500">
-                                  No FNF row yet. Use the create button in clearance above, or records
-                                  are created automatically when HR approves a pending request.
-                                </p>
-                              ) : null}
-                              {obFnf == null && !obLoading && !canManageOnboarding ? (
-                                <p className="text-sm text-slate-500">
-                                  HR will publish your full &amp; final details here after
-                                  processing.
-                                </p>
-                              ) : null}
-                              {obFnf ? (
-                                <div className="space-y-2">
-                                  <p className="text-xs text-slate-500">
-                                    Status: <strong>{obFnf.status}</strong>
-                                    {obFnf.netPayable != null
-                                      ? ` · Net ${obFnf.netPayable}`
-                                      : ''}
-                                    {obFnf.processedAt
-                                      ? ` · processed ${obFnf.processedAt}`
-                                      : ''}
-                                  </p>
-                                  {canManageOnboarding && obFnf.status === 'DRAFT' && (
-                                    <div className="grid gap-2 sm:grid-cols-2">
-                                      {(
-                                        [
-                                          ['le', 'Leave encashment', 'le'],
-                                          ['g', 'Gratuity', 'g'],
-                                          ['b', 'Bonus payable', 'b'],
-                                          ['r', 'Recovery (deduct)', 'r'],
-                                        ] as const
-                                      ).map(([k, label, formKey]) => (
-                                        <label key={k} className="block text-xs">
-                                          <span className="text-slate-500">{label}</span>
-                                          <input
-                                            type="text"
-                                            value={fnfForm[formKey]}
-                                            onChange={(e) =>
-                                              setFnfForm((p) => ({
-                                                ...p,
-                                                [formKey]: e.target.value,
-                                              }))
-                                            }
-                                            className="mt-0.5 w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
-                                            placeholder="0.00"
-                                          />
-                                        </label>
-                                      ))}
-                                    </div>
-                                  )}
-                                  {canManageOnboarding && obFnf.status === 'DRAFT' && (
-                                    <div className="flex flex-wrap gap-2">
-                                      <Button
-                                        variant="primary"
-                                        disabled={fnfBusy}
-                                        onClick={() => void saveFnf(s.id)}
-                                      >
-                                        {fnfBusy ? '…' : 'Save amounts'}
-                                      </Button>
-                                      <Button
-                                        variant="secondary"
-                                        disabled={fnfBusy}
-                                        onClick={() => void finalizeFnf(s.id)}
-                                      >
-                                        Finalize FNF
-                                      </Button>
-                                    </div>
-                                  )}
-                                  {!canManageOnboarding && (
-                                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                                      FNF is managed by HR. Your net payable (if any) will appear
-                                      here.
-                                    </p>
-                                  )}
-                                </div>
-                              ) : null}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-500">No separation requests yet.</p>
-            )}
-          </Card>
+          <ExitRequestCard
+            lastDay={lastDay}
+            reason={reason}
+            resignDay={resignDay}
+            sepType={sepType}
+            submitBusy={submitBusy}
+            onLastDayChange={setLastDay}
+            onReasonChange={setReason}
+            onResignDayChange={setResignDay}
+            onSepTypeChange={setSepType}
+            onSubmit={() => void submitExit()}
+          />
+          <SeparationRequestsCard
+            actionId={actionId}
+            canManageOnboarding={canManageOnboarding}
+            clBusy={clBusy}
+            ensureBusy={ensureBusy}
+            fnfBusy={fnfBusy}
+            fnfForm={fnfForm}
+            loading={loading}
+            obCl={obCl}
+            obErr={obErr}
+            obFnf={obFnf}
+            obLoading={obLoading}
+            openObId={openObId}
+            separations={separations}
+            onEnsureRows={(id) => void ensureOffboardingRows(id)}
+            onFinalizeFnf={(id) => void finalizeFnf(id)}
+            onHrAction={(id, approve) => void hrAction(id, approve)}
+            onOpenObIdChange={setOpenObId}
+            onSaveFnf={(id) => void saveFnf(id)}
+            onToggleClearance={(separationId, clearanceId, next) =>
+              void toggleClearance(separationId, clearanceId, next)
+            }
+            onUpdateFnfForm={(patch) => setFnfForm((current) => ({ ...current, ...patch }))}
+          />
         </div>
       )}
     </div>

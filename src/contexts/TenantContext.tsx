@@ -8,6 +8,7 @@ import { graphQlUserMessage } from '../utils/graphqlUserMessage';
 
 type TenantResolutionStatus = 'marketing' | 'resolving' | 'resolved' | 'not-found' | 'error';
 const TENANT_SLUG_SESSION_KEY = 'heliorhrms.tenantSlug';
+const LOCAL_TENANT_QUERY_KEYS = ['tenant', 'tenantSlug', 'slug'] as const;
 
 interface TenantContextType {
   currentTenant: Tenant;
@@ -74,11 +75,26 @@ function slugFromHost(hostname: string): string | null {
   return null;
 }
 
+function slugFromQuery(search: string, hostname: string): string | null {
+  if (!isLocalHost(hostname)) return null;
+  const params = new URLSearchParams(search);
+  for (const key of LOCAL_TENANT_QUERY_KEYS) {
+    const slug = params.get(key)?.trim().toLowerCase();
+    if (slug) return slug;
+  }
+  return null;
+}
+
 function detectTenantSlug(): string | null {
   const pathSlug = slugFromPath(window.location.pathname);
   if (pathSlug) {
     sessionStorage.setItem(TENANT_SLUG_SESSION_KEY, pathSlug);
     return pathSlug;
+  }
+  const querySlug = slugFromQuery(window.location.search, window.location.hostname);
+  if (querySlug) {
+    sessionStorage.setItem(TENANT_SLUG_SESSION_KEY, querySlug);
+    return querySlug;
   }
   return slugFromHost(window.location.hostname);
 }
