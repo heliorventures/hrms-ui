@@ -112,7 +112,9 @@ const CreateInvoiceModal = ({
             <option value="">Auto current month</option>
             {cyclesForTenant.map((cycle) => (
               <option key={cycle.id} value={cycle.id}>
-                {cycle.periodStart} -> {cycle.periodEnd} - {cycle.status}
+                {cycle.periodStart}
+                {' -> '}
+                {cycle.periodEnd} - {cycle.status}
               </option>
             ))}
           </select>

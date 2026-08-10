@@ -4,6 +4,7 @@ import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
 interface LeaveBalancesCardProps {
   balanceYear: number;
   balances: LeaveBoardQuery['leaveBalances'];
+  leaveTypes: LeaveBoardQuery['leaveTypes'];
   leaveTypeNameById: Map<string, string>;
   loading: boolean;
   yearChoices: number[];
@@ -13,6 +14,7 @@ interface LeaveBalancesCardProps {
 const LeaveBalancesCard = ({
   balanceYear,
   balances,
+  leaveTypes,
   leaveTypeNameById,
   loading,
   yearChoices,
@@ -42,7 +44,7 @@ const LeaveBalancesCard = ({
   >
     {loading ? (
       <p className="text-sm text-gray-500 dark:text-gray-400">Loading balances...</p>
-    ) : balances.length ? (
+    ) : leaveTypes.length ? (
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead>
@@ -51,24 +53,31 @@ const LeaveBalancesCard = ({
               <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Available</th>
               <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Pending</th>
               <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Used</th>
-              <th className="py-2 font-medium text-gray-700 dark:text-gray-300">Entitled</th>
+              <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Entitled</th>
+              <th className="py-2 font-medium text-gray-700 dark:text-gray-300">Provisioning</th>
             </tr>
           </thead>
           <tbody>
-            {balances.map((balance) => (
-              <tr
-                key={balance.id}
-                className="border-b border-gray-100 dark:border-gray-800 last:border-0"
-              >
-                <td className="py-2 pr-4 text-gray-900 dark:text-white">
-                  {leaveTypeNameById.get(balance.leaveTypeId) ?? balance.leaveTypeId.slice(0, 8)}
-                </td>
-                <td className="py-2 pr-4 font-mono text-xs">{balance.balanceDays}</td>
-                <td className="py-2 pr-4 font-mono text-xs">{balance.pendingDays}</td>
-                <td className="py-2 pr-4 font-mono text-xs">{balance.usedDays}</td>
-                <td className="py-2 font-mono text-xs">{balance.entitledDays}</td>
-              </tr>
-            ))}
+            {leaveTypes.map((leaveType) => {
+              const balance = balances.find((row) => row.leaveTypeId === leaveType.id);
+              return (
+                <tr
+                  key={leaveType.id}
+                  className="border-b border-gray-100 dark:border-gray-800 last:border-0"
+                >
+                  <td className="py-2 pr-4 text-gray-900 dark:text-white">
+                    {leaveTypeNameById.get(leaveType.id) ?? leaveType.name}
+                  </td>
+                  <td className="py-2 pr-4 font-mono text-xs">{balance?.balanceDays ?? '0'}</td>
+                  <td className="py-2 pr-4 font-mono text-xs">{balance?.pendingDays ?? '0'}</td>
+                  <td className="py-2 pr-4 font-mono text-xs">{balance?.usedDays ?? '0'}</td>
+                  <td className="py-2 pr-4 font-mono text-xs">{balance?.entitledDays ?? '0'}</td>
+                  <td className="py-2 text-xs text-gray-600 dark:text-gray-400">
+                    {balance ? 'Provisioned' : 'Not provisioned'}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

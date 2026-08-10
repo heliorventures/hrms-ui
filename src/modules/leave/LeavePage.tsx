@@ -331,6 +331,7 @@ const LeavePage = () => {
       <LeaveBalancesCard
         balanceYear={balanceYear}
         balances={data?.leaveBalances ?? []}
+        leaveTypes={data?.leaveTypes ?? []}
         leaveTypeNameById={leaveTypeNameById}
         loading={loading}
         yearChoices={yearChoices}

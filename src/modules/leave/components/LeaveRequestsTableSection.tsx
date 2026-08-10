@@ -114,16 +114,6 @@ const LeaveRequestsTableSection = ({
             row.isHalfDay ? (row.halfDaySession ?? 'Half day') : 'Full day',
         },
         {
-          key: 'workflowInstanceId',
-          label: 'Workflow',
-          render: (row: LeaveRequestRow) =>
-            row.workflowInstanceId ? (
-              <span className="font-mono text-xs text-gray-600 dark:text-gray-400">In progress</span>
-            ) : (
-              '—'
-            ),
-        },
-        {
           key: 'status',
           label: 'Status',
           render: (row: LeaveRequestRow) => (

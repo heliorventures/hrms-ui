@@ -6,6 +6,7 @@ import { useGraphClient } from '../../../hooks/useGraphClient';
 import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
 import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import { ApplyLeaveContextPanel, UpcomingHolidaysList } from './ApplyLeaveSupportingInfo';
 
 /** Calendar days from local midnight today → start date (0 = today). */
 function calendarDaysBeforeLeaveStart(fromDateStr: string): number {
@@ -145,6 +146,8 @@ const ApplyLeaveModal = ({
     onClose();
   };
 
+  const clearFormError = () => setFormError(null);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!leaveTypeId || !fromDate || !toDate) {
@@ -228,7 +231,7 @@ const ApplyLeaveModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Apply for Leave">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Apply for Leave" size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
@@ -238,7 +241,13 @@ const ApplyLeaveModal = ({
           </label>
           <select
             value={leaveTypeId}
-            onChange={(e) => setLeaveTypeId(e.target.value)}
+            onChange={(e) => {
+              const nextLeaveTypeId = e.target.value;
+              const nextType = leaveTypes.find((type) => type.id === nextLeaveTypeId);
+              clearFormError();
+              setLeaveTypeId(nextLeaveTypeId);
+              if (nextType?.requiresDocument !== true) setSupportingDocRef('');
+            }}
             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             required
           >
@@ -251,82 +260,23 @@ const ApplyLeaveModal = ({
           </select>
         </div>
 
-        {leaveTypeId && (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-300">
-            <p className="font-medium text-gray-900 dark:text-white">Context</p>
-            <ul className="mt-2 list-inside list-disc space-y-1">
-              <li>
-                Available balance (this year):{' '}
-                <span className="font-mono">{balanceForType?.balanceDays ?? '—'}</span> days
-              </li>
-              {policyForType ? (
-                <>
-                  {policyForType.annualEntitlement != null && (
-                    <li>Policy annual entitlement: {policyForType.annualEntitlement} days</li>
-                  )}
-                  {policyForType.accrualFrequency && (
-                    <li>
-                      Accrual: {policyForType.accrualFrequency}
-                      {policyForType.accrualDays ? ` (${policyForType.accrualDays} days)` : ''}
-                    </li>
-                  )}
-                  {policyForType.maxConsecutiveDays != null && (
-                    <li>Max consecutive: {policyForType.maxConsecutiveDays} days</li>
-                  )}
-                  {policyForType.minNoticeDays != null && (
-                    <li>Min notice: {policyForType.minNoticeDays} days</li>
-                  )}
-                </>
-              ) : (
-                <li>No published policy row for this type — check with HR.</li>
-              )}
-              {requiresDocument && (
-                <li className="font-medium text-amber-800 dark:text-amber-200">
-                  Document reference required when submitting.
-                </li>
-              )}
-              {selectedType?.sandwichRule ? (
-                <li className="font-medium text-amber-800 dark:text-amber-200">
-                  Sandwich rule is on: charged days follow the full calendar span between from and to
-                  (weekends in between count).
-                </li>
-              ) : (
-                <li className="text-gray-600 dark:text-gray-400">
-                  Sandwich rule is off: charged days are weekdays only, excluding public holidays on
-                  tenant calendars (same rule the server applies).
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
+        <ApplyLeaveContextPanel
+          balance={balanceForType}
+          leaveType={selectedType}
+          policy={policyForType}
+          requiresDocument={requiresDocument}
+        />
 
-        {upcomingHolidays.length > 0 && (
-          <div>
-            <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Upcoming holidays
-            </p>
-            <ul className="max-h-28 overflow-y-auto rounded border border-gray-200 text-xs dark:border-gray-600">
-              {upcomingHolidays.slice(0, 12).map((h) => (
-                <li
-                  key={h.id}
-                  className="flex justify-between border-b border-gray-100 px-2 py-1 last:border-0 dark:border-gray-800"
-                >
-                  <span>{h.name}</span>
-                  <span className="font-mono text-gray-500">
-                    {new Date(h.holidayDate).toLocaleDateString('en-IN')} · {h.calendarName}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
+        <UpcomingHolidaysList holidays={upcomingHolidays} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
             type="date"
             label="From"
             value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
+            onChange={(e) => {
+              clearFormError();
+              setFromDate(e.target.value);
+            }}
             fullWidth
             required
           />
@@ -334,7 +284,10 @@ const ApplyLeaveModal = ({
             type="date"
             label="To"
             value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
+            onChange={(e) => {
+              clearFormError();
+              setToDate(e.target.value);
+            }}
             fullWidth
             required
           />
@@ -350,6 +303,7 @@ const ApplyLeaveModal = ({
             checked={halfDayEligible && isHalfDay}
             disabled={!halfDayEligible}
             onChange={(e) => {
+              clearFormError();
               const on = e.target.checked;
               setIsHalfDay(on);
               if (!on) setHalfDaySession('');
@@ -372,9 +326,10 @@ const ApplyLeaveModal = ({
             </label>
             <select
               value={halfDaySession}
-              onChange={(e) =>
-                setHalfDaySession(e.target.value as 'FIRST_HALF' | 'SECOND_HALF' | '')
-              }
+              onChange={(e) => {
+                clearFormError();
+                setHalfDaySession(e.target.value as 'FIRST_HALF' | 'SECOND_HALF' | '');
+              }}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               required
             >
@@ -391,7 +346,10 @@ const ApplyLeaveModal = ({
           </label>
           <textarea
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => {
+              clearFormError();
+              setReason(e.target.value);
+            }}
             rows={3}
             required
             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
@@ -406,7 +364,10 @@ const ApplyLeaveModal = ({
             </label>
             <Input
               value={supportingDocRef}
-              onChange={(e) => setSupportingDocRef(e.target.value)}
+              onChange={(e) => {
+                clearFormError();
+                setSupportingDocRef(e.target.value);
+              }}
               fullWidth
               placeholder="Link to uploaded file or ticket / reference ID"
             />

@@ -12,7 +12,9 @@ import {
   OrgChartDocument,
   RejectTimesheetWeekBatchDocument,
   TimesheetWeekBatchesDocument,
+  ViewerEmployeeIdDocument,
   type OrgChartQuery,
+  type ViewerEmployeeIdQuery,
 } from '../../api/graphql/graphql';
 
 type BatchRow = {
@@ -30,6 +32,7 @@ const HrTimesheetsPage = () => {
   const client = useGraphClient('client');
   const [batches, setBatches] = useState<BatchRow[]>([]);
   const [orgLabels, setOrgLabels] = useState<Map<string, string>>(new Map());
+  const [viewerEmployeeId, setViewerEmployeeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'pending' | 'all'>('pending');
@@ -57,6 +60,11 @@ const HrTimesheetsPage = () => {
     setBatches(rows);
   }, [client, filter]);
 
+  const loadViewer = useCallback(async () => {
+    const response = await client.request<ViewerEmployeeIdQuery>(ViewerEmployeeIdDocument);
+    setViewerEmployeeId(response.viewerEmployeeId?.trim() || null);
+  }, [client]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -64,7 +72,7 @@ const HrTimesheetsPage = () => {
         setLoading(true);
         setError(null);
         setInfoNotice(null);
-        await Promise.all([loadOrg(), loadBatches()]);
+        await Promise.all([loadOrg(), loadViewer(), loadBatches()]);
       } catch (e) {
         if (!cancelled) {
           setError(graphQlUserMessage(e));
@@ -76,7 +84,7 @@ const HrTimesheetsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [loadOrg, loadBatches]);
+  }, [loadOrg, loadViewer, loadBatches]);
 
   const silentRefresh = useCallback(async () => {
     try {
@@ -98,6 +106,8 @@ const HrTimesheetsPage = () => {
         setInfoNotice(
           'Your approval was recorded. The submission stays open until every workflow step is finished — continue with HR or the next approver.',
         );
+      } else {
+        setInfoNotice('Timesheet approved.');
       }
       await silentRefresh();
     } catch (e) {
@@ -119,6 +129,7 @@ const HrTimesheetsPage = () => {
       });
       setRejectFor(null);
       setRejectReason('');
+      setInfoNotice('Timesheet rejected.');
       await silentRefresh();
     } catch (e) {
       setError(graphQlUserMessage(e));
@@ -201,17 +212,20 @@ const HrTimesheetsPage = () => {
                 },
               },
               {
-                key: 'wf',
-                label: 'Workflow',
-                render: (row: BatchRow) => row.workflowInstanceId ?? '—',
-              },
-              {
                 key: 'actions',
                 label: '',
                 render: (row: BatchRow) => {
                   const pending = row.status?.toUpperCase() === 'PENDING';
-                  const mayAct = pending && row.viewerMayApprove === true;
+                  const ownSubmission = viewerEmployeeId != null && row.employeeId === viewerEmployeeId;
+                  const mayAct = pending && row.viewerMayApprove === true && !ownSubmission;
                   const waiting = pending && row.viewerMayApprove === false;
+                  if (ownSubmission) {
+                    return (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Own submission
+                      </span>
+                    );
+                  }
                   if (mayAct) {
                     return (
                       <div className="flex flex-wrap gap-2">

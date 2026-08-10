@@ -6,6 +6,7 @@ import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { ClientOpsAdminReportsDataDocument } from '../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import AttendanceReportDetails from './components/AttendanceReportDetails';
 
 interface EmployeeRow {
   id: string;
@@ -340,6 +341,10 @@ const AdminReportsPage = () => {
       </Card>
 
       <Card title="Report Summary">{renderReportContent()}</Card>
+
+      {reportType === 'attendance' && (
+        <AttendanceReportDetails employees={data?.employees ?? []} rows={filteredAttendance} />
+      )}
     </div>
   );
 };

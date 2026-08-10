@@ -49,13 +49,13 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
       onClick={onClose}
     >
       <div
-        className={`w-full ${sizeClasses[size]} rounded-lg bg-white shadow-xl dark:bg-gray-800`}
+        className={`flex max-h-[calc(100vh-2rem)] w-full ${sizeClasses[size]} flex-col rounded-lg bg-white shadow-xl dark:bg-gray-800`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
       >
-        <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
           <h2
             id={titleId}
             className="text-lg font-semibold text-gray-900 dark:text-white"
@@ -78,7 +78,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
             </svg>
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="min-h-0 overflow-y-auto p-6">{children}</div>
       </div>
     </div>
   );

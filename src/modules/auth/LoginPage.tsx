@@ -29,10 +29,12 @@ const LoginPage = () => {
 
   const submitting = loading;
 
-  const refreshCaptcha = useCallback(() => {
+  const refreshCaptcha = useCallback((clearCaptchaError = true) => {
     setCaptchaCode(generateCaptcha());
     setCaptchaInput('');
-    setErrors((e) => ({ ...e, captcha: undefined }));
+    if (clearCaptchaError) {
+      setErrors((e) => ({ ...e, captcha: undefined }));
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,7 +55,7 @@ const LoginPage = () => {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       if (newErrors.captcha) {
-        refreshCaptcha();
+        refreshCaptcha(false);
       }
       return;
     }
@@ -149,7 +151,7 @@ const LoginPage = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={refreshCaptcha}
+                  onClick={() => refreshCaptcha()}
                   className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                   title="Refresh captcha"
                 >

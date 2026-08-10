@@ -10,7 +10,7 @@ import {
 } from '../../api/graphql/graphql';
 import { decodeTimesheetDescription } from '../../utils/timesheetDescription';
 import { timesheetWeekRangeIso } from '../../utils/timesheetWeek';
-import { isoDateRangeContains, monthBoundsIso, toIsoDate } from '../../utils/calendarRange';
+import { isoDateRangeContains, monthBoundsIso, parseIsoDate, toIsoDate } from '../../utils/calendarRange';
 import {
   buildCustomRangeGridCells,
   buildMonthGridCells,
@@ -24,6 +24,8 @@ import {
   earliestEditableMondayIso,
   timesheetEntryCanDelete,
   timesheetEntryCanEdit,
+  timesheetEntryLocksDay,
+  validateTimesheetWeekHours,
   weekMondayOfWorkDateIso,
 } from './timesheetRules';
 import type { EntryRow, PeriodMode } from './timesheetTypes';
@@ -153,11 +155,16 @@ const TimesheetPage = () => {
   const todayIso = toIsoDate(new Date());
 
   const dateAllowsNewEntry = useCallback(
-    (iso: string) =>
-      iso >= allowedMinIsoForm &&
-      iso <= displayBounds.end &&
-      weekMondayOfWorkDateIso(iso) >= earliestMonday,
-    [allowedMinIsoForm, displayBounds.end, earliestMonday]
+    (iso: string) => {
+      const dayRows = entriesByDate.get(iso) ?? [];
+      return (
+        iso >= allowedMinIsoForm &&
+        iso <= displayBounds.end &&
+        weekMondayOfWorkDateIso(iso) >= earliestMonday &&
+        !dayRows.some((row) => timesheetEntryLocksDay(row.status))
+      );
+    },
+    [allowedMinIsoForm, displayBounds.end, earliestMonday, entriesByDate]
   );
 
   const openNewEntry = (datePreset: string | null = null) => {
@@ -182,6 +189,18 @@ const TimesheetPage = () => {
 
   const handleSubmitWeek = async () => {
     if (!submitWeekEditable) return;
+    const weekBounds = {
+      start: weekSubmitMonday,
+      end: timesheetWeekRangeIso(parseIsoDate(weekSubmitMonday)).end,
+    };
+    const weekHours = entries
+      .filter((entry) => isoDateRangeContains(entry.workDate, weekBounds.start, weekBounds.end))
+      .reduce((total, row) => total + (parseFloat(row.hoursWorked) || 0), 0);
+    const weekValidationError = validateTimesheetWeekHours(weekHours);
+    if (weekValidationError) {
+      setError(weekValidationError);
+      return;
+    }
     setSubmitBusy(true);
     setError(null);
     try {
@@ -196,7 +215,7 @@ const TimesheetPage = () => {
 
   const exportCsv = () => {
     const lines = [
-      ['workDate', 'hoursWorked', 'projectCode', 'task', 'notes', 'status', 'batchId'].join(','),
+      ['Work Date', 'Hours Worked', 'Project Code', 'Task', 'Notes', 'Status', 'Batch Id'].join(','),
       ...sorted.map((row) => {
         const decoded = decodeTimesheetDescription(row.description ?? null);
         const escapeCsv = (value: string | null | undefined) =>

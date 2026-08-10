@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/common/Card';
-import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
-import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { createPermissionService } from '../../auth/permissionService';
@@ -14,11 +12,11 @@ import {
 } from '../../api/graphql/graphql';
 import { formatBackendTime } from '../../utils/timeFormat';
 import {
-  formatLatLng,
   formatMinutesAsHhMm,
   segmentWorkedMinutes,
 } from '../../utils/attendanceDuration';
 import { isoDateRangeContains, monthBoundsIso, parseIsoDate, toIsoDate } from '../../utils/calendarRange';
+import AttendanceSegmentsTable from './components/AttendanceSegmentsTable';
 import ManualAttendanceModal from './components/ManualAttendanceModal';
 import type { AttendanceBoardData, FlatSegmentRow } from './types';
 
@@ -44,9 +42,12 @@ const AttendancePage = () => {
   const [board, setBoard] = useState<AttendanceBoardData | null>(null);
   const [adjustPolicyDays, setAdjustPolicyDays] = useState<number>(14);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjustDefaultDate, setAdjustDefaultDate] = useState(toIsoDate(now));
+  const [adjustDefaultSegment, setAdjustDefaultSegment] = useState<FlatSegmentRow | null>(null);
 
   const monthBounds = useMemo(() => monthBoundsIso(year, monthIndex), [year, monthIndex]);
 
@@ -88,10 +89,15 @@ const AttendancePage = () => {
 
   const refreshBoard = useCallback(async () => {
     try {
+      setRefreshing(true);
+      setSuccess(null);
       const b = await loadBoard();
       setBoard(b);
+      setSuccess('Attendance refreshed.');
     } catch (e) {
       setError(graphQlUserMessage(e));
+    } finally {
+      setRefreshing(false);
     }
   }, [loadBoard]);
 
@@ -137,25 +143,11 @@ const AttendancePage = () => {
     };
   }, [filteredSegments]);
 
-  const statusVariant = (status?: string | null) => {
-    switch ((status ?? '').toLowerCase()) {
-      case 'present':
-        return 'success';
-      case 'absent':
-        return 'danger';
-      case 'half-day':
-        return 'warning';
-      case 'leave':
-        return 'info';
-      default:
-        return 'neutral';
-    }
-  };
-
   const shiftLimit = 12;
 
-  const openAdjust = (iso: string) => {
+  const openAdjust = (iso: string, segment: FlatSegmentRow | null = null) => {
     setAdjustDefaultDate(iso);
+    setAdjustDefaultSegment(segment);
     setAdjustOpen(true);
   };
 
@@ -237,8 +229,13 @@ const AttendancePage = () => {
           >
             Next
           </Button>
-          <Button variant="outline" type="button" onClick={() => void refreshBoard()}>
-            Refresh
+          <Button
+            variant="outline"
+            type="button"
+            disabled={refreshing}
+            onClick={() => void refreshBoard()}
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
         </div>
       </Card>
@@ -278,6 +275,11 @@ const AttendancePage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
+      {success && (
+        <Card>
+          <p className="text-sm text-green-700 dark:text-green-300">{success}</p>
+        </Card>
+      )}
 
       <Card title="Shift templates">
         {loading ? (
@@ -303,97 +305,25 @@ const AttendancePage = () => {
         )}
       </Card>
 
-      <Card title={`Attendance — ${monthBounds.start} to ${monthBounds.end}`}>
-        {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading attendance…</p>
-        ) : filteredSegments.length ? (
-          <Table
-            data={filteredSegments}
-            keyExtractor={(row) => row.id}
-            columns={[
-              {
-                key: 'workDate',
-                label: 'Date',
-                render: (row: FlatSegmentRow) =>
-                  new Date(row.workDate).toLocaleDateString('en-IN', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                  }),
-              },
-              {
-                key: 'in',
-                label: 'Punch in',
-                render: (row: FlatSegmentRow) => formatBackendTime(row.checkInTime ?? null),
-              },
-              {
-                key: 'out',
-                label: 'Punch out',
-                render: (row: FlatSegmentRow) => formatBackendTime(row.checkOutTime ?? null),
-              },
-              {
-                key: 'dur',
-                label: 'Duration',
-                render: (row: FlatSegmentRow) =>
-                  row.segmentMinutes != null && row.segmentMinutes > 0
-                    ? formatMinutesAsHhMm(row.segmentMinutes)
-                    : row.checkInTime && !row.checkOutTime
-                      ? 'Open'
-                      : '—',
-              },
-              {
-                key: 'loc',
-                label: 'Location (in → out)',
-                render: (row: FlatSegmentRow) => (
-                  <span className="max-w-xs font-mono text-xs">
-                    {formatLatLng(row.checkInLat, row.checkInLng)} →{' '}
-                    {formatLatLng(row.checkOutLat, row.checkOutLng)}
-                  </span>
-                ),
-              },
-              {
-                key: 'status',
-                label: 'Status',
-                render: (row: FlatSegmentRow) => (
-                  <Badge variant={statusVariant(row.status)}>{row.status ?? '—'}</Badge>
-                ),
-              },
-              {
-                key: 'adj',
-                label: '',
-                render: (row: FlatSegmentRow) => {
-                  const allow = selfAdjustAllowedForDate(row.workDate) || canRegularize;
-                  return (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="!py-1 !text-xs"
-                      disabled={!allow}
-                      title={
-                        !allow
-                          ? `Self-service locked after ${adjustPolicyDays} days — contact HR`
-                          : undefined
-                      }
-                      onClick={() => openAdjust(row.workDate)}
-                    >
-                      Adjust day
-                    </Button>
-                  );
-                },
-              },
-            ]}
-          />
-        ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            No punch segments in this month (raise limit or choose another month).
-          </p>
-        )}
-      </Card>
-
+      <AttendanceSegmentsTable
+        adjustPolicyDays={adjustPolicyDays}
+        canRegularize={canRegularize}
+        loading={loading}
+        rows={filteredSegments}
+        title={`Attendance - ${monthBounds.start} to ${monthBounds.end}`}
+        selfAdjustAllowedForDate={selfAdjustAllowedForDate}
+        onAdjust={(row) => openAdjust(row.workDate, row)}
+      />
       <ManualAttendanceModal
         isOpen={adjustOpen}
-        onClose={() => setAdjustOpen(false)}
+        onClose={() => {
+          setAdjustOpen(false);
+          setAdjustDefaultSegment(null);
+        }}
         defaultWorkDate={adjustDefaultDate}
+        defaultCheckIn={adjustDefaultSegment?.checkInTime}
+        defaultCheckOut={adjustDefaultSegment?.checkOutTime}
+        existingSegments={board?.attendance ?? []}
         onSaved={() => void refreshBoard()}
       />
     </div>

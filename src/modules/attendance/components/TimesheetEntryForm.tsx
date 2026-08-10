@@ -13,6 +13,7 @@ import {
 } from '../../../api/graphql/graphql';
 import { clampIsoDateToRange } from '../../../utils/timesheetWeek';
 import { encodeTimesheetDescription, decodeTimesheetDescription } from '../../../utils/timesheetDescription';
+import { validateTimesheetEntryHours } from '../../timesheet/timesheetRules';
 
 export interface TimesheetEntryFormProps {
   onClose: () => void;
@@ -122,8 +123,13 @@ const TimesheetEntryForm = ({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    setSubmitting(true);
     const wd = clampIsoDateToRange(workDate, allowedMinIso, allowedMaxIso);
+    const hoursError = validateTimesheetEntryHours(hoursWorked);
+    if (hoursError) {
+      setFormError(hoursError);
+      return;
+    }
+    setSubmitting(true);
     const desc = encodeTimesheetDescription(taskCode, notes);
     try {
       if (editing) {

@@ -1,5 +1,4 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import type { UuidEntityOption } from '../../../components/common/UuidEntitySearchSelect';
 import { useDialogs } from '../../../contexts/DialogContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import {
@@ -34,9 +33,13 @@ import {
   EXPENSE_CATEGORY_LIMIT,
   EXPENSE_POLICY_DIRECTORY_LIMIT,
   optionalString,
-  shortEntityId,
   summarizeExpensePolicyScope,
 } from '../expenseCategoryUtils';
+import {
+  buildDepartmentOptions,
+  buildDesignationOptions,
+  buildRoleOptions,
+} from '../expensePolicyPickerOptions';
 
 export function useAdminExpenseCategories() {
   const client = useGraphClient('client');
@@ -198,47 +201,25 @@ export function useAdminExpenseCategories() {
     [departmentLabels, designationLabels, roleLabels]
   );
 
-  const departmentOptions = useMemo((): UuidEntityOption[] => {
-    const options = policyPickerDepartments.map((department) => ({
-      id: department.id,
-      title: department.name,
-      subtitle: department.code ?? undefined,
-    }));
-    addUnknownOption(options, policyForm.departmentId, 'Unknown department (from policy)');
-    return options;
-  }, [policyForm.departmentId, policyPickerDepartments]);
+  const departmentOptions = useMemo(
+    () => buildDepartmentOptions(policyPickerDepartments, policyForm.departmentId),
+    [policyForm.departmentId, policyPickerDepartments]
+  );
 
-  const designationOptions = useMemo((): UuidEntityOption[] => {
-    const options = policyPickerDesignations.map((designation) => {
-      const level =
-        typeof designation.level === 'number' && Number.isFinite(designation.level)
-          ? designation.level
-          : null;
-      return {
-        id: designation.id,
-        title: level !== null ? `${designation.title} - L${level}` : designation.title,
-        subtitle: designation.departmentId
-          ? departmentNameById.get(designation.departmentId) ??
-            `Dept ${shortEntityId(designation.departmentId)}`
-          : undefined,
-      };
-    });
-    addUnknownOption(options, policyForm.designationId, 'Unknown designation (from policy)');
-    return options;
-  }, [departmentNameById, policyForm.designationId, policyPickerDesignations]);
+  const designationOptions = useMemo(
+    () =>
+      buildDesignationOptions(
+        policyPickerDesignations,
+        departmentNameById,
+        policyForm.designationId
+      ),
+    [departmentNameById, policyForm.designationId, policyPickerDesignations]
+  );
 
-  const roleOptions = useMemo((): UuidEntityOption[] => {
-    const options = policyPickerRoles.map((role) => {
-      const description = role.description?.trim();
-      return {
-        id: role.id,
-        title: role.name + (role.isSystemRole ? ' (system)' : ''),
-        subtitle: description && description.length > 96 ? `${description.slice(0, 96)}...` : description,
-      };
-    });
-    addUnknownOption(options, policyForm.roleId, 'Unknown role (from policy)');
-    return options;
-  }, [policyForm.roleId, policyPickerRoles]);
+  const roleOptions = useMemo(
+    () => buildRoleOptions(policyPickerRoles, policyForm.roleId),
+    [policyForm.roleId, policyPickerRoles]
+  );
 
   const openNewCategory = () => {
     setEditId(null);
@@ -411,13 +392,6 @@ export function useAdminExpenseCategories() {
     savePolicy,
     deletePolicy,
   };
-}
-
-function addUnknownOption(options: UuidEntityOption[], id: string, title: string) {
-  const trimmed = id.trim();
-  if (trimmed && !options.some((option) => option.id === trimmed)) {
-    options.push({ id: trimmed, title, subtitle: shortEntityId(trimmed) });
-  }
 }
 
 export type AdminExpenseCategoriesModel = ReturnType<typeof useAdminExpenseCategories>;

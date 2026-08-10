@@ -1,7 +1,7 @@
 import Card from '../../../components/common/Card';
 import { parseIsoDate } from '../../../utils/calendarRange';
 import { decodeTimesheetDescription } from '../../../utils/timesheetDescription';
-import { timesheetEntryCanDelete } from '../timesheetRules';
+import { formatTimesheetHours, timesheetEntryCanDelete } from '../timesheetRules';
 import type { EntryRow } from '../timesheetTypes';
 
 const WEEKDAY_HEADERS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
@@ -97,7 +97,7 @@ const TimesheetCalendarCard = ({
                         {dayOfMonth}
                       </span>
                       <span className="text-[11px] font-medium tabular-nums text-gray-700 dark:text-gray-200">
-                        {dayTotal > 0 ? `${dayTotal.toFixed(dayTotal % 1 === 0 ? 0 : 1)}h` : '-'}
+                        {dayTotal > 0 ? `${formatTimesheetHours(dayTotal)}h` : '-'}
                       </span>
                     </div>
                     <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
@@ -106,7 +106,7 @@ const TimesheetCalendarCard = ({
                         const parsedHours = parseFloat(entry.hoursWorked);
                         const hours = Number.isNaN(parsedHours)
                           ? entry.hoursWorked
-                          : `${parsedHours % 1 === 0 ? parsedHours : parsedHours.toFixed(1)}h`;
+                          : `${formatTimesheetHours(parsedHours)}h`;
                         const summary =
                           [hours, entry.projectCode?.trim() || null, decoded.task?.trim() || null]
                             .filter(Boolean)

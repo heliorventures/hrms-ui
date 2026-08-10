@@ -5,11 +5,19 @@ import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { AddManualAttendanceSegmentDocument } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import {
+  type AttendanceSegmentInterval,
+  validateManualAttendanceSegment,
+} from '../../../utils/attendanceValidation';
+import { formatBackendTime } from '../../../utils/timeFormat';
 
 export interface ManualAttendanceModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultWorkDate: string;
+  defaultCheckIn?: string | null;
+  defaultCheckOut?: string | null;
+  existingSegments: AttendanceSegmentInterval[];
   onSaved: () => void;
 }
 
@@ -17,6 +25,9 @@ const ManualAttendanceModal = ({
   isOpen,
   onClose,
   defaultWorkDate,
+  defaultCheckIn,
+  defaultCheckOut,
+  existingSegments,
   onSaved,
 }: ManualAttendanceModalProps) => {
   const client = useGraphClient('client');
@@ -29,13 +40,25 @@ const ManualAttendanceModal = ({
   useEffect(() => {
     if (isOpen) {
       setWorkDate(defaultWorkDate);
+      setCheckIn(formatBackendTime(defaultCheckIn ?? '09:00').slice(0, 5));
+      setCheckOut(formatBackendTime(defaultCheckOut ?? '18:00').slice(0, 5));
       setError(null);
     }
-  }, [isOpen, defaultWorkDate]);
+  }, [isOpen, defaultWorkDate, defaultCheckIn, defaultCheckOut]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    const validationMessage = validateManualAttendanceSegment({
+      workDate,
+      checkIn,
+      checkOut,
+      existingSegments,
+    });
+    if (validationMessage) {
+      setError(validationMessage);
+      return;
+    }
     setBusy(true);
     try {
       await client.request(AddManualAttendanceSegmentDocument, {
