@@ -42,12 +42,12 @@ const ExpensePoliciesPanel = ({
           className="!px-3 !py-1 !text-xs"
           onClick={onAddPolicy}
         >
-          Add policy
+          Add Policy
         </Button>
       ) : null}
     </div>
     {!categories.length ? (
-      <p className="text-sm text-gray-500 dark:text-gray-400">Create a category first.</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Create A Category First.</p>
     ) : (
       <>
         <div className="mb-4">
@@ -71,7 +71,7 @@ const ExpensePoliciesPanel = ({
         </div>
         {directoryLoading ? (
           <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-            Loading organization directory. Names in the grid update when ready.
+            Loading Organization Directory. Names In The Grid Update When Ready.
           </p>
         ) : null}
         {policyError ? <p className="mb-3 text-sm text-red-600 dark:text-red-400">{policyError}</p> : null}
@@ -79,8 +79,8 @@ const ExpensePoliciesPanel = ({
           data={rows}
           keyExtractor={(policy) => policy.id}
           loading={loading}
-          loadingMessage="Loading policies..."
-          emptyMessage="No policies for this category. Category-level max only applies."
+          loadingMessage="Loading Policies..."
+          emptyMessage="No Policies For This Category. Category-Level Max Only Applies."
           columns={[
             {
               key: 'applicable',

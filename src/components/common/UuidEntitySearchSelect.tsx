@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { UI_EMPTY_TEXT, UI_FORM_TEXT, UI_PLACEHOLDER_TEXT } from '../../constants/uiText';
 
 export type UuidEntityOption = {
   id: string;
@@ -28,8 +29,8 @@ const controlClass =
  */
 const UuidEntitySearchSelect = ({
   label,
-  placeholder = 'Search…',
-  emptyLabel = 'Choose…',
+  placeholder = UI_PLACEHOLDER_TEXT.uuidEntitySearch,
+  emptyLabel = UI_FORM_TEXT.chooseAny,
   options,
   valueId,
   onChangeId,
@@ -88,7 +89,7 @@ const UuidEntitySearchSelect = ({
         ))}
       </select>
       {q && filtered.length === 0 && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">No matches — try another search.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{UI_EMPTY_TEXT.matchesTryAnotherSearch}</p>
       )}
     </div>
   );

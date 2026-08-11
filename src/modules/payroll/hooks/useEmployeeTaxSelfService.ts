@@ -11,10 +11,25 @@ import {
   type TaxSectionDefinitionsQuery,
 } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import { uploadTenantFile, validateTenantUploadFile } from '../../../utils/tenantFileUpload';
 import type { TaxConfigurationRow, TaxSectionCatalogRow } from '../payrollTypes';
 
 const TAX_COMPUTATION_LIMIT = 20;
 const TAX_SECTION_LIMIT = 120;
+const MONEY_PATTERN = /^(?:\d+|\d+\.\d{1,2}|\.\d{1,2})$/;
+const SECTION_CODE_PATTERN = /^[A-Z0-9][A-Z0-9_-]{1,31}$/;
+
+const parseYear = (raw: string) => {
+  const year = Number(raw.trim());
+  return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : NaN;
+};
+
+const validateOptionalMoney = (raw: string, label: string): string | null => {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (!MONEY_PATTERN.test(trimmed)) return `${label} must be a non-negative amount with up to 2 decimal places.`;
+  return Number(trimmed) >= 0 ? null : `${label} must be non-negative.`;
+};
 
 export function useEmployeeTaxSelfService(
   client: GraphQLClient,
@@ -37,6 +52,7 @@ export function useEmployeeTaxSelfService(
   const [proofSectionCode, setProofSectionCode] = useState('');
   const [proofDeclared, setProofDeclared] = useState('');
   const [proofActual, setProofActual] = useState('');
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofBusy, setProofBusy] = useState(false);
   const [proofMsg, setProofMsg] = useState<string | null>(null);
 
@@ -105,9 +121,16 @@ export function useEmployeeTaxSelfService(
         setDeclMsg('No active tax configuration. Ask HR to set up tax slabs for your tenant.');
         return;
       }
-      const fiscalYear = Number(declFy.trim());
-      if (!Number.isFinite(fiscalYear)) {
+      const fiscalYear = parseYear(declFy);
+      if (Number.isNaN(fiscalYear)) {
         setDeclMsg('Enter a valid fiscal year (India FY anchor year, e.g. 2025).');
+        return;
+      }
+      const amountError =
+        validateOptionalMoney(declGross, 'Gross income') ??
+        validateOptionalMoney(declDed, 'Total deductions');
+      if (amountError) {
+        setDeclMsg(amountError);
         return;
       }
       setDeclSubmitting(true);
@@ -144,18 +167,34 @@ export function useEmployeeTaxSelfService(
         setProofMsg('No active tax configuration. Ask HR to configure tax slabs.');
         return;
       }
-      const fiscalYear = Number(declFy.trim());
-      if (!Number.isFinite(fiscalYear)) {
+      const fiscalYear = parseYear(declFy);
+      if (Number.isNaN(fiscalYear)) {
         setProofMsg('Set a valid FY on the Estimated declaration section (above).');
         return;
       }
       const sectionCode = proofSectionCode.trim().toUpperCase();
-      if (!sectionCode) {
-        setProofMsg('Choose or enter a deduction section.');
+      if (!SECTION_CODE_PATTERN.test(sectionCode)) {
+        setProofMsg('Choose or enter a valid deduction section code.');
+        return;
+      }
+      const declaredError = validateOptionalMoney(proofDeclared, 'Declared amount');
+      const actualError = validateOptionalMoney(proofActual, 'Actual amount');
+      if (declaredError || actualError) {
+        setProofMsg(declaredError ?? actualError);
+        return;
+      }
+      if (!proofFile) {
+        setProofMsg('Proof file is required before submitting a tax proof line.');
+        return;
+      }
+      const proofFileError = validateTenantUploadFile(proofFile, 'Proof file');
+      if (proofFileError) {
+        setProofMsg(proofFileError);
         return;
       }
       setProofBusy(true);
       try {
+        const fileStorageId = await uploadTenantFile(client, proofFile);
         await client.request(SubmitTaxProofLineDocument, {
           input: {
             taxConfigVersionId: configId,
@@ -163,12 +202,13 @@ export function useEmployeeTaxSelfService(
             sectionCode,
             declaredAmount: proofDeclared.trim() || '0',
             actualAmount: proofActual.trim() || proofDeclared.trim() || '0',
-            fileStorageId: null,
+            fileStorageId,
           },
         });
         setProofMsg('Proof line submitted — status PENDING until HR approves.');
         setProofDeclared('');
         setProofActual('');
+        setProofFile(null);
         await loadEmployeeTax();
       } catch (err) {
         setProofMsg(graphQlUserMessage(err));
@@ -183,9 +223,20 @@ export function useEmployeeTaxSelfService(
       loadEmployeeTax,
       proofActual,
       proofDeclared,
+      proofFile,
       proofSectionCode,
     ]
   );
+
+  const handleProofFileChange = useCallback((file: File | null) => {
+    setProofFile(file);
+    if (!file) {
+      setProofMsg(null);
+      return;
+    }
+    const proofFileError = validateTenantUploadFile(file, 'Proof file');
+    setProofMsg(proofFileError);
+  }, []);
 
   return {
     taxComputationsSelf,
@@ -209,6 +260,8 @@ export function useEmployeeTaxSelfService(
     setProofDeclared,
     proofActual,
     setProofActual,
+    proofFile,
+    setProofFile: handleProofFileChange,
     proofBusy,
     proofMsg,
     handleDeclUpsert,

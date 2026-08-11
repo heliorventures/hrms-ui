@@ -9,6 +9,32 @@ import {
   ClientOpsUpsertAttendancePunchPolicyDocument,
 } from '../../api/graphql/graphql';
 
+const DECIMAL_PATTERN = /^-?(?:\d+|\d+\.\d+|\.\d+)$/;
+
+const parseOptionalDecimal = (raw: string) => {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (!DECIMAL_PATTERN.test(trimmed)) return NaN;
+  return Number(trimmed);
+};
+
+const isValidIpv4CidrToken = (token: string) => {
+  const [ip, cidr, extra] = token.split('/');
+  if (!ip || extra != null) return false;
+  const octets = ip.split('.');
+  if (octets.length !== 4) return false;
+  const hasValidOctets = octets.every((part) => {
+    if (!/^\d{1,3}$/.test(part)) return false;
+    const value = Number(part);
+    return value >= 0 && value <= 255;
+  });
+  if (!hasValidOctets) return false;
+  if (cidr == null) return true;
+  if (!/^\d{1,2}$/.test(cidr)) return false;
+  const mask = Number(cidr);
+  return mask >= 0 && mask <= 32;
+};
+
 const AdminAttendancePolicyPage = () => {
   const client = useGraphClient('client');
   const [policy, setPolicy] = useState<{
@@ -86,19 +112,37 @@ const AdminAttendancePolicyPage = () => {
   const onSave = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    const lat = siteLatitude.trim() === '' ? null : Number.parseFloat(siteLatitude);
-    const lng = siteLongitude.trim() === '' ? null : Number.parseFloat(siteLongitude);
-    const maxM = maxDistanceMeters.trim() === '' ? null : Number.parseInt(maxDistanceMeters, 10);
-    if (lat != null && Number.isNaN(lat)) {
-      setFormError('Invalid latitude');
+    const lat = parseOptionalDecimal(siteLatitude);
+    const lng = parseOptionalDecimal(siteLongitude);
+    const maxM = parseOptionalDecimal(maxDistanceMeters);
+    const allowlistTokens = ipAllowlist
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (lat != null && (!Number.isFinite(lat) || lat < -90 || lat > 90)) {
+      setFormError('Latitude must be a decimal value between -90 and 90.');
       return;
     }
-    if (lng != null && Number.isNaN(lng)) {
-      setFormError('Invalid longitude');
+    if (lng != null && (!Number.isFinite(lng) || lng < -180 || lng > 180)) {
+      setFormError('Longitude must be a decimal value between -180 and 180.');
       return;
     }
-    if (maxM != null && Number.isNaN(maxM)) {
-      setFormError('Invalid max distance');
+    if (maxM != null && (!Number.isFinite(maxM) || maxM <= 0 || !Number.isInteger(maxM))) {
+      setFormError('Max distance must be a whole number greater than 0 meters.');
+      return;
+    }
+    if (allowlistTokens.some((token) => !isValidIpv4CidrToken(token))) {
+      setFormError('IP allowlist must contain comma-separated IPv4 addresses or IPv4 CIDR ranges.');
+      return;
+    }
+    const hasCompleteGeoRule = lat != null && lng != null && maxM != null;
+    const hasPartialGeoRule = lat != null || lng != null || maxM != null;
+    if (hasPartialGeoRule && !hasCompleteGeoRule) {
+      setFormError('Latitude, longitude, and max distance are required together for geofence enforcement.');
+      return;
+    }
+    if (isEnforced && !hasCompleteGeoRule && !allowlistTokens.length) {
+      setFormError('Enable enforcement only after adding a complete geofence or at least one IP rule.');
       return;
     }
     setSaving(true);
@@ -133,9 +177,9 @@ const AdminAttendancePolicyPage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="Live punch policy">
+      <Card title="Live Punch Policy">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : (
           <form onSubmit={(e) => void onSave(e)} className="space-y-4">
             {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
@@ -149,14 +193,14 @@ const AdminAttendancePolicyPage = () => {
             </label>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
-                label="Site latitude"
+                label="Site Latitude"
                 value={siteLatitude}
                 onChange={(e) => setSiteLatitude(e.target.value)}
                 fullWidth
                 inputMode="decimal"
               />
               <Input
-                label="Site longitude"
+                label="Site Longitude"
                 value={siteLongitude}
                 onChange={(e) => setSiteLongitude(e.target.value)}
                 fullWidth
@@ -164,7 +208,7 @@ const AdminAttendancePolicyPage = () => {
               />
             </div>
             <Input
-              label="Max distance (meters)"
+              label="Max Distance (Meters)"
               value={maxDistanceMeters}
               onChange={(e) => setMaxDistanceMeters(e.target.value)}
               fullWidth
@@ -185,14 +229,14 @@ const AdminAttendancePolicyPage = () => {
               <p className="text-xs text-gray-500">Last updated: {policy.updatedAt}</p>
             )}
             <Button type="submit" disabled={saving}>
-              {saving ? 'Saving…' : 'Save policy'}
+              {saving ? 'Saving...' : 'Save Policy'}
             </Button>
           </form>
         )}
       </Card>
       <Card title="Shifts">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : shifts.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {shifts.map((s) => (
@@ -206,7 +250,7 @@ const AdminAttendancePolicyPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No shift templates.</p>
+          <p className="text-sm text-gray-500">No Shift Templates.</p>
         )}
       </Card>
     </div>

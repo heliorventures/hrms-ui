@@ -163,12 +163,12 @@ const OpsOperatorsPage = () => {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Operator users"
+        title="Operator Users"
         description="Platform staff: create accounts (Argon2 on server) and assign roles via kabipay_ops.operator_user_role."
         actions={
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="primary" onClick={openCreate}>
-              Add operator user
+              Add Operator User
             </Button>
             <button
               type="button"
@@ -206,14 +206,14 @@ const OpsOperatorsPage = () => {
         </p>
       </Card>
 
-      {loading && <p className="text-sm text-slate-500">Loading…</p>}
+      {loading && <p className="text-sm text-slate-500">Loading...</p>}
       {error && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {error}
         </p>
       )}
 
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} title="New operator user" size="md">
+      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} title="New Operator User" size="md">
         <form onSubmit={onCreateUser} className="space-y-3">
           <p className="text-xs text-slate-500 dark:text-slate-400">Password must be at least 8 characters.</p>
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth />
@@ -226,14 +226,14 @@ const OpsOperatorsPage = () => {
             fullWidth
             autoComplete="new-password"
           />
-          <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required fullWidth />
-          <Input label="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} fullWidth />
+          <Input label="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required fullWidth />
+          <Input label="Phone (Optional)" value={phone} onChange={(e) => setPhone(e.target.value)} fullWidth />
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" variant="primary" disabled={submitting}>
-              {submitting ? 'Creating…' : 'Create'}
+              {submitting ? 'Creating...' : 'Create'}
             </Button>
           </div>
         </form>
@@ -245,7 +245,7 @@ const OpsOperatorsPage = () => {
         title={rolesSubject ? `Roles — ${rolesSubject.email}` : 'Roles'}
         size="md"
       >
-        {rolesModalLoading && <p className="text-sm text-slate-500">Loading current roles…</p>}
+        {rolesModalLoading && <p className="text-sm text-slate-500">Loading Current Roles...</p>}
         {!rolesModalLoading && rolesSubject && (
           <form onSubmit={onSaveRoles} className="space-y-3">
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -253,7 +253,7 @@ const OpsOperatorsPage = () => {
             </p>
             <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-3 dark:border-slate-600">
               {roles.length === 0 ? (
-                <p className="text-sm text-slate-500">No roles defined in catalog.</p>
+                <p className="text-sm text-slate-500">No Roles Defined In Catalog.</p>
               ) : (
                 roles.map((role) => (
                   <label key={role.id} className="flex cursor-pointer items-start gap-2 text-sm">
@@ -280,7 +280,7 @@ const OpsOperatorsPage = () => {
                 Cancel
               </Button>
               <Button type="submit" variant="primary" disabled={rolesSaving || roles.length === 0}>
-                {rolesSaving ? 'Saving…' : 'Save roles'}
+                {rolesSaving ? 'Saving...' : 'Save Roles'}
               </Button>
             </div>
           </form>
@@ -289,7 +289,7 @@ const OpsOperatorsPage = () => {
 
       {!loading && !error && (
         <>
-          <Card title="Roles (catalog)">
+          <Card title="Roles (Catalog)">
             <Table<OpRoleRow>
               data={roles}
               keyExtractor={(r) => r.id}
@@ -313,7 +313,7 @@ const OpsOperatorsPage = () => {
                   label: 'Active',
                   render: (r) => (r.isActive ? 'Yes' : 'No'),
                 },
-                { key: 'lastLoginAt', label: 'Last login', render: (r) => r.lastLoginAt ?? '—' },
+                { key: 'lastLoginAt', label: 'Last Login', render: (r) => r.lastLoginAt ?? '—' },
                 {
                   key: 'id',
                   label: '',

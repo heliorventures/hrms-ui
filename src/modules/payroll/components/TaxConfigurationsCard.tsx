@@ -11,13 +11,13 @@ interface TaxConfigurationsCardProps {
 const TaxConfigurationsCard = ({ configs, loading }: TaxConfigurationsCardProps) => (
   <Card title="Tax Configurations">
     {loading ? (
-      <p className="text-sm text-gray-500 dark:text-gray-400">Loading tax configurations...</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Loading Tax Configurations...</p>
     ) : configs.length ? (
       <Table
         data={configs}
         keyExtractor={(row) => row.id}
         columns={[
-          { key: 'fiscalYear', label: 'Fiscal year', render: (row) => `FY ${row.fiscalYear}` },
+          { key: 'fiscalYear', label: 'Fiscal Year', render: (row) => `FY ${row.fiscalYear}` },
           { key: 'regime', label: 'Regime', render: (row) => row.regime ?? '-' },
           { key: 'countryCode', label: 'Country', render: (row) => row.countryCode },
           {
@@ -32,7 +32,7 @@ const TaxConfigurationsCard = ({ configs, loading }: TaxConfigurationsCardProps)
         ]}
       />
     ) : (
-      <p className="text-sm text-gray-500 dark:text-gray-400">No tax configurations found.</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">No Tax Configurations Found.</p>
     )}
   </Card>
 );

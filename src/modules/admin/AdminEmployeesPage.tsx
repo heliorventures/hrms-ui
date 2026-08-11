@@ -6,7 +6,7 @@ import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import CreateEmployeeModal from './components/CreateEmployeeModal';
 import EditEmployeeModal, { type EditEmployeeRow } from './components/EditEmployeeModal';
-import { ClientOpsAdminEmployeesDocument, ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
+import { ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 interface EmployeeRow {
@@ -25,12 +25,37 @@ interface EmployeeRow {
   departmentName?: string | null;
   designationTitle?: string | null;
   linkedUserEmail?: string | null;
+  linkedUserUsername?: string | null;
   reportingManagerName?: string | null;
 }
 
 interface EmployeesData {
   employees: EmployeeRow[];
 }
+
+const ClientOpsAdminEmployeesWithLoginDocument = `
+  query ClientOpsAdminEmployeesWithLogin($limit: Int! = 100) {
+    employees(limit: $limit) {
+      id
+      employeeCode
+      firstName
+      lastName
+      fullName
+      status
+      employmentType
+      dateOfJoining
+      departmentId
+      designationId
+      reportingManagerId
+      userId
+      departmentName
+      designationTitle
+      linkedUserEmail
+      linkedUserUsername
+      reportingManagerName
+    }
+  }
+`;
 
 const AdminEmployeesPage = () => {
   const client = useGraphClient('client');
@@ -46,7 +71,7 @@ const AdminEmployeesPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await client.request<EmployeesData>(ClientOpsAdminEmployeesDocument, {
+      const result = await client.request<EmployeesData>(ClientOpsAdminEmployeesWithLoginDocument, {
         limit: 100,
       });
       setEmployees(result.employees ?? []);
@@ -107,7 +132,7 @@ const AdminEmployeesPage = () => {
       },
       {
         key: 'reportingManagerId',
-        label: 'Reports to',
+        label: 'Reports To',
         render: (row: EmployeeRow) =>
           row.reportingManagerName ||
           (row.reportingManagerId && nameById.get(row.reportingManagerId)) ||
@@ -116,9 +141,9 @@ const AdminEmployeesPage = () => {
       },
       {
         key: 'userId',
-        label: 'Linked User',
+        label: 'Username',
         render: (employee: EmployeeRow) =>
-          employee.linkedUserEmail ?? employee.userId ?? '—',
+          employee.linkedUserUsername ?? employee.linkedUserEmail ?? employee.userId ?? '—',
       },
       {
         key: 'departmentId',
@@ -187,15 +212,15 @@ const AdminEmployeesPage = () => {
 
       <Card title="Employee List">
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading employees...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Employees...</p>
         ) : employees.length > 0 ? (
           <Table data={employees} columns={columns} keyExtractor={(employee) => employee.id} />
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No employees found</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Employees Found</p>
         )}
       </Card>
 
-      <Card title="Admin notes">
+      <Card title="Admin Notes">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           <strong>Add / Edit</strong> use <code className="text-xs">createEmployee</code> /{' '}
           <code className="text-xs">updateEmployee</code> with org picks and optional{' '}

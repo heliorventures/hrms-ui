@@ -36,7 +36,7 @@ const TaxSectionsCard = ({
   onRegimeChange,
   onSubmit,
 }: TaxSectionsCardProps) => (
-  <Card title="Income tax deduction sections">
+  <Card title="Income Tax Deduction Sections">
     <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
       Maintain section labels for employee proofs. Use OLD, NEW, or ALL for regime scope.
     </p>
@@ -57,12 +57,12 @@ const TaxSectionsCard = ({
       </div>
     )}
     <form className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end" onSubmit={onSubmit}>
-      <Input label="Section code" value={sectionCode} onChange={(event) => onCodeChange(event.target.value)} />
+      <Input label="Section Code" value={sectionCode} onChange={(event) => onCodeChange(event.target.value)} />
       <div className="min-w-[14rem] flex-1">
         <Input label="Label" value={sectionLabel} onChange={(event) => onLabelChange(event.target.value)} />
       </div>
       <Input label="Regime" value={sectionRegime} onChange={(event) => onRegimeChange(event.target.value)} />
-      <Input label="Max deduction" value={sectionMax} onChange={(event) => onMaxChange(event.target.value)} />
+      <Input label="Max Deduction" value={sectionMax} onChange={(event) => onMaxChange(event.target.value)} />
       <Button type="submit" variant="secondary" size="sm" disabled={submitting}>
         {submitting ? 'Saving...' : 'Upsert section'}
       </Button>

@@ -53,4 +53,4 @@ export const formatTaxCurrency = (amount: number) =>
   }).format(amount);
 
 export const formatOptionalTaxAmount = (value?: string | null) =>
-  value == null ? 'No upper limit' : formatTaxCurrency(Number(value));
+  value == null ? 'No Upper Limit' : formatTaxCurrency(Number(value));

@@ -58,7 +58,7 @@ const SecurityTab = ({ onPasswordChanged }: SecurityTabProps) => {
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <Input
           type="password"
-          label="Current password"
+          label="Current Password"
           value={currentPassword}
           onChange={(ev) => setCurrentPassword(ev.target.value)}
           fullWidth
@@ -67,7 +67,7 @@ const SecurityTab = ({ onPasswordChanged }: SecurityTabProps) => {
         />
         <Input
           type="password"
-          label="New password"
+          label="New Password"
           value={newPassword}
           onChange={(ev) => setNewPassword(ev.target.value)}
           fullWidth
@@ -77,7 +77,7 @@ const SecurityTab = ({ onPasswordChanged }: SecurityTabProps) => {
         />
         <Input
           type="password"
-          label="Confirm new password"
+          label="Confirm New Password"
           value={confirmPassword}
           onChange={(ev) => setConfirmPassword(ev.target.value)}
           fullWidth

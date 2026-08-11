@@ -15,7 +15,7 @@ export const selectFieldClass =
 export const HOLIDAY_LIMIT = 200;
 
 export const LEAVE_SETTINGS_TABS = [
-  { key: 'types', label: 'Leave types' },
+  { key: 'types', label: 'Leave Types' },
   { key: 'policies', label: 'Policies' },
   { key: 'balances', label: 'Balances' },
   { key: 'holidays', label: 'Holidays' },
@@ -29,7 +29,7 @@ export const ACCRUAL_FREQUENCY_OPTIONS = [
 ];
 
 export const HOLIDAY_TYPE_OPTIONS = [
-  { value: '', label: 'Not specified' },
+  { value: '', label: 'Not Specified' },
   { value: 'PUBLIC', label: 'Public' },
   { value: 'NATIONAL', label: 'National' },
   { value: 'REGIONAL', label: 'Regional' },
@@ -49,28 +49,28 @@ export const DEFAULT_LEAVE_TYPE_FORM: LeaveTypeForm = {
 };
 
 export const DELETE_LEAVE_TYPE_DIALOG = {
-  title: 'Delete leave type?',
+  title: 'Delete Leave Type?',
   message: 'This will soft-delete the leave type for your tenant.',
   variant: 'danger' as const,
   confirmLabel: 'Delete',
 };
 
 export const DELETE_LEAVE_POLICY_DIALOG = {
-  title: 'Delete policy?',
+  title: 'Delete Policy?',
   message: 'Remove this leave policy row?',
   variant: 'danger' as const,
   confirmLabel: 'Delete',
 };
 
 export const DELETE_HOLIDAY_CALENDAR_DIALOG = {
-  title: 'Delete calendar?',
+  title: 'Delete Calendar?',
   message: 'This deletes the holiday calendar and all holidays on it.',
   variant: 'danger' as const,
   confirmLabel: 'Delete',
 };
 
 export const DELETE_HOLIDAY_DIALOG = {
-  title: 'Remove holiday?',
+  title: 'Remove Holiday?',
   message: 'Remove this holiday from the calendar?',
   variant: 'danger' as const,
   confirmLabel: 'Remove',
@@ -78,7 +78,7 @@ export const DELETE_HOLIDAY_DIALOG = {
 
 export function provisionBalancesDialog(year: number) {
   return {
-    title: 'Provision balances from policies?',
+    title: 'Provision Balances From Policies?',
     message: `This upserts leave balances for every active employee for calendar year ${year} using each leave type's policy. Existing used and pending values are kept where possible.`,
     confirmLabel: 'Provision',
   };
@@ -151,7 +151,7 @@ export function createLeaveTypeForm(row: LeaveTypeRow): LeaveTypeForm {
 export function formatLeaveTypeFlags(row: LeaveTypeRow): string {
   const pay = row.isPaid ? 'Paid' : 'Unpaid';
   const day = row.halfDayAllowed ? 'Half day' : 'Full day';
-  const document = row.requiresDocument ? 'Document required' : 'No document';
+  const document = row.requiresDocument ? 'Document Required' : 'No Document';
   return `${pay} - ${day} - ${document}`;
 }
 

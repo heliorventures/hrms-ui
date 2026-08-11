@@ -35,6 +35,16 @@ import type {
 type MainTab = 'join' | 'exit';
 
 const EMPTY_FNF_FORM: FnfFormState = { le: '', g: '', b: '', r: '' };
+const MONEY_PATTERN = /^(?:\d+|\d+\.\d{1,2}|\.\d{1,2})$/;
+
+const validateOptionalMoney = (value: string, label: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (!MONEY_PATTERN.test(trimmed) || Number(trimmed) < 0) {
+    return `${label} must be a non-negative amount with up to 2 decimal places.`;
+  }
+  return null;
+};
 
 const OnboardingPage = () => {
   const { clientSession } = useAuth();
@@ -163,6 +173,15 @@ const OnboardingPage = () => {
   };
 
   const saveFnf = async (separationId: string) => {
+    const amountError =
+      validateOptionalMoney(fnfForm.le, 'Leave encashment') ??
+      validateOptionalMoney(fnfForm.g, 'Gratuity') ??
+      validateOptionalMoney(fnfForm.b, 'Bonus payable') ??
+      validateOptionalMoney(fnfForm.r, 'Recovery');
+    if (amountError) {
+      setObErr(amountError);
+      return;
+    }
     setFnfBusy(true);
     setObErr(null);
     try {
@@ -228,6 +247,10 @@ const OnboardingPage = () => {
       setError('Last working day is required');
       return;
     }
+    if (resignDay.trim() && resignDay.trim() > lastDay.trim()) {
+      setError('Resignation date cannot be after the last working day.');
+      return;
+    }
     setSubmitBusy(true);
     setError(null);
     try {
@@ -252,7 +275,7 @@ const OnboardingPage = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Onboarding & exit"
+        title="Onboarding & Exit"
         description="Complete joining tasks; file exit requests, HR approval, department clearance, and FNF settlement."
       />
 
@@ -260,8 +283,8 @@ const OnboardingPage = () => {
         value={mainTab}
         onChange={(id) => setMainTab(id as MainTab)}
         tabs={[
-          { id: 'join', label: 'Joining checklist' },
-          { id: 'exit', label: 'Exit & separation' },
+          { id: 'join', label: 'Joining Checklist' },
+          { id: 'exit', label: 'Exit & Separation' },
         ]}
       />
 

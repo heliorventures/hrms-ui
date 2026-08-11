@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { UI_EMPTY_TEXT, NAV_LABELS } from '../../constants/uiText';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -118,7 +119,7 @@ const NotificationDropdown = () => {
         type="button"
         onClick={handleToggle}
         className="relative rounded-md p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        aria-label="Notifications"
+        aria-label={NAV_LABELS.notifications}
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -139,7 +140,7 @@ const NotificationDropdown = () => {
         <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
           <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{NAV_LABELS.notifications}</h3>
               {unreadCount > 0 && (
                 <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-900 dark:text-red-200">
                   {unreadCount} new
@@ -218,7 +219,7 @@ const NotificationDropdown = () => {
             ) : (
               !loadError && (
                 <div className="px-4 py-8 text-center">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{UI_EMPTY_TEXT.notifications}</p>
                 </div>
               )
             )}

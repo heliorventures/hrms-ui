@@ -103,7 +103,7 @@ const PunchInOut = () => {
   };
 
   const nextIsCheckIn = !summary?.openSegment;
-  const buttonLabel = submitting ? 'Recording…' : nextIsCheckIn ? 'Punch in' : 'Punch out';
+  const buttonLabel = submitting ? 'Recording...' : nextIsCheckIn ? 'Punch In' : 'Punch Out';
 
   const handlePunch = async () => {
     setError(null);
@@ -130,9 +130,9 @@ const PunchInOut = () => {
 
   const lastEventCoords = lastPunch
     ? lastPunch.checkOutLat && lastPunch.checkOutLng
-      ? `Punch out: ${formatCoord(lastPunch.checkOutLat, lastPunch.checkOutLng)}`
+      ? `Punch Out: ${formatCoord(lastPunch.checkOutLat, lastPunch.checkOutLng)}`
       : lastPunch.checkInLat && lastPunch.checkInLng
-        ? `Punch in: ${formatCoord(lastPunch.checkInLat, lastPunch.checkInLng)}`
+        ? `Punch In: ${formatCoord(lastPunch.checkInLat, lastPunch.checkInLng)}`
         : null
     : null;
 
@@ -149,7 +149,7 @@ const PunchInOut = () => {
         </div>
 
         {loadingSummary && (
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400">Loading today…</p>
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">Loading Today...</p>
         )}
 
         {!loadingSummary && summary && (
@@ -187,7 +187,7 @@ const PunchInOut = () => {
             {summary.openSegment && (
               <p className="text-xs text-amber-800 dark:text-amber-200">
                 Open: checked in at {formatBackendTime(summary.openSegment.checkInTime)} — tap
-                &quot;Punch out&quot; to close this block.
+                &quot;Punch Out&quot; to close this block.
               </p>
             )}
           </div>

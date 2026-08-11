@@ -55,7 +55,7 @@ const AssetsPage = () => {
       )}
       <Card title="Categories">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.assetCategories?.length ? (
           <ul className="flex flex-wrap gap-2">
             {data.assetCategories.map((x) => (
@@ -69,12 +69,12 @@ const AssetsPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No categories.</p>
+          <p className="text-sm text-gray-500">No Categories.</p>
         )}
       </Card>
       <Card title="Inventory">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.assets?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.assets.map((a) => (
@@ -89,7 +89,7 @@ const AssetsPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No assets.</p>
+          <p className="text-sm text-gray-500">No Assets.</p>
         )}
       </Card>
     </div>

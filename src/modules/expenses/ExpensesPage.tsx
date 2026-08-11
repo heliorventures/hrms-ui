@@ -6,17 +6,20 @@ import ExpenseCategoryGrid from './components/ExpenseCategoryGrid';
 import ExpenseClaimsTable from './components/ExpenseClaimsTable';
 import ExpenseNotice from './components/ExpenseNotice';
 import ExpensesHeader from './components/ExpensesHeader';
+import PaymentReferenceModal from './components/PaymentReferenceModal';
 import RejectReasonModal from './components/RejectReasonModal';
 import SubmitExpenseModal from './components/SubmitExpenseModal';
 import SubmitTravelModal from './components/SubmitTravelModal';
 import TravelRequestsTable from './components/TravelRequestsTable';
 import { useExpenseActions } from './hooks/useExpenseActions';
 import { useExpensesBoard } from './hooks/useExpensesBoard';
+import type { ExpenseRow } from './types';
 
 const ExpensesPage = () => {
   const { isAuthenticated, user, clientSession } = useAuth();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [travelOpen, setTravelOpen] = useState(false);
+  const [paymentTarget, setPaymentTarget] = useState<ExpenseRow | null>(null);
   const { client, data, loadSubmissionHints, loading, notice, refresh, setNotice, submissionHints } =
     useExpensesBoard(user?.id);
   const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
@@ -82,6 +85,21 @@ const ExpensesPage = () => {
         onConfirm={() => void actions.approveExpense()}
       />
 
+      <PaymentReferenceModal
+        busy={Boolean(actions.busyKey)}
+        target={paymentTarget}
+        onCancel={() => {
+          if (actions.busyKey) return;
+          setPaymentTarget(null);
+        }}
+        onConfirm={(paymentReference) => {
+          if (!paymentTarget) return;
+          void actions.markExpensePaid(paymentTarget.id, paymentReference).then((saved) => {
+            if (saved) setPaymentTarget(null);
+          });
+        }}
+      />
+
       <SubmitTravelModal
         isOpen={travelOpen}
         onClose={() => setTravelOpen(false)}
@@ -115,7 +133,7 @@ const ExpensesPage = () => {
         loading={loading}
         travelRequestLabels={travelRequestLabels}
         onApprove={actions.openApproveExpense}
-        onMarkPaid={(expenseId) => void actions.markExpensePaid(expenseId)}
+        onMarkPaid={setPaymentTarget}
         onReject={(expenseId) => actions.setRejectTarget({ kind: 'expense', id: expenseId })}
       />
 

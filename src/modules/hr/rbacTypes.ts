@@ -8,7 +8,12 @@ export interface RbacScopeRow {
   scopeType: string;
 }
 
-export type RbacUserRow = RbacAdminBoardQuery['tenantDirectoryUsers'][number];
+export interface RbacUserRow {
+  id: string;
+  username: string;
+  email?: string | null;
+  isActive: boolean;
+}
 export type RbacRoleRow = RbacAdminBoardQuery['tenantDirectoryRoles'][number];
 export type RbacPermissionRow = RbacAdminBoardQuery['tenantCatalogPermissions'][number];
 

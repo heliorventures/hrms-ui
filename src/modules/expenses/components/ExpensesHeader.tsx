@@ -26,7 +26,7 @@ const ExpensesHeader = ({
             </Button>
           </Link>
         ) : null}
-        <Button onClick={onOpenExpense}>Submit expense</Button>
+        <Button onClick={onOpenExpense}>Submit Expense</Button>
         <Button
           variant="secondary"
           onClick={onOpenTravel}

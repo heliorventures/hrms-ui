@@ -129,28 +129,28 @@ export function PersonalInfoTab({
               className="gap-1"
             >
               <Pencil className="h-3.5 w-3.5" aria-hidden />
-              {saving ? 'Saving…' : 'Save'}
+              {saving ? 'Saving...' : 'Save'}
             </Button>
           ) : null}
         </div>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
-            label="Legal first name"
+            label="Legal First Name"
             value={values.firstName}
             onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('firstName', e.target.value)}
             disabled={disabled}
             fullWidth
           />
           <Input
-            label="Legal last name"
+            label="Legal Last Name"
             value={values.lastName}
             onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('lastName', e.target.value)}
             disabled={disabled}
             fullWidth
           />
           <Input
-            label="Blood group"
+            label="Blood Group"
             value={values.bloodGroup}
             onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('bloodGroup', e.target.value)}
             disabled={disabled}
@@ -158,7 +158,7 @@ export function PersonalInfoTab({
             placeholder="e.g. O+"
           />
           <Input
-            label="Work email"
+            label="Work Email"
             value={values.email}
             onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('email', e.target.value)}
             disabled
@@ -175,7 +175,7 @@ export function PersonalInfoTab({
             Phone and address are not on the employee profile API yet; they stay read-only here.
           </p>
           <Input
-            label="Date of birth"
+            label="Date Of Birth"
             type="date"
             value={ymdFromValue(values.dateOfBirth)}
             onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('dateOfBirth', e.target.value)}
@@ -199,7 +199,7 @@ export function PersonalInfoTab({
             fullWidth
           />
           <Input
-            label="Emergency contact name"
+            label="Emergency Contact Name"
             value={values.emergencyContactName}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               handleChange('emergencyContactName', e.target.value)
@@ -208,7 +208,7 @@ export function PersonalInfoTab({
             fullWidth
           />
           <Input
-            label="Emergency contact phone"
+            label="Emergency Contact Phone"
             value={values.emergencyContactPhone}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               handleChange('emergencyContactPhone', e.target.value)
@@ -217,7 +217,7 @@ export function PersonalInfoTab({
             fullWidth
           />
           <Input
-            label="Emergency contact relation"
+            label="Emergency Contact Relation"
             value={values.emergencyContactRelation}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               handleChange('emergencyContactRelation', e.target.value)

@@ -24,7 +24,6 @@ import {
   AllCompanyHolidaysDocument,
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
-  LeaveBoardDocument,
   LeaveWorkflowTrailQueryDocument,
   OrgChartDocument,
   type AllCompanyHolidaysQuery,
@@ -32,6 +31,7 @@ import {
   type LeaveWorkflowTrailQueryQuery,
   type OrgChartQuery,
 } from '../../api/graphql/graphql';
+import { LeaveBoardRangeDocument } from './leaveBoardQuery';
 
 type ApproveLeaveRequestMutation = {
   approveLeaveRequest: { status: string };
@@ -68,6 +68,13 @@ const LeavePage = () => {
 
   const defaultYear = useMemo(() => new Date().getFullYear(), []);
   const [balanceYear, setBalanceYear] = useState(defaultYear);
+  const requestYearRange = useMemo(
+    () => ({
+      fromDate: `${balanceYear}-01-01`,
+      toDate: `${balanceYear}-12-31`,
+    }),
+    [balanceYear]
+  );
 
   const yearChoices = useMemo(() => {
     const years: number[] = [];
@@ -76,8 +83,14 @@ const LeavePage = () => {
   }, [defaultYear]);
 
   const loadBoard = useCallback(
-    () => client.request<LeaveBoardQuery>(LeaveBoardDocument, { limit: BOARD_LIMIT, balanceYear }),
-    [client, balanceYear]
+    () =>
+      client.request<LeaveBoardQuery>(LeaveBoardRangeDocument, {
+        limit: BOARD_LIMIT,
+        balanceYear,
+        fromDate: requestYearRange.fromDate,
+        toDate: requestYearRange.toDate,
+      }),
+    [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]
   );
 
   const loadOrgChart = useCallback(async () => {
@@ -253,6 +266,8 @@ const LeavePage = () => {
     return requests.every((request) => request.employeeId === viewerId);
   }, [data?.leaveRequests, viewerId, showApprovalColumn]);
 
+  const leaveRequestLimitReached = (data?.leaveRequests?.length ?? 0) >= BOARD_LIMIT;
+
   const employeeLabel = useCallback(
     (employeeId: string) => orgLabels.get(employeeId) ?? `${employeeId.slice(0, 8)}...`,
     [orgLabels]
@@ -327,6 +342,14 @@ const LeavePage = () => {
           <p className="text-sm text-sky-800 dark:text-sky-200">{approveWorkflowNotice}</p>
         </Card>
       )}
+      {leaveRequestLimitReached && (
+        <Card>
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            Leave requests reached the {BOARD_LIMIT}-row load limit. Use workflow trail or backend
+            reports before treating this screen as a complete approval history.
+          </p>
+        </Card>
+      )}
 
       <LeaveBalancesCard
         balanceYear={balanceYear}
@@ -347,14 +370,14 @@ const LeavePage = () => {
 
       <Card id="leave-requests-section" title="Recent Leave Requests">
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading leave requests...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Leave Requests...</p>
         ) : (
           <LeaveRequestsTableSection
             approveBusyId={approveBusyId}
             canApproveRow={canApproveRowForTable}
             cancelBusyId={cancelBusyId}
             employeeLabel={hideEmployeeColumn ? undefined : employeeLabel}
-            emptyLabel="No leave requests found."
+            emptyLabel="No Leave Requests Found."
             hideEmployeeColumn={hideEmployeeColumn}
             leaveTypeNameById={leaveTypeNameById}
             rows={data?.leaveRequests ?? []}

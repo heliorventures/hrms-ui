@@ -76,7 +76,7 @@ const AnalyticsPage = () => {
         onChange={(id) => setTab(id as Tab)}
         tabs={[
           { id: 'workplace', label: 'Workplace' },
-          { id: 'webhooks', label: 'Webhook deliveries' },
+          { id: 'webhooks', label: 'Webhook Deliveries' },
         ]}
       />
 
@@ -98,7 +98,7 @@ const AnalyticsPage = () => {
         <div className="grid gap-4 md:grid-cols-2">
           {loading ? (
             <Card>
-              <p className="text-sm text-gray-500">Loading…</p>
+              <p className="text-sm text-gray-500">Loading...</p>
             </Card>
           ) : (
             <>
@@ -116,10 +116,10 @@ const AnalyticsPage = () => {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-gray-500">No competencies returned.</p>
+                  <p className="text-sm text-gray-500">No Competencies Returned.</p>
                 )}
               </Card>
-              <Card title="Talent pools">
+              <Card title="Talent Pools">
                 {workplace?.talentPools?.length ? (
                   <ul className="divide-y divide-gray-200 text-sm dark:divide-gray-700">
                     {workplace.talentPools.map((row) => (
@@ -132,7 +132,7 @@ const AnalyticsPage = () => {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-gray-500">No talent pools returned.</p>
+                  <p className="text-sm text-gray-500">No Talent Pools Returned.</p>
                 )}
               </Card>
             </>
@@ -141,12 +141,12 @@ const AnalyticsPage = () => {
       )}
 
       {tab === 'webhooks' && (
-        <Card title="Webhook deliveries (recent)">
+        <Card title="Webhook Deliveries (Recent)">
           {whErr && (
             <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">{whErr}</p>
           )}
           {!whErr && !deliveries ? (
-            <p className="text-sm text-gray-500">Loading…</p>
+            <p className="text-sm text-gray-500">Loading...</p>
           ) : deliveries?.webhookDeliveryLogs?.length ? (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-xs">
@@ -190,7 +190,7 @@ const AnalyticsPage = () => {
               </table>
             </div>
           ) : !whErr ? (
-            <p className="text-sm text-gray-500">No delivery attempts logged yet.</p>
+            <p className="text-sm text-gray-500">No Delivery Attempts Logged Yet.</p>
           ) : null}
         </Card>
       )}

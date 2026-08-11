@@ -21,6 +21,7 @@ import type {
   RejectTarget,
   SubmitExpenseInput,
 } from '../types';
+import { parseStrictMoney, validatePositiveMoney } from '../utils/amountValidation';
 
 interface UseExpenseActionsArgs {
   client: GraphQLClient;
@@ -48,12 +49,27 @@ export function useExpenseActions({ client, refresh, setNotice }: UseExpenseActi
   const approveExpense = useCallback(async () => {
     if (!approveTarget) return;
     setApproveError(null);
+    const approvedAmount = approveTarget.draftApprove.trim();
+    const approvedError = validatePositiveMoney(approvedAmount, 'Approved amount');
+    if (approvedError) {
+      setApproveError(approvedError);
+      return;
+    }
+    const claimedAmountNumber = parseStrictMoney(approveTarget.claimAmount);
+    const approvedAmountNumber = parseStrictMoney(approvedAmount);
+    if (!Number.isFinite(claimedAmountNumber) || claimedAmountNumber <= 0) {
+      setApproveError('Claim amount is invalid; refresh the expense board before approving.');
+      return;
+    }
+    if (approvedAmountNumber > claimedAmountNumber) {
+      setApproveError('Approved amount cannot exceed the claimed amount.');
+      return;
+    }
     setBusyKey(`${EXPENSE_BUSY_PREFIX.expense}:${approveTarget.id}`);
     try {
-      const approvedAmount = approveTarget.draftApprove.trim();
       const result = await client.request<ApproveExpenseMutation>(ApproveExpenseDocument, {
         expenseId: approveTarget.id,
-        ...(approvedAmount === approveTarget.claimAmount.trim() ? {} : { approvedAmount }),
+        ...(approvedAmountNumber === claimedAmountNumber ? {} : { approvedAmount }),
       });
       await refresh();
       setApproveTarget(null);
@@ -79,18 +95,28 @@ export function useExpenseActions({ client, refresh, setNotice }: UseExpenseActi
   }, [approveTarget, client, refresh, setNotice]);
 
   const markExpensePaid = useCallback(
-    async (expenseId: string) => {
+    async (expenseId: string, paymentReference: string) => {
+      const reference = paymentReference.trim();
+      if (!reference) {
+        setNotice({
+          variant: 'error',
+          message: 'Payment reference is required before marking an expense as paid.',
+        });
+        return false;
+      }
       setBusyKey(`${EXPENSE_BUSY_PREFIX.payment}:${expenseId}`);
       try {
         await client.request<MarkExpensePaymentStatusMutation>(MarkExpensePaymentStatusDocument, {
           expenseId,
           paymentStatus: EXPENSE_STATUS.paid,
-          paymentReference: undefined,
+          paymentReference: reference,
         });
         await refresh();
         setNotice({ variant: 'success', message: 'Payment marked as paid.' });
+        return true;
       } catch (err) {
         setNotice({ variant: 'error', message: graphQlUserMessage(err) });
+        return false;
       } finally {
         setBusyKey(null);
       }

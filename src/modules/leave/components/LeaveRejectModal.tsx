@@ -55,11 +55,11 @@ const LeaveRejectModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Reject leave request">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Reject Leave Request">
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         {err && <p className="text-sm text-red-600 dark:text-red-400">{err}</p>}
         <Input
-          label="Reason for rejection"
+          label="Reason For Rejection"
           value={reason}
           onChange={(ev) => setReason(ev.target.value)}
           fullWidth

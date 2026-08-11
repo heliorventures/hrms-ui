@@ -4,7 +4,7 @@ export type HrLeaveFilter = 'pending' | 'all' | 'approved' | 'rejected' | 'cance
 
 const HR_LEAVE_FILTERS: Array<{ id: HrLeaveFilter; label: string }> = [
   { id: 'pending', label: 'Pending' },
-  { id: 'all', label: 'All' },
+  { id: 'all', label: 'ALL' },
   { id: 'approved', label: 'Approved' },
   { id: 'rejected', label: 'Rejected' },
   { id: 'cancelled', label: 'Cancelled' },

@@ -176,7 +176,7 @@ const AdminHrTimesheetSettingsPage = () => {
   };
 
   const projectPickOpts = [
-    { value: '', label: 'Choose project' },
+    { value: '', label: 'Choose Project' },
     ...projects.map((p) => ({ value: p.code, label: `${p.code} — ${p.name}` })),
   ];
 
@@ -199,10 +199,10 @@ const AdminHrTimesheetSettingsPage = () => {
         </Card>
       )}
 
-      <Card title="Attendance self-adjust window">
+      <Card title="Attendance Self-Adjust Window">
         <form className="space-y-3 max-w-md" onSubmit={(ev) => void saveAdjustment(ev)}>
           <Input
-            label="Max calendar days employees may self-add missed punches"
+            label="Max Calendar Days Employees May Self-Add Missed Punches"
             value={maxSelfDays}
             onChange={(e) => setMaxSelfDays(e.target.value)}
             inputMode="numeric"
@@ -210,7 +210,7 @@ const AdminHrTimesheetSettingsPage = () => {
             disabled={!canPolicyWide}
           />
           <Button type="submit" variant="primary" disabled={!canPolicyWide || busy}>
-            Save adjustment policy
+            Save Adjustment Policy
           </Button>
           {!canPolicyWide && (
             <p className="text-xs text-gray-500">Needs HR attendance policy or timesheet manage.</p>
@@ -218,10 +218,10 @@ const AdminHrTimesheetSettingsPage = () => {
         </form>
       </Card>
 
-      <Card title="Timesheet lock policy">
+      <Card title="Timesheet Lock Policy">
         <form className="space-y-3 max-w-md" onSubmit={(ev) => void saveLock(ev)}>
           <Input
-            label="Editable week span (rolling Mondays HR allows drafts for)"
+            label="Editable Week Span (Rolling Mondays HR Allows Drafts For)"
             value={editableWeekSpan}
             onChange={(e) => setEditableWeekSpan(e.target.value)}
             inputMode="numeric"
@@ -238,7 +238,7 @@ const AdminHrTimesheetSettingsPage = () => {
             Lock approved timesheet rows from edits
           </label>
           <Button type="submit" variant="primary" disabled={!canManageCatalog || busy}>
-            Save lock policy
+            Save Lock Policy
           </Button>
           {!canManageCatalog && (
             <p className="text-xs text-gray-500">Needs timesheet:manage.</p>
@@ -246,7 +246,7 @@ const AdminHrTimesheetSettingsPage = () => {
         </form>
       </Card>
 
-      <Card title="Company projects">
+      <Card title="Company Projects">
         <form className="grid max-w-xl gap-3 md:grid-cols-2" onSubmit={(ev) => void addProject(ev)}>
           <Input
             label="Code"
@@ -257,7 +257,7 @@ const AdminHrTimesheetSettingsPage = () => {
             disabled={!canManageCatalog}
           />
           <Input
-            label="Display name"
+            label="Display Name"
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
             placeholder="Internal / overhead"
@@ -272,7 +272,7 @@ const AdminHrTimesheetSettingsPage = () => {
         </form>
       </Card>
 
-      <Card title="Task types per project">
+      <Card title="Task Types Per Project">
         <form className="space-y-3 max-w-xl" onSubmit={(ev) => void saveTasks(ev)}>
           <Select
             label="Project"
@@ -295,7 +295,7 @@ const AdminHrTimesheetSettingsPage = () => {
             />
           </div>
           <Button type="submit" variant="primary" disabled={!canManageCatalog || busy}>
-            Save task list
+            Save Task List
           </Button>
         </form>
       </Card>

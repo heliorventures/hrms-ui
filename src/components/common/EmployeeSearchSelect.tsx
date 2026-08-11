@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { UI_EMPTY_TEXT, UI_FORM_TEXT, UI_PLACEHOLDER_TEXT } from '../../constants/uiText';
 
 export interface EmployeePickRow {
   id: string;
@@ -50,7 +51,7 @@ const EmployeeSearchSelect = ({
       <input
         type="search"
         autoComplete="off"
-        placeholder="Search by employee code or name…"
+        placeholder={UI_PLACEHOLDER_TEXT.employeeSearch}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         disabled={disabled}
@@ -72,7 +73,7 @@ const EmployeeSearchSelect = ({
         disabled={disabled}
         size={Math.min(10, Math.max(4, filtered.length + 1))}
       >
-        <option value="">Choose an employee…</option>
+        <option value="">{UI_FORM_TEXT.chooseEmployee}</option>
         {filtered.map((e) => (
           <option key={e.id} value={e.id}>
             {e.employeeCode} — {e.fullName}
@@ -80,7 +81,7 @@ const EmployeeSearchSelect = ({
         ))}
       </select>
       {q && filtered.length === 0 && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">No employees match this search.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{UI_EMPTY_TEXT.employeesMatchSearch}</p>
       )}
     </div>
   );

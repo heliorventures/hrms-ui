@@ -21,7 +21,7 @@ const typeMeta: Record<
     border: 'border-emerald-200/80 dark:border-emerald-900/40',
   },
   DEPARTMENT_CHANGE: {
-    label: 'Org change',
+    label: 'Org Change',
     dot: 'bg-amber-500',
     border: 'border-amber-200/80 dark:border-amber-900/40',
   },

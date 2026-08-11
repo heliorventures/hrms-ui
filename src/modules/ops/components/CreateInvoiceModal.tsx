@@ -80,7 +80,7 @@ const CreateInvoiceModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create invoice" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Create Invoice" size="md">
       <form onSubmit={(event) => void submit(event)} className="space-y-3">
         {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -94,7 +94,7 @@ const CreateInvoiceModal = ({
             }}
             required
           >
-            <option value="">Select tenant</option>
+            <option value="">Select Tenant</option>
             {tenants.map((tenant) => (
               <option key={tenant.id} value={tenant.id}>
                 {tenant.name}
@@ -124,12 +124,12 @@ const CreateInvoiceModal = ({
           <Input label="Total" value={total} onChange={(event) => setTotal(event.target.value)} required />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input label="Discount total" value={discount} onChange={(event) => setDiscount(event.target.value)} />
-          <Input label="Tax amount" value={tax} onChange={(event) => setTax(event.target.value)} />
+          <Input label="Discount Total" value={discount} onChange={(event) => setDiscount(event.target.value)} />
+          <Input label="Tax Amount" value={tax} onChange={(event) => setTax(event.target.value)} />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input label="Currency" value={currency} onChange={(event) => setCurrency(event.target.value)} />
-          <Input label="Due date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+          <Input label="Due Date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>

@@ -153,7 +153,7 @@ export function IdentityTab({
             disabled={panSaving || panInput.trim().length !== 10}
             onClick={() => void savePan()}
           >
-            {panSaving ? 'Saving…' : 'Save PAN'}
+            {panSaving ? 'Saving...' : 'Save PAN'}
           </Button>
         </InfoCard>
 
@@ -184,7 +184,7 @@ export function IdentityTab({
             disabled={aadhaarSaving || aadhaarInput.trim().length < 4}
             onClick={() => void saveAadhaar()}
           >
-            {aadhaarSaving ? 'Saving…' : 'Save Aadhaar'}
+            {aadhaarSaving ? 'Saving...' : 'Save Aadhaar'}
           </Button>
         </InfoCard>
 

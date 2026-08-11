@@ -10,11 +10,11 @@ interface AllHolidaysModalProps {
 }
 
 const AllHolidaysModal = ({ holidays, isOpen, loading, onClose }: AllHolidaysModalProps) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Company holidays">
+  <Modal isOpen={isOpen} onClose={onClose} title="Company Holidays">
     {loading ? (
       <p className="text-sm text-gray-500">Loading...</p>
     ) : holidays.length === 0 ? (
-      <p className="text-sm text-gray-500">No holidays returned for this year.</p>
+      <p className="text-sm text-gray-500">No Holidays Returned For This Year.</p>
     ) : (
       <ul className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto text-sm dark:divide-gray-800">
         {holidays.map((holiday) => (

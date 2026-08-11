@@ -19,7 +19,7 @@ export function TabNavigation({ tabs, activeId, onChange }: TabNavigationProps) 
       <nav
         className="flex min-w-max gap-1 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-1 dark:border-slate-700/80 dark:bg-slate-900/40"
         role="tablist"
-        aria-label="Employee profile sections"
+        aria-label="Employee Profile Sections"
       >
         {tabs.map((t) => {
           const Icon = t.icon;

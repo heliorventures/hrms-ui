@@ -55,7 +55,7 @@ const RecordPaymentModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Record payment" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Record Payment" size="md">
       <form onSubmit={(event) => void submit(event)} className="space-y-3">
         {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -66,7 +66,7 @@ const RecordPaymentModal = ({
             onChange={(event) => setInvoiceId(event.target.value)}
             required
           >
-            <option value="">Select invoice</option>
+            <option value="">Select Invoice</option>
             {invoices.map((invoice) => (
               <option key={invoice.id} value={invoice.id}>
                 {invoice.invoiceNumber} - {invoice.totalAmount} {invoice.currency} ({invoice.status})
@@ -75,8 +75,8 @@ const RecordPaymentModal = ({
           </select>
         </label>
         <Input label="Amount" value={amount} onChange={(event) => setAmount(event.target.value)} required />
-        <Input label="Payment method" value={method} onChange={(event) => setMethod(event.target.value)} />
-        <Input label="Gateway ref" value={reference} onChange={(event) => setReference(event.target.value)} />
+        <Input label="Payment Method" value={method} onChange={(event) => setMethod(event.target.value)} />
+        <Input label="Gateway Ref" value={reference} onChange={(event) => setReference(event.target.value)} />
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel

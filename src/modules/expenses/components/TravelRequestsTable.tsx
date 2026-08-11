@@ -30,11 +30,11 @@ const TravelRequestsTable = ({
   onReject,
 }: TravelRequestsTableProps) => {
   return (
-    <Card title="Travel requests">
+    <Card title="Travel Requests">
       <Table
         data={rows}
         loading={loading}
-        emptyMessage="No travel requests yet."
+        emptyMessage="No Travel Requests Yet."
         keyExtractor={(row) => row.id}
         columns={[
           {

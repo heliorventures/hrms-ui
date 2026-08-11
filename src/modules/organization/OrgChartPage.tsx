@@ -106,7 +106,7 @@ const OrgChartPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Org chart</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Org Chart</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Reporting hierarchy from <span className="font-mono text-xs">reportingManagerId</span>, shown as a top-down
           tree. Visibility follows your <span className="font-mono text-xs">employee</span> data scope (same as the
@@ -116,12 +116,12 @@ const OrgChartPage = () => {
 
       <Card>
         {loading && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading org chart…</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Org Chart...</p>
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         {!loading && !error && roots.length === 0 && (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No employees in scope, or no rows returned.
+            No Employees In Scope, Or No Rows Returned.
           </p>
         )}
         {!loading && !error && roots.length > 0 && (

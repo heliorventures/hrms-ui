@@ -64,7 +64,7 @@ const LeaveHolidaysPage = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Company holidays</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Company Holidays</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Public and company holidays from configured calendars. Choose a calendar year (including past years).
           </p>
@@ -105,7 +105,7 @@ const LeaveHolidaysPage = () => {
           <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>
         )}
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading holidays…</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Holidays...</p>
         ) : inYear.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
             No holidays on record from <span className="font-mono">January 1, {year}</span> onward in this list.

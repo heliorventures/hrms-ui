@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { UI_EMPTY_TEXT, UI_STATUS_TEXT } from '../../constants/uiText';
 
 interface TableColumn<T> {
   key: keyof T | string;
@@ -20,10 +21,10 @@ const Table = <T,>({
   data,
   columns,
   keyExtractor,
-  emptyMessage = 'No records found.',
+  emptyMessage = UI_EMPTY_TEXT.records,
   errorMessage = null,
   loading = false,
-  loadingMessage = 'Loading...',
+  loadingMessage = UI_STATUS_TEXT.loading,
 }: TableProps<T>) => {
   const colSpan = Math.max(columns.length, 1);
 

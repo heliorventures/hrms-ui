@@ -29,7 +29,7 @@ export const DEFAULT_EXPENSE_POLICY_FORM: ExpensePolicyForm = {
 };
 
 export const EXPENSE_POLICY_SCOPE_OPTIONS = [
-  { value: 'ALL', label: 'ALL - entire tenant' },
+  { value: 'ALL', label: 'ALL - Entire Tenant' },
   { value: 'DEPARTMENT', label: 'DEPARTMENT' },
   { value: 'DESIGNATION', label: 'DESIGNATION' },
   { value: 'ROLE', label: 'ROLE' },

@@ -52,16 +52,26 @@ const TimesheetPage = () => {
   const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null);
   const [submitBusy, setSubmitBusy] = useState(false);
 
+  const customStartTrim = customStart.trim();
+  const customEndTrim = customEnd.trim();
+  const customRangeError =
+    periodMode === 'custom' &&
+    customStartTrim.length > 0 &&
+    customEndTrim.length > 0 &&
+    customStartTrim > customEndTrim
+      ? 'Custom start date must be on or before custom end date.'
+      : null;
+
   const displayBounds = useMemo(() => {
     if (periodMode === 'week') return timesheetWeekRangeIso(cursor);
     if (periodMode === 'month') return monthBoundsIso(cursor.getFullYear(), cursor.getMonth());
-    const start = customStart.trim();
-    const end = customEnd.trim();
-    if (start && end) return start <= end ? { start, end } : { start: end, end: start };
+    const start = customStartTrim;
+    const end = customEndTrim;
+    if (start && end) return { start, end };
     if (start) return { start, end: start };
     if (end) return { start: end, end };
     return timesheetWeekRangeIso(new Date());
-  }, [periodMode, cursor, customStart, customEnd]);
+  }, [periodMode, cursor, customStartTrim, customEndTrim]);
 
   const earliestMonday = useMemo(() => earliestEditableMondayIso(lockWeeks), [lockWeeks]);
 
@@ -186,6 +196,7 @@ const TimesheetPage = () => {
 
   const dateAllowsNewEntry = useCallback(
     (iso: string) => {
+      if (customRangeError) return false;
       const dayRows = entriesByDate.get(iso) ?? [];
       return (
         iso >= allowedMinIsoForm &&
@@ -194,7 +205,7 @@ const TimesheetPage = () => {
         !dayRows.some((row) => timesheetEntryLocksDay(row.status))
       );
     },
-    [allowedMinIsoForm, displayBounds.end, earliestMonday, entriesByDate]
+    [allowedMinIsoForm, customRangeError, displayBounds.end, earliestMonday, entriesByDate]
   );
 
   const openNewEntry = (datePreset: string | null = null) => {
@@ -218,6 +229,7 @@ const TimesheetPage = () => {
   };
 
   const handleSubmitWeek = async () => {
+    if (customRangeError) return;
     const freshPolicy = await loadPolicies();
     const freshEarliestMonday = earliestEditableMondayIso(
       freshPolicy?.editableWeekSpan ?? DEFAULT_LOCK_WEEKS
@@ -313,6 +325,8 @@ const TimesheetPage = () => {
         periodMode={periodMode}
         periodSummary={periodSummary}
         sortedCount={sorted.length}
+        actionsDisabled={Boolean(customRangeError)}
+        rangeError={customRangeError}
         submitBusy={submitBusy}
         submitWeekEditable={submitWeekEditable}
         weekSubmitMonday={weekSubmitMonday}
@@ -332,7 +346,7 @@ const TimesheetPage = () => {
         calendarWeeks={calendarWeeks}
         deleteBusyId={deleteBusyId}
         entriesByDate={entriesByDate}
-        error={error}
+        error={customRangeError ?? error}
         loading={loading}
         sortedCount={sorted.length}
         todayIso={todayIso}
@@ -365,7 +379,7 @@ const TimesheetPage = () => {
           setEditing(null);
           setAddDatePreset(null);
         }}
-        title={editing ? 'Edit entry' : 'Add entry'}
+        title={editing ? 'Edit Entry' : 'Add Entry'}
       >
         <TimesheetEntryForm
           key={editing?.id ?? addDatePreset ?? 'new'}

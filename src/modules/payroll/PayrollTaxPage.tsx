@@ -29,6 +29,29 @@ const TAX_SECTIONS_LIMIT = 200;
 const TAX_COMPUTATIONS_LIMIT = 10;
 const DEFAULT_COUNTRY_CODE = 'IN';
 const DEFAULT_DISPLAY_ORDER = 0;
+const MONEY_PATTERN = /^(?:\d+|\d+\.\d{1,2}|\.\d{1,2})$/;
+const RATE_PATTERN = /^(?:\d+|\d+\.\d{1,4}|\.\d{1,4})$/;
+const SECTION_CODE_PATTERN = /^[A-Z0-9][A-Z0-9_-]{1,31}$/;
+
+const parseYear = (raw: string) => {
+  const year = Number(raw.trim());
+  return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : NaN;
+};
+
+const validateOptionalMoney = (raw: string, label: string): string | null => {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (!MONEY_PATTERN.test(trimmed)) return `${label} must be a non-negative amount with up to 2 decimal places.`;
+  return Number(trimmed) >= 0 ? null : `${label} must be non-negative.`;
+};
+
+const validateOptionalRate = (raw: string, label: string): string | null => {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (!RATE_PATTERN.test(trimmed)) return `${label} must be a percentage between 0 and 100.`;
+  const value = Number(trimmed);
+  return value >= 0 && value <= 100 ? null : `${label} must be a percentage between 0 and 100.`;
+};
 
 const PayrollTaxPage = () => {
   const client = useGraphClient('client');
@@ -158,13 +181,17 @@ const PayrollTaxPage = () => {
     setCfgUpsertBusy(true);
     setCfgUpsertMsg(null);
     try {
-      const fiscalYear = Number(cfgFy);
-      if (Number.isNaN(fiscalYear)) throw new Error('Invalid fiscal year');
+      const fiscalYear = parseYear(cfgFy);
+      if (Number.isNaN(fiscalYear)) throw new Error('Fiscal year must be between 2000 and 2100.');
+      const countryCode = cfgCountry.trim().toUpperCase();
+      if (countryCode && !/^[A-Z]{2}$/.test(countryCode)) {
+        throw new Error('Country code must be a 2-letter ISO code.');
+      }
       await client.request(UpsertTaxConfigurationVersionDocument, {
         input: {
           fiscalYear,
           regime: cfgRegime.trim() || null,
-          countryCode: cfgCountry.trim() || DEFAULT_COUNTRY_CODE,
+          countryCode: countryCode || DEFAULT_COUNTRY_CODE,
           isActive: cfgActive,
         },
       });
@@ -181,6 +208,26 @@ const PayrollTaxPage = () => {
     event.preventDefault();
     if (!selectedConfigId) {
       setSlabMsg('Select a tax configuration first.');
+      return;
+    }
+    if (!slabFrom.trim()) {
+      setSlabMsg('Income from is required.');
+      return;
+    }
+    const fromError = validateOptionalMoney(slabFrom, 'Income from');
+    const toError = validateOptionalMoney(slabTo, 'Income to');
+    const rateError =
+      validateOptionalRate(slabRate, 'Tax rate') ??
+      validateOptionalRate(slabSurcharge, 'Surcharge rate') ??
+      validateOptionalRate(slabCess, 'Cess rate');
+    if (fromError || toError || rateError) {
+      setSlabMsg(fromError ?? toError ?? rateError);
+      return;
+    }
+    const incomeFrom = Number(slabFrom.trim());
+    const incomeTo = slabTo.trim() ? Number(slabTo.trim()) : null;
+    if (incomeTo != null && incomeTo <= incomeFrom) {
+      setSlabMsg('Income to must be greater than income from.');
       return;
     }
     setSlabBusy(true);
@@ -207,13 +254,27 @@ const PayrollTaxPage = () => {
 
   const handleUpsertTaxSection = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const sectionCode = secCode.trim().toUpperCase();
+    if (!SECTION_CODE_PATTERN.test(sectionCode)) {
+      setSecMsg('Section code must use A-Z, 0-9, underscore, or hyphen.');
+      return;
+    }
+    if (!secLabel.trim()) {
+      setSecMsg('Section label is required.');
+      return;
+    }
+    const maxError = validateOptionalMoney(secMax, 'Max deduction amount');
+    if (maxError) {
+      setSecMsg(maxError);
+      return;
+    }
     setSecBusy(true);
     setSecMsg(null);
     try {
       const regimeScope = secRegime.trim().toUpperCase();
       await client.request(UpsertTaxSectionDefinitionDocument, {
         input: {
-          sectionCode: secCode.trim().toUpperCase(),
+          sectionCode,
           sectionLabel: secLabel.trim(),
           regimeScope: regimeScope === 'ALL' ? null : regimeScope || null,
           countryCode: DEFAULT_COUNTRY_CODE,
@@ -237,13 +298,25 @@ const PayrollTaxPage = () => {
       setFormMsg('Select a tax configuration first.');
       return;
     }
+    const fiscalYear = parseYear(formYear);
+    if (Number.isNaN(fiscalYear)) {
+      setFormMsg('Fiscal year must be between 2000 and 2100.');
+      return;
+    }
+    const amountError =
+      validateOptionalMoney(formGross, 'Gross income') ??
+      validateOptionalMoney(formDed, 'Total deductions');
+    if (amountError) {
+      setFormMsg(amountError);
+      return;
+    }
     setFormMsg(null);
     setFormSubmitting(true);
     try {
       await client.request(UpsertTaxComputationDocument, {
         input: {
           taxConfigVersionId: selectedConfigId,
-          fiscalYear: Number(formYear),
+          fiscalYear,
           taxRegimeChosen: formRegime.trim() || null,
           grossIncome: formGross.trim() || null,
           totalDeductions: formDed.trim() || null,

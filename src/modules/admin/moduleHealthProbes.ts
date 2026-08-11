@@ -228,7 +228,7 @@ export const MODULE_HEALTH_PROBES: ProbeConfig[] = [
   },
   {
     key: 'tenant',
-    label: 'Tenants (ops)',
+    label: 'Tenants (Ops)',
     plane: 'operator',
     query: gql`
       query TenantsHealth {
@@ -242,7 +242,7 @@ export const MODULE_HEALTH_PROBES: ProbeConfig[] = [
   },
   {
     key: 'billing',
-    label: 'Billing (ops)',
+    label: 'Billing (Ops)',
     plane: 'operator',
     query: gql`
       query BillingHealth {
@@ -256,7 +256,7 @@ export const MODULE_HEALTH_PROBES: ProbeConfig[] = [
   },
   {
     key: 'operator',
-    label: 'Operators (ops)',
+    label: 'Operators (Ops)',
     plane: 'operator',
     query: gql`
       query OperatorHealth {

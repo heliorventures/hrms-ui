@@ -42,7 +42,7 @@ const HolidaySummaryCard = ({
       </ul>
     ) : (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        No holidays scheduled ahead. Admins can add calendars under Admin &gt; Leave settings
+        No holidays scheduled ahead. Admins can add calendars under Admin &gt; Leave Settings
         {canManageLeave ? ' (/admin/leave-settings)' : ''}.
       </p>
     )}

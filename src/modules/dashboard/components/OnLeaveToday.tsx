@@ -2,7 +2,32 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../../components/common/Card';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { OnLeaveTodayDocument, type OnLeaveTodayQuery } from '../../../api/graphql/graphql';
+import { type OnLeaveTodayQuery } from '../../../api/graphql/graphql';
+
+const OnLeaveTodayRangeDocument = `
+  query OnLeaveTodayRange($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50, $today: NaiveDate) {
+    leaveRequests(limit: $limit, fromDate: $today, toDate: $today) {
+      id
+      employeeId
+      leaveTypeId
+      fromDate
+      toDate
+      status
+      isHalfDay
+      halfDaySession
+    }
+    leaveTypes(limit: $typeLim) {
+      id
+      name
+      code
+    }
+    orgChart(limit: $orgLim) {
+      employeeId
+      fullName
+      employeeCode
+    }
+  }
+`;
 
 const OnLeaveToday = () => {
   const client = useGraphClient('client');
@@ -15,10 +40,11 @@ const OnLeaveToday = () => {
     (async () => {
       try {
         setLoading(true);
-        const result = await client.request<OnLeaveTodayQuery>(OnLeaveTodayDocument, {
+        const result = await client.request<OnLeaveTodayQuery>(OnLeaveTodayRangeDocument, {
           limit: 50,
           orgLim: 500,
           typeLim: 50,
+          today,
         });
         if (!cancelled) {
           setPayload(result);
@@ -34,7 +60,7 @@ const OnLeaveToday = () => {
     return () => {
       cancelled = true;
     };
-  }, [client]);
+  }, [client, today]);
 
   const nameByEmployeeId = useMemo(() => {
     const m = new Map<string, string>();
@@ -70,7 +96,7 @@ const OnLeaveToday = () => {
   if (loading) {
     return (
       <Card title="On Leave Today">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading leave requests...</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading Leave Requests...</p>
         <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
           <Link
             to="/leave/team-calendar"
@@ -121,7 +147,7 @@ const OnLeaveToday = () => {
           })}
         </div>
       ) : (
-        <p className="text-sm text-gray-500 dark:text-gray-400">No one is on leave today</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No One Is On Leave Today</p>
       )}
       <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
         <Link

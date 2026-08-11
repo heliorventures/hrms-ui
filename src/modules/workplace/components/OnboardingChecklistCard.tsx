@@ -38,7 +38,7 @@ const OnboardingChecklistCard = ({ busyId, items, loading, onToggle }: Onboardin
         ))}
       </ul>
     ) : (
-      <p className="text-sm text-gray-500">No onboarding tasks for your profile.</p>
+      <p className="text-sm text-gray-500">No Onboarding Tasks For Your Profile.</p>
     )}
   </Card>
 );

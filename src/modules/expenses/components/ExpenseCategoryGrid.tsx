@@ -12,7 +12,7 @@ const ExpenseCategoryGrid = ({ categories, loading }: ExpenseCategoryGridProps) 
   return (
     <Card title="Expense Categories">
       {loading ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading categories...</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading Categories...</p>
       ) : categories.length ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {categories.map((category) => (
@@ -31,13 +31,13 @@ const ExpenseCategoryGrid = ({ categories, loading }: ExpenseCategoryGridProps) 
               </div>
               <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
                 Max per claim:{' '}
-                {category.maxAmountPerClaim ? formatCurrency(category.maxAmountPerClaim) : 'No limit'}
+                {category.maxAmountPerClaim ? formatCurrency(category.maxAmountPerClaim) : 'No Limit'}
               </p>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-gray-500 dark:text-gray-400">No expense categories found.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No Expense Categories Found.</p>
       )}
     </Card>
   );

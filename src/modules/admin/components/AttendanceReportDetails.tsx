@@ -97,7 +97,7 @@ const AttendanceReportDetails = ({ employees, rows }: AttendanceReportDetailsPro
         />
       ) : (
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No attendance records match the selected filters.
+          No Attendance Records Match The Selected Filters.
         </p>
       )}
       <div className="mt-4">

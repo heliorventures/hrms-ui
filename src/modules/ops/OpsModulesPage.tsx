@@ -162,7 +162,7 @@ const OpsModulesPage = () => {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Modules & subscriptions"
+        title="Modules & Subscriptions"
         description="Catalog toggles and per-tenant module subscriptions (GraphQL mutations on kabipay-ops)."
         actions={
           <div className="flex flex-wrap gap-2">
@@ -171,7 +171,7 @@ const OpsModulesPage = () => {
               onClick={openNewSubscription}
               className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
             >
-              Add subscription
+              Add Subscription
             </button>
             <button
               type="button"
@@ -207,7 +207,7 @@ const OpsModulesPage = () => {
           {toast}
         </p>
       )}
-      {loading && <p className="text-sm text-slate-500">Loading…</p>}
+      {loading && <p className="text-sm text-slate-500">Loading...</p>}
       {error && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {error}
@@ -250,7 +250,7 @@ const OpsModulesPage = () => {
               </select>
             </div>
             <Input
-              label="Contracted seats"
+              label="Contracted Seats"
               type="number"
               min={0}
               value={String(subSeats)}
@@ -288,7 +288,7 @@ const OpsModulesPage = () => {
             </div>
             <div className="flex gap-2">
               <Button type="submit" disabled={subSubmitting}>
-                {subSubmitting ? 'Saving…' : 'Save'}
+                {subSubmitting ? 'Saving...' : 'Save'}
               </Button>
               <button
                 type="button"
@@ -304,7 +304,7 @@ const OpsModulesPage = () => {
 
       {!loading && !error && (
         <>
-          <Card title="Module catalog">
+          <Card title="Module Catalog">
             <Table<ModuleRow>
               data={modules}
               keyExtractor={(r) => r.id}
@@ -336,7 +336,7 @@ const OpsModulesPage = () => {
             />
           </Card>
 
-          <Card title="Tenant subscriptions">
+          <Card title="Tenant Subscriptions">
             <Table<SubRow>
               data={subs}
               keyExtractor={(r) => r.id}

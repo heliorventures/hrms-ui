@@ -56,7 +56,7 @@ const LeaveRequestsTableSection = ({
   onRejectClick,
   onCancelOwn,
   onOpenTrail,
-  emptyLabel = 'No leave requests match this filter.',
+  emptyLabel = 'No Leave Requests Match This Filter.',
 }: LeaveRequestsTableSectionProps) => {
   if (!rows.length) {
     return <p className="text-sm text-gray-500 dark:text-gray-400">{emptyLabel}</p>;
@@ -132,7 +132,7 @@ const LeaveRequestsTableSection = ({
         },
         {
           key: 'supportingDocumentReference',
-          label: 'Doc ref.',
+          label: 'Doc Ref.',
           render: (row: LeaveRequestRow) => row.supportingDocumentReference ?? '—',
         },
         {
@@ -186,7 +186,7 @@ const LeaveRequestsTableSection = ({
           ? [
               {
                 key: 'selfService',
-                label: 'My request',
+                label: 'My Request',
                 render: (row: LeaveRequestRow) =>
                   row.status.toLowerCase() === 'pending' && row.employeeId === viewerId ? (
                     <Button

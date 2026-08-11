@@ -25,8 +25,8 @@ const PayrollSalaryTab = ({
         data={salaryComponents ?? []}
         loading={loadingSalary}
         errorMessage={errorSalary ? 'Could not load this section.' : null}
-        loadingMessage="Loading salary components…"
-        emptyMessage="No salary components found."
+        loadingMessage="Loading Salary Components..."
+        emptyMessage="No Salary Components Found."
         keyExtractor={(row) => row.id}
         columns={[
           { key: 'name', label: 'Component' },
@@ -57,8 +57,8 @@ const PayrollSalaryTab = ({
       <Table
         data={payrollCycles ?? []}
         loading={loadingShell}
-        loadingMessage="Loading payroll cycles…"
-        emptyMessage="No payroll cycles found."
+        loadingMessage="Loading Payroll Cycles..."
+        emptyMessage="No Payroll Cycles Found."
         keyExtractor={(row) => row.id}
         columns={[
           { key: 'name', label: 'Cycle' },
@@ -74,7 +74,7 @@ const PayrollSalaryTab = ({
           },
           {
             key: 'paymentDate',
-            label: 'Payment date',
+            label: 'Payment Date',
             render: (row: PayrollCycleRow) => formatPayrollPaymentDate(row.paymentDate),
           },
         ]}

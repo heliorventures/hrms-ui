@@ -67,7 +67,7 @@ const ExpensePolicyModal = ({
         </select>
       </div>
       {directoryLoading ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400">Loading organization directory...</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Loading Organization Directory...</p>
       ) : null}
       {directoryError ? (
         <p className="text-xs text-amber-700 dark:text-amber-400">{directoryError}</p>
@@ -85,21 +85,21 @@ const ExpensePolicyModal = ({
         onChange={onChange}
       />
       <Input
-        label="Limit per day (optional decimal)"
+        label="Limit Per Day (Optional Decimal)"
         value={form.limitPerDay}
         onChange={(event) => onChange({ ...form, limitPerDay: event.target.value })}
         fullWidth
         inputMode="decimal"
       />
       <Input
-        label="Limit per month (optional decimal)"
+        label="Limit Per Month (Optional Decimal)"
         value={form.limitPerMonth}
         onChange={(event) => onChange({ ...form, limitPerMonth: event.target.value })}
         fullWidth
         inputMode="decimal"
       />
       <Input
-        label="Policy max amount per claim (optional)"
+        label="Policy Max Amount Per Claim (Optional)"
         value={form.maxAmountPerClaim}
         onChange={(event) => onChange({ ...form, maxAmountPerClaim: event.target.value })}
         fullWidth
@@ -125,7 +125,7 @@ const ExpensePolicyModal = ({
       </label>
       <div className="flex gap-3">
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving...' : 'Save policy'}
+          {saving ? 'Saving...' : 'Save Policy'}
         </Button>
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
@@ -164,7 +164,7 @@ const ExpensePolicyScopeFields = ({
     if (directoryError && !hasDepartments) {
       return (
         <Input
-          label="Department ID (paste UUID)"
+          label="Department ID (Paste UUID)"
           value={form.departmentId}
           onChange={(event) => onChange({ ...form, departmentId: event.target.value })}
           fullWidth
@@ -176,7 +176,7 @@ const ExpensePolicyScopeFields = ({
       <UuidEntitySearchSelect
         label="Department"
         placeholder="Search by name or code..."
-        emptyLabel="Choose a department..."
+        emptyLabel="Choose A Department..."
         options={departmentOptions}
         valueId={form.departmentId}
         disabled={directoryLoading}
@@ -190,7 +190,7 @@ const ExpensePolicyScopeFields = ({
     if (directoryError && !hasDesignations) {
       return (
         <Input
-          label="Designation ID (paste UUID)"
+          label="Designation ID (Paste UUID)"
           value={form.designationId}
           onChange={(event) => onChange({ ...form, designationId: event.target.value })}
           fullWidth
@@ -202,7 +202,7 @@ const ExpensePolicyScopeFields = ({
       <UuidEntitySearchSelect
         label="Designation"
         placeholder="Search by title..."
-        emptyLabel="Choose a designation..."
+        emptyLabel="Choose A Designation..."
         options={designationOptions}
         valueId={form.designationId}
         disabled={directoryLoading}
@@ -216,7 +216,7 @@ const ExpensePolicyScopeFields = ({
     if (directoryError && !hasRoles) {
       return (
         <Input
-          label="Role ID (paste UUID)"
+          label="Role ID (Paste UUID)"
           value={form.roleId}
           onChange={(event) => onChange({ ...form, roleId: event.target.value })}
           fullWidth
@@ -226,9 +226,9 @@ const ExpensePolicyScopeFields = ({
     }
     return (
       <UuidEntitySearchSelect
-        label="Tenant role"
+        label="Tenant Role"
         placeholder="Search by role name..."
-        emptyLabel="Choose a role..."
+        emptyLabel="Choose A Role..."
         options={roleOptions}
         valueId={form.roleId}
         disabled={directoryLoading}

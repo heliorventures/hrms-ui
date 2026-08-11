@@ -122,7 +122,7 @@ const TimesheetBatchPreviewModal = ({
         </div>
 
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading entries...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Entries...</p>
         ) : error ? (
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         ) : rows.length ? (
@@ -142,7 +142,7 @@ const TimesheetBatchPreviewModal = ({
             ]}
           />
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No entries found for this week.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Entries Found For This Week.</p>
         )}
 
         {batch && pending ? (

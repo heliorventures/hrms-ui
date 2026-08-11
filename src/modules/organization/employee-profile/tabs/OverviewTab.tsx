@@ -16,7 +16,7 @@ export function OverviewTab({ model, showSalary }: OverviewTabProps) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        <InfoCard title="Current role" subtitle="Primary assignment">
+        <InfoCard title="Current Role" subtitle="Primary assignment">
           <div className="flex items-start gap-2">
             <Briefcase className="mt-0.5 h-4 w-4 text-indigo-500" aria-hidden />
             <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
@@ -32,7 +32,7 @@ export function OverviewTab({ model, showSalary }: OverviewTabProps) {
             </p>
           </div>
         </InfoCard>
-        <InfoCard title="Annual compensation" subtitle={showSalary ? 'Full detail in Growth' : 'Visible to HR only'}>
+        <InfoCard title="Annual Compensation" subtitle={showSalary ? 'Full detail in Growth' : 'Visible to HR only'}>
           <div className="flex items-start gap-2">
             <Coins className="mt-0.5 h-4 w-4 text-indigo-500" aria-hidden />
             <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
@@ -40,7 +40,7 @@ export function OverviewTab({ model, showSalary }: OverviewTabProps) {
             </p>
           </div>
         </InfoCard>
-        <InfoCard title="Leave balance" subtitle="From employee profile">
+        <InfoCard title="Leave Balance" subtitle="From employee profile">
           <div className="flex items-start gap-2">
             <Sparkles className="mt-0.5 h-4 w-4 text-indigo-500" aria-hidden />
             <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
@@ -51,7 +51,7 @@ export function OverviewTab({ model, showSalary }: OverviewTabProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <InfoCard title="Recent activity" subtitle="Latest profile events">
+        <InfoCard title="Recent Activity" subtitle="Latest profile events">
           <ul className="space-y-2">
             {model.recentActivity.map((a) => (
               <li
@@ -64,7 +64,7 @@ export function OverviewTab({ model, showSalary }: OverviewTabProps) {
             ))}
           </ul>
         </InfoCard>
-        <InfoCard title="Growth preview" subtitle="From joining to latest change">
+        <InfoCard title="Growth Preview" subtitle="From joining to latest change">
           <Timeline
             items={previewNodes.map((n) => ({
               id: n.id,

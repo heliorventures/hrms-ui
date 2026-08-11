@@ -19,6 +19,36 @@ interface CreateAnnouncementModalProps {
   onCreated?: () => void;
 }
 
+const MAX_ANNOUNCEMENT_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_ANNOUNCEMENT_DOCUMENT_BYTES = 10 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const ALLOWED_DOCUMENT_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+]);
+
+const validateFile = (
+  file: File | null,
+  allowedTypes: Set<string>,
+  maxBytes: number,
+  label: string
+) => {
+  if (!file) return null;
+  if (file.size > maxBytes) {
+    return `${label} must be ${Math.floor(maxBytes / (1024 * 1024))} MB or smaller.`;
+  }
+  if (!allowedTypes.has(file.type)) return `${label} file type is not allowed.`;
+  return null;
+};
+
+const parseOptionalDateTime = (value: string) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
 const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncementModalProps) => {
   const client = useGraphClient('client');
   const { can, clientSession } = useAuth();
@@ -86,6 +116,40 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+    if (!title.trim()) {
+      setSubmitError('Title is required.');
+      return;
+    }
+    const publishAt = hrCompose ? parseOptionalDateTime(annPublish) : null;
+    const expiresAt = hrCompose ? parseOptionalDateTime(annExpire) : null;
+    if (publishAt === undefined || expiresAt === undefined) {
+      setSubmitError('Publish and expiry dates must be valid date/time values.');
+      return;
+    }
+    if (publishAt && expiresAt && expiresAt <= publishAt) {
+      setSubmitError('Expiry date must be after publish date.');
+      return;
+    }
+    const imageError = validateFile(
+      imageFile,
+      ALLOWED_IMAGE_TYPES,
+      MAX_ANNOUNCEMENT_IMAGE_BYTES,
+      'Announcement image'
+    );
+    if (imageError) {
+      setSubmitError(imageError);
+      return;
+    }
+    const documentError = validateFile(
+      documentFile,
+      ALLOWED_DOCUMENT_TYPES,
+      MAX_ANNOUNCEMENT_DOCUMENT_BYTES,
+      'Announcement document'
+    );
+    if (documentError) {
+      setSubmitError(documentError);
+      return;
+    }
     setSubmitting(true);
     try {
       let imageContentBase64: string | null = null;
@@ -109,8 +173,6 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
       }
 
       const roleTrim = annRole.trim();
-      const publishAt = hrCompose && annPublish ? new Date(annPublish).toISOString() : null;
-      const expiresAt = hrCompose && annExpire ? new Date(annExpire).toISOString() : null;
 
       await client.request(CreateAnnouncementDocument, {
         input: {
@@ -120,7 +182,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
             roleTrim !== '' ? null : targetAudience.trim() === '' ? null : targetAudience.trim(),
           targetDepartmentId: hrCompose && annDept.trim() !== '' ? annDept.trim() : null,
           targetLocationId: hrCompose && annLoc.trim() !== '' ? annLoc.trim() : null,
-          targetRoleCode: hrCompose && roleTrim !== '' ? roleTrim : null,
+          targetRoleCode: hrCompose && roleTrim !== '' ? roleTrim.toUpperCase() : null,
           publishAt,
           expiresAt,
           employeePost,
@@ -204,14 +266,14 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
               </select>
             </div>
             <Input
-              label="Location id (optional UUID)"
+              label="Location ID (Optional UUID)"
               type="text"
               value={annLoc}
               onChange={(e) => setAnnLoc(e.target.value)}
               fullWidth
             />
             <Input
-              label="Target role code (optional, e.g. HR_ADMIN)"
+              label="Target Role Code (Optional, E.G. HR_ADMIN)"
               type="text"
               value={annRole}
               onChange={(e) => setAnnRole(e.target.value)}
@@ -219,7 +281,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
             />
             {annRole.trim() === '' ? (
               <Input
-                label="Target audience (optional)"
+                label="Target Audience (Optional)"
                 placeholder="e.g. ALL, Engineering"
                 type="text"
                 value={targetAudience}
@@ -259,7 +321,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
         ) : (
           <>
             <Input
-              label="Target audience (optional)"
+              label="Target Audience (Optional)"
               placeholder="e.g. ALL, Engineering"
               type="text"
               value={targetAudience}

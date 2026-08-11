@@ -2,10 +2,49 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { HrLeaveCalendarDocument, type HrLeaveCalendarQuery } from '../../../api/graphql/graphql';
+import { type HrLeaveCalendarQuery } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 const MAX_EMPLOYEES = 45;
+
+const HrLeaveCalendarRangeDocument = `
+  query HrLeaveCalendarRange(
+    $reqLim: Int! = 400
+    $orgLim: Int! = 500
+    $typeLim: Int! = 80
+    $holidayFrom: NaiveDate!
+    $holidayLimit: Int! = 400
+    $fromDate: NaiveDate
+    $toDate: NaiveDate
+  ) {
+    leaveRequests(limit: $reqLim, fromDate: $fromDate, toDate: $toDate) {
+      id
+      employeeId
+      leaveTypeId
+      fromDate
+      toDate
+      status
+      isHalfDay
+      halfDaySession
+    }
+    orgChart(limit: $orgLim) {
+      employeeId
+      fullName
+      employeeCode
+    }
+    leaveTypes(limit: $typeLim) {
+      id
+      name
+      code
+    }
+    upcomingHolidays(fromDate: $holidayFrom, limit: $holidayLimit) {
+      id
+      holidayDate
+      name
+      calendarName
+    }
+  }
+`;
 
 const MONTH_LABELS = [
   'January',
@@ -76,15 +115,17 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
   const monthPrefix = `${year}-${pad2(month + 1)}`;
 
   const load = useCallback(async () => {
-    const r = await client.request<HrLeaveCalendarQuery>(HrLeaveCalendarDocument, {
+    const r = await client.request<HrLeaveCalendarQuery>(HrLeaveCalendarRangeDocument, {
       reqLim: 400,
       orgLim: 500,
       typeLim: 80,
       holidayFrom: `${year}-01-01`,
       holidayLimit: 450,
+      fromDate: monthDays[0],
+      toDate: monthDays[monthDays.length - 1],
     });
     setData(r);
-  }, [client, year]);
+  }, [client, monthDays, year]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -185,13 +226,13 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
     <Card
       title={
         <span className="flex flex-wrap items-center justify-between gap-3">
-          <span>Team leave calendar</span>
+          <span>Team Leave Calendar</span>
           <div className="flex flex-wrap items-center gap-2 text-xs font-normal">
             <button
               type="button"
               className="rounded border border-gray-300 px-2 py-1 dark:border-gray-600"
               onClick={goPrevMonth}
-              aria-label="Previous month"
+              aria-label="Previous Month"
             >
               ←
             </button>
@@ -227,7 +268,7 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
               type="button"
               className="rounded border border-gray-300 px-2 py-1 dark:border-gray-600"
               onClick={goNextMonth}
-              aria-label="Next month"
+              aria-label="Next Month"
             >
               →
             </button>
@@ -249,7 +290,7 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
       </p>
       {error && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {loading && !data ? (
-        <p className="text-sm text-gray-500">Loading…</p>
+        <p className="text-sm text-gray-500">Loading...</p>
       ) : (
         <div className="overflow-x-auto pb-2">
           <table className="border-collapse text-[11px]">
@@ -291,7 +332,7 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
                       rangeLine,
                       slot?.half ? 'Half day' : null,
                       slot ? `Status: ${slot.status}` : null,
-                      hol ? 'Public holiday (same date)' : null,
+                      hol ? 'Public Holiday (same date)' : null,
                     ].filter(Boolean);
 
                     if (slot && hol) {
@@ -304,7 +345,7 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
                       title = metaParts.join(' · ');
                     } else if (hol) {
                       style.backgroundColor = 'rgb(148 163 184 / 0.42)';
-                      title = ['Public holiday', day].join(' · ');
+                      title = ['Public Holiday', day].join(' · ');
                     }
 
                     return (

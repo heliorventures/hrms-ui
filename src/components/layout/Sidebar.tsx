@@ -4,6 +4,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { canAccessTenantPath } from '../../auth/navAccess';
 import { useAuth } from '../../contexts/AuthContext';
 import { APP_BRAND } from '../../constants/brand';
+import { UI_A11Y_TEXT, UI_EMPTY_TEXT, UI_PLACEHOLDER_TEXT } from '../../constants/uiText';
 import { matchesNavFilter, NAV_CATALOG } from '../../navigation/navCatalog';
 import {
   SIDEBAR_GROUPS,
@@ -134,7 +135,7 @@ const SidebarHeader = ({ onClose }: { onClose: () => void }) => (
       type="button"
       onClick={onClose}
       className="rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 lg:hidden"
-      aria-label="Close sidebar"
+      aria-label={UI_A11Y_TEXT.closeSidebar}
     >
       <X className="h-5 w-5" />
     </button>
@@ -158,9 +159,9 @@ const SidebarFilter = ({
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Filter menu, pages..."
+        placeholder={UI_PLACEHOLDER_TEXT.sidebarFilter}
         className="w-full rounded-lg border border-slate-200/90 bg-slate-50/90 py-1.5 pl-8 pr-2 text-xs text-slate-900 shadow-inner placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100"
-        aria-label="Filter sidebar menu"
+        aria-label={UI_A11Y_TEXT.filterSidebarMenu}
       />
     </div>
   </div>
@@ -228,7 +229,7 @@ const SidebarNavGroup = ({
         </div>
       ) : null}
       {expanded && childrenLinks.length === 0 && filterActive ? (
-        <p className="ml-2 mt-1 pl-2 text-xs text-slate-400">No items match</p>
+        <p className="ml-2 mt-1 pl-2 text-xs text-slate-400">{UI_EMPTY_TEXT.sidebarItems}</p>
       ) : null}
     </div>
   );

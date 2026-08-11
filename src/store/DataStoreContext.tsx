@@ -56,7 +56,7 @@ interface DataStoreContextType {
   getPayslips: (userId: string, tenantId: string) => Payslip[];
   getSalaryHistory: (userId: string, tenantId: string) => SalaryHistoryEntry[];
 
-  // Punch in/out (persists across logout)
+  // Punch In/out (persists across logout)
   getPunchRecord: (userId: string) => PunchRecord | null;
   setPunchIn: (userId: string) => void;
   setPunchOut: (userId: string) => void;

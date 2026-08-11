@@ -16,6 +16,14 @@ import {
 type EmployeeRow = ClientOpsAdminEmployeesQuery['employees'][number];
 type EmploymentHistoryLine = PayrollEmploymentHistoryQuery['employmentHistoryRecords'][number];
 
+const MONEY_PATTERN = /^(?:\d+|\d+\.\d{1,2}|\.\d{1,2})$/;
+
+function parseMoneyInput(value: string): number {
+  const trimmed = value.trim();
+  if (!MONEY_PATTERN.test(trimmed)) return NaN;
+  return Number(trimmed);
+}
+
 /** GraphQL NaiveDate / DateTime scalars arrive as strings at runtime. */
 function displayDateOnly(v: unknown): string {
   if (v == null) return '—';
@@ -108,6 +116,19 @@ const PayrollCompensationPage = () => {
       setSaveError('Select an employee');
       return;
     }
+    const salary = parseMoneyInput(monthlySalary);
+    if (!Number.isFinite(salary) || salary <= 0) {
+      setSaveError('Monthly salary must be a positive amount with up to 2 decimal places.');
+      return;
+    }
+    if (!effectiveFrom) {
+      setSaveError('Effective from date is required.');
+      return;
+    }
+    if (selectedJoinDate && effectiveFrom < selectedJoinDate) {
+      setSaveError(`Effective from date cannot be before the joining date (${selectedJoinDate}).`);
+      return;
+    }
     setSaveBusy(true);
     setSaveError(null);
     setSaveOk(null);
@@ -135,12 +156,12 @@ const PayrollCompensationPage = () => {
     () => [
       {
         key: 'effectiveFrom',
-        label: 'Effective from',
+        label: 'Effective From',
         render: (row: EmploymentHistoryLine) => displayDateOnly(row.effectiveFrom),
       },
       {
         key: 'monthlySalary',
-        label: 'Monthly salary',
+        label: 'Monthly Salary',
         render: (row: EmploymentHistoryLine) => row.monthlySalary ?? '—',
       },
       { key: 'changeReason', label: 'Reason', render: (row: EmploymentHistoryLine) => row.changeReason ?? '—' },
@@ -163,7 +184,7 @@ const PayrollCompensationPage = () => {
         </p>
       </div>
 
-      <Card title="Employee & history">
+      <Card title="Employee & History">
         {empError && <p className="mb-3 text-sm text-red-600">{empError}</p>}
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -184,7 +205,7 @@ const PayrollCompensationPage = () => {
               }}
               disabled={empLoading}
             >
-              <option value="">{empLoading ? 'Loading…' : 'Select employee'}</option>
+              <option value="">{empLoading ? 'Loading...' : 'Select Employee'}</option>
               {employees.map((e) => (
                 <option key={e.id} value={e.id}>
                   {e.employeeCode} — {e.fullName} ({e.status})
@@ -201,9 +222,9 @@ const PayrollCompensationPage = () => {
           <div className="mt-6">
             {histError && <p className="mb-2 text-sm text-red-600">{histError}</p>}
             {histLoading ? (
-              <p className="text-sm text-slate-500">Loading history…</p>
+              <p className="text-sm text-slate-500">Loading History...</p>
             ) : history.length === 0 ? (
-              <p className="text-sm text-slate-500">No compensation rows yet.</p>
+              <p className="text-sm text-slate-500">No Compensation Rows Yet.</p>
             ) : (
               <Table data={history} columns={historyColumns} keyExtractor={(row) => row.id} />
             )}
@@ -211,7 +232,7 @@ const PayrollCompensationPage = () => {
         )}
       </Card>
 
-      <Card title="Set monthly salary">
+      <Card title="Set Monthly Salary">
         <form className="space-y-4" onSubmit={onSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -259,7 +280,7 @@ const PayrollCompensationPage = () => {
           {saveError && <p className="text-sm text-red-600">{saveError}</p>}
           {saveOk && <p className="text-sm text-emerald-700">{saveOk}</p>}
           <Button type="submit" disabled={!selectedId || saveBusy}>
-            {saveBusy ? 'Saving…' : 'Save compensation'}
+            {saveBusy ? 'Saving...' : 'Save Compensation'}
           </Button>
         </form>
       </Card>

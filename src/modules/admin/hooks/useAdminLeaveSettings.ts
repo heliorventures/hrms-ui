@@ -101,7 +101,7 @@ export function useAdminLeaveSettings() {
         { year: provisionYear }
       );
       await showAlert({
-        title: 'Provisioning complete',
+        title: 'Provisioning Complete',
         message: `Updated ${result.provisionLeaveBalancesFromPolicies} employee / leave-type balance row(s).`,
         variant: 'success',
       });

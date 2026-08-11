@@ -45,9 +45,9 @@ export const timesheetEntryEditDisabledReason = (
     return `Week is outside the editable window starting ${earliestMonday}`;
   }
   const normalized = statusUpper(status);
-  if (normalized === 'DRAFT') return 'Edit entry';
+  if (normalized === 'DRAFT') return 'Edit Entry';
   if ((normalized === 'SUBMITTED' || normalized === 'APPROVED') && !lockApprovedEntries) {
-    return 'Edit entry';
+    return 'Edit Entry';
   }
   if (normalized === 'SUBMITTED' || normalized === 'APPROVED') {
     return `${normalized} entries are locked by the tenant policy`;

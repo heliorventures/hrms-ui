@@ -23,7 +23,7 @@ const JobDetailsTab = ({ data }: JobDetailsTabProps) => {
     { label: 'Attendance Number', value: employeeTime.attendanceNumber },
     { label: 'Payroll Time Source', value: employeeTime.payrollTimeSource },
     {
-      label: 'Disable attendance tracking',
+      label: 'Disable Attendance Tracking',
       value: employeeTime.disableAttendanceTracking ? 'Yes' : 'No',
     },
     {
@@ -108,7 +108,7 @@ const JobDetailsTab = ({ data }: JobDetailsTabProps) => {
       </Card>
 
       {customFields && customFields.length > 0 && (
-        <Card title="Other (Configurable by Admin)">
+        <Card title="Other (Configurable By Admin)">
           <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
             Custom fields added by your administrator.
           </p>

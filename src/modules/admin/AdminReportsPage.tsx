@@ -4,9 +4,47 @@ import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { ClientOpsAdminReportsDataDocument } from '../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import AttendanceReportDetails from './components/AttendanceReportDetails';
+
+const ClientOpsAdminReportsDataRangeDocument = `
+  query ClientOpsAdminReportsDataRange($fromDate: NaiveDate, $toDate: NaiveDate) {
+    employees(limit: 100) {
+      id
+      employeeCode
+      fullName
+    }
+    attendance(limit: 100, fromDate: $fromDate, toDate: $toDate) {
+      id
+      employeeId
+      workDate
+      status
+      checkInTime
+      checkOutTime
+    }
+    leaveRequests(limit: 100, fromDate: $fromDate, toDate: $toDate) {
+      id
+      employeeId
+      fromDate
+      toDate
+      status
+    }
+    payrollCycles(limit: 100) {
+      id
+      name
+      month
+      year
+      status
+      paymentDate
+    }
+    salaryComponents(limit: 100) {
+      id
+      componentType
+      isActive
+      isTaxable
+    }
+  }
+`;
 
 interface EmployeeRow {
   id: string;
@@ -82,11 +120,21 @@ const AdminReportsPage = () => {
 
   useEffect(() => {
     let cancelled = false;
+    if (filters.startDate && filters.endDate && filters.startDate > filters.endDate) {
+      setError('Start date must be on or before end date.');
+      setLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await client.request<ReportsData>(ClientOpsAdminReportsDataDocument);
+        const result = await client.request<ReportsData>(ClientOpsAdminReportsDataRangeDocument, {
+          fromDate: filters.startDate || null,
+          toDate: filters.endDate || null,
+        });
         if (!cancelled) setData(result);
       } catch (e) {
         if (!cancelled) {
@@ -99,10 +147,10 @@ const AdminReportsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [client]);
+  }, [client, filters.endDate, filters.startDate]);
 
   const employeeOptions = [
-    { value: 'all', label: 'All Employees' },
+    { value: 'all', label: 'ALL Employees' },
     ...((data?.employees ?? []).map((emp) => ({
       value: emp.id,
       label: `${emp.fullName} (${emp.employeeCode})`,
@@ -114,6 +162,11 @@ const AdminReportsPage = () => {
     { value: 'leave', label: 'Leave Report' },
     { value: 'payroll', label: 'Payroll Report' },
   ];
+
+  const dateRangeError =
+    filters.startDate && filters.endDate && filters.startDate > filters.endDate
+      ? 'Start date must be on or before end date.'
+      : null;
 
   const employeeLabelById = useMemo(() => {
     const labels: Record<string, string> = {};
@@ -199,7 +252,7 @@ const AdminReportsPage = () => {
   };
 
   const handleGenerateReport = () => {
-    if (!data) return;
+    if (!data || dateRangeError) return;
     if (reportType === 'attendance') {
       downloadCsv(`attendance-report-${filters.startDate || 'all'}-to-${filters.endDate || 'all'}.csv`, [
         ['Employee', 'Employee Id', 'Work Date', 'Status', 'Check In', 'Check Out'],
@@ -352,7 +405,7 @@ const AdminReportsPage = () => {
 
       {loading && (
         <Card>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading report data...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Report Data...</p>
         </Card>
       )}
 
@@ -395,8 +448,12 @@ const AdminReportsPage = () => {
           />
         </div>
 
+        {dateRangeError && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{dateRangeError}</p>
+        )}
+
         <div className="mt-4">
-          <Button disabled={loading || !data} onClick={handleGenerateReport}>
+          <Button disabled={loading || !data || Boolean(dateRangeError)} onClick={handleGenerateReport}>
             Generate Report
           </Button>
         </div>

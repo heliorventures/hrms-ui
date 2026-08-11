@@ -68,7 +68,7 @@ const SortableRow = ({
         className="cursor-grab touch-none select-none text-slate-400 hover:text-indigo-600 active:cursor-grabbing dark:text-slate-500 dark:hover:text-indigo-300"
         {...attributes}
         {...listeners}
-        aria-label="Drag to reorder step"
+        aria-label="Drag To Reorder Step"
         disabled={reorderBusy}
       >
         <span aria-hidden className="text-base leading-none">
@@ -90,11 +90,11 @@ const SortableRow = ({
         onClick={() => void onDeleteStep(step.id)}
         title={
           delStepBusy === step.id
-            ? 'Removing…'
+            ? 'Removing...'
             : 'Remove step (blocked if approvals ran on this step)'
         }
       >
-        {delStepBusy === step.id ? 'Removing…' : 'Remove'}
+        {delStepBusy === step.id ? 'Removing...' : 'Remove'}
       </button>
     </li>
   );

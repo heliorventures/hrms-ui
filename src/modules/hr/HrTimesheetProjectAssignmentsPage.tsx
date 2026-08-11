@@ -128,7 +128,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
 
   const employeeOptions = useMemo(() => {
     return [
-      { value: '', label: loading ? 'Loading…' : '— Select employee —' },
+      { value: '', label: loading ? 'Loading...' : '- Select Employee -' },
       ...assigneeRows.map((r) => ({
         value: r.employeeId,
         label: `${r.fullName}${r.employeeCode ? ` (${r.employeeCode})` : ''}`,
@@ -171,7 +171,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
 
   return (
     <div className="space-y-6">
-      <Card title="Timesheet project assignments">
+      <Card title="Timesheet Project Assignments">
         <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
           Restrict which projects an employee can log hours against. Leave none selected and save to allow{' '}
           <strong>all</strong> active catalog projects.
@@ -189,7 +189,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
           </p>
         )}
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : (
           <form className="space-y-4" onSubmit={(ev) => void save(ev)}>
             {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -210,7 +210,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
             {employeeId.trim() ? (
               <>
                 {loadingCodes ? (
-                  <p className="text-sm text-gray-500">Loading current assignments…</p>
+                  <p className="text-sm text-gray-500">Loading Current Assignments...</p>
                 ) : (
                   <>
                     {unrestricted && (
@@ -221,7 +221,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
                     <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                       {catalog.length === 0 ? (
                         <p className="text-sm text-gray-500">
-                          No projects in catalog — add them under Admin → Timesheet settings.
+                          No projects in catalog — add them under Admin → Timesheet Settings.
                         </p>
                       ) : (
                         catalog.map((p) => {
@@ -249,7 +249,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
                   </>
                 )}
                 <Button type="submit" variant="primary" disabled={saving || loadingCodes}>
-                  {saving ? 'Saving…' : 'Save assignments'}
+                  {saving ? 'Saving...' : 'Save Assignments'}
                 </Button>
               </>
             ) : null}

@@ -46,7 +46,7 @@ const PayrollPayslipTab = ({
   onSelectedCycleChange,
 }: PayrollPayslipTabProps) => (
   <div className="space-y-4">
-    {payslipsLoading && <p className="text-sm text-slate-500">Loading payslips…</p>}
+    {payslipsLoading && <p className="text-sm text-slate-500">Loading Payslips...</p>}
 
     {payslipError && !payslipsLoading && payslipMigrationRequired && (
       <Card>
@@ -111,7 +111,7 @@ const PayrollPayslipTab = ({
 
     {!payslipsLoading && !payslipError && payslips && payslips.length === 0 && (
       <Card>
-        <p className="text-sm text-slate-500">No payslips for your account yet.</p>
+        <p className="text-sm text-slate-500">No Payslips For Your Account Yet.</p>
       </Card>
     )}
   </div>

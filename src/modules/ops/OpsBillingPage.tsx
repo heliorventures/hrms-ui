@@ -121,7 +121,7 @@ const OpsBillingPage = () => {
                 setCreateOpen(true);
               }}
             >
-              Create invoice
+              Create Invoice
             </Button>
             <Button
               type="button"

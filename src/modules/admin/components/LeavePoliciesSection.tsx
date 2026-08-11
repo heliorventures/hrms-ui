@@ -15,27 +15,27 @@ interface LeavePoliciesSectionProps {
 }
 
 const LeavePoliciesSection = ({ model }: LeavePoliciesSectionProps) => (
-  <Card title="Leave policies">
+  <Card title="Leave Policies">
     <div className="mb-4">
       <Button type="button" variant="primary" className="!text-sm" onClick={model.openNewPolicy}>
-        Add policy
+        Add Policy
       </Button>
     </div>
     <Table
       data={model.data?.leavePolicies ?? []}
       keyExtractor={(row) => row.id}
       loading={model.loading}
-      loadingMessage="Loading policies..."
-      emptyMessage="No policies."
+      loadingMessage="Loading Policies..."
+      emptyMessage="No Policies."
       columns={[
         {
           key: 'leaveType',
-          label: 'Leave type',
+          label: 'Leave Type',
           render: (row) => model.leaveTypeCodeById.get(row.leaveTypeId) ?? row.leaveTypeId.slice(0, 8),
         },
         { key: 'freq', label: 'Accrual', render: formatLeavePolicyAccrual },
         { key: 'entitlement', label: 'Annual', render: (row) => row.annualEntitlement ?? '-' },
-        { key: 'max', label: 'Max consec.', render: (row) => row.maxConsecutiveDays ?? '-' },
+        { key: 'max', label: 'Max Consec.', render: (row) => row.maxConsecutiveDays ?? '-' },
         {
           key: 'actions',
           label: '',
@@ -89,13 +89,13 @@ const LeavePolicyModal = ({ model }: LeavePoliciesSectionProps) => {
           ))}
         </select>
         <Input
-          label="Applicable to (optional)"
+          label="Applicable To (Optional)"
           value={form.applicableTo}
           onChange={(event) => model.setPolicyForm({ ...form, applicableTo: event.target.value })}
           fullWidth
         />
         <Input
-          label="Annual entitlement (days)"
+          label="Annual Entitlement (Days)"
           value={form.annual}
           onChange={(event) => model.setPolicyForm({ ...form, annual: event.target.value })}
           fullWidth
@@ -118,19 +118,19 @@ const LeavePolicyModal = ({ model }: LeavePoliciesSectionProps) => {
           For days per month, choose Monthly and enter monthly days below.
         </p>
         <Input
-          label="Accrual days (decimal string)"
+          label="Accrual Days (Decimal String)"
           value={form.accrualDays}
           onChange={(event) => model.setPolicyForm({ ...form, accrualDays: event.target.value })}
           fullWidth
         />
         <Input
-          label="Max consecutive days"
+          label="Max Consecutive Days"
           value={form.maxCons}
           onChange={(event) => model.setPolicyForm({ ...form, maxCons: event.target.value })}
           fullWidth
         />
         <Input
-          label="Min notice days"
+          label="Min Notice Days"
           value={form.minNotice}
           onChange={(event) => model.setPolicyForm({ ...form, minNotice: event.target.value })}
           fullWidth

@@ -58,7 +58,7 @@ const SeparationRequestsCard = ({
   onToggleClearance,
   onUpdateFnfForm,
 }: SeparationRequestsCardProps) => (
-  <Card title="Your requests">
+  <Card title="Your Requests">
     {loading ? (
       <p className="text-sm text-gray-500">Loading...</p>
     ) : separations.length ? (
@@ -120,7 +120,7 @@ const SeparationRequestsCard = ({
             {separation.status === 'APPROVED' && openObId === separation.id ? (
               <div className="mt-3 border-t border-slate-200/90 pt-3 dark:border-slate-600">
                 {obLoading ? (
-                  <p className="text-sm text-gray-500">Loading clearance & FNF...</p>
+                  <p className="text-sm text-gray-500">Loading Clearance & FNF...</p>
                 ) : obErr ? (
                   <p className="text-sm text-red-600 dark:text-red-400">{obErr}</p>
                 ) : (
@@ -140,7 +140,7 @@ const SeparationRequestsCard = ({
                           disabled={ensureBusy}
                           onClick={() => onEnsureRows(separation.id)}
                         >
-                          {ensureBusy ? '...' : 'Create clearance & FNF records'}
+                          {ensureBusy ? '...' : 'Create Clearance & FNF Records'}
                         </Button>
                       ) : null}
                       {obCl.length ? (
@@ -190,7 +190,7 @@ const SeparationRequestsCard = ({
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-sm text-slate-500">No clearance rows.</p>
+                        <p className="text-sm text-slate-500">No Clearance Rows.</p>
                       )}
                     </div>
                     <div>
@@ -200,7 +200,7 @@ const SeparationRequestsCard = ({
                       {!obFnf && !obLoading ? (
                         <p className="text-sm text-slate-500">
                           {canManageOnboarding
-                            ? 'No FNF row yet. Create clearance and FNF records first.'
+                            ? 'No FNF Row Yet. Create Clearance And FNF Records First.'
                             : 'HR will publish your full and final details here after processing.'}
                         </p>
                       ) : null}
@@ -241,7 +241,7 @@ const SeparationRequestsCard = ({
                                 disabled={fnfBusy}
                                 onClick={() => onSaveFnf(separation.id)}
                               >
-                                {fnfBusy ? '...' : 'Save amounts'}
+                                {fnfBusy ? '...' : 'Save Amounts'}
                               </Button>
                               <Button
                                 variant="secondary"
@@ -263,7 +263,7 @@ const SeparationRequestsCard = ({
         ))}
       </ul>
     ) : (
-      <p className="text-sm text-gray-500">No separation requests yet.</p>
+      <p className="text-sm text-gray-500">No Separation Requests Yet.</p>
     )}
   </Card>
 );

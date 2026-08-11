@@ -63,7 +63,7 @@ const AdminSettingsPage = () => {
 
       <Card title="Employee Directory Snapshot">
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading employees...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Employees...</p>
         ) : employees.length > 0 ? (
           <Table
             data={employees}
@@ -93,7 +93,7 @@ const AdminSettingsPage = () => {
             ]}
           />
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No employees found.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Employees Found.</p>
         )}
       </Card>
 

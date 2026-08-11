@@ -53,7 +53,7 @@ const LearningPage = () => {
       )}
       <Card title="Skills">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.skills?.length ? (
           <div className="flex flex-wrap gap-2">
             {data.skills.map((s) => (
@@ -67,12 +67,12 @@ const LearningPage = () => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No skills catalog.</p>
+          <p className="text-sm text-gray-500">No Skills Catalog.</p>
         )}
       </Card>
       <Card title="Courses">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.courses?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.courses.map((c) => (
@@ -87,7 +87,7 @@ const LearningPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No active courses.</p>
+          <p className="text-sm text-gray-500">No Active Courses.</p>
         )}
       </Card>
     </div>

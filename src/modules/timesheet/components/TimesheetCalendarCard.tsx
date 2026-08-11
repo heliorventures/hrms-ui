@@ -124,7 +124,7 @@ const TimesheetCalendarCard = ({
                             <button
                               type="button"
                               disabled={!editable}
-                              title={editable ? 'Edit entry' : editDisabledReason(entry)}
+                              title={editable ? 'Edit Entry' : editDisabledReason(entry)}
                               onClick={() => {
                                 if (editable) onEdit(entry);
                               }}
@@ -140,7 +140,7 @@ const TimesheetCalendarCard = ({
                             {timesheetEntryCanDelete(entry.status) && (
                               <button
                                 type="button"
-                                aria-label="Delete entry"
+                                aria-label="Delete Entry"
                                 disabled={deleteBusyId === entry.id}
                                 className="shrink-0 rounded px-0.5 text-xs leading-none text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40"
                                 onClick={(event) => {
@@ -171,7 +171,7 @@ const TimesheetCalendarCard = ({
           ))}
           {!sortedCount && (
             <p className="pt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-              No entries in this period. Use Add entry or + Add on a day.
+              No Entries In This Period. Use Add Entry Or + Add On A Day.
             </p>
           )}
         </div>

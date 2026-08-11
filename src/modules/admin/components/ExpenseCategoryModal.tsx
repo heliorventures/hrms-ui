@@ -26,7 +26,7 @@ const ExpenseCategoryModal = ({
   <Modal isOpen={open} onClose={onClose} title={editId ? 'Edit category' : 'New category'}>
     <form onSubmit={onSubmit} className="space-y-4">
       <Input
-        label="Display name"
+        label="Display Name"
         value={form.name}
         onChange={(event) => onChange({ ...form, name: event.target.value })}
         fullWidth
@@ -46,7 +46,7 @@ const ExpenseCategoryModal = ({
         </p>
       ) : null}
       <Input
-        label="Max amount per claim (optional)"
+        label="Max Amount Per Claim (Optional)"
         value={form.maxAmountPerClaim}
         onChange={(event) => onChange({ ...form, maxAmountPerClaim: event.target.value })}
         fullWidth

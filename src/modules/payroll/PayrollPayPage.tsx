@@ -87,6 +87,7 @@ const PayrollPayPage = () => {
           proofActual={pay.proofActual}
           proofBusy={pay.proofBusy}
           proofDeclared={pay.proofDeclared}
+          proofFile={pay.proofFile}
           proofMsg={pay.proofMsg}
           proofSectionCode={pay.proofSectionCode}
           taxComputationsSelf={pay.taxComputationsSelf}
@@ -99,6 +100,7 @@ const PayrollPayPage = () => {
           onDeclSubmit={pay.handleDeclUpsert}
           onProofActualChange={pay.setProofActual}
           onProofDeclaredChange={pay.setProofDeclared}
+          onProofFileChange={pay.setProofFile}
           onProofSectionCodeChange={pay.setProofSectionCode}
           onProofSubmit={pay.handleProofSubmit}
         />

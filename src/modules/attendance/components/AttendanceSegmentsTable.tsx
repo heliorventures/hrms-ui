@@ -42,7 +42,7 @@ const AttendanceSegmentsTable = ({
 }: AttendanceSegmentsTableProps) => (
   <Card title={title}>
     {loading ? (
-      <p className="text-sm text-gray-500 dark:text-gray-400">Loading attendance...</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Loading Attendance...</p>
     ) : rows.length ? (
       <Table
         data={rows}
@@ -60,12 +60,12 @@ const AttendanceSegmentsTable = ({
           },
           {
             key: 'in',
-            label: 'Punch in',
+            label: 'Punch In',
             render: (row: FlatSegmentRow) => formatBackendTime(row.checkInTime ?? null),
           },
           {
             key: 'out',
-            label: 'Punch out',
+            label: 'Punch Out',
             render: (row: FlatSegmentRow) => formatBackendTime(row.checkOutTime ?? null),
           },
           {
@@ -80,7 +80,7 @@ const AttendanceSegmentsTable = ({
           },
           {
             key: 'loc',
-            label: 'Location (in -> out)',
+            label: 'Location (In -> Out)',
             render: (row: FlatSegmentRow) => (
               <span className="max-w-xs text-xs text-gray-600 dark:text-gray-300">
                 {formatLatLng(row.checkInLat, row.checkInLng)}
@@ -123,7 +123,7 @@ const AttendanceSegmentsTable = ({
       />
     ) : (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        No punch segments in this month (raise limit or choose another month).
+        No Punch Segments In This Month (Raise Limit Or Choose Another Month).
       </p>
     )}
   </Card>

@@ -1,6 +1,7 @@
 # Employee profile + HR document workflow (kabipay-employee). Merged for codegen when gateway is behind.
 
 extend type Employee {
+  linkedUserUsername: String
   dateOfBirth: NaiveDate
   gender: String
   nationality: String
@@ -87,11 +88,27 @@ input UploadEmployeeDocumentInput {
   contentBase64: String!
 }
 
+input UploadTenantFileInput {
+  fileName: String!
+  mimeType: String
+  contentBase64: String!
+}
+
+type UploadedTenantFile {
+  id: ID!
+  tenantId: ID!
+  originalFileName: String
+  mimeType: String
+  fileSizeBytes: Int
+  createdAt: DateTime!
+}
+
 extend type Mutation {
   updateEmployeePersonalProfile(input: UpdateEmployeePersonalProfileInput!): Employee!
   upsertEmployeePrimaryBank(input: UpsertEmployeePrimaryBankInput!): EmployeeBankAccount!
   upsertEmployeePrimaryPan(input: UpsertEmployeePrimaryPanInput!): EmployeePanRecord!
   upsertEmployeePrimaryAadhaar(input: UpsertEmployeePrimaryAadhaarInput!): EmployeeAadhaarRecord!
   uploadEmployeeDocument(input: UploadEmployeeDocumentInput!): EmployeeDocument!
+  uploadTenantFile(input: UploadTenantFileInput!): UploadedTenantFile!
   resolveEmployeeDocument(employeeDocumentId: ID!, approved: Boolean!): EmployeeDocument!
 }

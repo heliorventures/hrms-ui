@@ -10,7 +10,7 @@ interface PayrollSalaryComponentsCardProps {
 const PayrollSalaryComponentsCard = ({ rows, loading }: PayrollSalaryComponentsCardProps) => (
   <Card title="Salary Components">
     {loading ? (
-      <p className="text-sm text-gray-500 dark:text-gray-400">Loading salary components…</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Loading Salary Components...</p>
     ) : rows.length ? (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {rows.map((item) => (
@@ -39,7 +39,7 @@ const PayrollSalaryComponentsCard = ({ rows, loading }: PayrollSalaryComponentsC
         ))}
       </div>
     ) : (
-      <p className="text-sm text-gray-500 dark:text-gray-400">No salary components found.</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">No Salary Components Found.</p>
     )}
   </Card>
 );

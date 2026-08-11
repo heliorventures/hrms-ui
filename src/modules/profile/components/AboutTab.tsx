@@ -64,7 +64,7 @@ const AboutTab = ({ data }: AboutTabProps) => {
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No education details added.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Education Details Added.</p>
         )}
       </Card>
 
@@ -88,7 +88,7 @@ const AboutTab = ({ data }: AboutTabProps) => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No past experience added.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Past Experience Added.</p>
         )}
       </Card>
 
@@ -121,7 +121,7 @@ const AboutTab = ({ data }: AboutTabProps) => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No timeline events.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Timeline Events.</p>
         )}
       </Card>
     </div>

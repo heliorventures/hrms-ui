@@ -58,9 +58,9 @@ const PerformancePage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="Review cycles">
+      <Card title="Review Cycles">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.reviewCycles?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.reviewCycles.map((c) => (
@@ -74,12 +74,12 @@ const PerformancePage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No review cycles.</p>
+          <p className="text-sm text-gray-500">No Review Cycles.</p>
         )}
       </Card>
       <Card title="Goals">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.goals?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.goals.map((g) => (
@@ -93,7 +93,7 @@ const PerformancePage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No goals.</p>
+          <p className="text-sm text-gray-500">No Goals.</p>
         )}
       </Card>
     </div>

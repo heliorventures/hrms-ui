@@ -112,7 +112,7 @@ const OrganizationEmployeesPage = () => {
       {loading && (
         <Card>
           <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            Loading employees...
+            Loading Employees...
           </p>
         </Card>
       )}
@@ -214,7 +214,7 @@ const OrganizationEmployeesPage = () => {
           <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
             {searchQuery.trim()
               ? 'No employees match your search. Try a different term.'
-              : 'No employees found.'}
+              : 'No Employees Found.'}
           </p>
         </Card>
       )}

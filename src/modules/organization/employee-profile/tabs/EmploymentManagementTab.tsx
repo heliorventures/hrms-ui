@@ -232,9 +232,9 @@ export function EmploymentManagementTab({
           {bannerErr}
         </div>
       ) : null}
-      {orgLoading ? <p className="text-xs text-slate-500">Loading org directory...</p> : null}
+      {orgLoading ? <p className="text-xs text-slate-500">Loading Org Directory...</p> : null}
 
-      <InfoCard title="Employment status" subtitle="HR actions - impacts payroll and access">
+      <InfoCard title="Employment Status" subtitle="HR actions - impacts payroll and access">
         <div className="flex flex-wrap items-center gap-2">
           <EmploymentStatusBadge status={statusUi} />
           {statusUi !== 'ACTIVE' ? (
@@ -257,7 +257,7 @@ export function EmploymentManagementTab({
       <InfoCard
         title="Compensation"
         subtitle={`Last updated ${formatCompactDate(model.compensation.lastUpdatedAt)}`}
-        action={<Button type="button" size="sm" variant="primary" onClick={() => setSalaryOpen(true)}>Update salary</Button>}
+        action={<Button type="button" size="sm" variant="primary" onClick={() => setSalaryOpen(true)}>Update Salary</Button>}
       >
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <div className="rounded-2xl bg-slate-50/90 p-4 dark:bg-slate-800/50">
@@ -288,7 +288,7 @@ export function EmploymentManagementTab({
       </InfoCard>
 
       <InfoCard
-        title="Role & reporting"
+        title="Role & Reporting"
         subtitle="Updates department, designation, and reporting manager"
         action={<Button type="button" size="sm" variant="outline" onClick={() => setRoleOpen(true)}>Change</Button>}
       >
@@ -311,7 +311,7 @@ export function EmploymentManagementTab({
       </InfoCard>
 
       <InfoCard
-        title="Company assignments"
+        title="Company Assignments"
         subtitle="Leave policy, shift, location, grade"
         action={
           <Button type="button" size="sm" variant="outline" onClick={() => setAssignOpen(true)}>

@@ -14,13 +14,13 @@ const HrHomePage = () => {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">HR workbench</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          People administration and operational workflows. Tenant-wide configuration for roles,
+          People Administration and operational workflows. Tenant-wide configuration for roles,
           leave policies, and platform settings lives under <span className="font-mono text-xs">Admin</span>.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card title="People admin">
+        <Card title="People Admin">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Create and update employee records, assignments, and HR workflows.
           </p>
@@ -39,7 +39,7 @@ const HrHomePage = () => {
               <>
                 {' '}
                 Leave types, policies, and holidays are configured under{' '}
-                <span className="font-mono text-xs">Admin → Leave settings</span>.
+                <span className="font-mono text-xs">Admin → Leave Settings</span>.
               </>
             ) : (
               <>

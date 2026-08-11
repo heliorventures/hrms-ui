@@ -56,7 +56,7 @@ const TaxAdminFormsCard = ({
   onSlabSurchargeChange,
   onSlabToChange,
 }: TaxAdminFormsCardProps) => (
-  <Card title="HR admin - tax versions & slabs">
+  <Card title="HR Admin - Tax Versions & Slabs">
     <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
       Create tax configuration versions per fiscal year/regime, then add slabs for the selected version.
     </p>
@@ -64,15 +64,15 @@ const TaxAdminFormsCard = ({
       className="mb-6 flex flex-wrap items-end gap-3 border-b border-gray-200 pb-6 dark:border-gray-600"
       onSubmit={onConfigSubmit}
     >
-      <Input label="Fiscal year" value={configFiscalYear} onChange={(event) => onConfigFiscalYearChange(event.target.value)} />
-      <Input label="Regime label" value={configRegime} onChange={(event) => onConfigRegimeChange(event.target.value)} />
+      <Input label="Fiscal Year" value={configFiscalYear} onChange={(event) => onConfigFiscalYearChange(event.target.value)} />
+      <Input label="Regime Label" value={configRegime} onChange={(event) => onConfigRegimeChange(event.target.value)} />
       <Input label="Country" value={configCountry} onChange={(event) => onConfigCountryChange(event.target.value)} />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={configActive} onChange={(event) => onConfigActiveChange(event.target.checked)} />
         Active
       </label>
       <Button type="submit" variant="secondary" size="sm" disabled={configBusy}>
-        {configBusy ? 'Saving...' : 'Save tax version'}
+        {configBusy ? 'Saving...' : 'Save Tax Version'}
       </Button>
     </form>
     {configMessage && <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">{configMessage}</p>}
@@ -81,13 +81,13 @@ const TaxAdminFormsCard = ({
       Add slab for the selected configuration.
     </p>
     <form className="flex flex-wrap items-end gap-3" onSubmit={onSlabSubmit}>
-      <Input label="Income from" value={slabFrom} onChange={(event) => onSlabFromChange(event.target.value)} />
-      <Input label="Income to" value={slabTo} onChange={(event) => onSlabToChange(event.target.value)} />
-      <Input label="Tax rate %" value={slabRate} onChange={(event) => onSlabRateChange(event.target.value)} />
+      <Input label="Income From" value={slabFrom} onChange={(event) => onSlabFromChange(event.target.value)} />
+      <Input label="Income To" value={slabTo} onChange={(event) => onSlabToChange(event.target.value)} />
+      <Input label="Tax Rate %" value={slabRate} onChange={(event) => onSlabRateChange(event.target.value)} />
       <Input label="Surcharge %" value={slabSurcharge} onChange={(event) => onSlabSurchargeChange(event.target.value)} />
       <Input label="Cess %" value={slabCess} onChange={(event) => onSlabCessChange(event.target.value)} />
       <Button type="submit" variant="primary" size="sm" disabled={slabBusy}>
-        {slabBusy ? 'Saving...' : 'Save slab'}
+        {slabBusy ? 'Saving...' : 'Save Slab'}
       </Button>
     </form>
     {slabMessage && <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{slabMessage}</p>}

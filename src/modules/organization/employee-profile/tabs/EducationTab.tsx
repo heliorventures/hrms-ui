@@ -59,7 +59,7 @@ export function EducationTab({ initial, readOnly }: EducationTabProps) {
   if (entries.length === 0 && readOnly) {
     return (
       <EmptySection
-        title="No education on file"
+        title="No Education On File"
         description="Add degrees and institutions when HR records are available."
       />
     );
@@ -71,7 +71,7 @@ export function EducationTab({ initial, readOnly }: EducationTabProps) {
         <div className="flex justify-end">
           <Button type="button" size="sm" variant="primary" className="gap-1" onClick={openNew}>
             <Plus className="h-4 w-4" aria-hidden />
-            Add education
+            Add Education
           </Button>
         </div>
       ) : null}
@@ -115,7 +115,7 @@ export function EducationTab({ initial, readOnly }: EducationTabProps) {
       <Modal
         isOpen={modal}
         onClose={() => setModal(false)}
-        title={editing ? 'Edit education' : 'Add education'}
+        title={editing ? 'Edit Education' : 'Add Education'}
         size="md"
       >
         <div className="space-y-3">

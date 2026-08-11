@@ -40,9 +40,9 @@ const RolePermissionsPanel = ({
     </Card>
     <Card title="Permissions">
       {!selectedRoleId ? (
-        <p className="text-sm text-gray-500">Select a role.</p>
+        <p className="text-sm text-gray-500">Select A Role.</p>
       ) : loading ? (
-        <p className="text-sm text-gray-500">Loading permissions...</p>
+        <p className="text-sm text-gray-500">Loading Permissions...</p>
       ) : (
         <>
           <div className="max-h-[32rem] space-y-4 overflow-y-auto">
@@ -77,7 +77,7 @@ const RolePermissionsPanel = ({
           </div>
           <div className="mt-4">
             <Button type="button" variant="primary" onClick={onSave}>
-              Save permissions
+              Save Permissions
             </Button>
           </div>
         </>

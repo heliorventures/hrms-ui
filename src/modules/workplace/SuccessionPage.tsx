@@ -50,7 +50,7 @@ const SuccessionPage = () => {
       )}
       <Card title="Competencies">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.competencies?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.competencies.map((row) => (
@@ -64,12 +64,12 @@ const SuccessionPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No competencies in catalog.</p>
+          <p className="text-sm text-gray-500">No Competencies In Catalog.</p>
         )}
       </Card>
-      <Card title="Talent pools">
+      <Card title="Talent Pools">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.talentPools?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.talentPools.map((p) => (
@@ -82,7 +82,7 @@ const SuccessionPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No talent pools defined.</p>
+          <p className="text-sm text-gray-500">No Talent Pools Defined.</p>
         )}
       </Card>
     </div>

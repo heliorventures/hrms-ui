@@ -21,11 +21,11 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login, loading, error: authError } = useAuth();
   const { currentTenant, resolutionStatus, resolutionError } = useTenant();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaCode, setCaptchaCode] = useState(() => generateCaptcha());
-  const [errors, setErrors] = useState<{ email?: string; password?: string; captcha?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string; password?: string; captcha?: string }>({});
 
   const submitting = loading;
 
@@ -39,10 +39,10 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: { email?: string; password?: string; captcha?: string } = {};
+    const newErrors: { username?: string; password?: string; captcha?: string } = {};
 
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
+    if (!username.trim()) {
+      newErrors.username = 'Username is required';
     }
     if (!password) {
       newErrors.password = 'Password is required';
@@ -63,7 +63,7 @@ const LoginPage = () => {
     setErrors({});
 
     try {
-      await login(email.trim(), password, { tenantId: currentTenant.id });
+      await login(username.trim(), password, { tenantId: currentTenant.id });
       navigate('/dashboard', { replace: true });
     } catch {
       // AuthContext already populated `authError`; we just rotate the captcha
@@ -87,17 +87,17 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
-              label="Email"
-              type="email"
-              value={email}
+              label="Username"
+              type="text"
+              value={username}
               onChange={(e) => {
-                setEmail(e.target.value);
-                setErrors((err) => ({ ...err, email: undefined }));
+                setUsername(e.target.value);
+                setErrors((err) => ({ ...err, username: undefined }));
               }}
-              placeholder="e.g. john.doe@techcorp.com"
-              error={errors.email}
+              placeholder="Email, mobile number, or unique name"
+              error={errors.username}
               fullWidth
-              autoComplete="email"
+              autoComplete="username"
             />
 
             <div>
@@ -153,7 +153,7 @@ const LoginPage = () => {
                   type="button"
                   onClick={() => refreshCaptcha()}
                   className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                  title="Refresh captcha"
+                  title="Refresh Captcha"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path

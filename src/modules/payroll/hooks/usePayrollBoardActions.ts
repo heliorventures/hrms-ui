@@ -15,6 +15,9 @@ import type {
 } from '../payrollTypes';
 
 const now = new Date();
+const MONEY_PATTERN = /^(?:\d+|\d+\.\d{1,2}|\.\d{1,2})$/;
+const COMPONENT_CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,31}$/;
+const TAN_PATTERN = /^[A-Z]{4}\d{5}[A-Z]$/;
 
 const DEFAULT_CYCLE_FORM: PayrollCycleFormState = {
   newCycleName: defaultCycleName(),
@@ -28,6 +31,14 @@ const DEFAULT_ARREAR_FORM: PayrollArrearFormState = {
   arrearAmount: '',
   arrearReason: '',
 };
+
+const parseMoneyInput = (value: string): number => {
+  const trimmed = value.trim();
+  if (!MONEY_PATTERN.test(trimmed)) return NaN;
+  return Number(trimmed);
+};
+
+const isValidIsoDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
 
 interface PayrollBoardActionsParams {
   client: GraphQLClient;
@@ -64,16 +75,35 @@ export function usePayrollBoardActions({
   }, []);
 
   const savePayrollCompliance = useCallback(async () => {
-    setComplianceSaveBusy(true);
     setComplianceSaveError(null);
     setComplianceSaveOk(null);
+    const employerTan = complianceForm.employerTanInput.trim().toUpperCase();
+    const baseComponentCode = complianceForm.baseComponentInput.trim().toUpperCase();
+    const arrearComponentCode = complianceForm.arrearComponentInput.trim().toUpperCase();
+    if (employerTan && !TAN_PATTERN.test(employerTan)) {
+      setComplianceSaveError('Employer TAN must match the Indian TAN format, for example ABCD12345E.');
+      return;
+    }
+    if (baseComponentCode && !COMPONENT_CODE_PATTERN.test(baseComponentCode)) {
+      setComplianceSaveError('Base salary component code must start with a letter and use A-Z, 0-9, or underscore.');
+      return;
+    }
+    if (arrearComponentCode && !COMPONENT_CODE_PATTERN.test(arrearComponentCode)) {
+      setComplianceSaveError('Arrear component code must start with a letter and use A-Z, 0-9, or underscore.');
+      return;
+    }
+    if (baseComponentCode && arrearComponentCode && baseComponentCode === arrearComponentCode) {
+      setComplianceSaveError('Base and arrear component codes must be different.');
+      return;
+    }
+    setComplianceSaveBusy(true);
     try {
       await client.request(UpsertPayrollComplianceSettingDocument, {
         input: {
-          employerTan: complianceForm.employerTanInput.trim() || null,
+          employerTan: employerTan || null,
           employerLegalName: complianceForm.employerLegalNameInput.trim() || null,
-          baseSalaryComponentCode: complianceForm.baseComponentInput.trim() || null,
-          arrearSalaryComponentCode: complianceForm.arrearComponentInput.trim() || null,
+          baseSalaryComponentCode: baseComponentCode || null,
+          arrearSalaryComponentCode: arrearComponentCode || null,
           payslipHeaderTitle: complianceForm.payslipHeaderInput.trim() || null,
           payslipLogoFileStorageId: complianceForm.payslipLogoIdInput.trim() || null,
         },
@@ -90,15 +120,34 @@ export function usePayrollBoardActions({
   }, [client, complianceForm, reload]);
 
   const createCycle = useCallback(async () => {
-    setCreateBusy(true);
     setCreateError(null);
     setCreateOk(null);
+    const cycleName = cycleForm.newCycleName.trim();
+    const cycleMonth = Number(cycleForm.newCycleMonth);
+    const cycleYear = Number(cycleForm.newCycleYear);
+    if (!cycleName) {
+      setCreateError('Cycle name is required.');
+      return;
+    }
+    if (!Number.isInteger(cycleMonth) || cycleMonth < 1 || cycleMonth > 12) {
+      setCreateError('Payroll month must be between 1 and 12.');
+      return;
+    }
+    if (!Number.isInteger(cycleYear) || cycleYear < 2000 || cycleYear > 2100) {
+      setCreateError('Payroll year must be between 2000 and 2100.');
+      return;
+    }
+    if (cycleForm.newCyclePayDate && !isValidIsoDate(cycleForm.newCyclePayDate)) {
+      setCreateError('Payment date must be a valid date.');
+      return;
+    }
+    setCreateBusy(true);
     try {
       await client.request(CreatePayrollCycleDocument, {
         input: {
-          name: cycleForm.newCycleName.trim(),
-          month: cycleForm.newCycleMonth,
-          year: cycleForm.newCycleYear,
+          name: cycleName,
+          month: cycleMonth,
+          year: cycleYear,
           ...(cycleForm.newCyclePayDate ? { paymentDate: cycleForm.newCyclePayDate } : {}),
         },
       });
@@ -107,8 +156,8 @@ export function usePayrollBoardActions({
           id: '',
           name: '',
           status: 'DRAFT',
-          month: cycleForm.newCycleMonth,
-          year: cycleForm.newCycleYear,
+          month: cycleMonth,
+          year: cycleYear,
         })}.`
       );
       await reload();
@@ -120,15 +169,30 @@ export function usePayrollBoardActions({
   }, [client, cycleForm, reload]);
 
   const createArrear = useCallback(async () => {
-    setArrearBusy(true);
     setArrearError(null);
     setArrearOk(null);
+    const employeeId = arrearForm.arrearEmployeeId.trim();
+    const amount = parseMoneyInput(arrearForm.arrearAmount);
+    const reason = arrearForm.arrearReason.trim();
+    if (!employeeId) {
+      setArrearError('Select an employee for the arrear.');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setArrearError('Arrear amount must be a positive amount with up to 2 decimal places.');
+      return;
+    }
+    if (!reason) {
+      setArrearError('Arrear reason is required for payroll audit history.');
+      return;
+    }
+    setArrearBusy(true);
     try {
       await client.request(CreatePayrollArrearDocument, {
         input: {
-          employeeId: arrearForm.arrearEmployeeId.trim(),
+          employeeId,
           amount: arrearForm.arrearAmount.trim(),
-          reason: arrearForm.arrearReason.trim() || null,
+          reason,
         },
       });
       setArrearOk('PENDING arrear saved — it will be paid in the next run with an ARREAR line.');
@@ -143,6 +207,10 @@ export function usePayrollBoardActions({
 
   const runPayroll = useCallback(
     async (payrollCycleId: string) => {
+      const confirmed = window.confirm(
+        'Run payroll for this cycle now? This calculates salary, arrears, and processed payslips for the cycle.'
+      );
+      if (!confirmed) return;
       setRunBusy(payrollCycleId);
       setRunError(null);
       setRunOk(null);

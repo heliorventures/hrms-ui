@@ -69,13 +69,13 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Submit travel request">
+    <Modal isOpen={isOpen} onClose={onClose} title="Submit Travel Request">
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         {submitError && <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input
-            label="From location"
+            label="From Location"
             type="text"
             name="fromLocation"
             value={formData.fromLocation}
@@ -85,7 +85,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
           />
 
           <Input
-            label="To location"
+            label="To Location"
             type="text"
             name="toLocation"
             value={formData.toLocation}
@@ -97,7 +97,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input
-            label="From date"
+            label="From Date"
             type="date"
             name="fromDate"
             value={formData.fromDate}
@@ -108,7 +108,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
           />
 
           <Input
-            label="To date"
+            label="To Date"
             type="date"
             name="toDate"
             value={formData.toDate}
@@ -120,7 +120,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
         </div>
 
         <Input
-          label="Estimated cost (₹)"
+          label="Estimated Cost (₹)"
           type="number"
           name="estimatedCost"
           value={formData.estimatedCost}
@@ -154,7 +154,7 @@ const SubmitTravelModal = ({ isOpen, onClose, onSubmitted }: SubmitTravelModalPr
 
         <div className="flex gap-3">
           <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? 'Submitting…' : 'Submit request'}
+            {submitting ? 'Submitting...' : 'Submit Request'}
           </Button>
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel

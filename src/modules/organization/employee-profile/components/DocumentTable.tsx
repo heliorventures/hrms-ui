@@ -22,7 +22,7 @@ export function DocumentTable({ rows, isHr, onPreview, onApprove, onReject }: Do
         <thead className="bg-slate-50/90 text-xs font-semibold uppercase text-slate-500 dark:bg-slate-900/80 dark:text-slate-400">
           <tr>
             <th className="px-4 py-3">Document</th>
-            <th className="hidden px-4 py-3 sm:table-cell">Uploaded by</th>
+            <th className="hidden px-4 py-3 sm:table-cell">Uploaded By</th>
             <th className="hidden px-4 py-3 md:table-cell">Date</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3 text-right">Actions</th>

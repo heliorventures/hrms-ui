@@ -20,7 +20,7 @@ const LeaveBalancesSection = ({ model }: LeaveBalancesSectionProps) => (
 );
 
 const ProvisionBalancesCard = ({ model }: LeaveBalancesSectionProps) => (
-  <Card title="Provision from policies (company-wide)">
+  <Card title="Provision From Policies (Company-Wide)">
     <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
       Creates or updates leave balance rows for every active employee using each leave type policy.
       Existing used, pending, and carried-forward values are kept.
@@ -50,7 +50,7 @@ const ProvisionBalancesCard = ({ model }: LeaveBalancesSectionProps) => (
 const BalanceFormCard = ({ model }: LeaveBalancesSectionProps) => {
   const form = model.balanceForm;
   return (
-    <Card title="Upsert balance row">
+    <Card title="Upsert Balance Row">
       <p className="mb-3 text-xs text-gray-500">
         Sets entitled, used, pending, and carried-forward days. Server recomputes available balance.
       </p>
@@ -68,12 +68,12 @@ const BalanceFormCard = ({ model }: LeaveBalancesSectionProps) => {
           onChange={(leaveTypeId) => model.setBalanceForm({ ...form, leaveTypeId })}
         />
         <Input label="Year" value={form.year} onChange={(e) => model.setBalanceForm({ ...form, year: e.target.value })} fullWidth required />
-        <Input label="Entitled days" value={form.entitled} onChange={(e) => model.setBalanceForm({ ...form, entitled: e.target.value })} fullWidth required />
-        <Input label="Used days" value={form.used} onChange={(e) => model.setBalanceForm({ ...form, used: e.target.value })} fullWidth required />
-        <Input label="Pending days" value={form.pending} onChange={(e) => model.setBalanceForm({ ...form, pending: e.target.value })} fullWidth required />
-        <Input label="Carried forward" value={form.carried} onChange={(e) => model.setBalanceForm({ ...form, carried: e.target.value })} fullWidth required />
+        <Input label="Entitled Days" value={form.entitled} onChange={(e) => model.setBalanceForm({ ...form, entitled: e.target.value })} fullWidth required />
+        <Input label="Used Days" value={form.used} onChange={(e) => model.setBalanceForm({ ...form, used: e.target.value })} fullWidth required />
+        <Input label="Pending Days" value={form.pending} onChange={(e) => model.setBalanceForm({ ...form, pending: e.target.value })} fullWidth required />
+        <Input label="Carried Forward" value={form.carried} onChange={(e) => model.setBalanceForm({ ...form, carried: e.target.value })} fullWidth required />
         <Button type="submit" variant="primary">
-          Save balance
+          Save Balance
         </Button>
       </form>
     </Card>
@@ -83,7 +83,7 @@ const BalanceFormCard = ({ model }: LeaveBalancesSectionProps) => {
 const AdjustmentFormCard = ({ model }: LeaveBalancesSectionProps) => {
   const form = model.adjustmentForm;
   return (
-    <Card title="Adjust entitlement">
+    <Card title="Adjust Entitlement">
       <p className="mb-3 text-xs text-gray-500">
         Adds days to an existing balance row and can credit available balance by the same delta.
       </p>
@@ -101,7 +101,7 @@ const AdjustmentFormCard = ({ model }: LeaveBalancesSectionProps) => {
           onChange={(leaveTypeId) => model.setAdjustmentForm({ ...form, leaveTypeId })}
         />
         <Input label="Year" value={form.year} onChange={(e) => model.setAdjustmentForm({ ...form, year: e.target.value })} fullWidth required />
-        <Input label="Entitled delta (+/- decimal)" value={form.delta} onChange={(e) => model.setAdjustmentForm({ ...form, delta: e.target.value })} fullWidth required />
+        <Input label="Entitled Delta (+/- Decimal)" value={form.delta} onChange={(e) => model.setAdjustmentForm({ ...form, delta: e.target.value })} fullWidth required />
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

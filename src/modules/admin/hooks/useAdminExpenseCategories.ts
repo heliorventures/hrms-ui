@@ -338,7 +338,7 @@ export function useAdminExpenseCategories() {
 
   const deletePolicy = async (policy: ExpensePolicyRow) => {
     const ok = await confirm({
-      title: 'Delete expense policy?',
+      title: 'Delete Expense Policy?',
       message:
         'Submit-time caps and receipt rules are resolved from policies for each employee. Removing a row changes enforcement immediately.',
       confirmLabel: 'Delete',

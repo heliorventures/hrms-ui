@@ -13,13 +13,13 @@ const AdminExpenseCategoriesPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expense categories</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expense Categories</h1>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Types of claims employees choose when submitting expenses. Requires{' '}
             <span className="font-mono text-xs">expense:manage</span> (HR / admin).
           </p>
         </div>
-        <Button onClick={model.openNewCategory}>Add category</Button>
+        <Button onClick={model.openNewCategory}>Add Category</Button>
       </div>
 
       {model.error ? (
@@ -28,7 +28,7 @@ const AdminExpenseCategoriesPage = () => {
         </Card>
       ) : null}
 
-      <Card title="Configured categories">
+      <Card title="Configured Categories">
         <ExpenseCategoriesTable
           rows={model.rows}
           loading={model.loading}

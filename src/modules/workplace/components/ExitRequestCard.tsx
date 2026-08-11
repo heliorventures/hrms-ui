@@ -26,7 +26,7 @@ const ExitRequestCard = ({
   onSepTypeChange,
   onSubmit,
 }: ExitRequestCardProps) => (
-  <Card title="New exit request">
+  <Card title="New Exit Request">
     <div className="space-y-4">
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -77,7 +77,7 @@ const ExitRequestCard = ({
         />
       </div>
       <Button variant="primary" disabled={submitBusy} onClick={onSubmit}>
-        {submitBusy ? 'Submitting...' : 'Submit request'}
+        {submitBusy ? 'Submitting...' : 'Submit Request'}
       </Button>
     </div>
   </Card>

@@ -9,8 +9,8 @@ interface TaxComputationsCardProps {
 }
 
 const TaxComputationsCard = ({ computations, error, loading }: TaxComputationsCardProps) => (
-  <Card title="Your tax computations">
-    {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading declarations...</p>}
+  <Card title="Your Tax Computations">
+    {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading Declarations...</p>}
     {error && !loading && <p className="text-sm text-amber-800 dark:text-amber-200">{error}</p>}
     {!loading && !error && computations && computations.length > 0 && (
       <Table
@@ -26,14 +26,14 @@ const TaxComputationsCard = ({ computations, error, loading }: TaxComputationsCa
           },
           {
             key: 'final',
-            label: 'Est. tax',
+            label: 'Est. Tax',
             render: (row) => (row.finalTax ? formatTaxCurrency(Number(row.finalTax)) : '-'),
           },
         ]}
       />
     )}
     {!loading && !error && computations && computations.length === 0 && (
-      <p className="text-sm text-gray-500 dark:text-gray-400">No saved computations yet.</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">No Saved Computations Yet.</p>
     )}
   </Card>
 );

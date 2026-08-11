@@ -75,13 +75,13 @@ const PayrollCyclesCard = ({
           className="w-28"
         />
         <Input
-          label="Payment date (optional)"
+          label="Payment Date (Optional)"
           type="date"
           value={form.newCyclePayDate}
           onChange={(event) => onChange('newCyclePayDate', event.target.value)}
         />
         <Button type="button" variant="primary" size="sm" disabled={createBusy} onClick={onCreate}>
-          {createBusy ? 'Creating…' : 'Create draft cycle'}
+          {createBusy ? 'Creating...' : 'Create Draft Cycle'}
         </Button>
       </div>
       {createError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{createError}</p>}
@@ -103,8 +103,8 @@ const PayrollCyclesCard = ({
     <Table
       data={rows}
       loading={loading}
-      loadingMessage="Loading payroll cycles…"
-      emptyMessage="No payroll cycles found."
+      loadingMessage="Loading Payroll Cycles..."
+      emptyMessage="No Payroll Cycles Found."
       keyExtractor={(row) => row.id}
       columns={[
         { key: 'name', label: 'Cycle', render: (row: PayrollCycleRow) => row.name },
@@ -116,7 +116,7 @@ const PayrollCyclesCard = ({
         },
         {
           key: 'paymentDate',
-          label: 'Payment date',
+          label: 'Payment Date',
           render: (row: PayrollCycleRow) => formatPayrollPaymentDate(row.paymentDate),
         },
         {

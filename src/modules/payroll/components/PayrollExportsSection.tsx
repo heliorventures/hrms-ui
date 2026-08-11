@@ -34,7 +34,7 @@ const monthlyExportCards: {
 }[] = [
   {
     key: 'tds',
-    title: 'India — monthly TDS summary (CSV)',
+    title: 'India — Monthly TDS Summary (CSV)',
     buttonLabel: 'Download CSV',
     busyLabel: 'Downloading…',
     description: (
@@ -48,7 +48,7 @@ const monthlyExportCards: {
   },
   {
     key: 'pfEsi',
-    title: 'India — PF / ESI summary (CSV)',
+    title: 'India — PF / ESI Summary (CSV)',
     buttonLabel: 'Download PF/ESI CSV',
     busyLabel: 'Downloading…',
     usesSharedPeriod: true,
@@ -57,7 +57,7 @@ const monthlyExportCards: {
   },
   {
     key: 'form24q',
-    title: 'India — Form 24Q salary payment month (stub CSV)',
+    title: 'India — Form 24Q Salary Payment Month (Stub CSV)',
     buttonLabel: 'Download Form 24Q month stub CSV',
     busyLabel: 'Downloading…',
     description: (
@@ -72,7 +72,7 @@ const monthlyExportCards: {
   },
   {
     key: 'epfEcr',
-    title: 'India — EPFO ECR contribution prep (stub CSV)',
+    title: 'India — EPFO ECR Contribution Prep (Stub CSV)',
     buttonLabel: 'Download EPF ECR prep stub CSV',
     busyLabel: 'Downloading…',
     description: (
@@ -86,7 +86,7 @@ const monthlyExportCards: {
   },
   {
     key: 'bank',
-    title: 'Payroll — bank transfer list (CSV)',
+    title: 'Payroll — Bank Transfer List (CSV)',
     buttonLabel: 'Download bank transfer CSV',
     busyLabel: 'Downloading…',
     description: (
@@ -102,7 +102,7 @@ const monthlyExportCards: {
   },
   {
     key: 'neft',
-    title: 'India — bulk NEFT credit prep (CSV)',
+    title: 'India — Bulk NEFT Credit Prep (CSV)',
     buttonLabel: 'Download bulk NEFT prep CSV',
     busyLabel: 'Downloading…',
     description:
@@ -180,7 +180,7 @@ const PayrollExportsSection = ({
       );
     })}
 
-    <Card title="India FY — employee payroll totals (CSV)">
+    <Card title="India FY — Employee Payroll Totals (CSV)">
       <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
         Aggregates payslips in payroll cycles whose India financial year matches the selected start
         year (April through the following March). Sums gross, deductions, net, TDS, PF/ESI

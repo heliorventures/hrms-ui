@@ -68,7 +68,7 @@ const ProfileTab = ({ data }: ProfileTabProps) => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No education details.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Education Details.</p>
         )}
       </Card>
 
@@ -111,7 +111,7 @@ const ProfileTab = ({ data }: ProfileTabProps) => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No address added.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Address Added.</p>
         )}
       </Card>
 

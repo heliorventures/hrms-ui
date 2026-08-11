@@ -102,7 +102,7 @@ export const EmploymentActionModals = ({
     <ConfirmationModal
       isOpen={terminateOpen}
       onClose={onTerminateClose}
-      title="Terminate employment"
+      title="Terminate Employment"
       warning="This action impacts payroll and access. Ensure offboarding tasks are coordinated."
       confirmLabel="Confirm termination"
       onConfirm={onTerminateConfirm}
@@ -115,7 +115,7 @@ export const EmploymentActionModals = ({
           </p>
         </div>
         <Input
-          label="Effective date"
+          label="Effective Date"
           type="date"
           value={termEffective}
           onChange={(event: ChangeEvent<HTMLInputElement>) => onTermEffectiveChange(event.target.value)}
@@ -135,10 +135,10 @@ export const EmploymentActionModals = ({
       </div>
     </ConfirmationModal>
 
-    <Modal isOpen={salaryOpen} onClose={onSalaryClose} title="Update salary" size="md">
+    <Modal isOpen={salaryOpen} onClose={onSalaryClose} title="Update Salary" size="md">
       <div className="space-y-3">
         <Input
-          label="New annual base"
+          label="New Annual Base"
           value={newSalaryAnnual}
           onChange={(event: ChangeEvent<HTMLInputElement>) => onNewSalaryAnnualChange(event.target.value)}
           fullWidth
@@ -148,7 +148,7 @@ export const EmploymentActionModals = ({
           {pctHike.toFixed(2)}%
         </p>
         <Input
-          label="Effective date"
+          label="Effective Date"
           type="date"
           value={salaryEffective}
           onChange={(event: ChangeEvent<HTMLInputElement>) => onSalaryEffectiveChange(event.target.value)}
@@ -176,7 +176,7 @@ export const EmploymentActionModals = ({
       </div>
     </Modal>
 
-    <Modal isOpen={roleOpen} onClose={onRoleClose} title="Update role & org" size="md">
+    <Modal isOpen={roleOpen} onClose={onRoleClose} title="Update Role & Org" size="md">
       <div className="space-y-3">
         <Select
           label="Department"
@@ -184,7 +184,7 @@ export const EmploymentActionModals = ({
           fullWidth
           onChange={(event: ChangeEvent<HTMLSelectElement>) => onDepartmentChange(event.target.value)}
           options={[
-            { value: '', label: 'Keep unchanged' },
+            { value: '', label: 'Keep Unchanged' },
             ...departments.map((department) => ({ value: department.id, label: department.name })),
           ]}
         />
@@ -194,7 +194,7 @@ export const EmploymentActionModals = ({
           fullWidth
           onChange={(event: ChangeEvent<HTMLSelectElement>) => onDesignationChange(event.target.value)}
           options={[
-            { value: '', label: 'Keep unchanged' },
+            { value: '', label: 'Keep Unchanged' },
             ...designations.map((designation) => ({
               value: designation.id,
               label: designation.title,
@@ -202,18 +202,18 @@ export const EmploymentActionModals = ({
           ]}
         />
         <Select
-          label="Reporting manager"
+          label="Reporting Manager"
           value={managerChoice}
           fullWidth
           onChange={(event: ChangeEvent<HTMLSelectElement>) => onManagerChoiceChange(event.target.value)}
           options={[
-            { value: '__NOCHANGE__', label: 'No change' },
-            { value: '__CLEAR__', label: 'No manager' },
+            { value: '__NOCHANGE__', label: 'No Change' },
+            { value: '__CLEAR__', label: 'No Manager' },
             ...managerOptions,
           ]}
         />
         <Input
-          label="Effective date (record only)"
+          label="Effective Date (Record Only)"
           type="date"
           value={roleEffective}
           onChange={(event: ChangeEvent<HTMLInputElement>) => onRoleEffectiveChange(event.target.value)}
@@ -230,7 +230,7 @@ export const EmploymentActionModals = ({
       </div>
     </Modal>
 
-    <Modal isOpen={assignOpen} onClose={onAssignClose} title="Company assignments" size="md">
+    <Modal isOpen={assignOpen} onClose={onAssignClose} title="Company Assignments" size="md">
       <div className="space-y-3">
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Assignment entities are not exposed on this mutation yet. Use workforce admin screens when available.

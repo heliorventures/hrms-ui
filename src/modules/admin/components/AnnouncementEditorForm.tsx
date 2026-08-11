@@ -105,13 +105,13 @@ const AnnouncementEditorForm = ({
       </select>
     </div>
     <Input
-      label="Location id (optional UUID)"
+      label="Location ID (Optional UUID)"
       value={locationId}
       onChange={(e) => onLocationChange(e.target.value)}
       fullWidth
     />
     <Input
-      label="Target role code"
+      label="Target Role Code"
       value={roleCode}
       onChange={(e) => onRoleCodeChange(e.target.value)}
       fullWidth
@@ -154,7 +154,7 @@ const AnnouncementEditorForm = ({
       />
     </div>
     <Button type="submit" variant="primary" disabled={busy}>
-      {busy ? 'Saving...' : isEditing ? 'Update announcement' : 'Create announcement'}
+      {busy ? 'Saving...' : isEditing ? 'Update Announcement' : 'Create Announcement'}
     </Button>
   </form>
 );

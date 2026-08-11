@@ -54,9 +54,9 @@ const CompensationPage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="Review cycles">
+      <Card title="Review Cycles">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.compensationReviewCycles?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.compensationReviewCycles.map((c) => (
@@ -74,12 +74,12 @@ const CompensationPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No compensation review cycles.</p>
+          <p className="text-sm text-gray-500">No Compensation Review Cycles.</p>
         )}
       </Card>
-      <Card title="Salary bands">
+      <Card title="Salary Bands">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.salaryBands?.length ? (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
@@ -109,7 +109,7 @@ const CompensationPage = () => {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No salary bands defined.</p>
+          <p className="text-sm text-gray-500">No Salary Bands Defined.</p>
         )}
       </Card>
     </div>

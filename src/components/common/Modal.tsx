@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useId, useRef } from 'react';
+import { UI_A11Y_TEXT } from '../../constants/uiText';
 
 interface ModalProps {
   isOpen: boolean;
@@ -66,7 +67,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
             type="button"
             onClick={onClose}
             className="rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-            aria-label="Close modal"
+            aria-label={UI_A11Y_TEXT.closeModal}
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

@@ -18,7 +18,8 @@ extend type Mutation {
 
 type TenantDirectoryUser {
   id: ID!
-  email: String!
+  username: String!
+  email: String
   isActive: Boolean!
 }
 

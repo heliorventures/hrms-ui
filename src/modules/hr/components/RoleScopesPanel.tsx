@@ -43,11 +43,11 @@ const RoleScopesPanel = ({
         Rows map to <span className="font-mono">permission_scope</span> for list filters.
       </p>
     </Card>
-    <Card title="Scope rows">
+    <Card title="Scope Rows">
       {!selectedRoleId ? (
-        <p className="text-sm text-gray-500">Select a role.</p>
+        <p className="text-sm text-gray-500">Select A Role.</p>
       ) : loading ? (
-        <p className="text-sm text-gray-500">Loading scopes...</p>
+        <p className="text-sm text-gray-500">Loading Scopes...</p>
       ) : (
         <>
           <div className="overflow-x-auto">
@@ -109,10 +109,10 @@ const RoleScopesPanel = ({
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={onAddRow}>
-              Add row
+              Add Row
             </Button>
             <Button type="button" variant="primary" onClick={onSave}>
-              Save scopes
+              Save Scopes
             </Button>
           </div>
         </>

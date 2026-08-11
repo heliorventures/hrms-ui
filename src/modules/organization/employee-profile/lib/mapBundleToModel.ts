@@ -234,7 +234,7 @@ export function mapBundleToEmployeeProfileModel(
     const r = bundle.employmentHistoryRecords[0];
     recentActivity.push({
       id: 'act-salary',
-      label: 'Compensation history updated',
+      label: 'Compensation History Updated',
       at: typeof r.updatedAt === 'string' ? r.updatedAt : String(r.updatedAt),
     });
   }

@@ -96,7 +96,7 @@ const GrievancePage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="File a case">
+      <Card title="File A Case">
         <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
           {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
           <div>
@@ -130,13 +130,13 @@ const GrievancePage = () => {
             />
           </div>
           <Button type="submit" disabled={submitting || loading}>
-            {submitting ? 'Submitting…' : 'Submit case'}
+            {submitting ? 'Submitting...' : 'Submit Case'}
           </Button>
         </form>
       </Card>
       <Card title="Cases">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : cases.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {cases.map((x) => (
@@ -152,7 +152,7 @@ const GrievancePage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No cases.</p>
+          <p className="text-sm text-gray-500">No Cases.</p>
         )}
       </Card>
     </div>

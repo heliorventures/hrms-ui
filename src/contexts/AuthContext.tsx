@@ -91,7 +91,7 @@ interface AuthContextType {
    * Enable with `VITE_ENABLE_DEV_ROLE_SWITCH=true` in dev.
    */
   switchRole: (role: UserRole) => void;
-  login: (email: string, password: string, opts?: LoginOptions) => Promise<void>;
+  login: (username: string, password: string, opts?: LoginOptions) => Promise<void>;
   loginOps: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   logoutOps: () => Promise<void>;
@@ -115,10 +115,11 @@ function devRoleSwitchEnabled(): boolean {
 
 /** User shape from client JWT claims when no separate profile API has run yet. */
 function userFromClientTokenPair(pair: TokenPair, role: UserRole): User {
+  const displayName = pair.username ?? pair.email;
   return {
     id: pair.userId,
     tenantId: pair.tenantId ?? '',
-    name: ((pair.email ?? '') as string).split('@')[0],
+    name: displayName.split('@')[0],
     email: pair.email,
     role,
     employeeId: '',
@@ -286,7 +287,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [clientSession?.expiresAtMs, refreshClientSession, user]);
 
   const login = useCallback(
-    async (email: string, password: string, opts: LoginOptions = {}) => {
+    async (username: string, password: string, opts: LoginOptions = {}) => {
       setError(null);
 
       const tenant = opts.tenantId ?? defaultTenantId();
@@ -296,12 +297,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       setLoading(true);
       try {
-        const pair = await loginClient(email.trim(), password, tenant);
+        const pair = await loginClient(username.trim(), password, tenant);
         applyTokens(pair);
       } catch (e) {
         if (e instanceof AuthError) {
           const friendly =
-            e.code === 'UNAUTHENTICATED' ? 'Email or password is incorrect.' : graphQlUserMessage(e);
+            e.code === 'UNAUTHENTICATED' ? 'Username or password is incorrect.' : graphQlUserMessage(e);
           setError(friendly);
         } else if (e instanceof TypeError) {
           setError(

@@ -112,9 +112,9 @@ const BenefitsPage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="My enrollments">
+      <Card title="My Enrollments">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : enrollments.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {enrollments.map((row) => {
@@ -148,12 +148,12 @@ const BenefitsPage = () => {
             })}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No enrollments yet — pick a plan below.</p>
+          <p className="text-sm text-gray-500">No Enrollments Yet - Pick A Plan Below.</p>
         )}
       </Card>
-      <Card title="Benefit types">
+      <Card title="Benefit Types">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.benefitTypes?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.benefitTypes.map((t) => (
@@ -167,12 +167,12 @@ const BenefitsPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No benefit types configured.</p>
+          <p className="text-sm text-gray-500">No Benefit Types Configured.</p>
         )}
       </Card>
-      <Card title="Active plans">
+      <Card title="Active Plans">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.benefitPlans?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.benefitPlans.map((p) => {
@@ -206,7 +206,7 @@ const BenefitsPage = () => {
             })}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No active plans.</p>
+          <p className="text-sm text-gray-500">No Active Plans.</p>
         )}
       </Card>
     </div>

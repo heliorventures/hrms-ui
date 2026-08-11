@@ -37,18 +37,21 @@ const UserRolesPanel = ({
               }`}
               onClick={() => onSelectUser(user.id)}
             >
-              <span className="font-medium text-gray-900 dark:text-white">{user.email}</span>
-              <span className="text-xs text-gray-500">{user.isActive ? 'Active' : 'Inactive'}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{user.username}</span>
+              <span className="text-xs text-gray-500">
+                {user.email ? `${user.email} - ` : ''}
+                {user.isActive ? 'Active' : 'Inactive'}
+              </span>
             </button>
           </li>
         ))}
       </ul>
     </Card>
-    <Card title={selectedUserId ? 'Assigned roles' : 'Select a user'}>
+    <Card title={selectedUserId ? 'Assigned Roles' : 'Select A User'}>
       {!selectedUserId ? (
-        <p className="text-sm text-gray-500">Choose a user on the left.</p>
+        <p className="text-sm text-gray-500">Choose A User On The Left.</p>
       ) : loading ? (
-        <p className="text-sm text-gray-500">Loading roles...</p>
+        <p className="text-sm text-gray-500">Loading Roles...</p>
       ) : (
         <>
           <div className="max-h-[22rem] space-y-2 overflow-y-auto">
@@ -66,7 +69,7 @@ const UserRolesPanel = ({
           </div>
           <div className="mt-4">
             <Button type="button" variant="primary" onClick={onSave}>
-              Save user roles
+              Save User Roles
             </Button>
           </div>
         </>

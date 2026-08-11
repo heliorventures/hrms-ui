@@ -131,7 +131,7 @@ export function DocumentsTab({
     return (
       <>
         <EmptySection
-          title="No documents yet"
+          title="No Documents Yet"
           description="Upload PAN, Aadhaar, offer letters, or appraisal letters. Employee uploads require HR approval."
           actionLabel="Upload document"
           onAction={() => setUploadOpen(true)}

@@ -62,7 +62,7 @@ const OrganizationDocumentsPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Organization documents</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Organization Documents</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Policy types and your uploaded files for this tenant.
         </p>
@@ -74,9 +74,9 @@ const OrganizationDocumentsPage = () => {
         </Card>
       )}
 
-      <Card title="Document types">
+      <Card title="Document Types">
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         ) : types.length ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {types.map((t) => (
@@ -95,13 +95,13 @@ const OrganizationDocumentsPage = () => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No document types configured.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Document Types Configured.</p>
         )}
       </Card>
 
-      <Card title="Your documents">
+      <Card title="Your Documents">
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         ) : docs.length ? (
           <Table
             data={docs}
@@ -131,7 +131,7 @@ const OrganizationDocumentsPage = () => {
             ]}
           />
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No documents uploaded yet.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Documents Uploaded Yet.</p>
         )}
       </Card>
     </div>

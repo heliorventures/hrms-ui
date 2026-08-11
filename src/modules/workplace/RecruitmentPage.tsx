@@ -60,9 +60,9 @@ const RecruitmentPage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="Job postings">
+      <Card title="Job Postings">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.jobPostings?.length ? (
           <ul className="space-y-3">
             {data.jobPostings.map((j) => (
@@ -82,12 +82,12 @@ const RecruitmentPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No job postings.</p>
+          <p className="text-sm text-gray-500">No Job Postings.</p>
         )}
       </Card>
       <Card title="Applications">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.applications?.length ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.applications.map((a) => (
@@ -101,7 +101,7 @@ const RecruitmentPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No applications.</p>
+          <p className="text-sm text-gray-500">No Applications.</p>
         )}
       </Card>
     </div>

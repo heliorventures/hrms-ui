@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { canAccessTenantPath } from '../../auth/navAccess';
+import { UI_A11Y_TEXT, UI_EMPTY_TEXT } from '../../constants/uiText';
 import { useAuth } from '../../contexts/AuthContext';
 import { NAV_CATALOG, type NavCatalogEntry } from '../../navigation/navCatalog';
 import { useCommandPalette } from './CommandPaletteContext';
@@ -120,7 +121,7 @@ const CommandPalette = () => {
       className="fixed inset-0 z-[100] flex items-start justify-center bg-slate-900/50 px-3 pt-[12vh] backdrop-blur-sm sm:pt-[10vh]"
       role="dialog"
       aria-modal="true"
-      aria-label="Command palette"
+      aria-label={UI_A11Y_TEXT.commandPalette}
     >
       <div
         ref={panelRef}
@@ -161,7 +162,7 @@ const CommandPalette = () => {
         >
           {rows.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-slate-500">
-              No matches. Try other words.
+              {UI_EMPTY_TEXT.matches}
             </p>
           ) : null}
 

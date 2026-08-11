@@ -22,7 +22,7 @@ const PayrollComplianceCard = ({
   onChange,
   onSave,
 }: PayrollComplianceCardProps) => (
-  <Card title="Employer branding & statutory (India)">
+  <Card title="Employer Branding & Statutory (India)">
     <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
       Employer TAN / name drive Form 24Q / Form 16 CSV columns (empty → env fallback on the
       payroll process). <strong className="font-medium">Pay run</strong> posts one line against
@@ -43,7 +43,7 @@ const PayrollComplianceCard = ({
         className="font-mono"
       />
       <Input
-        label="Employer legal name"
+        label="Employer Legal Name"
         value={form.employerLegalNameInput}
         onChange={(event) => onChange('employerLegalNameInput', event.target.value)}
         placeholder="Registered name as per TAN"
@@ -51,28 +51,28 @@ const PayrollComplianceCard = ({
         className="min-w-[16rem]"
       />
       <Input
-        label="Base earning code"
+        label="Base Earning Code"
         value={form.baseComponentInput}
         onChange={(event) => onChange('baseComponentInput', event.target.value)}
         placeholder="BASIC"
         className="font-mono"
       />
       <Input
-        label="Arrear earning code"
+        label="Arrear Earning Code"
         value={form.arrearComponentInput}
         onChange={(event) => onChange('arrearComponentInput', event.target.value)}
         placeholder="ARREAR"
         className="font-mono"
       />
       <Input
-        label="Payslip header (display name)"
+        label="Payslip Header (Display Name)"
         value={form.payslipHeaderInput}
         onChange={(event) => onChange('payslipHeaderInput', event.target.value)}
         placeholder="Company name as on payslip"
         className="min-w-[14rem]"
       />
       <Input
-        label="Logo file UUID (optional)"
+        label="Logo File UUID (Optional)"
         value={form.payslipLogoIdInput}
         onChange={(event) => onChange('payslipLogoIdInput', event.target.value)}
         placeholder="file_storage.id after HR upload"
@@ -85,7 +85,7 @@ const PayrollComplianceCard = ({
         disabled={busy || loading}
         onClick={() => onSave()}
       >
-        {busy ? 'Saving…' : 'Save'}
+        {busy ? 'Saving...' : 'Save'}
       </Button>
     </div>
     {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}

@@ -82,9 +82,9 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
 
   if (loading) {
     return (
-      <Card title="Announcements & notifications" className={fullHeight ? 'h-full flex flex-col' : ''}>
+      <Card title="Announcements & Notifications" className={fullHeight ? 'h-full flex flex-col' : ''}>
         <div className={fullHeight ? 'flex-1 min-h-0 flex items-center justify-center' : ''}>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
       </Card>
     );
@@ -131,7 +131,7 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{announcement.title}</p>
                 <p className="mt-1 line-clamp-3 text-xs text-gray-600 dark:text-gray-300">
-                  {announcement.body ?? 'No body provided.'}
+                  {announcement.body ?? 'No Body Provided.'}
                 </p>
                 {announcement.imageReadUrl ? (
                   <img
@@ -227,14 +227,14 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
                     {notification.title ?? 'Untitled notification'}
                   </p>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {notification.message ?? 'No message body provided.'}
+                    {notification.message ?? 'No Message Body Provided.'}
                   </p>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No private notifications yet.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Private Notifications Yet.</p>
         )}
       </div>
     );
@@ -244,7 +244,7 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
       {announcementBlock}
       {notificationsBlock}
       {!announcementBlock && !notificationsBlock ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">No announcements or notifications.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No Announcements Or Notifications.</p>
       ) : null}
     </>
   );

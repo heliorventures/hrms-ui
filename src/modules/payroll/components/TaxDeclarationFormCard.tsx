@@ -32,14 +32,14 @@ const TaxDeclarationFormCard = ({
   onRegimeChange,
   onSubmit,
 }: TaxDeclarationFormCardProps) => (
-  <Card title="Update declaration">
+  <Card title="Update Declaration">
     <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
       Uses the tax configuration selected above. Requires a signed-in employee.
     </p>
     <form onSubmit={onSubmit} className="max-w-lg space-y-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Input
-          label="Fiscal year"
+          label="Fiscal Year"
           value={fiscalYear}
           onChange={(event) => onFiscalYearChange(event.target.value)}
           inputMode="numeric"
@@ -55,14 +55,14 @@ const TaxDeclarationFormCard = ({
         />
       </div>
       <Input
-        label="Gross income"
+        label="Gross Income"
         value={grossIncome}
         onChange={(event) => onGrossIncomeChange(event.target.value)}
         fullWidth
         inputMode="decimal"
       />
       <Input
-        label="Total deductions"
+        label="Total Deductions"
         value={deductions}
         onChange={(event) => onDeductionsChange(event.target.value)}
         fullWidth

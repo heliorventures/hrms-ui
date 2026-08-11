@@ -26,6 +26,20 @@ function intervalsOverlap(firstStart: number, firstEnd: number, secondStart: num
   return firstStart < secondEnd && firstEnd > secondStart;
 }
 
+function normalizeAttendanceInterval(start: number, end: number): { start: number; end: number } | null {
+  if (start === end) return null;
+  return { start, end: end > start ? end : end + MAX_ATTENDANCE_MINUTES_PER_DAY };
+}
+
+function intervalsOverlapAcrossMidnight(
+  first: { start: number; end: number },
+  second: { start: number; end: number }
+) {
+  return [-MAX_ATTENDANCE_MINUTES_PER_DAY, 0, MAX_ATTENDANCE_MINUTES_PER_DAY].some((offset) =>
+    intervalsOverlap(first.start + offset, first.end + offset, second.start, second.end)
+  );
+}
+
 export function validateManualAttendanceSegment({
   workDate,
   checkIn,
@@ -39,9 +53,10 @@ export function validateManualAttendanceSegment({
   const start = naiveTimeToMinutes(normalizeTime(checkIn));
   const end = naiveTimeToMinutes(normalizeTime(checkOut));
   if (Number.isNaN(start) || Number.isNaN(end)) return 'Enter valid punch times.';
-  if (end <= start) return 'Punch out must be later than punch in.';
+  const newInterval = normalizeAttendanceInterval(start, end);
+  if (!newInterval) return 'Punch In and punch out cannot be the same time.';
 
-  const newMinutes = end - start;
+  const newMinutes = newInterval.end - newInterval.start;
   const sameDaySegments = existingSegments.filter(
     (segment) => segment.workDate === workDate && segment.id !== excludedSegmentId
   );
@@ -53,11 +68,12 @@ export function validateManualAttendanceSegment({
     const worked = segmentWorkedMinutes(segment.checkInTime, segment.checkOutTime) ?? 0;
     existingMinutes += worked;
 
-    if (
-      !Number.isNaN(existingStart) &&
-      !Number.isNaN(existingEnd) &&
-      intervalsOverlap(start, end, existingStart, existingEnd)
-    ) {
+    const existingInterval =
+      !Number.isNaN(existingStart) && !Number.isNaN(existingEnd)
+        ? normalizeAttendanceInterval(existingStart, existingEnd)
+        : null;
+
+    if (existingInterval && intervalsOverlapAcrossMidnight(newInterval, existingInterval)) {
       return 'This punch range overlaps an existing attendance segment for the day.';
     }
   }

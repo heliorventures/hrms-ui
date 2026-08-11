@@ -14,6 +14,7 @@ export interface TokenPair {
   tokenType: 'Bearer';
   expiresIn: number;
   tenantId?: string;
+  username?: string;
   email: string;
   userId: string;
 }
@@ -117,11 +118,11 @@ export async function resolveTenantBySlug(slug: string): Promise<ResolvedTenant>
 }
 
 export async function loginClient(
-  email: string,
+  username: string,
   password: string,
   tenantId: string
 ): Promise<TokenPair> {
-  return postJson<TokenPair>('/auth/client/login', { email, password, tenantId });
+  return postJson<TokenPair>('/auth/client/login', { username, password, tenantId });
 }
 
 export async function refreshClient(refresh: string): Promise<TokenPair> {

@@ -12,11 +12,11 @@ interface AnnouncementListProps {
 
 const AnnouncementList = ({ announcements, deptNameById, loading }: AnnouncementListProps) => {
   if (loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading announcements...</p>;
+    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading Announcements...</p>;
   }
 
   if (announcements.length === 0) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">No announcements found.</p>;
+    return <p className="text-sm text-gray-500 dark:text-gray-400">No Announcements Found.</p>;
   }
 
   return (
@@ -30,7 +30,7 @@ const AnnouncementList = ({ announcements, deptNameById, loading }: Announcement
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">{announcement.title}</h3>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                {announcement.body ?? 'No announcement body provided.'}
+                {announcement.body ?? 'No Announcement Body Provided.'}
               </p>
               {announcement.imageReadUrl && (
                 <div className="mt-3">

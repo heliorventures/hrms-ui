@@ -1,4 +1,5 @@
 import { useTenant } from '../../contexts/TenantContext';
+import { UI_PLACEHOLDER_TEXT } from '../../constants/uiText';
 import { useCommandPalette } from './CommandPaletteContext';
 import NotificationDropdown from './NotificationDropdown';
 import ProfileDropdown from './ProfileDropdown';
@@ -19,7 +20,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
         <button
           onClick={onToggleSidebar}
           className="rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 lg:hidden"
-          aria-label="Toggle sidebar"
+          aria-label="Toggle Sidebar"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -47,7 +48,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
-          <span className="min-w-0 flex-1 truncate">Search pages, people, tools…</span>
+          <span className="min-w-0 flex-1 truncate">{UI_PLACEHOLDER_TEXT.globalSearch}</span>
           <kbd className="hidden shrink-0 rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500 dark:border-slate-600 dark:bg-slate-800 lg:inline">
             {shortcutLabel}
           </kbd>
@@ -56,7 +57,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
           type="button"
           onClick={() => open()}
           className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 md:hidden"
-          aria-label="Open search and navigation"
+          aria-label="Open Search And Navigation"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path

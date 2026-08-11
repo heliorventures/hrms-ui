@@ -154,6 +154,10 @@ const ApplyLeaveModal = ({
       setFormError('Choose a leave type and date range.');
       return;
     }
+    if (toDate < fromDate) {
+      setFormError('To date must be on or after from date.');
+      return;
+    }
     const reasonTrim = reason.trim();
     if (!reasonTrim) {
       setFormError('Reason is required.');
@@ -244,7 +248,7 @@ const ApplyLeaveModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Apply for Leave" size="lg">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Apply For Leave" size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
@@ -347,8 +351,8 @@ const ApplyLeaveModal = ({
               required
             >
               <option value="">Select...</option>
-              <option value="FIRST_HALF">First half</option>
-              <option value="SECOND_HALF">Second half</option>
+              <option value="FIRST_HALF">First Half</option>
+              <option value="SECOND_HALF">Second Half</option>
             </select>
           </div>
         )}

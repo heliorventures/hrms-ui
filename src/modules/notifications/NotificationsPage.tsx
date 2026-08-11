@@ -88,7 +88,7 @@ const NotificationsPage = () => {
         </Card>
       )}
 
-      <Card title="Public announcements">
+      <Card title="Public Announcements">
         <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
           Company updates, celebrations, and posts shared with everyone. Your personal alerts appear below.
         </p>
@@ -99,7 +99,7 @@ const NotificationsPage = () => {
         />
       </Card>
 
-      <Card title="Your private notifications">
+      <Card title="Your Private Notifications">
         <PrivateNotificationList
           actionBusy={actionBusy}
           filter={filter}

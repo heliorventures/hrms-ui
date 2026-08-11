@@ -121,7 +121,7 @@ const OpsFeatureFlagsPage = () => {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Feature flags"
+        title="Feature Flags"
         description="Per-tenant toggles in kabipay_ops.feature_flag (beyond module subscriptions)."
         actions={
           <button
@@ -163,10 +163,10 @@ const OpsFeatureFlagsPage = () => {
         </p>
       )}
 
-      <Card title="Add or update flag">
+      <Card title="Add Or Update Flag">
         <form onSubmit={onUpsert} className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <Input
-            label="Feature key"
+            label="Feature Key"
             value={featureName}
             onChange={(e) => setFeatureName(e.target.value)}
             placeholder="e.g. payroll_beta"
@@ -182,14 +182,14 @@ const OpsFeatureFlagsPage = () => {
             Enabled
           </label>
           <Button type="submit" disabled={saving || !tenantId || !featureName.trim()}>
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Saving...' : 'Save'}
           </Button>
         </form>
       </Card>
 
-      <Card title="Flags for tenant">
-        {!tenantId && <p className="text-sm text-slate-500">Choose a tenant.</p>}
-        {tenantId && loading && <p className="text-sm text-slate-500">Loading…</p>}
+      <Card title="Flags For Tenant">
+        {!tenantId && <p className="text-sm text-slate-500">Choose A Tenant.</p>}
+        {tenantId && loading && <p className="text-sm text-slate-500">Loading...</p>}
         {tenantId && !loading && (
           <Table<FlagRow>
             data={flags}

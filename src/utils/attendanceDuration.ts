@@ -16,7 +16,8 @@ export function segmentWorkedMinutes(
   const a = naiveTimeToMinutes(checkIn);
   const b = naiveTimeToMinutes(checkOut);
   if (Number.isNaN(a) || Number.isNaN(b)) return null;
-  const diff = b - a;
+  if (a === b) return null;
+  const diff = b > a ? b - a : b + 24 * 60 - a;
   return diff > 0 ? diff : null;
 }
 

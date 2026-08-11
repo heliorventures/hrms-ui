@@ -194,15 +194,15 @@ const OpsTenantsPage = () => {
       )}
 
       {provisionOpen && (
-        <Card title="Provision new tenant">
+        <Card title="Provision New Tenant">
           <form onSubmit={onProvision} className="max-w-xl space-y-3">
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Uses the same deterministic UUID as <code>provision-tenant.ps1</code>. Set{' '}
               <code>KABIPAY_DATABASE_DIR</code> on the API host for Liquibase when “Run migrations” is on.
             </p>
-            <Input label="Display name" value={pvName} onChange={(e) => setPvName(e.target.value)} required />
+            <Input label="Display Name" value={pvName} onChange={(e) => setPvName(e.target.value)} required />
             <Input
-              label="Code (subdomain key, 2–32 chars)"
+              label="Code (Subdomain Key, 2–32 Chars)"
               value={pvCode}
               onChange={(e) => setPvCode(e.target.value)}
               placeholder="acme"
@@ -213,7 +213,7 @@ const OpsTenantsPage = () => {
               <Input label="Currency" value={pvCurrency} onChange={(e) => setPvCurrency(e.target.value)} />
             </div>
             <Input
-              label="Schema override (optional)"
+              label="Schema Override (Optional)"
               value={pvSchema}
               onChange={(e) => setPvSchema(e.target.value)}
               placeholder="tenant_abc12345"
@@ -263,10 +263,10 @@ const OpsTenantsPage = () => {
                 ))}
               </select>
             </div>
-            <Input label="Plan (optional)" value={edPlan} onChange={(e) => setEdPlan(e.target.value)} />
+            <Input label="Plan (Optional)" value={edPlan} onChange={(e) => setEdPlan(e.target.value)} />
             <div className="flex gap-2">
               <Button type="submit" disabled={edSubmitting}>
-                {edSubmitting ? 'Saving…' : 'Save'}
+                {edSubmitting ? 'Saving...' : 'Save'}
               </Button>
               <button
                 type="button"
@@ -281,7 +281,7 @@ const OpsTenantsPage = () => {
       )}
 
       <Card title="Directory">
-        {loading && <p className="text-sm text-slate-500">Loading…</p>}
+        {loading && <p className="text-sm text-slate-500">Loading...</p>}
         {!loading && (
           <Table<TenantRow>
             data={rows}

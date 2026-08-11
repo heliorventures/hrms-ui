@@ -19,6 +19,38 @@ import {
 
 type ConsoleData = AdminNotificationsConsoleQuery;
 
+const MAX_ANNOUNCEMENT_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_ANNOUNCEMENT_DOCUMENT_BYTES = 10 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const ALLOWED_DOCUMENT_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+]);
+
+const validateFile = (
+  file: File | null,
+  allowedTypes: Set<string>,
+  maxBytes: number,
+  label: string
+) => {
+  if (!file) return null;
+  if (file.size > maxBytes) {
+    return `${label} must be ${Math.floor(maxBytes / (1024 * 1024))} MB or smaller.`;
+  }
+  if (!allowedTypes.has(file.type)) {
+    return `${label} file type is not allowed.`;
+  }
+  return null;
+};
+
+const parseOptionalDateTime = (value: string) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
 const AdminNotificationsPage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<ConsoleData | null>(null);
@@ -115,25 +147,58 @@ const AdminNotificationsPage = () => {
 
   const publishAnnouncement = async (event: React.FormEvent) => {
     event.preventDefault();
-    setBusy(true);
     setError(null);
+    const title = annTitle.trim();
+    if (!title) {
+      setError('Announcement title is required.');
+      return;
+    }
+    const publishAt = parseOptionalDateTime(annPublish);
+    const expiresAt = parseOptionalDateTime(annExpire);
+    if (publishAt === undefined || expiresAt === undefined) {
+      setError('Publish and expiry dates must be valid date/time values.');
+      return;
+    }
+    if (publishAt && expiresAt && expiresAt <= publishAt) {
+      setError('Expiry date must be after publish date.');
+      return;
+    }
+    const imageError = validateFile(
+      annImage,
+      ALLOWED_IMAGE_TYPES,
+      MAX_ANNOUNCEMENT_IMAGE_BYTES,
+      'Announcement image'
+    );
+    if (imageError) {
+      setError(imageError);
+      return;
+    }
+    const documentError = validateFile(
+      annDoc,
+      ALLOWED_DOCUMENT_TYPES,
+      MAX_ANNOUNCEMENT_DOCUMENT_BYTES,
+      'Announcement document'
+    );
+    if (documentError) {
+      setError(documentError);
+      return;
+    }
+    setBusy(true);
     try {
       const attachments = await readAnnouncementFiles();
-      const publishAt = annPublish ? new Date(annPublish).toISOString() : null;
-      const expiresAt = annExpire ? new Date(annExpire).toISOString() : null;
 
       if (editId) {
         const existing = data?.adminAnnouncements.find((item) => item.id === editId);
         await client.request(UpdateAnnouncementDocument, {
           input: {
             id: editId,
-            title: annTitle.trim(),
+            title,
             body: annBody.trim() === '' ? null : annBody.trim(),
             targetDepartmentId: annDept.trim() === '' ? null : annDept.trim(),
             targetLocationId: annLoc.trim() === '' ? null : annLoc.trim(),
             clearTargetDepartment: Boolean(existing?.targetDepartmentId) && annDept.trim() === '',
             clearTargetLocation: Boolean(existing?.targetLocationId) && annLoc.trim() === '',
-            targetRoleCode: annRole.trim() === '' ? null : annRole.trim(),
+            targetRoleCode: annRole.trim() === '' ? null : annRole.trim().toUpperCase(),
             clearRoleAudience:
               Boolean(existing?.targetAudience?.startsWith('ROLE:')) && annRole.trim() === '',
             publishAt,
@@ -148,11 +213,11 @@ const AdminNotificationsPage = () => {
       } else {
         await client.request(CreateAnnouncementDocument, {
           input: {
-            title: annTitle.trim(),
+            title,
             body: annBody.trim() === '' ? null : annBody.trim(),
             targetDepartmentId: annDept.trim() === '' ? null : annDept.trim(),
             targetLocationId: annLoc.trim() === '' ? null : annLoc.trim(),
-            targetRoleCode: annRole.trim() === '' ? null : annRole.trim(),
+            targetRoleCode: annRole.trim() === '' ? null : annRole.trim().toUpperCase(),
             publishAt,
             expiresAt,
             employeePost,
@@ -184,12 +249,16 @@ const AdminNotificationsPage = () => {
 
   const sendDirect = async (event: React.FormEvent) => {
     event.preventDefault();
+    setError(null);
     if (selUsers.length === 0) {
       setError('Select at least one user');
       return;
     }
+    if (!dnTitle.trim() && !dnMessage.trim()) {
+      setError('Direct notification requires a title or message.');
+      return;
+    }
     setBusy(true);
-    setError(null);
     try {
       await client.request(CreateDirectNotificationsDocument, {
         input: {
@@ -227,7 +296,7 @@ const AdminNotificationsPage = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notification admin</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notification Admin</h1>
       <p className="text-sm text-gray-600 dark:text-gray-400">
         Manage announcements and send private in-app notifications to selected users.
       </p>
@@ -272,7 +341,7 @@ const AdminNotificationsPage = () => {
         )}
       </Card>
 
-      <Card title="Direct notifications to users">
+      <Card title="Direct Notifications To Users">
         <DirectNotificationComposer
           busy={busy}
           employees={employeesWithUser}
@@ -290,7 +359,7 @@ const AdminNotificationsPage = () => {
         />
       </Card>
 
-      <Card title="Recent announcements">
+      <Card title="Recent Announcements">
         <div className="space-y-2">
           {(data?.adminAnnouncements ?? []).map((announcement) => (
             <div
@@ -328,7 +397,7 @@ const AdminNotificationsPage = () => {
         </div>
       </Card>
 
-      <Card title="Recent in-app notifications (tenant)">
+      <Card title="Recent In-App Notifications (Tenant)">
         <div className="max-h-96 space-y-2 overflow-y-auto text-sm">
           {(data?.adminNotifications ?? []).map((notification) => (
             <div

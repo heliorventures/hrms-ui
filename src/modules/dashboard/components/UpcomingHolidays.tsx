@@ -47,8 +47,8 @@ const UpcomingHolidays = () => {
   }, [client]);
 
   return (
-    <Card title="Upcoming holidays">
-      {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}
+    <Card title="Upcoming Holidays">
+      {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>}
       {error && !loading && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {!loading && !error && rows && rows.length > 0 && (
         <ul className="space-y-2">
@@ -78,7 +78,7 @@ const UpcomingHolidays = () => {
         </ul>
       )}
       {!loading && !error && rows && rows.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">No upcoming holidays in range.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No Upcoming Holidays In Range.</p>
       )}
       <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
         <Link

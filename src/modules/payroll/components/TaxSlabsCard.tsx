@@ -10,7 +10,7 @@ interface TaxSlabsCardProps {
 const TaxSlabsCard = ({ loading, slabs }: TaxSlabsCardProps) => (
   <Card title="Tax Slabs">
     {loading ? (
-      <p className="text-sm text-gray-500 dark:text-gray-400">Loading tax slabs...</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Loading Tax Slabs...</p>
     ) : slabs.length ? (
       <Table
         data={slabs}
@@ -18,11 +18,11 @@ const TaxSlabsCard = ({ loading, slabs }: TaxSlabsCardProps) => (
         columns={[
           {
             key: 'incomeFrom',
-            label: 'Income from',
+            label: 'Income From',
             render: (row) => formatTaxCurrency(Number(row.incomeFrom)),
           },
-          { key: 'incomeTo', label: 'Income to', render: (row) => formatOptionalTaxAmount(row.incomeTo) },
-          { key: 'taxRate', label: 'Tax rate', render: (row) => (row.taxRate ? `${row.taxRate}%` : '-') },
+          { key: 'incomeTo', label: 'Income To', render: (row) => formatOptionalTaxAmount(row.incomeTo) },
+          { key: 'taxRate', label: 'Tax Rate', render: (row) => (row.taxRate ? `${row.taxRate}%` : '-') },
           {
             key: 'surchargeRate',
             label: 'Surcharge',
@@ -33,7 +33,7 @@ const TaxSlabsCard = ({ loading, slabs }: TaxSlabsCardProps) => (
       />
     ) : (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        No tax slabs found for the selected configuration.
+        No Tax Slabs Found For The Selected Configuration.
       </p>
     )}
   </Card>

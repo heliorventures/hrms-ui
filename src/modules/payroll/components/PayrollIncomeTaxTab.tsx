@@ -34,6 +34,7 @@ interface PayrollIncomeTaxTabProps {
   proofActual: string;
   proofBusy: boolean;
   proofDeclared: string;
+  proofFile: File | null;
   proofMsg: string | null;
   proofSectionCode: string;
   taxComputationsSelf: TaxComputationSelfRow[] | null;
@@ -46,6 +47,7 @@ interface PayrollIncomeTaxTabProps {
   onDeclSubmit: (event: FormEvent) => void;
   onProofActualChange: (value: string) => void;
   onProofDeclaredChange: (value: string) => void;
+  onProofFileChange: (file: File | null) => void;
   onProofSectionCodeChange: (value: string) => void;
   onProofSubmit: (event: FormEvent) => void;
 }
@@ -68,6 +70,7 @@ const PayrollIncomeTaxTab = ({
   proofActual,
   proofBusy,
   proofDeclared,
+  proofFile,
   proofMsg,
   proofSectionCode,
   taxComputationsSelf,
@@ -80,6 +83,7 @@ const PayrollIncomeTaxTab = ({
   onDeclSubmit,
   onProofActualChange,
   onProofDeclaredChange,
+  onProofFileChange,
   onProofSectionCodeChange,
   onProofSubmit,
 }: PayrollIncomeTaxTabProps) => (
@@ -111,11 +115,13 @@ const PayrollIncomeTaxTab = ({
       sectionCode={proofSectionCode}
       declared={proofDeclared}
       actual={proofActual}
+      proofFile={proofFile}
       busy={proofBusy}
       message={proofMsg}
       onSectionCodeChange={onProofSectionCodeChange}
       onDeclaredChange={onProofDeclaredChange}
       onActualChange={onProofActualChange}
+      onProofFileChange={onProofFileChange}
       onSubmit={onProofSubmit}
     />
     <EmployeeTaxDeclarationFormCard

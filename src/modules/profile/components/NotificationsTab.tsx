@@ -12,8 +12,8 @@ const TOPICS: { id: string; label: string; hint: string }[] = [
   { id: 'leave', label: 'Leave', hint: 'Leave requests and approvals' },
   { id: 'expense', label: 'Expense', hint: 'Expense claims' },
   { id: 'travel', label: 'Travel', hint: 'Travel requests' },
-  { id: 'tax', label: 'Tax / proofs', hint: 'Tax documents and proof reminders' },
-  { id: 'hr_direct', label: 'HR & broadcasts', hint: 'Direct HR messages and broadcasts' },
+  { id: 'tax', label: 'Tax / Proofs', hint: 'Tax documents and proof reminders' },
+  { id: 'hr_direct', label: 'HR & Broadcasts', hint: 'Direct HR messages and broadcasts' },
   { id: 'other', label: 'Other', hint: 'Any other in-app alerts' },
 ];
 
@@ -81,7 +81,7 @@ const NotificationsTab = () => {
   };
 
   return (
-    <Card title="Notification preferences">
+    <Card title="Notification Preferences">
       <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
         Control what appears in your bell and on the Notifications page. This applies to in-app
         alerts only; email or SMS is not configured here.
@@ -94,7 +94,7 @@ const NotificationsTab = () => {
       )}
 
       {loading ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
       ) : (
         <div className="space-y-6">
           <label className="flex items-center gap-3 text-sm text-gray-800 dark:text-gray-200">
@@ -159,7 +159,7 @@ const NotificationsTab = () => {
 
           <div className="pt-2">
             <Button type="button" variant="primary" disabled={saving} onClick={() => void save()}>
-              {saving ? 'Saving…' : 'Save preferences'}
+              {saving ? 'Saving...' : 'Save Preferences'}
             </Button>
           </div>
         </div>

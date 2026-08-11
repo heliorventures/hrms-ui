@@ -3,9 +3,16 @@ import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Select from '../../../components/common/Select';
+import { useGraphClient } from '../../../hooks/useGraphClient';
 import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import { uploadTenantFile, validateTenantUploadFile } from '../../../utils/tenantFileUpload';
 import { EXPENSE_DEFAULT_CURRENCY } from '../constants';
+import {
+  normalizeCurrencyCode,
+  parseStrictMoney,
+  validatePositiveMoney,
+} from '../utils/amountValidation';
 import { formatCurrency } from '../utils/formatters';
 import type {
   ExpenseCategoryRow,
@@ -37,18 +44,20 @@ const SubmitExpenseModal = ({
   onClose,
   onSubmit,
 }: SubmitExpenseModalProps) => {
+  const client = useGraphClient('client');
   const [categoryId, setCategoryId] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState(EXPENSE_DEFAULT_CURRENCY);
   const [expenseDate, setExpenseDate] = useState(() => toDateInputValue());
   const [title, setTitle] = useState('');
   const [travelRequestId, setTravelRequestId] = useState('');
-  const [receiptFileStorageId, setReceiptFileStorageId] = useState('');
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const categoryOptions = useMemo(
     () => [
-      { value: '', label: 'Select category' },
+      { value: '', label: 'Select Category' },
       ...categories.map((category) => ({
         value: category.id,
         label: `${category.name} (${category.code})`,
@@ -59,7 +68,7 @@ const SubmitExpenseModal = ({
 
   const travelOptions = useMemo(
     () => [
-      { value: '', label: 'No linked trip' },
+      { value: '', label: 'No Linked Trip' },
       ...travelRequests
         .filter((row) => row.status.toUpperCase() !== 'REJECTED')
         .map((row) => ({
@@ -81,7 +90,8 @@ const SubmitExpenseModal = ({
     setExpenseDate(toDateInputValue());
     setTitle('');
     setTravelRequestId('');
-    setReceiptFileStorageId('');
+    setReceiptFile(null);
+    setUploadingReceipt(false);
     setFormError(null);
   }, []);
 
@@ -100,22 +110,73 @@ const SubmitExpenseModal = ({
       setFormError('Category, title, and amount are required.');
       return;
     }
+    const amountError = validatePositiveMoney(amount, 'Amount');
+    if (amountError) {
+      setFormError(amountError);
+      return;
+    }
+    const normalizedCurrency = normalizeCurrencyCode(currency);
+    if (!normalizedCurrency) {
+      setFormError('Currency must be a 3-letter ISO code.');
+      return;
+    }
+    if (expenseDate > toDateInputValue()) {
+      setFormError('Expense date cannot be in the future.');
+      return;
+    }
+    const claimAmount = parseStrictMoney(amount);
+    const maxAmountSource = submissionHints?.maxAmountPerClaim ?? '';
+    const maxAmount = maxAmountSource ? parseStrictMoney(maxAmountSource) : NaN;
+    if (Number.isFinite(maxAmount) && claimAmount > maxAmount) {
+      setFormError(
+        `Amount exceeds the category limit of ${formatCurrency(maxAmountSource, normalizedCurrency)}.`
+      );
+      return;
+    }
+    if (submissionHints?.receiptRequired && !receiptFile) {
+      setFormError('Receipt is required for this category.');
+      return;
+    }
+    if (receiptFile) {
+      const receiptError = validateTenantUploadFile(receiptFile, 'Receipt');
+      if (receiptError) {
+        setFormError(receiptError);
+        return;
+      }
+    }
     setFormError(null);
+    let receiptFileStorageId: string | undefined;
     try {
+      if (receiptFile) {
+        setUploadingReceipt(true);
+        receiptFileStorageId = await uploadTenantFile(client, receiptFile);
+      }
+      setUploadingReceipt(false);
       await onSubmit({
         expenseCategoryId: categoryId,
         amount: amount.trim(),
-        currency: currency.trim() || EXPENSE_DEFAULT_CURRENCY,
+        currency: normalizedCurrency,
         expenseDate,
         title: title.trim(),
         ...(travelRequestId.trim() ? { travelRequestId: travelRequestId.trim() } : {}),
-        ...(receiptFileStorageId.trim()
-          ? { receiptFileStorageId: receiptFileStorageId.trim() }
-          : {}),
+        ...(receiptFileStorageId ? { receiptFileStorageId } : {}),
       });
       close();
     } catch (err) {
+      setUploadingReceipt(false);
       setFormError(graphQlUserMessage(err));
+    }
+  };
+
+  const handleReceiptChange = (file: File | null) => {
+    setReceiptFile(file);
+    if (!file) {
+      setFormError(null);
+      return;
+    }
+    const receiptError = validateTenantUploadFile(file, 'Receipt');
+    if (receiptError) {
+      setFormError(receiptError);
     }
   };
 
@@ -123,7 +184,7 @@ const SubmitExpenseModal = ({
     <Modal
       isOpen={isOpen}
       onClose={close}
-      title="Submit expense claim"
+      title="Submit Expense Claim"
     >
       <form
         onSubmit={(event) => void handleSubmit(event)}
@@ -154,7 +215,7 @@ const SubmitExpenseModal = ({
             ) : null}
             {submissionHints.receiptRequired ? (
               <p className="mt-1 font-medium text-amber-900 dark:text-amber-200">
-                Receipt file ID is required for this category.
+                Receipt upload is required for this category.
               </p>
             ) : null}
           </div>
@@ -184,21 +245,27 @@ const SubmitExpenseModal = ({
         </div>
         <Input
           type="date"
-          label="Expense date"
+          label="Expense Date"
           value={expenseDate}
           onChange={(event) => setExpenseDate(event.target.value)}
           fullWidth
           required
         />
-        <Input
-          label="Receipt file ID"
-          value={receiptFileStorageId}
-          onChange={(event) => setReceiptFileStorageId(event.target.value)}
-          fullWidth
-          placeholder="Uploaded file UUID when required"
-        />
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Receipt
+          <input
+            type="file"
+            accept="application/pdf,image/jpeg,image/png"
+            onChange={(event) => handleReceiptChange(event.target.files?.[0] ?? null)}
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:file:bg-gray-700 dark:file:text-gray-100"
+            required={Boolean(submissionHints?.receiptRequired)}
+          />
+          <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+            PDF, JPG, or PNG up to 6 MB.
+          </span>
+        </label>
         <Select
-          label="Linked travel request"
+          label="Linked Travel Request"
           value={travelRequestId}
           onChange={(event) => setTravelRequestId(event.target.value)}
           options={travelOptions}
@@ -208,9 +275,9 @@ const SubmitExpenseModal = ({
           <Button
             type="submit"
             variant="primary"
-            disabled={submitting || loading || categories.length === 0}
+            disabled={submitting || uploadingReceipt || loading || categories.length === 0}
           >
-            {submitting ? 'Submitting...' : 'Submit'}
+            {uploadingReceipt ? 'Uploading...' : submitting ? 'Submitting...' : 'Submit'}
           </Button>
           <Button
             type="button"

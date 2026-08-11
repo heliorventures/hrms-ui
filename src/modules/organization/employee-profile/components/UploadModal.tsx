@@ -21,8 +21,8 @@ interface UploadModalProps {
 const categories: { value: DocumentCategory; label: string }[] = [
   { value: 'PAN', label: 'PAN' },
   { value: 'AADHAAR', label: 'Aadhaar' },
-  { value: 'OFFER_LETTER', label: 'Offer letter' },
-  { value: 'APPRAISAL_LETTER', label: 'Appraisal letter' },
+  { value: 'OFFER_LETTER', label: 'Offer Letter' },
+  { value: 'APPRAISAL_LETTER', label: 'Appraisal Letter' },
   { value: 'PASSPORT', label: 'Passport' },
   { value: 'OTHER', label: 'Other' },
 ];
@@ -125,7 +125,7 @@ export function UploadModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title="Upload document" size="md">
+    <Modal isOpen={isOpen} onClose={resetAndClose} title="Upload Document" size="md">
       <form onSubmit={(ev) => void handleSubmit(ev)} className="space-y-4">
         <Select
           label="Category"
@@ -140,7 +140,7 @@ export function UploadModal({
         />
         {documentTypes.length > 0 && typeOptions.length > 0 ? (
           <Select
-            label="Document type"
+            label="Document Type"
             name="documentTypeId"
             value={documentTypeId || typeOptions[0]?.value || ''}
             fullWidth
@@ -150,7 +150,7 @@ export function UploadModal({
         ) : null}
         {documentTypes.length === 0 ? (
           <p className="text-sm text-amber-800 dark:text-amber-200">
-            No document types returned for this tenant. Upload may fail until types are seeded.
+            No Document types returned for this tenant. Upload may fail until types are seeded.
           </p>
         ) : null}
         <div>

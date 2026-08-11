@@ -184,7 +184,7 @@ const AddEditEmployeeModal = ({ isOpen, onClose, employee, onSave }: AddEditEmpl
           />
 
           <Input
-            label="Date of Birth"
+            label="Date Of Birth"
             type="date"
             name="dateOfBirth"
             value={formData.dateOfBirth}

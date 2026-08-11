@@ -27,7 +27,7 @@ const PrivateNotificationList = ({
   onMarkRead,
 }: PrivateNotificationListProps) => {
   if (loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading notifications...</p>;
+    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading Notifications...</p>;
   }
 
   if (notifications.length === 0) {
@@ -35,7 +35,7 @@ const PrivateNotificationList = ({
       <div className="py-12 text-center">
         {emptyNotificationsIcon}
         <p className="mt-4 text-gray-500 dark:text-gray-400">
-          {filter === 'unread' ? 'No unread notifications' : 'No notifications found'}
+          {filter === 'unread' ? 'No Unread Notifications' : 'No Notifications found'}
         </p>
       </div>
     );
@@ -74,7 +74,7 @@ const PrivateNotificationList = ({
                       )}
                     </div>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      {notification.message ?? 'No message body provided.'}
+                      {notification.message ?? 'No Message Body Provided.'}
                     </p>
                     <div className="mt-2 flex items-center gap-3">
                       <Badge variant="neutral" size="sm">

@@ -321,13 +321,6 @@ export type CreateEmployeeInput = {
   employmentType?: InputMaybe<Scalars['String']['input']>;
   firstName: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
-  /**
-   * When set, creates a tenant login with a provisional password (`ChangeMe!123`). Cannot be combined with `userId`.
-   *
-   * TODO(invite-flow): Replace provisional password + optional DEMO_STAFF assignment with email invite,
-   * magic-link enrolment, or admin-triggered reset-password flow (see `employee_service::create_provisional_login_user`).
-   */
-  loginEmail?: InputMaybe<Scalars['String']['input']>;
   /** Must be another active employee in the tenant; cannot be self (enforced after id is chosen). */
   reportingManagerId?: InputMaybe<Scalars['ID']['input']>;
   /** Defaults to `ACTIVE` when omitted. */
@@ -3119,7 +3112,6 @@ export type UpdateEmployeeInput = {
   firstName?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
-  loginEmail?: InputMaybe<Scalars['String']['input']>;
   /** Omitted = leave unchanged; `null` = clear manager; id = set manager (cycle-safe). */
   reportingManagerId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;

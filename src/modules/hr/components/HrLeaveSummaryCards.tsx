@@ -23,7 +23,7 @@ const HrLeaveSummaryCards = ({
   onYearChange,
 }: HrLeaveSummaryCardsProps) => (
   <div className="grid gap-4 sm:grid-cols-3">
-    <Card title="Pending approvals">
+    <Card title="Pending Approvals">
       {loading ? (
         <p className="text-sm text-gray-500">...</p>
       ) : (
@@ -32,7 +32,7 @@ const HrLeaveSummaryCards = ({
         </p>
       )}
     </Card>
-    <Card title="In queue">
+    <Card title="In Queue">
       <p className="text-sm text-gray-600 dark:text-gray-400">
         Showing up to <span className="font-mono">{limit}</span> requests in your scope.
       </p>
@@ -68,7 +68,7 @@ const HrLeaveSummaryCards = ({
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-gray-500">No rows for this year.</p>
+        <p className="text-xs text-gray-500">No Rows For This Year.</p>
       )}
     </Card>
   </div>

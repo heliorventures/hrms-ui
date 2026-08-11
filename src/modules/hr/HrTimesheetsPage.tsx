@@ -147,7 +147,7 @@ const HrTimesheetsPage = () => {
       (
         [
           { key: 'pending' as const, label: 'Pending' },
-          { key: 'all' as const, label: 'All Statuses' },
+          { key: 'all' as const, label: 'ALL Statuses' },
         ] as const
       ).map((t) => (
         <Button
@@ -305,7 +305,7 @@ const HrTimesheetsPage = () => {
       >
         <div className="space-y-3">
           <Input
-            label="Reason (optional)"
+            label="Reason (Optional)"
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             fullWidth

@@ -112,12 +112,12 @@ const TimesheetEntryForm = ({
 
   const projectOptions = useMemo(() => {
     const opts = projects.map((p) => ({ value: p.code, label: `${p.code} — ${p.name}` }));
-    return [{ value: '', label: loadingCatalog ? 'Loading projects…' : '— Optional —' }, ...opts];
+    return [{ value: '', label: loadingCatalog ? 'Loading Projects...' : '- Optional -' }, ...opts];
   }, [projects, loadingCatalog]);
 
   const taskOptions = useMemo(() => {
     const opts = tasks.map((t) => ({ value: t, label: t }));
-    return [{ value: '', label: tasks.length ? '— Task —' : 'No tasks (configure in admin)' }, ...opts];
+    return [{ value: '', label: tasks.length ? '- Task -' : 'No Tasks (Configure In Admin)' }, ...opts];
   }, [tasks]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -162,13 +162,13 @@ const TimesheetEntryForm = ({
   };
 
   return (
-    <Card title={editing ? 'Edit timesheet entry' : 'Add timesheet entry'}>
+    <Card title={editing ? 'Edit Timesheet Entry' : 'Add Timesheet Entry'}>
       <form onSubmit={(ev) => void handleSubmit(ev)} className="space-y-4">
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
         <Input
           type="date"
-          label="Work date"
+          label="Work Date"
           value={workDate}
           min={allowedMinIso}
           max={allowedMaxIso}
@@ -195,7 +195,7 @@ const TimesheetEntryForm = ({
         />
 
         <Select
-          label="Task type"
+          label="Task Type"
           value={taskCode}
           onChange={(e) => setTaskCode(e.target.value)}
           options={taskOptions}
@@ -218,7 +218,7 @@ const TimesheetEntryForm = ({
 
         <div className="flex gap-3">
           <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? 'Saving…' : editing ? 'Save changes' : 'Submit entry'}
+            {submitting ? 'Saving...' : editing ? 'Save Changes' : 'Submit Entry'}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
             Cancel

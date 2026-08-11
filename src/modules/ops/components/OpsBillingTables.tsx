@@ -15,7 +15,7 @@ function tenantName(tenants: TenantRow[], id: string): string {
 
 const OpsBillingTables = ({ cycles, invoices, payments, tenants }: OpsBillingTablesProps) => (
   <>
-    <Card title="Billing cycles">
+    <Card title="Billing Cycles">
       <Table<CycleRow>
         data={cycles}
         keyExtractor={(row) => row.id}
@@ -54,25 +54,25 @@ const OpsBillingTables = ({ cycles, invoices, payments, tenants }: OpsBillingTab
           },
           { key: 'status', label: 'Status' },
           { key: 'dueDate', label: 'Due', render: (row) => row.dueDate ?? '-' },
-          { key: 'paidAt', label: 'Paid at', render: (row) => row.paidAt ?? '-' },
+          { key: 'paidAt', label: 'Paid At', render: (row) => row.paidAt ?? '-' },
         ]}
       />
     </Card>
 
-    <Card title="Payments (recent)">
+    <Card title="Payments (Recent)">
       <Table<PaymentRow>
         data={payments}
         keyExtractor={(row) => row.id}
         columns={[
           {
             key: 'invoiceId',
-            label: 'Invoice id',
+            label: 'Invoice ID',
             render: (row) => <span className="font-mono text-xs">{row.invoiceId.slice(0, 8)}...</span>,
           },
           { key: 'amount', label: 'Amount' },
           { key: 'status', label: 'Status' },
           { key: 'paymentMethod', label: 'Method', render: (row) => row.paymentMethod ?? '-' },
-          { key: 'paidAt', label: 'Paid at', render: (row) => row.paidAt ?? '-' },
+          { key: 'paidAt', label: 'Paid At', render: (row) => row.paidAt ?? '-' },
         ]}
       />
     </Card>

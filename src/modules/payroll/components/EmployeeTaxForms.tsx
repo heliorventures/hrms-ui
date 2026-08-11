@@ -11,11 +11,13 @@ export const EmployeeTaxProofFormCard = ({
   sectionCode,
   declared,
   actual,
+  proofFile,
   busy,
   message,
   onSectionCodeChange,
   onDeclaredChange,
   onActualChange,
+  onProofFileChange,
   onSubmit,
 }: {
   activeTaxConfig: TaxConfigurationRow | null;
@@ -24,18 +26,20 @@ export const EmployeeTaxProofFormCard = ({
   sectionCode: string;
   declared: string;
   actual: string;
+  proofFile: File | null;
   busy: boolean;
   message: string | null;
   onSectionCodeChange: (value: string) => void;
   onDeclaredChange: (value: string) => void;
   onActualChange: (value: string) => void;
+  onProofFileChange: (file: File | null) => void;
   onSubmit: (event: FormEvent) => void;
 }) => (
-  <Card title="Submit deduction proof">
+  <Card title="Submit Deduction Proof">
     {!activeTaxConfig ? (
       <p className="text-sm text-slate-500">Tax configuration missing — HR must enable Manage Tax.</p>
     ) : loading ? (
-      <p className="text-sm text-slate-500">Loading…</p>
+      <p className="text-sm text-slate-500">Loading...</p>
     ) : (
       <form className="max-w-xl space-y-4" onSubmit={onSubmit}>
         <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -63,7 +67,7 @@ export const EmployeeTaxProofFormCard = ({
             </label>
           ) : (
             <Input
-              label="Section code"
+              label="Section Code"
               placeholder="80C"
               value={sectionCode}
               onChange={(event) => onSectionCodeChange(event.target.value)}
@@ -78,12 +82,25 @@ export const EmployeeTaxProofFormCard = ({
           />
         </div>
         <Input
-          label="Actual / invested (₹)"
+          label="Actual / Invested (₹)"
           inputMode="decimal"
           placeholder="Same as declared if proof pending"
           value={actual}
           onChange={(event) => onActualChange(event.target.value)}
         />
+        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+          Proof File
+          <input
+            type="file"
+            accept="application/pdf,image/jpeg,image/png"
+            onChange={(event) => onProofFileChange(event.target.files?.[0] ?? null)}
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:file:bg-slate-700 dark:file:text-slate-100"
+            required={!proofFile}
+          />
+          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+            PDF, JPG, or PNG up to 6 MB.
+          </span>
+        </label>
         {message && (
           <p
             className={`text-sm ${
@@ -96,7 +113,7 @@ export const EmployeeTaxProofFormCard = ({
           </p>
         )}
         <Button type="submit" disabled={busy}>
-          {busy ? 'Submitting…' : 'Submit proof line'}
+          {busy ? 'Submitting...' : 'Submit Proof Line'}
         </Button>
       </form>
     )}
@@ -132,7 +149,7 @@ export const EmployeeTaxDeclarationFormCard = ({
   onDeductionsChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
 }) => (
-  <Card title="Estimated declaration">
+  <Card title="Estimated Declaration">
     {!activeTaxConfig ? (
       <p className="text-sm text-slate-500">
         Activate a tax configuration (HR → Manage Tax) before saving declarations.
@@ -145,13 +162,13 @@ export const EmployeeTaxDeclarationFormCard = ({
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
-            label="Fiscal year (India anchor year)"
+            label="Fiscal Year (India Anchor Year)"
             inputMode="numeric"
             value={fiscalYear}
             onChange={(event) => onFiscalYearChange(event.target.value)}
           />
           <Input
-            label="Regime (optional)"
+            label="Regime (Optional)"
             placeholder="NEW_REGIME / OLD_REGIME"
             value={regime}
             onChange={(event) => onRegimeChange(event.target.value)}
@@ -159,14 +176,14 @@ export const EmployeeTaxDeclarationFormCard = ({
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
-            label="Gross income (estimated)"
+            label="Gross Income (Estimated)"
             inputMode="decimal"
             placeholder="850000"
             value={gross}
             onChange={(event) => onGrossChange(event.target.value)}
           />
           <Input
-            label="Total deductions (estimated)"
+            label="Total Deductions (Estimated)"
             inputMode="decimal"
             placeholder="175000"
             value={deductions}
@@ -185,7 +202,7 @@ export const EmployeeTaxDeclarationFormCard = ({
           </p>
         )}
         <Button type="submit" disabled={submitting || loading}>
-          {submitting ? 'Saving…' : 'Save declaration'}
+          {submitting ? 'Saving...' : 'Save Declaration'}
         </Button>
       </form>
     )}

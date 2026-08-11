@@ -25,7 +25,7 @@ const ApproveExpenseModal = ({
     <Modal
       isOpen={target !== null}
       onClose={onCancel}
-      title="Approve expense claim"
+      title="Approve Expense Claim"
     >
       {target ? (
         <div className="space-y-4">
@@ -42,7 +42,7 @@ const ApproveExpenseModal = ({
             the reimbursable amount only when partially approving.
           </p>
           <Input
-            label="Approve amount"
+            label="Approve Amount"
             value={target.draftApprove}
             onChange={(event) => onChange({ ...target, draftApprove: event.target.value })}
             fullWidth
@@ -56,7 +56,7 @@ const ApproveExpenseModal = ({
               disabled={busy}
               onClick={onConfirm}
             >
-              {busy ? 'Submitting...' : 'Submit approval'}
+              {busy ? 'Submitting...' : 'Submit Approval'}
             </Button>
             <Button
               type="button"

@@ -21,7 +21,7 @@ const LeaveWorkflowTrailModal = ({
   summaryRow,
   onClose,
 }: LeaveWorkflowTrailModalProps) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Leave request history" size="lg">
+  <Modal isOpen={isOpen} onClose={onClose} title="Leave Request History" size="lg">
     {summaryRow && (
       <div className="mb-4 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
         <p className="font-medium text-gray-900 dark:text-white">
@@ -44,15 +44,15 @@ const LeaveWorkflowTrailModal = ({
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
           {summaryRow.workflowInstanceId
             ? 'Workflow instance attached. Steps appear below when recorded.'
-            : 'No workflow instance on this request. Approval is still enforced by the server.'}
+            : 'No Workflow Instance On This Request. Approval Is Still Enforced By The Server.'}
         </p>
       </div>
     )}
     {loading ? (
-      <p className="text-sm text-gray-500">Loading workflow steps...</p>
+      <p className="text-sm text-gray-500">Loading Workflow Steps...</p>
     ) : rows.length === 0 ? (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        No workflow step actions recorded yet.
+        No Workflow Step Actions Recorded Yet.
       </p>
     ) : (
       <ul className="space-y-3 text-sm">

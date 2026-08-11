@@ -63,7 +63,7 @@ const RejectReasonModal = ({
         />
         <div className="flex gap-3">
           <Button type="submit" variant="primary" disabled={busy}>
-            {busy ? 'Submitting…' : 'Reject'}
+            {busy ? 'Submitting...' : 'Reject'}
           </Button>
           <Button type="button" variant="outline" onClick={handleClose} disabled={busy}>
             Cancel

@@ -11,18 +11,18 @@ interface LeaveTypesSectionProps {
 }
 
 const LeaveTypesSection = ({ model }: LeaveTypesSectionProps) => (
-  <Card title="Leave types">
+  <Card title="Leave Types">
     <div className="mb-4">
       <Button type="button" variant="primary" className="!text-sm" onClick={model.openNewType}>
-        Add leave type
+        Add Leave Type
       </Button>
     </div>
     <Table
       data={model.data?.leaveTypes ?? []}
       keyExtractor={(row) => row.id}
       loading={model.loading}
-      loadingMessage="Loading leave types..."
-      emptyMessage="No leave types."
+      loadingMessage="Loading Leave Types..."
+      emptyMessage="No Leave Types."
       columns={[
         { key: 'code', label: 'Code', render: (row) => row.code },
         { key: 'name', label: 'Name', render: (row) => row.name },
@@ -90,7 +90,7 @@ const LeaveTypeModal = ({ model }: LeaveTypesSectionProps) => {
         />
         <LeaveTypeCheckboxes model={model} />
         <Input
-          label="Max carry-forward days"
+          label="Max Carry-Forward Days"
           value={form.maxCf}
           onChange={(event) => model.setTypeForm({ ...form, maxCf: event.target.value })}
           fullWidth
@@ -127,7 +127,7 @@ const LeaveTypeCheckboxes = ({ model }: LeaveTypesSectionProps) => {
           checked={form.carryForward}
           onChange={(event) => set({ ...form, carryForward: event.target.checked })}
         />
-        Carry forward
+        Carry Forward
       </label>
       <label className="flex items-center gap-2 text-sm">
         <input

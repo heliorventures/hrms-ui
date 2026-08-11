@@ -28,9 +28,9 @@ export const ActiveTaxConfigurationCard = ({
   activeTaxConfig: TaxConfigurationRow | null;
   loadingShell: boolean;
 }) => (
-  <Card title="Active tax configuration">
+  <Card title="Active Tax Configuration">
     {loadingShell ? (
-      <p className="text-sm text-slate-500">Loading…</p>
+      <p className="text-sm text-slate-500">Loading...</p>
     ) : activeTaxConfig ? (
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant={activeTaxConfig.isActive ? 'success' : 'neutral'}>
@@ -43,7 +43,7 @@ export const ActiveTaxConfigurationCard = ({
         </span>
       </div>
     ) : (
-      <p className="text-sm text-slate-500">No active tax configuration found.</p>
+      <p className="text-sm text-slate-500">No Active Tax Configuration Found.</p>
     )}
   </Card>
 );
@@ -55,28 +55,28 @@ export const TaxSlabsCard = ({
   activeTaxSlabs: TaxSlabRow[];
   loadingShell: boolean;
 }) => (
-  <Card title="Tax slabs">
+  <Card title="Tax Slabs">
     <Table
       data={activeTaxSlabs}
       loading={loadingShell}
-      loadingMessage="Loading…"
-      emptyMessage="No tax slabs found."
+      loadingMessage="Loading..."
+      emptyMessage="No Tax Slabs Found."
       keyExtractor={(row) => row.id}
       columns={[
         {
           key: 'incomeFrom',
-          label: 'Income from',
+          label: 'Income From',
           render: (row: TaxSlabRow) => formatInr(Number(row.incomeFrom)),
         },
         {
           key: 'incomeTo',
-          label: 'Income to',
+          label: 'Income To',
           render: (row: TaxSlabRow) =>
-            row.incomeTo ? formatInr(Number(row.incomeTo)) : 'No upper limit',
+            row.incomeTo ? formatInr(Number(row.incomeTo)) : 'No Upper Limit',
         },
         {
           key: 'taxRate',
-          label: 'Tax rate',
+          label: 'Tax Rate',
           render: (row: TaxSlabRow) => (row.taxRate ? `${row.taxRate}%` : '—'),
         },
       ]}
@@ -95,7 +95,7 @@ export const PayslipFySummaryCard = ({
 }) => (
   <Card title={`Payslip summary (India FY ${totals.fyAnchor}-${totals.fyAnchor + 1})`}>
     {payslipsLoading ? (
-      <p className="text-sm text-slate-500">Loading payslip data…</p>
+      <p className="text-sm text-slate-500">Loading Payslip Data...</p>
     ) : payslipError ? (
       <p className="text-sm text-amber-800 dark:text-amber-200">{payslipError}</p>
     ) : (
@@ -135,12 +135,12 @@ export const EmployeeTaxTables = ({
   hasError: boolean;
 }) => (
   <>
-    <Card title="Your tax declaration">
+    <Card title="Your Tax Declaration">
       <Table
         data={computations ?? []}
         loading={loading && !hasError}
-        loadingMessage="Loading your declaration…"
-        emptyMessage="No declaration yet — use the form below once HR has activated a tax regime."
+        loadingMessage="Loading Your Declaration..."
+        emptyMessage="No Declaration Yet - Use The Form Below Once HR Has Activated A Tax Regime."
         keyExtractor={(row) => row.id}
         columns={[
           { key: 'fy', label: 'FY', render: (row: TaxComputationSelfRow) => `FY ${row.fiscalYear}` },
@@ -151,7 +151,7 @@ export const EmployeeTaxTables = ({
           },
           {
             key: 'grossIncome',
-            label: 'Gross declared',
+            label: 'Gross Declared',
             render: (row: TaxComputationSelfRow) => formatAmountString(row.grossIncome),
           },
           {
@@ -161,23 +161,23 @@ export const EmployeeTaxTables = ({
           },
           {
             key: 'finalTax',
-            label: 'Estimated tax',
+            label: 'Estimated Tax',
             render: (row: TaxComputationSelfRow) => formatAmountString(row.finalTax),
           },
           {
             key: 'tdsPerMonth',
-            label: 'TDS / month',
+            label: 'TDS / Month',
             render: (row: TaxComputationSelfRow) => formatAmountString(row.tdsPerMonth),
           },
         ]}
       />
     </Card>
-    <Card title="Proof submissions (FY)">
+    <Card title="Proof Submissions (FY)">
       <Table
         data={proofs ?? []}
         loading={loading && !hasError}
-        loadingMessage="Loading proofs…"
-        emptyMessage="No proofs for this FY yet — use Submit deduction proof below."
+        loadingMessage="Loading Proofs..."
+        emptyMessage="No Proofs For This FY Yet - Use Submit Deduction Proof Below."
         keyExtractor={(row) => row.id}
         columns={[
           { key: 'sectionCode', label: 'Section' },
@@ -188,7 +188,7 @@ export const EmployeeTaxTables = ({
           },
           {
             key: 'actualAmount',
-            label: 'Actual (proof)',
+            label: 'Actual (Proof)',
             render: (row: TaxProofLineSelfRow) => formatAmountString(row.actualAmount),
           },
           {

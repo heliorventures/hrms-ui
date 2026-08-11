@@ -178,7 +178,7 @@ const AdminWorkflowsPage = () => {
         description="Definitions, steps, and in-flight instances. Leave: use approver type REPORTING_MANAGER_OR_ROLE plus approverRoleId (HR role) for one-step manager-or-HR approval; runtime enforcement is in kabipay-leave."
       />
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Create workflow">
+        <Card title="Create Workflow">
           <form onSubmit={onCreateWorkflow} className="space-y-3">
             {wMsg && (
               <p
@@ -197,7 +197,7 @@ const AdminWorkflowsPage = () => {
               required
             />
             <Input
-              label="Entity type"
+              label="Entity Type"
               value={wEntity}
               onChange={(e) => setWEntity(e.target.value)}
               fullWidth
@@ -212,11 +212,11 @@ const AdminWorkflowsPage = () => {
               Active
             </label>
             <Button type="submit" variant="primary" disabled={wBusy}>
-              {wBusy ? 'Creating…' : 'Create workflow'}
+              {wBusy ? 'Creating...' : 'Create Workflow'}
             </Button>
           </form>
         </Card>
-        <Card title="Add step">
+        <Card title="Add Step">
           <form onSubmit={onCreateStep} className="space-y-3">
             {sMsg && (
               <p
@@ -228,7 +228,7 @@ const AdminWorkflowsPage = () => {
               </p>
             )}
             <Input
-              label="Workflow id (UUID)"
+              label="Workflow ID (UUID)"
               value={sWorkflowId}
               onChange={(e) => setSWorkflowId(e.target.value)}
               fullWidth
@@ -245,7 +245,7 @@ const AdminWorkflowsPage = () => {
                 min={1}
               />
               <Input
-                label="SLA (hours, optional)"
+                label="SLA (Hours, Optional)"
                 type="number"
                 value={sSla == null ? '' : String(sSla)}
                 onChange={(e) => {
@@ -260,14 +260,14 @@ const AdminWorkflowsPage = () => {
               />
             </div>
             <Input
-              label="Step name"
+              label="Step Name"
               value={sName}
               onChange={(e) => setSName(e.target.value)}
               fullWidth
               required
             />
             <Input
-              label="Approver type"
+              label="Approver Type"
               value={sApprover}
               onChange={(e) => setSApprover(e.target.value)}
               fullWidth
@@ -278,7 +278,7 @@ const AdminWorkflowsPage = () => {
               Can skip
             </label>
             <Button type="submit" variant="primary" disabled={sBusy}>
-              {sBusy ? 'Saving…' : 'Add step'}
+              {sBusy ? 'Saving...' : 'Add Step'}
             </Button>
           </form>
         </Card>
@@ -288,9 +288,9 @@ const AdminWorkflowsPage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="Definitions & steps">
+      <Card title="Definitions & Steps">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : stepsData?.workflowsWithSteps && stepsData.workflowsWithSteps.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700/80">
             {stepsData.workflowsWithSteps.map((row) => (
@@ -309,7 +309,7 @@ const AdminWorkflowsPage = () => {
                     onDeleteStep={onDeleteStep}
                   />
                 ) : (
-                  <p className="mt-1 text-xs text-slate-500">No steps in graph.</p>
+                  <p className="mt-1 text-xs text-slate-500">No Steps In Graph.</p>
                 )}
               </li>
             ))}
@@ -331,12 +331,12 @@ const AdminWorkflowsPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No workflows.</p>
+          <p className="text-sm text-gray-500">No Workflows.</p>
         )}
       </Card>
       <Card title="Instances">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.workflowInstances?.length ? (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
@@ -344,7 +344,7 @@ const AdminWorkflowsPage = () => {
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-400">
                   <th className="rounded-tl-md py-2.5 pl-2 pr-3">Entity</th>
                   <th className="py-2.5 pr-3">Status</th>
-                  <th className="rounded-tr-md py-2.5 pr-2">Entity id</th>
+                  <th className="rounded-tr-md py-2.5 pr-2">Entity ID</th>
                 </tr>
               </thead>
               <tbody>
@@ -366,7 +366,7 @@ const AdminWorkflowsPage = () => {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No instances.</p>
+          <p className="text-sm text-gray-500">No Instances.</p>
         )}
       </Card>
     </div>

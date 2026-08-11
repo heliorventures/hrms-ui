@@ -53,7 +53,7 @@ const ProfileDropdown = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 rounded-md p-1.5 text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-        aria-label="User menu"
+        aria-label="User Menu"
       >
         <div className="flex h-8 w-8 items-center justify-center rounded-full border border-indigo-200/80 bg-indigo-50 text-sm font-semibold text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-950/50 dark:text-indigo-200">
           {initials}

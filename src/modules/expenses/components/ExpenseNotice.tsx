@@ -16,7 +16,7 @@ const ExpenseNotice = ({ notice, onDismiss }: ExpenseNoticeProps) => {
           type="button"
           className="shrink-0 rounded-md px-2 py-0.5 text-sm font-medium opacity-70 hover:bg-black/10 hover:opacity-100 dark:hover:bg-white/10"
           onClick={onDismiss}
-          aria-label="Dismiss notification"
+          aria-label="Dismiss Notification"
         >
           Close
         </button>

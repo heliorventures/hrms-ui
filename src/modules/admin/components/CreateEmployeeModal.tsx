@@ -6,11 +6,20 @@ import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
 import {
   CreateEmployeeDocument,
   ClientOpsOrgListsForEmployeeModalDocument,
   type CreateEmployeeInput,
 } from '../../../api/graphql/graphql';
+import {
+  buildDepartmentOptions,
+  buildDesignationOptions,
+  buildManagerOptions,
+  EMPLOYEE_STATUS_OPTIONS,
+  LOADING_EMPLOYEE_FORM_OPTION,
+  type SelectOption,
+} from '../employeeFormOptions';
 
 interface CreateEmployeeModalProps {
   isOpen: boolean;
@@ -30,9 +39,9 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   const [departmentId, setDepartmentId] = useState('');
   const [designationId, setDesignationId] = useState('');
   const [reportingManagerId, setReportingManagerId] = useState('');
-  const [deptOptions, setDeptOptions] = useState<{ value: string; label: string }[]>([]);
-  const [desigOptions, setDesigOptions] = useState<{ value: string; label: string }[]>([]);
-  const [managerOptions, setManagerOptions] = useState<{ value: string; label: string }[]>([]);
+  const [deptOptions, setDeptOptions] = useState<SelectOption[]>([]);
+  const [desigOptions, setDesigOptions] = useState<SelectOption[]>([]);
+  const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
   const [orgLoadError, setOrgLoadError] = useState<string | null>(null);
 
   const loadOrg = useCallback(async () => {
@@ -44,27 +53,9 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         designations: { id: string; title: string }[];
         employees: { id: string; employeeCode: string; fullName: string }[];
       }>(ClientOpsOrgListsForEmployeeModalDocument, { dlim: 100, glim: 100, elim: 100 });
-      setDeptOptions([
-        { value: '', label: '— None —' },
-        ...(res.departments ?? []).map((d) => ({
-          value: d.id,
-          label: `${d.name} (${d.code})`,
-        })),
-      ]);
-      setDesigOptions([
-        { value: '', label: '— None —' },
-        ...(res.designations ?? []).map((d) => ({
-          value: d.id,
-          label: d.title,
-        })),
-      ]);
-      setManagerOptions([
-        { value: '', label: '— None —' },
-        ...(res.employees ?? []).map((em) => ({
-          value: em.id,
-          label: `${em.fullName} (${em.employeeCode})`,
-        })),
-      ]);
+      setDeptOptions(buildDepartmentOptions(res.departments ?? []));
+      setDesigOptions(buildDesignationOptions(res.designations ?? []));
+      setManagerOptions(buildManagerOptions(res.employees ?? []));
     } catch (e) {
       setOrgLoadError(graphQlUserMessage(e));
     }
@@ -73,12 +64,6 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   useEffect(() => {
     void loadOrg();
   }, [loadOrg]);
-
-  const statusOptions = [
-    { value: 'ACTIVE', label: 'Active' },
-    { value: 'INACTIVE', label: 'Inactive' },
-    { value: 'PROBATION', label: 'Probation' },
-  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,7 +103,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add employee">
+    <Modal isOpen={isOpen} onClose={onClose} title="Add Employee">
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
         {orgLoadError && (
@@ -126,7 +111,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         )}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
-            label="Employee code *"
+            label={`${UI_FIELD_LABELS.employeeCode} *`}
             value={employeeCode}
             onChange={(e) => {
               setEmployeeCode(e.target.value);
@@ -137,7 +122,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
           />
           <Input
             type="date"
-            label="Date of joining *"
+            label={`${UI_FIELD_LABELS.dateOfJoining} *`}
             value={dateOfJoining}
             onChange={(e) => {
               setDateOfJoining(e.target.value);
@@ -148,7 +133,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
-            label="First name *"
+            label={`${UI_FIELD_LABELS.firstName} *`}
             value={firstName}
             onChange={(e) => {
               setFirstName(e.target.value);
@@ -157,7 +142,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
             required
           />
           <Input
-            label="Last name *"
+            label={`${UI_FIELD_LABELS.lastName} *`}
             value={lastName}
             onChange={(e) => {
               setLastName(e.target.value);
@@ -172,7 +157,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
           onChange={(e) => {
             setStatus(e.target.value);
           }}
-          options={statusOptions}
+          options={EMPLOYEE_STATUS_OPTIONS}
           fullWidth
         />
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -182,7 +167,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
             onChange={(e) => {
               setDepartmentId(e.target.value);
             }}
-            options={deptOptions.length ? deptOptions : [{ value: '', label: '— Loading —' }]}
+            options={deptOptions.length ? deptOptions : [LOADING_EMPLOYEE_FORM_OPTION]}
             fullWidth
           />
           <Select
@@ -191,32 +176,32 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
             onChange={(e) => {
               setDesignationId(e.target.value);
             }}
-            options={desigOptions.length ? desigOptions : [{ value: '', label: '— Loading —' }]}
+            options={desigOptions.length ? desigOptions : [LOADING_EMPLOYEE_FORM_OPTION]}
             fullWidth
           />
         </div>
         <Select
-          label="Reporting manager"
+          label={UI_FIELD_LABELS.reportingManager}
           value={reportingManagerId}
           onChange={(e) => {
             setReportingManagerId(e.target.value);
           }}
           options={
-            managerOptions.length ? managerOptions : [{ value: '', label: '— Loading —' }]
+            managerOptions.length ? managerOptions : [LOADING_EMPLOYEE_FORM_OPTION]
           }
           fullWidth
         />
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-          Login account creation is intentionally not available here until the invite or password
-          reset flow is wired. Create the employee record now, then provision sign-in through the
-          secure account workflow.
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+          Login account creation is intentionally not available here until the secure invite or
+          password-reset workflow is wired. Create the employee record, then provision sign-in
+          through the approved account workflow.
         </p>
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? 'Creating…' : 'Create'}
+            {submitting ? UI_STATUS_TEXT.creating : UI_ACTION_TEXT.create}
           </Button>
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {UI_ACTION_TEXT.cancel}
           </Button>
         </div>
       </form>

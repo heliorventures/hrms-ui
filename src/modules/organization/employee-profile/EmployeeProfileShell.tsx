@@ -74,7 +74,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
   if (loading) {
     return (
       <div className="space-y-4">
-        <EmployeeHeader employeeName="Loading…" employeeCode="—" />
+        <EmployeeHeader employeeName="Loading..." employeeCode="—" />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-3">
             <ProfileSectionSkeleton rows={6} />

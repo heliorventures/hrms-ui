@@ -16,7 +16,7 @@ interface ExpenseClaimsTableProps {
   loading: boolean;
   travelRequestLabels: Record<string, string>;
   onApprove: (row: ExpenseRow) => void;
-  onMarkPaid: (expenseId: string) => void;
+  onMarkPaid: (row: ExpenseRow) => void;
   onReject: (expenseId: string) => void;
 }
 
@@ -52,7 +52,7 @@ const ExpenseClaimsTable = ({
       <Table
         data={expenses}
         loading={loading}
-        emptyMessage="No expense claims found."
+        emptyMessage="No Expense Claims Found."
         keyExtractor={(expense) => expense.id}
         columns={[
           {
@@ -161,7 +161,7 @@ const ExpenseClaimsTable = ({
                             variant="secondary"
                             className="!px-2 !py-1 !text-xs"
                             disabled={busyKey === `${EXPENSE_BUSY_PREFIX.payment}:${expense.id}`}
-                            onClick={() => onMarkPaid(expense.id)}
+                            onClick={() => onMarkPaid(expense)}
                           >
                             Mark paid
                           </Button>

@@ -15,8 +15,8 @@ const ExpenseCategoriesTable = ({ rows, loading, onEdit, onDelete }: ExpenseCate
     data={rows}
     keyExtractor={(row) => row.id}
     loading={loading}
-    loadingMessage="Loading categories..."
-    emptyMessage="No expense categories yet."
+    loadingMessage="Loading Categories..."
+    emptyMessage="No Expense Categories Yet."
     columns={[
       {
         key: 'name',
@@ -30,7 +30,7 @@ const ExpenseCategoriesTable = ({ rows, loading, onEdit, onDelete }: ExpenseCate
       },
       {
         key: 'cap',
-        label: 'Max / claim',
+        label: 'Max / Claim',
         render: (row) => (
           <span className="text-sm text-gray-700 dark:text-gray-300">
             {formatMaybeAmount(row.maxAmountPerClaim)}

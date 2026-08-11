@@ -5,7 +5,6 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   PermissionIdsForRoleDocument,
   PermissionScopesForRoleDocument,
-  RbacAdminBoardDocument,
   RoleIdsForUserDocument,
   SetRolePermissionsDocument,
   SetRolePermissionScopesDocument,
@@ -19,7 +18,7 @@ import RbacAccessTabs from './components/RbacAccessTabs';
 import RolePermissionsPanel from './components/RolePermissionsPanel';
 import RoleScopesPanel from './components/RoleScopesPanel';
 import UserRolesPanel from './components/UserRolesPanel';
-import type { RbacAccessTab, RbacScopeRow } from './rbacTypes';
+import { RBAC_SCOPE_TYPES, type RbacAccessTab, type RbacScopeRow } from './rbacTypes';
 
 const DEFAULT_SCOPE_ROW: RbacScopeRow = {
   resource: 'employee',
@@ -27,10 +26,42 @@ const DEFAULT_SCOPE_ROW: RbacScopeRow = {
   scopeType: 'TEAM',
 };
 
+type RbacAdminBoardData = Omit<RbacAdminBoardQuery, 'tenantDirectoryUsers'> & {
+  tenantDirectoryUsers: Array<{
+    id: string;
+    username: string;
+    email?: string | null;
+    isActive: boolean;
+  }>;
+};
+
+const RbacAdminBoardWithUsernameDocument = `
+  query RbacAdminBoardWithUsername($uLim: Int! = 120, $rLim: Int! = 80, $pLim: Int! = 400) {
+    tenantDirectoryUsers(limit: $uLim) {
+      id
+      username
+      email
+      isActive
+    }
+    tenantDirectoryRoles(limit: $rLim) {
+      id
+      name
+      description
+      isSystemRole
+    }
+    tenantCatalogPermissions(limit: $pLim) {
+      id
+      resource
+      action
+      description
+    }
+  }
+`;
+
 const HrAccessManagementPage = () => {
   const client = useGraphClient('client');
   const [tab, setTab] = useState<RbacAccessTab>('users');
-  const [board, setBoard] = useState<RbacAdminBoardQuery | null>(null);
+  const [board, setBoard] = useState<RbacAdminBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -52,7 +83,7 @@ const HrAccessManagementPage = () => {
     setError(null);
     try {
       setBoard(
-        await client.request<RbacAdminBoardQuery>(RbacAdminBoardDocument, {
+        await client.request<RbacAdminBoardData>(RbacAdminBoardWithUsernameDocument, {
           uLim: 120,
           rLim: 80,
           pLim: 400,
@@ -151,7 +182,7 @@ const HrAccessManagementPage = () => {
   }, [client, scopeRoleId]);
 
   const permsByResource = useMemo(() => {
-    const result = new Map<string, RbacAdminBoardQuery['tenantCatalogPermissions']>();
+    const result = new Map<string, RbacAdminBoardData['tenantCatalogPermissions']>();
     for (const permission of board?.tenantCatalogPermissions ?? []) {
       if (!result.has(permission.resource)) result.set(permission.resource, []);
       result.get(permission.resource)!.push(permission);
@@ -177,6 +208,11 @@ const HrAccessManagementPage = () => {
 
   const saveUserRoles = async () => {
     if (!selectedUserId) return;
+    const user = board?.tenantDirectoryUsers.find((row) => row.id === selectedUserId);
+    const confirmed = window.confirm(
+      `Replace assigned roles for ${user?.username ?? selectedUserId} with ${userRoleIds.size} role(s)?`
+    );
+    if (!confirmed) return;
     setInfo(null);
     setError(null);
     try {
@@ -192,6 +228,11 @@ const HrAccessManagementPage = () => {
 
   const saveRolePerms = async () => {
     if (!selectedRoleId) return;
+    const role = board?.tenantDirectoryRoles.find((row) => row.id === selectedRoleId);
+    const confirmed = window.confirm(
+      `Replace permissions for ${role?.name ?? selectedRoleId} with ${permIds.size} permission(s)?`
+    );
+    if (!confirmed) return;
     setInfo(null);
     setError(null);
     try {
@@ -207,16 +248,51 @@ const HrAccessManagementPage = () => {
 
   const saveScopes = async () => {
     if (!scopeRoleId) return;
+    const catalogKeys = new Set(
+      (board?.tenantCatalogPermissions ?? []).map(
+        (permission) => `${permission.resource.trim()}:${permission.action.trim()}`
+      )
+    );
+    const normalizedScopes = scopeRows.map((row) => ({
+      resource: row.resource.trim(),
+      action: row.action.trim(),
+      scopeType: row.scopeType.trim().toUpperCase(),
+    }));
+    const duplicateCheck = new Set<string>();
+    for (const row of normalizedScopes) {
+      if (!row.resource || !row.action) {
+        setError('Scope resource and action are required.');
+        return;
+      }
+      if (!catalogKeys.has(`${row.resource}:${row.action}`)) {
+        setError(`Scope ${row.resource}:${row.action} is not in the tenant permission catalog.`);
+        return;
+      }
+      if (!RBAC_SCOPE_TYPES.includes(row.scopeType as (typeof RBAC_SCOPE_TYPES)[number])) {
+        setError(`Scope type ${row.scopeType} is invalid.`);
+        return;
+      }
+      const duplicateKey = `${row.resource}:${row.action}:${row.scopeType}`;
+      if (duplicateCheck.has(duplicateKey)) {
+        setError(`Duplicate scope ${duplicateKey} is not allowed.`);
+        return;
+      }
+      duplicateCheck.add(duplicateKey);
+    }
+    const role = board?.tenantDirectoryRoles.find((row) => row.id === scopeRoleId);
+    const hasAllScope = normalizedScopes.some((row) => row.scopeType === 'ALL');
+    const confirmed = window.confirm(
+      `Replace permission scopes for ${role?.name ?? scopeRoleId} with ${normalizedScopes.length} scope row(s)?${
+        hasAllScope ? ' This includes ALL scope.' : ''
+      }`
+    );
+    if (!confirmed) return;
     setInfo(null);
     setError(null);
     try {
       await client.request(SetRolePermissionScopesDocument, {
         roleId: scopeRoleId,
-        scopes: scopeRows.map((row) => ({
-          resource: row.resource.trim(),
-          action: row.action.trim(),
-          scopeType: row.scopeType.trim().toUpperCase(),
-        })),
+        scopes: normalizedScopes,
       });
       setInfo('Scopes saved.');
     } catch (err) {
@@ -233,7 +309,7 @@ const HrAccessManagementPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Roles & permissions</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Roles & Permissions</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Manage tenant RBAC. Changes to roles or permissions require users to obtain a fresh token.
         </p>
@@ -260,7 +336,7 @@ const HrAccessManagementPage = () => {
       />
 
       {loading ? (
-        <p className="text-sm text-gray-500">Loading directory...</p>
+        <p className="text-sm text-gray-500">Loading Directory...</p>
       ) : tab === 'users' ? (
         <UserRolesPanel
           loading={userRolesLoading}

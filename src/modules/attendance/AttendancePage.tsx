@@ -6,10 +6,7 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { createPermissionService } from '../../auth/permissionService';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
-import {
-  AttendanceAdjustmentPolicyDocument,
-  AttendanceBoardDocument,
-} from '../../api/graphql/graphql';
+import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
 import { formatBackendTime } from '../../utils/timeFormat';
 import {
   formatMinutesAsHhMm,
@@ -19,6 +16,35 @@ import { isoDateRangeContains, monthBoundsIso, parseIsoDate, toIsoDate } from '.
 import AttendanceSegmentsTable from './components/AttendanceSegmentsTable';
 import ManualAttendanceModal from './components/ManualAttendanceModal';
 import type { AttendanceBoardData, FlatSegmentRow } from './types';
+
+const ATTENDANCE_BOARD_LIMIT = 800;
+
+const AttendanceBoardRangeDocument = `
+  query AttendanceBoardRange($limit: Int! = 400, $fromDate: NaiveDate, $toDate: NaiveDate) {
+    shifts(limit: $limit) {
+      id
+      name
+      startTime
+      endTime
+      workHours
+      isNightShift
+    }
+    attendance(limit: $limit, fromDate: $fromDate, toDate: $toDate) {
+      id
+      employeeId
+      workDate
+      checkInTime
+      checkOutTime
+      checkInLat
+      checkInLng
+      checkOutLat
+      checkOutLng
+      status
+      source
+      lateMinutes
+    }
+  }
+`;
 
 function calendarDaysBetweenWorkAndToday(workIso: string): number {
   const a = parseIsoDate(workIso);
@@ -52,8 +78,12 @@ const AttendancePage = () => {
   const monthBounds = useMemo(() => monthBoundsIso(year, monthIndex), [year, monthIndex]);
 
   const loadBoard = useCallback(async () => {
-    return client.request<AttendanceBoardData>(AttendanceBoardDocument, { limit: 800 });
-  }, [client]);
+    return client.request<AttendanceBoardData>(AttendanceBoardRangeDocument, {
+      limit: ATTENDANCE_BOARD_LIMIT,
+      fromDate: monthBounds.start,
+      toDate: monthBounds.end,
+    });
+  }, [client, monthBounds.end, monthBounds.start]);
 
   const loadPolicy = useCallback(async () => {
     try {
@@ -143,6 +173,8 @@ const AttendancePage = () => {
     };
   }, [filteredSegments]);
 
+  const attendanceLimitReached = (board?.attendance?.length ?? 0) >= ATTENDANCE_BOARD_LIMIT;
+
   const shiftLimit = 12;
 
   const openAdjust = (iso: string, segment: FlatSegmentRow | null = null) => {
@@ -165,7 +197,7 @@ const AttendancePage = () => {
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Punch history, locations, and corrections for your employee record.{' '}
             <Link to="/dashboard" className="text-primary-600 underline dark:text-primary-400">
-              Punch in/out from the dashboard.
+              Punch In/out from the dashboard.
             </Link>{' '}
             Weekly hour logging lives under{' '}
             <Link to="/timesheet" className="text-primary-600 underline dark:text-primary-400">
@@ -278,6 +310,15 @@ const AttendancePage = () => {
       {success && (
         <Card>
           <p className="text-sm text-green-700 dark:text-green-300">{success}</p>
+        </Card>
+      )}
+      {attendanceLimitReached && (
+        <Card>
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            Attendance results reached the {ATTENDANCE_BOARD_LIMIT}-row load limit. Narrow the
+            period or refresh after server-side paging is available before relying on this view for
+            payroll reconciliation.
+          </p>
         </Card>
       )}
 

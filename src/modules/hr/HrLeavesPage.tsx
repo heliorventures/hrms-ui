@@ -22,13 +22,13 @@ import LeaveTeamCalendar from './components/LeaveTeamCalendar';
 import {
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
-  LeaveBoardDocument,
   LeaveWorkflowTrailQueryDocument,
   OrgChartDocument,
   type LeaveBoardQuery,
   type LeaveWorkflowTrailQueryQuery,
   type OrgChartQuery,
 } from '../../api/graphql/graphql';
+import { LeaveBoardRangeDocument } from '../leave/leaveBoardQuery';
 
 type ApproveLeaveRequestMutation = {
   approveLeaveRequest: { status: string };
@@ -64,6 +64,13 @@ const HrLeavesPage = () => {
   );
   const defaultYear = useMemo(() => new Date().getFullYear(), []);
   const [balanceYear, setBalanceYear] = useState(defaultYear);
+  const requestYearRange = useMemo(
+    () => ({
+      fromDate: `${balanceYear}-01-01`,
+      toDate: `${balanceYear}-12-31`,
+    }),
+    [balanceYear]
+  );
   const yearChoices = useMemo(() => {
     const years: number[] = [];
     for (let year = defaultYear - 2; year <= defaultYear + 1; year += 1) years.push(year);
@@ -71,8 +78,14 @@ const HrLeavesPage = () => {
   }, [defaultYear]);
 
   const loadBoard = useCallback(
-    () => client.request<LeaveBoardQuery>(LeaveBoardDocument, { limit: HR_LEAVE_LIMIT, balanceYear }),
-    [client, balanceYear]
+    () =>
+      client.request<LeaveBoardQuery>(LeaveBoardRangeDocument, {
+        limit: HR_LEAVE_LIMIT,
+        balanceYear,
+        fromDate: requestYearRange.fromDate,
+        toDate: requestYearRange.toDate,
+      }),
+    [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]
   );
 
   const loadOrgChart = useCallback(async () => {
@@ -239,7 +252,7 @@ const HrLeavesPage = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave approvals</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave Approvals</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             HR queue over visible leave requests. Use{' '}
             <Link className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400" to="/leave">
@@ -313,14 +326,14 @@ const HrLeavesPage = () => {
       <Card title="Requests">
         <HrLeaveFilterTabs activeFilter={filter} pendingCount={pendingCount} onChange={setFilter} />
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading requests...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Requests...</p>
         ) : (
           <LeaveRequestsTableSection
             approveBusyId={approveBusyId}
             canApproveRow={canApproveRowForTable}
             cancelBusyId={cancelBusyId}
             employeeLabel={employeeLabel}
-            emptyLabel="No requests in this tab."
+            emptyLabel="No Requests In This Tab."
             leaveTypeNameById={leaveTypeNameById}
             rows={filteredRows}
             showApprovalColumn={showApprovalColumn}

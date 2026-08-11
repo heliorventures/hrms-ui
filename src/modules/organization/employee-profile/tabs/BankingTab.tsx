@@ -72,11 +72,11 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
             onClick={() => setEditing(true)}
           >
             <Pencil className="h-3.5 w-3.5" aria-hidden />
-            {b.bankName === '—' ? 'Add account' : 'Update'}
+            {b.bankName === '—' ? 'Add Account' : 'Update'}
           </Button>
         </div>
         <InfoCard
-          title="Bank account"
+          title="Bank Account"
           subtitle="Sensitive fields are masked in the UI"
           action={<VerificationBadge status={b.verificationStatus} />}
         >
@@ -120,16 +120,16 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
           {error}
         </div>
       ) : null}
-      <InfoCard title="Edit primary bank" subtitle="Stored as the employee’s salary account">
+      <InfoCard title="Edit Primary Bank" subtitle="Stored as the employee’s salary account">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
-            label="Bank name"
+            label="Bank Name"
             value={bankName}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setBankName(e.target.value)}
             fullWidth
           />
           <Input
-            label="Account number"
+            label="Account Number"
             value={accountNumber}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setAccountNumber(e.target.value)}
             fullWidth
@@ -142,7 +142,7 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
             fullWidth
           />
           <Input
-            label="Account type (optional)"
+            label="Account Type (Optional)"
             value={accountType}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setAccountType(e.target.value)}
             fullWidth
@@ -169,7 +169,7 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
             }
             onClick={() => void save()}
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </InfoCard>

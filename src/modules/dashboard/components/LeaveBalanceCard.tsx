@@ -66,8 +66,8 @@ const LeaveBalanceCard = () => {
       to="/leave#leave-requests"
       className="block rounded-xl outline-none ring-offset-2 ring-offset-slate-50 transition hover:opacity-[0.98] focus-visible:ring-2 focus-visible:ring-indigo-500 dark:ring-offset-slate-950"
     >
-      <Card title="Leave balance">
-      {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}
+      <Card title="Leave Balance">
+      {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>}
       {error && !loading && <p className="text-sm text-amber-800 dark:text-amber-200">{error}</p>}
       {!loading && !error && rows && rows.length > 0 && (
         <ul className="space-y-2">
@@ -90,7 +90,7 @@ const LeaveBalanceCard = () => {
         </ul>
       )}
       {!loading && !error && rows && rows.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">No leave balance rows yet.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No Leave Balance Rows Yet.</p>
       )}
       <p className="mt-3 text-xs font-medium text-indigo-600 dark:text-indigo-400">
         Open leave center →
