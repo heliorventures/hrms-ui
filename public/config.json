@@ -1,4 +1,5 @@
 {
   "gatewayUrl": "http://127.0.0.1:4009/graphql",
-  "authUrl": "http://127.0.0.1:4001"
+  "authUrl": "http://127.0.0.1:4001",
+  "tenantBaseDomain": "heliorhrms.com"
 }
