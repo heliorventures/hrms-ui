@@ -57,14 +57,16 @@ function renderChildRoute(route: AppChildRoute): JSX.Element {
   );
 }
 
-const OpsRoutes = () => (
-  <Route
-    path="/ops"
-    element={<OpsProtectedLayout />}
-  >
-    {OPS_CHILD_ROUTES.map(renderChildRoute)}
-  </Route>
-);
+function renderOpsRoute(): JSX.Element {
+  return (
+    <Route
+      path="/ops"
+      element={<OpsProtectedLayout />}
+    >
+      {OPS_CHILD_ROUTES.map(renderChildRoute)}
+    </Route>
+  );
+}
 
 const AppRoutes = () => {
   const { isAuthenticated, isOpsAuthenticated } = useAuth();
@@ -83,7 +85,7 @@ const AppRoutes = () => {
           path="/ops/login"
           element={isOpsAuthenticated ? <Navigate to="/ops/tenants" replace /> : <OpsLoginPage />}
         />
-        <OpsRoutes />
+        {renderOpsRoute()}
         <Route path="*" element={<MarketingPage />} />
       </Routes>
     );
@@ -122,7 +124,7 @@ const AppRoutes = () => {
         element={isOpsAuthenticated ? <Navigate to="/ops/tenants" replace /> : <OpsLoginPage />}
       />
 
-      <OpsRoutes />
+      {renderOpsRoute()}
 
       <Route path="/" element={<ProtectedLayout />}>
         {TENANT_APP_ROUTES.map(renderChildRoute)}
