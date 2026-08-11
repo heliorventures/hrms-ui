@@ -3,7 +3,10 @@ import Modal from '../../../components/common/Modal';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { AddManualAttendanceSegmentDocument } from '../../../api/graphql/graphql';
+import {
+  AddManualAttendanceSegmentDocument,
+  UpdateManualAttendanceSegmentDocument,
+} from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
   type AttendanceSegmentInterval,
@@ -13,19 +16,6 @@ import { formatBackendTime } from '../../../utils/timeFormat';
 
 const DEFAULT_CHECK_IN = '09:00';
 const DEFAULT_CHECK_OUT = '18:00';
-
-const UPDATE_MANUAL_ATTENDANCE_SEGMENT_DOCUMENT = `
-  mutation UpdateManualAttendanceSegment($input: UpdateManualAttendanceSegmentInput!) {
-    updateManualAttendanceSegment(input: $input) {
-      id
-      workDate
-      checkInTime
-      checkOutTime
-      source
-      status
-    }
-  }
-`;
 
 export interface ManualAttendanceModalProps {
   isOpen: boolean;
@@ -87,7 +77,7 @@ const ManualAttendanceModal = ({
     };
     try {
       if (editingSegmentId) {
-        await client.request(UPDATE_MANUAL_ATTENDANCE_SEGMENT_DOCUMENT, {
+        await client.request(UpdateManualAttendanceSegmentDocument, {
           input: {
             id: editingSegmentId,
             ...input,
