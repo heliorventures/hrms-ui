@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { canAccessTenantPath } from '../auth/navAccess';
 import { createPermissionService, type Capability } from '../auth/permissionService';
+import { sessionMatchesTenant } from '../auth/tenantSession';
 import AppLayout from '../components/layout/AppLayout';
 import { APP_BRAND } from '../constants/brand';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,12 +9,12 @@ import { useTenant } from '../contexts/TenantContext';
 import OpsLayout from '../modules/ops/OpsLayout';
 
 export const ProtectedLayout = () => {
-  const { isAuthenticated } = useAuth();
-  const { resolutionStatus } = useTenant();
+  const { isAuthenticated, tenantId } = useAuth();
+  const { currentTenant, resolutionStatus } = useTenant();
   if (resolutionStatus !== 'resolved') {
     return <Navigate to="/" replace />;
   }
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !sessionMatchesTenant(tenantId, currentTenant.id)) {
     return <Navigate to="/login" replace />;
   }
   return <AppLayout />;

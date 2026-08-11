@@ -27,6 +27,7 @@ import {
 } from '../auth/clientSession';
 import {
   clearClientSession,
+  clearLegacyClientRefreshToken,
   clearOperatorSession,
   getClientRefreshToken,
   getOperatorRefreshToken,
@@ -35,7 +36,9 @@ import {
   setOperatorAccessToken,
   setOperatorRefreshToken,
 } from '../auth/tokenStore';
+import { refreshTokenTenantId, sessionMatchesTenant } from '../auth/tenantSession';
 import { getAppConfig } from '../config';
+import { useTenant } from './TenantContext';
 import { graphQlUserMessage } from '../utils/graphqlUserMessage';
 
 export interface OpsUser {
@@ -139,6 +142,7 @@ function opsUserFromTokenPair(pair: TokenPair): OpsUser {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const { currentTenant, resolutionStatus } = useTenant();
   const [user, setUser] = useState<User | null>(null);
   const [opsUser, setOpsUser] = useState<OpsUser | null>(null);
   const [role, setRole] = useState<UserRole>('employee');
@@ -147,7 +151,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opsError, setOpsError] = useState<string | null>(null);
-  const clientRefreshPromiseRef = useRef<Promise<boolean> | null>(null);
+  const clientRefreshPromiseRef = useRef<{ tenantId: string; promise: Promise<boolean> } | null>(
+    null
+  );
 
   const persona = clientSession?.persona ?? 'EMPLOYEE';
   /** Legacy “admin shell” flag for a few non-RBAC UI toggles only (persona + dev role switch). */
@@ -176,9 +182,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     [hasJwtRole]
   );
 
-  const applyTokens = useCallback((pair: TokenPair) => {
+  const applyTokens = useCallback((pair: TokenPair, expectedTenantId: string) => {
+    if (!sessionMatchesTenant(pair.tenantId, expectedTenantId)) {
+      clearClientSession(expectedTenantId);
+      throw new Error('tenant session mismatch');
+    }
     setClientAccessToken(pair.access);
-    setClientRefreshToken(pair.refresh);
+    setClientRefreshToken(expectedTenantId, pair.refresh);
     const session = parseClientAccessToken(pair.access) ?? emptySession();
     setClientSession(session);
     const legacyRole = personaToLegacyUserRole(session.persona);
@@ -196,44 +206,50 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setOpsError(null);
   }, []);
 
-  const clearClientState = useCallback(() => {
-    clearClientSession();
+  const clearClientState = useCallback((tenantToClear: string | null = tenantId) => {
+    clearClientSession(tenantToClear);
     setUser(null);
     setTenantId(null);
     setRole('employee');
     setClientSession(null);
-  }, []);
+  }, [tenantId]);
 
-  const refreshClientSession = useCallback(async (): Promise<boolean> => {
-    const refresh = getClientRefreshToken();
+  const refreshClientSession = useCallback(async (expectedTenantId: string): Promise<boolean> => {
+    const refresh = getClientRefreshToken(expectedTenantId);
     if (!refresh) return false;
-    if (clientRefreshPromiseRef.current) return clientRefreshPromiseRef.current;
+    if (!sessionMatchesTenant(refreshTokenTenantId(refresh), expectedTenantId)) {
+      clearClientState(expectedTenantId);
+      return false;
+    }
+    if (clientRefreshPromiseRef.current?.tenantId === expectedTenantId) {
+      return clientRefreshPromiseRef.current.promise;
+    }
 
     const refreshAttempt = (async () => {
       try {
         const pair = await refreshClient(refresh);
-        if (getClientRefreshToken() === refresh) {
-          applyTokens(pair);
+        if (getClientRefreshToken(expectedTenantId) === refresh) {
+          applyTokens(pair, expectedTenantId);
         }
         return true;
       } catch (e) {
         if (
-          getClientRefreshToken() === refresh &&
+          getClientRefreshToken(expectedTenantId) === refresh &&
           e instanceof AuthError &&
           (e.status === 401 || e.status === 403)
         ) {
-          clearClientState();
+          clearClientState(expectedTenantId);
           setError(graphQlUserMessage(e));
         }
         return false;
       }
     })();
 
-    clientRefreshPromiseRef.current = refreshAttempt;
+    clientRefreshPromiseRef.current = { tenantId: expectedTenantId, promise: refreshAttempt };
     try {
       return await refreshAttempt;
     } finally {
-      if (clientRefreshPromiseRef.current === refreshAttempt) {
+      if (clientRefreshPromiseRef.current?.promise === refreshAttempt) {
         clientRefreshPromiseRef.current = null;
       }
     }
@@ -241,9 +257,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Silent refresh on mount: restore client and/or operator sessions independently.
   useEffect(() => {
-    const clientRefresh = getClientRefreshToken();
     const operatorRefresh = getOperatorRefreshToken();
-    if (!clientRefresh && !operatorRefresh) return;
+    const expectedTenantId =
+      resolutionStatus === 'resolved' && currentTenant.id ? currentTenant.id : null;
+    if (!expectedTenantId && !operatorRefresh) return;
 
     let cancelled = false;
     (async () => {
@@ -251,8 +268,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       try {
         await Promise.all([
           (async () => {
-            if (!clientRefresh || cancelled) return;
-            await refreshClientSession();
+            if (!expectedTenantId || cancelled) return;
+            clearLegacyClientRefreshToken();
+            const clientRefresh = getClientRefreshToken(expectedTenantId);
+            if (!clientRefresh) return;
+            if (!sessionMatchesTenant(refreshTokenTenantId(clientRefresh), expectedTenantId)) {
+              clearClientSession(expectedTenantId);
+              return;
+            }
+            await refreshClientSession(expectedTenantId);
           })(),
           (async () => {
             if (!operatorRefresh) return;
@@ -272,23 +296,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => {
       cancelled = true;
     };
-  }, [applyOpsTokens, refreshClientSession]);
+  }, [applyOpsTokens, currentTenant.id, refreshClientSession, resolutionStatus]);
 
   useEffect(() => {
-    if (!user || !clientSession?.expiresAtMs || !getClientRefreshToken()) return;
+    if (
+      !user ||
+      !tenantId ||
+      !clientSession?.expiresAtMs ||
+      !sessionMatchesTenant(tenantId, currentTenant.id) ||
+      !getClientRefreshToken(tenantId)
+    ) {
+      return;
+    }
     const delay = Math.max(5_000, clientSession.expiresAtMs - Date.now() - CLIENT_REFRESH_LEEWAY_MS);
     const timer = window.setTimeout(() => {
-      void refreshClientSession();
+      void refreshClientSession(tenantId);
     }, delay);
     return () => window.clearTimeout(timer);
-  }, [clientSession?.expiresAtMs, refreshClientSession, user]);
+  }, [clientSession?.expiresAtMs, currentTenant.id, refreshClientSession, tenantId, user]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !tenantId || !sessionMatchesTenant(tenantId, currentTenant.id)) return;
     const maybeRefresh = () => {
-      if (!clientSession?.expiresAtMs || !getClientRefreshToken()) return;
+      if (!clientSession?.expiresAtMs || !getClientRefreshToken(tenantId)) return;
       if (clientSession.expiresAtMs - Date.now() <= CLIENT_REFRESH_ON_RESUME_MS) {
-        void refreshClientSession();
+        void refreshClientSession(tenantId);
       }
     };
     const onVisibility = () => {
@@ -300,13 +332,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       window.removeEventListener('focus', maybeRefresh);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [clientSession?.expiresAtMs, refreshClientSession, user]);
+  }, [clientSession?.expiresAtMs, currentTenant.id, refreshClientSession, tenantId, user]);
 
   const login = useCallback(
     async (username: string, password: string, opts: LoginOptions = {}) => {
       setError(null);
 
-      const tenant = opts.tenantId ?? defaultTenantId();
+      const tenant = opts.tenantId ?? (currentTenant.id || defaultTenantId());
       if (!tenant) {
         setError('Open your organization sign-in link before logging in.');
         throw new Error('missing tenantId');
@@ -314,7 +346,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(true);
       try {
         const pair = await loginClient(username.trim(), password, tenant);
-        applyTokens(pair);
+        applyTokens(pair, tenant);
       } catch (e) {
         if (e instanceof AuthError) {
           const friendly =
@@ -332,7 +364,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setLoading(false);
       }
     },
-    [applyTokens]
+    [applyTokens, currentTenant.id]
   );
 
   const loginOpsHandler = useCallback(
@@ -363,7 +395,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   );
 
   const logout = useCallback(async () => {
-    const refresh = getClientRefreshToken();
+    const authenticatedTenantId = tenantId;
+    const refresh = authenticatedTenantId ? getClientRefreshToken(authenticatedTenantId) : null;
     if (refresh) {
       try {
         await logoutClient(refresh);
@@ -371,9 +404,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Best-effort — we still clear local state below.
       }
     }
-    clearClientState();
+    clearClientState(authenticatedTenantId);
     setError(null);
-  }, [clearClientState]);
+  }, [clearClientState, tenantId]);
 
   const logoutOps = useCallback(async () => {
     const refresh = getOperatorRefreshToken();

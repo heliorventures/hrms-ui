@@ -23,6 +23,8 @@ function codeToMessage(code: string): string | null {
       return 'The seat limit has been reached for this feature.';
     case 'TENANT_SUSPENDED':
       return 'This organization workspace is not active.';
+    case 'TENANT_DATABASE_UNAVAILABLE':
+      return 'This organization workspace is temporarily unavailable. Please try again shortly.';
     case 'DATABASE_ERROR':
     case 'INTERNAL_ERROR':
       return 'We could not complete this action right now. Please try again in a moment.';

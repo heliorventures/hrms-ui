@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { sessionMatchesTenant } from '../auth/tenantSession';
 import { useAuth } from '../contexts/AuthContext';
 import { useTenant } from '../contexts/TenantContext';
 import LoginPage from '../modules/auth/LoginPage';
@@ -69,9 +70,11 @@ function renderOpsRoute(): JSX.Element {
 }
 
 const AppRoutes = () => {
-  const { isAuthenticated, isOpsAuthenticated } = useAuth();
-  const { resolutionStatus, resolutionError } = useTenant();
+  const { isAuthenticated, isOpsAuthenticated, tenantId } = useAuth();
+  const { currentTenant, resolutionStatus, resolutionError } = useTenant();
   const location = useLocation();
+  const isTenantAuthenticated =
+    isAuthenticated && sessionMatchesTenant(tenantId, currentTenant.id);
 
   const tenantPathMatch = location.pathname.match(/^\/t\/[^/]+(?<rest>\/.*)?$/);
   if (tenantPathMatch && resolutionStatus === 'resolved') {
@@ -113,11 +116,11 @@ const AppRoutes = () => {
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+        element={isTenantAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
       />
       <Route
         path="/forgot-password"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />}
+        element={isTenantAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />}
       />
       <Route
         path="/ops/login"

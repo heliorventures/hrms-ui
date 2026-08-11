@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { Tenant } from '../types';
-import { useAuth } from './AuthContext';
 import { getAppConfig } from '../config';
 import { resolveTenantBySlug, type ResolvedTenant } from '../auth/authClient';
 import { APP_BRAND } from '../constants/brand';
@@ -100,7 +99,6 @@ function detectTenantSlug(): string | null {
 }
 
 export const TenantProvider = ({ children }: TenantProviderProps) => {
-  const { user } = useAuth();
   const tenantSlug = useMemo(() => detectTenantSlug(), []);
   const [resolvedTenant, setResolvedTenant] = useState<Tenant | null>(null);
   const [resolutionStatus, setResolutionStatus] = useState<TenantResolutionStatus>(
@@ -140,15 +138,8 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
 
   const currentTenant = useMemo<Tenant>(() => {
     if (resolvedTenant) return resolvedTenant;
-    if (user?.tenantId) {
-      return {
-        id: user.tenantId,
-        name: 'Organization',
-        companyCode: user.tenantId.slice(0, 4).toUpperCase(),
-      };
-    }
     return emptyTenant();
-  }, [resolvedTenant, user?.tenantId]);
+  }, [resolvedTenant]);
 
   const switchTenant = (_tenantId: string) => {
     // Tenant switching is intentionally disabled until the API provides a scoped tenant list.
