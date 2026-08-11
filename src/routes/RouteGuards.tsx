@@ -67,10 +67,16 @@ export const TenantResolvingPage = () => (
   </main>
 );
 
-export const TenantNotFoundPage = ({ message }: { message: string | null }) => (
+export const TenantNotFoundPage = ({
+  message,
+  title = 'Organization not found',
+}: {
+  message: string | null;
+  title?: string;
+}) => (
   <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 text-slate-900 dark:bg-slate-950 dark:text-white">
     <div className="max-w-md rounded-lg border border-amber-200 bg-white p-6 text-center shadow-card dark:border-amber-700/60 dark:bg-slate-900">
-      <h1 className="text-lg font-semibold">Organization not found</h1>
+      <h1 className="text-lg font-semibold">{title}</h1>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {message ?? 'Check the HeliorHRMS link and try again.'}
       </p>

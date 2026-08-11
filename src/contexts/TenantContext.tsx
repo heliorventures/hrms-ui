@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { Tenant } from '../types';
 import { getAppConfig } from '../config';
-import { resolveTenantBySlug, type ResolvedTenant } from '../auth/authClient';
+import { AuthError, resolveTenantBySlug, type ResolvedTenant } from '../auth/authClient';
 import { APP_BRAND } from '../constants/brand';
 import { graphQlUserMessage } from '../utils/graphqlUserMessage';
 
@@ -98,6 +98,20 @@ function detectTenantSlug(): string | null {
   return slugFromHost(window.location.hostname);
 }
 
+function tenantResolutionErrorStatus(err: unknown): TenantResolutionStatus {
+  if (err instanceof AuthError && (err.status === 404 || err.code === 'TENANT_NOT_FOUND')) {
+    return 'not-found';
+  }
+  return 'error';
+}
+
+function tenantResolutionErrorMessage(err: unknown): string {
+  if (err instanceof TypeError) {
+    return `Cannot reach the authentication service at ${getAppConfig().authUrl}.`;
+  }
+  return graphQlUserMessage(err);
+}
+
 export const TenantProvider = ({ children }: TenantProviderProps) => {
   const tenantSlug = useMemo(() => detectTenantSlug(), []);
   const [resolvedTenant, setResolvedTenant] = useState<Tenant | null>(null);
@@ -126,8 +140,8 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
       } catch (err) {
         if (cancelled) return;
         setResolvedTenant(null);
-        setResolutionStatus('not-found');
-        setResolutionError(graphQlUserMessage(err));
+        setResolutionStatus(tenantResolutionErrorStatus(err));
+        setResolutionError(tenantResolutionErrorMessage(err));
       }
     })();
 

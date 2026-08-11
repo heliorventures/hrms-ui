@@ -107,7 +107,15 @@ const AppRoutes = () => {
     return (
       <Routes>
         <Route path="/ops/login" element={<OpsLoginPage />} />
-        <Route path="*" element={<TenantNotFoundPage message={resolutionError} />} />
+        <Route
+          path="*"
+          element={
+            <TenantNotFoundPage
+              message={resolutionError}
+              title={resolutionStatus === 'error' ? 'Authentication service unavailable' : undefined}
+            />
+          }
+        />
       </Routes>
     );
   }
