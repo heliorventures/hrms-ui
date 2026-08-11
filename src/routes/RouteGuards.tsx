@@ -36,7 +36,7 @@ export const PayrollPermissionRoute = ({
 }) => {
   const { clientSession } = useAuth();
   if (!createPermissionService(clientSession).canCapability(capability)) {
-    return <Navigate to="/payroll/payslips" replace />;
+    return <Navigate to="/payroll/pay" replace />;
   }
   return children;
 };

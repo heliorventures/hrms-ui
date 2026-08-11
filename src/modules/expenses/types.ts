@@ -52,6 +52,7 @@ export interface ExpenseBoardData {
   expenseCategories: ExpenseCategoryRow[];
   expenses: ExpenseRow[];
   travelRequests: TravelRequestRow[];
+  employeeLabels?: Record<string, string>;
 }
 
 export type ExpenseNotice = {

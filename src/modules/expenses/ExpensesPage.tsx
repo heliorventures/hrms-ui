@@ -35,6 +35,15 @@ const ExpensesPage = () => {
   const categories = data?.expenseCategories ?? [];
   const expenses = data?.expenses ?? [];
   const travelRequests = data?.travelRequests ?? [];
+  const employeeLabels = data?.employeeLabels ?? {};
+  const travelRequestLabels = useMemo(() => {
+    const labels: Record<string, string> = {};
+    for (const row of travelRequests) {
+      const route = [row.originLocation, row.destinationLocation].filter(Boolean).join(' -> ');
+      labels[row.id] = `${route || row.purpose} (${row.fromDate})`;
+    }
+    return labels;
+  }, [travelRequests]);
 
   return (
     <div className="space-y-6">
@@ -101,8 +110,10 @@ const ExpensesPage = () => {
         canApprove={canApprove}
         canMarkPayment={canMarkPayment}
         categories={categories}
+        employeeLabels={employeeLabels}
         expenses={expenses}
         loading={loading}
+        travelRequestLabels={travelRequestLabels}
         onApprove={actions.openApproveExpense}
         onMarkPaid={(expenseId) => void actions.markExpensePaid(expenseId)}
         onReject={(expenseId) => actions.setRejectTarget({ kind: 'expense', id: expenseId })}
@@ -111,6 +122,7 @@ const ExpensesPage = () => {
       <TravelRequestsTable
         busyKey={actions.busyKey}
         canApprove={canApprove}
+        employeeLabels={employeeLabels}
         loading={loading}
         rows={travelRequests}
         onApprove={(travelRequestId) => void actions.approveTravel(travelRequestId)}

@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
@@ -74,7 +74,7 @@ const SubmitExpenseModal = ({
     if (isOpen) onCategoryChange(categoryId);
   }, [categoryId, isOpen, onCategoryChange]);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setCategoryId('');
     setAmount('');
     setCurrency(EXPENSE_DEFAULT_CURRENCY);
@@ -83,7 +83,11 @@ const SubmitExpenseModal = ({
     setTravelRequestId('');
     setReceiptFileStorageId('');
     setFormError(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) reset();
+  }, [isOpen, reset]);
 
   const close = () => {
     reset();

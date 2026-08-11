@@ -1,7 +1,11 @@
 import Card from '../../../components/common/Card';
 import { parseIsoDate } from '../../../utils/calendarRange';
 import { decodeTimesheetDescription } from '../../../utils/timesheetDescription';
-import { formatTimesheetHours, timesheetEntryCanDelete } from '../timesheetRules';
+import {
+  formatTimesheetHours,
+  parseTimesheetHours,
+  timesheetEntryCanDelete,
+} from '../timesheetRules';
 import type { EntryRow } from '../timesheetTypes';
 
 const WEEKDAY_HEADERS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
@@ -22,6 +26,7 @@ interface TimesheetCalendarCardProps {
   totalHours: number;
   canAddOnDate: (iso: string) => boolean;
   canEditRow: (row: EntryRow) => boolean;
+  editDisabledReason: (row: EntryRow) => string;
   onAddForDate: (iso: string) => void;
   onDelete: (row: EntryRow) => void;
   onEdit: (row: EntryRow) => void;
@@ -38,6 +43,7 @@ const TimesheetCalendarCard = ({
   totalHours,
   canAddOnDate,
   canEditRow,
+  editDisabledReason,
   onAddForDate,
   onDelete,
   onEdit,
@@ -65,7 +71,7 @@ const TimesheetCalendarCard = ({
               {week.map((cell) => {
                 const dayEntries = entriesByDate.get(cell.iso) ?? [];
                 const dayTotal = dayEntries.reduce(
-                  (total, row) => total + (parseFloat(row.hoursWorked) || 0),
+                  (total, row) => total + (parseTimesheetHours(row.hoursWorked) || 0),
                   0
                 );
                 const ref = parseIsoDate(cell.iso);
@@ -103,7 +109,7 @@ const TimesheetCalendarCard = ({
                     <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
                       {dayEntries.map((entry) => {
                         const decoded = decodeTimesheetDescription(entry.description ?? null);
-                        const parsedHours = parseFloat(entry.hoursWorked);
+                        const parsedHours = parseTimesheetHours(entry.hoursWorked);
                         const hours = Number.isNaN(parsedHours)
                           ? entry.hoursWorked
                           : `${formatTimesheetHours(parsedHours)}h`;
@@ -118,7 +124,7 @@ const TimesheetCalendarCard = ({
                             <button
                               type="button"
                               disabled={!editable}
-                              title={editable ? 'Edit entry' : `${entry.status} - only draft entries can be edited here`}
+                              title={editable ? 'Edit entry' : editDisabledReason(entry)}
                               onClick={() => {
                                 if (editable) onEdit(entry);
                               }}

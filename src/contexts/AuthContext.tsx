@@ -55,6 +55,9 @@ const emptySession = (): ParsedClientSession => ({
   persona: 'EMPLOYEE',
 });
 
+const CLIENT_REFRESH_LEEWAY_MS = 60_000;
+const CLIENT_REFRESH_ON_RESUME_MS = 2 * 60_000;
+
 interface AuthContextType {
   user: User | null;
   opsUser: OpsUser | null;
@@ -190,6 +193,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setOpsError(null);
   }, []);
 
+  const clearClientState = useCallback(() => {
+    clearClientSession();
+    setUser(null);
+    setTenantId(null);
+    setRole('employee');
+    setClientSession(null);
+  }, []);
+
+  const refreshClientSession = useCallback(async (): Promise<boolean> => {
+    const refresh = getClientRefreshToken();
+    if (!refresh) return false;
+    try {
+      const pair = await refreshClient(refresh);
+      applyTokens(pair);
+      return true;
+    } catch (e) {
+      if (e instanceof AuthError && (e.status === 401 || e.status === 403)) {
+        clearClientState();
+        setError(graphQlUserMessage(e));
+      }
+      return false;
+    }
+  }, [applyTokens, clearClientState]);
+
   // Silent refresh on mount: restore client and/or operator sessions independently.
   useEffect(() => {
     const clientRefresh = getClientRefreshToken();
@@ -229,6 +256,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       cancelled = true;
     };
   }, [applyTokens, applyOpsTokens]);
+
+  useEffect(() => {
+    if (!user || !clientSession?.expiresAtMs || !getClientRefreshToken()) return;
+    const delay = Math.max(5_000, clientSession.expiresAtMs - Date.now() - CLIENT_REFRESH_LEEWAY_MS);
+    const timer = window.setTimeout(() => {
+      void refreshClientSession();
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [clientSession?.expiresAtMs, refreshClientSession, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const maybeRefresh = () => {
+      if (!clientSession?.expiresAtMs || !getClientRefreshToken()) return;
+      if (clientSession.expiresAtMs - Date.now() <= CLIENT_REFRESH_ON_RESUME_MS) {
+        void refreshClientSession();
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') maybeRefresh();
+    };
+    window.addEventListener('focus', maybeRefresh);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', maybeRefresh);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [clientSession?.expiresAtMs, refreshClientSession, user]);
 
   const login = useCallback(
     async (email: string, password: string, opts: LoginOptions = {}) => {
@@ -299,13 +354,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Best-effort — we still clear local state below.
       }
     }
-    clearClientSession();
-    setUser(null);
-    setTenantId(null);
-    setRole('employee');
-    setClientSession(null);
+    clearClientState();
     setError(null);
-  }, []);
+  }, [clearClientState]);
 
   const logoutOps = useCallback(async () => {
     const refresh = getOperatorRefreshToken();

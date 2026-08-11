@@ -2,6 +2,7 @@ export const PERMISSIONS = {
   analyticsRead: 'analytics:read',
   assetsManage: 'assets:manage',
   attendancePunchPolicy: 'attendance:punch_policy',
+  attendancePunchSelf: 'attendance:punch_self',
   attendanceRegularize: 'attendance:regularize',
   benefitsManage: 'benefits:manage',
   benefitsSelf: 'benefits:self',

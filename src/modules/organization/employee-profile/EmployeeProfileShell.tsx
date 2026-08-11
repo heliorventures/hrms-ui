@@ -148,7 +148,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
               />
             ) : null}
             {activeTab === 'education' ? (
-              <EducationTab key={model.core.id} initial={model.education} readOnly={false} />
+              <EducationTab key={model.core.id} initial={model.education} readOnly />
             ) : null}
             {activeTab === 'work' ? <WorkExperienceTab model={model} /> : null}
             {activeTab === 'growth' ? <GrowthTimelineTab nodes={model.growthTimeline} /> : null}

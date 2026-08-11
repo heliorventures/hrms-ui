@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ExpenseBoardDocument,
   ExpenseSubmissionHintsDocument,
+  OrgChartDocument,
   type ExpenseSubmissionHintsQuery,
 } from '../../../api/graphql/graphql';
 import { useGraphClient } from '../../../hooks/useGraphClient';
@@ -17,9 +18,19 @@ export function useExpensesBoard(userId?: string) {
   const [submissionHints, setSubmissionHints] = useState<ExpenseSubmissionHints | null>(null);
 
   const loadBoard = useCallback(async () => {
-    return client.request<ExpenseBoardData>(ExpenseBoardDocument, {
-      limit: EXPENSE_BOARD_LIMIT,
-    });
+    const [board, org] = await Promise.all([
+      client.request<ExpenseBoardData>(ExpenseBoardDocument, {
+        limit: EXPENSE_BOARD_LIMIT,
+      }),
+      client.request<{
+        orgChart: { employeeId: string; employeeCode: string; fullName: string }[];
+      }>(OrgChartDocument, { limit: 500 }).catch(() => ({ orgChart: [] })),
+    ]);
+    const employeeLabels: Record<string, string> = {};
+    for (const row of org.orgChart ?? []) {
+      employeeLabels[row.employeeId] = `${row.fullName} (${row.employeeCode})`;
+    }
+    return { ...board, employeeLabels };
   }, [client]);
 
   const refresh = useCallback(async () => {

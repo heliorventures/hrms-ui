@@ -147,6 +147,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
       isOpen={isOpen}
       onClose={handleClose}
       title={hrCompose ? 'New announcement (HR)' : 'New announcement'}
+      size="xl"
     >
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         {submitError && <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}

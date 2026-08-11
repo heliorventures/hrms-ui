@@ -16,6 +16,7 @@ import {
   type OrgChartQuery,
   type ViewerEmployeeIdQuery,
 } from '../../api/graphql/graphql';
+import TimesheetBatchPreviewModal from './components/TimesheetBatchPreviewModal';
 
 type BatchRow = {
   id: string;
@@ -38,6 +39,7 @@ const HrTimesheetsPage = () => {
   const [filter, setFilter] = useState<'pending' | 'all'>('pending');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rejectFor, setRejectFor] = useState<BatchRow | null>(null);
+  const [previewFor, setPreviewFor] = useState<BatchRow | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [infoNotice, setInfoNotice] = useState<string | null>(null);
 
@@ -104,11 +106,12 @@ const HrTimesheetsPage = () => {
       const st = exp?.status?.trim().toUpperCase() ?? '';
       if (st === 'PENDING' && exp?.workflowInstanceId) {
         setInfoNotice(
-          'Your approval was recorded. The submission stays open until every workflow step is finished — continue with HR or the next approver.',
+          'Your approval was recorded. The submission stays open until every workflow step is finished - continue with HR or the next approver.',
         );
       } else {
         setInfoNotice('Timesheet approved.');
       }
+      setPreviewFor(null);
       await silentRefresh();
     } catch (e) {
       setError(graphQlUserMessage(e));
@@ -128,6 +131,7 @@ const HrTimesheetsPage = () => {
         rejectionReason: rejectReason.trim() || null,
       });
       setRejectFor(null);
+      setPreviewFor(null);
       setRejectReason('');
       setInfoNotice('Timesheet rejected.');
       await silentRefresh();
@@ -143,7 +147,7 @@ const HrTimesheetsPage = () => {
       (
         [
           { key: 'pending' as const, label: 'Pending' },
-          { key: 'all' as const, label: 'All statuses' },
+          { key: 'all' as const, label: 'All Statuses' },
         ] as const
       ).map((t) => (
         <Button
@@ -162,11 +166,12 @@ const HrTimesheetsPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timesheet approvals</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timesheet Approvals</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Same inbox pattern as expenses/travel: <strong>Status</strong> stays workflow-pending until
           all configured steps complete; approve/reject is only enabled when it is your turn (
-          <code className="font-mono text-xs">viewerMayApprove</code>).
+          <code className="font-mono text-xs">viewerMayApprove</code>). Open details before acting to
+          review the submitted rows.
         </p>
       </div>
 
@@ -178,7 +183,7 @@ const HrTimesheetsPage = () => {
           </div>
         ) : null}
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         ) : error ? (
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         ) : batches.length ? (
@@ -194,7 +199,7 @@ const HrTimesheetsPage = () => {
               },
               {
                 key: 'week',
-                label: 'Week starts',
+                label: 'Week Starts',
                 render: (row: BatchRow) => row.weekStartDate,
               },
               {
@@ -204,7 +209,7 @@ const HrTimesheetsPage = () => {
                   const up = row.status?.trim().toUpperCase() ?? '';
                   const label =
                     up === 'PENDING' && row.pendingApprovalStage
-                      ? `Pending · ${row.pendingApprovalStage}`
+                      ? `Pending - ${row.pendingApprovalStage}`
                       : row.status;
                   const variant =
                     up === 'PENDING' && row.viewerMayApprove === false ? 'neutral' : 'info';
@@ -219,11 +224,25 @@ const HrTimesheetsPage = () => {
                   const ownSubmission = viewerEmployeeId != null && row.employeeId === viewerEmployeeId;
                   const mayAct = pending && row.viewerMayApprove === true && !ownSubmission;
                   const waiting = pending && row.viewerMayApprove === false;
+                  const canPreview = pending || row.status?.toUpperCase() === 'REJECTED';
                   if (ownSubmission) {
                     return (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Own submission
+                        Own Submission
                       </span>
+                    );
+                  }
+                  if (canPreview && !mayAct) {
+                    return (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="!py-1 !text-xs"
+                        disabled={busyId === row.id}
+                        onClick={() => setPreviewFor(row)}
+                      >
+                        View
+                      </Button>
                     );
                   }
                   if (mayAct) {
@@ -231,12 +250,21 @@ const HrTimesheetsPage = () => {
                       <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
+                          variant="outline"
+                          className="!py-1 !text-xs"
+                          disabled={busyId === row.id}
+                          onClick={() => setPreviewFor(row)}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          type="button"
                           variant="primary"
                           className="!py-1 !text-xs"
                           disabled={busyId === row.id}
                           onClick={() => void handleApprove(row.id)}
                         >
-                          {busyId === row.id ? '…' : 'Approve'}
+                          {busyId === row.id ? '...' : 'Approve'}
                         </Button>
                         <Button
                           type="button"
@@ -256,24 +284,24 @@ const HrTimesheetsPage = () => {
                   if (waiting) {
                     return (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Awaiting another approver
+                        Awaiting Another Approver
                       </span>
                     );
                   }
-                  return '—';
+                  return '-';
                 },
               },
             ]}
           />
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No batches in this filter.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Batches In This Filter.</p>
         )}
       </Card>
 
       <Modal
         isOpen={!!rejectFor}
         onClose={() => setRejectFor(null)}
-        title="Reject timesheet week"
+        title="Reject Timesheet Week"
       >
         <div className="space-y-3">
           <Input
@@ -284,7 +312,7 @@ const HrTimesheetsPage = () => {
           />
           <div className="flex gap-2">
             <Button type="button" variant="primary" onClick={() => void handleReject()}>
-              Confirm reject
+              Confirm Reject
             </Button>
             <Button type="button" variant="outline" onClick={() => setRejectFor(null)}>
               Cancel
@@ -292,6 +320,19 @@ const HrTimesheetsPage = () => {
           </div>
         </div>
       </Modal>
+      <TimesheetBatchPreviewModal
+        batch={previewFor}
+        employeeLabel={
+          previewFor ? orgLabels.get(previewFor.employeeId) ?? previewFor.employeeId.slice(0, 8) : ''
+        }
+        busy={busyId === previewFor?.id}
+        onClose={() => setPreviewFor(null)}
+        onApprove={(id) => void handleApprove(id)}
+        onReject={(batch) => {
+          setRejectFor(batch);
+          setRejectReason('');
+        }}
+      />
     </div>
   );
 };

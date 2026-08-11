@@ -3119,6 +3119,7 @@ export type UpdateEmployeeInput = {
   firstName?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
+  loginEmail?: InputMaybe<Scalars['String']['input']>;
   /** Omitted = leave unchanged; `null` = clear manager; id = set manager (cycle-safe). */
   reportingManagerId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;

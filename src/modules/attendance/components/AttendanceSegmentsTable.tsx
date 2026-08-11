@@ -82,7 +82,7 @@ const AttendanceSegmentsTable = ({
             key: 'loc',
             label: 'Location (in -> out)',
             render: (row: FlatSegmentRow) => (
-              <span className="max-w-xs font-mono text-xs">
+              <span className="max-w-xs text-xs text-gray-600 dark:text-gray-300">
                 {formatLatLng(row.checkInLat, row.checkInLng)}
                 {' -> '}
                 {formatLatLng(row.checkOutLat, row.checkOutLng)}

@@ -19,6 +19,7 @@ interface ClientJwtPayload {
   roles?: string[];
   permissions?: string[];
   resource_scopes?: Record<string, string>;
+  exp?: number;
 }
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
@@ -46,6 +47,7 @@ export interface ParsedClientSession {
   permissions: ReadonlySet<string>;
   resourceScopes: Readonly<Record<string, string>>;
   persona: ClientPersona;
+  expiresAtMs?: number;
 }
 
 export function parseClientAccessToken(accessToken: string): ParsedClientSession | null {
@@ -75,6 +77,7 @@ export function parseClientAccessToken(accessToken: string): ParsedClientSession
     permissions,
     resourceScopes,
     persona: derivePersonaFromJwtRoles(jwtRoles),
+    expiresAtMs: typeof raw.exp === 'number' ? raw.exp * 1000 : undefined,
   };
 }
 

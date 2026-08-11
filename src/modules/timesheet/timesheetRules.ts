@@ -2,7 +2,7 @@ import { parseIsoDate, toIsoDate } from '../../utils/calendarRange';
 import { timesheetWeekRangeIso } from '../../utils/timesheetWeek';
 
 export const MAX_TIMESHEET_ENTRY_HOURS = 24;
-export const MAX_TIMESHEET_WEEK_HOURS = 40;
+const DECIMAL_HOURS_PATTERN = /^(?:\d+|\d+\.\d+|\.\d+)$/;
 
 export const statusUpper = (status: string) => status.trim().toUpperCase();
 
@@ -23,8 +23,37 @@ export const earliestEditableMondayIso = (editableWeekSpan: number) => {
 export const weekMondayOfWorkDateIso = (workIso: string) =>
   timesheetWeekRangeIso(parseIsoDate(workIso)).start;
 
-export const timesheetEntryCanEdit = (status: string, workDate: string, earliestMonday: string) =>
-  statusUpper(status) === 'DRAFT' && weekMondayOfWorkDateIso(workDate) >= earliestMonday;
+export const timesheetEntryCanEdit = (
+  status: string,
+  workDate: string,
+  earliestMonday: string,
+  lockApprovedEntries: boolean
+) => {
+  if (weekMondayOfWorkDateIso(workDate) < earliestMonday) return false;
+  const normalized = statusUpper(status);
+  if (normalized === 'DRAFT') return true;
+  return !lockApprovedEntries && (normalized === 'SUBMITTED' || normalized === 'APPROVED');
+};
+
+export const timesheetEntryEditDisabledReason = (
+  status: string,
+  workDate: string,
+  earliestMonday: string,
+  lockApprovedEntries: boolean
+) => {
+  if (weekMondayOfWorkDateIso(workDate) < earliestMonday) {
+    return `Week is outside the editable window starting ${earliestMonday}`;
+  }
+  const normalized = statusUpper(status);
+  if (normalized === 'DRAFT') return 'Edit entry';
+  if ((normalized === 'SUBMITTED' || normalized === 'APPROVED') && !lockApprovedEntries) {
+    return 'Edit entry';
+  }
+  if (normalized === 'SUBMITTED' || normalized === 'APPROVED') {
+    return `${normalized} entries are locked by the tenant policy`;
+  }
+  return `${normalized || 'This'} entry cannot be edited`;
+};
 
 export const timesheetEntryLocksDay = (status: string) => {
   const normalized = statusUpper(status);
@@ -32,13 +61,19 @@ export const timesheetEntryLocksDay = (status: string) => {
 };
 
 export const formatTimesheetHours = (hours: number | string) => {
-  const value = typeof hours === 'number' ? hours : parseFloat(hours);
+  const value = typeof hours === 'number' ? hours : Number(hours);
   if (!Number.isFinite(value)) return String(hours);
   return Number.isInteger(value) ? `${value}` : value.toFixed(2).replace(/\.?0+$/, '');
 };
 
+export const parseTimesheetHours = (hours: string): number => {
+  const trimmed = hours.trim();
+  if (!DECIMAL_HOURS_PATTERN.test(trimmed)) return NaN;
+  return Number(trimmed);
+};
+
 export const validateTimesheetEntryHours = (hours: string): string | null => {
-  const value = parseFloat(hours);
+  const value = parseTimesheetHours(hours);
   if (!Number.isFinite(value) || value <= 0) return 'Enter valid hours greater than 0.';
   if (value > MAX_TIMESHEET_ENTRY_HOURS) {
     return `A single timesheet entry cannot exceed ${MAX_TIMESHEET_ENTRY_HOURS} hours.`;
@@ -47,9 +82,7 @@ export const validateTimesheetEntryHours = (hours: string): string | null => {
 };
 
 export const validateTimesheetWeekHours = (hours: number): string | null => {
-  if (hours > MAX_TIMESHEET_WEEK_HOURS) {
-    return `Weekly timesheet total cannot exceed ${MAX_TIMESHEET_WEEK_HOURS} hours.`;
-  }
+  if (!Number.isFinite(hours) || hours < 0) return 'Weekly timesheet total is invalid.';
   return null;
 };
 

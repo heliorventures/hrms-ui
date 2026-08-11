@@ -139,7 +139,7 @@ const AttendancePage = () => {
       completedMinutes,
       avgMinutes,
       totalDisplay: formatMinutesAsHhMm(completedMinutes),
-      avgDisplay: denom > 0 ? formatMinutesAsHhMm(avgMinutes) : '—',
+      avgDisplay: denom > 0 ? formatMinutesAsHhMm(avgMinutes) : '-',
     };
   }, [filteredSegments]);
 
@@ -175,7 +175,7 @@ const AttendancePage = () => {
           </p>
         </div>
         <Button variant="primary" type="button" onClick={() => openAdjust(toIsoDate(new Date()))}>
-          Add missed punches
+          Add Missed Punches
         </Button>
       </div>
 
@@ -241,7 +241,7 @@ const AttendancePage = () => {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card title="Avg. hours / worked day">
+        <Card title="Avg. Hours / Worked Day">
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
             {monthlyStats.avgDisplay}
           </p>
@@ -249,19 +249,19 @@ const AttendancePage = () => {
             Completed segments only; denominator = days with at least one punch or open segment.
           </p>
         </Card>
-        <Card title="Worked days this month">
+        <Card title="Worked Days This Month">
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
             {monthlyStats.workedDays}
           </p>
         </Card>
-        <Card title="Total time (completed segments)">
+        <Card title="Total Time (Completed Segments)">
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
             {monthlyStats.totalDisplay}
           </p>
         </Card>
       </div>
 
-      <Card title="Self-service adjustment policy">
+      <Card title="Self-Service Adjustment Policy">
         <p className="text-sm text-gray-600 dark:text-gray-300">
           You can normally add missed punch segments for dates within the last{' '}
           <span className="font-medium">{adjustPolicyDays}</span> calendar days. Beyond that window,
@@ -281,9 +281,9 @@ const AttendancePage = () => {
         </Card>
       )}
 
-      <Card title="Shift templates">
+      <Card title="Shift Templates">
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         ) : board?.shifts?.length ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {board.shifts.slice(0, shiftLimit).map((shift) => (
@@ -293,15 +293,15 @@ const AttendancePage = () => {
               >
                 <h3 className="font-semibold text-gray-900 dark:text-white">{shift.name}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatBackendTime(shift.startTime ?? null)} –{' '}
+                  {formatBackendTime(shift.startTime ?? null)} -{' '}
                   {formatBackendTime(shift.endTime ?? null)}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">Nominal hours: {shift.workHours ?? '—'}</p>
+                <p className="mt-1 text-xs text-gray-500">Nominal Hours: {shift.workHours ?? '-'}</p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No shifts configured.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No Shifts Configured.</p>
         )}
       </Card>
 
@@ -321,6 +321,7 @@ const AttendancePage = () => {
           setAdjustDefaultSegment(null);
         }}
         defaultWorkDate={adjustDefaultDate}
+        editingSegmentId={adjustDefaultSegment?.id}
         defaultCheckIn={adjustDefaultSegment?.checkInTime}
         defaultCheckOut={adjustDefaultSegment?.checkOutTime}
         existingSegments={board?.attendance ?? []}

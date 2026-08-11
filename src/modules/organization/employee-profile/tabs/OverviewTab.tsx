@@ -40,7 +40,7 @@ export function OverviewTab({ model, showSalary }: OverviewTabProps) {
             </p>
           </div>
         </InfoCard>
-        <InfoCard title="Leave balance" subtitle="Optional — demo value">
+        <InfoCard title="Leave balance" subtitle="From employee profile">
           <div className="flex items-start gap-2">
             <Sparkles className="mt-0.5 h-4 w-4 text-indigo-500" aria-hidden />
             <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">

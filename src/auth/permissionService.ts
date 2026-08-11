@@ -3,6 +3,7 @@ import type { ParsedClientSession } from './clientSession';
 import { HR_ADMIN_ROLE_CODES, PERMISSIONS, type PermissionCode } from './permissions';
 
 export type Capability =
+  | 'action.attendance.punch'
   | 'action.attendance.regularize'
   | 'action.expense.approve'
   | 'action.expense.manage'
@@ -13,6 +14,9 @@ export type Capability =
   | 'action.onboarding.manage'
   | 'action.people.search'
   | 'action.timesheet.manage'
+  | 'route.attendance'
+  | 'route.dashboard'
+  | 'route.expenses'
   | 'route.admin.access'
   | 'route.admin.attendancePolicy'
   | 'route.admin.employees'
@@ -29,10 +33,17 @@ export type Capability =
   | 'route.hr.timesheetAssignments'
   | 'route.hr.timesheets'
   | 'route.insights'
+  | 'route.leave'
+  | 'route.notifications'
+  | 'route.organization.documents'
+  | 'route.organization.employees'
+  | 'route.organization.orgChart'
   | 'route.payroll.admin'
   | 'route.payroll.compensation'
   | 'route.payroll.self'
   | 'route.payroll.tax'
+  | 'route.profile.settings'
+  | 'route.timesheet'
   | 'route.workplace.assets'
   | 'route.workplace.benefits'
   | 'route.workplace.compensation'
@@ -92,6 +103,7 @@ function canUseHrWorkbench(session: ParsedClientSession | null): boolean {
 
 const DIRECT_CAPABILITY_PERMISSIONS: Partial<Record<Capability, PermissionCode>> = {
   'action.attendance.regularize': PERMISSIONS.attendanceRegularize,
+  'action.attendance.punch': PERMISSIONS.attendancePunchSelf,
   'action.expense.manage': PERMISSIONS.expenseManage,
   'action.leave.manage': PERMISSIONS.leaveManage,
   'action.timesheet.manage': PERMISSIONS.timesheetManage,
@@ -122,14 +134,26 @@ export function createPermissionService(
     if (directPermission) return canPermission(directPermission);
 
     switch (capability) {
+      case 'route.attendance':
+      case 'route.dashboard':
+      case 'route.expenses':
+      case 'route.leave':
+      case 'route.notifications':
+      case 'route.organization.documents':
+      case 'route.organization.employees':
+      case 'route.organization.orgChart':
+      case 'route.payroll.self':
+      case 'route.profile.settings':
+      case 'route.timesheet':
+        return session != null;
       case 'action.expense.approve':
-        return canPermission(PERMISSIONS.expenseApprove) || hasBroadDataScopeForResource(session, 'expense');
-      case 'action.expense.pay':
         return (
-          canPermission(PERMISSIONS.expensePay) ||
           canPermission(PERMISSIONS.expenseApprove) ||
-          hasBroadDataScopeForResource(session, 'expense')
+          hasBroadDataScopeForResource(session, 'expense') ||
+          hasHrAdminLikeRole(session)
         );
+      case 'action.expense.pay':
+        return canPermission(PERMISSIONS.expensePay);
       case 'action.leave.approve':
         return canApproveLeave(session);
       case 'action.notifications.manage':
@@ -157,8 +181,6 @@ export function createPermissionService(
           canPermission(PERMISSIONS.payrollStatutoryExport) ||
           canPermission(PERMISSIONS.employeeWrite)
         );
-      case 'route.payroll.self':
-        return session != null;
       case 'route.hr.leaves':
         return canApproveLeave(session) || canPermission(PERMISSIONS.leaveManage);
       case 'route.hr.timesheets':
@@ -203,6 +225,18 @@ export function createPermissionService(
 }
 
 export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
+  '/attendance': 'route.attendance',
+  '/dashboard': 'route.dashboard',
+  '/expenses': 'route.expenses',
+  '/leave': 'route.leave',
+  '/leave/holidays': 'route.leave',
+  '/leave/team-calendar': 'route.leave',
+  '/notifications': 'route.notifications',
+  '/organization/documents': 'route.organization.documents',
+  '/organization/employees': 'route.organization.employees',
+  '/organization/org-chart': 'route.organization.orgChart',
+  '/profile/settings': 'route.profile.settings',
+  '/timesheet': 'route.timesheet',
   '/admin/access': 'route.admin.access',
   '/admin/attendance-policy': 'route.admin.attendancePolicy',
   '/admin/employees': 'route.admin.employees',

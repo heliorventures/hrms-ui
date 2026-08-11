@@ -15,6 +15,7 @@ interface ManualAttendanceValidationInput {
   checkIn: string;
   checkOut: string;
   existingSegments: AttendanceSegmentInterval[];
+  excludedSegmentId?: string | null;
 }
 
 function normalizeTime(value: string): string {
@@ -30,6 +31,7 @@ export function validateManualAttendanceSegment({
   checkIn,
   checkOut,
   existingSegments,
+  excludedSegmentId,
 }: ManualAttendanceValidationInput): string | null {
   if (!workDate || !checkIn || !checkOut) return 'Enter work date, punch in, and punch out.';
   if (workDate > toIsoDate(new Date())) return 'Future attendance cannot be regularized.';
@@ -40,7 +42,9 @@ export function validateManualAttendanceSegment({
   if (end <= start) return 'Punch out must be later than punch in.';
 
   const newMinutes = end - start;
-  const sameDaySegments = existingSegments.filter((segment) => segment.workDate === workDate);
+  const sameDaySegments = existingSegments.filter(
+    (segment) => segment.workDate === workDate && segment.id !== excludedSegmentId
+  );
   let existingMinutes = 0;
 
   for (const segment of sameDaySegments) {

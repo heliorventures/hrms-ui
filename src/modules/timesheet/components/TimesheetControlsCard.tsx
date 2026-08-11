@@ -11,6 +11,8 @@ interface TimesheetControlsCardProps {
   periodMode: PeriodMode;
   periodSummary: string;
   sortedCount: number;
+  actionsDisabled?: boolean;
+  rangeError?: string | null;
   submitBusy: boolean;
   submitWeekEditable: boolean;
   weekSubmitMonday: string;
@@ -34,6 +36,8 @@ const TimesheetControlsCard = ({
   periodMode,
   periodSummary,
   sortedCount,
+  actionsDisabled = false,
+  rangeError = null,
   submitBusy,
   submitWeekEditable,
   weekSubmitMonday,
@@ -61,7 +65,7 @@ const TimesheetControlsCard = ({
       </p>
     </div>
 
-    <Card title="Period & actions">
+    <Card title="Period & Actions">
       <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -72,9 +76,9 @@ const TimesheetControlsCard = ({
             value={periodMode}
             onChange={(event) => onModeChange(event.target.value as PeriodMode)}
           >
-            <option value="week">Current week (Mon-Sun)</option>
-            <option value="month">Calendar month</option>
-            <option value="custom">Custom dates</option>
+            <option value="week">Current Week (Mon-Sun)</option>
+            <option value="month">Calendar Month</option>
+            <option value="custom">Custom Dates</option>
           </select>
         </div>
 
@@ -84,7 +88,7 @@ const TimesheetControlsCard = ({
               Previous
             </Button>
             <Button variant="outline" type="button" onClick={onThisPeriod}>
-              Today / this period
+              Today / This Period
             </Button>
             <Button variant="outline" type="button" onClick={onNext}>
               Next
@@ -110,19 +114,22 @@ const TimesheetControlsCard = ({
         )}
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="primary" type="button" onClick={onAddEntry}>
-            Add entry
+          <Button variant="primary" type="button" onClick={onAddEntry} disabled={actionsDisabled}>
+            Add Entry
           </Button>
           <Button variant="outline" type="button" onClick={onRefresh}>
             Refresh
           </Button>
-          <Button variant="outline" type="button" onClick={onExportCsv} disabled={!sortedCount}>
+          <Button variant="outline" type="button" onClick={onExportCsv} disabled={!sortedCount || actionsDisabled}>
             Export CSV
           </Button>
         </div>
       </div>
 
       <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{periodSummary}</p>
+      {rangeError ? (
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{rangeError}</p>
+      ) : null}
       <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
         Draft edits allowed for weeks starting on or after {earliestMonday}.{' '}
         {lockApproved ? 'Approved rows stay locked server-side.' : ''}
@@ -136,7 +143,7 @@ const TimesheetControlsCard = ({
             disabled={!submitWeekEditable || submitBusy}
             onClick={onSubmitWeek}
           >
-            {submitBusy ? 'Submitting...' : `Submit week ${weekSubmitMonday} for approval`}
+            {submitBusy ? 'Submitting...' : `Submit Week ${weekSubmitMonday} For Approval`}
           </Button>
           {!submitWeekEditable && (
             <span className="text-xs text-amber-700 dark:text-amber-300">

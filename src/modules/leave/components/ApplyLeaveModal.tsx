@@ -8,7 +8,7 @@ import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { ApplyLeaveContextPanel, UpcomingHolidaysList } from './ApplyLeaveSupportingInfo';
 
-/** Calendar days from local midnight today → start date (0 = today). */
+/** Calendar days from local midnight today to start date (0 = today). */
 function calendarDaysBeforeLeaveStart(fromDateStr: string): number {
   const [y, m, d] = fromDateStr.split('-').map(Number);
   if (!y || !m || !d) return NaN;
@@ -195,6 +195,19 @@ const ApplyLeaveModal = ({
       );
       return;
     }
+    if (!balanceForType) {
+      setFormError(
+        'This leave type is not provisioned for your employee record. Ask HR to provision balances first.'
+      );
+      return;
+    }
+    const availableDays = Number(balanceForType.balanceDays ?? 0);
+    if (Number.isFinite(availableDays) && availableDays < reqDays) {
+      setFormError(
+        `Insufficient leave balance. Available: ${availableDays} day(s), requested: ${reqDays} day(s).`
+      );
+      return;
+    }
     if (
       policyForType?.maxConsecutiveDays != null &&
       policyForType.maxConsecutiveDays > 0 &&
@@ -251,7 +264,7 @@ const ApplyLeaveModal = ({
             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             required
           >
-            <option value="">Select…</option>
+            <option value="">Select...</option>
             {leaveTypes.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name} ({t.code})
@@ -333,7 +346,7 @@ const ApplyLeaveModal = ({
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               required
             >
-              <option value="">Select…</option>
+              <option value="">Select...</option>
               <option value="FIRST_HALF">First half</option>
               <option value="SECOND_HALF">Second half</option>
             </select>
@@ -376,7 +389,7 @@ const ApplyLeaveModal = ({
 
         <div className="flex gap-3">
           <Button type="submit" variant="primary" disabled={submitting || !leaveTypes.length}>
-            {submitting ? 'Submitting…' : 'Submit application'}
+            {submitting ? 'Submitting...' : 'Submit Application'}
           </Button>
           <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
             Cancel

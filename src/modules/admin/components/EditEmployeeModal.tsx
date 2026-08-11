@@ -23,6 +23,8 @@ export interface EditEmployeeRow {
   departmentId?: string | null;
   designationId?: string | null;
   reportingManagerId?: string | null;
+  userId?: string | null;
+  linkedUserEmail?: string | null;
 }
 
 interface EditEmployeeModalProps {
@@ -43,6 +45,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
   const [departmentId, setDepartmentId] = useState('');
   const [designationId, setDesignationId] = useState('');
   const [reportingManagerId, setReportingManagerId] = useState('');
+  const [loginEmail, setLoginEmail] = useState('');
   const [deptOptions, setDeptOptions] = useState<{ value: string; label: string }[]>([]);
   const [desigOptions, setDesigOptions] = useState<{ value: string; label: string }[]>([]);
   const [managerOptions, setManagerOptions] = useState<{ value: string; label: string }[]>([]);
@@ -99,6 +102,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     setDepartmentId(employee.departmentId ?? '');
     setDesignationId(employee.designationId ?? '');
     setReportingManagerId(employee.reportingManagerId ?? '');
+    setLoginEmail(employee.linkedUserEmail ?? '');
     setFormError(null);
   }, [employee, isOpen]);
 
@@ -131,6 +135,10 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         input.designationId = designationId;
       }
       input.reportingManagerId = reportingManagerId || null;
+      const email = loginEmail.trim();
+      if (email && email !== (employee.linkedUserEmail ?? '').trim()) {
+        input.loginEmail = email;
+      }
       await client.request(UpdateEmployeeDocument, { input: input as UpdateEmployeeInput });
       onUpdated();
       onClose();
@@ -200,6 +208,16 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           }}
           fullWidth
           placeholder="e.g. PERMANENT"
+        />
+        <Input
+          label="Login email"
+          type="email"
+          value={loginEmail}
+          onChange={(e) => {
+            setLoginEmail(e.target.value);
+          }}
+          fullWidth
+          placeholder="employee@company.com"
         />
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Select

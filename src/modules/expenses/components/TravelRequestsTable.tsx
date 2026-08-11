@@ -3,12 +3,13 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Table from '../../../components/common/Table';
 import { EXPENSE_BUSY_PREFIX, EXPENSE_STATUS } from '../constants';
-import { expenseStatusVariant, formatCurrency, formatDate, shortId } from '../utils/formatters';
+import { expenseStatusVariant, formatCurrency, formatDate } from '../utils/formatters';
 import type { TravelRequestRow } from '../types';
 
 interface TravelRequestsTableProps {
   busyKey: string | null;
   canApprove: boolean;
+  employeeLabels: Record<string, string>;
   loading: boolean;
   rows: TravelRequestRow[];
   onApprove: (travelRequestId: string) => void;
@@ -22,6 +23,7 @@ function tripLabel(row: TravelRequestRow): string {
 const TravelRequestsTable = ({
   busyKey,
   canApprove,
+  employeeLabels,
   loading,
   rows,
   onApprove,
@@ -35,6 +37,11 @@ const TravelRequestsTable = ({
         emptyMessage="No travel requests yet."
         keyExtractor={(row) => row.id}
         columns={[
+          {
+            key: 'employeeId',
+            label: 'Employee',
+            render: (row) => <span>{employeeLabels[row.employeeId] ?? row.employeeId}</span>,
+          },
           {
             key: 'purpose',
             label: 'Trip',
@@ -54,14 +61,7 @@ const TravelRequestsTable = ({
           {
             key: 'workflow',
             label: 'Approval',
-            render: (row) =>
-              row.workflowInstanceId ? (
-                <span className="font-mono text-xs text-teal-700 dark:text-teal-300">
-                  WF {shortId(row.workflowInstanceId)}
-                </span>
-              ) : (
-                <span className="text-gray-400">-</span>
-              ),
+            render: (row) => row.pendingApprovalStage || row.status || '-',
           },
           {
             key: 'status',

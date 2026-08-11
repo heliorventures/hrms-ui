@@ -22,8 +22,10 @@ import TimesheetControlsCard from './components/TimesheetControlsCard';
 import {
   downloadTextFile,
   earliestEditableMondayIso,
+  parseTimesheetHours,
   timesheetEntryCanDelete,
   timesheetEntryCanEdit,
+  timesheetEntryEditDisabledReason,
   timesheetEntryLocksDay,
   validateTimesheetWeekHours,
   weekMondayOfWorkDateIso,
@@ -55,7 +57,10 @@ const TimesheetPage = () => {
     if (periodMode === 'month') return monthBoundsIso(cursor.getFullYear(), cursor.getMonth());
     const start = customStart.trim();
     const end = customEnd.trim();
-    return start && end && start <= end ? { start, end } : timesheetWeekRangeIso(new Date());
+    if (start && end) return start <= end ? { start, end } : { start: end, end: start };
+    if (start) return { start, end: start };
+    if (end) return { start: end, end };
+    return timesheetWeekRangeIso(new Date());
   }, [periodMode, cursor, customStart, customEnd]);
 
   const earliestMonday = useMemo(() => earliestEditableMondayIso(lockWeeks), [lockWeeks]);
@@ -65,11 +70,21 @@ const TimesheetPage = () => {
       const response = await client.request(TimesheetLockPolicyDocument);
       const policy = response.timesheetLockPolicy;
       const span = parseInt(String(policy?.editableWeekSpan ?? DEFAULT_LOCK_WEEKS), 10);
-      setLockWeeks(Number.isFinite(span) ? span : DEFAULT_LOCK_WEEKS);
-      setLockApproved(Boolean(policy?.lockApprovedEntries));
+      const nextLockWeeks = Number.isFinite(span) ? span : DEFAULT_LOCK_WEEKS;
+      const nextLockApproved = Boolean(policy?.lockApprovedEntries);
+      setLockWeeks(nextLockWeeks);
+      setLockApproved(nextLockApproved);
+      return {
+        editableWeekSpan: nextLockWeeks,
+        lockApprovedEntries: nextLockApproved,
+      };
     } catch {
       setLockWeeks(DEFAULT_LOCK_WEEKS);
       setLockApproved(true);
+      return {
+        editableWeekSpan: DEFAULT_LOCK_WEEKS,
+        lockApprovedEntries: true,
+      };
     }
   }, [client]);
 
@@ -105,11 +120,26 @@ const TimesheetPage = () => {
 
   const refresh = useCallback(async () => {
     try {
-      await loadEntries();
+      await Promise.all([loadPolicies(), loadEntries()]);
     } catch (err) {
       setError(graphQlUserMessage(err));
     }
-  }, [loadEntries]);
+  }, [loadPolicies, loadEntries]);
+
+  useEffect(() => {
+    const refreshPolicy = () => {
+      void loadPolicies();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refreshPolicy();
+    };
+    window.addEventListener('focus', refreshPolicy);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', refreshPolicy);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [loadPolicies]);
 
   const filtered = useMemo(
     () =>
@@ -129,7 +159,7 @@ const TimesheetPage = () => {
   );
 
   const totalHours = useMemo(
-    () => filtered.reduce((total, row) => total + (parseFloat(row.hoursWorked) || 0), 0),
+    () => filtered.reduce((total, row) => total + (parseTimesheetHours(row.hoursWorked) || 0), 0),
     [filtered]
   );
 
@@ -188,14 +218,21 @@ const TimesheetPage = () => {
   };
 
   const handleSubmitWeek = async () => {
-    if (!submitWeekEditable) return;
+    const freshPolicy = await loadPolicies();
+    const freshEarliestMonday = earliestEditableMondayIso(
+      freshPolicy?.editableWeekSpan ?? DEFAULT_LOCK_WEEKS
+    );
+    if (weekSubmitMonday < freshEarliestMonday) {
+      setError(`Week ${weekSubmitMonday} is outside the editable window starting ${freshEarliestMonday}.`);
+      return;
+    }
     const weekBounds = {
       start: weekSubmitMonday,
       end: timesheetWeekRangeIso(parseIsoDate(weekSubmitMonday)).end,
     };
     const weekHours = entries
       .filter((entry) => isoDateRangeContains(entry.workDate, weekBounds.start, weekBounds.end))
-      .reduce((total, row) => total + (parseFloat(row.hoursWorked) || 0), 0);
+      .reduce((total, row) => total + (parseTimesheetHours(row.hoursWorked) || 0), 0);
     const weekValidationError = validateTimesheetWeekHours(weekHours);
     if (weekValidationError) {
       setError(weekValidationError);
@@ -301,7 +338,17 @@ const TimesheetPage = () => {
         todayIso={todayIso}
         totalHours={totalHours}
         canAddOnDate={dateAllowsNewEntry}
-        canEditRow={(row) => timesheetEntryCanEdit(row.status, row.workDate, earliestMonday)}
+        canEditRow={(row) =>
+          timesheetEntryCanEdit(row.status, row.workDate, earliestMonday, lockApproved)
+        }
+        editDisabledReason={(row) =>
+          timesheetEntryEditDisabledReason(
+            row.status,
+            row.workDate,
+            earliestMonday,
+            lockApproved
+          )
+        }
         onAddForDate={openNewEntry}
         onDelete={(row) => void handleDelete(row)}
         onEdit={(row) => {

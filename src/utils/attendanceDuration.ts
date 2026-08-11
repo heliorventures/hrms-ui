@@ -1,6 +1,6 @@
 import { formatBackendTime } from './timeFormat';
 
-/** Parse backend time string to minutes since midnight; unsupported → NaN. */
+/** Parse backend time string to minutes since midnight; unsupported values return NaN. */
 export function naiveTimeToMinutes(value: string | null | undefined): number {
   if (value == null || value === '') return NaN;
   const v = formatBackendTime(value);
@@ -27,8 +27,8 @@ export function formatMinutesAsHhMm(totalMinutes: number): string {
 }
 
 export function formatLatLng(lat?: string | null, lng?: string | null): string {
-  if ((lat == null || lat === '') && (lng == null || lng === '')) return '—';
-  const la = lat?.trim() || '—';
-  const ln = lng?.trim() || '—';
+  if ((lat == null || lat === '') && (lng == null || lng === '')) return '-';
+  const la = lat?.trim() || '-';
+  const ln = lng?.trim() || '-';
   return `${la}, ${ln}`;
 }

@@ -11,8 +11,10 @@ interface ExpenseClaimsTableProps {
   canApprove: boolean;
   canMarkPayment: boolean;
   categories: ExpenseCategoryRow[];
+  employeeLabels: Record<string, string>;
   expenses: ExpenseRow[];
   loading: boolean;
+  travelRequestLabels: Record<string, string>;
   onApprove: (row: ExpenseRow) => void;
   onMarkPaid: (expenseId: string) => void;
   onReject: (expenseId: string) => void;
@@ -37,8 +39,10 @@ const ExpenseClaimsTable = ({
   canApprove,
   canMarkPayment,
   categories,
+  employeeLabels,
   expenses,
   loading,
+  travelRequestLabels,
   onApprove,
   onMarkPaid,
   onReject,
@@ -51,6 +55,13 @@ const ExpenseClaimsTable = ({
         emptyMessage="No expense claims found."
         keyExtractor={(expense) => expense.id}
         columns={[
+          {
+            key: 'employeeId',
+            label: 'Employee',
+            render: (expense) => (
+              <span>{employeeLabels[expense.employeeId] ?? expense.employeeId}</span>
+            ),
+          },
           {
             key: 'expenseCategoryId',
             label: 'Category',
@@ -65,8 +76,10 @@ const ExpenseClaimsTable = ({
             key: 'travelRequestId',
             label: 'Trip',
             render: (expense) => (
-              <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
-                {shortId(expense.travelRequestId)}
+              <span>
+                {expense.travelRequestId
+                  ? travelRequestLabels[expense.travelRequestId] ?? shortId(expense.travelRequestId)
+                  : '-'}
               </span>
             ),
           },

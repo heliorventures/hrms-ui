@@ -1,5 +1,6 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
+import { createPermissionService } from '../../auth/permissionService';
 import Badge from '../../components/common/Badge';
 import PunchInOut from './components/PunchInOut';
 import LeaveBalanceCard from './components/LeaveBalanceCard';
@@ -8,8 +9,11 @@ import OnLeaveToday from './components/OnLeaveToday';
 import UpcomingHolidays from './components/UpcomingHolidays';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { clientSession, user } = useAuth();
   const { currentTenant } = useTenant();
+  const canPunchAttendance = createPermissionService(clientSession).canCapability(
+    'action.attendance.punch'
+  );
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
@@ -30,7 +34,7 @@ const Dashboard = () => {
           ) : null}
         </div>
 
-        <PunchInOut />
+        {canPunchAttendance ? <PunchInOut /> : null}
 
         <div className="space-y-6">
           <LeaveBalanceCard />

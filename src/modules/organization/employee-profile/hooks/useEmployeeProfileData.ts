@@ -4,7 +4,6 @@ import type { GraphQLClient } from 'graphql-request';
 import { EmployeeProfileBundleDocument } from '../../../../api/graphql/graphql';
 import type { EmployeeProfileModel, TenantDocumentTypeOption } from '../types';
 import { mapBundleToEmployeeProfileModel } from '../lib/mapBundleToModel';
-import { buildEmployeeProfileModel } from '../mock/buildProfileModel';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 
 export function useEmployeeProfileData(
@@ -52,22 +51,7 @@ export function useEmployeeProfileData(
           return;
         }
 
-        const synth = buildEmployeeProfileModel(base.core);
-        const merged: EmployeeProfileModel = {
-          ...base,
-          education: base.education.length > 0 ? base.education : synth.education,
-          workExperience:
-            base.workExperience.length > 0 ? base.workExperience : synth.workExperience,
-          leaveBalanceDays: base.leaveBalanceDays ?? synth.leaveBalanceDays,
-          companyAssignment:
-            base.companyAssignment.leavePolicyName === '—'
-              ? synth.companyAssignment
-              : base.companyAssignment,
-          growthTimeline:
-            base.growthTimeline.length > 1 ? base.growthTimeline : synth.growthTimeline,
-        };
-
-        setModel(merged);
+        setModel(base);
         setDocumentTypes(result.documentTypes ?? []);
       } catch (e) {
         if (!cancelled) {

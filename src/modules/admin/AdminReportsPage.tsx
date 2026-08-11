@@ -55,6 +55,19 @@ interface ReportsData {
   salaryComponents: SalaryComponentRow[];
 }
 
+const escapeCsv = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+const downloadCsv = (filename: string, rows: unknown[][]) => {
+  const csv = rows.map((row) => row.map(escapeCsv).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+};
+
 const AdminReportsPage = () => {
   const client = useGraphClient('client');
   const [reportType, setReportType] = useState<'attendance' | 'leave' | 'payroll'>('attendance');
@@ -101,6 +114,14 @@ const AdminReportsPage = () => {
     { value: 'leave', label: 'Leave Report' },
     { value: 'payroll', label: 'Payroll Report' },
   ];
+
+  const employeeLabelById = useMemo(() => {
+    const labels: Record<string, string> = {};
+    (data?.employees ?? []).forEach((employee) => {
+      labels[employee.id] = `${employee.fullName} (${employee.employeeCode})`;
+    });
+    return labels;
+  }, [data]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -175,6 +196,47 @@ const AdminReportsPage = () => {
     const taxableComponents = (data.salaryComponents ?? []).filter((s) => s.isTaxable).length;
 
     return { totalCycles, processed, activeComponents, taxableComponents };
+  };
+
+  const handleGenerateReport = () => {
+    if (!data) return;
+    if (reportType === 'attendance') {
+      downloadCsv(`attendance-report-${filters.startDate || 'all'}-to-${filters.endDate || 'all'}.csv`, [
+        ['Employee', 'Employee Id', 'Work Date', 'Status', 'Check In', 'Check Out'],
+        ...filteredAttendance.map((row) => [
+          employeeLabelById[row.employeeId] ?? row.employeeId,
+          row.employeeId,
+          row.workDate,
+          row.status ?? '',
+          row.checkInTime ?? '',
+          row.checkOutTime ?? '',
+        ]),
+      ]);
+      return;
+    }
+    if (reportType === 'leave') {
+      downloadCsv(`leave-report-${filters.startDate || 'all'}-to-${filters.endDate || 'all'}.csv`, [
+        ['Employee', 'Employee Id', 'From Date', 'To Date', 'Status'],
+        ...filteredLeave.map((row) => [
+          employeeLabelById[row.employeeId] ?? row.employeeId,
+          row.employeeId,
+          row.fromDate,
+          row.toDate,
+          row.status,
+        ]),
+      ]);
+      return;
+    }
+    downloadCsv(`payroll-report-${filters.startDate || 'all'}-to-${filters.endDate || 'all'}.csv`, [
+      ['Cycle', 'Month', 'Year', 'Status', 'Payment Date'],
+      ...filteredPayrollCycles.map((row) => [
+        row.name,
+        row.month,
+        row.year,
+        row.status,
+        row.paymentDate ?? '',
+      ]),
+    ]);
   };
 
   const renderReportContent = () => {
@@ -334,7 +396,7 @@ const AdminReportsPage = () => {
         </div>
 
         <div className="mt-4">
-          <Button disabled title="Export/report generation is not wired yet">
+          <Button disabled={loading || !data} onClick={handleGenerateReport}>
             Generate Report
           </Button>
         </div>

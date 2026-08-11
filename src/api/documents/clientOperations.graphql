@@ -685,6 +685,17 @@ mutation AddManualAttendanceSegment($input: AddManualAttendanceSegmentInput!) {
   }
 }
 
+mutation UpdateManualAttendanceSegment($input: UpdateManualAttendanceSegmentInput!) {
+  updateManualAttendanceSegment(input: $input) {
+    id
+    workDate
+    checkInTime
+    checkOutTime
+    source
+    status
+  }
+}
+
 mutation CreateTimesheetEntry($input: CreateTimesheetEntryInput!) {
   createTimesheetEntry(input: $input) {
     id

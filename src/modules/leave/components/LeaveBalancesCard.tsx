@@ -23,7 +23,7 @@ const LeaveBalancesCard = ({
   <Card
     title={
       <span className="flex flex-wrap items-center justify-between gap-3">
-        <span>Leave balances ({balanceYear})</span>
+        <span>Leave Balances ({balanceYear})</span>
         <label className="flex items-center gap-2 text-xs font-normal text-gray-600 dark:text-gray-400">
           Year
           <select
@@ -43,7 +43,7 @@ const LeaveBalancesCard = ({
     }
   >
     {loading ? (
-      <p className="text-sm text-gray-500 dark:text-gray-400">Loading balances...</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Loading Balances...</p>
     ) : leaveTypes.length ? (
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
@@ -73,7 +73,7 @@ const LeaveBalancesCard = ({
                   <td className="py-2 pr-4 font-mono text-xs">{balance?.usedDays ?? '0'}</td>
                   <td className="py-2 pr-4 font-mono text-xs">{balance?.entitledDays ?? '0'}</td>
                   <td className="py-2 text-xs text-gray-600 dark:text-gray-400">
-                    {balance ? 'Provisioned' : 'Not provisioned'}
+                    {balance ? 'Provisioned' : 'Not Provisioned'}
                   </td>
                 </tr>
               );
@@ -83,7 +83,7 @@ const LeaveBalancesCard = ({
       </div>
     ) : (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        No leave balances for this year. HR may need to provision balances.
+        No Leave Balances For This Year. HR May Need To Provision Balances.
       </p>
     )}
   </Card>
