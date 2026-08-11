@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Card from '../../../components/common/Card';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { type OnLeaveTodayQuery } from '../../../api/graphql/graphql';
+import { toIsoDate } from '../../../utils/calendarRange';
 
 const OnLeaveTodayRangeDocument = `
   query OnLeaveTodayRange($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50, $today: NaiveDate) {
@@ -31,7 +32,7 @@ const OnLeaveTodayRangeDocument = `
 
 const OnLeaveToday = () => {
   const client = useGraphClient('client');
-  const [today] = new Date().toISOString().split('T');
+  const today = toIsoDate(new Date());
   const [payload, setPayload] = useState<OnLeaveTodayQuery | null>(null);
   const [loading, setLoading] = useState(true);
 

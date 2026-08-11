@@ -7,14 +7,28 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import AttendanceReportDetails from './components/AttendanceReportDetails';
 
+const REPORT_EMPLOYEE_LIMIT = 100;
+const REPORT_ATTENDANCE_LIMIT = 500;
+const REPORT_LEAVE_LIMIT = 200;
+const REPORT_PAYROLL_CYCLE_LIMIT = 60;
+const REPORT_SALARY_COMPONENT_LIMIT = 200;
+
 const ClientOpsAdminReportsDataRangeDocument = `
-  query ClientOpsAdminReportsDataRange($fromDate: NaiveDate, $toDate: NaiveDate) {
-    employees(limit: 100) {
+  query ClientOpsAdminReportsDataRange(
+    $employeeLimit: Int!
+    $attendanceLimit: Int!
+    $leaveLimit: Int!
+    $payrollCycleLimit: Int!
+    $salaryComponentLimit: Int!
+    $fromDate: NaiveDate
+    $toDate: NaiveDate
+  ) {
+    employees(limit: $employeeLimit) {
       id
       employeeCode
       fullName
     }
-    attendance(limit: 100, fromDate: $fromDate, toDate: $toDate) {
+    attendance(limit: $attendanceLimit, fromDate: $fromDate, toDate: $toDate) {
       id
       employeeId
       workDate
@@ -22,14 +36,14 @@ const ClientOpsAdminReportsDataRangeDocument = `
       checkInTime
       checkOutTime
     }
-    leaveRequests(limit: 100, fromDate: $fromDate, toDate: $toDate) {
+    leaveRequests(limit: $leaveLimit, fromDate: $fromDate, toDate: $toDate) {
       id
       employeeId
       fromDate
       toDate
       status
     }
-    payrollCycles(limit: 100) {
+    payrollCycles(limit: $payrollCycleLimit) {
       id
       name
       month
@@ -37,7 +51,7 @@ const ClientOpsAdminReportsDataRangeDocument = `
       status
       paymentDate
     }
-    salaryComponents(limit: 100) {
+    salaryComponents(limit: $salaryComponentLimit) {
       id
       componentType
       isActive
@@ -93,7 +107,13 @@ interface ReportsData {
   salaryComponents: SalaryComponentRow[];
 }
 
-const escapeCsv = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+const escapeCsv = (value: unknown) => {
+  let text = String(value ?? '');
+  if (/^[=+\-@]/.test(text.trimStart())) {
+    text = `'${text}`;
+  }
+  return `"${text.replace(/"/g, '""')}"`;
+};
 
 const downloadCsv = (filename: string, rows: unknown[][]) => {
   const csv = rows.map((row) => row.map(escapeCsv).join(',')).join('\n');
@@ -132,6 +152,11 @@ const AdminReportsPage = () => {
         setLoading(true);
         setError(null);
         const result = await client.request<ReportsData>(ClientOpsAdminReportsDataRangeDocument, {
+          employeeLimit: REPORT_EMPLOYEE_LIMIT,
+          attendanceLimit: REPORT_ATTENDANCE_LIMIT,
+          leaveLimit: REPORT_LEAVE_LIMIT,
+          payrollCycleLimit: REPORT_PAYROLL_CYCLE_LIMIT,
+          salaryComponentLimit: REPORT_SALARY_COMPONENT_LIMIT,
           fromDate: filters.startDate || null,
           toDate: filters.endDate || null,
         });
@@ -167,6 +192,32 @@ const AdminReportsPage = () => {
     filters.startDate && filters.endDate && filters.startDate > filters.endDate
       ? 'Start date must be on or before end date.'
       : null;
+
+  const reportCompletenessWarning = useMemo(() => {
+    if (!data) return null;
+    const capped = (label: string, rows: unknown[], limit: number) =>
+      rows.length >= limit ? `${label} (${limit})` : null;
+    const impacted =
+      reportType === 'attendance'
+        ? [
+            capped('employees', data.employees, REPORT_EMPLOYEE_LIMIT),
+            capped('attendance rows', data.attendance, REPORT_ATTENDANCE_LIMIT),
+          ]
+        : reportType === 'leave'
+          ? [
+              capped('employees', data.employees, REPORT_EMPLOYEE_LIMIT),
+              capped('leave requests', data.leaveRequests, REPORT_LEAVE_LIMIT),
+            ]
+          : [
+              capped('payroll cycles', data.payrollCycles, REPORT_PAYROLL_CYCLE_LIMIT),
+              capped('salary components', data.salaryComponents, REPORT_SALARY_COMPONENT_LIMIT),
+            ];
+    const labels = impacted.filter(Boolean);
+    if (labels.length === 0) return null;
+    return `Report data reached the load limit for ${labels.join(
+      ', '
+    )}. Narrow the date range before using summary numbers or exporting CSV.`;
+  }, [data, reportType]);
 
   const employeeLabelById = useMemo(() => {
     const labels: Record<string, string> = {};
@@ -252,7 +303,7 @@ const AdminReportsPage = () => {
   };
 
   const handleGenerateReport = () => {
-    if (!data || dateRangeError) return;
+    if (!data || dateRangeError || reportCompletenessWarning) return;
     if (reportType === 'attendance') {
       downloadCsv(`attendance-report-${filters.startDate || 'all'}-to-${filters.endDate || 'all'}.csv`, [
         ['Employee', 'Employee Id', 'Work Date', 'Status', 'Check In', 'Check Out'],
@@ -451,9 +502,17 @@ const AdminReportsPage = () => {
         {dateRangeError && (
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">{dateRangeError}</p>
         )}
+        {reportCompletenessWarning && (
+          <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+            {reportCompletenessWarning}
+          </p>
+        )}
 
         <div className="mt-4">
-          <Button disabled={loading || !data || Boolean(dateRangeError)} onClick={handleGenerateReport}>
+          <Button
+            disabled={loading || !data || Boolean(dateRangeError) || Boolean(reportCompletenessWarning)}
+            onClick={handleGenerateReport}
+          >
             Generate Report
           </Button>
         </div>

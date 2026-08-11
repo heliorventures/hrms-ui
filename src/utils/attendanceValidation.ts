@@ -26,20 +26,6 @@ function intervalsOverlap(firstStart: number, firstEnd: number, secondStart: num
   return firstStart < secondEnd && firstEnd > secondStart;
 }
 
-function normalizeAttendanceInterval(start: number, end: number): { start: number; end: number } | null {
-  if (start === end) return null;
-  return { start, end: end > start ? end : end + MAX_ATTENDANCE_MINUTES_PER_DAY };
-}
-
-function intervalsOverlapAcrossMidnight(
-  first: { start: number; end: number },
-  second: { start: number; end: number }
-) {
-  return [-MAX_ATTENDANCE_MINUTES_PER_DAY, 0, MAX_ATTENDANCE_MINUTES_PER_DAY].some((offset) =>
-    intervalsOverlap(first.start + offset, first.end + offset, second.start, second.end)
-  );
-}
-
 export function validateManualAttendanceSegment({
   workDate,
   checkIn,
@@ -53,10 +39,9 @@ export function validateManualAttendanceSegment({
   const start = naiveTimeToMinutes(normalizeTime(checkIn));
   const end = naiveTimeToMinutes(normalizeTime(checkOut));
   if (Number.isNaN(start) || Number.isNaN(end)) return 'Enter valid punch times.';
-  const newInterval = normalizeAttendanceInterval(start, end);
-  if (!newInterval) return 'Punch In and punch out cannot be the same time.';
+  if (start >= end) return 'Punch In must be before punch out for the same calendar day.';
 
-  const newMinutes = newInterval.end - newInterval.start;
+  const newMinutes = end - start;
   const sameDaySegments = existingSegments.filter(
     (segment) => segment.workDate === workDate && segment.id !== excludedSegmentId
   );
@@ -70,10 +55,10 @@ export function validateManualAttendanceSegment({
 
     const existingInterval =
       !Number.isNaN(existingStart) && !Number.isNaN(existingEnd)
-        ? normalizeAttendanceInterval(existingStart, existingEnd)
+        ? { start: existingStart, end: existingEnd }
         : null;
 
-    if (existingInterval && intervalsOverlapAcrossMidnight(newInterval, existingInterval)) {
+    if (existingInterval && intervalsOverlap(start, end, existingInterval.start, existingInterval.end)) {
       return 'This punch range overlaps an existing attendance segment for the day.';
     }
   }

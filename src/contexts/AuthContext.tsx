@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -146,6 +147,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opsError, setOpsError] = useState<string | null>(null);
+  const clientRefreshPromiseRef = useRef<Promise<boolean> | null>(null);
 
   const persona = clientSession?.persona ?? 'EMPLOYEE';
   /** Legacy “admin shell” flag for a few non-RBAC UI toggles only (persona + dev role switch). */
@@ -205,16 +207,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const refreshClientSession = useCallback(async (): Promise<boolean> => {
     const refresh = getClientRefreshToken();
     if (!refresh) return false;
-    try {
-      const pair = await refreshClient(refresh);
-      applyTokens(pair);
-      return true;
-    } catch (e) {
-      if (e instanceof AuthError && (e.status === 401 || e.status === 403)) {
-        clearClientState();
-        setError(graphQlUserMessage(e));
+    if (clientRefreshPromiseRef.current) return clientRefreshPromiseRef.current;
+
+    const refreshAttempt = (async () => {
+      try {
+        const pair = await refreshClient(refresh);
+        if (getClientRefreshToken() === refresh) {
+          applyTokens(pair);
+        }
+        return true;
+      } catch (e) {
+        if (
+          getClientRefreshToken() === refresh &&
+          e instanceof AuthError &&
+          (e.status === 401 || e.status === 403)
+        ) {
+          clearClientState();
+          setError(graphQlUserMessage(e));
+        }
+        return false;
       }
-      return false;
+    })();
+
+    clientRefreshPromiseRef.current = refreshAttempt;
+    try {
+      return await refreshAttempt;
+    } finally {
+      if (clientRefreshPromiseRef.current === refreshAttempt) {
+        clientRefreshPromiseRef.current = null;
+      }
     }
   }, [applyTokens, clearClientState]);
 
@@ -230,13 +251,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       try {
         await Promise.all([
           (async () => {
-            if (!clientRefresh) return;
-            try {
-              const pair = await refreshClient(clientRefresh);
-              if (!cancelled) applyTokens(pair);
-            } catch {
-              if (!cancelled) clearClientSession();
-            }
+            if (!clientRefresh || cancelled) return;
+            await refreshClientSession();
           })(),
           (async () => {
             if (!operatorRefresh) return;
@@ -256,7 +272,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => {
       cancelled = true;
     };
-  }, [applyTokens, applyOpsTokens]);
+  }, [applyOpsTokens, refreshClientSession]);
 
   useEffect(() => {
     if (!user || !clientSession?.expiresAtMs || !getClientRefreshToken()) return;

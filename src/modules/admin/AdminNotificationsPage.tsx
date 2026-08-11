@@ -20,7 +20,7 @@ import {
 type ConsoleData = AdminNotificationsConsoleQuery;
 
 const MAX_ANNOUNCEMENT_IMAGE_BYTES = 5 * 1024 * 1024;
-const MAX_ANNOUNCEMENT_DOCUMENT_BYTES = 10 * 1024 * 1024;
+const MAX_ANNOUNCEMENT_DOCUMENT_BYTES = 6 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const ALLOWED_DOCUMENT_TYPES = new Set([
   'application/pdf',
