@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { OrgChartDocument, type OrgChartQuery } from '../../api/graphql/graphql';
+import {
+  OrganizationDirectoryChartDocument,
+  type OrganizationDirectoryChartQuery,
+} from '../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   buildOrgChartChildMap,
@@ -20,9 +23,13 @@ function EmployeeNodeCard({ row }: { row: OrgChartRowLite }) {
       >
         {row.fullName}
       </Link>
-      <div className="mt-0.5 font-mono text-[10px] text-slate-500 dark:text-slate-400">{row.employeeCode}</div>
+      <div className="mt-0.5 font-mono text-[10px] text-slate-500 dark:text-slate-400">
+        {row.employeeCode}
+      </div>
       {meta ? (
-        <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-slate-600 dark:text-slate-300">{meta}</p>
+        <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-slate-600 dark:text-slate-300">
+          {meta}
+        </p>
       ) : null}
     </div>
   );
@@ -34,10 +41,21 @@ function EmployeeNodeCard({ row }: { row: OrgChartRowLite }) {
 function OrgSubtree({
   row,
   childMap,
+  ancestors = new Set<string>(),
 }: {
   row: OrgChartRowLite;
   childMap: Map<string, OrgChartRowLite[]>;
+  ancestors?: ReadonlySet<string>;
 }) {
+  if (ancestors.has(row.employeeId)) {
+    return (
+      <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+        Reporting cycle detected at {row.fullName}; this branch was stopped.
+      </div>
+    );
+  }
+  const nextAncestors = new Set(ancestors);
+  nextAncestors.add(row.employeeId);
   const kids = childMap.get(row.employeeId) ?? [];
   if (kids.length === 0) {
     return <EmployeeNodeCard row={row} />;
@@ -61,9 +79,15 @@ function OrgSubtree({
           )}
           {kids.map((child) => (
             <div key={child.employeeId} className="relative flex flex-col items-center">
-              <div className="mb-0 h-5 w-px shrink-0 bg-slate-400 md:hidden dark:bg-slate-500" aria-hidden />
-              <div className="hidden h-5 w-px shrink-0 bg-slate-400 md:block dark:bg-slate-500" aria-hidden />
-              <OrgSubtree row={child} childMap={childMap} />
+              <div
+                className="mb-0 h-5 w-px shrink-0 bg-slate-400 md:hidden dark:bg-slate-500"
+                aria-hidden
+              />
+              <div
+                className="hidden h-5 w-px shrink-0 bg-slate-400 md:block dark:bg-slate-500"
+                aria-hidden
+              />
+              <OrgSubtree row={child} childMap={childMap} ancestors={nextAncestors} />
             </div>
           ))}
         </div>
@@ -84,8 +108,12 @@ const OrgChartPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await client.request<OrgChartQuery>(OrgChartDocument, { limit: 500 });
-        if (!cancelled) setRows((res.orgChart ?? []) as OrgChartRowLite[]);
+        const res = await client.request<OrganizationDirectoryChartQuery>(
+          OrganizationDirectoryChartDocument
+        );
+        if (!cancelled) {
+          setRows((res.organizationDirectoryChart ?? []) as OrgChartRowLite[]);
+        }
       } catch (e) {
         if (!cancelled) {
           setError(graphQlUserMessage(e));
@@ -108,9 +136,8 @@ const OrgChartPage = () => {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Org Chart</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Reporting hierarchy from <span className="font-mono text-xs">reportingManagerId</span>, shown as a top-down
-          tree. Visibility follows your <span className="font-mono text-xs">employee</span> data scope (same as the
-          directory).
+          Reporting hierarchy from <span className="font-mono text-xs">reportingManagerId</span>,
+          shown as a top-down tree for all current employees in your organization.
         </p>
       </div>
 
@@ -121,7 +148,7 @@ const OrgChartPage = () => {
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         {!loading && !error && roots.length === 0 && (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No Employees In Scope, Or No Rows Returned.
+            No current employees or reporting relationships were returned.
           </p>
         )}
         {!loading && !error && roots.length > 0 && (

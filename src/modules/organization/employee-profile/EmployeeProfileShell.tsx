@@ -52,12 +52,12 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
   const isHr = createPermissionService(clientSession).canCapability('route.hr.people');
   const showSalary = isHr;
 
-  const { loading, error, model, documentTypes, refetch } = useEmployeeProfileData(client, employeeId);
-
-  const visibleTabs = useMemo(
-    () => TAB_DEFS.filter((t) => (t.hrOnly ? isHr : true)),
-    [isHr]
+  const { loading, error, model, access, documentTypes, refetch } = useEmployeeProfileData(
+    client,
+    employeeId
   );
+
+  const visibleTabs = useMemo(() => TAB_DEFS.filter((t) => (t.hrOnly ? isHr : true)), [isHr]);
 
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -88,7 +88,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
     );
   }
 
-  if (error || !model) {
+  if (error || (!model && !access)) {
     return (
       <div className="space-y-4">
         <EmployeeHeader employeeName="Employee" employeeCode="—" />
@@ -96,6 +96,45 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
       </div>
     );
   }
+
+  if (access && !access.canViewPrivateProfile) {
+    const employee = access.directoryEntry;
+    return (
+      <div className="min-h-[60vh] space-y-4 pb-8">
+        <EmployeeHeader employeeName={employee.fullName} employeeCode={employee.employeeCode} />
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Employee details
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            The organization directory shows work information only. Personal, identity, banking, and
+            document details remain private.
+          </p>
+          <dl className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              ['Designation', employee.designationTitle ?? '—'],
+              ['Department', employee.departmentName ?? '—'],
+              ['Reports to', employee.reportingManagerName ?? '—'],
+              ['Employment type', employee.employmentType ?? '—'],
+              ['Joining date', new Date(employee.dateOfJoining).toLocaleDateString('en-IN')],
+              ['Status', employee.status],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  {label}
+                </dt>
+                <dd className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+    );
+  }
+
+  if (!model || !access) return null;
 
   return (
     <div className="min-h-[60vh] space-y-4 pb-8">
@@ -115,11 +154,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
         </div>
 
         <div className="space-y-4 lg:col-span-9">
-          <TabNavigation
-            tabs={visibleTabs}
-            activeId={activeTab}
-            onChange={setActiveTab}
-          />
+          <TabNavigation tabs={visibleTabs} activeId={activeTab} onChange={setActiveTab} />
 
           <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/40 sm:p-6">
             {activeTab === 'overview' ? (
@@ -131,11 +166,19 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 employeeId={model.core.id}
                 client={client}
                 initial={model.personal}
-                onSaved={refetch}
+                canManageSensitiveFields={access.canManageOrganizationFields}
+                pendingRequests={model.profileChangeRequests}
+                isSelf={access.isSelf}
               />
             ) : null}
             {activeTab === 'banking' ? (
-              <BankingTab employeeId={model.core.id} client={client} model={model} onSaved={refetch} />
+              <BankingTab
+                employeeId={model.core.id}
+                client={client}
+                model={model}
+                canManageSensitiveFields={access.canManageOrganizationFields}
+                onSaved={refetch}
+              />
             ) : null}
             {activeTab === 'identity' ? (
               <IdentityTab
@@ -143,14 +186,30 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 client={client}
                 model={model}
                 documentTypes={documentTypes}
-                isHr={isHr}
+                isHr={access.canManageOrganizationFields}
                 onChanged={refetch}
               />
             ) : null}
             {activeTab === 'education' ? (
-              <EducationTab key={model.core.id} initial={model.education} readOnly />
+              <EducationTab
+                key={model.core.id}
+                employeeId={model.core.id}
+                client={client}
+                initial={model.education}
+                documentTypes={documentTypes}
+                canReview={access.canReviewProfileChanges && !access.isSelf}
+              />
             ) : null}
-            {activeTab === 'work' ? <WorkExperienceTab model={model} /> : null}
+            {activeTab === 'work' ? (
+              <WorkExperienceTab
+                key={model.core.id}
+                employeeId={model.core.id}
+                client={client}
+                initial={model.workExperience}
+                documentTypes={documentTypes}
+                canReview={access.canReviewProfileChanges && !access.isSelf}
+              />
+            ) : null}
             {activeTab === 'growth' ? <GrowthTimelineTab nodes={model.growthTimeline} /> : null}
             {activeTab === 'documents' ? (
               <DocumentsTab

@@ -9,6 +9,13 @@ extend type Employee {
   emergencyContactName: String
   emergencyContactPhone: String
   emergencyContactRelation: String
+  personalPhone: String
+  currentAddress: String
+  permanentAddress: String
+}
+
+extend type DocumentType {
+  systemKey: String
 }
 
 extend type EmployeeDocument {
@@ -21,6 +28,95 @@ extend type EmployeeDocument {
 extend type Query {
   employeePrimaryBank(employeeId: ID!): EmployeeBankAccount
   employeeIdentityProfile(employeeId: ID!): EmployeeIdentityProfile!
+  employeeDirectoryPage(limit: Int! = 100, after: String): EmployeeDirectoryPage!
+  organizationDirectoryChart: [EmployeeDirectoryEntry!]!
+  employeeProfileAccess(employeeId: ID!): EmployeeProfileAccess
+  employeeProfileChangeRequests(employeeId: ID!, status: String): [EmployeeProfileChangeRequest!]!
+  employeeEducationRecords(employeeId: ID!): [EmployeeEducation!]!
+  employeeWorkExperienceRecords(employeeId: ID!): [EmployeeWorkExperience!]!
+}
+
+type EmployeeDirectoryEntry {
+  employeeId: ID!
+  employeeCode: String!
+  fullName: String!
+  departmentName: String
+  designationTitle: String
+  reportingManagerId: ID
+  reportingManagerName: String
+  employmentType: String
+  dateOfJoining: NaiveDate!
+  status: String!
+}
+
+type EmployeeDirectoryPage {
+  rows: [EmployeeDirectoryEntry!]!
+  nextCursor: String
+  hasMore: Boolean!
+}
+
+type EmployeeProfileAccess {
+  directoryEntry: EmployeeDirectoryEntry!
+  isSelf: Boolean!
+  canViewPrivateProfile: Boolean!
+  canEditPersonalProfile: Boolean!
+  canManageOrganizationFields: Boolean!
+  canReviewProfileChanges: Boolean!
+}
+
+type EmployeeProfileChangeRequest {
+  id: ID!
+  employeeId: ID!
+  requestType: String!
+  status: String!
+  requestedSummary: String!
+  supportingDocumentId: ID
+  reviewedBy: ID
+  reviewedAt: DateTime
+  rejectionReason: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type EmployeeEducation {
+  id: ID!
+  employeeId: ID!
+  educationLevel: String!
+  qualification: String!
+  fieldOfStudy: String
+  institution: String!
+  boardUniversity: String
+  startDate: NaiveDate
+  completionYear: Int!
+  gradeScore: String
+  description: String
+  verificationStatus: String!
+  evidenceDocumentIds: [ID!]!
+  reviewedBy: ID
+  reviewedAt: DateTime
+  rejectionReason: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type EmployeeWorkExperience {
+  id: ID!
+  employeeId: ID!
+  company: String!
+  roleTitle: String!
+  employmentType: String
+  location: String
+  startDate: NaiveDate!
+  endDate: NaiveDate
+  isCurrent: Boolean!
+  description: String
+  verificationStatus: String!
+  evidenceDocumentIds: [ID!]!
+  reviewedBy: ID
+  reviewedAt: DateTime
+  rejectionReason: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type EmployeeBankAccount {
@@ -88,6 +184,61 @@ input UploadEmployeeDocumentInput {
   contentBase64: String!
 }
 
+input UpdateEmployeeSelfServiceProfileInput {
+  employeeId: ID!
+  personalPhone: String
+  currentAddress: String
+  permanentAddress: String
+  gender: String
+  nationality: String
+  bloodGroup: String
+  emergencyContactName: String
+  emergencyContactPhone: String
+  emergencyContactRelation: String
+}
+
+input SubmitEmployeeProfileChangeInput {
+  employeeId: ID!
+  requestType: String!
+  firstName: String
+  lastName: String
+  dateOfBirth: NaiveDate
+  panNumber: String
+  aadhaarNumber: String
+  bankName: String
+  accountNumber: String
+  ifscCode: String
+  accountType: String
+  supportingDocumentId: ID
+}
+
+input UpsertEmployeeEducationInput {
+  id: ID
+  employeeId: ID!
+  educationLevel: String!
+  qualification: String!
+  fieldOfStudy: String
+  institution: String!
+  boardUniversity: String
+  startDate: NaiveDate
+  completionYear: Int!
+  gradeScore: String
+  description: String
+}
+
+input UpsertEmployeeWorkExperienceInput {
+  id: ID
+  employeeId: ID!
+  company: String!
+  roleTitle: String!
+  employmentType: String
+  location: String
+  startDate: NaiveDate!
+  endDate: NaiveDate
+  isCurrent: Boolean!
+  description: String
+}
+
 input UploadTenantFileInput {
   fileName: String!
   mimeType: String
@@ -105,6 +256,40 @@ type UploadedTenantFile {
 
 extend type Mutation {
   updateEmployeePersonalProfile(input: UpdateEmployeePersonalProfileInput!): Employee!
+  updateEmployeeSelfServiceProfile(input: UpdateEmployeeSelfServiceProfileInput!): Employee!
+  submitEmployeeProfileChange(
+    input: SubmitEmployeeProfileChangeInput!
+  ): EmployeeProfileChangeRequest!
+  cancelEmployeeProfileChange(requestId: ID!): EmployeeProfileChangeRequest!
+  resolveEmployeeProfileChange(
+    requestId: ID!
+    approved: Boolean!
+    rejectionReason: String
+  ): EmployeeProfileChangeRequest!
+  upsertEmployeeEducation(input: UpsertEmployeeEducationInput!): EmployeeEducation!
+  deleteEmployeeEducation(employeeId: ID!, educationId: ID!): Boolean!
+  linkEmployeeEducationEvidence(
+    employeeId: ID!
+    educationId: ID!
+    employeeDocumentId: ID!
+  ): EmployeeEducation!
+  resolveEmployeeEducation(
+    educationId: ID!
+    approved: Boolean!
+    rejectionReason: String
+  ): EmployeeEducation!
+  upsertEmployeeWorkExperience(input: UpsertEmployeeWorkExperienceInput!): EmployeeWorkExperience!
+  deleteEmployeeWorkExperience(employeeId: ID!, workExperienceId: ID!): Boolean!
+  linkEmployeeWorkExperienceEvidence(
+    employeeId: ID!
+    workExperienceId: ID!
+    employeeDocumentId: ID!
+  ): EmployeeWorkExperience!
+  resolveEmployeeWorkExperience(
+    workExperienceId: ID!
+    approved: Boolean!
+    rejectionReason: String
+  ): EmployeeWorkExperience!
   upsertEmployeePrimaryBank(input: UpsertEmployeePrimaryBankInput!): EmployeeBankAccount!
   upsertEmployeePrimaryPan(input: UpsertEmployeePrimaryPanInput!): EmployeePanRecord!
   upsertEmployeePrimaryAadhaar(input: UpsertEmployeePrimaryAadhaarInput!): EmployeeAadhaarRecord!

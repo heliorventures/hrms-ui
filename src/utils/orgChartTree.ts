@@ -15,7 +15,9 @@ export function buildOrgChartChildMap(rows: OrgChartRowLite[]): Map<string, OrgC
     childMap.set(mid, list);
   }
   for (const [, list] of childMap) {
-    list.sort((a, b) => (a.employeeCode ?? '').localeCompare(b.employeeCode ?? '', undefined, { numeric: true }));
+    list.sort((a, b) =>
+      (a.employeeCode ?? '').localeCompare(b.employeeCode ?? '', undefined, { numeric: true })
+    );
   }
   return childMap;
 }
@@ -27,6 +29,24 @@ export function findOrgChartRoots(rows: OrgChartRowLite[]): OrgChartRowLite[] {
     const mid = r.reportingManagerId?.trim();
     return !mid || !byId.has(mid);
   });
-  roots.sort((a, b) => (a.employeeCode ?? '').localeCompare(b.employeeCode ?? '', undefined, { numeric: true }));
+  const childMap = buildOrgChartChildMap(rows);
+  const visited = new Set<string>();
+  const visit = (id: string) => {
+    if (visited.has(id)) return;
+    visited.add(id);
+    for (const child of childMap.get(id) ?? []) visit(child.employeeId);
+  };
+  for (const root of roots) visit(root.employeeId);
+
+  // Corrupt legacy cycles have no natural root. Promote one node per disconnected
+  // component so every employee remains visible; recursive rendering still guards cycles.
+  for (const row of rows) {
+    if (visited.has(row.employeeId)) continue;
+    roots.push(row);
+    visit(row.employeeId);
+  }
+  roots.sort((a, b) =>
+    (a.employeeCode ?? '').localeCompare(b.employeeCode ?? '', undefined, { numeric: true })
+  );
   return roots;
 }

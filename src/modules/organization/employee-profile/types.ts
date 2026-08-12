@@ -4,6 +4,7 @@ export interface TenantDocumentTypeOption {
   id: string;
   name: string;
   category?: string | null;
+  systemKey?: string | null;
 }
 
 export type EmploymentStatusUi = 'ACTIVE' | 'TERMINATED' | 'ON_LEAVE' | 'SUSPENDED';
@@ -22,11 +23,7 @@ export type DocumentApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export type UploaderKind = 'EMPLOYEE' | 'HR';
 
-export type GrowthEventType =
-  | 'JOINING'
-  | 'APPRAISAL'
-  | 'PROMOTION'
-  | 'SALARY_CHANGE';
+export type GrowthEventType = 'JOINING' | 'APPRAISAL' | 'PROMOTION' | 'SALARY_CHANGE';
 
 export type LifecycleEventType =
   | 'JOINING'
@@ -52,6 +49,7 @@ export interface CoreEmployeeRecord {
   departmentName?: string | null;
   designationTitle?: string | null;
   linkedUserEmail?: string | null;
+  linkedUserUsername?: string | null;
   reportingManagerName?: string | null;
   /** From `employee.bloodGroup` when loaded from API */
   bloodGroup?: string | null;
@@ -93,19 +91,44 @@ export interface IdentityRecord {
 
 export interface EducationEntry {
   id: string;
-  degree: string;
+  educationLevel: string;
+  qualification: string;
+  fieldOfStudy: string;
   institution: string;
-  year: number;
+  boardUniversity: string;
+  startDate: string;
+  completionYear: number;
+  gradeScore: string;
+  description: string;
+  verificationStatus: VerificationStatus;
+  evidenceDocumentIds: string[];
+  rejectionReason?: string | null;
 }
 
 export interface WorkExperienceEntry {
   id: string;
   company: string;
-  role: string;
+  roleTitle: string;
+  employmentType: string;
+  location: string;
   startDate: string;
   endDate: string | null;
   description: string;
   isCurrent: boolean;
+  verificationStatus: VerificationStatus;
+  evidenceDocumentIds: string[];
+  rejectionReason?: string | null;
+}
+
+export interface ProfileChangeRequest {
+  id: string;
+  requestType: string;
+  status: string;
+  requestedSummary: string;
+  supportingDocumentId?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface GrowthTimelineNode {
@@ -172,6 +195,7 @@ export interface EmployeeProfileModel {
   identities: IdentityRecord[];
   education: EducationEntry[];
   workExperience: WorkExperienceEntry[];
+  profileChangeRequests: ProfileChangeRequest[];
   growthTimeline: GrowthTimelineNode[];
   documents: DocumentRow[];
   recentActivity: RecentActivityItem[];

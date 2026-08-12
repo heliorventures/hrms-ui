@@ -1,4 +1,4 @@
-import type { EmployeeProfileBundleQuery } from '../../../../api/graphql/graphql';
+import type { EmployeePrivateProfileQuery } from '../../../../api/graphql/graphql';
 import type {
   CompanyAssignment,
   CoreEmployeeRecord,
@@ -46,11 +46,7 @@ function verifyFromBool(v: boolean): VerificationStatus {
 
 /** Build full profile view model from `EmployeeProfileBundle`. */
 export function mapBundleToEmployeeProfileModel(
-  bundle: EmployeeProfileBundleQuery,
-  opts?: {
-    educationFallback?: EducationEntry[];
-    workFallback?: EmployeeProfileModel['workExperience'];
-  }
+  bundle: EmployeePrivateProfileQuery
 ): EmployeeProfileModel | null {
   const emp = bundle.employee;
   if (!emp) return null;
@@ -72,6 +68,7 @@ export function mapBundleToEmployeeProfileModel(
     departmentName: emp.departmentName ?? null,
     designationTitle: emp.designationTitle ?? null,
     linkedUserEmail: emp.linkedUserEmail ?? null,
+    linkedUserUsername: emp.linkedUserUsername ?? null,
     reportingManagerName: emp.reportingManagerName ?? null,
     bloodGroup: emp.bloodGroup ?? null,
     createdAt: typeof emp.createdAt === 'string' ? emp.createdAt : String(emp.createdAt),
@@ -93,12 +90,12 @@ export function mapBundleToEmployeeProfileModel(
     lastName: emp.lastName,
     bloodGroup: emp.bloodGroup ?? '',
     email: emp.linkedUserEmail ?? '',
-    phone: '',
-    dateOfBirth: dobIso ? dobIso.slice(0, 10) : '1990-01-01',
+    phone: emp.personalPhone ?? '',
+    dateOfBirth: dobIso ? dobIso.slice(0, 10) : '',
     gender: emp.gender ?? '',
     nationality: emp.nationality ?? '',
-    permanentAddress: '',
-    currentAddress: '',
+    permanentAddress: emp.permanentAddress ?? '',
+    currentAddress: emp.currentAddress ?? '',
     emergencyContactName: emp.emergencyContactName ?? '',
     emergencyContactPhone: emp.emergencyContactPhone ?? '',
     emergencyContactRelation: emp.emergencyContactRelation ?? '',
@@ -156,8 +153,7 @@ export function mapBundleToEmployeeProfileModel(
     const row = hist[i];
     const prev = i > 0 ? hist[i - 1] : null;
     const newAnnual = row.monthlySalary ? Number(row.monthlySalary) * 12 : 0;
-    const prevAnnual =
-      prev?.monthlySalary != null ? Number(prev.monthlySalary) * 12 : newAnnual;
+    const prevAnnual = prev?.monthlySalary != null ? Number(prev.monthlySalary) * 12 : newAnnual;
     let changePercent = 0;
     if (prevAnnual > 0 && newAnnual !== prevAnnual) {
       changePercent = ((newAnnual - prevAnnual) / prevAnnual) * 100;
@@ -215,19 +211,20 @@ export function mapBundleToEmployeeProfileModel(
   }
 
   const documents: DocumentRow[] = (bundle.employeeDocuments ?? []).map(
-    (d: NonNullable<EmployeeProfileBundleQuery['employeeDocuments']>[number]) => {
-    const uploadedBy =
-      d.uploadedByUserId && emp.userId && d.uploadedByUserId === emp.userId ? 'EMPLOYEE' : 'HR';
-    return {
-      id: d.id,
-      name: d.originalFileName ?? d.documentTypeName ?? 'Document',
-      category: mapCategory(d.documentTypeCategory, d.documentTypeName),
-      uploadedBy,
-      uploadedAt: typeof d.uploadedAt === 'string' ? d.uploadedAt : String(d.uploadedAt),
-      status: docStatus(d.status),
-      mimeType: 'application/pdf',
-    };
-  });
+    (d: NonNullable<EmployeePrivateProfileQuery['employeeDocuments']>[number]) => {
+      const uploadedBy =
+        d.uploadedByUserId && emp.userId && d.uploadedByUserId === emp.userId ? 'EMPLOYEE' : 'HR';
+      return {
+        id: d.id,
+        name: d.originalFileName ?? d.documentTypeName ?? 'Document',
+        category: mapCategory(d.documentTypeCategory, d.documentTypeName),
+        uploadedBy,
+        uploadedAt: typeof d.uploadedAt === 'string' ? d.uploadedAt : String(d.uploadedAt),
+        status: docStatus(d.status),
+        mimeType: 'application/pdf',
+      };
+    }
+  );
 
   const recentActivity: RecentActivityItem[] = [];
   if (bundle.employmentHistoryRecords[0]) {
@@ -261,15 +258,15 @@ export function mapBundleToEmployeeProfileModel(
     gradeBand: '—',
   };
 
-  const lifecycleEvents: EmployeeProfileModel['lifecycleEvents'] = salaryHistory.slice(-4).map(
-    (s, i) => ({
+  const lifecycleEvents: EmployeeProfileModel['lifecycleEvents'] = salaryHistory
+    .slice(-4)
+    .map((s, i) => ({
       id: `lc-${s.id}`,
       type: 'SALARY_CHANGE' as const,
       date: s.effectiveDate,
       label: i === 0 ? 'Salary revision' : 'Salary change',
       detail: s.reason,
-    })
-  );
+    }));
   if (lifecycleEvents.length === 0) {
     lifecycleEvents.push({
       id: 'lc-join',
@@ -286,8 +283,47 @@ export function mapBundleToEmployeeProfileModel(
     personal,
     banking,
     identities,
-    education: opts?.educationFallback ?? [],
-    workExperience: opts?.workFallback ?? [],
+    education: bundle.employeeEducationRecords.map(
+      (row): EducationEntry => ({
+        id: row.id,
+        educationLevel: row.educationLevel,
+        qualification: row.qualification,
+        fieldOfStudy: row.fieldOfStudy ?? '',
+        institution: row.institution,
+        boardUniversity: row.boardUniversity ?? '',
+        startDate: row.startDate == null ? '' : String(row.startDate),
+        completionYear: row.completionYear,
+        gradeScore: row.gradeScore ?? '',
+        description: row.description ?? '',
+        verificationStatus: row.verificationStatus as VerificationStatus,
+        evidenceDocumentIds: [...row.evidenceDocumentIds],
+        rejectionReason: row.rejectionReason,
+      })
+    ),
+    workExperience: bundle.employeeWorkExperienceRecords.map((row) => ({
+      id: row.id,
+      company: row.company,
+      roleTitle: row.roleTitle,
+      employmentType: row.employmentType ?? '',
+      location: row.location ?? '',
+      startDate: String(row.startDate),
+      endDate: row.endDate == null ? null : String(row.endDate),
+      description: row.description ?? '',
+      isCurrent: row.isCurrent,
+      verificationStatus: row.verificationStatus as VerificationStatus,
+      evidenceDocumentIds: [...row.evidenceDocumentIds],
+      rejectionReason: row.rejectionReason,
+    })),
+    profileChangeRequests: bundle.employeeProfileChangeRequests.map((row) => ({
+      id: row.id,
+      requestType: row.requestType,
+      status: row.status,
+      requestedSummary: row.requestedSummary,
+      supportingDocumentId: row.supportingDocumentId,
+      rejectionReason: row.rejectionReason,
+      createdAt: String(row.createdAt),
+      updatedAt: String(row.updatedAt),
+    })),
     growthTimeline,
     documents,
     recentActivity,

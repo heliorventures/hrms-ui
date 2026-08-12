@@ -2,10 +2,16 @@ import { useEffect, useState, type ChangeEvent } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { Check, Pencil } from 'lucide-react';
 
-import type { PersonalInfoFields } from '../types';
+import type { PersonalInfoFields, ProfileChangeRequest } from '../types';
 import Input from '../../../../components/common/Input';
 import Button from '../../../../components/common/Button';
-import { UpdateEmployeePersonalProfileDocument } from '../../../../api/graphql/graphql';
+import {
+  CancelEmployeeProfileChangeDocument,
+  ResolveEmployeeProfileChangeDocument,
+  SubmitEmployeeProfileChangeDocument,
+  UpdateEmployeePersonalProfileDocument,
+  UpdateEmployeeSelfServiceProfileDocument,
+} from '../../../../api/graphql/graphql';
 import { toDateInputValue } from '../../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 
@@ -14,7 +20,9 @@ interface PersonalInfoTabProps {
   client: GraphQLClient;
   initial: PersonalInfoFields;
   readOnly?: boolean;
-  onSaved?: () => void;
+  canManageSensitiveFields?: boolean;
+  pendingRequests?: ProfileChangeRequest[];
+  isSelf?: boolean;
 }
 
 function ymdFromValue(isoOrYmd: string): string {
@@ -35,19 +43,25 @@ export function PersonalInfoTab({
   client,
   initial,
   readOnly,
-  onSaved,
+  canManageSensitiveFields = false,
+  pendingRequests = [],
+  isSelf = false,
 }: PersonalInfoTabProps) {
   const [values, setValues] = useState<PersonalInfoFields>(initial);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [requests, setRequests] = useState(pendingRequests);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
 
   useEffect(() => {
     setValues(initial);
     setDirty(false);
     setError(null);
   }, [initial]);
+
+  useEffect(() => setRequests(pendingRequests), [pendingRequests]);
 
   const handleChange = (field: keyof PersonalInfoFields, value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
@@ -61,24 +75,76 @@ export function PersonalInfoTab({
     setError(null);
     try {
       const dob = ymdFromValue(values.dateOfBirth);
-      await client.request(UpdateEmployeePersonalProfileDocument, {
+      const sensitiveChanged =
+        values.firstName.trim() !== initial.firstName.trim() ||
+        values.lastName.trim() !== initial.lastName.trim() ||
+        dob !== ymdFromValue(initial.dateOfBirth);
+
+      const direct = await client.request(UpdateEmployeeSelfServiceProfileDocument, {
         input: {
           employeeId,
-          firstName: values.firstName.trim() || undefined,
-          lastName: values.lastName.trim() || undefined,
-          dateOfBirth: dob || undefined,
-          gender: values.gender.trim() || undefined,
-          nationality: values.nationality.trim() || undefined,
-          bloodGroup: values.bloodGroup.trim() || undefined,
-          emergencyContactName: values.emergencyContactName.trim() || undefined,
-          emergencyContactPhone: values.emergencyContactPhone.trim() || undefined,
-          emergencyContactRelation: values.emergencyContactRelation.trim() || undefined,
+          personalPhone: values.phone,
+          currentAddress: values.currentAddress,
+          permanentAddress: values.permanentAddress,
+          gender: values.gender,
+          nationality: values.nationality,
+          bloodGroup: values.bloodGroup,
+          emergencyContactName: values.emergencyContactName,
+          emergencyContactPhone: values.emergencyContactPhone,
+          emergencyContactRelation: values.emergencyContactRelation,
         },
       });
+
+      if (sensitiveChanged) {
+        if (canManageSensitiveFields) {
+          await client.request(UpdateEmployeePersonalProfileDocument, {
+            input: {
+              employeeId,
+              firstName: values.firstName.trim() || undefined,
+              lastName: values.lastName.trim() || undefined,
+              dateOfBirth: dob || undefined,
+            },
+          });
+        } else {
+          await client.request(SubmitEmployeeProfileChangeDocument, {
+            input: {
+              employeeId,
+              requestType: 'LEGAL_NAME_OR_DOB',
+              firstName:
+                values.firstName.trim() !== initial.firstName.trim()
+                  ? values.firstName.trim()
+                  : undefined,
+              lastName:
+                values.lastName.trim() !== initial.lastName.trim()
+                  ? values.lastName.trim()
+                  : undefined,
+              dateOfBirth: dob !== ymdFromValue(initial.dateOfBirth) ? dob || undefined : undefined,
+            },
+          });
+        }
+      }
+      const updated = direct.updateEmployeeSelfServiceProfile;
+      setValues((current) => ({
+        ...current,
+        firstName:
+          sensitiveChanged && !canManageSensitiveFields ? initial.firstName : current.firstName,
+        lastName:
+          sensitiveChanged && !canManageSensitiveFields ? initial.lastName : current.lastName,
+        dateOfBirth:
+          sensitiveChanged && !canManageSensitiveFields ? initial.dateOfBirth : current.dateOfBirth,
+        phone: updated.personalPhone ?? '',
+        currentAddress: updated.currentAddress ?? '',
+        permanentAddress: updated.permanentAddress ?? '',
+        gender: updated.gender ?? '',
+        nationality: updated.nationality ?? '',
+        bloodGroup: updated.bloodGroup ?? '',
+        emergencyContactName: updated.emergencyContactName ?? '',
+        emergencyContactPhone: updated.emergencyContactPhone ?? '',
+        emergencyContactRelation: updated.emergencyContactRelation ?? '',
+      }));
       setDirty(false);
       setSavedFlash(true);
       window.setTimeout(() => setSavedFlash(false), 2400);
-      onSaved?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {
@@ -87,6 +153,57 @@ export function PersonalInfoTab({
   };
 
   const disabled = readOnly === true;
+  const legalChangePending = requests.some(
+    (request) => request.requestType === 'LEGAL_NAME_OR_DOB' && request.status === 'PENDING'
+  );
+
+  const resolveRequest = async (requestId: string, approved: boolean) => {
+    const rejectionReason = approved ? undefined : window.prompt('Reason for rejection:')?.trim();
+    if (!approved && !rejectionReason) return;
+    setReviewingId(requestId);
+    setError(null);
+    try {
+      const result = await client.request(ResolveEmployeeProfileChangeDocument, {
+        requestId,
+        approved,
+        rejectionReason,
+      });
+      setRequests((current) =>
+        current.map((request) =>
+          request.id === requestId
+            ? {
+                ...request,
+                status: result.resolveEmployeeProfileChange.status,
+                rejectionReason: result.resolveEmployeeProfileChange.rejectionReason,
+              }
+            : request
+        )
+      );
+    } catch (cause) {
+      setError(graphQlUserMessage(cause));
+    } finally {
+      setReviewingId(null);
+    }
+  };
+
+  const cancelRequest = async (requestId: string) => {
+    setReviewingId(requestId);
+    setError(null);
+    try {
+      const result = await client.request(CancelEmployeeProfileChangeDocument, { requestId });
+      setRequests((current) =>
+        current.map((request) =>
+          request.id === requestId
+            ? { ...request, status: result.cancelEmployeeProfileChange.status }
+            : request
+        )
+      );
+    } catch (cause) {
+      setError(graphQlUserMessage(cause));
+    } finally {
+      setReviewingId(null);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -115,8 +232,8 @@ export function PersonalInfoTab({
               Personal information
             </h3>
             <p className="text-xs text-slate-500">
-              Name, demographics, and emergency contacts sync to HRMS. Work email comes from the linked
-              user account.
+              Contact and demographic fields save immediately. Legal name and date-of-birth changes
+              are sent to HR for review.
             </p>
           </div>
           {!disabled ? (
@@ -138,21 +255,27 @@ export function PersonalInfoTab({
           <Input
             label="Legal First Name"
             value={values.firstName}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('firstName', e.target.value)}
-            disabled={disabled}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              handleChange('firstName', e.target.value)
+            }
+            disabled={disabled || (!canManageSensitiveFields && legalChangePending)}
             fullWidth
           />
           <Input
             label="Legal Last Name"
             value={values.lastName}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('lastName', e.target.value)}
-            disabled={disabled}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              handleChange('lastName', e.target.value)
+            }
+            disabled={disabled || (!canManageSensitiveFields && legalChangePending)}
             fullWidth
           />
           <Input
             label="Blood Group"
             value={values.bloodGroup}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('bloodGroup', e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              handleChange('bloodGroup', e.target.value)
+            }
             disabled={disabled}
             fullWidth
             placeholder="e.g. O+"
@@ -168,18 +291,17 @@ export function PersonalInfoTab({
             label="Phone"
             value={values.phone}
             onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('phone', e.target.value)}
-            disabled
+            disabled={disabled}
             fullWidth
           />
-          <p className="md:col-span-2 -mt-2 text-xs text-slate-500">
-            Phone and address are not on the employee profile API yet; they stay read-only here.
-          </p>
           <Input
             label="Date Of Birth"
             type="date"
             value={ymdFromValue(values.dateOfBirth)}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('dateOfBirth', e.target.value)}
-            disabled={disabled}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              handleChange('dateOfBirth', e.target.value)
+            }
+            disabled={disabled || (!canManageSensitiveFields && legalChangePending)}
             fullWidth
           />
           <Input
@@ -236,7 +358,7 @@ export function PersonalInfoTab({
               onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                 handleChange('permanentAddress', e.target.value)
               }
-              disabled
+              disabled={disabled}
             />
           </div>
           <div className="md:col-span-2">
@@ -250,11 +372,57 @@ export function PersonalInfoTab({
               onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                 handleChange('currentAddress', e.target.value)
               }
-              disabled
+              disabled={disabled}
             />
           </div>
         </div>
       </div>
+      {requests.some((request) => request.status === 'PENDING') ? (
+        <div className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+          <p className="font-semibold">Pending profile changes</p>
+          {requests
+            .filter((request) => request.status === 'PENDING')
+            .map((request) => (
+              <div key={request.id} className="flex flex-wrap items-center justify-between gap-2">
+                <span>{request.requestedSummary}</span>
+                <div className="flex gap-2">
+                  {canManageSensitiveFields && !isSelf ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        disabled={reviewingId === request.id}
+                        onClick={() => void resolveRequest(request.id, true)}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={reviewingId === request.id}
+                        onClick={() => void resolveRequest(request.id, false)}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  ) : isSelf ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={reviewingId === request.id}
+                      onClick={() => void cancelRequest(request.id)}
+                    >
+                      Cancel request
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : null}
     </div>
   );
 }

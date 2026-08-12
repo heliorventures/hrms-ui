@@ -4,31 +4,13 @@ import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { ClientOpsEmployeesDirectoryDocument } from '../../api/graphql/graphql';
+import {
+  ClientOpsEmployeesDirectoryDocument,
+  type ClientOpsEmployeesDirectoryQuery,
+} from '../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
-interface EmployeeRow {
-  id: string;
-  employeeCode: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  status: string;
-  employmentType?: string | null;
-  dateOfJoining: string;
-  departmentId?: string | null;
-  designationId?: string | null;
-  reportingManagerId?: string | null;
-  userId?: string | null;
-  departmentName?: string | null;
-  designationTitle?: string | null;
-  linkedUserEmail?: string | null;
-  reportingManagerName?: string | null;
-}
-
-interface EmployeesData {
-  employees: EmployeeRow[];
-}
+type EmployeeRow = ClientOpsEmployeesDirectoryQuery['employeeDirectoryPage']['rows'][number];
 
 const matchSearch = (employee: EmployeeRow, query: string): boolean => {
   if (!query.trim()) return true;
@@ -40,10 +22,7 @@ const matchSearch = (employee: EmployeeRow, query: string): boolean => {
     employee.employmentType ?? '',
     employee.departmentName ?? '',
     employee.designationTitle ?? '',
-    employee.linkedUserEmail ?? '',
     employee.reportingManagerName ?? '',
-    employee.departmentId ?? '',
-    employee.designationId ?? '',
   ].filter(Boolean);
   return fields.some((f) => f.toLowerCase().includes(q));
 };
@@ -61,10 +40,35 @@ const OrganizationEmployeesPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await client.request<EmployeesData>(ClientOpsEmployeesDirectoryDocument, {
-          limit: 100,
-        });
-        if (!cancelled) setEmployees(result.employees ?? []);
+        const allRows = new Map<string, EmployeeRow>();
+        const seenCursors = new Set<string>();
+        let after: string | undefined;
+        do {
+          let result: ClientOpsEmployeesDirectoryQuery;
+          try {
+            result = await client.request(ClientOpsEmployeesDirectoryDocument, {
+              limit: 100,
+              after,
+            });
+          } catch (cause) {
+            if (!cancelled && allRows.size > 0) {
+              setEmployees([...allRows.values()]);
+              setError(
+                `Loaded ${allRows.size} employees, but a later directory page failed: ${graphQlUserMessage(cause)}`
+              );
+              return;
+            }
+            throw cause;
+          }
+          for (const row of result.employeeDirectoryPage.rows) {
+            allRows.set(row.employeeId, row);
+          }
+          const next = result.employeeDirectoryPage.nextCursor ?? undefined;
+          if (!next || seenCursors.has(next)) break;
+          seenCursors.add(next);
+          after = next;
+        } while (!cancelled);
+        if (!cancelled) setEmployees([...allRows.values()]);
       } catch (e) {
         if (!cancelled) {
           setError(graphQlUserMessage(e));
@@ -120,7 +124,7 @@ const OrganizationEmployeesPage = () => {
       {!loading && filteredEmployees.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredEmployees.map((employee) => (
-            <Card key={employee.id} className="flex flex-col">
+            <Card key={employee.employeeId} className="flex flex-col">
               <div className="flex items-start gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-100 text-lg font-semibold text-primary-700 dark:bg-primary-900 dark:text-primary-300">
                   {employee.fullName
@@ -140,14 +144,6 @@ const OrganizationEmployeesPage = () => {
                 </div>
               </div>
               <dl className="mt-4 space-y-2 border-t border-gray-200 pt-4 dark:border-gray-700">
-                <div>
-                  <dt className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-                    Linked login
-                  </dt>
-                  <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
-                    {employee.linkedUserEmail ?? (employee.userId ? 'Linked (no email visible)' : 'Not linked')}
-                  </dd>
-                </div>
                 <div>
                   <dt className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
                     Department
@@ -198,7 +194,7 @@ const OrganizationEmployeesPage = () => {
               </dl>
               <div className="mt-4">
                 <Link
-                  to={`/organization/employees/${employee.id}`}
+                  to={`/organization/employees/${employee.employeeId}`}
                   className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
                 >
                   View details

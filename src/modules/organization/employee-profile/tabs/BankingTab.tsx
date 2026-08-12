@@ -7,7 +7,10 @@ import { InfoCard } from '../components/InfoCard';
 import { VerificationBadge } from '../components/StatusBadge';
 import Input from '../../../../components/common/Input';
 import Button from '../../../../components/common/Button';
-import { UpsertEmployeePrimaryBankDocument } from '../../../../api/graphql/graphql';
+import {
+  SubmitEmployeeProfileChangeDocument,
+  UpsertEmployeePrimaryBankDocument,
+} from '../../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 
 interface BankingTabProps {
@@ -15,17 +18,32 @@ interface BankingTabProps {
   client: GraphQLClient;
   model: EmployeeProfileModel;
   onSaved?: () => void;
+  canManageSensitiveFields?: boolean;
 }
 
-export function BankingTab({ employeeId, client, model, onSaved }: BankingTabProps) {
+export function BankingTab({
+  employeeId,
+  client,
+  model,
+  onSaved,
+  canManageSensitiveFields = false,
+}: BankingTabProps) {
   const b = model.banking;
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
   const [bankName, setBankName] = useState(b.bankName === '—' ? '' : b.bankName);
   const [accountNumber, setAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState(b.ifscCode === '—' ? '' : b.ifscCode);
   const [accountType, setAccountType] = useState(b.accountType === '—' ? '' : b.accountType);
+
+  const pendingRequest =
+    !canManageSensitiveFields &&
+    (submitted ||
+      model.profileChangeRequests.some(
+        (request) => request.requestType === 'BANK_ACCOUNT' && request.status === 'PENDING'
+      ));
 
   useEffect(() => {
     if (!editing) {
@@ -41,18 +59,24 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
     setSaving(true);
     setError(null);
     try {
-      await client.request(UpsertEmployeePrimaryBankDocument, {
-        input: {
-          employeeId,
-          bankName: bankName.trim(),
-          accountNumber: accountNumber.trim(),
-          ifscCode: ifscCode.trim().toUpperCase(),
-          accountType: accountType.trim() || undefined,
-        },
-      });
+      const input = {
+        employeeId,
+        bankName: bankName.trim(),
+        accountNumber: accountNumber.trim(),
+        ifscCode: ifscCode.trim().toUpperCase(),
+        accountType: accountType.trim() || undefined,
+      };
+      if (canManageSensitiveFields) {
+        await client.request(UpsertEmployeePrimaryBankDocument, { input });
+      } else {
+        await client.request(SubmitEmployeeProfileChangeDocument, {
+          input: { ...input, requestType: 'BANK_ACCOUNT' },
+        });
+        setSubmitted(true);
+      }
       setEditing(false);
       setAccountNumber('');
-      onSaved?.();
+      if (canManageSensitiveFields) onSaved?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {
@@ -69,10 +93,11 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
             size="sm"
             variant="outline"
             className="gap-1"
+            disabled={pendingRequest}
             onClick={() => setEditing(true)}
           >
             <Pencil className="h-3.5 w-3.5" aria-hidden />
-            {b.bankName === '—' ? 'Add Account' : 'Update'}
+            {pendingRequest ? 'Pending HR review' : b.bankName === '—' ? 'Add Account' : 'Update'}
           </Button>
         </div>
         <InfoCard
@@ -85,7 +110,9 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
               <Landmark className="h-4 w-4 text-indigo-500" aria-hidden />
               <div>
                 <p className="text-xs font-medium uppercase text-slate-400">Bank name</p>
-                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{b.bankName}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {b.bankName}
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-2 rounded-xl bg-slate-50/90 p-3 dark:bg-slate-800/50">
@@ -105,7 +132,9 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
             </div>
             <div className="rounded-xl bg-slate-50/90 p-3 dark:bg-slate-800/50">
               <p className="text-xs font-medium uppercase text-slate-400">Account type</p>
-              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{b.accountType}</p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                {b.accountType}
+              </p>
             </div>
           </div>
         </InfoCard>
@@ -161,15 +190,10 @@ export function BankingTab({ employeeId, client, model, onSaved }: BankingTabPro
           <Button
             type="button"
             variant="primary"
-            disabled={
-              saving ||
-              !bankName.trim() ||
-              !accountNumber.trim() ||
-              !ifscCode.trim()
-            }
+            disabled={saving || !bankName.trim() || !accountNumber.trim() || !ifscCode.trim()}
             onClick={() => void save()}
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? 'Saving...' : canManageSensitiveFields ? 'Save' : 'Submit for review'}
           </Button>
         </div>
       </InfoCard>

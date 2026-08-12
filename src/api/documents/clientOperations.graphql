@@ -160,11 +160,7 @@ query TaxComputationsList($limit: Int! = 10) {
   }
 }
 
-query TaxProofLines(
-  $employeeId: ID
-  $taxConfigVersionId: ID
-  $fiscalYear: Int
-) {
+query TaxProofLines($employeeId: ID, $taxConfigVersionId: ID, $fiscalYear: Int) {
   taxProofLines(
     employeeId: $employeeId
     taxConfigVersionId: $taxConfigVersionId
@@ -515,7 +511,11 @@ mutation ApproveExpense($expenseId: ID!, $approvedAmount: String) {
   }
 }
 
-mutation MarkExpensePaymentStatus($expenseId: ID!, $paymentStatus: String!, $paymentReference: String) {
+mutation MarkExpensePaymentStatus(
+  $expenseId: ID!
+  $paymentStatus: String!
+  $paymentReference: String
+) {
   markExpensePaymentStatus(
     expenseId: $expenseId
     paymentStatus: $paymentStatus
@@ -839,6 +839,177 @@ mutation UploadEmployeeDocumentProfile($input: UploadEmployeeDocumentInput!) {
   }
 }
 
+mutation UpdateEmployeeSelfServiceProfile($input: UpdateEmployeeSelfServiceProfileInput!) {
+  updateEmployeeSelfServiceProfile(input: $input) {
+    id
+    gender
+    nationality
+    bloodGroup
+    personalPhone
+    currentAddress
+    permanentAddress
+    emergencyContactName
+    emergencyContactPhone
+    emergencyContactRelation
+    updatedAt
+  }
+}
+
+mutation SubmitEmployeeProfileChange($input: SubmitEmployeeProfileChangeInput!) {
+  submitEmployeeProfileChange(input: $input) {
+    id
+    requestType
+    status
+    requestedSummary
+    supportingDocumentId
+    rejectionReason
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CancelEmployeeProfileChange($requestId: ID!) {
+  cancelEmployeeProfileChange(requestId: $requestId) {
+    id
+    status
+    updatedAt
+  }
+}
+
+mutation ResolveEmployeeProfileChange(
+  $requestId: ID!
+  $approved: Boolean!
+  $rejectionReason: String
+) {
+  resolveEmployeeProfileChange(
+    requestId: $requestId
+    approved: $approved
+    rejectionReason: $rejectionReason
+  ) {
+    id
+    status
+    requestedSummary
+    reviewedAt
+    rejectionReason
+    updatedAt
+  }
+}
+
+mutation UpsertEmployeeEducation($input: UpsertEmployeeEducationInput!) {
+  upsertEmployeeEducation(input: $input) {
+    id
+    employeeId
+    educationLevel
+    qualification
+    fieldOfStudy
+    institution
+    boardUniversity
+    startDate
+    completionYear
+    gradeScore
+    description
+    verificationStatus
+    evidenceDocumentIds
+    rejectionReason
+    updatedAt
+  }
+}
+
+mutation DeleteEmployeeEducation($employeeId: ID!, $educationId: ID!) {
+  deleteEmployeeEducation(employeeId: $employeeId, educationId: $educationId)
+}
+
+mutation LinkEmployeeEducationEvidence(
+  $employeeId: ID!
+  $educationId: ID!
+  $employeeDocumentId: ID!
+) {
+  linkEmployeeEducationEvidence(
+    employeeId: $employeeId
+    educationId: $educationId
+    employeeDocumentId: $employeeDocumentId
+  ) {
+    id
+    verificationStatus
+    evidenceDocumentIds
+    updatedAt
+  }
+}
+
+mutation ResolveEmployeeEducation(
+  $educationId: ID!
+  $approved: Boolean!
+  $rejectionReason: String
+) {
+  resolveEmployeeEducation(
+    educationId: $educationId
+    approved: $approved
+    rejectionReason: $rejectionReason
+  ) {
+    id
+    verificationStatus
+    rejectionReason
+    updatedAt
+  }
+}
+
+mutation UpsertEmployeeWorkExperience($input: UpsertEmployeeWorkExperienceInput!) {
+  upsertEmployeeWorkExperience(input: $input) {
+    id
+    employeeId
+    company
+    roleTitle
+    employmentType
+    location
+    startDate
+    endDate
+    isCurrent
+    description
+    verificationStatus
+    evidenceDocumentIds
+    rejectionReason
+    updatedAt
+  }
+}
+
+mutation DeleteEmployeeWorkExperience($employeeId: ID!, $workExperienceId: ID!) {
+  deleteEmployeeWorkExperience(employeeId: $employeeId, workExperienceId: $workExperienceId)
+}
+
+mutation LinkEmployeeWorkExperienceEvidence(
+  $employeeId: ID!
+  $workExperienceId: ID!
+  $employeeDocumentId: ID!
+) {
+  linkEmployeeWorkExperienceEvidence(
+    employeeId: $employeeId
+    workExperienceId: $workExperienceId
+    employeeDocumentId: $employeeDocumentId
+  ) {
+    id
+    verificationStatus
+    evidenceDocumentIds
+    updatedAt
+  }
+}
+
+mutation ResolveEmployeeWorkExperience(
+  $workExperienceId: ID!
+  $approved: Boolean!
+  $rejectionReason: String
+) {
+  resolveEmployeeWorkExperience(
+    workExperienceId: $workExperienceId
+    approved: $approved
+    rejectionReason: $rejectionReason
+  ) {
+    id
+    verificationStatus
+    rejectionReason
+    updatedAt
+  }
+}
+
 mutation UploadTenantFile($input: UploadTenantFileInput!) {
   uploadTenantFile(input: $input) {
     id
@@ -899,6 +1070,17 @@ query OrgChart($limit: Int! = 500) {
   }
 }
 
+query OrganizationDirectoryChart {
+  organizationDirectoryChart {
+    employeeId
+    employeeCode
+    fullName
+    reportingManagerId
+    departmentName
+    designationTitle
+  }
+}
+
 # Canonical viewer employee UUID (leave subgraph); avoids pulling full LeaveBoard on HR screens.
 query ViewerEmployeeId {
   viewerEmployeeId
@@ -947,7 +1129,10 @@ query OnboardingChecklist($limit: Int! = 100) {
 }
 
 mutation SetOnboardingChecklistItem($checklistItemId: ID!, $isCompleted: Boolean!) {
-  setOnboardingChecklistItemCompleted(checklistItemId: $checklistItemId, isCompleted: $isCompleted) {
+  setOnboardingChecklistItemCompleted(
+    checklistItemId: $checklistItemId
+    isCompleted: $isCompleted
+  ) {
     id
     isCompleted
   }
@@ -1121,11 +1306,7 @@ mutation ClientOpsEnsureOffboarding($separationId: ID!) {
   ensureSeparationOffboardingArtifacts(separationId: $separationId)
 }
 
-query WorkplaceCompensationData(
-  $blim: Int! = 100
-  $clim: Int! = 20
-  $dlim: Int! = 200
-) {
+query WorkplaceCompensationData($blim: Int! = 100, $clim: Int! = 20, $dlim: Int! = 200) {
   designations(limit: $dlim) {
     id
     title
@@ -1940,8 +2121,49 @@ mutation ClientOpsUpsertAttendancePunchPolicy($input: UpsertAttendancePunchPolic
   }
 }
 
-query ClientOpsEmployeesDirectory($limit: Int! = 100) {
-  employees(limit: $limit) {
+query ClientOpsEmployeesDirectory($limit: Int! = 100, $after: String) {
+  employeeDirectoryPage(limit: $limit, after: $after) {
+    rows {
+      employeeId
+      employeeCode
+      fullName
+      status
+      employmentType
+      dateOfJoining
+      departmentName
+      designationTitle
+      reportingManagerId
+      reportingManagerName
+    }
+    nextCursor
+    hasMore
+  }
+}
+
+query EmployeeProfileAccess($employeeId: ID!) {
+  employeeProfileAccess(employeeId: $employeeId) {
+    isSelf
+    canViewPrivateProfile
+    canEditPersonalProfile
+    canManageOrganizationFields
+    canReviewProfileChanges
+    directoryEntry {
+      employeeId
+      employeeCode
+      fullName
+      status
+      employmentType
+      dateOfJoining
+      departmentName
+      designationTitle
+      reportingManagerId
+      reportingManagerName
+    }
+  }
+}
+
+query EmployeePrivateProfile($employeeId: ID!) {
+  employee(id: $employeeId) {
     id
     employeeCode
     firstName
@@ -1959,6 +2181,106 @@ query ClientOpsEmployeesDirectory($limit: Int! = 100) {
     linkedUserEmail
     linkedUserUsername
     reportingManagerName
+    personalPhone
+    currentAddress
+    permanentAddress
+    dateOfBirth
+    gender
+    nationality
+    bloodGroup
+    emergencyContactName
+    emergencyContactPhone
+    emergencyContactRelation
+    createdAt
+    updatedAt
+  }
+  employeeDocuments(employeeId: $employeeId, limit: 100) {
+    id
+    documentTypeId
+    status
+    uploadedAt
+    originalFileName
+    uploadedByUserId
+    documentTypeName
+    documentTypeCategory
+  }
+  documentTypes(limit: 100) {
+    id
+    name
+    category
+    systemKey
+  }
+  employmentHistoryRecords(employeeId: $employeeId, limit: 48) {
+    id
+    monthlySalary
+    effectiveFrom
+    effectiveTo
+    changeReason
+    updatedAt
+  }
+  employeePrimaryBank(employeeId: $employeeId) {
+    id
+    bankName
+    accountNumberMasked
+    ifscCode
+    accountType
+    isVerified
+  }
+  employeeIdentityProfile(employeeId: $employeeId) {
+    pan {
+      id
+      maskedPan
+      isVerified
+    }
+    aadhaar {
+      id
+      maskedAadhaar
+      isVerified
+    }
+  }
+  employeeProfileChangeRequests(employeeId: $employeeId) {
+    id
+    requestType
+    status
+    requestedSummary
+    supportingDocumentId
+    reviewedAt
+    rejectionReason
+    createdAt
+    updatedAt
+  }
+  employeeEducationRecords(employeeId: $employeeId) {
+    id
+    employeeId
+    educationLevel
+    qualification
+    fieldOfStudy
+    institution
+    boardUniversity
+    startDate
+    completionYear
+    gradeScore
+    description
+    verificationStatus
+    evidenceDocumentIds
+    rejectionReason
+    updatedAt
+  }
+  employeeWorkExperienceRecords(employeeId: $employeeId) {
+    id
+    employeeId
+    company
+    roleTitle
+    employmentType
+    location
+    startDate
+    endDate
+    isCurrent
+    description
+    verificationStatus
+    evidenceDocumentIds
+    rejectionReason
+    updatedAt
   }
 }
 

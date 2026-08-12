@@ -10,6 +10,7 @@ import Input from '../../../../components/common/Input';
 import { UploadModal } from '../components/UploadModal';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import {
+  SubmitEmployeeProfileChangeDocument,
   UploadEmployeeDocumentProfileDocument,
   UpsertEmployeePrimaryAadhaarDocument,
   UpsertEmployeePrimaryPanDocument,
@@ -35,7 +36,7 @@ export function IdentityTab({
   client,
   model,
   documentTypes,
-  isHr: _isHr,
+  isHr,
   onChanged,
 }: IdentityTabProps) {
   const [panInput, setPanInput] = useState('');
@@ -43,17 +44,19 @@ export function IdentityTab({
   const [panSaving, setPanSaving] = useState(false);
   const [aadhaarSaving, setAadhaarSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [passportOpen, setPassportOpen] = useState(false);
+  const [uploadKind, setUploadKind] = useState<IdentityRecord['kind'] | null>(null);
+  const [supportingDocuments, setSupportingDocuments] = useState<
+    Partial<Record<IdentityRecord['kind'], string>>
+  >({});
 
-  const passportTypes = useMemo(
-    () =>
-      documentTypes.filter((t) => {
-        const c = (t.category ?? '').toUpperCase();
-        const n = (t.name ?? '').toUpperCase();
-        return c.includes('PASSPORT') || n.includes('PASSPORT');
-      }),
-    [documentTypes]
-  );
+  const uploadTypes = useMemo(() => {
+    if (!uploadKind) return [];
+    const aliases = uploadKind === 'AADHAAR' ? ['AADHAAR', 'AADHAR'] : [uploadKind];
+    return documentTypes.filter((type) => {
+      const text = `${type.systemKey ?? ''} ${type.category ?? ''} ${type.name}`.toUpperCase();
+      return aliases.some((alias) => text.includes(alias));
+    });
+  }, [documentTypes, uploadKind]);
 
   const identityByKind = useMemo(() => {
     const m = new Map<IdentityRecord['kind'], IdentityRecord>();
@@ -65,11 +68,22 @@ export function IdentityTab({
     setPanSaving(true);
     setError(null);
     try {
-      await client.request(UpsertEmployeePrimaryPanDocument, {
-        input: { employeeId, panNumber: panInput.trim() },
-      });
+      if (isHr) {
+        await client.request(UpsertEmployeePrimaryPanDocument, {
+          input: { employeeId, panNumber: panInput.trim() },
+        });
+      } else {
+        await client.request(SubmitEmployeeProfileChangeDocument, {
+          input: {
+            employeeId,
+            requestType: 'PAN',
+            panNumber: panInput.trim(),
+            supportingDocumentId: supportingDocuments.PAN,
+          },
+        });
+      }
       setPanInput('');
-      onChanged?.();
+      if (isHr) onChanged?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {
@@ -81,11 +95,22 @@ export function IdentityTab({
     setAadhaarSaving(true);
     setError(null);
     try {
-      await client.request(UpsertEmployeePrimaryAadhaarDocument, {
-        input: { employeeId, aadhaarNumber: aadhaarInput.trim() },
-      });
+      if (isHr) {
+        await client.request(UpsertEmployeePrimaryAadhaarDocument, {
+          input: { employeeId, aadhaarNumber: aadhaarInput.trim() },
+        });
+      } else {
+        await client.request(SubmitEmployeeProfileChangeDocument, {
+          input: {
+            employeeId,
+            requestType: 'AADHAAR',
+            aadhaarNumber: aadhaarInput.trim(),
+            supportingDocumentId: supportingDocuments.AADHAAR,
+          },
+        });
+      }
       setAadhaarInput('');
-      onChanged?.();
+      if (isHr) onChanged?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {
@@ -93,13 +118,13 @@ export function IdentityTab({
     }
   };
 
-  const uploadPassport = async (payload: {
+  const uploadIdentityDocument = async (payload: {
     documentTypeId: string;
     fileName: string;
     mimeType: string;
     contentBase64: string;
   }) => {
-    await client.request(UploadEmployeeDocumentProfileDocument, {
+    const result = await client.request(UploadEmployeeDocumentProfileDocument, {
       input: {
         employeeId,
         documentTypeId: payload.documentTypeId,
@@ -108,7 +133,12 @@ export function IdentityTab({
         contentBase64: payload.contentBase64,
       },
     });
-    onChanged?.();
+    if (uploadKind) {
+      setSupportingDocuments((current) => ({
+        ...current,
+        [uploadKind]: result.uploadEmployeeDocument.id,
+      }));
+    }
   };
 
   const pan = identityByKind.get('PAN');
@@ -139,7 +169,9 @@ export function IdentityTab({
           <Input
             label="New PAN"
             value={panInput}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setPanInput(e.target.value.toUpperCase())}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setPanInput(e.target.value.toUpperCase())
+            }
             fullWidth
             className="mt-2"
             placeholder="ABCDE1234F"
@@ -153,8 +185,20 @@ export function IdentityTab({
             disabled={panSaving || panInput.trim().length !== 10}
             onClick={() => void savePan()}
           >
-            {panSaving ? 'Saving...' : 'Save PAN'}
+            {panSaving ? 'Saving...' : isHr ? 'Save PAN' : 'Submit PAN for review'}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2 ml-2 gap-1"
+            onClick={() => setUploadKind('PAN')}
+          >
+            <Upload className="h-3.5 w-3.5" aria-hidden /> Upload PAN card
+          </Button>
+          {supportingDocuments.PAN ? (
+            <p className="mt-1 text-xs text-emerald-600">PAN document attached.</p>
+          ) : null}
         </InfoCard>
 
         <InfoCard
@@ -166,7 +210,9 @@ export function IdentityTab({
           <p className="font-mono text-sm font-semibold tracking-wider text-slate-900 dark:text-slate-100">
             {aadhaar?.maskedValue ?? '—'}
           </p>
-          <p className="mt-2 text-xs text-slate-500">Enter full 12-digit number or last 4 digits.</p>
+          <p className="mt-2 text-xs text-slate-500">
+            Enter full 12-digit number or last 4 digits.
+          </p>
           <Input
             label="New Aadhaar"
             value={aadhaarInput}
@@ -184,8 +230,20 @@ export function IdentityTab({
             disabled={aadhaarSaving || aadhaarInput.trim().length < 4}
             onClick={() => void saveAadhaar()}
           >
-            {aadhaarSaving ? 'Saving...' : 'Save Aadhaar'}
+            {aadhaarSaving ? 'Saving...' : isHr ? 'Save Aadhaar' : 'Submit Aadhaar for review'}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2 ml-2 gap-1"
+            onClick={() => setUploadKind('AADHAAR')}
+          >
+            <Upload className="h-3.5 w-3.5" aria-hidden /> Upload Aadhaar card
+          </Button>
+          {supportingDocuments.AADHAAR ? (
+            <p className="mt-1 text-xs text-emerald-600">Aadhaar document attached.</p>
+          ) : null}
         </InfoCard>
 
         <InfoCard
@@ -205,13 +263,13 @@ export function IdentityTab({
             variant="outline"
             size="sm"
             className="mt-2 gap-1"
-            disabled={passportTypes.length === 0 && documentTypes.length === 0}
-            onClick={() => setPassportOpen(true)}
+            disabled={documentTypes.length === 0}
+            onClick={() => setUploadKind('PASSPORT')}
           >
             <Upload className="h-3.5 w-3.5" aria-hidden />
             Upload passport scan
           </Button>
-          {passportTypes.length === 0 && documentTypes.length > 0 ? (
+          {uploadKind === 'PASSPORT' && uploadTypes.length === 0 && documentTypes.length > 0 ? (
             <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
               No passport document type in directory — add one under admin document types.
             </p>
@@ -220,10 +278,12 @@ export function IdentityTab({
       </div>
 
       <UploadModal
-        isOpen={passportOpen}
-        onClose={() => setPassportOpen(false)}
-        documentTypes={passportTypes.length > 0 ? passportTypes : documentTypes}
-        onSubmit={uploadPassport}
+        isOpen={uploadKind !== null}
+        onClose={() => setUploadKind(null)}
+        title={`Upload ${uploadKind === 'AADHAAR' ? 'Aadhaar card' : uploadKind === 'PAN' ? 'PAN card' : 'passport scan'}`}
+        hideCategory
+        documentTypes={uploadTypes.length > 0 ? uploadTypes : documentTypes}
+        onSubmit={uploadIdentityDocument}
       />
     </div>
   );

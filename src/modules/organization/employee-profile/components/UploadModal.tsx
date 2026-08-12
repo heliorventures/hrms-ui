@@ -9,6 +9,8 @@ interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   documentTypes: TenantDocumentTypeOption[];
+  title?: string;
+  hideCategory?: boolean;
   /** When no tenant types exist, user still picks a UI category (mapped on submit). */
   onSubmit: (payload: {
     documentTypeId: string;
@@ -48,6 +50,8 @@ export function UploadModal({
   isOpen,
   onClose,
   documentTypes,
+  title = 'Upload Document',
+  hideCategory = false,
   onSubmit,
 }: UploadModalProps) {
   const [category, setCategory] = useState<DocumentCategory>('PAN');
@@ -59,6 +63,12 @@ export function UploadModal({
   const typeOptions = useMemo(() => {
     if (documentTypes.length === 0) return [];
     const upper = (s: string) => s.toUpperCase();
+    if (hideCategory) {
+      return documentTypes.map((t) => ({
+        value: t.id,
+        label: `${t.name}${t.category ? ` (${t.category})` : ''}`,
+      }));
+    }
     return documentTypes
       .filter((t) => {
         const c = upper(t.category ?? '');
@@ -67,7 +77,12 @@ export function UploadModal({
           case 'PAN':
             return c.includes('PAN') || n.includes('PAN');
           case 'AADHAAR':
-            return c.includes('AADHAAR') || c.includes('AADHAR') || n.includes('AADHAAR') || n.includes('AADHAR');
+            return (
+              c.includes('AADHAAR') ||
+              c.includes('AADHAR') ||
+              n.includes('AADHAAR') ||
+              n.includes('AADHAR')
+            );
           case 'PASSPORT':
             return c.includes('PASSPORT') || n.includes('PASSPORT');
           case 'OFFER_LETTER':
@@ -81,11 +96,9 @@ export function UploadModal({
         }
       })
       .map((t) => ({ value: t.id, label: `${t.name}${t.category ? ` (${t.category})` : ''}` }));
-  }, [documentTypes, category]);
+  }, [documentTypes, category, hideCategory]);
 
-  const effectiveTypeId =
-    documentTypeId ||
-    (typeOptions[0]?.value ?? documentTypes[0]?.id ?? '');
+  const effectiveTypeId = documentTypeId || (typeOptions[0]?.value ?? documentTypes[0]?.id ?? '');
 
   const resetAndClose = () => {
     setFile(null);
@@ -102,7 +115,9 @@ export function UploadModal({
     }
     const id = effectiveTypeId;
     if (!id) {
-      setError('No document type is configured for this tenant. Add document types in admin settings.');
+      setError(
+        'No document type is configured for this tenant. Add document types in admin settings.'
+      );
       return;
     }
     setBusy(true);
@@ -125,19 +140,21 @@ export function UploadModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title="Upload Document" size="md">
+    <Modal isOpen={isOpen} onClose={resetAndClose} title={title} size="md">
       <form onSubmit={(ev) => void handleSubmit(ev)} className="space-y-4">
-        <Select
-          label="Category"
-          name="category"
-          value={category}
-          fullWidth
-          onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-            setCategory(e.target.value as DocumentCategory);
-            setDocumentTypeId('');
-          }}
-          options={categories.map((c) => ({ value: c.value, label: c.label }))}
-        />
+        {!hideCategory ? (
+          <Select
+            label="Category"
+            name="category"
+            value={category}
+            fullWidth
+            onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+              setCategory(e.target.value as DocumentCategory);
+              setDocumentTypeId('');
+            }}
+            options={categories.map((c) => ({ value: c.value, label: c.label }))}
+          />
+        ) : null}
         {documentTypes.length > 0 && typeOptions.length > 0 ? (
           <Select
             label="Document Type"
