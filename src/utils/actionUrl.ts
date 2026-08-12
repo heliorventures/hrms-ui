@@ -11,3 +11,14 @@ export const normalizeInternalActionUrl = (url: string | null | undefined) => {
     return null;
   }
 };
+
+export const notificationActionDestination = (url: string | null | undefined) =>
+  normalizeInternalActionUrl(url) ?? '/notifications';
+
+export const directNotificationActionUrl = (url: string | null | undefined) => {
+  const internalUrl = normalizeInternalActionUrl(url);
+  if (!internalUrl) return '/notifications';
+
+  const pathname = internalUrl.split('#', 1)[0].split('?', 1)[0];
+  return pathname === '/notifications' ? internalUrl : '/notifications';
+};

@@ -3,6 +3,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { directNotificationActionUrl } from '../../utils/actionUrl';
 import { fileToBase64 } from '../../utils/fileEncoding';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import AnnouncementEditorForm from './components/AnnouncementEditorForm';
@@ -15,6 +16,7 @@ import {
   DeleteNotificationAdminDocument,
   UpdateAnnouncementDocument,
   type AdminNotificationsConsoleQuery,
+  type CreateDirectNotificationsMutation,
 } from '../../api/graphql/graphql';
 
 type ConsoleData = AdminNotificationsConsoleQuery;
@@ -56,6 +58,7 @@ const AdminNotificationsPage = () => {
   const [data, setData] = useState<ConsoleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [annTitle, setAnnTitle] = useState('');
@@ -148,6 +151,7 @@ const AdminNotificationsPage = () => {
   const publishAnnouncement = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setSuccess(null);
     const title = annTitle.trim();
     if (!title) {
       setError('Announcement title is required.');
@@ -236,6 +240,7 @@ const AdminNotificationsPage = () => {
 
   const removeAnnouncement = async (id: string) => {
     if (!window.confirm('Delete this announcement?')) return;
+    setSuccess(null);
     setBusy(true);
     try {
       await client.request(DeleteAnnouncementDocument, { id });
@@ -250,6 +255,7 @@ const AdminNotificationsPage = () => {
   const sendDirect = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setSuccess(null);
     if (selUsers.length === 0) {
       setError('Select at least one user');
       return;
@@ -260,21 +266,32 @@ const AdminNotificationsPage = () => {
     }
     setBusy(true);
     try {
-      await client.request(CreateDirectNotificationsDocument, {
-        input: {
-          userIds: selUsers,
-          title: dnTitle.trim() === '' ? null : dnTitle.trim(),
-          message: dnMessage.trim() === '' ? null : dnMessage.trim(),
-          kind: dnKind.trim() === '' ? null : dnKind.trim(),
-          actionUrl: dnUrl.trim() === '' ? null : dnUrl.trim(),
-        },
-      });
+      const response = await client.request<CreateDirectNotificationsMutation>(
+        CreateDirectNotificationsDocument,
+        {
+          input: {
+            userIds: selUsers,
+            title: dnTitle.trim() === '' ? null : dnTitle.trim(),
+            message: dnMessage.trim() === '' ? null : dnMessage.trim(),
+            kind: dnKind.trim() === '' ? null : dnKind.trim(),
+            actionUrl: directNotificationActionUrl(dnUrl),
+          },
+        }
+      );
       setDnTitle('');
       setDnMessage('');
       setDnUrl('');
       setSelUsers([]);
-      setData(await load());
+      setSuccess(`Created ${response.createDirectNotifications} direct notification(s).`);
+      try {
+        setData(await load());
+      } catch (reloadErr) {
+        setError(
+          `Direct notification was sent, but the admin list could not refresh: ${graphQlUserMessage(reloadErr)}`
+        );
+      }
     } catch (err) {
+      setSuccess(null);
       setError(graphQlUserMessage(err));
     } finally {
       setBusy(false);
@@ -283,6 +300,7 @@ const AdminNotificationsPage = () => {
 
   const removeInAppRow = async (id: string) => {
     if (!window.confirm('Delete this notification row?')) return;
+    setSuccess(null);
     setBusy(true);
     try {
       await client.request(DeleteNotificationAdminDocument, { id });
@@ -304,6 +322,14 @@ const AdminNotificationsPage = () => {
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </Card>
+      )}
+
+      {success && (
+        <Card>
+          <p className="text-sm text-green-700 dark:text-green-300" role="status" aria-live="polite">
+            {success}
+          </p>
         </Card>
       )}
 

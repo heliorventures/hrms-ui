@@ -17,6 +17,7 @@ export interface TokenPair {
   username?: string;
   email: string;
   userId: string;
+  mustChangePassword: boolean;
 }
 
 export interface ResolvedTenant {

@@ -57,6 +57,7 @@ const emptySession = (): ParsedClientSession => ({
   permissions: new Set(),
   resourceScopes: {},
   persona: 'EMPLOYEE',
+  mustChangePassword: false,
 });
 
 const CLIENT_REFRESH_LEEWAY_MS = 60_000;

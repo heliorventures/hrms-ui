@@ -11,9 +11,15 @@ extend type Query {
 }
 
 extend type Mutation {
+  provisionEmployeeLogin(input: ProvisionEmployeeLoginInput!): Employee!
+  resetEmployeePassword(input: ResetEmployeePasswordInput!): Boolean!
   setRolePermissions(roleId: ID!, permissionIds: [ID!]!): Boolean!
   setUserRoles(userId: ID!, roleIds: [ID!]!): Boolean!
   setRolePermissionScopes(roleId: ID!, scopes: [PermissionScopeAssignmentInput!]!): Boolean!
+}
+
+extend input CreateEmployeeInput {
+  loginAccount: EmployeeLoginAccountInput
 }
 
 type TenantDirectoryUser {
@@ -48,4 +54,24 @@ input PermissionScopeAssignmentInput {
   resource: String!
   action: String!
   scopeType: String!
+}
+
+input EmployeeLoginAccountInput {
+  username: String!
+  email: String
+  initialPassword: String!
+  roleIds: [ID!]
+}
+
+input ProvisionEmployeeLoginInput {
+  employeeId: ID!
+  username: String!
+  email: String
+  initialPassword: String!
+  roleIds: [ID!]
+}
+
+input ResetEmployeePasswordInput {
+  employeeId: ID!
+  newPassword: String!
 }

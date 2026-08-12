@@ -4,11 +4,11 @@ import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
+import { useAuth } from '../../../contexts/AuthContext';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
 import {
   UpdateEmployeeDocument,
-  ClientOpsOrgListsForEmployeeModalDocument,
   type UpdateEmployeeInput,
 } from '../../../api/graphql/graphql';
 import {
@@ -19,6 +19,71 @@ import {
   LOADING_EMPLOYEE_FORM_OPTION,
   type SelectOption,
 } from '../employeeFormOptions';
+
+const EmployeeModalDirectoryDocument = `
+  query ClientOpsOrgListsForEmployeeModal($dlim: Int! = 100, $glim: Int! = 100, $elim: Int! = 100) {
+    departments(limit: $dlim) {
+      id
+      name
+      code
+    }
+    designations(limit: $glim) {
+      id
+      title
+    }
+    employees(limit: $elim) {
+      id
+      employeeCode
+      fullName
+    }
+  }
+`;
+
+const EmployeeModalAdminDirectoryDocument = `
+  query ClientOpsOrgListsForEmployeeModal(
+    $dlim: Int! = 100
+    $glim: Int! = 100
+    $elim: Int! = 100
+    $rlim: Int! = 80
+  ) {
+    departments(limit: $dlim) {
+      id
+      name
+      code
+    }
+    designations(limit: $glim) {
+      id
+      title
+    }
+    employees(limit: $elim) {
+      id
+      employeeCode
+      fullName
+    }
+    tenantDirectoryRoles(limit: $rlim) {
+      id
+      name
+      isSystemRole
+    }
+  }
+`;
+
+const ProvisionEmployeeLoginDocument = `
+  mutation ProvisionEmployeeLogin($input: ProvisionEmployeeLoginInput!) {
+    provisionEmployeeLogin(input: $input) {
+      id
+      userId
+      linkedUserUsername
+      linkedUserEmail
+    }
+  }
+`;
+
+const ResetEmployeePasswordDocument = `
+  mutation ResetEmployeePassword($input: ResetEmployeePasswordInput!) {
+    resetEmployeePassword(input: $input)
+  }
+`;
 
 export interface EditEmployeeRow {
   id: string;
@@ -46,6 +111,9 @@ interface EditEmployeeModalProps {
 
 const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmployeeModalProps) => {
   const client = useGraphClient('client');
+  const { can, hasAnyJwtRole } = useAuth();
+  const canManageLoginAccounts =
+    can('role:manage') || hasAnyJwtRole(['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN']);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');
@@ -55,9 +123,17 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
   const [departmentId, setDepartmentId] = useState('');
   const [designationId, setDesignationId] = useState('');
   const [reportingManagerId, setReportingManagerId] = useState('');
+  const [accountUsername, setAccountUsername] = useState('');
+  const [accountEmail, setAccountEmail] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
+  const [accountConfirmPassword, setAccountConfirmPassword] = useState('');
+  const [accountRoleId, setAccountRoleId] = useState('');
+  const [accountBusy, setAccountBusy] = useState(false);
+  const [accountMessage, setAccountMessage] = useState<string | null>(null);
   const [deptOptions, setDeptOptions] = useState<SelectOption[]>([]);
   const [desigOptions, setDesigOptions] = useState<SelectOption[]>([]);
   const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
+  const [roleOptions, setRoleOptions] = useState<SelectOption[]>([]);
   const [orgLoadError, setOrgLoadError] = useState<string | null>(null);
 
   const loadOrg = useCallback(async () => {
@@ -68,14 +144,25 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         departments: { id: string; name: string; code: string }[];
         designations: { id: string; title: string }[];
         employees: { id: string; employeeCode: string; fullName: string }[];
-      }>(ClientOpsOrgListsForEmployeeModalDocument, { dlim: 100, glim: 100, elim: 100 });
+        tenantDirectoryRoles?: { id: string; name: string; isSystemRole: boolean }[];
+      }>(
+        canManageLoginAccounts ? EmployeeModalAdminDirectoryDocument : EmployeeModalDirectoryDocument,
+        { dlim: 100, glim: 100, elim: 100, rlim: 80 }
+      );
       setDeptOptions(buildDepartmentOptions(res.departments ?? []));
       setDesigOptions(buildDesignationOptions(res.designations ?? []));
       setManagerOptions(buildManagerOptions(res.employees ?? [], employee?.id));
+      setRoleOptions([
+        { value: '', label: 'No role assigned' },
+        ...((res.tenantDirectoryRoles ?? []).map((role) => ({
+          value: role.id,
+          label: role.isSystemRole ? `${role.name} (system)` : role.name,
+        }))),
+      ]);
     } catch (e) {
       setOrgLoadError(graphQlUserMessage(e));
     }
-  }, [client, isOpen, employee?.id]);
+  }, [canManageLoginAccounts, client, isOpen, employee?.id]);
 
   useEffect(() => {
     void loadOrg();
@@ -90,8 +177,81 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     setDepartmentId(employee.departmentId ?? '');
     setDesignationId(employee.designationId ?? '');
     setReportingManagerId(employee.reportingManagerId ?? '');
+    setAccountUsername(employee.linkedUserUsername ?? '');
+    setAccountEmail(employee.linkedUserEmail ?? '');
+    setAccountPassword('');
+    setAccountConfirmPassword('');
+    setAccountRoleId('');
+    setAccountMessage(null);
     setFormError(null);
   }, [employee, isOpen]);
+
+  const validateAccountPassword = () => {
+    if (accountPassword.length < 8) {
+      setFormError('Password must be at least 8 characters.');
+      return false;
+    }
+    if (accountPassword !== accountConfirmPassword) {
+      setFormError('Password and confirmation do not match.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleProvisionLogin = async () => {
+    if (!employee) return;
+    setFormError(null);
+    setAccountMessage(null);
+    if (!accountUsername.trim()) {
+      setFormError('Username is required to provision login.');
+      return;
+    }
+    if (!validateAccountPassword()) return;
+    setAccountBusy(true);
+    try {
+      await client.request(ProvisionEmployeeLoginDocument, {
+        input: {
+          employeeId: employee.id,
+          username: accountUsername.trim(),
+          email: accountEmail.trim() || undefined,
+          initialPassword: accountPassword,
+          roleIds: accountRoleId ? [accountRoleId] : [],
+        },
+      });
+      setAccountPassword('');
+      setAccountConfirmPassword('');
+      setAccountMessage('Login provisioned. The employee must change the temporary password at next login.');
+      onUpdated();
+    } catch (err) {
+      setFormError(graphQlUserMessage(err));
+    } finally {
+      setAccountBusy(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!employee) return;
+    setFormError(null);
+    setAccountMessage(null);
+    if (!validateAccountPassword()) return;
+    setAccountBusy(true);
+    try {
+      await client.request(ResetEmployeePasswordDocument, {
+        input: {
+          employeeId: employee.id,
+          newPassword: accountPassword,
+        },
+      });
+      setAccountPassword('');
+      setAccountConfirmPassword('');
+      setAccountMessage('Password reset. Active sessions were revoked and the employee must change it at next login.');
+      onUpdated();
+    } catch (err) {
+      setFormError(graphQlUserMessage(err));
+    } finally {
+      setAccountBusy(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,10 +353,88 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
               {employee.linkedUserUsername || employee.linkedUserEmail || employee.userId || 'Not provisioned'}
             </span>
           </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Login creation and password reset are intentionally handled outside this employee edit
-            form until the secure account workflow is wired.
-          </p>
+          {accountMessage && (
+            <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300">{accountMessage}</p>
+          )}
+          {canManageLoginAccounts ? (
+          <div className="mt-3 space-y-3">
+            {!employee.userId && (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <Input
+                  label="Username *"
+                  value={accountUsername}
+                  onChange={(e) => setAccountUsername(e.target.value)}
+                  fullWidth
+                  autoComplete="off"
+                  placeholder="mobile number or unique name"
+                />
+                <Input
+                  label="Email"
+                  type="email"
+                  value={accountEmail}
+                  onChange={(e) => setAccountEmail(e.target.value)}
+                  fullWidth
+                  autoComplete="off"
+                  placeholder="optional"
+                />
+              </div>
+            )}
+            {!employee.userId && (
+              <Select
+                label="Initial Role"
+                value={accountRoleId}
+                onChange={(e) => setAccountRoleId(e.target.value)}
+                options={roleOptions.length ? roleOptions : [{ value: '', label: 'No role assigned' }]}
+                fullWidth
+              />
+            )}
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Input
+                label={employee.userId ? 'New Password *' : 'Initial Password *'}
+                type="password"
+                value={accountPassword}
+                onChange={(e) => setAccountPassword(e.target.value)}
+                fullWidth
+                minLength={8}
+                autoComplete="new-password"
+              />
+              <Input
+                label="Confirm Password *"
+                type="password"
+                value={accountConfirmPassword}
+                onChange={(e) => setAccountConfirmPassword(e.target.value)}
+                fullWidth
+                minLength={8}
+                autoComplete="new-password"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={accountBusy}
+              onClick={() => {
+                if (employee.userId) {
+                  void handleResetPassword();
+                } else {
+                  void handleProvisionLogin();
+                }
+              }}
+            >
+              {accountBusy
+                ? 'Saving...'
+                : employee.userId
+                  ? 'Reset password'
+                  : 'Provision login'}
+            </Button>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Admin-set passwords are temporary; the employee must change them at next login.
+            </p>
+          </div>
+          ) : (
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Password provisioning and reset require RBAC admin access.
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Select

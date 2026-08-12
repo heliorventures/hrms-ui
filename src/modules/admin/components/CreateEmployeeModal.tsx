@@ -4,12 +4,12 @@ import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
+import { useAuth } from '../../../contexts/AuthContext';
 import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
 import {
   CreateEmployeeDocument,
-  ClientOpsOrgListsForEmployeeModalDocument,
   type CreateEmployeeInput,
 } from '../../../api/graphql/graphql';
 import {
@@ -21,6 +21,54 @@ import {
   type SelectOption,
 } from '../employeeFormOptions';
 
+const EmployeeModalDirectoryDocument = `
+  query ClientOpsOrgListsForEmployeeModal($dlim: Int! = 100, $glim: Int! = 100, $elim: Int! = 100) {
+    departments(limit: $dlim) {
+      id
+      name
+      code
+    }
+    designations(limit: $glim) {
+      id
+      title
+    }
+    employees(limit: $elim) {
+      id
+      employeeCode
+      fullName
+    }
+  }
+`;
+
+const EmployeeModalAdminDirectoryDocument = `
+  query ClientOpsOrgListsForEmployeeModal(
+    $dlim: Int! = 100
+    $glim: Int! = 100
+    $elim: Int! = 100
+    $rlim: Int! = 80
+  ) {
+    departments(limit: $dlim) {
+      id
+      name
+      code
+    }
+    designations(limit: $glim) {
+      id
+      title
+    }
+    employees(limit: $elim) {
+      id
+      employeeCode
+      fullName
+    }
+    tenantDirectoryRoles(limit: $rlim) {
+      id
+      name
+      isSystemRole
+    }
+  }
+`;
+
 interface CreateEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,6 +77,15 @@ interface CreateEmployeeModalProps {
 
 const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModalProps) => {
   const client = useGraphClient('client');
+  const { can, hasAnyJwtRole } = useAuth();
+  const canManageLoginAccounts =
+    can('role:manage') || hasAnyJwtRole(['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN']);
+  const [createLogin, setCreateLogin] = useState(false);
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [initialPassword, setInitialPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [roleId, setRoleId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [employeeCode, setEmployeeCode] = useState('');
@@ -42,6 +99,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   const [deptOptions, setDeptOptions] = useState<SelectOption[]>([]);
   const [desigOptions, setDesigOptions] = useState<SelectOption[]>([]);
   const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
+  const [roleOptions, setRoleOptions] = useState<SelectOption[]>([]);
   const [orgLoadError, setOrgLoadError] = useState<string | null>(null);
 
   const loadOrg = useCallback(async () => {
@@ -52,22 +110,56 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         departments: { id: string; name: string; code: string }[];
         designations: { id: string; title: string }[];
         employees: { id: string; employeeCode: string; fullName: string }[];
-      }>(ClientOpsOrgListsForEmployeeModalDocument, { dlim: 100, glim: 100, elim: 100 });
+        tenantDirectoryRoles?: { id: string; name: string; isSystemRole: boolean }[];
+      }>(
+        canManageLoginAccounts ? EmployeeModalAdminDirectoryDocument : EmployeeModalDirectoryDocument,
+        { dlim: 100, glim: 100, elim: 100, rlim: 80 }
+      );
       setDeptOptions(buildDepartmentOptions(res.departments ?? []));
       setDesigOptions(buildDesignationOptions(res.designations ?? []));
       setManagerOptions(buildManagerOptions(res.employees ?? []));
+      setRoleOptions([
+        { value: '', label: 'No role assigned' },
+        ...((res.tenantDirectoryRoles ?? []).map((role) => ({
+          value: role.id,
+          label: role.isSystemRole ? `${role.name} (system)` : role.name,
+        }))),
+      ]);
     } catch (e) {
       setOrgLoadError(graphQlUserMessage(e));
     }
-  }, [client, isOpen]);
+  }, [canManageLoginAccounts, client, isOpen]);
 
   useEffect(() => {
     void loadOrg();
   }, [loadOrg]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setCreateLogin(canManageLoginAccounts);
+  }, [canManageLoginAccounts, isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    if (createLogin && !canManageLoginAccounts) {
+      setFormError('Login account creation requires RBAC admin access.');
+      return;
+    }
+    if (createLogin) {
+      if (!username.trim()) {
+        setFormError('Username is required when creating a login account.');
+        return;
+      }
+      if (initialPassword.length < 8) {
+        setFormError('Initial password must be at least 8 characters.');
+        return;
+      }
+      if (initialPassword !== confirmPassword) {
+        setFormError('Initial password and confirmation do not match.');
+        return;
+      }
+    }
     setSubmitting(true);
     try {
       const input: Record<string, unknown> = {
@@ -86,6 +178,14 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       if (reportingManagerId) {
         input.reportingManagerId = reportingManagerId;
       }
+      if (createLogin) {
+        input.loginAccount = {
+          username: username.trim(),
+          email: email.trim() || undefined,
+          initialPassword,
+          roleIds: roleId ? [roleId] : [],
+        };
+      }
       await client.request(CreateEmployeeDocument, { input: input as CreateEmployeeInput });
       onCreated();
       onClose();
@@ -95,6 +195,12 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       setDepartmentId('');
       setDesignationId('');
       setReportingManagerId('');
+      setCreateLogin(true);
+      setUsername('');
+      setEmail('');
+      setInitialPassword('');
+      setConfirmPassword('');
+      setRoleId('');
     } catch (err) {
       setFormError(graphQlUserMessage(err));
     } finally {
@@ -191,11 +297,79 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
           }
           fullWidth
         />
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-          Login account creation is intentionally not available here until the secure invite or
-          password-reset workflow is wired. Create the employee record, then provision sign-in
-          through the approved account workflow.
-        </p>
+        {canManageLoginAccounts ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-900/40">
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-100">
+            <input
+              type="checkbox"
+              checked={createLogin}
+              onChange={(event) => setCreateLogin(event.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+            />
+            Create login account
+          </label>
+          {createLogin && (
+            <div className="mt-3 space-y-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <Input
+                  label="Username *"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  fullWidth
+                  required={createLogin}
+                  autoComplete="off"
+                  placeholder="mobile number or unique name"
+                />
+                <Input
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  fullWidth
+                  autoComplete="off"
+                  placeholder="optional"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <Input
+                  label="Initial Password *"
+                  type="password"
+                  value={initialPassword}
+                  onChange={(e) => setInitialPassword(e.target.value)}
+                  fullWidth
+                  required={createLogin}
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+                <Input
+                  label="Confirm Password *"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  fullWidth
+                  required={createLogin}
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+              </div>
+              <Select
+                label="Initial Role"
+                value={roleId}
+                onChange={(e) => setRoleId(e.target.value)}
+                options={roleOptions.length ? roleOptions : [{ value: '', label: 'No role assigned' }]}
+                fullWidth
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                The employee must change this temporary password at next login.
+              </p>
+            </div>
+          )}
+        </div>
+        ) : (
+          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+            Login account creation requires RBAC admin access.
+          </p>
+        )}
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? UI_STATUS_TEXT.creating : UI_ACTION_TEXT.create}

@@ -6,12 +6,13 @@ import { getClientAccessToken } from '../../../auth/tokenStore';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 interface SecurityTabProps {
+  forced?: boolean;
   onPasswordChanged: () => void | Promise<void>;
 }
 
 const MIN_PASSWORD_LEN = 8;
 
-const SecurityTab = ({ onPasswordChanged }: SecurityTabProps) => {
+const SecurityTab = ({ forced = false, onPasswordChanged }: SecurityTabProps) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -51,8 +52,9 @@ const SecurityTab = ({ onPasswordChanged }: SecurityTabProps) => {
   return (
     <div className="max-w-lg space-y-4">
       <p className="text-sm text-gray-600 dark:text-gray-400">
-        After a successful change, all active sessions are revoked and you will need to sign in
-        again.
+        {forced
+          ? 'Your temporary password must be changed before you can continue. After a successful change, sign in again with the new password.'
+          : 'After a successful change, all active sessions are revoked and you will need to sign in again.'}
       </p>
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

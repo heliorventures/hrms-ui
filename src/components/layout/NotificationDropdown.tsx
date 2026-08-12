@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { UI_EMPTY_TEXT, NAV_LABELS } from '../../constants/uiText';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { notificationActionDestination } from '../../utils/actionUrl';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   NotificationBoardDocument,
@@ -76,14 +77,7 @@ const NotificationDropdown = () => {
     } catch {
       /* still navigate */
     }
-    const url = n.actionUrl?.trim();
-    if (url) {
-      if (url.startsWith('http://') || url.startsWith('https://')) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      } else {
-        navigate(url.startsWith('/') ? url : `/${url}`);
-      }
-    }
+    navigate(notificationActionDestination(n.actionUrl));
     setIsOpen(false);
   };
 

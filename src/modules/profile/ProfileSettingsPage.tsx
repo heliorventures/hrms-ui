@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { getDefaultUserProfile } from '../../profile/defaultUserProfile';
@@ -23,10 +23,12 @@ const tabs: { id: TabId; label: string }[] = [
 ];
 
 const ProfileSettingsPage = () => {
-  const { user, logout } = useAuth();
+  const { clientSession, user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { currentTenant } = useTenant();
-  const [activeTab, setActiveTab] = useState<TabId>('about');
+  const initialTab = searchParams.get('tab') === 'security' ? 'security' : 'about';
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
   const data = user ? getDefaultUserProfile(user, currentTenant.name) : null;
 
@@ -128,6 +130,7 @@ const ProfileSettingsPage = () => {
       {activeTab === 'notifications' && <NotificationsTab />}
       {activeTab === 'security' && (
         <SecurityTab
+          forced={clientSession?.mustChangePassword === true}
           onPasswordChanged={async () => {
             await logout();
             navigate('/login', { replace: true });

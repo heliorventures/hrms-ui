@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { canAccessTenantPath } from '../auth/navAccess';
 import { createPermissionService, type Capability } from '../auth/permissionService';
 import { sessionMatchesTenant } from '../auth/tenantSession';
@@ -9,13 +9,20 @@ import { useTenant } from '../contexts/TenantContext';
 import OpsLayout from '../modules/ops/OpsLayout';
 
 export const ProtectedLayout = () => {
-  const { isAuthenticated, tenantId } = useAuth();
+  const { clientSession, isAuthenticated, tenantId } = useAuth();
   const { currentTenant, resolutionStatus } = useTenant();
+  const location = useLocation();
   if (resolutionStatus !== 'resolved') {
     return <Navigate to="/" replace />;
   }
   if (!isAuthenticated || !sessionMatchesTenant(tenantId, currentTenant.id)) {
     return <Navigate to="/login" replace />;
+  }
+  const onForcedPasswordChange =
+    location.pathname === '/profile/settings' &&
+    new URLSearchParams(location.search).get('tab') === 'security';
+  if (clientSession?.mustChangePassword && !onForcedPasswordChange) {
+    return <Navigate to="/profile/settings?tab=security" replace />;
   }
   return <AppLayout />;
 };

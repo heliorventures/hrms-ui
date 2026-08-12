@@ -12,6 +12,7 @@ import {
   OrgDepartmentsDocument,
   type OrgDepartmentsQuery,
 } from '../../api/graphql/graphql';
+import { buildCreateAnnouncementInput } from './createAnnouncementInput';
 
 interface CreateAnnouncementModalProps {
   isOpen: boolean;
@@ -172,27 +173,29 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
         documentMimeType = document.mime;
       }
 
-      const roleTrim = annRole.trim();
-
       await client.request(CreateAnnouncementDocument, {
-        input: {
-          title: title.trim(),
-          body: body.trim() === '' ? null : body.trim(),
-          targetAudience:
-            roleTrim !== '' ? null : targetAudience.trim() === '' ? null : targetAudience.trim(),
-          targetDepartmentId: hrCompose && annDept.trim() !== '' ? annDept.trim() : null,
-          targetLocationId: hrCompose && annLoc.trim() !== '' ? annLoc.trim() : null,
-          targetRoleCode: hrCompose && roleTrim !== '' ? roleTrim.toUpperCase() : null,
-          publishAt,
-          expiresAt,
-          employeePost,
-          imageFileName,
-          imageMimeType,
-          imageContentBase64,
-          documentFileName,
-          documentMimeType,
-          documentContentBase64,
-        },
+        input: buildCreateAnnouncementInput(
+          {
+            hrCompose,
+            title,
+            body,
+            targetAudience,
+            targetDepartmentId: annDept,
+            targetLocationId: annLoc,
+            targetRoleCode: annRole,
+            publishAt,
+            expiresAt,
+            employeePost,
+          },
+          {
+            imageFileName,
+            imageMimeType,
+            imageContentBase64,
+            documentFileName,
+            documentMimeType,
+            documentContentBase64,
+          }
+        ),
       });
       onCreated?.();
       reset();
@@ -318,27 +321,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
               </div>
             </div>
           </>
-        ) : (
-          <>
-            <Input
-              label="Target Audience (Optional)"
-              placeholder="e.g. ALL, Engineering"
-              type="text"
-              value={targetAudience}
-              onChange={(e) => setTargetAudience(e.target.value)}
-              fullWidth
-            />
-            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input
-                type="checkbox"
-                checked={employeePost}
-                onChange={(e) => setEmployeePost(e.target.checked)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-              Employee / team post (uncheck for company-wide HR style)
-            </label>
-          </>
-        )}
+        ) : null}
 
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Image</label>

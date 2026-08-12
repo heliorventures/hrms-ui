@@ -752,7 +752,23 @@ mutation CreateEmployee($input: CreateEmployeeInput!) {
     status
     dateOfJoining
     reportingManagerId
+    userId
+    linkedUserUsername
+    linkedUserEmail
   }
+}
+
+mutation ProvisionEmployeeLogin($input: ProvisionEmployeeLoginInput!) {
+  provisionEmployeeLogin(input: $input) {
+    id
+    userId
+    linkedUserUsername
+    linkedUserEmail
+  }
+}
+
+mutation ResetEmployeePassword($input: ResetEmployeePasswordInput!) {
+  resetEmployeePassword(input: $input)
 }
 
 mutation UpdateEmployee($input: UpdateEmployeeInput!) {
@@ -1868,6 +1884,7 @@ query ClientOpsOrgListsForEmployeeModal(
   $dlim: Int! = 100
   $glim: Int! = 100
   $elim: Int! = 100
+  $rlim: Int! = 80
 ) {
   departments(limit: $dlim) {
     id
@@ -1882,6 +1899,11 @@ query ClientOpsOrgListsForEmployeeModal(
     id
     employeeCode
     fullName
+  }
+  tenantDirectoryRoles(limit: $rlim) {
+    id
+    name
+    isSystemRole
   }
 }
 
