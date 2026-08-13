@@ -1,13 +1,13 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { Check, Pencil } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import type { PersonalInfoFields, ProfileChangeRequest } from '../types';
 import Input from '../../../../components/common/Input';
 import Button from '../../../../components/common/Button';
 import {
   CancelEmployeeProfileChangeDocument,
-  ResolveEmployeeProfileChangeDocument,
   SubmitEmployeeProfileChangeDocument,
   UpdateEmployeePersonalProfileDocument,
   UpdateEmployeeSelfServiceProfileDocument,
@@ -156,35 +156,6 @@ export function PersonalInfoTab({
   const legalChangePending = requests.some(
     (request) => request.requestType === 'LEGAL_NAME_OR_DOB' && request.status === 'PENDING'
   );
-
-  const resolveRequest = async (requestId: string, approved: boolean) => {
-    const rejectionReason = approved ? undefined : window.prompt('Reason for rejection:')?.trim();
-    if (!approved && !rejectionReason) return;
-    setReviewingId(requestId);
-    setError(null);
-    try {
-      const result = await client.request(ResolveEmployeeProfileChangeDocument, {
-        requestId,
-        approved,
-        rejectionReason,
-      });
-      setRequests((current) =>
-        current.map((request) =>
-          request.id === requestId
-            ? {
-                ...request,
-                status: result.resolveEmployeeProfileChange.status,
-                rejectionReason: result.resolveEmployeeProfileChange.rejectionReason,
-              }
-            : request
-        )
-      );
-    } catch (cause) {
-      setError(graphQlUserMessage(cause));
-    } finally {
-      setReviewingId(null);
-    }
-  };
 
   const cancelRequest = async (requestId: string) => {
     setReviewingId(requestId);
@@ -387,26 +358,9 @@ export function PersonalInfoTab({
                 <span>{request.requestedSummary}</span>
                 <div className="flex gap-2">
                   {canManageSensitiveFields && !isSelf ? (
-                    <>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="primary"
-                        disabled={reviewingId === request.id}
-                        onClick={() => void resolveRequest(request.id, true)}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={reviewingId === request.id}
-                        onClick={() => void resolveRequest(request.id, false)}
-                      >
-                        Reject
-                      </Button>
-                    </>
+                    <Link to="/organization/profile-reviews" className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                      Open secure review
+                    </Link>
                   ) : isSelf ? (
                     <Button
                       type="button"

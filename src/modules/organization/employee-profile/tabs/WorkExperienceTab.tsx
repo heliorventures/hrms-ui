@@ -9,12 +9,13 @@ import Modal from '../../../../components/common/Modal';
 import { EmptySection } from '../components/SectionStates';
 import { VerificationBadge } from '../components/StatusBadge';
 import { UploadModal } from '../components/UploadModal';
+import { ConfirmProfileActionModal } from '../components/ConfirmProfileActionModal';
 import { formatCompactDate } from '../lib/masking';
+import { formatWorkDuration } from '../lib/workDuration';
 import {
   DeleteEmployeeWorkExperienceDocument,
-  LinkEmployeeWorkExperienceEvidenceDocument,
   ResolveEmployeeWorkExperienceDocument,
-  UploadEmployeeDocumentProfileDocument,
+  UploadEmployeeWorkExperienceEvidenceDocument,
   UpsertEmployeeWorkExperienceDocument,
 } from '../../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
@@ -52,6 +53,9 @@ export function WorkExperienceTab({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [evidenceTarget, setEvidenceTarget] = useState<string | null>(null);
+  const [actionTarget, setActionTarget] = useState<{ kind: 'delete' | 'reject'; id: string } | null>(null);
+  const [actionReason, setActionReason] = useState('');
+  const [actionBusy, setActionBusy] = useState(false);
 
   useEffect(() => setEntries(initial), [initial]);
 
@@ -136,12 +140,7 @@ export function WorkExperienceTab({
   };
 
   const remove = async (id: string) => {
-    if (
-      !window.confirm(
-        'Delete this work experience record? This action removes it from your profile.'
-      )
-    )
-      return;
+    setActionBusy(true);
     setError(null);
     try {
       await client.request(DeleteEmployeeWorkExperienceDocument, {
@@ -151,6 +150,9 @@ export function WorkExperienceTab({
       setEntries((current) => current.filter((entry) => entry.id !== id));
     } catch (cause) {
       setError(graphQlUserMessage(cause));
+    } finally {
+      setActionBusy(false);
+      setActionTarget(null);
     }
   };
 
@@ -161,23 +163,19 @@ export function WorkExperienceTab({
     contentBase64: string;
   }) => {
     if (!evidenceTarget) return;
-    const upload = await client.request(UploadEmployeeDocumentProfileDocument, {
-      input: { employeeId, ...payload },
-    });
-    const linked = await client.request(LinkEmployeeWorkExperienceEvidenceDocument, {
-      employeeId,
+    const linked = await client.request(UploadEmployeeWorkExperienceEvidenceDocument, {
       workExperienceId: evidenceTarget,
-      employeeDocumentId: upload.uploadEmployeeDocument.id,
+      input: { employeeId, ...payload },
     });
     setEntries((current) =>
       current.map((entry) =>
         entry.id === evidenceTarget
           ? {
               ...entry,
-              verificationStatus: linked.linkEmployeeWorkExperienceEvidence
+              verificationStatus: linked.uploadEmployeeWorkExperienceEvidence
                 .verificationStatus as VerificationStatus,
               evidenceDocumentIds: [
-                ...linked.linkEmployeeWorkExperienceEvidence.evidenceDocumentIds,
+                ...linked.uploadEmployeeWorkExperienceEvidence.evidenceDocumentIds,
               ],
             }
           : entry
@@ -185,9 +183,8 @@ export function WorkExperienceTab({
     );
   };
 
-  const review = async (id: string, approved: boolean) => {
-    const rejectionReason = approved ? undefined : window.prompt('Reason for rejection:')?.trim();
-    if (!approved && !rejectionReason) return;
+  const review = async (id: string, approved: boolean, rejectionReason?: string) => {
+    setActionBusy(true);
     setError(null);
     try {
       const result = await client.request(ResolveEmployeeWorkExperienceDocument, {
@@ -209,6 +206,10 @@ export function WorkExperienceTab({
       );
     } catch (cause) {
       setError(graphQlUserMessage(cause));
+    } finally {
+      setActionBusy(false);
+      setActionTarget(null);
+      setActionReason('');
     }
   };
 
@@ -249,6 +250,7 @@ export function WorkExperienceTab({
                       {formatCompactDate(entry.startDate)} —{' '}
                       {entry.endDate ? formatCompactDate(entry.endDate) : 'Present'}
                       {entry.employmentType ? ` · ${entry.employmentType}` : ''}
+                      {` · ${formatWorkDuration(entry.startDate, entry.endDate)}`}
                     </p>
                     {entry.description ? (
                       <p className="mt-2 text-sm text-slate-600">{entry.description}</p>
@@ -277,7 +279,7 @@ export function WorkExperienceTab({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => void review(entry.id, false)}
+                      onClick={() => setActionTarget({ kind: 'reject', id: entry.id })}
                     >
                       Reject
                     </Button>
@@ -300,7 +302,7 @@ export function WorkExperienceTab({
                   variant="outline"
                   size="sm"
                   className="!px-2 text-rose-600"
-                  onClick={() => void remove(entry.id)}
+                  onClick={() => setActionTarget({ kind: 'delete', id: entry.id })}
                 >
                   <Trash2 className="h-4 w-4" aria-label="Delete" />
                 </Button>
@@ -425,6 +427,22 @@ export function WorkExperienceTab({
         hideCategory
         documentTypes={evidenceTypes}
         onSubmit={uploadEvidence}
+      />
+      <ConfirmProfileActionModal
+        isOpen={actionTarget !== null}
+        title={actionTarget?.kind === 'reject' ? 'Reject work evidence' : 'Delete work experience'}
+        description={actionTarget?.kind === 'reject' ? 'The evidence and record will be marked rejected. Provide a clear reason.' : 'This removes the work-experience record from the employee profile.'}
+        confirmLabel={actionTarget?.kind === 'reject' ? 'Reject evidence' : 'Delete record'}
+        busy={actionBusy}
+        reason={actionReason}
+        reasonRequired={actionTarget?.kind === 'reject'}
+        onReasonChange={setActionReason}
+        onClose={() => { setActionTarget(null); setActionReason(''); }}
+        onConfirm={() => {
+          if (!actionTarget) return;
+          if (actionTarget.kind === 'reject') void review(actionTarget.id, false, actionReason.trim());
+          else void remove(actionTarget.id);
+        }}
       />
     </div>
   );

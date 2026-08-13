@@ -1,5 +1,7 @@
 # Employee profile + HR document workflow (kabipay-employee). Merged for codegen when gateway is behind.
 
+scalar JSON
+
 extend type Employee {
   linkedUserUsername: String
   dateOfBirth: NaiveDate
@@ -20,6 +22,7 @@ extend type DocumentType {
 
 extend type EmployeeDocument {
   originalFileName: String
+  mimeType: String
   uploadedByUserId: ID
   documentTypeName: String
   documentTypeCategory: String
@@ -32,6 +35,10 @@ extend type Query {
   organizationDirectoryChart: [EmployeeDirectoryEntry!]!
   employeeProfileAccess(employeeId: ID!): EmployeeProfileAccess
   employeeProfileChangeRequests(employeeId: ID!, status: String): [EmployeeProfileChangeRequest!]!
+  employeeProfileReviewQueue(status: String, limit: Int! = 50): [EmployeeProfileReviewQueueItem!]!
+  employeeProfileChangeReviewDetail(requestId: ID!): EmployeeProfileChangeReviewDetail!
+  employeeEvidenceReviewQueue(limit: Int! = 100): [EmployeeEvidenceReviewQueueItem!]!
+  employeeDocumentSignedReadUrl(employeeDocumentId: ID!, ttlSeconds: Int! = 600): String!
   employeeEducationRecords(employeeId: ID!): [EmployeeEducation!]!
   employeeWorkExperienceRecords(employeeId: ID!): [EmployeeWorkExperience!]!
 }
@@ -76,6 +83,32 @@ type EmployeeProfileChangeRequest {
   rejectionReason: String
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+type EmployeeProfileReviewQueueItem {
+  request: EmployeeProfileChangeRequest!
+  employeeCode: String!
+  employeeName: String!
+  hasSupportingDocument: Boolean!
+}
+
+type EmployeeProfileChangeReviewDetail {
+  request: EmployeeProfileChangeRequest!
+  employeeCode: String!
+  employeeName: String!
+  currentValues: JSON!
+  requestedValues: JSON!
+}
+
+type EmployeeEvidenceReviewQueueItem {
+  recordId: ID!
+  employeeId: ID!
+  employeeCode: String!
+  employeeName: String!
+  evidenceType: String!
+  summary: String!
+  evidenceDocumentIds: [ID!]!
+  createdAt: DateTime!
 }
 
 type EmployeeEducation {
@@ -273,6 +306,10 @@ extend type Mutation {
     educationId: ID!
     employeeDocumentId: ID!
   ): EmployeeEducation!
+  uploadEmployeeEducationEvidence(
+    educationId: ID!
+    input: UploadEmployeeDocumentInput!
+  ): EmployeeEducation!
   resolveEmployeeEducation(
     educationId: ID!
     approved: Boolean!
@@ -284,6 +321,10 @@ extend type Mutation {
     employeeId: ID!
     workExperienceId: ID!
     employeeDocumentId: ID!
+  ): EmployeeWorkExperience!
+  uploadEmployeeWorkExperienceEvidence(
+    workExperienceId: ID!
+    input: UploadEmployeeDocumentInput!
   ): EmployeeWorkExperience!
   resolveEmployeeWorkExperience(
     workExperienceId: ID!

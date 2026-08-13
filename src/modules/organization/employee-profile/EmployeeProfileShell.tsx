@@ -52,7 +52,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
   const isHr = createPermissionService(clientSession).canCapability('route.hr.people');
   const showSalary = isHr;
 
-  const { loading, error, model, access, documentTypes, refetch } = useEmployeeProfileData(
+  const { loading, refreshing, error, model, access, documentTypes, refetch } = useEmployeeProfileData(
     client,
     employeeId
   );
@@ -88,7 +88,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
     );
   }
 
-  if (error || (!model && !access)) {
+  if ((error && !model) || (!model && !access)) {
     return (
       <div className="space-y-4">
         <EmployeeHeader employeeName="Employee" employeeCode="—" />
@@ -138,12 +138,17 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
 
   return (
     <div className="min-h-[60vh] space-y-4 pb-8">
+      {error ? (
+        <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+          Refresh failed; the last loaded profile remains visible. {error}
+        </div>
+      ) : null}
       <EmployeeHeader
         employeeName={model.core.fullName}
         employeeCode={model.core.employeeCode}
         actions={
-          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
-            Refresh
+          <Button type="button" variant="outline" size="sm" disabled={refreshing} onClick={() => refetch()}>
+            {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
         }
       />
@@ -177,7 +182,6 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 client={client}
                 model={model}
                 canManageSensitiveFields={access.canManageOrganizationFields}
-                onSaved={refetch}
               />
             ) : null}
             {activeTab === 'identity' ? (
@@ -187,7 +191,6 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 model={model}
                 documentTypes={documentTypes}
                 isHr={access.canManageOrganizationFields}
-                onChanged={refetch}
               />
             ) : null}
             {activeTab === 'education' ? (
@@ -219,7 +222,6 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 initial={model.documents}
                 documentTypes={documentTypes}
                 isHr={isHr}
-                onChanged={refetch}
               />
             ) : null}
             {activeTab === 'employment' && isHr ? (
@@ -227,7 +229,6 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 employeeId={model.core.id}
                 client={client}
                 model={model}
-                onChanged={refetch}
               />
             ) : null}
           </div>

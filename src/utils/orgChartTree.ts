@@ -50,3 +50,64 @@ export function findOrgChartRoots(rows: OrgChartRowLite[]): OrgChartRowLite[] {
   );
   return roots;
 }
+
+export interface OrgChartHealth {
+  missingManagerEmployeeIds: string[];
+  cycleEmployeeIds: string[];
+}
+
+export function analyzeOrgChart(rows: OrgChartRowLite[]): OrgChartHealth {
+  const byId = new Map(rows.map((row) => [row.employeeId, row]));
+  const missingManagerEmployeeIds = rows
+    .filter((row) => {
+      const managerId = row.reportingManagerId?.trim();
+      return managerId != null && managerId !== '' && !byId.has(managerId);
+    })
+    .map((row) => row.employeeId)
+    .sort();
+  const cycleIds = new Set<string>();
+  const state = new Map<string, 0 | 1 | 2>();
+  const stack: string[] = [];
+  const visit = (employeeId: string) => {
+    if (state.get(employeeId) === 2) return;
+    if (state.get(employeeId) === 1) {
+      const start = stack.lastIndexOf(employeeId);
+      for (const id of stack.slice(Math.max(0, start))) cycleIds.add(id);
+      return;
+    }
+    state.set(employeeId, 1);
+    stack.push(employeeId);
+    const managerId = byId.get(employeeId)?.reportingManagerId?.trim();
+    if (managerId && byId.has(managerId)) visit(managerId);
+    stack.pop();
+    state.set(employeeId, 2);
+  };
+  for (const row of rows) visit(row.employeeId);
+  return {
+    missingManagerEmployeeIds,
+    cycleEmployeeIds: [...cycleIds].sort(),
+  };
+}
+
+export function filterOrgChartRows(rows: OrgChartRowLite[], query: string): OrgChartRowLite[] {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return rows;
+  const byId = new Map(rows.map((row) => [row.employeeId, row]));
+  const included = new Set<string>();
+  for (const row of rows) {
+    const searchable = [row.fullName, row.employeeCode, row.departmentName, row.designationTitle]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    if (!searchable.includes(normalized)) continue;
+    let current: OrgChartRowLite | undefined = row;
+    const seen = new Set<string>();
+    while (current && !seen.has(current.employeeId)) {
+      seen.add(current.employeeId);
+      included.add(current.employeeId);
+      const managerId: string | undefined = current.reportingManagerId?.trim();
+      current = managerId ? byId.get(managerId) : undefined;
+    }
+  }
+  return rows.filter((row) => included.has(row.employeeId));
+}

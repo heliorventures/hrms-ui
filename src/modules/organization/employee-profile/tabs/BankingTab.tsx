@@ -17,7 +17,6 @@ interface BankingTabProps {
   employeeId: string;
   client: GraphQLClient;
   model: EmployeeProfileModel;
-  onSaved?: () => void;
   canManageSensitiveFields?: boolean;
 }
 
@@ -25,10 +24,10 @@ export function BankingTab({
   employeeId,
   client,
   model,
-  onSaved,
   canManageSensitiveFields = false,
 }: BankingTabProps) {
-  const b = model.banking;
+  const [bank, setBank] = useState(model.banking);
+  const b = bank;
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +43,10 @@ export function BankingTab({
       model.profileChangeRequests.some(
         (request) => request.requestType === 'BANK_ACCOUNT' && request.status === 'PENDING'
       ));
+
+  useEffect(() => {
+    setBank(model.banking);
+  }, [model.banking]);
 
   useEffect(() => {
     if (!editing) {
@@ -67,7 +70,16 @@ export function BankingTab({
         accountType: accountType.trim() || undefined,
       };
       if (canManageSensitiveFields) {
-        await client.request(UpsertEmployeePrimaryBankDocument, { input });
+        const result = await client.request(UpsertEmployeePrimaryBankDocument, { input });
+        const updated = result.upsertEmployeePrimaryBank;
+        setBank({
+          bankName: updated.bankName,
+          accountNumberMasked: updated.accountNumberMasked,
+          accountNumberTail: updated.accountNumberMasked.slice(-4),
+          ifscCode: updated.ifscCode,
+          accountType: updated.accountType ?? 'â€”',
+          verificationStatus: updated.isVerified ? 'VERIFIED' : 'UNVERIFIED',
+        });
       } else {
         await client.request(SubmitEmployeeProfileChangeDocument, {
           input: { ...input, requestType: 'BANK_ACCOUNT' },
@@ -76,7 +88,6 @@ export function BankingTab({
       }
       setEditing(false);
       setAccountNumber('');
-      if (canManageSensitiveFields) onSaved?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {

@@ -38,6 +38,7 @@ export type Capability =
   | 'route.organization.documents'
   | 'route.organization.employees'
   | 'route.organization.orgChart'
+  | 'route.organization.profileReviews'
   | 'route.payroll.admin'
   | 'route.payroll.compensation'
   | 'route.payroll.self'
@@ -173,6 +174,7 @@ export function createPermissionService(
       case 'route.hr.home':
         return canUseHrWorkbench(session);
       case 'route.hr.people':
+      case 'route.organization.profileReviews':
       case 'route.admin.employees':
       case 'route.payroll.compensation':
         return canPermission(PERMISSIONS.employeeWrite);
@@ -235,6 +237,7 @@ export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
   '/organization/documents': 'route.organization.documents',
   '/organization/employees': 'route.organization.employees',
   '/organization/org-chart': 'route.organization.orgChart',
+  '/organization/profile-reviews': 'route.organization.profileReviews',
   '/profile/settings': 'route.profile.settings',
   '/timesheet': 'route.timesheet',
   '/admin/access': 'route.admin.access',

@@ -15,6 +15,7 @@ export function useEmployeeProfileData(
   employeeId: string | undefined
 ): {
   loading: boolean;
+  refreshing: boolean;
   error: string | null;
   model: EmployeeProfileModel | null;
   access: NonNullable<EmployeeProfileAccessQuery['employeeProfileAccess']> | null;
@@ -22,6 +23,7 @@ export function useEmployeeProfileData(
   refetch: () => void;
 } {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [model, setModel] = useState<EmployeeProfileModel | null>(null);
   const [access, setAccess] = useState<NonNullable<
@@ -47,6 +49,7 @@ export function useEmployeeProfileData(
     (async () => {
       const initialLoad = loadedEmployeeId.current !== employeeId;
       if (initialLoad) setLoading(true);
+      else setRefreshing(true);
       setError(null);
       try {
         const accessResult = await client.request(EmployeeProfileAccessDocument, {
@@ -56,8 +59,10 @@ export function useEmployeeProfileData(
         const nextAccess = accessResult.employeeProfileAccess ?? null;
         setAccess(nextAccess);
         if (!nextAccess) {
-          setModel(null);
-          setDocumentTypes([]);
+          if (initialLoad) {
+            setModel(null);
+            setDocumentTypes([]);
+          }
           setError('Employee not found');
           return;
         }
@@ -72,9 +77,11 @@ export function useEmployeeProfileData(
 
         const base = mapBundleToEmployeeProfileModel(result);
         if (!base) {
-          setModel(null);
-          setAccess(null);
-          setDocumentTypes([]);
+          if (initialLoad) {
+            setModel(null);
+            setAccess(null);
+            setDocumentTypes([]);
+          }
           setError('Employee not found');
           return;
         }
@@ -83,14 +90,17 @@ export function useEmployeeProfileData(
         setDocumentTypes(result.documentTypes ?? []);
       } catch (e) {
         if (!cancelled) {
-          setModel(null);
-          setDocumentTypes([]);
+          if (initialLoad) {
+            setModel(null);
+            setDocumentTypes([]);
+          }
           setError(graphQlUserMessage(e));
         }
       } finally {
         if (!cancelled) {
           loadedEmployeeId.current = employeeId;
           setLoading(false);
+          setRefreshing(false);
         }
       }
     })();
@@ -100,5 +110,5 @@ export function useEmployeeProfileData(
     };
   }, [client, employeeId, reloadToken]);
 
-  return { loading, error, model, access, documentTypes, refetch };
+  return { loading, refreshing, error, model, access, documentTypes, refetch };
 }

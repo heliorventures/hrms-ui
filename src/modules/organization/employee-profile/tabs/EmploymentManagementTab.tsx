@@ -22,7 +22,6 @@ interface EmploymentManagementTabProps {
   employeeId: string;
   client: GraphQLClient;
   model: EmployeeProfileModel;
-  onChanged?: () => void;
 }
 
 const NO_MANAGER_CHANGE = '__NOCHANGE__';
@@ -45,7 +44,6 @@ export function EmploymentManagementTab({
   employeeId,
   client,
   model,
-  onChanged,
 }: EmploymentManagementTabProps) {
   const [statusUi, setStatusUi] = useState<EmploymentStatusUi>(model.statusUi);
   const [statusSaving, setStatusSaving] = useState(false);
@@ -70,6 +68,8 @@ export function EmploymentManagementTab({
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [designations, setDesignations] = useState<{ id: string; title: string }[]>([]);
   const [orgRows, setOrgRows] = useState<{ employeeId: string; fullName: string; employeeCode: string }[]>([]);
+  const [salaryAnnual, setSalaryAnnual] = useState(model.compensation.baseSalaryAnnual);
+  const [roleAssignment, setRoleAssignment] = useState(model.roleAssignment);
 
   useEffect(() => {
     setStatusUi(model.statusUi);
@@ -79,6 +79,8 @@ export function EmploymentManagementTab({
     setDepartmentId(model.core.departmentId ?? '');
     setDesignationId(model.core.designationId ?? '');
     setNewSalaryAnnual(String(model.compensation.baseSalaryAnnual));
+    setSalaryAnnual(model.compensation.baseSalaryAnnual);
+    setRoleAssignment(model.roleAssignment);
   }, [model.core.departmentId, model.core.designationId, model.compensation.baseSalaryAnnual]);
 
   useEffect(() => {
@@ -146,14 +148,13 @@ export function EmploymentManagementTab({
         });
         setStatusUi(next);
         setBanner('Employment status updated.');
-        onChanged?.();
       } catch (err) {
         setBannerErr(graphQlUserMessage(err));
       } finally {
         setStatusSaving(false);
       }
     },
-    [client, employeeId, onChanged]
+    [client, employeeId]
   );
 
   const pctHike = useMemo(() => {
@@ -185,8 +186,8 @@ export function EmploymentManagementTab({
         },
       });
       setSalaryOpen(false);
+      setSalaryAnnual(annual);
       setBanner('Compensation updated.');
-      onChanged?.();
     } catch (err) {
       setBannerErr(graphQlUserMessage(err));
     } finally {
@@ -210,9 +211,14 @@ export function EmploymentManagementTab({
       if (managerChoice === CLEAR_MANAGER) input.reportingManagerId = null;
       else if (managerChoice !== NO_MANAGER_CHANGE) input.reportingManagerId = managerChoice;
       await client.request(UpdateEmployeeDocument, { input });
+      setRoleAssignment((current) => ({
+        ...current,
+        department: departments.find((row) => row.id === departmentId)?.name ?? current.department,
+        designation: designations.find((row) => row.id === designationId)?.title ?? current.designation,
+        reportingManagerName: managerChoice === CLEAR_MANAGER ? '—' : managerChoice === NO_MANAGER_CHANGE ? current.reportingManagerName : orgRows.find((row) => row.employeeId === managerChoice)?.fullName ?? current.reportingManagerName,
+      }));
       setRoleOpen(false);
       setBanner('Role and reporting updated.');
-      onChanged?.();
     } catch (err) {
       setBannerErr(graphQlUserMessage(err));
     } finally {
@@ -266,7 +272,7 @@ export function EmploymentManagementTab({
               Current base (annual)
             </div>
             <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-              {formatInrAnnual(model.compensation.baseSalaryAnnual, true)}
+              {formatInrAnnual(salaryAnnual, true)}
             </p>
             <ul className="mt-3 space-y-1 text-xs text-slate-600 dark:text-slate-400">
               {model.compensation.components.map((component) => (
@@ -294,9 +300,9 @@ export function EmploymentManagementTab({
       >
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {[
-            ['Designation', model.roleAssignment.designation],
-            ['Department', model.roleAssignment.department],
-            ['Manager', model.roleAssignment.reportingManagerName],
+            ['Designation', roleAssignment.designation],
+            ['Department', roleAssignment.department],
+            ['Manager', roleAssignment.reportingManagerName],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl bg-slate-50/90 p-3 dark:bg-slate-800/50">
               <p className="text-[11px] font-semibold uppercase text-slate-400">{label}</p>

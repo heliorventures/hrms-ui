@@ -10,6 +10,7 @@ import Modal from '../../../../components/common/Modal';
 import Button from '../../../../components/common/Button';
 import {
   ResolveEmployeeDocumentDocument,
+  EmployeeDocumentSignedReadUrlDocument,
   UploadEmployeeDocumentProfileDocument,
 } from '../../../../api/graphql/graphql';
 
@@ -19,7 +20,6 @@ interface DocumentsTabProps {
   initial: DocumentRow[];
   documentTypes: TenantDocumentTypeOption[];
   isHr: boolean;
-  onChanged?: () => void;
 }
 
 function mapCategoryFromName(name?: string | null): DocumentRow['category'] {
@@ -61,11 +61,13 @@ export function DocumentsTab({
   initial,
   documentTypes,
   isHr,
-  onChanged,
 }: DocumentsTabProps) {
   const [rows, setRows] = useState<DocumentRow[]>(initial);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [preview, setPreview] = useState<DocumentRow | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -90,7 +92,6 @@ export function DocumentsTab({
     const d = res.uploadEmployeeDocument;
     const uploadedBy: DocumentRow['uploadedBy'] = isHr ? 'HR' : 'EMPLOYEE';
     setRows((r) => [mapRowFromServer(d, uploadedBy, payload.mimeType), ...r]);
-    onChanged?.();
   };
 
   const approve = async (id: string) => {
@@ -104,7 +105,6 @@ export function DocumentsTab({
       setRows((r) =>
         r.map((x) => (x.id === id ? { ...x, status: st === 'APPROVED' ? 'APPROVED' : 'PENDING' } : x))
       );
-      onChanged?.();
     } finally {
       setBusyId(null);
     }
@@ -121,10 +121,33 @@ export function DocumentsTab({
       setRows((r) =>
         r.map((x) => (x.id === id ? { ...x, status: st === 'REJECTED' ? 'REJECTED' : 'PENDING' } : x))
       );
-      onChanged?.();
     } finally {
       setBusyId(null);
     }
+  };
+
+  const openPreview = async (row: DocumentRow) => {
+    setPreview(row);
+    setPreviewUrl(null);
+    setPreviewError(null);
+    setPreviewLoading(true);
+    try {
+      const result = await client.request(EmployeeDocumentSignedReadUrlDocument, {
+        employeeDocumentId: row.id,
+        ttlSeconds: 600,
+      });
+      setPreviewUrl(result.employeeDocumentSignedReadUrl);
+    } catch (error) {
+      setPreviewError(error instanceof Error ? error.message : 'Unable to open this document.');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const closePreview = () => {
+    setPreview(null);
+    setPreviewUrl(null);
+    setPreviewError(null);
   };
 
   if (rows.length === 0) {
@@ -164,7 +187,7 @@ export function DocumentsTab({
       <DocumentTable
         rows={rows}
         isHr={isHr}
-        onPreview={setPreview}
+        onPreview={(row) => void openPreview(row)}
         onApprove={busyId ? undefined : (idx) => void approve(idx)}
         onReject={busyId ? undefined : (idx) => void reject(idx)}
       />
@@ -178,7 +201,7 @@ export function DocumentsTab({
 
       <Modal
         isOpen={preview != null}
-        onClose={() => setPreview(null)}
+        onClose={closePreview}
         title={preview?.name ?? 'Preview'}
         size="lg"
       >
@@ -187,16 +210,24 @@ export function DocumentsTab({
             <p className="text-xs text-slate-500">
               {preview.mimeType} · Uploaded {new Date(preview.uploadedAt).toLocaleString('en-IN')}
             </p>
-            <div className="flex min-h-[320px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40">
-              <p className="max-w-sm px-4 text-center text-sm text-slate-500">
-                Preview uses secure storage in production. This placeholder represents PDF/image
-                rendering for{' '}
-                <span className="font-medium text-slate-700 dark:text-slate-300">{preview.name}</span>.
-              </p>
+            <div className="flex min-h-[320px] items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40">
+              {previewLoading ? <p className="text-sm text-slate-500">Creating secure preview...</p> : null}
+              {previewError ? <p role="alert" className="px-4 text-center text-sm text-red-600">{previewError}</p> : null}
+              {previewUrl && preview.mimeType.startsWith('image/') ? (
+                <img src={previewUrl} alt={preview.name} className="max-h-[65vh] max-w-full object-contain" />
+              ) : null}
+              {previewUrl && preview.mimeType === 'application/pdf' ? (
+                <iframe src={previewUrl} title={preview.name} className="h-[65vh] w-full" />
+              ) : null}
+              {previewUrl && preview.mimeType !== 'application/pdf' && !preview.mimeType.startsWith('image/') ? (
+                <p className="px-4 text-center text-sm text-slate-500">Preview is unavailable for this file type. Use Download.</p>
+              ) : null}
             </div>
-            <Button type="button" variant="secondary" fullWidth disabled>
-              Download (wire to signed URL)
-            </Button>
+            {previewUrl ? (
+              <a href={previewUrl} download={preview.name} target="_blank" rel="noreferrer" className="block">
+                <Button type="button" variant="secondary" fullWidth>Download</Button>
+              </a>
+            ) : null}
           </div>
         ) : null}
       </Modal>

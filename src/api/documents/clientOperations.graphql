@@ -834,6 +834,7 @@ mutation UploadEmployeeDocumentProfile($input: UploadEmployeeDocumentInput!) {
     status
     documentTypeId
     originalFileName
+    mimeType
     documentTypeName
     uploadedAt
   }
@@ -936,6 +937,15 @@ mutation LinkEmployeeEducationEvidence(
   }
 }
 
+mutation UploadEmployeeEducationEvidence($educationId: ID!, $input: UploadEmployeeDocumentInput!) {
+  uploadEmployeeEducationEvidence(educationId: $educationId, input: $input) {
+    id
+    verificationStatus
+    evidenceDocumentIds
+    updatedAt
+  }
+}
+
 mutation ResolveEmployeeEducation(
   $educationId: ID!
   $approved: Boolean!
@@ -993,6 +1003,18 @@ mutation LinkEmployeeWorkExperienceEvidence(
   }
 }
 
+mutation UploadEmployeeWorkExperienceEvidence(
+  $workExperienceId: ID!
+  $input: UploadEmployeeDocumentInput!
+) {
+  uploadEmployeeWorkExperienceEvidence(workExperienceId: $workExperienceId, input: $input) {
+    id
+    verificationStatus
+    evidenceDocumentIds
+    updatedAt
+  }
+}
+
 mutation ResolveEmployeeWorkExperience(
   $workExperienceId: ID!
   $approved: Boolean!
@@ -1015,6 +1037,7 @@ mutation UploadTenantFile($input: UploadTenantFileInput!) {
     id
     tenantId
     originalFileName
+    mimeType
     mimeType
     fileSizeBytes
     createdAt
@@ -2162,6 +2185,67 @@ query EmployeeProfileAccess($employeeId: ID!) {
   }
 }
 
+query EmployeeDocumentSignedReadUrl($employeeDocumentId: ID!, $ttlSeconds: Int! = 600) {
+  employeeDocumentSignedReadUrl(
+    employeeDocumentId: $employeeDocumentId
+    ttlSeconds: $ttlSeconds
+  )
+}
+
+query EmployeeProfileReviewQueue($status: String = "PENDING", $limit: Int! = 50) {
+  employeeProfileReviewQueue(status: $status, limit: $limit) {
+    employeeCode
+    employeeName
+    hasSupportingDocument
+    request {
+      id
+      employeeId
+      requestType
+      status
+      requestedSummary
+      supportingDocumentId
+      reviewedAt
+      rejectionReason
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+query EmployeeProfileChangeReviewDetail($requestId: ID!) {
+  employeeProfileChangeReviewDetail(requestId: $requestId) {
+    employeeCode
+    employeeName
+    currentValues
+    requestedValues
+    request {
+      id
+      employeeId
+      requestType
+      status
+      requestedSummary
+      supportingDocumentId
+      reviewedAt
+      rejectionReason
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+query EmployeeEvidenceReviewQueue($limit: Int! = 100) {
+  employeeEvidenceReviewQueue(limit: $limit) {
+    recordId
+    employeeId
+    employeeCode
+    employeeName
+    evidenceType
+    summary
+    evidenceDocumentIds
+    createdAt
+  }
+}
+
 query EmployeePrivateProfile($employeeId: ID!) {
   employee(id: $employeeId) {
     id
@@ -2200,6 +2284,7 @@ query EmployeePrivateProfile($employeeId: ID!) {
     status
     uploadedAt
     originalFileName
+    mimeType
     uploadedByUserId
     documentTypeName
     documentTypeCategory
@@ -2350,6 +2435,7 @@ query EmployeeProfileBundle($employeeId: ID!) {
     status
     uploadedAt
     originalFileName
+    mimeType
     uploadedByUserId
     documentTypeName
     documentTypeCategory

@@ -221,7 +221,7 @@ export function mapBundleToEmployeeProfileModel(
         uploadedBy,
         uploadedAt: typeof d.uploadedAt === 'string' ? d.uploadedAt : String(d.uploadedAt),
         status: docStatus(d.status),
-        mimeType: 'application/pdf',
+        mimeType: d.mimeType ?? 'application/octet-stream',
       };
     }
   );

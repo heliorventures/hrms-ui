@@ -129,6 +129,12 @@ export const NAV_CATALOG: NavCatalogEntry[] = [
     keywords: ['policies', 'handbook', 'files', 'hr documents'],
   },
   {
+    path: '/organization/profile-reviews',
+    label: 'Profile Reviews',
+    group: 'People',
+    keywords: ['hr', 'approval', 'profile change', 'identity', 'bank'],
+  },
+  {
     path: '/workplace/benefits',
     label: NAV_LABELS.benefits,
     group: 'Workplace',

@@ -61,7 +61,14 @@ export function DocumentTable({ rows, isHr, onPreview, onApprove, onReject }: Do
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button type="button" variant="outline" size="sm" className="!px-2" disabled>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="!px-2"
+                    onClick={() => onPreview(row)}
+                    aria-label={`Download ${row.name}`}
+                  >
                     <Download className="h-4 w-4" />
                   </Button>
                   {isHr && row.status === 'PENDING' && row.uploadedBy === 'EMPLOYEE' ? (

@@ -49,6 +49,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { path: '/organization/employees', label: NAV_LABELS.employees },
       { path: '/organization/org-chart', label: NAV_LABELS.orgChart },
       { path: '/organization/documents', label: NAV_LABELS.documents },
+      { path: '/organization/profile-reviews', label: 'Profile Reviews' },
     ],
   },
   {

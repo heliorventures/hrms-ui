@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { Upload } from 'lucide-react';
 
@@ -22,7 +22,6 @@ interface IdentityTabProps {
   model: EmployeeProfileModel;
   documentTypes: TenantDocumentTypeOption[];
   isHr: boolean;
-  onChanged?: () => void;
 }
 
 const labels: Record<IdentityRecord['kind'], string> = {
@@ -37,8 +36,8 @@ export function IdentityTab({
   model,
   documentTypes,
   isHr,
-  onChanged,
 }: IdentityTabProps) {
+  const [identities, setIdentities] = useState(model.identities);
   const [panInput, setPanInput] = useState('');
   const [aadhaarInput, setAadhaarInput] = useState('');
   const [panSaving, setPanSaving] = useState(false);
@@ -60,17 +59,30 @@ export function IdentityTab({
 
   const identityByKind = useMemo(() => {
     const m = new Map<IdentityRecord['kind'], IdentityRecord>();
-    for (const row of model.identities) m.set(row.kind, row);
+    for (const row of identities) m.set(row.kind, row);
     return m;
+  }, [identities]);
+
+  useEffect(() => {
+    setIdentities(model.identities);
   }, [model.identities]);
+
+  const replaceIdentity = (next: IdentityRecord) => {
+    setIdentities((current) => [next, ...current.filter((row) => row.kind !== next.kind)]);
+  };
 
   const savePan = async () => {
     setPanSaving(true);
     setError(null);
     try {
       if (isHr) {
-        await client.request(UpsertEmployeePrimaryPanDocument, {
+        const result = await client.request(UpsertEmployeePrimaryPanDocument, {
           input: { employeeId, panNumber: panInput.trim() },
+        });
+        replaceIdentity({
+          kind: 'PAN',
+          maskedValue: result.upsertEmployeePrimaryPan.maskedPan,
+          verificationStatus: result.upsertEmployeePrimaryPan.isVerified ? 'VERIFIED' : 'UNVERIFIED',
         });
       } else {
         await client.request(SubmitEmployeeProfileChangeDocument, {
@@ -81,9 +93,9 @@ export function IdentityTab({
             supportingDocumentId: supportingDocuments.PAN,
           },
         });
+        if (pan) replaceIdentity({ ...pan, verificationStatus: 'PENDING' });
       }
       setPanInput('');
-      if (isHr) onChanged?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {
@@ -96,8 +108,13 @@ export function IdentityTab({
     setError(null);
     try {
       if (isHr) {
-        await client.request(UpsertEmployeePrimaryAadhaarDocument, {
+        const result = await client.request(UpsertEmployeePrimaryAadhaarDocument, {
           input: { employeeId, aadhaarNumber: aadhaarInput.trim() },
+        });
+        replaceIdentity({
+          kind: 'AADHAAR',
+          maskedValue: result.upsertEmployeePrimaryAadhaar.maskedAadhaar,
+          verificationStatus: result.upsertEmployeePrimaryAadhaar.isVerified ? 'VERIFIED' : 'UNVERIFIED',
         });
       } else {
         await client.request(SubmitEmployeeProfileChangeDocument, {
@@ -108,9 +125,9 @@ export function IdentityTab({
             supportingDocumentId: supportingDocuments.AADHAAR,
           },
         });
+        if (aadhaar) replaceIdentity({ ...aadhaar, verificationStatus: 'PENDING' });
       }
       setAadhaarInput('');
-      if (isHr) onChanged?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {

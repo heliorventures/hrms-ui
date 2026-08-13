@@ -26,6 +26,7 @@ import EmployeeDetailPage from '../modules/organization/EmployeeDetailPage';
 import OrgChartPage from '../modules/organization/OrgChartPage';
 import OrganizationDocumentsPage from '../modules/organization/OrganizationDocumentsPage';
 import OrganizationEmployeesPage from '../modules/organization/OrganizationEmployeesPage';
+import ProfileReviewPage from '../modules/organization/ProfileReviewPage';
 import PayrollCompensationPage from '../modules/payroll/PayrollCompensationPage';
 import PayrollPage from '../modules/payroll/PayrollPage';
 import PayrollPayPage from '../modules/payroll/PayrollPayPage';
@@ -80,6 +81,7 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   },
   { path: 'organization/org-chart', tenantPath: '/organization/org-chart', element: <OrgChartPage /> },
   { path: 'organization/documents', tenantPath: '/organization/documents', element: <OrganizationDocumentsPage /> },
+  { path: 'organization/profile-reviews', tenantPath: '/organization/profile-reviews', element: <ProfileReviewPage /> },
   { path: 'workplace/benefits', tenantPath: '/workplace/benefits', element: <BenefitsPage /> },
   {
     path: 'workplace/recruitment',
