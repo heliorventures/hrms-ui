@@ -5,6 +5,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { APP_BRAND } from '../../constants/brand';
+import AppLogo from '../../components/brand/AppLogo';
 
 const CAPTCHA_LENGTH = 5;
 const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -77,9 +78,7 @@ const LoginPage = () => {
       <div className="w-full max-w-md">
         <div className="rounded-2xl border border-slate-200/90 bg-white p-8 shadow-card-md dark:border-slate-700/80 dark:bg-slate-900/80">
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              {APP_BRAND.productName}
-            </h1>
+            <AppLogo size="lg" className="justify-center" />
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               Sign in to {currentTenant.id ? currentTenant.name : 'your organization'}
             </p>

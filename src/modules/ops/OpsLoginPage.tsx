@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
+import AppLogo from '@/components/brand/AppLogo';
 import { APP_BRAND } from '@/constants/brand';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -61,9 +62,7 @@ const OpsLoginPage = () => {
       <div className="w-full max-w-md">
         <div className="rounded-lg border border-slate-200/90 bg-white p-8 shadow-card-md dark:border-slate-700/80 dark:bg-slate-900/80">
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              Operator console
-            </h1>
+            <AppLogo size="lg" supportingText="Operator console" className="justify-center" />
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               Platform sign-in for {APP_BRAND.productName}
             </p>

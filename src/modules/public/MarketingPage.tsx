@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { APP_BRAND } from '../../constants/brand';
+import AppLogo from '../../components/brand/AppLogo';
 
 const FEATURE_LABELS = [
   'People operations',
@@ -13,9 +14,7 @@ const MarketingPage = () => {
     <main className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
       <section className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-10">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-300">
-            {APP_BRAND.platformName}
-          </p>
+          <AppLogo size="md" supportingText={APP_BRAND.tagline} />
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
             Run HR, payroll, time, and employee operations from one workspace.
           </h1>
@@ -41,7 +40,7 @@ const MarketingPage = () => {
               Platform sign in
             </Link>
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              Tenant users should open their company-specific HeliorHRMS URL.
+              Tenant users should open their company-specific Helior HRMS URL.
             </span>
           </div>
         </div>

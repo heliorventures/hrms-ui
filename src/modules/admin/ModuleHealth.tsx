@@ -1,7 +1,7 @@
 /**
  * Module Health panel.
  *
- * Probes federated HeliorHRMS subgraphs through the stitching gateway.
+ * Probes federated Helior HRMS subgraphs through the stitching gateway.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useGraphClient } from '@/hooks/useGraphClient';
@@ -72,7 +72,7 @@ const ModuleHealth = () => {
         <div>
           <h1 className="text-2xl font-semibold">Module Health</h1>
           <p className="text-sm text-gray-500">
-            Live introspection of every HeliorHRMS subgraph through the stitching gateway.
+            Live introspection of every Helior HRMS subgraph through the stitching gateway.
             Tenant-plane queries use the current tenant id; ops-plane queries use operator headers.
           </p>
         </div>
