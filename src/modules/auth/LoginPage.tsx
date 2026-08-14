@@ -4,7 +4,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import { APP_BRAND } from '../../constants/brand';
 import AppLogo from '../../components/brand/AppLogo';
 
 const CAPTCHA_LENGTH = 5;
