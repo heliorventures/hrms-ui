@@ -3,7 +3,7 @@ import { ChevronDown, Search, X } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { canAccessTenantPath } from '../../auth/navAccess';
 import { useAuth } from '../../contexts/AuthContext';
-import { APP_BRAND } from '../../constants/brand';
+import AppLogo from '../brand/AppLogo';
 import { UI_A11Y_TEXT, UI_EMPTY_TEXT, UI_PLACEHOLDER_TEXT } from '../../constants/uiText';
 import { matchesNavFilter, NAV_CATALOG } from '../../navigation/navCatalog';
 import {
@@ -128,9 +128,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
 const SidebarHeader = ({ onClose }: { onClose: () => void }) => (
   <div className="flex h-14 items-center justify-between border-b border-slate-200/90 px-4 dark:border-slate-700/90">
-    <span className="text-lg font-semibold tracking-tight text-indigo-600 dark:text-indigo-400">
-      {APP_BRAND.productName}
-    </span>
+    <AppLogo size="sm" />
     <button
       type="button"
       onClick={onClose}
