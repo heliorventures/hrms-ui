@@ -8,6 +8,16 @@ function codeToMessage(code: string): string | null {
     case 'VALIDATION_ERROR':
     case 'INVALID_JSON':
       return 'Check the entered details and try again.';
+    case 'CURRENT_PASSWORD_INCORRECT':
+      return 'The current password is incorrect.';
+    case 'PASSWORD_REUSE_NOT_ALLOWED':
+      return 'New password must be different from the current password.';
+    case 'LEAVE_DATE_OVERLAP':
+      return 'An active leave request already covers all or part of those dates.';
+    case 'EXPENSE_CLAIM_LIMIT_EXCEEDED':
+      return 'Amount exceeds the permitted category limit. Review the limit shown above.';
+    case 'EXPENSE_MONTHLY_LIMIT_EXCEEDED':
+      return 'This claim would exceed the monthly category limit.';
     case 'CONFLICT':
       return 'This record conflicts with an existing value.';
     case 'FORBIDDEN':

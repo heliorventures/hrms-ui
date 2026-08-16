@@ -30,6 +30,10 @@ const SecurityTab = ({ forced = false, onPasswordChanged }: SecurityTabProps) =>
       setError('New password and confirmation do not match.');
       return;
     }
+    if (newPassword === currentPassword) {
+      setError('New password must be different from the current password.');
+      return;
+    }
     const access = getClientAccessToken();
     if (!access) {
       setError('Your session has expired. Sign in again.');

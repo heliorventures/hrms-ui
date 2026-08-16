@@ -81,6 +81,7 @@ const SubmitExpenseModal = ({
 
   const activeSubmissionHints =
     submissionHints?.expenseCategoryId === categoryId ? submissionHints : null;
+  const displayCurrency = normalizeCurrencyCode(currency) ?? EXPENSE_DEFAULT_CURRENCY;
 
   useEffect(() => {
     if (isOpen) onCategoryChange(categoryId);
@@ -207,13 +208,13 @@ const SubmitExpenseModal = ({
             {activeSubmissionHints.maxAmountPerClaim ? (
               <p>
                 Max per claim:{' '}
-                <strong>{formatCurrency(activeSubmissionHints.maxAmountPerClaim, currency)}</strong>
+                <strong>{formatCurrency(activeSubmissionHints.maxAmountPerClaim, displayCurrency)}</strong>
               </p>
             ) : null}
             {activeSubmissionHints.limitPerMonth ? (
               <p className="mt-1">
                 Monthly limit:{' '}
-                <strong>{formatCurrency(activeSubmissionHints.limitPerMonth, currency)}</strong>
+                <strong>{formatCurrency(activeSubmissionHints.limitPerMonth, displayCurrency)}</strong>
               </p>
             ) : null}
             {activeSubmissionHints.receiptRequired ? (
@@ -244,6 +245,7 @@ const SubmitExpenseModal = ({
             value={currency}
             onChange={(event) => setCurrency(event.target.value)}
             fullWidth
+            maxLength={3}
           />
         </div>
         <Input

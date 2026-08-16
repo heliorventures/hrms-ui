@@ -4,6 +4,54 @@ import { ClientError } from 'graphql-request';
 import { graphQlUserMessage } from './graphqlUserMessage';
 
 describe('graphQlUserMessage', () => {
+  it('distinguishes an incorrect current password from an expired session', () => {
+    const err = Object.assign(new Error('The current password is incorrect.'), {
+      code: 'CURRENT_PASSWORD_INCORRECT',
+    });
+
+    expect(graphQlUserMessage(err)).toBe('The current password is incorrect.');
+  });
+
+  it('explains that the new password must differ from the current password', () => {
+    const err = Object.assign(new Error('New password must be different.'), {
+      code: 'PASSWORD_REUSE_NOT_ALLOWED',
+    });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'New password must be different from the current password.'
+    );
+  });
+
+  it('maps category cap failures without exposing a generic validation message', () => {
+    const err = Object.assign(new Error('Amount exceeds the permitted category limit.'), {
+      code: 'EXPENSE_CLAIM_LIMIT_EXCEEDED',
+    });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'Amount exceeds the permitted category limit. Review the limit shown above.'
+    );
+  });
+
+  it('maps monthly category limit failures', () => {
+    const err = Object.assign(new Error('Monthly category limit exceeded.'), {
+      code: 'EXPENSE_MONTHLY_LIMIT_EXCEEDED',
+    });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'This claim would exceed the monthly category limit.'
+    );
+  });
+
+  it('maps overlapping leave requests to a date-specific message', () => {
+    const err = Object.assign(new Error('Active leave request overlaps.'), {
+      code: 'LEAVE_DATE_OVERLAP',
+    });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'An active leave request already covers all or part of those dates.'
+    );
+  });
+
   it('preserves timesheet validation detail when GraphQL exposes VALIDATION_ERROR', () => {
     const err = new ClientError(
       {

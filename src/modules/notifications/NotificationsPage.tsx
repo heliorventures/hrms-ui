@@ -58,21 +58,6 @@ const NotificationsPage = () => {
           <Button variant="primary" size="sm" onClick={() => setComposeOpen(true)}>
             New announcement
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setFilter(filter === 'all' ? 'unread' : 'all')}
-          >
-            {filter === 'all' ? 'Show Unread' : 'Show All'}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={actionBusy}
-            onClick={() => void markAllRead()}
-          >
-            {actionBusy ? 'Working...' : 'Mark all read'}
-          </Button>
         </div>
       </div>
 
@@ -100,6 +85,28 @@ const NotificationsPage = () => {
       </Card>
 
       <Card title="Your Private Notifications">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Unread filtering and read status apply only to your private notifications.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilter(filter === 'all' ? 'unread' : 'all')}
+            >
+              {filter === 'all' ? 'Show unread private' : 'Show all private'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={actionBusy}
+              onClick={() => void markAllRead()}
+            >
+              {actionBusy ? 'Working...' : 'Mark all private read'}
+            </Button>
+          </div>
+        </div>
         <PrivateNotificationList
           actionBusy={actionBusy}
           filter={filter}

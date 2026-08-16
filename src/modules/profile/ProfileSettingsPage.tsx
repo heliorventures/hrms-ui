@@ -1,164 +1,155 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTenant } from '../../contexts/TenantContext';
-import { getDefaultUserProfile } from '../../profile/defaultUserProfile';
-import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
-import AboutTab from './components/AboutTab';
-import ProfileTab from './components/ProfileTab';
-import JobDetailsTab from './components/JobDetailsTab';
-import DocumentsTab from './components/DocumentsTab';
-import SecurityTab from './components/SecurityTab';
-import NotificationsTab from './components/NotificationsTab';
+import Card from '../../components/common/Card';
+import { useAuth } from '../../contexts/AuthContext';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { EmployeeProfileShell } from '../organization/employee-profile/EmployeeProfileShell';
+import SecurityTab from './components/SecurityTab';
+import { MyEmployeeDocument, type MyEmployeeQuery } from './myEmployeeQuery';
 
-type TabId = 'about' | 'profile' | 'job' | 'documents' | 'notifications' | 'security';
-
-const tabs: { id: TabId; label: string }[] = [
-  { id: 'about', label: 'About' },
-  { id: 'profile', label: 'Profile' },
-  { id: 'job', label: 'Job Details' },
-  { id: 'documents', label: 'Documents' },
-  { id: 'notifications', label: 'Notifications' },
-  { id: 'security', label: 'Security' },
-];
+type ProfileView = 'profile' | 'security';
 
 const ProfileSettingsPage = () => {
   const { clientSession, user, logout } = useAuth();
+  const client = useGraphClient('client');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { currentTenant } = useTenant();
-  const initialTab = searchParams.get('tab') === 'security' ? 'security' : 'about';
-  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+  const [activeView, setActiveView] = useState<ProfileView>(
+    searchParams.get('tab') === 'security' ? 'security' : 'profile'
+  );
+  const [employeeId, setEmployeeId] = useState<string | null | undefined>(undefined);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const userId = user?.id;
 
-  const data = user ? getDefaultUserProfile(user, currentTenant.name) : null;
+  useEffect(() => {
+    if (!userId) {
+      setEmployeeId(null);
+      setProfileError(null);
+      return;
+    }
 
-  if (activeTab !== 'security' && clientSession?.employeeId) {
+    let cancelled = false;
+    setEmployeeId(undefined);
+    setProfileError(null);
+    void client
+      .request<MyEmployeeQuery>(MyEmployeeDocument)
+      .then((response) => {
+        if (!cancelled) setEmployeeId(response.myEmployee?.id ?? null);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setEmployeeId(null);
+          setProfileError(graphQlUserMessage(error));
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [client, userId]);
+
+  if (!user) {
     return (
-      <div className="space-y-4">
+      <Card>
+        <p className="text-center text-gray-500 dark:text-gray-400">
+          Please log in to view profile.
+        </p>
+      </Card>
+    );
+  }
+
+  if (activeView === 'security') {
+    return (
+      <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Edit your personal profile, upload documents, and maintain your education and work
-              experience.
+              Change your password and revoke existing sessions.
             </p>
           </div>
-          <Button type="button" variant="outline" onClick={() => setActiveTab('security')}>
-            Security settings
-          </Button>
+          {!clientSession?.mustChangePassword && employeeId ? (
+            <Button type="button" variant="outline" onClick={() => setActiveView('profile')}>
+              Back to profile
+            </Button>
+          ) : null}
         </div>
-        <EmployeeProfileShell employeeId={clientSession.employeeId} />
+        <Card>
+          <SecurityTab
+            forced={clientSession?.mustChangePassword === true}
+            onPasswordChanged={async () => {
+              await logout();
+              navigate('/login', { replace: true, state: { passwordChanged: true } });
+            }}
+          />
+        </Card>
       </div>
     );
   }
 
-  if (!user || !data) {
+  if (employeeId === undefined) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-gray-700 dark:bg-gray-800">
-        <p className="text-gray-500 dark:text-gray-400">Please log in to view profile.</p>
+      <Card>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading your employee profile...</p>
+      </Card>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+          <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
+            Security settings
+          </Button>
+        </div>
+        <Card>
+          <p className="font-medium text-red-700 dark:text-red-300">
+            We could not load your employee profile.
+          </p>
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{profileError}</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!employeeId) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+          <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
+            Security settings
+          </Button>
+        </div>
+        <Card>
+          <p className="font-medium text-gray-900 dark:text-white">
+            No employee profile is linked to this login.
+          </p>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+            Ask your tenant administrator or HR team to link an employee record to {user.email}.
+          </p>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
-
-      {/* Top header: email, phone, company, employeeId */}
-      <Card className="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Email</p>
-            <p className="mt-1 font-medium text-gray-900 dark:text-white">{data.header.email}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Phone</p>
-            <p className="mt-1 font-medium text-gray-900 dark:text-white">
-              {data.header.phone || '-'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-              Company
-            </p>
-            <p className="mt-1 font-medium text-gray-900 dark:text-white">
-              {data.header.companyName}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-              Employee ID
-            </p>
-            <p className="mt-1 font-medium text-gray-900 dark:text-white">
-              {data.header.employeeId}
-            </p>
-          </div>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Edit your personal profile, upload documents, and maintain your employment records.
+          </p>
         </div>
-      </Card>
-
-      {/* Business unit, department, reporting manager */}
-      <Card>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-              Business Unit
-            </p>
-            <p className="mt-1 font-medium text-gray-900 dark:text-white">
-              {data.org.businessUnit}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-              Department
-            </p>
-            <p className="mt-1 font-medium text-gray-900 dark:text-white">{data.org.department}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-              Reporting Manager
-            </p>
-            <p className="mt-1 font-medium text-gray-900 dark:text-white">
-              {data.org.reportingManager}
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="-mb-px flex gap-6" aria-label="Tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`border-b-2 py-4 text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
+          Security settings
+        </Button>
       </div>
-
-      {activeTab === 'about' && <AboutTab data={data} />}
-      {activeTab === 'profile' && <ProfileTab data={data} />}
-      {activeTab === 'job' && <JobDetailsTab data={data} />}
-      {activeTab === 'documents' && <DocumentsTab />}
-      {activeTab === 'notifications' && <NotificationsTab />}
-      {activeTab === 'security' && (
-        <SecurityTab
-          forced={clientSession?.mustChangePassword === true}
-          onPasswordChanged={async () => {
-            await logout();
-            navigate('/login', { replace: true });
-          }}
-        />
-      )}
+      <EmployeeProfileShell employeeId={employeeId} />
     </div>
   );
 };

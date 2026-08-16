@@ -57,9 +57,9 @@ function calendarDaysBetweenWorkAndToday(workIso: string): number {
 const AttendancePage = () => {
   const client = useGraphClient('client');
   const { clientSession } = useAuth();
-  const canRegularize = createPermissionService(clientSession).canCapability(
-    'action.attendance.regularize'
-  );
+  const permissions = createPermissionService(clientSession);
+  const canPunchAttendance = permissions.canCapability('action.attendance.punch');
+  const canRegularize = permissions.canCapability('action.attendance.regularize');
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -206,9 +206,11 @@ const AttendancePage = () => {
             .
           </p>
         </div>
-        <Button variant="primary" type="button" onClick={() => openAdjust(toIsoDate(new Date()))}>
-          Add Missed Punches
-        </Button>
+        {canPunchAttendance ? (
+          <Button variant="primary" type="button" onClick={() => openAdjust(toIsoDate(new Date()))}>
+            Add Missed Punches
+          </Button>
+        ) : null}
       </div>
 
       <Card title="Month">
@@ -348,6 +350,7 @@ const AttendancePage = () => {
 
       <AttendanceSegmentsTable
         adjustPolicyDays={adjustPolicyDays}
+        canAdjust={canPunchAttendance}
         canRegularize={canRegularize}
         loading={loading}
         rows={filteredSegments}
@@ -355,19 +358,21 @@ const AttendancePage = () => {
         selfAdjustAllowedForDate={selfAdjustAllowedForDate}
         onAdjust={(row) => openAdjust(row.workDate, row)}
       />
-      <ManualAttendanceModal
-        isOpen={adjustOpen}
-        onClose={() => {
-          setAdjustOpen(false);
-          setAdjustDefaultSegment(null);
-        }}
-        defaultWorkDate={adjustDefaultDate}
-        editingSegmentId={adjustDefaultSegment?.id}
-        defaultCheckIn={adjustDefaultSegment?.checkInTime}
-        defaultCheckOut={adjustDefaultSegment?.checkOutTime}
-        existingSegments={board?.attendance ?? []}
-        onSaved={() => void refreshBoard()}
-      />
+      {canPunchAttendance ? (
+        <ManualAttendanceModal
+          isOpen={adjustOpen}
+          onClose={() => {
+            setAdjustOpen(false);
+            setAdjustDefaultSegment(null);
+          }}
+          defaultWorkDate={adjustDefaultDate}
+          editingSegmentId={adjustDefaultSegment?.id}
+          defaultCheckIn={adjustDefaultSegment?.checkInTime}
+          defaultCheckOut={adjustDefaultSegment?.checkOutTime}
+          existingSegments={board?.attendance ?? []}
+          onSaved={() => void refreshBoard()}
+        />
+      ) : null}
     </div>
   );
 };

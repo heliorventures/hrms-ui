@@ -5,6 +5,7 @@ import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import { formatBackendTime } from '../../utils/timeFormat';
 import AttendanceReportDetails from './components/AttendanceReportDetails';
 
 const REPORT_EMPLOYEE_LIMIT = 100;
@@ -219,12 +220,15 @@ const AdminReportsPage = () => {
     )}. Narrow the date range before using summary numbers or exporting CSV.`;
   }, [data, reportType]);
 
-  const employeeLabelById = useMemo(() => {
-    const labels: Record<string, string> = {};
+  const employeeMetadataById = useMemo(() => {
+    const metadata: Record<string, { label: string; employeeCode: string }> = {};
     (data?.employees ?? []).forEach((employee) => {
-      labels[employee.id] = `${employee.fullName} (${employee.employeeCode})`;
+      metadata[employee.id] = {
+        label: `${employee.fullName} (${employee.employeeCode})`,
+        employeeCode: employee.employeeCode,
+      };
     });
-    return labels;
+    return metadata;
   }, [data]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -306,24 +310,24 @@ const AdminReportsPage = () => {
     if (!data || dateRangeError) return;
     if (reportType === 'attendance') {
       downloadCsv(`attendance-report-${filters.startDate || 'all'}-to-${filters.endDate || 'all'}.csv`, [
-        ['Employee', 'Employee ID', 'Work Date', 'Status', 'Check In', 'Check Out'],
+        ['Employee', 'Employee Code', 'Work Date', 'Status', 'Check In', 'Check Out'],
         ...filteredAttendance.map((row) => [
-          employeeLabelById[row.employeeId] ?? row.employeeId,
-          row.employeeId,
+          employeeMetadataById[row.employeeId]?.label ?? 'Employee not loaded',
+          employeeMetadataById[row.employeeId]?.employeeCode ?? '',
           row.workDate,
           row.status ?? '',
-          row.checkInTime ?? '',
-          row.checkOutTime ?? '',
+          row.checkInTime ? formatBackendTime(row.checkInTime) : '',
+          row.checkOutTime ? formatBackendTime(row.checkOutTime) : '',
         ]),
       ]);
       return;
     }
     if (reportType === 'leave') {
       downloadCsv(`leave-report-${filters.startDate || 'all'}-to-${filters.endDate || 'all'}.csv`, [
-        ['Employee', 'Employee Id', 'From Date', 'To Date', 'Status'],
+        ['Employee', 'Employee Code', 'From Date', 'To Date', 'Status'],
         ...filteredLeave.map((row) => [
-          employeeLabelById[row.employeeId] ?? row.employeeId,
-          row.employeeId,
+          employeeMetadataById[row.employeeId]?.label ?? 'Employee not loaded',
+          employeeMetadataById[row.employeeId]?.employeeCode ?? '',
           row.fromDate,
           row.toDate,
           row.status,

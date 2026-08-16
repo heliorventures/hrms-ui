@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useCallback, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import Input from '../../components/common/Input';
@@ -19,6 +19,7 @@ const generateCaptcha = () => {
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, loading, error: authError } = useAuth();
   const { currentTenant, resolutionStatus, resolutionError } = useTenant();
   const [username, setUsername] = useState('');
@@ -28,6 +29,14 @@ const LoginPage = () => {
   const [errors, setErrors] = useState<{ username?: string; password?: string; captcha?: string }>({});
 
   const submitting = loading;
+  const [passwordChangedNotice] = useState(
+    () => (location.state as { passwordChanged?: boolean } | null)?.passwordChanged === true
+  );
+
+  useEffect(() => {
+    if (!passwordChangedNotice) return;
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+  }, [location.pathname, location.search, navigate, passwordChangedNotice]);
 
   const refreshCaptcha = useCallback((clearCaptchaError = true) => {
     setCaptchaCode(generateCaptcha());
@@ -84,6 +93,14 @@ const LoginPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {passwordChangedNotice && (
+              <div
+                role="status"
+                className="rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-800 dark:border-green-700/60 dark:bg-green-900/30 dark:text-green-100"
+              >
+                Password changed successfully. Sign in with your new password.
+              </div>
+            )}
             <Input
               label="Username"
               type="text"

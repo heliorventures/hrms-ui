@@ -36,17 +36,19 @@ describe('directNotificationActionUrl', () => {
     expect(directNotificationActionUrl('')).toBe('/notifications');
   });
 
-  it('rejects external and admin-only routes for recipient-safe direct notifications', () => {
+  it('rejects external and protocol-relative routes', () => {
     expect(directNotificationActionUrl('https://evil.example/path')).toBe('/notifications');
-    expect(directNotificationActionUrl('/admin/notifications')).toBe('/notifications');
-    expect(directNotificationActionUrl('https://heliorsoft.com/admin/notifications')).toBe(
-      '/notifications'
-    );
+    expect(directNotificationActionUrl('//evil.example/path')).toBe('/notifications');
+    expect(directNotificationActionUrl('/\\evil.example/path')).toBe('/notifications');
   });
 
-  it('preserves the authenticated notifications route with query and hash', () => {
+  it('preserves normalized internal application routes with query and hash', () => {
     expect(directNotificationActionUrl('/notifications?filter=unread#top')).toBe(
       '/notifications?filter=unread#top'
+    );
+    expect(directNotificationActionUrl('/expenses?tab=claims')).toBe('/expenses?tab=claims');
+    expect(directNotificationActionUrl('https://heliorsoft.com/leave#requests')).toBe(
+      '/leave#requests'
     );
   });
 });

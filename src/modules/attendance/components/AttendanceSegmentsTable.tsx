@@ -10,6 +10,7 @@ interface AttendanceSegmentsTableProps {
   title: string;
   rows: FlatSegmentRow[];
   adjustPolicyDays: number;
+  canAdjust: boolean;
   canRegularize: boolean;
   loading: boolean;
   selfAdjustAllowedForDate: (workIso: string) => boolean;
@@ -35,6 +36,7 @@ const AttendanceSegmentsTable = ({
   title,
   rows,
   adjustPolicyDays,
+  canAdjust,
   canRegularize,
   loading,
   selfAdjustAllowedForDate,
@@ -96,29 +98,33 @@ const AttendanceSegmentsTable = ({
               <Badge variant={statusVariant(row.status)}>{row.status ?? '-'}</Badge>
             ),
           },
-          {
-            key: 'adj',
-            label: '',
-            render: (row: FlatSegmentRow) => {
-              const allow = selfAdjustAllowedForDate(row.workDate) || canRegularize;
-              return (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="!py-1 !text-xs"
-                  disabled={!allow}
-                  title={
-                    !allow
-                      ? `Self-service locked after ${adjustPolicyDays} days - contact HR`
-                      : undefined
-                  }
-                  onClick={() => onAdjust(row)}
-                >
-                  Adjust day
-                </Button>
-              );
-            },
-          },
+          ...(canAdjust
+            ? [
+                {
+                  key: 'adj',
+                  label: '',
+                  render: (row: FlatSegmentRow) => {
+                    const allow = selfAdjustAllowedForDate(row.workDate) || canRegularize;
+                    return (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="!py-1 !text-xs"
+                        disabled={!allow}
+                        title={
+                          !allow
+                            ? `Self-service locked after ${adjustPolicyDays} days - contact HR`
+                            : undefined
+                        }
+                        onClick={() => onAdjust(row)}
+                      >
+                        Adjust day
+                      </Button>
+                    );
+                  },
+                },
+              ]
+            : []),
         ]}
       />
     ) : (

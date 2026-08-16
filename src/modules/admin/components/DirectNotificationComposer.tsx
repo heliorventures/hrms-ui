@@ -60,7 +60,18 @@ const DirectNotificationComposer = ({
     <Input label="Kind" value={kind} onChange={(event) => onKindChange(event.target.value)} fullWidth />
     <Input label="Title" value={title} onChange={(event) => onTitleChange(event.target.value)} fullWidth />
     <Input label="Message" value={message} onChange={(event) => onMessageChange(event.target.value)} fullWidth />
-    <Input label="Action URL" value={url} onChange={(event) => onUrlChange(event.target.value)} fullWidth />
+    <div>
+      <Input
+        label="Action URL"
+        value={url}
+        onChange={(event) => onUrlChange(event.target.value)}
+        placeholder="/expenses?tab=claims"
+        fullWidth
+      />
+      <p className="mt-1 text-xs text-gray-500">
+        Optional internal application path. External and protocol-relative URLs are rejected.
+      </p>
+    </div>
     <Button type="submit" variant="primary" disabled={busy}>
       Send
     </Button>

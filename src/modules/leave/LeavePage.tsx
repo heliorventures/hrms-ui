@@ -37,6 +37,11 @@ type ApproveLeaveRequestMutation = {
   approveLeaveRequest: { status: string };
 };
 
+type LeaveRequestWithEmployee = LeaveBoardQuery['leaveRequests'][number] & {
+  employeeName?: string | null;
+  employeeCode?: string | null;
+};
+
 const BOARD_LIMIT = 20;
 const ORG_CHART_LIMIT = 500;
 const HOLIDAY_LIMIT = 450;
@@ -50,7 +55,6 @@ const LeavePage = () => {
   const location = useLocation();
   const [orgChartRows, setOrgChartRows] = useState<OrgChartQuery['orgChart']>([]);
   const [data, setData] = useState<LeaveBoardQuery | null>(null);
-  const [orgLabels, setOrgLabels] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
@@ -94,16 +98,16 @@ const LeavePage = () => {
   );
 
   const loadOrgChart = useCallback(async () => {
-    const response = await client.request<OrgChartQuery>(OrgChartDocument, { limit: ORG_CHART_LIMIT });
-    return {
-      labels: new Map(
-        (response.orgChart ?? []).map((row) => [
-          row.employeeId,
-          `${row.fullName}${row.employeeCode ? ` (${row.employeeCode})` : ''}`,
-        ])
-      ),
-      rows: response.orgChart ?? [],
-    };
+    try {
+      const response = await client.request<OrgChartQuery>(OrgChartDocument, {
+        limit: ORG_CHART_LIMIT,
+      });
+      return response.orgChart ?? [];
+    } catch {
+      // The leave list and its employee labels are authoritative. Org Chart is
+      // only supplementary UI context for manager action presentation.
+      return [];
+    }
   }, [client]);
 
   useEffect(() => {
@@ -130,10 +134,9 @@ const LeavePage = () => {
     setLoading(true);
     setError(null);
     try {
-      const [result, orgData] = await Promise.all([loadBoard(), loadOrgChart()]);
+      const [result, orgRows] = await Promise.all([loadBoard(), loadOrgChart()]);
       setData(result);
-      setOrgLabels(orgData.labels);
-      setOrgChartRows(orgData.rows);
+      setOrgChartRows(orgRows);
     } catch (err) {
       setError(graphQlUserMessage(err));
     } finally {
@@ -268,9 +271,21 @@ const LeavePage = () => {
 
   const leaveRequestLimitReached = (data?.leaveRequests?.length ?? 0) >= BOARD_LIMIT;
 
+  const employeeLabelById = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const row of (data?.leaveRequests ?? []) as LeaveRequestWithEmployee[]) {
+      if (!row.employeeName) continue;
+      labels.set(
+        row.employeeId,
+        `${row.employeeName}${row.employeeCode ? ` (${row.employeeCode})` : ''}`
+      );
+    }
+    return labels;
+  }, [data?.leaveRequests]);
+
   const employeeLabel = useCallback(
-    (employeeId: string) => orgLabels.get(employeeId) ?? `${employeeId.slice(0, 8)}...`,
-    [orgLabels]
+    (employeeId: string) => employeeLabelById.get(employeeId) ?? `${employeeId.slice(0, 8)}...`,
+    [employeeLabelById]
   );
 
   const openWorkflowTrail = async (row: LeaveBoardQuery['leaveRequests'][number]) => {

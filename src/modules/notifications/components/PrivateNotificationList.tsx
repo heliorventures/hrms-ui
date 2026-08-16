@@ -84,6 +84,11 @@ const PrivateNotificationList = ({
                         {formatTimeAgo(notification.createdAt)}
                       </span>
                     </div>
+                    {actionUrl ? (
+                      <p className="mt-2 break-all text-xs text-gray-500 dark:text-gray-400">
+                        Destination: <span className="font-mono">{actionUrl}</span>
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-col gap-2">

@@ -126,8 +126,10 @@ interface EditEmployeeModalProps {
 const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmployeeModalProps) => {
   const client = useGraphClient('client');
   const { can, hasAnyJwtRole } = useAuth();
+  const hasElevatedEmployeeRole = hasAnyJwtRole(['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN']);
   const canManageLoginAccounts =
-    can('role:manage') || hasAnyJwtRole(['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN']);
+    can('employee:write') || hasElevatedEmployeeRole;
+  const canReadRoleDirectory = can('role:manage') || hasElevatedEmployeeRole;
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');
@@ -160,7 +162,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         employees: { id: string; employeeCode: string; fullName: string }[];
         tenantDirectoryRoles?: { id: string; name: string; isSystemRole: boolean }[];
       }>(
-        canManageLoginAccounts ? EmployeeModalAdminDirectoryDocument : EmployeeModalDirectoryDocument,
+        canReadRoleDirectory ? EmployeeModalAdminDirectoryDocument : EmployeeModalDirectoryDocument,
         { dlim: 100, glim: 100, elim: 100, rlim: 80 }
       );
       setDeptOptions(buildDepartmentOptions(res.departments ?? []));
@@ -176,7 +178,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     } catch (e) {
       setOrgLoadError(graphQlUserMessage(e));
     }
-  }, [canManageLoginAccounts, client, isOpen, employee?.id]);
+  }, [canReadRoleDirectory, client, isOpen, employee?.id]);
 
   useEffect(() => {
     void loadOrg();
@@ -374,7 +376,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
             <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300">{accountMessage}</p>
           )}
           {canManageLoginAccounts ? (
-          <div className="mt-3 space-y-3">
+            <div className="mt-3 space-y-3">
             {employee.userId && (
               <Input
                 label="Login Email"
@@ -407,7 +409,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
                 />
               </div>
             )}
-            {!employee.userId && (
+            {!employee.userId && canReadRoleDirectory && (
               <Select
                 label="Initial Role"
                 value={accountRoleId}
@@ -457,10 +459,10 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Admin-set passwords are temporary; the employee must change them at next login.
             </p>
-          </div>
+            </div>
           ) : (
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              Password provisioning and reset require RBAC admin access.
+              Login email, password provisioning, and reset require employee administration access.
             </p>
           )}
         </div>

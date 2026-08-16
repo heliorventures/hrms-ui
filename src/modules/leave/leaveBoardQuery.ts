@@ -32,6 +32,8 @@ export const LeaveBoardRangeDocument = `
     leaveRequests(limit: $limit, fromDate: $fromDate, toDate: $toDate) {
       id
       employeeId
+      employeeName
+      employeeCode
       leaveTypeId
       fromDate
       toDate
