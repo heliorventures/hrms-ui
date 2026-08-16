@@ -4,12 +4,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { getDefaultUserProfile } from '../../profile/defaultUserProfile';
 import Card from '../../components/common/Card';
+import Button from '../../components/common/Button';
 import AboutTab from './components/AboutTab';
 import ProfileTab from './components/ProfileTab';
 import JobDetailsTab from './components/JobDetailsTab';
 import DocumentsTab from './components/DocumentsTab';
 import SecurityTab from './components/SecurityTab';
 import NotificationsTab from './components/NotificationsTab';
+import { EmployeeProfileShell } from '../organization/employee-profile/EmployeeProfileShell';
 
 type TabId = 'about' | 'profile' | 'job' | 'documents' | 'notifications' | 'security';
 
@@ -31,6 +33,26 @@ const ProfileSettingsPage = () => {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
   const data = user ? getDefaultUserProfile(user, currentTenant.name) : null;
+
+  if (activeTab !== 'security' && clientSession?.employeeId) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Edit your personal profile, upload documents, and maintain your education and work
+              experience.
+            </p>
+          </div>
+          <Button type="button" variant="outline" onClick={() => setActiveTab('security')}>
+            Security settings
+          </Button>
+        </div>
+        <EmployeeProfileShell employeeId={clientSession.employeeId} />
+      </div>
+    );
+  }
 
   if (!user || !data) {
     return (

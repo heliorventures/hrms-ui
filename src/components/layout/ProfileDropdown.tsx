@@ -12,7 +12,7 @@ const ProfileDropdown = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { user, role, switchRole, logout } = useAuth();
+  const { clientSession, user, role, switchRole, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -47,6 +47,9 @@ const ProfileDropdown = () => {
       .slice(0, 2) || 'U';
 
   const showDevRoleSwitch = devRoleSwitchEnabled();
+  const profilePath = clientSession?.employeeId
+    ? `/organization/employees/${clientSession.employeeId}`
+    : '/profile/settings';
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -81,7 +84,7 @@ const ProfileDropdown = () => {
           </div>
 
           <Link
-            to="/profile/settings"
+            to={profilePath}
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
           >

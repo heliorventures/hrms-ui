@@ -1,6 +1,8 @@
 export const PERMISSIONS = {
   analyticsRead: 'analytics:read',
   assetsManage: 'assets:manage',
+  assetsRead: 'assets:read',
+  assetsSelf: 'assets:self',
   attendancePunchPolicy: 'attendance:punch_policy',
   attendancePunchSelf: 'attendance:punch_self',
   attendanceRegularize: 'attendance:regularize',

@@ -3,7 +3,7 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Table from '../../../components/common/Table';
 import { EXPENSE_BUSY_PREFIX, EXPENSE_STATUS } from '../constants';
-import { expenseStatusVariant, formatCurrency, formatDate, shortId } from '../utils/formatters';
+import { expenseStatusVariant, formatCurrency, formatDate } from '../utils/formatters';
 import type { ExpenseCategoryRow, ExpenseRow } from '../types';
 
 interface ExpenseClaimsTableProps {
@@ -78,7 +78,7 @@ const ExpenseClaimsTable = ({
             render: (expense) => (
               <span>
                 {expense.travelRequestId
-                  ? travelRequestLabels[expense.travelRequestId] ?? shortId(expense.travelRequestId)
+                  ? travelRequestLabels[expense.travelRequestId] ?? 'Linked trip not loaded'
                   : '-'}
               </span>
             ),

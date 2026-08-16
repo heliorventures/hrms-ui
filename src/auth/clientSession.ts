@@ -19,6 +19,8 @@ interface ClientJwtPayload {
   roles?: string[];
   permissions?: string[];
   resource_scopes?: Record<string, string>;
+  employee_id?: string;
+  employeeId?: string;
   must_change_password?: boolean;
   exp?: number;
 }
@@ -47,6 +49,7 @@ export interface ParsedClientSession {
   jwtRoles: string[];
   permissions: ReadonlySet<string>;
   resourceScopes: Readonly<Record<string, string>>;
+  employeeId?: string;
   persona: ClientPersona;
   mustChangePassword: boolean;
   expiresAtMs?: number;
@@ -78,6 +81,12 @@ export function parseClientAccessToken(accessToken: string): ParsedClientSession
     jwtRoles,
     permissions,
     resourceScopes,
+    employeeId:
+      typeof raw.employee_id === 'string'
+        ? raw.employee_id
+        : typeof raw.employeeId === 'string'
+          ? raw.employeeId
+          : undefined,
     persona: derivePersonaFromJwtRoles(jwtRoles),
     mustChangePassword: claims.must_change_password === true,
     expiresAtMs: typeof raw.exp === 'number' ? raw.exp * 1000 : undefined,

@@ -23,6 +23,7 @@ export interface ApplyLeaveTypeOption {
   id: string;
   name: string;
   code: string;
+  isPaid?: boolean;
   halfDayAllowed?: boolean;
   requiresDocument?: boolean;
   sandwichRule?: boolean;
@@ -120,6 +121,7 @@ const ApplyLeaveModal = ({
 
   const halfDayAllowed = selectedType?.halfDayAllowed !== false;
   const requiresDocument = selectedType?.requiresDocument === true;
+  const consumesLeaveBalance = selectedType?.isPaid !== false;
   const isMultiDay = Boolean(fromDate && toDate && fromDate !== toDate);
   const halfDayEligible = halfDayAllowed && !isMultiDay;
 
@@ -199,14 +201,14 @@ const ApplyLeaveModal = ({
       );
       return;
     }
-    if (!balanceForType) {
+    if (consumesLeaveBalance && !balanceForType) {
       setFormError(
         'This leave type is not provisioned for your employee record. Ask HR to provision balances first.'
       );
       return;
     }
-    const availableDays = Number(balanceForType.balanceDays ?? 0);
-    if (Number.isFinite(availableDays) && availableDays < reqDays) {
+    const availableDays = Number(balanceForType?.balanceDays ?? 0);
+    if (consumesLeaveBalance && Number.isFinite(availableDays) && availableDays < reqDays) {
       setFormError(
         `Insufficient leave balance. Available: ${availableDays} day(s), requested: ${reqDays} day(s).`
       );

@@ -1,289 +1,356 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
-  ClientOpsAdminEmployeesDocument,
-  PayrollEmploymentHistoryDocument,
-  PayrollSetEmployeeCompensationDocument,
-  type ClientOpsAdminEmployeesQuery,
-  type PayrollEmploymentHistoryQuery,
-  type PayrollSetEmployeeCompensationMutation,
-} from '../../api/graphql/graphql';
+  AssignAnnualCtcSection,
+  SalaryBreakupPreviewSection,
+  SalaryComponentsSection,
+  SalaryStructureSection,
+} from './PayrollCompensationSections';
+import type {
+  AssignmentForm,
+  BoardResult,
+  ComponentForm,
+  SalaryBreakupPreview,
+  StructureDraftLine,
+} from './payrollCompensationTypes';
 
-type EmployeeRow = ClientOpsAdminEmployeesQuery['employees'][number];
-type EmploymentHistoryLine = PayrollEmploymentHistoryQuery['employmentHistoryRecords'][number];
+const COMPENSATION_BOARD_QUERY = /* GraphQL */ `
+  query PayrollCompensationBoard($employeeLimit: Int! = 300) {
+    employees(limit: $employeeLimit) {
+      id
+      employeeCode
+      fullName
+      status
+      dateOfJoining
+    }
+    salaryComponents(limit: 200) {
+      id
+      name
+      code
+      componentType
+      isTaxable
+      isFixed
+      isActive
+    }
+    salaryStructures(limit: 100) {
+      id
+      name
+      description
+      components {
+        id
+        salaryComponentId
+        componentName
+        componentCode
+        componentType
+        calculationBasis
+        calculationValue
+        displayOrder
+      }
+    }
+  }
+`;
+
+const UPSERT_SALARY_COMPONENT = /* GraphQL */ `
+  mutation UpsertSalaryComponent($input: UpsertSalaryComponentInput!) {
+    upsertSalaryComponent(input: $input) {
+      id
+      name
+      code
+      componentType
+      isActive
+    }
+  }
+`;
+
+const UPSERT_SALARY_STRUCTURE = /* GraphQL */ `
+  mutation UpsertSalaryStructure($input: UpsertSalaryStructureInput!) {
+    upsertSalaryStructure(input: $input) {
+      id
+      name
+      components {
+        id
+        componentCode
+        calculationBasis
+        calculationValue
+      }
+    }
+  }
+`;
+
+const ASSIGN_EMPLOYEE_SALARY_STRUCTURE = /* GraphQL */ `
+  mutation AssignEmployeeSalaryStructure($input: AssignEmployeeSalaryStructureInput!) {
+    assignEmployeeSalaryStructure(input: $input) {
+      id
+      employeeId
+      salaryStructureId
+      ctc
+      effectiveFrom
+    }
+  }
+`;
+
+const SALARY_BREAKUP_PREVIEW = /* GraphQL */ `
+  query EmployeeSalaryBreakupPreview($employeeId: ID!, $asOf: NaiveDate) {
+    employeeSalaryBreakupPreview(employeeId: $employeeId, asOf: $asOf) {
+      employeeId
+      annualCtc
+      monthlyGross
+      monthlyDeductions
+      monthlyNetBeforeStatutory
+      lines {
+        salaryComponentId
+        componentName
+        componentCode
+        componentType
+        calculationBasis
+        calculationValue
+        annualAmount
+        monthlyAmount
+        isOverride
+      }
+    }
+  }
+`;
 
 const MONEY_PATTERN = /^(?:\d+|\d+\.\d{1,2}|\.\d{1,2})$/;
+const today = () => new Date().toISOString().slice(0, 10);
 
-function parseMoneyInput(value: string): number {
-  const trimmed = value.trim();
-  if (!MONEY_PATTERN.test(trimmed)) return NaN;
-  return Number(trimmed);
+function validMoney(value: string): boolean {
+  return MONEY_PATTERN.test(value.trim()) && Number(value) >= 0;
 }
 
-/** GraphQL NaiveDate / DateTime scalars arrive as strings at runtime. */
-function displayDateOnly(v: unknown): string {
-  if (v == null) return '—';
-  if (typeof v === 'string') return v.length >= 10 ? v.slice(0, 10) : v;
-  return String(v);
-}
+const defaultComponentForm: ComponentForm = {
+  name: '',
+  code: '',
+  componentType: 'EARNING',
+  isTaxable: true,
+  isFixed: true,
+};
 
-const defaultEffectiveFrom = (): string => {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  return `${y}-${m}-01`;
+const defaultLineDraft: StructureDraftLine = {
+  salaryComponentId: '',
+  calculationBasis: 'PERCENT_OF_CTC',
+  calculationValue: '',
 };
 
 const PayrollCompensationPage = () => {
   const client = useGraphClient('client');
-  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
-  const [empLoading, setEmpLoading] = useState(true);
-  const [empError, setEmpError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState('');
-  const [history, setHistory] = useState<EmploymentHistoryLine[]>([]);
-  const [histLoading, setHistLoading] = useState(false);
-  const [histError, setHistError] = useState<string | null>(null);
-  const [monthlySalary, setMonthlySalary] = useState('');
-  const [effectiveFrom, setEffectiveFrom] = useState(defaultEffectiveFrom);
-  const [changeReason, setChangeReason] = useState('');
-  const [saveBusy, setSaveBusy] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveOk, setSaveOk] = useState<string | null>(null);
+  const [board, setBoard] = useState<BoardResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [ok, setOk] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [componentForm, setComponentForm] = useState<ComponentForm>(defaultComponentForm);
+  const [structureName, setStructureName] = useState('');
+  const [structureDescription, setStructureDescription] = useState('');
+  const [structureLines, setStructureLines] = useState<StructureDraftLine[]>([]);
+  const [lineDraft, setLineDraft] = useState<StructureDraftLine>(defaultLineDraft);
+  const [assignmentForm, setAssignmentForm] = useState<AssignmentForm>({
+    employeeId: '',
+    salaryStructureId: '',
+    annualCtc: '',
+    effectiveFrom: today(),
+  });
+  const [preview, setPreview] = useState<SalaryBreakupPreview | null>(null);
 
-  const loadEmployees = useCallback(async () => {
-    setEmpLoading(true);
-    setEmpError(null);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const result = await client.request<ClientOpsAdminEmployeesQuery>(ClientOpsAdminEmployeesDocument, {
-        limit: 200,
-      });
-      setEmployees(result.employees ?? []);
+      const result = await client.request<BoardResult>(COMPENSATION_BOARD_QUERY, { employeeLimit: 300 });
+      setBoard(result);
     } catch (e) {
-      setEmpError(graphQlUserMessage(e));
+      setError(graphQlUserMessage(e));
     } finally {
-      setEmpLoading(false);
+      setLoading(false);
     }
   }, [client]);
 
   useEffect(() => {
-    void loadEmployees();
-  }, [loadEmployees]);
+    void load();
+  }, [load]);
 
-  const loadHistory = useCallback(
-    async (employeeId: string) => {
-      if (!employeeId) {
-        setHistory([]);
-        return;
-      }
-      setHistLoading(true);
-      setHistError(null);
-      try {
-        const result = await client.request<PayrollEmploymentHistoryQuery>(PayrollEmploymentHistoryDocument, {
-          employeeId,
-          limit: 48,
-        });
-        setHistory(result.employmentHistoryRecords ?? []);
-      } catch (e) {
-        setHistory([]);
-        setHistError(graphQlUserMessage(e));
-      } finally {
-        setHistLoading(false);
-      }
-    },
-    [client],
+  const selectedEmployee = useMemo(
+    () => board?.employees.find((employee) => employee.id === assignmentForm.employeeId),
+    [assignmentForm.employeeId, board?.employees]
   );
 
-  useEffect(() => {
-    if (!selectedId) {
-      setHistory([]);
+  const addComponent = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!componentForm.name.trim() || !componentForm.code.trim()) {
+      setActionError('Component name and code are required.');
       return;
     }
-    void loadHistory(selectedId);
-  }, [selectedId, loadHistory]);
-
-  const selectedJoinDate = useMemo(() => {
-    const e = employees.find((x) => x.id === selectedId);
-    return e?.dateOfJoining != null ? displayDateOnly(e.dateOfJoining) : null;
-  }, [employees, selectedId]);
-
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!selectedId.trim()) {
-      setSaveError('Select an employee');
-      return;
-    }
-    const salary = parseMoneyInput(monthlySalary);
-    if (!Number.isFinite(salary) || salary <= 0) {
-      setSaveError('Monthly salary must be a positive amount with up to 2 decimal places.');
-      return;
-    }
-    if (!effectiveFrom) {
-      setSaveError('Effective from date is required.');
-      return;
-    }
-    if (selectedJoinDate && effectiveFrom < selectedJoinDate) {
-      setSaveError(`Effective from date cannot be before the joining date (${selectedJoinDate}).`);
-      return;
-    }
-    setSaveBusy(true);
-    setSaveError(null);
-    setSaveOk(null);
+    setBusy(true);
+    setActionError(null);
+    setOk(null);
     try {
-      await client.request<PayrollSetEmployeeCompensationMutation>(PayrollSetEmployeeCompensationDocument, {
+      await client.request(UPSERT_SALARY_COMPONENT, {
         input: {
-          employeeId: selectedId,
-          monthlySalary: monthlySalary.trim(),
-          effectiveFrom,
-          changeReason: changeReason.trim() || null,
+          name: componentForm.name.trim(),
+          code: componentForm.code.trim(),
+          componentType: componentForm.componentType,
+          isTaxable: componentForm.isTaxable,
+          isFixed: componentForm.isFixed,
+          isActive: true,
+          formulaExpression: null,
         },
       });
-      setSaveOk('Compensation saved.');
-      setMonthlySalary('');
-      setChangeReason('');
-      void loadHistory(selectedId);
-    } catch (err) {
-      setSaveError(graphQlUserMessage(err));
+      setComponentForm(defaultComponentForm);
+      setOk('Salary component saved.');
+      await load();
+    } catch (e) {
+      setActionError(graphQlUserMessage(e));
     } finally {
-      setSaveBusy(false);
+      setBusy(false);
     }
   };
 
-  const historyColumns = useMemo(
-    () => [
-      {
-        key: 'effectiveFrom',
-        label: 'Effective From',
-        render: (row: EmploymentHistoryLine) => displayDateOnly(row.effectiveFrom),
-      },
-      {
-        key: 'monthlySalary',
-        label: 'Monthly Salary',
-        render: (row: EmploymentHistoryLine) => row.monthlySalary ?? '—',
-      },
-      { key: 'changeReason', label: 'Reason', render: (row: EmploymentHistoryLine) => row.changeReason ?? '—' },
-      {
-        key: 'updatedAt',
-        label: 'Updated',
-        render: (row: EmploymentHistoryLine) => displayDateOnly(row.updatedAt),
-      },
-    ],
-    [],
-  );
+  const addStructureLine = () => {
+    if (!lineDraft.salaryComponentId || !validMoney(lineDraft.calculationValue)) {
+      setActionError('Select a component and enter a valid calculation value.');
+      return;
+    }
+    setStructureLines((lines) => [...lines, lineDraft]);
+    setLineDraft(defaultLineDraft);
+    setActionError(null);
+  };
+
+  const saveStructure = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!structureName.trim()) {
+      setActionError('Structure name is required.');
+      return;
+    }
+    if (structureLines.length === 0) {
+      setActionError('Add at least one component to the structure.');
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    setOk(null);
+    try {
+      await client.request(UPSERT_SALARY_STRUCTURE, {
+        input: {
+          name: structureName.trim(),
+          description: structureDescription.trim() || null,
+          components: structureLines.map((line, index) => ({
+            salaryComponentId: line.salaryComponentId,
+            calculationBasis: line.calculationBasis,
+            calculationValue: line.calculationValue.trim(),
+            displayOrder: index + 1,
+          })),
+        },
+      });
+      setStructureName('');
+      setStructureDescription('');
+      setStructureLines([]);
+      setOk('Salary structure saved.');
+      await load();
+    } catch (e) {
+      setActionError(graphQlUserMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const assignStructure = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!assignmentForm.employeeId || !assignmentForm.salaryStructureId) {
+      setActionError('Select employee and salary structure.');
+      return;
+    }
+    if (!validMoney(assignmentForm.annualCtc) || Number(assignmentForm.annualCtc) <= 0) {
+      setActionError('Annual CTC must be a positive amount.');
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    setOk(null);
+    try {
+      await client.request(ASSIGN_EMPLOYEE_SALARY_STRUCTURE, {
+        input: {
+          employeeId: assignmentForm.employeeId,
+          salaryStructureId: assignmentForm.salaryStructureId,
+          annualCtc: assignmentForm.annualCtc.trim(),
+          effectiveFrom: assignmentForm.effectiveFrom,
+          effectiveTo: null,
+          overrides: [],
+        },
+      });
+      setOk('Employee salary structure assigned.');
+      const result = await client.request<{ employeeSalaryBreakupPreview: SalaryBreakupPreview | null }>(
+        SALARY_BREAKUP_PREVIEW,
+        { employeeId: assignmentForm.employeeId, asOf: assignmentForm.effectiveFrom }
+      );
+      setPreview(result.employeeSalaryBreakupPreview);
+    } catch (e) {
+      setActionError(graphQlUserMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Compensation</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Set monthly salary per employee. Payroll uses the latest row by <code className="text-xs">effectiveFrom</code>{' '}
-          as the gross base.
+          Define payroll components, build salary structures, and assign annual CTC to employees.
+          Payroll splits payslip lines from the effective employee structure.
         </p>
       </div>
 
-      <Card title="Employee & History">
-        {empError && <p className="mb-3 text-sm text-red-600">{empError}</p>}
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="payroll-comp-emp">
-              Employee
-            </label>
-            <select
-              id="payroll-comp-emp"
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-              value={selectedId}
-              onChange={(ev) => {
-                setSelectedId(ev.target.value);
-                setSaveOk(null);
-                setSaveError(null);
-                const j = employees.find((x) => x.id === ev.target.value)?.dateOfJoining?.slice(0, 10);
-                if (j) setEffectiveFrom(j);
-                else setEffectiveFrom(defaultEffectiveFrom());
-              }}
-              disabled={empLoading}
-            >
-              <option value="">{empLoading ? 'Loading...' : 'Select Employee'}</option>
-              {employees.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.employeeCode} — {e.fullName} ({e.status})
-                </option>
-              ))}
-            </select>
-            {selectedJoinDate && (
-              <p className="mt-1 text-xs text-slate-500">Date of joining: {selectedJoinDate}</p>
-            )}
-          </div>
-        </div>
+      {error ? (
+        <Card>
+          <p className="text-sm text-red-600">{error}</p>
+        </Card>
+      ) : null}
+      {actionError ? (
+        <Card>
+          <p className="text-sm text-red-600">{actionError}</p>
+        </Card>
+      ) : null}
+      {ok ? (
+        <Card>
+          <p className="text-sm text-emerald-700">{ok}</p>
+        </Card>
+      ) : null}
 
-        {selectedId && (
-          <div className="mt-6">
-            {histError && <p className="mb-2 text-sm text-red-600">{histError}</p>}
-            {histLoading ? (
-              <p className="text-sm text-slate-500">Loading History...</p>
-            ) : history.length === 0 ? (
-              <p className="text-sm text-slate-500">No Compensation Rows Yet.</p>
-            ) : (
-              <Table data={history} columns={historyColumns} keyExtractor={(row) => row.id} />
-            )}
-          </div>
-        )}
-      </Card>
-
-      <Card title="Set Monthly Salary">
-        <form className="space-y-4" onSubmit={onSubmit}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="payroll-comp-amt">
-                Monthly salary (gross base)
-              </label>
-              <input
-                id="payroll-comp-amt"
-                type="text"
-                inputMode="decimal"
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                placeholder="e.g. 65000 or 65000.00"
-                value={monthlySalary}
-                onChange={(ev) => setMonthlySalary(ev.target.value)}
-                disabled={!selectedId}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="payroll-comp-eff">
-                Effective from
-              </label>
-              <input
-                id="payroll-comp-eff"
-                type="date"
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                value={effectiveFrom}
-                onChange={(ev) => setEffectiveFrom(ev.target.value)}
-                disabled={!selectedId}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="payroll-comp-reason">
-              Change reason (optional)
-            </label>
-            <input
-              id="payroll-comp-reason"
-              type="text"
-              className="w-full max-w-xl rounded-md border border-slate-300 px-3 py-2 text-sm"
-              value={changeReason}
-              onChange={(ev) => setChangeReason(ev.target.value)}
-              disabled={!selectedId}
-            />
-          </div>
-          {saveError && <p className="text-sm text-red-600">{saveError}</p>}
-          {saveOk && <p className="text-sm text-emerald-700">{saveOk}</p>}
-          <Button type="submit" disabled={!selectedId || saveBusy}>
-            {saveBusy ? 'Saving...' : 'Save Compensation'}
-          </Button>
-        </form>
-      </Card>
+      <SalaryComponentsSection
+        board={board}
+        busy={busy}
+        loading={loading}
+        componentForm={componentForm}
+        onComponentFormChange={setComponentForm}
+        onSubmit={addComponent}
+      />
+      <SalaryStructureSection
+        board={board}
+        busy={busy}
+        structureName={structureName}
+        structureDescription={structureDescription}
+        structureLines={structureLines}
+        lineDraft={lineDraft}
+        onStructureNameChange={setStructureName}
+        onStructureDescriptionChange={setStructureDescription}
+        onLineDraftChange={setLineDraft}
+        onAddLine={addStructureLine}
+        onSubmit={saveStructure}
+      />
+      <AssignAnnualCtcSection
+        board={board}
+        busy={busy}
+        assignmentForm={assignmentForm}
+        selectedJoiningDate={selectedEmployee?.dateOfJoining?.slice(0, 10)}
+        onAssignmentFormChange={setAssignmentForm}
+        onPreviewReset={() => setPreview(null)}
+        onSubmit={assignStructure}
+      />
+      {preview ? <SalaryBreakupPreviewSection preview={preview} /> : null}
     </div>
   );
 };

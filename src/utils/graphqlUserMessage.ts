@@ -35,6 +35,57 @@ function codeToMessage(code: string): string | null {
 
 function rawTextToMessage(raw: string): string {
   const lower = raw.toLowerCase();
+  if (lower.includes('workdate cannot be in the future') || lower.includes('future attendance')) {
+    return 'Future attendance cannot be regularized.';
+  }
+  if (lower.includes('checkintime must be before checkouttime') || lower.includes('punch in must be before punch out')) {
+    return 'Punch In must be before Punch Out for the same calendar day.';
+  }
+  if (lower.includes('manual attendance overlaps') || lower.includes('punch range overlaps')) {
+    return 'This punch range overlaps an existing attendance segment for the day.';
+  }
+  if (lower.includes('complete the open punch before adjusting manual attendance')) {
+    return 'Complete the open punch before adjusting attendance for this day.';
+  }
+  if (lower.includes('total attendance for a day cannot exceed 24 hours')) {
+    return 'Total attendance for a day cannot exceed 24 hours.';
+  }
+  if (lower.includes('manual attendance is limited to the last')) {
+    return 'This date is outside the self-service attendance adjustment window. Contact HR to regularize it.';
+  }
+  if (lower.includes('daily timesheet') && lower.includes('24 hours')) {
+    return 'Daily timesheet total cannot exceed 24 hours.';
+  }
+  if (lower.includes('weekly timesheet') && lower.includes('40 hours')) {
+    return 'Weekly timesheet total cannot exceed 40 hours.';
+  }
+  if (
+    lower.includes('pending or approved timesheet submission') ||
+    lower.includes('already has a submission')
+  ) {
+    return 'This week is already submitted. Ask the approver to reject it before adding or editing entries.';
+  }
+  if (lower.includes('cannot approve or reject your own timesheet submission')) {
+    return 'You cannot approve or reject your own timesheet submission.';
+  }
+  if (lower.includes('submitted timesheet rows cannot be edited')) {
+    return 'This entry is already submitted. Ask the approver to reject the week before editing it.';
+  }
+  if (lower.includes('approved timesheet rows cannot be moved to another week')) {
+    return 'Approved timesheet entries cannot be moved to another week.';
+  }
+  if (lower.includes('approved timesheet rows are locked')) {
+    return 'Approved timesheet entries are locked by the tenant policy.';
+  }
+  if (lower.includes('approved or submitted timesheet rows cannot be edited')) {
+    return 'This entry is already submitted. Ask the approver to reject the week before editing it.';
+  }
+  if (lower.includes('project is required')) {
+    return 'Project is required.';
+  }
+  if (lower.includes('task type is required')) {
+    return 'Task Type is required.';
+  }
   if (
     lower.includes('duplicate key') ||
     lower.includes('unique constraint') ||
@@ -85,6 +136,16 @@ function errorCode(err: unknown): string | null {
 }
 
 export function graphQlUserMessage(err: unknown): string {
+  if (err instanceof ClientError) {
+    const joined = err.response.errors?.map((item) => item.message).join(' ') ?? err.message;
+    const mapped = rawTextToMessage(joined);
+    if (mapped !== FALLBACK_MESSAGE) return mapped;
+    const code = errorCode(err);
+    if (code?.toUpperCase() === 'VALIDATION_ERROR') {
+      return codeToMessage(code) ?? FALLBACK_MESSAGE;
+    }
+  }
+
   const code = errorCode(err);
   if (code) {
     return codeToMessage(code) ?? FALLBACK_MESSAGE;

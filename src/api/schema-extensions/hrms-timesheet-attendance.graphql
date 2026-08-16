@@ -11,6 +11,8 @@ type TimesheetWeekBatch {
   id: ID!
   tenantId: ID!
   employeeId: ID!
+  employeeCode: String
+  employeeName: String
   weekStartDate: NaiveDate!
   status: String!
   workflowInstanceId: ID

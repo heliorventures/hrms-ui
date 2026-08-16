@@ -782,6 +782,7 @@ mutation UpdateEmployee($input: UpdateEmployeeInput!) {
     designationId
     employmentType
     reportingManagerId
+    linkedUserEmail
   }
 }
 

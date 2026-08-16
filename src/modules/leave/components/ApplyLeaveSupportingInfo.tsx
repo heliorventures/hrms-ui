@@ -24,9 +24,13 @@ export const ApplyLeaveContextPanel = ({
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-300">
       <p className="font-medium text-gray-900 dark:text-white">Context</p>
       <ul className="mt-2 list-inside list-disc space-y-1">
-        <li>
-          Available balance (this year): <span className="font-mono">{balance?.balanceDays ?? '-'}</span> days
-        </li>
+        {leaveType.isPaid === false ? (
+          <li>Balance: unpaid leave - no balance is consumed.</li>
+        ) : (
+          <li>
+            Available balance (this year): <span className="font-mono">{balance?.balanceDays ?? '-'}</span> days
+          </li>
+        )}
         {policy ? (
           <>
             {policy.annualEntitlement != null && (

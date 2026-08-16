@@ -79,6 +79,9 @@ const SubmitExpenseModal = ({
     [travelRequests]
   );
 
+  const activeSubmissionHints =
+    submissionHints?.expenseCategoryId === categoryId ? submissionHints : null;
+
   useEffect(() => {
     if (isOpen) onCategoryChange(categoryId);
   }, [categoryId, isOpen, onCategoryChange]);
@@ -125,7 +128,7 @@ const SubmitExpenseModal = ({
       return;
     }
     const claimAmount = parseStrictMoney(amount);
-    const maxAmountSource = submissionHints?.maxAmountPerClaim ?? '';
+    const maxAmountSource = activeSubmissionHints?.maxAmountPerClaim ?? '';
     const maxAmount = maxAmountSource ? parseStrictMoney(maxAmountSource) : NaN;
     if (Number.isFinite(maxAmount) && claimAmount > maxAmount) {
       setFormError(
@@ -133,7 +136,7 @@ const SubmitExpenseModal = ({
       );
       return;
     }
-    if (submissionHints?.receiptRequired && !receiptFile) {
+    if (activeSubmissionHints?.receiptRequired && !receiptFile) {
       setFormError('Receipt is required for this category.');
       return;
     }
@@ -199,21 +202,21 @@ const SubmitExpenseModal = ({
           required
           fullWidth
         />
-        {submissionHints ? (
+        {activeSubmissionHints ? (
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300">
-            {submissionHints.maxAmountPerClaim ? (
+            {activeSubmissionHints.maxAmountPerClaim ? (
               <p>
                 Max per claim:{' '}
-                <strong>{formatCurrency(submissionHints.maxAmountPerClaim, currency)}</strong>
+                <strong>{formatCurrency(activeSubmissionHints.maxAmountPerClaim, currency)}</strong>
               </p>
             ) : null}
-            {submissionHints.limitPerMonth ? (
+            {activeSubmissionHints.limitPerMonth ? (
               <p className="mt-1">
                 Monthly limit:{' '}
-                <strong>{formatCurrency(submissionHints.limitPerMonth, currency)}</strong>
+                <strong>{formatCurrency(activeSubmissionHints.limitPerMonth, currency)}</strong>
               </p>
             ) : null}
-            {submissionHints.receiptRequired ? (
+            {activeSubmissionHints.receiptRequired ? (
               <p className="mt-1 font-medium text-amber-900 dark:text-amber-200">
                 Receipt upload is required for this category.
               </p>
@@ -258,7 +261,7 @@ const SubmitExpenseModal = ({
             accept="application/pdf,image/jpeg,image/png"
             onChange={(event) => handleReceiptChange(event.target.files?.[0] ?? null)}
             className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:file:bg-gray-700 dark:file:text-gray-100"
-            required={Boolean(submissionHints?.receiptRequired)}
+            required={Boolean(activeSubmissionHints?.receiptRequired)}
           />
           <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
             PDF, JPG, or PNG up to 6 MB.

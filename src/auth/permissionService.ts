@@ -116,7 +116,6 @@ const DIRECT_CAPABILITY_PERMISSIONS: Partial<Record<Capability, PermissionCode>>
   'route.admin.settings': PERMISSIONS.roleManage,
   'route.insights': PERMISSIONS.analyticsRead,
   'route.payroll.tax': PERMISSIONS.taxApprove,
-  'route.workplace.assets': PERMISSIONS.assetsManage,
   'route.workplace.compensation': PERMISSIONS.compensationManage,
   'route.workplace.learning': PERMISSIONS.learningManage,
   'route.workplace.performance': PERMISSIONS.performanceManage,
@@ -176,8 +175,13 @@ export function createPermissionService(
       case 'route.hr.people':
       case 'route.organization.profileReviews':
       case 'route.admin.employees':
-      case 'route.payroll.compensation':
         return canPermission(PERMISSIONS.employeeWrite);
+      case 'route.payroll.compensation':
+        return (
+          canPermission(PERMISSIONS.compensationManage) ||
+          canPermission(PERMISSIONS.payrollStatutoryExport) ||
+          hasHrAdminLikeRole(session)
+        );
       case 'route.payroll.admin':
         return (
           canPermission(PERMISSIONS.payrollStatutoryExport) ||
@@ -205,6 +209,12 @@ export function createPermissionService(
         );
       case 'route.workplace.benefits':
         return canPermission(PERMISSIONS.benefitsManage) || canPermission(PERMISSIONS.benefitsSelf);
+      case 'route.workplace.assets':
+        return (
+          canPermission(PERMISSIONS.assetsManage) ||
+          canPermission(PERMISSIONS.assetsRead) ||
+          canPermission(PERMISSIONS.assetsSelf)
+        );
       case 'route.workplace.onboarding':
         return canPermission(PERMISSIONS.onboardingManage) || canPermission(PERMISSIONS.onboardingSelf);
       case 'route.workplace.grievance':

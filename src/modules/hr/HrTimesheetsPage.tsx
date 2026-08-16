@@ -9,18 +9,34 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   ApproveTimesheetWeekBatchDocument,
-  OrgChartDocument,
   RejectTimesheetWeekBatchDocument,
-  TimesheetWeekBatchesDocument,
   ViewerEmployeeIdDocument,
-  type OrgChartQuery,
   type ViewerEmployeeIdQuery,
 } from '../../api/graphql/graphql';
 import TimesheetBatchPreviewModal from './components/TimesheetBatchPreviewModal';
 
+const TIMESHEET_WEEK_BATCHES_DOCUMENT = `
+  query HrTimesheetWeekBatches($status: String, $limit: Int! = 80) {
+    timesheetWeekBatches(status: $status, limit: $limit) {
+      id
+      employeeId
+      employeeCode
+      employeeName
+      weekStartDate
+      status
+      submittedAt
+      workflowInstanceId
+      pendingApprovalStage
+      viewerMayApprove
+    }
+  }
+`;
+
 type BatchRow = {
   id: string;
   employeeId: string;
+  employeeCode?: string | null;
+  employeeName?: string | null;
   weekStartDate: string;
   status: string;
   submittedAt?: string | null;
@@ -32,7 +48,6 @@ type BatchRow = {
 const HrTimesheetsPage = () => {
   const client = useGraphClient('client');
   const [batches, setBatches] = useState<BatchRow[]>([]);
-  const [orgLabels, setOrgLabels] = useState<Map<string, string>>(new Map());
   const [viewerEmployeeId, setViewerEmployeeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,23 +58,12 @@ const HrTimesheetsPage = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [infoNotice, setInfoNotice] = useState<string | null>(null);
 
-  const loadOrg = useCallback(async () => {
-    const r = await client.request<OrgChartQuery>(OrgChartDocument, { limit: 500 });
-    const m = new Map<string, string>();
-    for (const row of r.orgChart ?? []) {
-      const label = `${row.fullName}${row.employeeCode ? ` (${row.employeeCode})` : ''}`;
-      m.set(row.employeeId, label);
-    }
-    setOrgLabels(m);
-  }, [client]);
-
   const loadBatches = useCallback(async () => {
-    const r = await client.request(TimesheetWeekBatchesDocument, {
+    const r = await client.request<{ timesheetWeekBatches: BatchRow[] }>(TIMESHEET_WEEK_BATCHES_DOCUMENT, {
       ...(filter === 'pending' ? { status: 'PENDING' } : {}),
       limit: 80,
     });
-    const rows = (r.timesheetWeekBatches ?? []) as BatchRow[];
-    setBatches(rows);
+    setBatches(r.timesheetWeekBatches ?? []);
   }, [client, filter]);
 
   const loadViewer = useCallback(async () => {
@@ -74,7 +78,7 @@ const HrTimesheetsPage = () => {
         setLoading(true);
         setError(null);
         setInfoNotice(null);
-        await Promise.all([loadOrg(), loadViewer(), loadBatches()]);
+        await Promise.all([loadViewer(), loadBatches()]);
       } catch (e) {
         if (!cancelled) {
           setError(graphQlUserMessage(e));
@@ -86,7 +90,16 @@ const HrTimesheetsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [loadOrg, loadViewer, loadBatches]);
+  }, [loadViewer, loadBatches]);
+
+  const employeeLabel = useCallback((row: BatchRow) => {
+    const name = row.employeeName?.trim();
+    const code = row.employeeCode?.trim();
+    if (name && code) return `${name} (${code})`;
+    if (name) return name;
+    if (code) return code;
+    return row.employeeId.slice(0, 8);
+  }, []);
 
   const silentRefresh = useCallback(async () => {
     try {
@@ -194,8 +207,7 @@ const HrTimesheetsPage = () => {
               {
                 key: 'employee',
                 label: 'Employee',
-                render: (row: BatchRow) =>
-                  orgLabels.get(row.employeeId) ?? row.employeeId.slice(0, 8),
+                render: (row: BatchRow) => employeeLabel(row),
               },
               {
                 key: 'week',
@@ -272,6 +284,7 @@ const HrTimesheetsPage = () => {
                           className="!py-1 !text-xs"
                           disabled={busyId === row.id}
                           onClick={() => {
+                            setPreviewFor(null);
                             setRejectFor(row);
                             setRejectReason('');
                           }}
@@ -300,7 +313,10 @@ const HrTimesheetsPage = () => {
 
       <Modal
         isOpen={!!rejectFor}
-        onClose={() => setRejectFor(null)}
+        onClose={() => {
+          setRejectFor(null);
+          setRejectReason('');
+        }}
         title="Reject Timesheet Week"
       >
         <div className="space-y-3">
@@ -314,7 +330,14 @@ const HrTimesheetsPage = () => {
             <Button type="button" variant="primary" onClick={() => void handleReject()}>
               Confirm Reject
             </Button>
-            <Button type="button" variant="outline" onClick={() => setRejectFor(null)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setRejectFor(null);
+                setRejectReason('');
+              }}
+            >
               Cancel
             </Button>
           </div>
@@ -322,13 +345,12 @@ const HrTimesheetsPage = () => {
       </Modal>
       <TimesheetBatchPreviewModal
         batch={previewFor}
-        employeeLabel={
-          previewFor ? orgLabels.get(previewFor.employeeId) ?? previewFor.employeeId.slice(0, 8) : ''
-        }
+        employeeLabel={previewFor ? employeeLabel(previewFor) : ''}
         busy={busyId === previewFor?.id}
         onClose={() => setPreviewFor(null)}
         onApprove={(id) => void handleApprove(id)}
         onReject={(batch) => {
+          setPreviewFor(null);
           setRejectFor(batch);
           setRejectReason('');
         }}

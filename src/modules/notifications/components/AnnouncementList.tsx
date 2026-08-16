@@ -45,11 +45,10 @@ const AnnouncementList = ({ announcements, deptNameById, loading }: Announcement
                 <div className="mt-2">
                   <a
                     href={announcement.documentReadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    download
                     className="text-sm text-primary-600 hover:underline dark:text-primary-400"
                   >
-                    View attachment
+                    Download attachment
                   </a>
                 </div>
               )}

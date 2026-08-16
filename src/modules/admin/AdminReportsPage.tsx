@@ -303,10 +303,10 @@ const AdminReportsPage = () => {
   };
 
   const handleGenerateReport = () => {
-    if (!data || dateRangeError || reportCompletenessWarning) return;
+    if (!data || dateRangeError) return;
     if (reportType === 'attendance') {
       downloadCsv(`attendance-report-${filters.startDate || 'all'}-to-${filters.endDate || 'all'}.csv`, [
-        ['Employee', 'Employee Id', 'Work Date', 'Status', 'Check In', 'Check Out'],
+        ['Employee', 'Employee ID', 'Work Date', 'Status', 'Check In', 'Check Out'],
         ...filteredAttendance.map((row) => [
           employeeLabelById[row.employeeId] ?? row.employeeId,
           row.employeeId,
@@ -510,7 +510,7 @@ const AdminReportsPage = () => {
 
         <div className="mt-4">
           <Button
-            disabled={loading || !data || Boolean(dateRangeError) || Boolean(reportCompletenessWarning)}
+            disabled={loading || !data || Boolean(dateRangeError)}
             onClick={handleGenerateReport}
           >
             Generate Report

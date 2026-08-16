@@ -7,10 +7,7 @@ import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useAuth } from '../../../contexts/AuthContext';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
-import {
-  UpdateEmployeeDocument,
-  type UpdateEmployeeInput,
-} from '../../../api/graphql/graphql';
+import { type UpdateEmployeeInput } from '../../../api/graphql/graphql';
 import {
   buildDepartmentOptions,
   buildDesignationOptions,
@@ -82,6 +79,23 @@ const ProvisionEmployeeLoginDocument = `
 const ResetEmployeePasswordDocument = `
   mutation ResetEmployeePassword($input: ResetEmployeePasswordInput!) {
     resetEmployeePassword(input: $input)
+  }
+`;
+
+const UpdateEmployeeWithLoginEmailDocument = `
+  mutation UpdateEmployee($input: UpdateEmployeeInput!) {
+    updateEmployee(input: $input) {
+      id
+      employeeCode
+      fullName
+      status
+      dateOfJoining
+      departmentId
+      designationId
+      employmentType
+      reportingManagerId
+      linkedUserEmail
+    }
   }
 `;
 
@@ -276,7 +290,10 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         input.designationId = designationId;
       }
       input.reportingManagerId = reportingManagerId || null;
-      await client.request(UpdateEmployeeDocument, { input: input as UpdateEmployeeInput });
+      if (canManageLoginAccounts && employee.userId && accountEmail.trim() !== (employee.linkedUserEmail ?? '')) {
+        input.linkedUserEmail = accountEmail.trim();
+      }
+      await client.request(UpdateEmployeeWithLoginEmailDocument, { input: input as UpdateEmployeeInput });
       onUpdated();
       onClose();
     } catch (err) {
@@ -358,6 +375,17 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           )}
           {canManageLoginAccounts ? (
           <div className="mt-3 space-y-3">
+            {employee.userId && (
+              <Input
+                label="Login Email"
+                type="email"
+                value={accountEmail}
+                onChange={(e) => setAccountEmail(e.target.value)}
+                fullWidth
+                autoComplete="off"
+                placeholder="optional"
+              />
+            )}
             {!employee.userId && (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <Input

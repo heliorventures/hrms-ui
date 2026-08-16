@@ -2,6 +2,7 @@ import { parseIsoDate, toIsoDate } from '../../utils/calendarRange';
 import { timesheetWeekRangeIso } from '../../utils/timesheetWeek';
 
 export const MAX_TIMESHEET_ENTRY_HOURS = 24;
+export const MAX_TIMESHEET_WEEK_HOURS = 40;
 const DECIMAL_HOURS_PATTERN = /^(?:\d+|\d+\.\d+|\.\d+)$/;
 
 export const statusUpper = (status: string) => status.trim().toUpperCase();
@@ -32,7 +33,7 @@ export const timesheetEntryCanEdit = (
   if (weekMondayOfWorkDateIso(workDate) < earliestMonday) return false;
   const normalized = statusUpper(status);
   if (normalized === 'DRAFT') return true;
-  return !lockApprovedEntries && (normalized === 'SUBMITTED' || normalized === 'APPROVED');
+  return !lockApprovedEntries && normalized === 'APPROVED';
 };
 
 export const timesheetEntryEditDisabledReason = (
@@ -46,10 +47,13 @@ export const timesheetEntryEditDisabledReason = (
   }
   const normalized = statusUpper(status);
   if (normalized === 'DRAFT') return 'Edit Entry';
-  if ((normalized === 'SUBMITTED' || normalized === 'APPROVED') && !lockApprovedEntries) {
+  if (normalized === 'APPROVED' && !lockApprovedEntries) {
     return 'Edit Entry';
   }
-  if (normalized === 'SUBMITTED' || normalized === 'APPROVED') {
+  if (normalized === 'SUBMITTED') {
+    return 'SUBMITTED entries are locked until the approver rejects the week';
+  }
+  if (normalized === 'APPROVED') {
     return `${normalized} entries are locked by the tenant policy`;
   }
   return `${normalized || 'This'} entry cannot be edited`;
@@ -81,8 +85,19 @@ export const validateTimesheetEntryHours = (hours: string): string | null => {
   return null;
 };
 
+export const validateTimesheetDayHours = (hours: number): string | null => {
+  if (!Number.isFinite(hours) || hours < 0) return 'Daily timesheet total is invalid.';
+  if (hours > MAX_TIMESHEET_ENTRY_HOURS) {
+    return `Daily timesheet total cannot exceed ${MAX_TIMESHEET_ENTRY_HOURS} hours.`;
+  }
+  return null;
+};
+
 export const validateTimesheetWeekHours = (hours: number): string | null => {
   if (!Number.isFinite(hours) || hours < 0) return 'Weekly timesheet total is invalid.';
+  if (hours > MAX_TIMESHEET_WEEK_HOURS) {
+    return `Weekly timesheet total cannot exceed ${MAX_TIMESHEET_WEEK_HOURS} hours.`;
+  }
   return null;
 };
 

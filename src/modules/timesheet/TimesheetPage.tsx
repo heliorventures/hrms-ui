@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Modal from '../../components/common/Modal';
+import FlashToastBar from '../../components/common/FlashToastBar';
+import { useDialogs } from '../../contexts/DialogContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { useFlashToast } from '../../hooks/useFlashToast';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   DeleteTimesheetEntryDocument,
@@ -37,6 +40,8 @@ const DEFAULT_LOCK_WEEKS = 4;
 
 const TimesheetPage = () => {
   const client = useGraphClient('client');
+  const { confirm } = useDialogs();
+  const { flash, show: showFlash, clear: clearFlash } = useFlashToast();
   const [entries, setEntries] = useState<EntryRow[]>([]);
   const [lockWeeks, setLockWeeks] = useState(DEFAULT_LOCK_WEEKS);
   const [lockApproved, setLockApproved] = useState(true);
@@ -182,6 +187,16 @@ const TimesheetPage = () => {
     return result;
   }, [filtered]);
 
+  const lockedWeekStarts = useMemo(() => {
+    const result = new Set<string>();
+    for (const entry of entries) {
+      if (timesheetEntryLocksDay(entry.status)) {
+        result.add(weekMondayOfWorkDateIso(entry.workDate));
+      }
+    }
+    return result;
+  }, [entries]);
+
   const calendarWeeks = useMemo(() => {
     if (periodMode === 'week') return buildWeekRowCells(displayBounds.start);
     if (periodMode === 'month') return buildMonthGridCells(displayBounds.start, displayBounds.end);
@@ -191,6 +206,13 @@ const TimesheetPage = () => {
   const weekSubmitMonday =
     periodMode === 'week' ? displayBounds.start : timesheetWeekRangeIso(new Date()).start;
   const submitWeekEditable = weekSubmitMonday >= earliestMonday;
+  const activeWeekLocked = lockedWeekStarts.has(weekSubmitMonday);
+  const addEntryDisabledReason = activeWeekLocked
+    ? 'This week is already submitted. Ask the approver to reject it before adding entries.'
+    : null;
+  const submitDisabledReason = activeWeekLocked
+    ? 'This week is already submitted. Ask the approver to reject it before resubmitting.'
+    : null;
   const allowedMinIsoForm = displayBounds.start >= earliestMonday ? displayBounds.start : earliestMonday;
   const todayIso = toIsoDate(new Date());
 
@@ -202,13 +224,19 @@ const TimesheetPage = () => {
         iso >= allowedMinIsoForm &&
         iso <= displayBounds.end &&
         weekMondayOfWorkDateIso(iso) >= earliestMonday &&
+        !lockedWeekStarts.has(weekMondayOfWorkDateIso(iso)) &&
         !dayRows.some((row) => timesheetEntryLocksDay(row.status))
       );
     },
-    [allowedMinIsoForm, customRangeError, displayBounds.end, earliestMonday, entriesByDate]
+    [allowedMinIsoForm, customRangeError, displayBounds.end, earliestMonday, entriesByDate, lockedWeekStarts]
   );
 
   const openNewEntry = (datePreset: string | null = null) => {
+    const targetDate = datePreset ?? todayIso;
+    if (lockedWeekStarts.has(weekMondayOfWorkDateIso(targetDate))) {
+      setError('This week is already submitted. Ask the approver to reject it before adding entries.');
+      return;
+    }
     setEditing(null);
     setAddDatePreset(datePreset);
     setFormOpen(true);
@@ -216,6 +244,13 @@ const TimesheetPage = () => {
 
   const handleDelete = async (row: EntryRow) => {
     if (!timesheetEntryCanDelete(row.status)) return;
+    const ok = await confirm({
+      title: 'Delete Timesheet Entry',
+      message: `Delete the ${row.hoursWorked}h entry for ${row.workDate}?`,
+      confirmLabel: 'Delete Entry',
+      variant: 'danger',
+    });
+    if (!ok) return;
     setDeleteBusyId(row.id);
     setError(null);
     try {
@@ -250,11 +285,16 @@ const TimesheetPage = () => {
       setError(weekValidationError);
       return;
     }
+    if (activeWeekLocked) {
+      setError('This week is already submitted. Ask the approver to reject it before resubmitting.');
+      return;
+    }
     setSubmitBusy(true);
     setError(null);
     try {
       await client.request(SubmitTimesheetWeekDocument, { weekStartDate: weekSubmitMonday });
       await refresh();
+      showFlash('Timesheet submitted successfully.', 'success');
     } catch (err) {
       setError(graphQlUserMessage(err));
     } finally {
@@ -326,9 +366,11 @@ const TimesheetPage = () => {
         periodSummary={periodSummary}
         sortedCount={sorted.length}
         actionsDisabled={Boolean(customRangeError)}
+        addEntryDisabledReason={addEntryDisabledReason}
         rangeError={customRangeError}
         submitBusy={submitBusy}
-        submitWeekEditable={submitWeekEditable}
+        submitDisabledReason={submitDisabledReason}
+        submitWeekEditable={submitWeekEditable && !activeWeekLocked}
         weekSubmitMonday={weekSubmitMonday}
         onAddEntry={() => openNewEntry()}
         onCustomEndChange={setCustomEnd}
@@ -403,8 +445,10 @@ const TimesheetPage = () => {
             setAddDatePreset(null);
           }}
           onSaved={() => void refresh()}
+          existingEntries={entries}
         />
       </Modal>
+      <FlashToastBar toast={flash} onDismiss={clearFlash} />
     </div>
   );
 };

@@ -56,6 +56,7 @@ const emptySession = (): ParsedClientSession => ({
   jwtRoles: [],
   permissions: new Set(),
   resourceScopes: {},
+  employeeId: undefined,
   persona: 'EMPLOYEE',
   mustChangePassword: false,
 });
@@ -119,7 +120,11 @@ function devRoleSwitchEnabled(): boolean {
 }
 
 /** User shape from client JWT claims when no separate profile API has run yet. */
-function userFromClientTokenPair(pair: TokenPair, role: UserRole): User {
+function userFromClientTokenPair(
+  pair: TokenPair,
+  role: UserRole,
+  employeeId?: string
+): User {
   const displayName = pair.username ?? pair.email;
   return {
     id: pair.userId,
@@ -127,7 +132,7 @@ function userFromClientTokenPair(pair: TokenPair, role: UserRole): User {
     name: displayName.split('@')[0],
     email: pair.email,
     role,
-    employeeId: '',
+    employeeId: employeeId ?? '',
     department: '',
     designation: '',
     joiningDate: '',
@@ -193,7 +198,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const session = parseClientAccessToken(pair.access) ?? emptySession();
     setClientSession(session);
     const legacyRole = personaToLegacyUserRole(session.persona);
-    const u = userFromClientTokenPair(pair, legacyRole);
+    const u = userFromClientTokenPair(pair, legacyRole, session.employeeId);
     setUser(u);
     setRole(legacyRole);
     setTenantId(pair.tenantId ?? null);
@@ -256,7 +261,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [applyTokens, clearClientState]);
 
-  // Silent refresh on mount: restore client and/or operator sessions independently.
+  // Startup restore: operator sessions may restore silently, but tenant/client sessions must
+  // pass the login captcha after a fresh app load.
   useEffect(() => {
     const operatorRefresh = getOperatorRefreshToken();
     const expectedTenantId =
@@ -271,13 +277,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           (async () => {
             if (!expectedTenantId || cancelled) return;
             clearLegacyClientRefreshToken();
-            const clientRefresh = getClientRefreshToken(expectedTenantId);
-            if (!clientRefresh) return;
-            if (!sessionMatchesTenant(refreshTokenTenantId(clientRefresh), expectedTenantId)) {
-              clearClientSession(expectedTenantId);
-              return;
-            }
-            await refreshClientSession(expectedTenantId);
+            clearClientSession(expectedTenantId);
           })(),
           (async () => {
             if (!operatorRefresh) return;

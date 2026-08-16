@@ -51,10 +51,14 @@ const TimesheetCalendarCard = ({
   <Card title={`Calendar - ${sortedCount} entr${sortedCount === 1 ? 'y' : 'ies'} - ${totalHours.toFixed(2)} h in view`}>
     {loading ? (
       <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
-    ) : error ? (
-      <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
     ) : (
-      <div className="overflow-x-auto">
+      <>
+        {error ? (
+          <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+            {error}
+          </p>
+        ) : null}
+        <div className="overflow-x-auto">
         <div className="min-w-[720px] space-y-2">
           <div className="grid grid-cols-7 gap-1.5">
             {WEEKDAY_HEADERS.map((header) => (
@@ -175,7 +179,8 @@ const TimesheetCalendarCard = ({
             </p>
           )}
         </div>
-      </div>
+        </div>
+      </>
     )}
   </Card>
 );

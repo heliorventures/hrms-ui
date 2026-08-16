@@ -59,11 +59,6 @@ const TravelRequestsTable = ({
               row.estimatedAmount ? formatCurrency(row.estimatedAmount, row.currency) : '-',
           },
           {
-            key: 'workflow',
-            label: 'Approval',
-            render: (row) => row.pendingApprovalStage || row.status || '-',
-          },
-          {
             key: 'status',
             label: 'Status',
             render: (row) => (

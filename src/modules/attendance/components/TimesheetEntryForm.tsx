@@ -13,7 +13,13 @@ import {
 } from '../../../api/graphql/graphql';
 import { clampIsoDateToRange } from '../../../utils/timesheetWeek';
 import { encodeTimesheetDescription, decodeTimesheetDescription } from '../../../utils/timesheetDescription';
-import { validateTimesheetEntryHours } from '../../timesheet/timesheetRules';
+import {
+  parseTimesheetHours,
+  validateTimesheetDayHours,
+  validateTimesheetEntryHours,
+  validateTimesheetWeekHours,
+  weekMondayOfWorkDateIso,
+} from '../../timesheet/timesheetRules';
 
 export interface TimesheetEntryFormProps {
   onClose: () => void;
@@ -31,6 +37,11 @@ export interface TimesheetEntryFormProps {
     projectCode?: string | null;
     description?: string | null;
   };
+  existingEntries?: Array<{
+    id: string;
+    workDate: string;
+    hoursWorked: string;
+  }>;
 }
 
 function localTodayIso(): string {
@@ -48,6 +59,7 @@ const TimesheetEntryForm = ({
   allowedMaxIso,
   initialWorkDateIso,
   editing,
+  existingEntries = [],
 }: TimesheetEntryFormProps) => {
   const client = useGraphClient('client');
   const defaultWorkDate = clampIsoDateToRange(
@@ -112,12 +124,12 @@ const TimesheetEntryForm = ({
 
   const projectOptions = useMemo(() => {
     const opts = projects.map((p) => ({ value: p.code, label: `${p.code} — ${p.name}` }));
-    return [{ value: '', label: loadingCatalog ? 'Loading Projects...' : '- Optional -' }, ...opts];
+    return [{ value: '', label: loadingCatalog ? 'Loading Projects...' : 'Select Project' }, ...opts];
   }, [projects, loadingCatalog]);
 
   const taskOptions = useMemo(() => {
     const opts = tasks.map((t) => ({ value: t, label: t }));
-    return [{ value: '', label: tasks.length ? '- Task -' : 'No Tasks (Configure In Admin)' }, ...opts];
+    return [{ value: '', label: tasks.length ? 'Select Task Type' : 'No Tasks (Configure In Admin)' }, ...opts];
   }, [tasks]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -127,6 +139,32 @@ const TimesheetEntryForm = ({
     const hoursError = validateTimesheetEntryHours(hoursWorked);
     if (hoursError) {
       setFormError(hoursError);
+      return;
+    }
+    if (!projectCode.trim()) {
+      setFormError('Project is required.');
+      return;
+    }
+    if (!taskCode.trim()) {
+      setFormError('Task Type is required.');
+      return;
+    }
+    const enteredHours = parseTimesheetHours(hoursWorked);
+    const existingDayHours = existingEntries
+      .filter((entry) => entry.workDate === wd && entry.id !== editing?.id)
+      .reduce((total, entry) => total + (parseTimesheetHours(entry.hoursWorked) || 0), 0);
+    const dayHoursError = validateTimesheetDayHours(existingDayHours + enteredHours);
+    if (dayHoursError) {
+      setFormError(dayHoursError);
+      return;
+    }
+    const weekStart = weekMondayOfWorkDateIso(wd);
+    const existingWeekHours = existingEntries
+      .filter((entry) => weekMondayOfWorkDateIso(entry.workDate) === weekStart && entry.id !== editing?.id)
+      .reduce((total, entry) => total + (parseTimesheetHours(entry.hoursWorked) || 0), 0);
+    const weekHoursError = validateTimesheetWeekHours(existingWeekHours + enteredHours);
+    if (weekHoursError) {
+      setFormError(weekHoursError);
       return;
     }
     setSubmitting(true);
@@ -189,9 +227,13 @@ const TimesheetEntryForm = ({
         <Select
           label="Project"
           value={projectCode}
-          onChange={(e) => setProjectCode(e.target.value)}
+          onChange={(e) => {
+            setProjectCode(e.target.value);
+            setTaskCode('');
+          }}
           options={projectOptions}
           fullWidth
+          required
         />
 
         <Select
@@ -201,6 +243,7 @@ const TimesheetEntryForm = ({
           options={taskOptions}
           fullWidth
           disabled={!projectCode.trim()}
+          required
         />
 
         <div>

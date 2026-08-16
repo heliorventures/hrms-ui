@@ -12,8 +12,10 @@ interface TimesheetControlsCardProps {
   periodSummary: string;
   sortedCount: number;
   actionsDisabled?: boolean;
+  addEntryDisabledReason?: string | null;
   rangeError?: string | null;
   submitBusy: boolean;
+  submitDisabledReason?: string | null;
   submitWeekEditable: boolean;
   weekSubmitMonday: string;
   onAddEntry: () => void;
@@ -37,8 +39,10 @@ const TimesheetControlsCard = ({
   periodSummary,
   sortedCount,
   actionsDisabled = false,
+  addEntryDisabledReason = null,
   rangeError = null,
   submitBusy,
+  submitDisabledReason = null,
   submitWeekEditable,
   weekSubmitMonday,
   onAddEntry,
@@ -76,7 +80,7 @@ const TimesheetControlsCard = ({
             value={periodMode}
             onChange={(event) => onModeChange(event.target.value as PeriodMode)}
           >
-            <option value="week">Current Week (Mon-Sun)</option>
+            <option value="week">Weekly View (Mon-Sun)</option>
             <option value="month">Calendar Month</option>
             <option value="custom">Custom Dates</option>
           </select>
@@ -114,7 +118,13 @@ const TimesheetControlsCard = ({
         )}
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="primary" type="button" onClick={onAddEntry} disabled={actionsDisabled}>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={onAddEntry}
+            disabled={actionsDisabled || Boolean(addEntryDisabledReason)}
+            title={addEntryDisabledReason ?? undefined}
+          >
             Add Entry
           </Button>
           <Button variant="outline" type="button" onClick={onRefresh}>
@@ -147,7 +157,7 @@ const TimesheetControlsCard = ({
           </Button>
           {!submitWeekEditable && (
             <span className="text-xs text-amber-700 dark:text-amber-300">
-              This week is outside the editable window configured by HR.
+              {submitDisabledReason ?? 'This week is outside the editable window configured by HR.'}
             </span>
           )}
         </div>

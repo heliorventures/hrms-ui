@@ -2,7 +2,9 @@
  * Dual-plane tokens for the tenant app and operator portal.
  *
  * Access tokens stay in memory only.
- * Refresh tokens are persisted so the UI can silently refresh after reload.
+ * Refresh tokens are persisted for active in-app refresh only.
+ * The tenant app intentionally does not silently restore a client session after reload because
+ * login must pass the captcha gate again.
  *
  * A future hardening step is to replace localStorage with httpOnly cookies.
  */
