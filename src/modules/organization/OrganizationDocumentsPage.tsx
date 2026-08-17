@@ -1,10 +1,73 @@
-import { useEffect, useMemo, useState } from 'react';
-import Card from '../../components/common/Card';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import Input from '../../components/common/Input';
+import Select from '../../components/common/Select';
 import Table from '../../components/common/Table';
+import { PERMISSIONS } from '../../auth/permissions';
+import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { OrgDocumentsListDocument } from '../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import { uploadTenantFile, validateTenantUploadFile } from '../../utils/tenantFileUpload';
+import {
+  CompanyDocumentAttachmentDocument,
+  companyDocumentObjectUrl,
+  type CompanyDocumentAttachmentResponse,
+} from './companyDocumentAttachment';
+
+const OrgDocumentsListDocument = `
+  query OrgDocumentsList($tlim: Int! = 50, $dlim: Int! = 50) {
+    companyDocuments(limit: 100) {
+      id
+      category
+      title
+      description
+      fileStorageId
+      originalFileName
+      mimeType
+      fileSizeBytes
+      status
+      visibleToEmployees
+      uploadedByUserId
+      createdAt
+      updatedAt
+    }
+    documentTypes(limit: $tlim) {
+      id
+      name
+      category
+      isRequired
+    }
+    employeeDocuments(limit: $dlim) {
+      id
+      documentTypeId
+      status
+      uploadedAt
+      expiryDate
+    }
+  }
+`;
+
+const CreateCompanyDocumentDocument = `
+  mutation CreateCompanyDocument($input: CreateCompanyDocumentInput!) {
+    createCompanyDocument(input: $input) {
+      id
+    }
+  }
+`;
+
+const DeleteCompanyDocumentDocument = `
+  mutation DeleteCompanyDocument($companyDocumentId: ID!) {
+    deleteCompanyDocument(companyDocumentId: $companyDocumentId)
+  }
+`;
+
+const COMPANY_DOCUMENT_CATEGORIES = [
+  { value: 'COMPANY_POLICY', label: 'Company Policy' },
+  { value: 'ONBOARDING', label: 'Onboarding' },
+  { value: 'EXIT_FORMALITY', label: 'Exit Formality' },
+] as const;
 
 interface DocumentTypeRow {
   id: string;
@@ -21,50 +84,190 @@ interface EmployeeDocumentRow {
   expiryDate?: string | null;
 }
 
+interface CompanyDocumentRow {
+  id: string;
+  category: string;
+  title: string;
+  description?: string | null;
+  fileStorageId: string;
+  originalFileName?: string | null;
+  mimeType?: string | null;
+  fileSizeBytes?: number | null;
+  status: string;
+  visibleToEmployees: boolean;
+  uploadedByUserId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface OrgDocumentsResponse {
+  companyDocuments: CompanyDocumentRow[];
+  documentTypes: DocumentTypeRow[];
+  employeeDocuments: EmployeeDocumentRow[];
+}
+
+interface UploadFormState {
+  category: string;
+  title: string;
+  description: string;
+  visibleToEmployees: boolean;
+  file: File | null;
+}
+
+const initialForm: UploadFormState = {
+  category: 'COMPANY_POLICY',
+  title: '',
+  description: '',
+  visibleToEmployees: true,
+  file: null,
+};
+
+function categoryLabel(category: string): string {
+  return COMPANY_DOCUMENT_CATEGORIES.find((option) => option.value === category)?.label ?? category;
+}
+
+function fileSizeLabel(size?: number | null): string {
+  if (!size || size <= 0) return '—';
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 const OrganizationDocumentsPage = () => {
   const client = useGraphClient('client');
+  const { canAny, hasAnyJwtRole } = useAuth();
+  const canManageCompanyDocuments =
+    canAny([PERMISSIONS.employeeWrite, PERMISSIONS.onboardingManage, PERMISSIONS.roleManage]) ||
+    hasAnyJwtRole(['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN']);
+
+  const [companyDocuments, setCompanyDocuments] = useState<CompanyDocumentRow[]>([]);
   const [types, setTypes] = useState<DocumentTypeRow[]>([]);
-  const [docs, setDocs] = useState<EmployeeDocumentRow[]>([]);
+  const [employeeDocs, setEmployeeDocs] = useState<EmployeeDocumentRow[]>([]);
+  const [form, setForm] = useState<UploadFormState>(initialForm);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const typeName = useMemo(() => Object.fromEntries(types.map((t) => [t.id, t.name])), [types]);
 
+  const loadDocuments = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const response = await client.request<OrgDocumentsResponse>(OrgDocumentsListDocument, {
+      tlim: 50,
+      dlim: 50,
+    });
+    setCompanyDocuments(response.companyDocuments);
+    setTypes(response.documentTypes);
+    setEmployeeDocs(response.employeeDocuments);
+    setLoading(false);
+  }, [client]);
+
   useEffect(() => {
-    let c = false;
+    let cancelled = false;
     (async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const res = await client.request<{
-          documentTypes: DocumentTypeRow[];
-          employeeDocuments: EmployeeDocumentRow[];
-        }>(OrgDocumentsListDocument, { tlim: 50, dlim: 50 });
-        if (!c) {
-          setTypes(res.documentTypes);
-          setDocs(res.employeeDocuments);
-        }
+        await loadDocuments();
       } catch (e) {
-        if (!c) {
-          setError(
-            graphQlUserMessage(e)
-          );
+        if (!cancelled) {
+          setError(graphQlUserMessage(e));
+          setLoading(false);
         }
-      } finally {
-        if (!c) setLoading(false);
       }
     })();
     return () => {
-      c = true;
+      cancelled = true;
     };
-  }, [client]);
+  }, [loadDocuments]);
+
+  const submitCompanyDocument = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canManageCompanyDocuments) return;
+    setError(null);
+    setSuccess(null);
+    const title = form.title.trim();
+    if (!title) {
+      setError('Document title is required.');
+      return;
+    }
+    if (!form.file) {
+      setError('Select a document file to upload.');
+      return;
+    }
+    const validation = validateTenantUploadFile(form.file, 'Company document');
+    if (validation) {
+      setError(validation);
+      return;
+    }
+
+    try {
+      setBusy(true);
+      const fileStorageId = await uploadTenantFile(client, form.file);
+      await client.request(CreateCompanyDocumentDocument, {
+        input: {
+          category: form.category,
+          title,
+          description: form.description.trim() || null,
+          fileStorageId,
+          visibleToEmployees: form.visibleToEmployees,
+        },
+      });
+      setForm(initialForm);
+      await loadDocuments();
+      setSuccess('Company document uploaded successfully.');
+    } catch (e) {
+      setError(graphQlUserMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const downloadCompanyDocument = async (document: CompanyDocumentRow) => {
+    try {
+      setError(null);
+      const result = await client.request<CompanyDocumentAttachmentResponse>(
+        CompanyDocumentAttachmentDocument,
+        { companyDocumentId: document.id }
+      );
+      const url = companyDocumentObjectUrl(result.companyDocumentAttachment);
+      const anchor = window.document.createElement('a');
+      anchor.href = url;
+      anchor.download =
+        result.companyDocumentAttachment.fileName || document.originalFileName || document.title;
+      window.document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(graphQlUserMessage(e));
+    }
+  };
+
+  const deleteCompanyDocument = async (document: CompanyDocumentRow) => {
+    if (!canManageCompanyDocuments) return;
+    const confirmed = window.confirm(`Delete "${document.title}"? Employees will no longer see it.`);
+    if (!confirmed) return;
+    try {
+      setBusy(true);
+      setError(null);
+      setSuccess(null);
+      await client.request(DeleteCompanyDocumentDocument, { companyDocumentId: document.id });
+      await loadDocuments();
+      setSuccess('Company document removed.');
+    } catch (e) {
+      setError(graphQlUserMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Organization Documents</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Policy types and your uploaded files for this tenant.
+          Company policies, onboarding material, exit-formality files, and your employee documents.
         </p>
       </div>
 
@@ -73,65 +276,220 @@ const OrganizationDocumentsPage = () => {
           <p className="text-sm text-amber-800 dark:text-amber-200">{error}</p>
         </Card>
       )}
+      {success && (
+        <Card>
+          <p className="text-sm text-emerald-700 dark:text-emerald-300">{success}</p>
+        </Card>
+      )}
+
+      {canManageCompanyDocuments && (
+        <Card title="Add Company Document">
+          <form className="space-y-4" onSubmit={(event) => void submitCompanyDocument(event)}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Select
+                fullWidth
+                label="Document Category"
+                options={COMPANY_DOCUMENT_CATEGORIES.map((option) => ({ ...option }))}
+                value={form.category}
+                onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
+              />
+              <Input
+                fullWidth
+                label="Title"
+                maxLength={255}
+                placeholder="Employee handbook, onboarding checklist, exit policy..."
+                value={form.title}
+                onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Description
+              </label>
+              <textarea
+                className="min-h-20 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                placeholder="Optional description shown to employees"
+                value={form.description}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, description: event.target.value }))
+                }
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto] md:items-end">
+              <Input
+                fullWidth
+                label="Document File"
+                type="file"
+                accept="application/pdf,image/jpeg,image/png"
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, file: event.target.files?.[0] ?? null }))
+                }
+              />
+              <label className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">
+                <input
+                  checked={form.visibleToEmployees}
+                  type="checkbox"
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      visibleToEmployees: event.target.checked,
+                    }))
+                  }
+                />
+                Visible to employees
+              </label>
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" disabled={busy}>
+                {busy ? 'Saving...' : 'Upload Document'}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      <Card title="Company Document Library">
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        ) : companyDocuments.length ? (
+          <Table
+            data={companyDocuments}
+            keyExtractor={(document) => document.id}
+            columns={[
+              {
+                key: 'title',
+                label: 'Document',
+                render: (document: CompanyDocumentRow) => (
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{document.title}</p>
+                    {document.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {document.description}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {document.originalFileName ?? 'Document'} · {fileSizeLabel(document.fileSizeBytes)}
+                    </p>
+                  </div>
+                ),
+              },
+              {
+                key: 'category',
+                label: 'Category',
+                render: (document: CompanyDocumentRow) => categoryLabel(document.category),
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (document: CompanyDocumentRow) => (
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant={document.status === 'ACTIVE' ? 'success' : 'warning'}>
+                      {document.status}
+                    </Badge>
+                    {!document.visibleToEmployees && <Badge variant="info">Hidden</Badge>}
+                  </div>
+                ),
+              },
+              {
+                key: 'updatedAt',
+                label: 'Updated',
+                render: (document: CompanyDocumentRow) =>
+                  new Date(document.updatedAt).toLocaleString('en-IN'),
+              },
+              {
+                key: 'actions',
+                label: 'Actions',
+                render: (document: CompanyDocumentRow) => (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void downloadCompanyDocument(document)}
+                    >
+                      Download
+                    </Button>
+                    {canManageCompanyDocuments && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        disabled={busy}
+                        onClick={() => void deleteCompanyDocument(document)}
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+          />
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No company documents have been published yet.
+          </p>
+        )}
+      </Card>
 
       <Card title="Document Types">
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         ) : types.length ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {types.map((t) => (
+            {types.map((type) => (
               <div
-                key={t.id}
+                key={type.id}
                 className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-medium text-gray-900 dark:text-white">{t.name}</h3>
-                  {t.isRequired && <Badge variant="warning">Required</Badge>}
+                  <h3 className="font-medium text-gray-900 dark:text-white">{type.name}</h3>
+                  {type.isRequired && <Badge variant="warning">Required</Badge>}
                 </div>
-                {t.category && (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t.category}</p>
+                {type.category && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{type.category}</p>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No Document Types Configured.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No document types configured.</p>
         )}
       </Card>
 
       <Card title="Your Documents">
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
-        ) : docs.length ? (
+        ) : employeeDocs.length ? (
           <Table
-            data={docs}
-            keyExtractor={(r) => r.id}
+            data={employeeDocs}
+            keyExtractor={(document) => document.id}
             columns={[
               {
                 key: 'name',
                 label: 'Type',
-                render: (r: EmployeeDocumentRow) => typeName[r.documentTypeId] ?? r.documentTypeId,
+                render: (document: EmployeeDocumentRow) =>
+                  typeName[document.documentTypeId] ?? document.documentTypeId,
               },
               {
                 key: 'status',
                 label: 'Status',
-                render: (r: EmployeeDocumentRow) => <Badge variant="info">{r.status}</Badge>,
+                render: (document: EmployeeDocumentRow) => <Badge variant="info">{document.status}</Badge>,
               },
               {
                 key: 'uploadedAt',
                 label: 'Uploaded',
-                render: (r: EmployeeDocumentRow) => new Date(r.uploadedAt).toLocaleString('en-IN'),
+                render: (document: EmployeeDocumentRow) =>
+                  new Date(document.uploadedAt).toLocaleString('en-IN'),
               },
               {
                 key: 'expiryDate',
                 label: 'Expires',
-                render: (r: EmployeeDocumentRow) =>
-                  r.expiryDate ? new Date(r.expiryDate).toLocaleDateString('en-IN') : '—',
+                render: (document: EmployeeDocumentRow) =>
+                  document.expiryDate ? new Date(document.expiryDate).toLocaleDateString('en-IN') : '—',
               },
             ]}
           />
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No Documents Uploaded Yet.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No documents uploaded yet.</p>
         )}
       </Card>
     </div>

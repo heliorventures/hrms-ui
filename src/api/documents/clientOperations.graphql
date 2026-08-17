@@ -178,6 +178,21 @@ query TaxProofLines($employeeId: ID, $taxConfigVersionId: ID, $fiscalYear: Int) 
 }
 
 query OrgDocumentsList($tlim: Int! = 50, $dlim: Int! = 50) {
+  companyDocuments(limit: 100) {
+    id
+    category
+    title
+    description
+    fileStorageId
+    originalFileName
+    mimeType
+    fileSizeBytes
+    status
+    visibleToEmployees
+    uploadedByUserId
+    createdAt
+    updatedAt
+  }
   documentTypes(limit: $tlim) {
     id
     name
@@ -786,6 +801,15 @@ mutation UpdateEmployee($input: UpdateEmployeeInput!) {
   }
 }
 
+query CompanyDocumentAttachment($companyDocumentId: ID!) {
+  companyDocumentAttachment(companyDocumentId: $companyDocumentId) {
+    fileName
+    mimeType
+    fileSizeBytes
+    contentBase64
+  }
+}
+
 mutation UpdateEmployeePersonalProfile($input: UpdateEmployeePersonalProfileInput!) {
   updateEmployeePersonalProfile(input: $input) {
     id
@@ -1051,6 +1075,28 @@ query TenantFileAttachment($fileStorageId: ID!) {
     fileSizeBytes
     contentBase64
   }
+}
+
+mutation CreateCompanyDocument($input: CreateCompanyDocumentInput!) {
+  createCompanyDocument(input: $input) {
+    id
+    category
+    title
+    description
+    fileStorageId
+    originalFileName
+    mimeType
+    fileSizeBytes
+    status
+    visibleToEmployees
+    uploadedByUserId
+    createdAt
+    updatedAt
+  }
+}
+
+mutation DeleteCompanyDocument($companyDocumentId: ID!) {
+  deleteCompanyDocument(companyDocumentId: $companyDocumentId)
 }
 
 mutation ResolveEmployeeDocument($employeeDocumentId: ID!, $approved: Boolean!) {
