@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { GraphQLError } from 'graphql';
 import { ClientError } from 'graphql-request';
+import { describe, expect, it } from 'vitest';
 
 import { graphQlUserMessage } from './graphqlUserMessage';
 
@@ -56,10 +57,9 @@ describe('graphQlUserMessage', () => {
     const err = new ClientError(
       {
         errors: [
-          {
-            message: 'validation error: weekly timesheet hours cannot exceed 40 hours',
+          new GraphQLError('validation error: weekly timesheet hours cannot exceed 40 hours', {
             extensions: { code: 'VALIDATION_ERROR' },
-          },
+          }),
         ],
         status: 400,
         headers: new Headers(),
@@ -76,11 +76,10 @@ describe('graphQlUserMessage', () => {
     const err = new ClientError(
       {
         errors: [
-          {
-            message:
-              'validation error: approved or submitted timesheet rows cannot be edited - reject the week submission first',
-            extensions: { code: 'VALIDATION_ERROR' },
-          },
+          new GraphQLError(
+            'validation error: approved or submitted timesheet rows cannot be edited - reject the week submission first',
+            { extensions: { code: 'VALIDATION_ERROR' } }
+          ),
         ],
         status: 400,
         headers: new Headers(),
@@ -97,10 +96,10 @@ describe('graphQlUserMessage', () => {
     const err = new ClientError(
       {
         errors: [
-          {
-            message: 'validation error: manual attendance overlaps with an existing segment for this day',
-            extensions: { code: 'VALIDATION_ERROR' },
-          },
+          new GraphQLError(
+            'validation error: manual attendance overlaps with an existing segment for this day',
+            { extensions: { code: 'VALIDATION_ERROR' } }
+          ),
         ],
         status: 400,
         headers: new Headers(),
@@ -117,11 +116,10 @@ describe('graphQlUserMessage', () => {
     const err = new ClientError(
       {
         errors: [
-          {
-            message:
-              'forbidden: manual attendance is limited to the last 14 calendar days unless you hold attendance regularization permission',
-            extensions: { code: 'FORBIDDEN' },
-          },
+          new GraphQLError(
+            'forbidden: manual attendance is limited to the last 14 calendar days unless you hold attendance regularization permission',
+            { extensions: { code: 'FORBIDDEN' } }
+          ),
         ],
         status: 403,
         headers: new Headers(),

@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { User, UserRole } from '../types';
+
 import {
   AuthError,
   loginClient,
@@ -25,6 +25,12 @@ import {
   type ClientPersona,
   type ParsedClientSession,
 } from '../auth/clientSession';
+import { endExpiredClientSession } from '../auth/sessionExpiry';
+import {
+  claimClientSessionBootstrap,
+  refreshTokenTenantId,
+  sessionMatchesTenant,
+} from '../auth/tenantSession';
 import {
   clearClientSession,
   clearLegacyClientRefreshToken,
@@ -36,10 +42,11 @@ import {
   setOperatorAccessToken,
   setOperatorRefreshToken,
 } from '../auth/tokenStore';
-import { refreshTokenTenantId, sessionMatchesTenant } from '../auth/tenantSession';
 import { getAppConfig } from '../config';
-import { useTenant } from './TenantContext';
+import type { User, UserRole } from '../types';
 import { graphQlUserMessage } from '../utils/graphqlUserMessage';
+
+import { useTenant } from './TenantContext';
 
 export interface OpsUser {
   id: string;
@@ -99,6 +106,7 @@ interface AuthContextType {
   switchRole: (role: UserRole) => void;
   login: (username: string, password: string, opts?: LoginOptions) => Promise<void>;
   loginOps: (email: string, password: string) => Promise<void>;
+  expireClientSession: () => void;
   logout: () => Promise<void>;
   logoutOps: () => Promise<void>;
 }
@@ -160,10 +168,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const clientRefreshPromiseRef = useRef<{ tenantId: string; promise: Promise<boolean> } | null>(
     null
   );
+  const clientBootstrapTenantRef = useRef<string | null>(null);
 
   const persona = clientSession?.persona ?? 'EMPLOYEE';
   /** Legacy “admin shell” flag for a few non-RBAC UI toggles only (persona + dev role switch). */
-  const isElevated = user != null && user.role !== 'employee';
+  const isElevated = user !== null && user.role !== 'employee';
 
   const can = useCallback(
     (permission: string) => clientSession?.permissions.has(permission) ?? false,
@@ -255,49 +264,44 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       return await refreshAttempt;
     } finally {
-      if (clientRefreshPromiseRef.current?.promise === refreshAttempt) {
+      if (clientRefreshPromiseRef.current.promise === refreshAttempt) {
         clientRefreshPromiseRef.current = null;
       }
     }
   }, [applyTokens, clearClientState]);
 
-  // Startup restore: operator sessions may restore silently, but tenant/client sessions must
-  // pass the login captcha after a fresh app load.
+  // Tenant sessions must pass the login captcha after a fresh app load. Claiming the resolved
+  // tenant keeps StrictMode or later auth-state effect replays from clearing newly issued tokens.
+  useEffect(() => {
+    if (resolutionStatus !== 'resolved' || !currentTenant.id) return;
+    if (!claimClientSessionBootstrap(clientBootstrapTenantRef, currentTenant.id)) return;
+
+    clearLegacyClientRefreshToken();
+    clearClientSession(currentTenant.id);
+  }, [currentTenant.id, resolutionStatus]);
+
+  // Operator sessions restore independently of tenant resolution.
   useEffect(() => {
     const operatorRefresh = getOperatorRefreshToken();
-    const expectedTenantId =
-      resolutionStatus === 'resolved' && currentTenant.id ? currentTenant.id : null;
-    if (!expectedTenantId && !operatorRefresh) return;
+    if (!operatorRefresh) return;
 
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        await Promise.all([
-          (async () => {
-            if (!expectedTenantId || cancelled) return;
-            clearLegacyClientRefreshToken();
-            clearClientSession(expectedTenantId);
-          })(),
-          (async () => {
-            if (!operatorRefresh) return;
-            try {
-              const pair = await refreshOps(operatorRefresh);
-              if (!cancelled) applyOpsTokens(pair);
-            } catch {
-              if (!cancelled) clearOperatorSession();
-            }
-          })(),
-        ]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+    const controller = new AbortController();
+    setLoading(true);
+    void refreshOps(operatorRefresh)
+      .then((pair) => {
+        if (!controller.signal.aborted) applyOpsTokens(pair);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) clearOperatorSession();
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [applyOpsTokens, currentTenant.id, refreshClientSession, resolutionStatus]);
+  }, [applyOpsTokens]);
 
   useEffect(() => {
     if (
@@ -395,6 +399,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     [applyOpsTokens]
   );
 
+  const expireClientSession = useCallback(() => {
+    endExpiredClientSession(tenantId, clearClientState, setError);
+  }, [clearClientState, tenantId]);
+
   const logout = useCallback(async () => {
     const authenticatedTenantId = tenantId;
     const refresh = authenticatedTenantId ? getClientRefreshToken(authenticatedTenantId) : null;
@@ -450,6 +458,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       switchRole,
       login,
       loginOps: loginOpsHandler,
+      expireClientSession,
       logout,
       logoutOps,
     }),
@@ -471,6 +480,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       switchRole,
       login,
       loginOpsHandler,
+      expireClientSession,
       logout,
       logoutOps,
     ]

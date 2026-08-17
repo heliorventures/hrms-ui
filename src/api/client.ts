@@ -1,6 +1,8 @@
 import { GraphQLClient } from 'graphql-request';
-import { getAppConfig } from '@/config';
+
+import { handleGraphResponse } from '@/auth/sessionExpiry';
 import { getClientAccessToken, getOperatorAccessToken } from '@/auth/tokenStore';
+import { getAppConfig } from '@/config';
 
 export type HeliorGraphPlane = 'client' | 'operator';
 
@@ -32,6 +34,7 @@ function buildHeaders(plane: HeliorGraphPlane, tenantId?: string): Record<string
 
 export interface GraphClientOptions {
   tenantId?: string;
+  onUnauthenticated?: () => void;
 }
 
 export function createGraphClient(
@@ -40,5 +43,8 @@ export function createGraphClient(
 ) {
   return new GraphQLClient(graphqlHttpUrl(), {
     headers: () => buildHeaders(plane, opts.tenantId),
+    responseMiddleware: (response) => {
+      handleGraphResponse(plane, response, opts.onUnauthenticated);
+    },
   });
 }

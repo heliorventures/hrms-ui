@@ -20,3 +20,12 @@ export function sessionMatchesTenant(
   const resolved = normalizeUuid(resolvedTenantId);
   return authenticated !== null && resolved !== null && authenticated === resolved;
 }
+
+export function claimClientSessionBootstrap(
+  state: { current: string | null },
+  tenantId: string
+): boolean {
+  if (state.current === tenantId) return false;
+  state.current = tenantId;
+  return true;
+}

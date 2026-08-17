@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { refreshTokenTenantId, sessionMatchesTenant } from './tenantSession';
+
+import {
+  claimClientSessionBootstrap,
+  refreshTokenTenantId,
+  sessionMatchesTenant,
+} from './tenantSession';
 
 describe('tenant session binding', () => {
   it('extracts only a valid tenant UUID prefix', () => {
@@ -23,5 +28,14 @@ describe('tenant session binding', () => {
       )
     ).toBe(false);
     expect(sessionMatchesTenant(null, 'e6d4fc13-feb8-52a0-93bd-f66c795969b1')).toBe(false);
+  });
+
+  it('claims startup cleanup only once for the same resolved tenant', () => {
+    const state = { current: null as string | null };
+
+    expect(claimClientSessionBootstrap(state, 'tenant-a')).toBe(true);
+    expect(claimClientSessionBootstrap(state, 'tenant-a')).toBe(false);
+    expect(claimClientSessionBootstrap(state, 'tenant-b')).toBe(true);
+    expect(state.current).toBe('tenant-b');
   });
 });
