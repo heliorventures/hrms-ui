@@ -23,6 +23,7 @@ interface PersonalInfoTabProps {
   canManageSensitiveFields?: boolean;
   pendingRequests?: ProfileChangeRequest[];
   isSelf?: boolean;
+  onChanged?: () => void;
 }
 
 function ymdFromValue(isoOrYmd: string): string {
@@ -46,12 +47,13 @@ export function PersonalInfoTab({
   canManageSensitiveFields = false,
   pendingRequests = [],
   isSelf = false,
+  onChanged,
 }: PersonalInfoTabProps) {
   const [values, setValues] = useState<PersonalInfoFields>(initial);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedFlash, setSavedFlash] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [requests, setRequests] = useState(pendingRequests);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
 
@@ -66,7 +68,7 @@ export function PersonalInfoTab({
   const handleChange = (field: keyof PersonalInfoFields, value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
     setDirty(true);
-    setSavedFlash(false);
+    setSuccessMessage(null);
     setError(null);
   };
 
@@ -143,8 +145,13 @@ export function PersonalInfoTab({
         emergencyContactRelation: updated.emergencyContactRelation ?? '',
       }));
       setDirty(false);
-      setSavedFlash(true);
-      window.setTimeout(() => setSavedFlash(false), 2400);
+      setSuccessMessage(
+        sensitiveChanged && !canManageSensitiveFields
+          ? 'Profile details saved. Legal name or date-of-birth changes were sent to HR for review.'
+          : 'Profile saved.'
+      );
+      onChanged?.();
+      window.setTimeout(() => setSuccessMessage(null), 4200);
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {
@@ -169,6 +176,7 @@ export function PersonalInfoTab({
             : request
         )
       );
+      onChanged?.();
     } catch (cause) {
       setError(graphQlUserMessage(cause));
     } finally {
@@ -178,13 +186,13 @@ export function PersonalInfoTab({
 
   return (
     <div className="space-y-4">
-      {savedFlash ? (
+      {successMessage ? (
         <div
           className="flex items-center gap-2 rounded-2xl border border-emerald-200/80 bg-emerald-50/80 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100"
           role="status"
         >
           <Check className="h-4 w-4 shrink-0" aria-hidden />
-          Profile saved.
+          {successMessage}
         </div>
       ) : null}
       {error ? (

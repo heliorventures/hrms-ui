@@ -6,6 +6,7 @@ import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { formatBackendTime } from '../../utils/timeFormat';
+import { titleCaseLabel } from '../../utils/uiLabel';
 import AttendanceReportDetails from './components/AttendanceReportDetails';
 
 const REPORT_EMPLOYEE_LIMIT = 100;
@@ -176,7 +177,7 @@ const AdminReportsPage = () => {
   }, [client, filters.endDate, filters.startDate]);
 
   const employeeOptions = [
-    { value: 'all', label: 'ALL Employees' },
+    { value: 'all', label: titleCaseLabel('ALL employees') },
     ...((data?.employees ?? []).map((emp) => ({
       value: emp.id,
       label: `${emp.fullName} (${emp.employeeCode})`,

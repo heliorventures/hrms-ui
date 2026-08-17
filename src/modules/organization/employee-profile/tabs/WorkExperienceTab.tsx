@@ -26,6 +26,7 @@ interface WorkExperienceTabProps {
   initial: WorkExperienceEntry[];
   documentTypes: TenantDocumentTypeOption[];
   canReview?: boolean;
+  onChanged?: () => void;
 }
 
 const blankForm = () => ({
@@ -45,6 +46,7 @@ export function WorkExperienceTab({
   initial,
   documentTypes,
   canReview = false,
+  onChanged,
 }: WorkExperienceTabProps) {
   const [entries, setEntries] = useState(initial);
   const [editing, setEditing] = useState<WorkExperienceEntry | null>(null);
@@ -131,6 +133,7 @@ export function WorkExperienceTab({
           ? current.map((entry) => (entry.id === mapped.id ? mapped : entry))
           : [mapped, ...current];
       });
+      onChanged?.();
       setModal(false);
     } catch (cause) {
       setError(graphQlUserMessage(cause));
@@ -148,6 +151,7 @@ export function WorkExperienceTab({
         workExperienceId: id,
       });
       setEntries((current) => current.filter((entry) => entry.id !== id));
+      onChanged?.();
     } catch (cause) {
       setError(graphQlUserMessage(cause));
     } finally {
@@ -181,6 +185,7 @@ export function WorkExperienceTab({
           : entry
       )
     );
+    onChanged?.();
   };
 
   const review = async (id: string, approved: boolean, rejectionReason?: string) => {
@@ -204,6 +209,7 @@ export function WorkExperienceTab({
             : entry
         )
       );
+      onChanged?.();
     } catch (cause) {
       setError(graphQlUserMessage(cause));
     } finally {

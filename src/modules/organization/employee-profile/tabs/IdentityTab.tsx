@@ -22,6 +22,7 @@ interface IdentityTabProps {
   model: EmployeeProfileModel;
   documentTypes: TenantDocumentTypeOption[];
   isHr: boolean;
+  onChanged?: () => void;
 }
 
 const labels: Record<IdentityRecord['kind'], string> = {
@@ -36,6 +37,7 @@ export function IdentityTab({
   model,
   documentTypes,
   isHr,
+  onChanged,
 }: IdentityTabProps) {
   const [identities, setIdentities] = useState(model.identities);
   const [panInput, setPanInput] = useState('');
@@ -96,6 +98,7 @@ export function IdentityTab({
         if (pan) replaceIdentity({ ...pan, verificationStatus: 'PENDING' });
       }
       setPanInput('');
+      onChanged?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {
@@ -128,6 +131,7 @@ export function IdentityTab({
         if (aadhaar) replaceIdentity({ ...aadhaar, verificationStatus: 'PENDING' });
       }
       setAadhaarInput('');
+      onChanged?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
     } finally {
@@ -156,6 +160,7 @@ export function IdentityTab({
         [uploadKind]: result.uploadEmployeeDocument.id,
       }));
     }
+    onChanged?.();
   };
 
   const pan = identityByKind.get('PAN');

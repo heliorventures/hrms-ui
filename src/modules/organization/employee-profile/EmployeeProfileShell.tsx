@@ -50,7 +50,6 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
   const client = useGraphClient('client');
   const { clientSession } = useAuth();
   const isHr = createPermissionService(clientSession).canCapability('route.hr.people');
-  const showSalary = isHr;
 
   const { loading, refreshing, error, model, access, documentTypes, refetch } = useEmployeeProfileData(
     client,
@@ -136,6 +135,9 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
 
   if (!model || !access) return null;
 
+  const canManageOrganizationFields = access.canManageOrganizationFields;
+  const showSalary = canManageOrganizationFields;
+
   return (
     <div className="min-h-[60vh] space-y-4 pb-8">
       {error ? (
@@ -171,9 +173,10 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 employeeId={model.core.id}
                 client={client}
                 initial={model.personal}
-                canManageSensitiveFields={access.canManageOrganizationFields}
+                canManageSensitiveFields={canManageOrganizationFields}
                 pendingRequests={model.profileChangeRequests}
                 isSelf={access.isSelf}
+                onChanged={refetch}
               />
             ) : null}
             {activeTab === 'banking' ? (
@@ -181,7 +184,8 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 employeeId={model.core.id}
                 client={client}
                 model={model}
-                canManageSensitiveFields={access.canManageOrganizationFields}
+                canManageSensitiveFields={canManageOrganizationFields}
+                onChanged={refetch}
               />
             ) : null}
             {activeTab === 'identity' ? (
@@ -190,7 +194,8 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 client={client}
                 model={model}
                 documentTypes={documentTypes}
-                isHr={access.canManageOrganizationFields}
+                isHr={canManageOrganizationFields}
+                onChanged={refetch}
               />
             ) : null}
             {activeTab === 'education' ? (
@@ -201,6 +206,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 initial={model.education}
                 documentTypes={documentTypes}
                 canReview={access.canReviewProfileChanges && !access.isSelf}
+                onChanged={refetch}
               />
             ) : null}
             {activeTab === 'work' ? (
@@ -211,6 +217,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 initial={model.workExperience}
                 documentTypes={documentTypes}
                 canReview={access.canReviewProfileChanges && !access.isSelf}
+                onChanged={refetch}
               />
             ) : null}
             {activeTab === 'growth' ? <GrowthTimelineTab nodes={model.growthTimeline} /> : null}
@@ -221,7 +228,8 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 client={client}
                 initial={model.documents}
                 documentTypes={documentTypes}
-                isHr={isHr}
+                isHr={canManageOrganizationFields}
+                onChanged={refetch}
               />
             ) : null}
             {activeTab === 'employment' && isHr ? (
@@ -229,6 +237,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 employeeId={model.core.id}
                 client={client}
                 model={model}
+                onChanged={refetch}
               />
             ) : null}
           </div>

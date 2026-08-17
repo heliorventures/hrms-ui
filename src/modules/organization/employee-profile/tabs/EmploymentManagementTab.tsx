@@ -22,6 +22,7 @@ interface EmploymentManagementTabProps {
   employeeId: string;
   client: GraphQLClient;
   model: EmployeeProfileModel;
+  onChanged?: () => void;
 }
 
 const NO_MANAGER_CHANGE = '__NOCHANGE__';
@@ -44,6 +45,7 @@ export function EmploymentManagementTab({
   employeeId,
   client,
   model,
+  onChanged,
 }: EmploymentManagementTabProps) {
   const [statusUi, setStatusUi] = useState<EmploymentStatusUi>(model.statusUi);
   const [statusSaving, setStatusSaving] = useState(false);
@@ -148,6 +150,7 @@ export function EmploymentManagementTab({
         });
         setStatusUi(next);
         setBanner('Employment status updated.');
+        onChanged?.();
       } catch (err) {
         setBannerErr(graphQlUserMessage(err));
       } finally {
@@ -188,6 +191,7 @@ export function EmploymentManagementTab({
       setSalaryOpen(false);
       setSalaryAnnual(annual);
       setBanner('Compensation updated.');
+      onChanged?.();
     } catch (err) {
       setBannerErr(graphQlUserMessage(err));
     } finally {
@@ -219,6 +223,7 @@ export function EmploymentManagementTab({
       }));
       setRoleOpen(false);
       setBanner('Role and reporting updated.');
+      onChanged?.();
     } catch (err) {
       setBannerErr(graphQlUserMessage(err));
     } finally {

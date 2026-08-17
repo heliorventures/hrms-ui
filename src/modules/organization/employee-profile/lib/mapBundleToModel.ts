@@ -169,7 +169,8 @@ export function mapBundleToEmployeeProfileModel(
     });
   }
 
-  const latestMonthly = bundle.employmentHistoryRecords[0]?.monthlySalary;
+  const latestHistory = hist.length > 0 ? hist[hist.length - 1] : undefined;
+  const latestMonthly = latestHistory?.monthlySalary;
   const parsedMonthly = latestMonthly != null ? Number(latestMonthly) : 0;
   const baseAnnual = parsedMonthly > 0 ? Math.round(parsedMonthly * 12) : 0;
 
@@ -177,10 +178,10 @@ export function mapBundleToEmployeeProfileModel(
     baseSalaryAnnual: baseAnnual,
     components: [] as { code: string; label: string; amountAnnual: number }[],
     lastUpdatedAt:
-      bundle.employmentHistoryRecords[0]?.updatedAt != null
-        ? typeof bundle.employmentHistoryRecords[0].updatedAt === 'string'
-          ? bundle.employmentHistoryRecords[0].updatedAt
-          : String(bundle.employmentHistoryRecords[0].updatedAt)
+      latestHistory?.updatedAt != null
+        ? typeof latestHistory.updatedAt === 'string'
+          ? latestHistory.updatedAt
+          : String(latestHistory.updatedAt)
         : core.updatedAt,
   };
 

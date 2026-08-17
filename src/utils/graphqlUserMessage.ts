@@ -14,6 +14,8 @@ function codeToMessage(code: string): string | null {
       return 'New password must be different from the current password.';
     case 'LEAVE_DATE_OVERLAP':
       return 'An active leave request already covers all or part of those dates.';
+    case 'LEAVE_POLICY_DUPLICATE':
+      return 'Only one leave policy can be configured for each leave type.';
     case 'EXPENSE_CLAIM_LIMIT_EXCEEDED':
       return 'Amount exceeds the permitted category limit. Review the limit shown above.';
     case 'EXPENSE_MONTHLY_LIMIT_EXCEEDED':

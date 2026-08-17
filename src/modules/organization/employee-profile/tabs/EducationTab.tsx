@@ -25,6 +25,7 @@ interface EducationTabProps {
   initial: EducationEntry[];
   documentTypes: TenantDocumentTypeOption[];
   canReview?: boolean;
+  onChanged?: () => void;
 }
 
 const levelOptions = [
@@ -56,6 +57,7 @@ export function EducationTab({
   initial,
   documentTypes,
   canReview = false,
+  onChanged,
 }: EducationTabProps) {
   const [entries, setEntries] = useState<EducationEntry[]>(initial);
   const [modal, setModal] = useState(false);
@@ -145,6 +147,7 @@ export function EducationTab({
           ? current.map((entry) => (entry.id === mapped.id ? mapped : entry))
           : [mapped, ...current];
       });
+      onChanged?.();
       setModal(false);
     } catch (cause) {
       setError(graphQlUserMessage(cause));
@@ -159,6 +162,7 @@ export function EducationTab({
     try {
       await client.request(DeleteEmployeeEducationDocument, { employeeId, educationId: id });
       setEntries((current) => current.filter((entry) => entry.id !== id));
+      onChanged?.();
     } catch (cause) {
       setError(graphQlUserMessage(cause));
     } finally {
@@ -190,6 +194,7 @@ export function EducationTab({
           : entry
       )
     );
+    onChanged?.();
   };
 
   const review = async (id: string, approved: boolean, rejectionReason?: string) => {
@@ -213,6 +218,7 @@ export function EducationTab({
             : entry
         )
       );
+      onChanged?.();
     } catch (cause) {
       setError(graphQlUserMessage(cause));
     } finally {

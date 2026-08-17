@@ -18,6 +18,7 @@ interface BankingTabProps {
   client: GraphQLClient;
   model: EmployeeProfileModel;
   canManageSensitiveFields?: boolean;
+  onChanged?: () => void;
 }
 
 export function BankingTab({
@@ -25,6 +26,7 @@ export function BankingTab({
   client,
   model,
   canManageSensitiveFields = false,
+  onChanged,
 }: BankingTabProps) {
   const [bank, setBank] = useState(model.banking);
   const b = bank;
@@ -86,6 +88,7 @@ export function BankingTab({
         });
         setSubmitted(true);
       }
+      onChanged?.();
       setEditing(false);
       setAccountNumber('');
     } catch (e) {

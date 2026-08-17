@@ -8,6 +8,7 @@ import { UploadModal } from '../components/UploadModal';
 import { EmptySection } from '../components/SectionStates';
 import Modal from '../../../../components/common/Modal';
 import Button from '../../../../components/common/Button';
+import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import {
   ResolveEmployeeDocumentDocument,
   UploadEmployeeDocumentProfileDocument,
@@ -24,6 +25,7 @@ interface DocumentsTabProps {
   initial: DocumentRow[];
   documentTypes: TenantDocumentTypeOption[];
   isHr: boolean;
+  onChanged?: () => void;
 }
 
 function mapCategoryFromName(name?: string | null): DocumentRow['category'] {
@@ -65,6 +67,7 @@ export function DocumentsTab({
   initial,
   documentTypes,
   isHr,
+  onChanged,
 }: DocumentsTabProps) {
   const [rows, setRows] = useState<DocumentRow[]>(initial);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -73,6 +76,8 @@ export function DocumentsTab({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setRows(initial);
@@ -104,6 +109,9 @@ export function DocumentsTab({
     const d = res.uploadEmployeeDocument;
     const uploadedBy: DocumentRow['uploadedBy'] = isHr ? 'HR' : 'EMPLOYEE';
     setRows((r) => [mapRowFromServer(d, uploadedBy, payload.mimeType), ...r]);
+    setActionError(null);
+    setSuccessMessage('Document uploaded successfully.');
+    onChanged?.();
   };
 
   const approve = async (id: string) => {
@@ -117,6 +125,11 @@ export function DocumentsTab({
       setRows((r) =>
         r.map((x) => (x.id === id ? { ...x, status: st === 'APPROVED' ? 'APPROVED' : 'PENDING' } : x))
       );
+      setActionError(null);
+      setSuccessMessage('Document approved.');
+      onChanged?.();
+    } catch (error) {
+      setActionError(graphQlUserMessage(error));
     } finally {
       setBusyId(null);
     }
@@ -133,6 +146,11 @@ export function DocumentsTab({
       setRows((r) =>
         r.map((x) => (x.id === id ? { ...x, status: st === 'REJECTED' ? 'REJECTED' : 'PENDING' } : x))
       );
+      setActionError(null);
+      setSuccessMessage('Document rejected.');
+      onChanged?.();
+    } catch (error) {
+      setActionError(graphQlUserMessage(error));
     } finally {
       setBusyId(null);
     }
@@ -150,7 +168,7 @@ export function DocumentsTab({
       );
       setPreviewUrl(employeeDocumentObjectUrl(result.employeeDocumentAttachment));
     } catch (error) {
-      setPreviewError(error instanceof Error ? error.message : 'Unable to open this document.');
+      setPreviewError(graphQlUserMessage(error));
     } finally {
       setPreviewLoading(false);
     }
@@ -165,6 +183,8 @@ export function DocumentsTab({
   if (rows.length === 0) {
     return (
       <>
+        {actionError ? <p role="alert" className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p> : null}
+        {successMessage ? <p role="status" className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{successMessage}</p> : null}
         <EmptySection
           title="No Documents Yet"
           description="Upload PAN, Aadhaar, offer letters, or appraisal letters. Employee uploads require HR approval."
@@ -183,6 +203,8 @@ export function DocumentsTab({
 
   return (
     <div className="space-y-4">
+      {actionError ? <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p> : null}
+      {successMessage ? <p role="status" className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{successMessage}</p> : null}
       <div className="flex flex-wrap justify-end gap-2">
         <Button
           type="button"
