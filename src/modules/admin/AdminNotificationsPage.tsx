@@ -9,17 +9,63 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import AnnouncementEditorForm from './components/AnnouncementEditorForm';
 import DirectNotificationComposer from './components/DirectNotificationComposer';
 import {
-  AdminNotificationsConsoleDocument,
-  CreateAnnouncementDocument,
   CreateDirectNotificationsDocument,
   DeleteAnnouncementDocument,
   DeleteNotificationAdminDocument,
   UpdateAnnouncementDocument,
-  type AdminNotificationsConsoleQuery,
-  type CreateDirectNotificationsMutation,
 } from '../../api/graphql/graphql';
+import {
+  AdminNotificationsConsoleSafeDocument,
+  CreateAnnouncementSafeDocument,
+} from '../notifications/notificationQueries';
 
-type ConsoleData = AdminNotificationsConsoleQuery;
+interface AdminAnnouncementRow {
+  id: string;
+  title: string;
+  body?: string | null;
+  targetAudience?: string | null;
+  targetDepartmentId?: string | null;
+  targetLocationId?: string | null;
+  postSource: string;
+  publishAt?: string | null;
+  expiresAt?: string | null;
+  createdAt: string;
+}
+
+interface AdminNotificationRow {
+  id: string;
+  userId: string;
+  kind?: string | null;
+  title?: string | null;
+  message?: string | null;
+  actionUrl?: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+interface AdminNotificationEmployeeRow {
+  id: string;
+  fullName: string;
+  userId?: string | null;
+  linkedUserEmail?: string | null;
+  linkedUserUsername?: string | null;
+}
+
+interface AdminNotificationDepartmentRow {
+  id: string;
+  name: string;
+}
+
+interface ConsoleData {
+  adminAnnouncements: AdminAnnouncementRow[];
+  adminNotifications: AdminNotificationRow[];
+  employees: AdminNotificationEmployeeRow[];
+  departments: AdminNotificationDepartmentRow[];
+}
+
+interface CreateDirectNotificationsResult {
+  createDirectNotifications: number;
+}
 
 const MAX_ANNOUNCEMENT_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_ANNOUNCEMENT_DOCUMENT_BYTES = 6 * 1024 * 1024;
@@ -80,7 +126,7 @@ const AdminNotificationsPage = () => {
   const [dnUrl, setDnUrl] = useState('');
 
   const load = useCallback(async () => {
-    return client.request<ConsoleData>(AdminNotificationsConsoleDocument, {});
+    return client.request<ConsoleData>(AdminNotificationsConsoleSafeDocument, {});
   }, [client]);
 
   useEffect(() => {
@@ -215,7 +261,7 @@ const AdminNotificationsPage = () => {
           },
         });
       } else {
-        await client.request(CreateAnnouncementDocument, {
+        await client.request(CreateAnnouncementSafeDocument, {
           input: {
             title,
             body: annBody.trim() === '' ? null : annBody.trim(),
@@ -266,7 +312,7 @@ const AdminNotificationsPage = () => {
     }
     setBusy(true);
     try {
-      const response = await client.request<CreateDirectNotificationsMutation>(
+      const response = await client.request<CreateDirectNotificationsResult>(
         CreateDirectNotificationsDocument,
         {
           input: {

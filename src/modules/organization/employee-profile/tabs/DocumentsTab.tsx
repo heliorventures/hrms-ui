@@ -10,9 +10,13 @@ import Modal from '../../../../components/common/Modal';
 import Button from '../../../../components/common/Button';
 import {
   ResolveEmployeeDocumentDocument,
-  EmployeeDocumentSignedReadUrlDocument,
   UploadEmployeeDocumentProfileDocument,
 } from '../../../../api/graphql/graphql';
+import {
+  EmployeeDocumentAttachmentDocument,
+  employeeDocumentObjectUrl,
+  type EmployeeDocumentAttachmentResponse,
+} from '../../employeeDocumentAttachment';
 
 interface DocumentsTabProps {
   employeeId: string;
@@ -74,6 +78,14 @@ export function DocumentsTab({
     setRows(initial);
   }, [initial]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const uploadDoc = async (payload: {
     documentTypeId: string;
     fileName: string;
@@ -132,11 +144,11 @@ export function DocumentsTab({
     setPreviewError(null);
     setPreviewLoading(true);
     try {
-      const result = await client.request(EmployeeDocumentSignedReadUrlDocument, {
-        employeeDocumentId: row.id,
-        ttlSeconds: 600,
-      });
-      setPreviewUrl(result.employeeDocumentSignedReadUrl);
+      const result = await client.request<EmployeeDocumentAttachmentResponse>(
+        EmployeeDocumentAttachmentDocument,
+        { employeeDocumentId: row.id }
+      );
+      setPreviewUrl(employeeDocumentObjectUrl(result.employeeDocumentAttachment));
     } catch (error) {
       setPreviewError(error instanceof Error ? error.message : 'Unable to open this document.');
     } finally {

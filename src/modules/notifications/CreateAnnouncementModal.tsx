@@ -8,11 +8,11 @@ import { canManageNotifications } from '../../auth/navAccess';
 import { fileToBase64 } from '../../utils/fileEncoding';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
-  CreateAnnouncementDocument,
   OrgDepartmentsDocument,
   type OrgDepartmentsQuery,
 } from '../../api/graphql/graphql';
 import { buildCreateAnnouncementInput } from './createAnnouncementInput';
+import { CreateAnnouncementSafeDocument } from './notificationQueries';
 
 interface CreateAnnouncementModalProps {
   isOpen: boolean;
@@ -173,7 +173,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
         documentMimeType = document.mime;
       }
 
-      await client.request(CreateAnnouncementDocument, {
+      await client.request(CreateAnnouncementSafeDocument, {
         input: buildCreateAnnouncementInput(
           {
             hrCompose,
@@ -211,11 +211,16 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={hrCompose ? 'New announcement (HR)' : 'New announcement'}
+      title={hrCompose ? 'New announcement (HR)' : 'New team post'}
       size="xl"
     >
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         {submitError && <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
+        {!hrCompose ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Team posts are shared on the public announcement feed without HR-only targeting.
+          </p>
+        ) : null}
 
         <Input
           label="Title"
@@ -349,7 +354,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onCreated }: CreateAnnouncem
             Cancel
           </Button>
           <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? 'Publishing…' : 'Publish'}
+            {submitting ? 'Publishing...' : hrCompose ? 'Publish announcement' : 'Publish team post'}
           </Button>
         </div>
       </form>

@@ -1039,9 +1039,17 @@ mutation UploadTenantFile($input: UploadTenantFileInput!) {
     tenantId
     originalFileName
     mimeType
-    mimeType
     fileSizeBytes
     createdAt
+  }
+}
+
+query TenantFileAttachment($fileStorageId: ID!) {
+  tenantFileAttachment(fileStorageId: $fileStorageId) {
+    fileName
+    mimeType
+    fileSizeBytes
+    contentBase64
   }
 }
 
@@ -1807,8 +1815,18 @@ query NotificationBoard($limit: Int! = 20) {
     postSource
     publishAt
     expiresAt
-    imageReadUrl
-    documentReadUrl
+    imageAttachment {
+      fileName
+      mimeType
+      fileSizeBytes
+      contentBase64
+    }
+    documentAttachment {
+      fileName
+      mimeType
+      fileSizeBytes
+      contentBase64
+    }
   }
   notifications(limit: $limit) {
     id
@@ -1854,8 +1872,6 @@ query AdminNotificationsConsole(
     publishAt
     expiresAt
     createdAt
-    imageReadUrl
-    documentReadUrl
   }
   adminNotifications(limit: $notLim) {
     id
@@ -1914,8 +1930,6 @@ mutation CreateAnnouncement($input: CreateAnnouncementInput!) {
     title
     body
     postSource
-    imageReadUrl
-    documentReadUrl
   }
 }
 
@@ -2186,11 +2200,13 @@ query EmployeeProfileAccess($employeeId: ID!) {
   }
 }
 
-query EmployeeDocumentSignedReadUrl($employeeDocumentId: ID!, $ttlSeconds: Int! = 600) {
-  employeeDocumentSignedReadUrl(
-    employeeDocumentId: $employeeDocumentId
-    ttlSeconds: $ttlSeconds
-  )
+query EmployeeDocumentAttachment($employeeDocumentId: ID!) {
+  employeeDocumentAttachment(employeeDocumentId: $employeeDocumentId) {
+    fileName
+    mimeType
+    fileSizeBytes
+    contentBase64
+  }
 }
 
 query EmployeeProfileReviewQueue($status: String = "PENDING", $limit: Int! = 50) {

@@ -1,9 +1,13 @@
 import { FormEvent } from 'react';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
-import type { AdminNotificationsConsoleQuery } from '../../../api/graphql/graphql';
 
-type EmployeeOption = AdminNotificationsConsoleQuery['employees'][number];
+interface EmployeeOption {
+  id: string;
+  fullName: string;
+  userId?: string | null;
+  linkedUserEmail?: string | null;
+}
 
 interface DirectNotificationComposerProps {
   busy: boolean;

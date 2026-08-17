@@ -38,7 +38,8 @@ extend type Query {
   employeeProfileReviewQueue(status: String, limit: Int! = 50): [EmployeeProfileReviewQueueItem!]!
   employeeProfileChangeReviewDetail(requestId: ID!): EmployeeProfileChangeReviewDetail!
   employeeEvidenceReviewQueue(limit: Int! = 100): [EmployeeEvidenceReviewQueueItem!]!
-  employeeDocumentSignedReadUrl(employeeDocumentId: ID!, ttlSeconds: Int! = 600): String!
+  employeeDocumentAttachment(employeeDocumentId: ID!): EmployeeDocumentAttachment!
+  tenantFileAttachment(fileStorageId: ID!): TenantFileAttachment!
   employeeEducationRecords(employeeId: ID!): [EmployeeEducation!]!
   employeeWorkExperienceRecords(employeeId: ID!): [EmployeeWorkExperience!]!
 }
@@ -98,6 +99,20 @@ type EmployeeProfileChangeReviewDetail {
   employeeName: String!
   currentValues: JSON!
   requestedValues: JSON!
+}
+
+type EmployeeDocumentAttachment {
+  fileName: String!
+  mimeType: String!
+  fileSizeBytes: Int
+  contentBase64: String!
+}
+
+type TenantFileAttachment {
+  fileName: String!
+  mimeType: String!
+  fileSizeBytes: Int
+  contentBase64: String!
 }
 
 type EmployeeEvidenceReviewQueueItem {

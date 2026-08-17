@@ -2,6 +2,13 @@ export type NotificationFilter = 'all' | 'unread';
 
 export type NotificationKind = 'company' | 'personal' | 'system';
 
+export interface AnnouncementAttachment {
+  fileName: string;
+  mimeType: string;
+  fileSizeBytes?: number | null;
+  contentBase64: string;
+}
+
 export interface AnnouncementRow {
   id: string;
   title: string;
@@ -12,8 +19,8 @@ export interface AnnouncementRow {
   publishAt?: string | null;
   expiresAt?: string | null;
   postSource?: string | null;
-  imageReadUrl?: string | null;
-  documentReadUrl?: string | null;
+  imageAttachment?: AnnouncementAttachment | null;
+  documentAttachment?: AnnouncementAttachment | null;
 }
 
 export interface NotificationRow {

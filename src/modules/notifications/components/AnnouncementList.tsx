@@ -2,6 +2,7 @@ import Badge from '../../../components/common/Badge';
 import {
   shortId,
 } from '../notificationPresentation';
+import { announcementImageSrc, downloadAnnouncementAttachment } from '../announcementAttachment';
 import type { AnnouncementRow } from '../notificationTypes';
 
 interface AnnouncementListProps {
@@ -32,24 +33,28 @@ const AnnouncementList = ({ announcements, deptNameById, loading }: Announcement
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 {announcement.body ?? 'No Announcement Body Provided.'}
               </p>
-              {announcement.imageReadUrl && (
+              {announcement.imageAttachment && (
                 <div className="mt-3">
                   <img
-                    src={announcement.imageReadUrl}
+                    src={announcementImageSrc(announcement.imageAttachment) ?? undefined}
                     alt=""
                     className="max-h-48 max-w-full rounded-md border border-gray-200 object-contain dark:border-gray-600"
                   />
                 </div>
               )}
-              {announcement.documentReadUrl && (
+              {announcement.documentAttachment && (
                 <div className="mt-2">
-                  <a
-                    href={announcement.documentReadUrl}
-                    download
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (announcement.documentAttachment) {
+                        downloadAnnouncementAttachment(announcement.documentAttachment);
+                      }
+                    }}
                     className="text-sm text-primary-600 hover:underline dark:text-primary-400"
                   >
                     Download attachment
-                  </a>
+                  </button>
                 </div>
               )}
             </div>

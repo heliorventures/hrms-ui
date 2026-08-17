@@ -6,12 +6,23 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import { notificationActionDestination } from '../../utils/actionUrl';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
-  NotificationBoardDocument,
   MarkNotificationReadDocument,
-  type NotificationBoardQuery,
 } from '../../api/graphql/graphql';
+import { NotificationDropdownDocument } from '../../modules/notifications/notificationQueries';
 
-type BoardNotification = NotificationBoardQuery['notifications'][number];
+interface BoardNotification {
+  id: string;
+  title?: string | null;
+  message?: string | null;
+  actionUrl?: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+interface NotificationDropdownData {
+  unreadNotificationCount?: number | null;
+  notifications: BoardNotification[];
+}
 
 const PREVIEW_LIMIT = 15;
 const REFRESH_MS = 60_000;
@@ -34,7 +45,7 @@ const NotificationDropdown = () => {
     }
     setLoadError(null);
     try {
-      const data = await client.request<NotificationBoardQuery>(NotificationBoardDocument, {
+      const data = await client.request<NotificationDropdownData>(NotificationDropdownDocument, {
         limit: PREVIEW_LIMIT,
       });
       setNotifications(data.notifications ?? []);

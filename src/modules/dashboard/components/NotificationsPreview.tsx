@@ -4,8 +4,13 @@ import Card from '../../../components/common/Card';
 import Button from '../../../components/common/Button';
 import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { NotificationBoardDocument } from '../../../api/graphql/graphql';
 import CreateAnnouncementModal from '../../notifications/CreateAnnouncementModal';
+import {
+  announcementImageSrc,
+  downloadAnnouncementAttachment,
+} from '../../notifications/announcementAttachment';
+import { NotificationBoardWithAttachmentsDocument } from '../../notifications/notificationQueries';
+import type { AnnouncementAttachment } from '../../notifications/notificationTypes';
 
 interface AnnouncementRow {
   id: string;
@@ -17,8 +22,8 @@ interface AnnouncementRow {
   postSource?: string | null;
   publishAt?: string | null;
   expiresAt?: string | null;
-  imageReadUrl?: string | null;
-  documentReadUrl?: string | null;
+  imageAttachment?: AnnouncementAttachment | null;
+  documentAttachment?: AnnouncementAttachment | null;
 }
 
 interface NotificationRow {
@@ -52,9 +57,10 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
   const [composeOpen, setComposeOpen] = useState(false);
 
   const loadBoard = useCallback(async () => {
-    const result = await client.request<NotificationBoardResult>(NotificationBoardDocument, {
-      limit,
-    });
+    const result = await client.request<NotificationBoardResult>(
+      NotificationBoardWithAttachmentsDocument,
+      { limit }
+    );
     return result;
   }, [client, limit]);
 
@@ -104,7 +110,7 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => setComposeOpen(true)}>
-          Post
+          Team post
         </Button>
         <Link
           to="/notifications"
@@ -133,22 +139,25 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
                 <p className="mt-1 line-clamp-3 text-xs text-gray-600 dark:text-gray-300">
                   {announcement.body ?? 'No Body Provided.'}
                 </p>
-                {announcement.imageReadUrl ? (
+                {announcement.imageAttachment ? (
                   <img
-                    src={announcement.imageReadUrl}
+                    src={announcementImageSrc(announcement.imageAttachment) ?? undefined}
                     alt=""
                     className="mt-2 max-h-32 max-w-full rounded border border-gray-200 object-contain dark:border-gray-600"
                   />
                 ) : null}
-                {announcement.documentReadUrl ? (
-                  <a
-                    href={announcement.documentReadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                {announcement.documentAttachment ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (announcement.documentAttachment) {
+                        downloadAnnouncementAttachment(announcement.documentAttachment);
+                      }
+                    }}
                     className="mt-2 inline-block text-xs text-primary-600 hover:underline dark:text-primary-400"
                   >
-                    View attachment
-                  </a>
+                    Download attachment
+                  </button>
                 ) : null}
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">

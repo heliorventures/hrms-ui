@@ -7,7 +7,6 @@ import Modal from '../../components/common/Modal';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
-  EmployeeDocumentSignedReadUrlDocument,
   EmployeeEvidenceReviewQueueDocument,
   EmployeeProfileChangeReviewDetailDocument,
   EmployeeProfileReviewQueueDocument,
@@ -17,6 +16,11 @@ import {
   type EmployeeEvidenceReviewQueueQuery,
   type EmployeeProfileReviewQueueQuery,
 } from '../../api/graphql/graphql';
+import {
+  EmployeeDocumentAttachmentDocument,
+  employeeDocumentObjectUrl,
+  type EmployeeDocumentAttachmentResponse,
+} from './employeeDocumentAttachment';
 import { reviewFieldLabel, reviewValueRows } from './profile-review/profileReviewValues';
 
 type QueueItem = EmployeeProfileReviewQueueQuery['employeeProfileReviewQueue'][number];
@@ -76,6 +80,22 @@ const ProfileReviewPage = () => {
   useEffect(() => {
     void loadQueue();
   }, [loadQueue]);
+
+  useEffect(() => {
+    return () => {
+      if (evidenceUrl) {
+        URL.revokeObjectURL(evidenceUrl);
+      }
+    };
+  }, [evidenceUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (evidenceLink?.url) {
+        URL.revokeObjectURL(evidenceLink.url);
+      }
+    };
+  }, [evidenceLink]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -138,11 +158,11 @@ const ProfileReviewPage = () => {
     setBusy(true);
     setError(null);
     try {
-      const result = await client.request(EmployeeDocumentSignedReadUrlDocument, {
-        employeeDocumentId: documentId,
-        ttlSeconds: 600,
-      });
-      setEvidenceUrl(result.employeeDocumentSignedReadUrl);
+      const result = await client.request<EmployeeDocumentAttachmentResponse>(
+        EmployeeDocumentAttachmentDocument,
+        { employeeDocumentId: documentId }
+      );
+      setEvidenceUrl(employeeDocumentObjectUrl(result.employeeDocumentAttachment));
     } catch (cause) {
       setError(graphQlUserMessage(cause));
     } finally {
@@ -181,11 +201,14 @@ const ProfileReviewPage = () => {
     setBusy(true);
     setError(null);
     try {
-      const result = await client.request(EmployeeDocumentSignedReadUrlDocument, {
-        employeeDocumentId: documentId,
-        ttlSeconds: 600,
+      const result = await client.request<EmployeeDocumentAttachmentResponse>(
+        EmployeeDocumentAttachmentDocument,
+        { employeeDocumentId: documentId }
+      );
+      setEvidenceLink({
+        documentId,
+        url: employeeDocumentObjectUrl(result.employeeDocumentAttachment),
       });
-      setEvidenceLink({ documentId, url: result.employeeDocumentSignedReadUrl });
     } catch (cause) {
       setError(graphQlUserMessage(cause));
     } finally {
@@ -271,7 +294,7 @@ const ProfileReviewPage = () => {
               </div>
               {detail.request.supportingDocumentId ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button type="button" variant="outline" disabled={busy} onClick={() => void loadEvidence()}>Generate secure evidence link</Button>
+                  <Button type="button" variant="outline" disabled={busy} onClick={() => void loadEvidence()}>Open secure evidence</Button>
                   {evidenceUrl ? <a href={evidenceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600">Open evidence <ExternalLink className="h-4 w-4" aria-hidden /></a> : null}
                 </div>
               ) : <p className="text-sm text-amber-700">No supporting document was attached.</p>}

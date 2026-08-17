@@ -13,6 +13,7 @@ const NotificationsPage = () => {
   const { can, clientSession } = useAuth();
   const navOpts = useMemo(() => ({ can, clientSession }), [can, clientSession]);
   const showAdminNotifLink = canManageNotifications(navOpts);
+  const composeLabel = showAdminNotifLink ? 'New announcement' : 'New team post';
   const [composeOpen, setComposeOpen] = useState(false);
   const {
     actionBusy,
@@ -56,7 +57,7 @@ const NotificationsPage = () => {
             </Link>
           ) : null}
           <Button variant="primary" size="sm" onClick={() => setComposeOpen(true)}>
-            New announcement
+            {composeLabel}
           </Button>
         </div>
       </div>

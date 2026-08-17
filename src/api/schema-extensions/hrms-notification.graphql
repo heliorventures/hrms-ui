@@ -65,6 +65,13 @@ type NotificationPreferences {
   mutedTopics: [String!]!
 }
 
+type AnnouncementAttachment {
+  fileName: String!
+  mimeType: String!
+  fileSizeBytes: Int
+  contentBase64: String!
+}
+
 input UpdateNotificationPreferencesInput {
   inAppEnabled: Boolean!
   announcementsEnabled: Boolean!
@@ -77,8 +84,8 @@ extend type Announcement {
   targetLocationId: ID
   imageFileStorageId: ID
   documentFileStorageId: ID
-  imageReadUrl: String
-  documentReadUrl: String
+  imageAttachment: AnnouncementAttachment
+  documentAttachment: AnnouncementAttachment
 }
 
 extend type Query {
