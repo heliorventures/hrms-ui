@@ -1,0 +1,104 @@
+# Asset Management lifecycle. Keep this extension until the running gateway exposes the 0057-backed schema.
+
+input PageInput {
+  page: Int! = 1
+  perPage: Int! = 25
+}
+
+type PageInfo {
+  totalCount: Int!
+  totalPages: Int!
+  currentPage: Int!
+  perPage: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+}
+
+extend type AssetCategory {
+  isActive: Boolean!
+  retiredAt: DateTime
+  retiredBy: ID
+}
+
+extend type Asset {
+  categoryName: String
+  categoryCode: String
+  locationId: ID
+  retiredAt: DateTime
+  retiredBy: ID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+extend type AssetAssignment {
+  employeeCode: String
+  employeeName: String
+  returnedOn: NaiveDate
+  conditionAtReturn: String
+  returnRemarks: String
+}
+
+type AssetCategoryPage {
+  rows: [AssetCategory!]!
+  pageInfo: PageInfo!
+}
+
+type AssetInventoryPage {
+  rows: [Asset!]!
+  pageInfo: PageInfo!
+}
+
+type AssetAllocationPage {
+  rows: [AssetAssignment!]!
+  pageInfo: PageInfo!
+}
+
+type AssetLocationOption {
+  id: ID!
+  name: String!
+}
+
+input UpsertAssetCategoryInput {
+  id: ID
+  name: String!
+  code: String!
+}
+
+input UpsertAssetInput {
+  id: ID
+  assetCategoryId: ID!
+  name: String!
+  serialNumber: String
+  assetTag: String
+  purchaseValue: String
+  purchaseDate: NaiveDate
+  locationId: ID
+}
+
+extend type Query {
+  assetLocationOptions(limit: Int! = 100): [AssetLocationOption!]!
+  assetCategoriesPage(
+    page: PageInput
+    search: String
+    activeOnly: Boolean! = true
+  ): AssetCategoryPage!
+  assetInventoryPage(
+    page: PageInput
+    search: String
+    categoryId: ID
+    status: String
+  ): AssetInventoryPage!
+  assetAllocationsPage(
+    page: PageInput
+    search: String
+    employeeId: ID
+    status: String
+  ): AssetAllocationPage!
+}
+
+extend type Mutation {
+  upsertAssetCategory(input: UpsertAssetCategoryInput!): AssetCategory!
+  retireAssetCategory(assetCategoryId: ID!): AssetCategory!
+  upsertAsset(input: UpsertAssetInput!): Asset!
+  retireAsset(assetId: ID!): Asset!
+}

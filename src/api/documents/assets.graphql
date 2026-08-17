@@ -1,0 +1,156 @@
+query AssetCategoriesPage($page: PageInput, $search: String, $activeOnly: Boolean! = true) {
+  assetCategoriesPage(page: $page, search: $search, activeOnly: $activeOnly) {
+    rows {
+      id
+      name
+      code
+      isActive
+      retiredAt
+      updatedAt
+    }
+    pageInfo {
+      totalCount
+      totalPages
+      currentPage
+      perPage
+      hasNextPage
+      hasPrevPage
+    }
+  }
+}
+
+query AssetInventoryPage($page: PageInput, $search: String, $categoryId: ID, $status: String) {
+  assetInventoryPage(page: $page, search: $search, categoryId: $categoryId, status: $status) {
+    rows {
+      id
+      assetCategoryId
+      categoryName
+      categoryCode
+      name
+      serialNumber
+      assetTag
+      purchaseValue
+      purchaseDate
+      status
+      locationId
+      retiredAt
+      updatedAt
+    }
+    pageInfo {
+      totalCount
+      totalPages
+      currentPage
+      perPage
+      hasNextPage
+      hasPrevPage
+    }
+  }
+}
+
+query AssetAllocationsPage($page: PageInput, $search: String, $employeeId: ID, $status: String) {
+  assetAllocationsPage(page: $page, search: $search, employeeId: $employeeId, status: $status) {
+    rows {
+      id
+      assetId
+      employeeId
+      employeeCode
+      employeeName
+      assetName
+      assetTag
+      serialNumber
+      purchaseValue
+      allocatedOn
+      expectedReturnOn
+      conditionAtAllocation
+      returnedOn
+      conditionAtReturn
+      returnRemarks
+      status
+      createdAt
+      updatedAt
+    }
+    pageInfo {
+      totalCount
+      totalPages
+      currentPage
+      perPage
+      hasNextPage
+      hasPrevPage
+    }
+  }
+}
+
+query AssetsEmployeeOptions($employeeLimit: Int! = 200, $locationLimit: Int! = 100) {
+  employees(limit: $employeeLimit) {
+    id
+    employeeCode
+    fullName
+    status
+  }
+  assetLocationOptions(limit: $locationLimit) {
+    id
+    name
+  }
+}
+
+mutation UpsertAssetCategory($input: UpsertAssetCategoryInput!) {
+  upsertAssetCategory(input: $input) {
+    id
+    name
+    code
+    isActive
+    retiredAt
+    updatedAt
+  }
+}
+
+mutation RetireAssetCategory($assetCategoryId: ID!) {
+  retireAssetCategory(assetCategoryId: $assetCategoryId) {
+    id
+    isActive
+    retiredAt
+  }
+}
+
+mutation UpsertAsset($input: UpsertAssetInput!) {
+  upsertAsset(input: $input) {
+    id
+    assetCategoryId
+    name
+    serialNumber
+    assetTag
+    purchaseValue
+    purchaseDate
+    status
+    locationId
+    updatedAt
+  }
+}
+
+mutation RetireAsset($assetId: ID!) {
+  retireAsset(assetId: $assetId) {
+    id
+    status
+    retiredAt
+  }
+}
+
+mutation AssignAssetToEmployee($input: AssignAssetInput!) {
+  assignAssetToEmployee(input: $input) {
+    id
+    assetId
+    employeeId
+    assetName
+    status
+  }
+}
+
+mutation ReturnEmployeeAsset($input: ReturnAssetInput!) {
+  returnEmployeeAsset(input: $input) {
+    id
+    assetId
+    employeeId
+    assetName
+    status
+  }
+}
