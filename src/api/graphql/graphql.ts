@@ -20,6 +20,7 @@ export type Scalars = {
    * The input/output is a string in RFC3339 format.
    */
   DateTime: { input: any; output: any; }
+  /** A scalar that can represent any JSON value. */
   JSON: { input: any; output: any; }
   /**
    * ISO 8601 calendar date without timezone.
@@ -75,14 +76,14 @@ export type Announcement = {
   body?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy?: Maybe<Scalars['ID']['output']>;
+  /** Authenticated document bytes for client-side Blob download. No storage or signed URL is exposed. */
+  documentAttachment?: Maybe<AnnouncementAttachment>;
   documentFileStorageId?: Maybe<Scalars['ID']['output']>;
-  /** Time-limited URL to open or download the attached document. */
-  documentReadUrl?: Maybe<Scalars['String']['output']>;
   expiresAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
+  /** Authenticated image bytes for inline preview. No storage or signed URL is exposed. */
+  imageAttachment?: Maybe<AnnouncementAttachment>;
   imageFileStorageId?: Maybe<Scalars['ID']['output']>;
-  /** Time-limited URL for inline image / preview (`GET` on kabipay-employee). */
-  imageReadUrl?: Maybe<Scalars['String']['output']>;
   postSource: Scalars['String']['output'];
   publishAt?: Maybe<Scalars['DateTime']['output']>;
   targetAudience?: Maybe<Scalars['String']['output']>;
@@ -90,6 +91,14 @@ export type Announcement = {
   targetLocationId?: Maybe<Scalars['ID']['output']>;
   tenantId: Scalars['ID']['output'];
   title: Scalars['String']['output'];
+};
+
+export type AnnouncementAttachment = {
+  __typename?: 'AnnouncementAttachment';
+  contentBase64: Scalars['String']['output'];
+  fileName: Scalars['String']['output'];
+  fileSizeBytes?: Maybe<Scalars['Int']['output']>;
+  mimeType: Scalars['String']['output'];
 };
 
 export type Application = {
@@ -118,6 +127,23 @@ export type Asset = {
   tenantId: Scalars['ID']['output'];
 };
 
+export type AssetAssignment = {
+  __typename?: 'AssetAssignment';
+  allocatedOn: Scalars['NaiveDate']['output'];
+  assetId: Scalars['ID']['output'];
+  assetName: Scalars['String']['output'];
+  assetTag?: Maybe<Scalars['String']['output']>;
+  conditionAtAllocation?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  employeeId: Scalars['ID']['output'];
+  expectedReturnOn?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['ID']['output'];
+  purchaseValue?: Maybe<Scalars['String']['output']>;
+  serialNumber?: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export type AssetCategory = {
   __typename?: 'AssetCategory';
   code?: Maybe<Scalars['String']['output']>;
@@ -126,6 +152,23 @@ export type AssetCategory = {
   name: Scalars['String']['output'];
   tenantId: Scalars['ID']['output'];
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type AssignAssetInput = {
+  allocatedOn: Scalars['NaiveDate']['input'];
+  assetId: Scalars['ID']['input'];
+  conditionAtAllocation?: InputMaybe<Scalars['String']['input']>;
+  employeeId: Scalars['ID']['input'];
+  expectedReturnOn?: InputMaybe<Scalars['NaiveDate']['input']>;
+};
+
+export type AssignEmployeeSalaryStructureInput = {
+  annualCtc: Scalars['String']['input'];
+  effectiveFrom: Scalars['NaiveDate']['input'];
+  effectiveTo?: InputMaybe<Scalars['NaiveDate']['input']>;
+  employeeId: Scalars['ID']['input'];
+  overrides: Array<EmployeeSalaryComponentOverrideInput>;
+  salaryStructureId: Scalars['ID']['input'];
 };
 
 export type Attendance = {
@@ -246,6 +289,24 @@ export type ClearanceChecklistItem = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type CompanyDocument = {
+  __typename?: 'CompanyDocument';
+  category: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  fileSizeBytes?: Maybe<Scalars['Int']['output']>;
+  fileStorageId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  mimeType?: Maybe<Scalars['String']['output']>;
+  originalFileName?: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  tenantId: Scalars['ID']['output'];
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  uploadedByUserId?: Maybe<Scalars['ID']['output']>;
+  visibleToEmployees: Scalars['Boolean']['output'];
+};
+
 export type CompensationReviewCycle = {
   __typename?: 'CompensationReviewCycle';
   budgetPercentage?: Maybe<Scalars['String']['output']>;
@@ -304,6 +365,14 @@ export type CreateAnnouncementInput = {
   /** When set with `employee_post=false`, stored as `target_audience` `ROLE:<code>` (e.g. `HR_ADMIN`). */
   targetRoleCode?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
+};
+
+export type CreateCompanyDocumentInput = {
+  category: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  fileStorageId: Scalars['ID']['input'];
+  title: Scalars['String']['input'];
+  visibleToEmployees?: Scalars['Boolean']['input'];
 };
 
 export type CreateDirectNotificationsInput = {
@@ -505,6 +574,7 @@ export type EmployeeBankAccount = {
   isVerified: Scalars['Boolean']['output'];
 };
 
+/** Explicitly allow-listed employee information visible in the tenant directory. */
 export type EmployeeDirectoryEntry = {
   __typename?: 'EmployeeDirectoryEntry';
   dateOfJoining: Scalars['NaiveDate']['output'];
@@ -542,6 +612,15 @@ export type EmployeeDocument = {
   updatedAt: Scalars['DateTime']['output'];
   uploadedAt: Scalars['DateTime']['output'];
   uploadedByUserId?: Maybe<Scalars['ID']['output']>;
+};
+
+export type EmployeeDocumentAttachment = {
+  __typename?: 'EmployeeDocumentAttachment';
+  /** Standard base64 payload returned only after employee/data-scope authorization. */
+  contentBase64: Scalars['String']['output'];
+  fileName: Scalars['String']['output'];
+  fileSizeBytes?: Maybe<Scalars['Int']['output']>;
+  mimeType: Scalars['String']['output'];
 };
 
 export type EmployeeEducation = {
@@ -638,6 +717,26 @@ export type EmployeeProfileReviewQueueItem = {
   employeeName: Scalars['String']['output'];
   hasSupportingDocument: Scalars['Boolean']['output'];
   request: EmployeeProfileChangeRequest;
+};
+
+export type EmployeeSalaryComponentOverrideInput = {
+  calculationBasis: Scalars['String']['input'];
+  calculationValue: Scalars['String']['input'];
+  isActive: Scalars['Boolean']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  salaryComponentId: Scalars['ID']['input'];
+};
+
+export type EmployeeSalaryStructure = {
+  __typename?: 'EmployeeSalaryStructure';
+  createdAt: Scalars['DateTime']['output'];
+  ctc: Scalars['String']['output'];
+  effectiveFrom: Scalars['NaiveDate']['output'];
+  effectiveTo?: Maybe<Scalars['NaiveDate']['output']>;
+  employeeId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  salaryStructureId: Scalars['ID']['output'];
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type EmployeeWorkExperience = {
@@ -917,7 +1016,9 @@ export type LeaveRequest = {
   appliedAt: Scalars['DateTime']['output'];
   /** Days requested, serialised as a decimal string for lossless transport. */
   daysRequested: Scalars['String']['output'];
+  employeeCode?: Maybe<Scalars['String']['output']>;
   employeeId: Scalars['ID']['output'];
+  employeeName?: Maybe<Scalars['String']['output']>;
   fromDate: Scalars['NaiveDate']['output'];
   halfDaySession?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
@@ -987,6 +1088,9 @@ export type Mutation = {
   approveTaxProofLine: TaxProofLine;
   approveTimesheetWeekBatch: TimesheetWeekBatch;
   approveTravelRequest: TravelRequest;
+  archiveCompanyDocument: CompanyDocument;
+  assignAssetToEmployee: AssetAssignment;
+  assignEmployeeSalaryStructure: EmployeeSalaryStructure;
   cancelEmployeeProfileChange: EmployeeProfileChangeRequest;
   /** Withdraw own **PENDING** leave request (releases balance hold; cancels workflow when present). */
   cancelLeaveRequest: LeaveRequest;
@@ -994,6 +1098,7 @@ export type Mutation = {
   connectTenantIntegration: TenantIntegrationRow;
   /** Public bulletin visible to all authenticated users in the tenant (company news or employee post). */
   createAnnouncement: Announcement;
+  createCompanyDocument: CompanyDocument;
   createDirectNotifications: Scalars['Int']['output'];
   createEmployee: Employee;
   createInvoice: Invoice;
@@ -1011,6 +1116,7 @@ export type Mutation = {
   /** Add a **step** to an existing workflow. Requires `workflow:manage` or HR / tenant admin role. */
   createWorkflowStep: WorkflowStep;
   deleteAnnouncement: Scalars['Boolean']['output'];
+  deleteCompanyDocument: Scalars['Boolean']['output'];
   deleteEmployeeEducation: Scalars['Boolean']['output'];
   deleteEmployeeWorkExperience: Scalars['Boolean']['output'];
   /** Soft-delete an **`expense_category`** (**`expense:manage`** required). */
@@ -1078,6 +1184,7 @@ export type Mutation = {
   resolveEmployeeEducation: EmployeeEducation;
   resolveEmployeeProfileChange: EmployeeProfileChangeRequest;
   resolveEmployeeWorkExperience: EmployeeWorkExperience;
+  returnEmployeeAsset: AssetAssignment;
   /**
    * **Pay run (v2)** — generate missing payslips for a `DRAFT` cycle, then set the cycle to
    * `PROCESSED`. Per employee: latest `employment_history.salary` as BASIC, PENDING
@@ -1128,6 +1235,7 @@ export type Mutation = {
   updateEmployee: Employee;
   /** Demographics + emergency contact. Employee may edit **self**; HR may edit anyone in scope. */
   updateEmployeePersonalProfile: Employee;
+  /** Direct self-service fields that do not change legal identity or organization assignment. */
   updateEmployeeSelfServiceProfile: Employee;
   /** Update an existing manual attendance segment with server-side overlap and daily-cap checks. */
   updateManualAttendanceSegment: Attendance;
@@ -1168,6 +1276,8 @@ export type Mutation = {
   upsertLeaveType: LeaveType;
   /** Upsert tenant employer TAN and legal name for India statutory payroll CSV placeholders. */
   upsertPayrollComplianceSetting: PayrollComplianceSetting;
+  upsertSalaryComponent: SalaryComponent;
+  upsertSalaryStructure: SalaryStructure;
   /**
    * Create or update the `tax_computation` row for this employee, config version, and year.
    *
@@ -1233,6 +1343,21 @@ export type MutationApproveTravelRequestArgs = {
 };
 
 
+export type MutationArchiveCompanyDocumentArgs = {
+  companyDocumentId: Scalars['ID']['input'];
+};
+
+
+export type MutationAssignAssetToEmployeeArgs = {
+  input: AssignAssetInput;
+};
+
+
+export type MutationAssignEmployeeSalaryStructureArgs = {
+  input: AssignEmployeeSalaryStructureInput;
+};
+
+
 export type MutationCancelEmployeeProfileChangeArgs = {
   requestId: Scalars['ID']['input'];
 };
@@ -1250,6 +1375,11 @@ export type MutationConnectTenantIntegrationArgs = {
 
 export type MutationCreateAnnouncementArgs = {
   input: CreateAnnouncementInput;
+};
+
+
+export type MutationCreateCompanyDocumentArgs = {
+  input: CreateCompanyDocumentInput;
 };
 
 
@@ -1300,6 +1430,11 @@ export type MutationCreateWorkflowStepArgs = {
 
 export type MutationDeleteAnnouncementArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteCompanyDocumentArgs = {
+  companyDocumentId: Scalars['ID']['input'];
 };
 
 
@@ -1511,6 +1646,11 @@ export type MutationResolveEmployeeWorkExperienceArgs = {
   approved: Scalars['Boolean']['input'];
   rejectionReason?: InputMaybe<Scalars['String']['input']>;
   workExperienceId: Scalars['ID']['input'];
+};
+
+
+export type MutationReturnEmployeeAssetArgs = {
+  input: ReturnAssetInput;
 };
 
 
@@ -1774,6 +1914,16 @@ export type MutationUpsertLeaveTypeArgs = {
 
 export type MutationUpsertPayrollComplianceSettingArgs = {
   input: UpsertPayrollComplianceSettingInput;
+};
+
+
+export type MutationUpsertSalaryComponentArgs = {
+  input: UpsertSalaryComponentInput;
+};
+
+
+export type MutationUpsertSalaryStructureArgs = {
+  input: UpsertSalaryStructureInput;
 };
 
 
@@ -2052,6 +2202,7 @@ export type Query = {
   analyticsHealth: Scalars['String']['output'];
   announcements: Array<Announcement>;
   applications: Array<Application>;
+  assetAssignments: Array<AssetAssignment>;
   assetCategories: Array<AssetCategory>;
   assets: Array<Asset>;
   assetsHealth: Scalars['String']['output'];
@@ -2070,6 +2221,8 @@ export type Query = {
   billingHealth: Scalars['String']['output'];
   /** Department exit clearance items for a separation. */
   clearanceChecklist: Array<ClearanceChecklistItem>;
+  companyDocumentAttachment: TenantFileAttachment;
+  companyDocuments: Array<CompanyDocument>;
   compensationHealth: Scalars['String']['output'];
   compensationReviewCycles: Array<CompensationReviewCycle>;
   competencies: Array<Competency>;
@@ -2088,12 +2241,10 @@ export type Query = {
    * belongs to another tenant (never leaks cross-tenant rows).
    */
   employee?: Maybe<Employee>;
+  /** Safe company directory available to every authenticated tenant employee. */
   employeeDirectoryPage: EmployeeDirectoryPage;
-  /**
-   * HMAC time-limited URL for `GET /files/employee-document?token=...` (no `Authorization` on GET).
-   * Caller must be able to read the employee who owns the document.
-   */
-  employeeDocumentSignedReadUrl: Scalars['String']['output'];
+  /** Private employee document bytes. Caller must be able to read the employee who owns the document. */
+  employeeDocumentAttachment: EmployeeDocumentAttachment;
   /** Uploaded employee documents. Omit `employeeId` to list the caller’s own files (JWT). */
   employeeDocuments: Array<EmployeeDocument>;
   employeeEducationRecords: Array<EmployeeEducation>;
@@ -2104,10 +2255,14 @@ export type Query = {
   employeeIdentityProfile: EmployeeIdentityProfile;
   /** Primary bank account for payroll (masked account number in API). */
   employeePrimaryBank?: Maybe<EmployeeBankAccount>;
+  /** Public profile projection plus server-derived private/edit capabilities. */
   employeeProfileAccess?: Maybe<EmployeeProfileAccess>;
   employeeProfileChangeRequests: Array<EmployeeProfileChangeRequest>;
+  /** HR-only, scope-checked request detail containing decrypted current and proposed values. */
   employeeProfileChangeReviewDetail: EmployeeProfileChangeReviewDetail;
+  /** HR-only masked queue. Sensitive values require the separate detail query. */
   employeeProfileReviewQueue: Array<EmployeeProfileReviewQueueItem>;
+  employeeSalaryBreakupPreview?: Maybe<SalaryBreakupPreview>;
   /** Assigned project codes only (empty ⇒ unrestricted catalog). */
   employeeTimesheetProjectCodes: Array<Scalars['String']['output']>;
   employeeWorkExperienceRecords: Array<EmployeeWorkExperience>;
@@ -2195,12 +2350,20 @@ export type Query = {
   modules: Array<Module>;
   /** Signed-in employee's enrollments (`[]` until they enroll via `enroll_in_benefit_plan`). */
   myBenefitEnrollments: Array<BenefitEnrollment>;
+  /**
+   * Authoritative employee profile linked to the authenticated user.
+   *
+   * This resolves `employee.user_id` on every call instead of trusting the
+   * optional denormalized `employee_id` access-token claim, so older tokens
+   * and repaired account links still reach the correct profile.
+   */
+  myEmployee?: Maybe<Employee>;
   /** Current user’s in-app visibility preferences (announcement bulletin + per-topic mutes). */
   myNotificationPreferences: NotificationPreferences;
   notificationHealth: Scalars['String']['output'];
   notifications: Array<Notification>;
   /**
-   * Onboarding tasks for an employee. Omit `employeeId` for the JWT subject’s checklist.
+   * Onboarding tasks for an employee. Omit `employeeId` for the JWT subject's checklist.
    * HR / directory managers may pass another employee id (same data-scope rules as documents).
    */
   onboardingChecklist: Array<OnboardingChecklistItem>;
@@ -2214,6 +2377,7 @@ export type Query = {
    * Respects the same **`employee`** `resource_scopes` as **`employees`** (SELF / TEAM / DEPARTMENT / ALL).
    */
   orgChart: Array<OrgChartRow>;
+  /** Safe full reporting hierarchy for authenticated employees. */
   organizationDirectoryChart: Array<EmployeeDirectoryEntry>;
   /** **HR / directory admins only** — inspect transactional outbox rows (e.g. after leave approval). */
   outboxEvents: Array<OutboxEventRow>;
@@ -2271,6 +2435,7 @@ export type Query = {
   salaryBands: Array<SalaryBand>;
   /** List salary components (earnings/deductions) for the caller's tenant. */
   salaryComponents: Array<SalaryComponent>;
+  salaryStructures: Array<SalaryStructure>;
   /**
    * Separation / offboarding requests. `onboarding:manage` sees tenant-wide rows;
    * `onboarding:self` (or manage) sees **their own**; otherwise forbidden.
@@ -2304,6 +2469,14 @@ export type Query = {
   tenantDirectoryRoles: Array<TenantDirectoryRole>;
   /** Tenant users for RBAC assignment (`role:manage` / HR admin). */
   tenantDirectoryUsers: Array<TenantDirectoryUser>;
+  /**
+   * Private tenant file bytes for generic `file_storage` uploads.
+   *
+   * This is intentionally not a public/signed URL. Generic file storage is shared by multiple
+   * HRMS modules, so reads are limited to the uploader or elevated tenant HR/onboarding/RBAC
+   * admins until each module has its own business-object-specific visibility rules.
+   */
+  tenantFileAttachment: TenantFileAttachment;
   tenantHealth: Scalars['String']['output'];
   /** **HR / directory admins only** — tenant integration rows. */
   tenantIntegrations: Array<TenantIntegrationRow>;
@@ -2367,6 +2540,13 @@ export type QueryApplicationsArgs = {
 };
 
 
+export type QueryAssetAssignmentsArgs = {
+  activeOnly?: Scalars['Boolean']['input'];
+  employeeId?: InputMaybe<Scalars['ID']['input']>;
+  limit?: Scalars['Int']['input'];
+};
+
+
 export type QueryAssetCategoriesArgs = {
   limit?: Scalars['Int']['input'];
 };
@@ -2408,6 +2588,18 @@ export type QueryBillingCyclesArgs = {
 
 export type QueryClearanceChecklistArgs = {
   separationId: Scalars['ID']['input'];
+};
+
+
+export type QueryCompanyDocumentAttachmentArgs = {
+  companyDocumentId: Scalars['ID']['input'];
+};
+
+
+export type QueryCompanyDocumentsArgs = {
+  activeOnly?: Scalars['Boolean']['input'];
+  category?: InputMaybe<Scalars['String']['input']>;
+  limit?: Scalars['Int']['input'];
 };
 
 
@@ -2464,9 +2656,8 @@ export type QueryEmployeeDirectoryPageArgs = {
 };
 
 
-export type QueryEmployeeDocumentSignedReadUrlArgs = {
+export type QueryEmployeeDocumentAttachmentArgs = {
   employeeDocumentId: Scalars['ID']['input'];
-  ttlSeconds?: Scalars['Int']['input'];
 };
 
 
@@ -2515,6 +2706,12 @@ export type QueryEmployeeProfileChangeReviewDetailArgs = {
 export type QueryEmployeeProfileReviewQueueArgs = {
   limit?: Scalars['Int']['input'];
   status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEmployeeSalaryBreakupPreviewArgs = {
+  asOf?: InputMaybe<Scalars['NaiveDate']['input']>;
+  employeeId: Scalars['ID']['input'];
 };
 
 
@@ -2832,6 +3029,11 @@ export type QuerySalaryComponentsArgs = {
 };
 
 
+export type QuerySalaryStructuresArgs = {
+  limit?: Scalars['Int']['input'];
+};
+
+
 export type QuerySeparationsArgs = {
   limit?: Scalars['Int']['input'];
 };
@@ -2894,6 +3096,11 @@ export type QueryTenantDirectoryRolesArgs = {
 
 export type QueryTenantDirectoryUsersArgs = {
   limit?: Scalars['Int']['input'];
+};
+
+
+export type QueryTenantFileAttachmentArgs = {
+  fileStorageId: Scalars['ID']['input'];
 };
 
 
@@ -3035,6 +3242,13 @@ export type ResetEmployeePasswordInput = {
   newPassword: Scalars['String']['input'];
 };
 
+export type ReturnAssetInput = {
+  assetAllocationId: Scalars['ID']['input'];
+  conditionAtReturn?: InputMaybe<Scalars['String']['input']>;
+  remarks?: InputMaybe<Scalars['String']['input']>;
+  returnedOn: Scalars['NaiveDate']['input'];
+};
+
 export type ReviewCycle = {
   __typename?: 'ReviewCycle';
   createdAt: Scalars['DateTime']['output'];
@@ -3061,11 +3275,36 @@ export type SalaryBand = {
   tenantId: Scalars['ID']['output'];
 };
 
+export type SalaryBreakupLine = {
+  __typename?: 'SalaryBreakupLine';
+  annualAmount: Scalars['String']['output'];
+  calculationBasis: Scalars['String']['output'];
+  calculationValue: Scalars['String']['output'];
+  componentCode: Scalars['String']['output'];
+  componentName: Scalars['String']['output'];
+  componentType: Scalars['String']['output'];
+  isOverride: Scalars['Boolean']['output'];
+  monthlyAmount: Scalars['String']['output'];
+  salaryComponentId: Scalars['ID']['output'];
+};
+
+export type SalaryBreakupPreview = {
+  __typename?: 'SalaryBreakupPreview';
+  annualCtc: Scalars['String']['output'];
+  employeeId: Scalars['ID']['output'];
+  employeeSalaryStructureId?: Maybe<Scalars['ID']['output']>;
+  lines: Array<SalaryBreakupLine>;
+  monthlyDeductions: Scalars['String']['output'];
+  monthlyGross: Scalars['String']['output'];
+  monthlyNetBeforeStatutory: Scalars['String']['output'];
+};
+
 export type SalaryComponent = {
   __typename?: 'SalaryComponent';
   code: Scalars['String']['output'];
   componentType: Scalars['String']['output'];
   createdAt: Scalars['DateTime']['output'];
+  formulaExpression?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   isFixed: Scalars['Boolean']['output'];
@@ -3073,6 +3312,36 @@ export type SalaryComponent = {
   name: Scalars['String']['output'];
   tenantId: Scalars['ID']['output'];
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type SalaryStructure = {
+  __typename?: 'SalaryStructure';
+  components: Array<SalaryStructureComponent>;
+  createdAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  tenantId: Scalars['ID']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type SalaryStructureComponent = {
+  __typename?: 'SalaryStructureComponent';
+  calculationBasis: Scalars['String']['output'];
+  calculationValue?: Maybe<Scalars['String']['output']>;
+  componentCode: Scalars['String']['output'];
+  componentName: Scalars['String']['output'];
+  componentType: Scalars['String']['output'];
+  displayOrder: Scalars['Int']['output'];
+  id: Scalars['ID']['output'];
+  salaryComponentId: Scalars['ID']['output'];
+};
+
+export type SalaryStructureComponentInput = {
+  calculationBasis: Scalars['String']['input'];
+  calculationValue: Scalars['String']['input'];
+  displayOrder: Scalars['Int']['input'];
+  salaryComponentId: Scalars['ID']['input'];
 };
 
 export type Separation = {
@@ -3322,6 +3591,15 @@ export type TenantDirectoryUser = {
   username: Scalars['String']['output'];
 };
 
+export type TenantFileAttachment = {
+  __typename?: 'TenantFileAttachment';
+  /** Standard base64 payload returned only after tenant file authorization. */
+  contentBase64: Scalars['String']['output'];
+  fileName: Scalars['String']['output'];
+  fileSizeBytes?: Maybe<Scalars['Int']['output']>;
+  mimeType: Scalars['String']['output'];
+};
+
 export type TenantIntegrationRow = {
   __typename?: 'TenantIntegrationRow';
   connectedAt?: Maybe<Scalars['DateTime']['output']>;
@@ -3381,7 +3659,9 @@ export type TimesheetProjectOption = {
 
 export type TimesheetWeekBatch = {
   __typename?: 'TimesheetWeekBatch';
+  employeeCode?: Maybe<Scalars['String']['output']>;
   employeeId: Scalars['ID']['output'];
+  employeeName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** Configured workflow step title when status is PENDING and a workflow is in progress. */
   pendingApprovalStage?: Maybe<Scalars['String']['output']>;
@@ -3453,6 +3733,8 @@ export type UpdateEmployeeInput = {
   firstName?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
+  /** Optional linked login email. Omit to leave unchanged; pass an empty string to clear it. */
+  linkedUserEmail?: InputMaybe<Scalars['String']['input']>;
   /** Omitted = leave unchanged; `null` = clear manager; id = set manager (cycle-safe). */
   reportingManagerId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
@@ -3694,6 +3976,24 @@ export type UpsertPayrollComplianceSettingInput = {
   employerTan?: InputMaybe<Scalars['String']['input']>;
   payslipHeaderTitle?: InputMaybe<Scalars['String']['input']>;
   payslipLogoFileStorageId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type UpsertSalaryComponentInput = {
+  code: Scalars['String']['input'];
+  componentType: Scalars['String']['input'];
+  formulaExpression?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  isActive: Scalars['Boolean']['input'];
+  isFixed: Scalars['Boolean']['input'];
+  isTaxable: Scalars['Boolean']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type UpsertSalaryStructureInput = {
+  components: Array<SalaryStructureComponentInput>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  name: Scalars['String']['input'];
 };
 
 export type UpsertTaxComputationInput = {
@@ -4005,7 +4305,7 @@ export type OrgDocumentsListQueryVariables = Exact<{
 }>;
 
 
-export type OrgDocumentsListQuery = { __typename?: 'Query', documentTypes: Array<{ __typename?: 'DocumentType', id: string, name: string, category?: string | null, isRequired: boolean }>, employeeDocuments: Array<{ __typename?: 'EmployeeDocument', id: string, documentTypeId: string, status: string, uploadedAt: any, expiryDate?: any | null }> };
+export type OrgDocumentsListQuery = { __typename?: 'Query', companyDocuments: Array<{ __typename?: 'CompanyDocument', id: string, category: string, title: string, description?: string | null, fileStorageId: string, originalFileName?: string | null, mimeType?: string | null, fileSizeBytes?: number | null, status: string, visibleToEmployees: boolean, uploadedByUserId?: string | null, createdAt: any, updatedAt: any }>, documentTypes: Array<{ __typename?: 'DocumentType', id: string, name: string, category?: string | null, isRequired: boolean }>, employeeDocuments: Array<{ __typename?: 'EmployeeDocument', id: string, documentTypeId: string, status: string, uploadedAt: any, expiryDate?: any | null }> };
 
 export type ClientOpsPayslipsListQueryVariables = Exact<{
   limit?: Scalars['Int']['input'];
@@ -4465,7 +4765,14 @@ export type UpdateEmployeeMutationVariables = Exact<{
 }>;
 
 
-export type UpdateEmployeeMutation = { __typename?: 'Mutation', updateEmployee: { __typename?: 'Employee', id: string, employeeCode: string, fullName: string, status: string, dateOfJoining: any, departmentId?: string | null, designationId?: string | null, employmentType?: string | null, reportingManagerId?: string | null } };
+export type UpdateEmployeeMutation = { __typename?: 'Mutation', updateEmployee: { __typename?: 'Employee', id: string, employeeCode: string, fullName: string, status: string, dateOfJoining: any, departmentId?: string | null, designationId?: string | null, employmentType?: string | null, reportingManagerId?: string | null, linkedUserEmail?: string | null } };
+
+export type CompanyDocumentAttachmentQueryVariables = Exact<{
+  companyDocumentId: Scalars['ID']['input'];
+}>;
+
+
+export type CompanyDocumentAttachmentQuery = { __typename?: 'Query', companyDocumentAttachment: { __typename?: 'TenantFileAttachment', fileName: string, mimeType: string, fileSizeBytes?: number | null, contentBase64: string } };
 
 export type UpdateEmployeePersonalProfileMutationVariables = Exact<{
   input: UpdateEmployeePersonalProfileInput;
@@ -4620,6 +4927,27 @@ export type UploadTenantFileMutationVariables = Exact<{
 
 
 export type UploadTenantFileMutation = { __typename?: 'Mutation', uploadTenantFile: { __typename?: 'UploadedTenantFile', id: string, tenantId: string, originalFileName?: string | null, mimeType?: string | null, fileSizeBytes?: number | null, createdAt: any } };
+
+export type TenantFileAttachmentQueryVariables = Exact<{
+  fileStorageId: Scalars['ID']['input'];
+}>;
+
+
+export type TenantFileAttachmentQuery = { __typename?: 'Query', tenantFileAttachment: { __typename?: 'TenantFileAttachment', fileName: string, mimeType: string, fileSizeBytes?: number | null, contentBase64: string } };
+
+export type CreateCompanyDocumentMutationVariables = Exact<{
+  input: CreateCompanyDocumentInput;
+}>;
+
+
+export type CreateCompanyDocumentMutation = { __typename?: 'Mutation', createCompanyDocument: { __typename?: 'CompanyDocument', id: string, category: string, title: string, description?: string | null, fileStorageId: string, originalFileName?: string | null, mimeType?: string | null, fileSizeBytes?: number | null, status: string, visibleToEmployees: boolean, uploadedByUserId?: string | null, createdAt: any, updatedAt: any } };
+
+export type DeleteCompanyDocumentMutationVariables = Exact<{
+  companyDocumentId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteCompanyDocumentMutation = { __typename?: 'Mutation', deleteCompanyDocument: boolean };
 
 export type ResolveEmployeeDocumentMutationVariables = Exact<{
   employeeDocumentId: Scalars['ID']['input'];
@@ -4974,7 +5302,7 @@ export type NotificationBoardQueryVariables = Exact<{
 }>;
 
 
-export type NotificationBoardQuery = { __typename?: 'Query', unreadNotificationCount: number, announcements: Array<{ __typename?: 'Announcement', id: string, title: string, body?: string | null, targetAudience?: string | null, targetDepartmentId?: string | null, targetLocationId?: string | null, postSource: string, publishAt?: any | null, expiresAt?: any | null, imageReadUrl?: string | null, documentReadUrl?: string | null }>, notifications: Array<{ __typename?: 'Notification', id: string, kind?: string | null, title?: string | null, message?: string | null, actionUrl?: string | null, isRead: boolean, createdAt: any }> };
+export type NotificationBoardQuery = { __typename?: 'Query', unreadNotificationCount: number, announcements: Array<{ __typename?: 'Announcement', id: string, title: string, body?: string | null, targetAudience?: string | null, targetDepartmentId?: string | null, targetLocationId?: string | null, postSource: string, publishAt?: any | null, expiresAt?: any | null, imageAttachment?: { __typename?: 'AnnouncementAttachment', fileName: string, mimeType: string, fileSizeBytes?: number | null, contentBase64: string } | null, documentAttachment?: { __typename?: 'AnnouncementAttachment', fileName: string, mimeType: string, fileSizeBytes?: number | null, contentBase64: string } | null }>, notifications: Array<{ __typename?: 'Notification', id: string, kind?: string | null, title?: string | null, message?: string | null, actionUrl?: string | null, isRead: boolean, createdAt: any }> };
 
 export type MyNotificationPreferencesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4996,7 +5324,7 @@ export type AdminNotificationsConsoleQueryVariables = Exact<{
 }>;
 
 
-export type AdminNotificationsConsoleQuery = { __typename?: 'Query', adminAnnouncements: Array<{ __typename?: 'Announcement', id: string, title: string, body?: string | null, targetAudience?: string | null, targetDepartmentId?: string | null, targetLocationId?: string | null, postSource: string, publishAt?: any | null, expiresAt?: any | null, createdAt: any, imageReadUrl?: string | null, documentReadUrl?: string | null }>, adminNotifications: Array<{ __typename?: 'Notification', id: string, userId: string, kind?: string | null, title?: string | null, message?: string | null, actionUrl?: string | null, isRead: boolean, createdAt: any }>, employees: Array<{ __typename?: 'Employee', id: string, fullName: string, userId?: string | null, linkedUserEmail?: string | null, linkedUserUsername?: string | null }>, departments: Array<{ __typename?: 'Department', id: string, name: string }> };
+export type AdminNotificationsConsoleQuery = { __typename?: 'Query', adminAnnouncements: Array<{ __typename?: 'Announcement', id: string, title: string, body?: string | null, targetAudience?: string | null, targetDepartmentId?: string | null, targetLocationId?: string | null, postSource: string, publishAt?: any | null, expiresAt?: any | null, createdAt: any }>, adminNotifications: Array<{ __typename?: 'Notification', id: string, userId: string, kind?: string | null, title?: string | null, message?: string | null, actionUrl?: string | null, isRead: boolean, createdAt: any }>, employees: Array<{ __typename?: 'Employee', id: string, fullName: string, userId?: string | null, linkedUserEmail?: string | null, linkedUserUsername?: string | null }>, departments: Array<{ __typename?: 'Department', id: string, name: string }> };
 
 export type UpdateAnnouncementMutationVariables = Exact<{
   input: UpdateAnnouncementInput;
@@ -5038,7 +5366,7 @@ export type CreateAnnouncementMutationVariables = Exact<{
 }>;
 
 
-export type CreateAnnouncementMutation = { __typename?: 'Mutation', createAnnouncement: { __typename?: 'Announcement', id: string, title: string, body?: string | null, postSource: string, imageReadUrl?: string | null, documentReadUrl?: string | null } };
+export type CreateAnnouncementMutation = { __typename?: 'Mutation', createAnnouncement: { __typename?: 'Announcement', id: string, title: string, body?: string | null, postSource: string } };
 
 export type ClientOpsNotificationPreviewQueryVariables = Exact<{
   limit?: Scalars['Int']['input'];
@@ -5146,13 +5474,12 @@ export type EmployeeProfileAccessQueryVariables = Exact<{
 
 export type EmployeeProfileAccessQuery = { __typename?: 'Query', employeeProfileAccess?: { __typename?: 'EmployeeProfileAccess', isSelf: boolean, canViewPrivateProfile: boolean, canEditPersonalProfile: boolean, canManageOrganizationFields: boolean, canReviewProfileChanges: boolean, directoryEntry: { __typename?: 'EmployeeDirectoryEntry', employeeId: string, employeeCode: string, fullName: string, status: string, employmentType?: string | null, dateOfJoining: any, departmentName?: string | null, designationTitle?: string | null, reportingManagerId?: string | null, reportingManagerName?: string | null } } | null };
 
-export type EmployeeDocumentSignedReadUrlQueryVariables = Exact<{
+export type EmployeeDocumentAttachmentQueryVariables = Exact<{
   employeeDocumentId: Scalars['ID']['input'];
-  ttlSeconds?: Scalars['Int']['input'];
 }>;
 
 
-export type EmployeeDocumentSignedReadUrlQuery = { __typename?: 'Query', employeeDocumentSignedReadUrl: string };
+export type EmployeeDocumentAttachmentQuery = { __typename?: 'Query', employeeDocumentAttachment: { __typename?: 'EmployeeDocumentAttachment', fileName: string, mimeType: string, fileSizeBytes?: number | null, contentBase64: string } };
 
 export type EmployeeProfileReviewQueueQueryVariables = Exact<{
   status?: InputMaybe<Scalars['String']['input']>;
@@ -5514,6 +5841,71 @@ export type OperatorHealthQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type OperatorHealthQuery = { __typename?: 'Query', operatorUsers: Array<{ __typename?: 'OperatorUser', id: string, email: string }> };
 
+export type PayrollCompensationBoardQueryVariables = Exact<{
+  employeeLimit?: Scalars['Int']['input'];
+}>;
+
+
+export type PayrollCompensationBoardQuery = { __typename?: 'Query', employees: Array<{ __typename?: 'Employee', id: string, employeeCode: string, fullName: string, status: string, dateOfJoining: any }>, salaryComponents: Array<{ __typename?: 'SalaryComponent', id: string, name: string, code: string, componentType: string, isTaxable: boolean, isFixed: boolean, isActive: boolean }>, salaryStructures: Array<{ __typename?: 'SalaryStructure', id: string, name: string, description?: string | null, components: Array<{ __typename?: 'SalaryStructureComponent', id: string, salaryComponentId: string, componentName: string, componentCode: string, componentType: string, calculationBasis: string, calculationValue?: string | null, displayOrder: number }> }> };
+
+export type UpsertSalaryComponentMutationVariables = Exact<{
+  input: UpsertSalaryComponentInput;
+}>;
+
+
+export type UpsertSalaryComponentMutation = { __typename?: 'Mutation', upsertSalaryComponent: { __typename?: 'SalaryComponent', id: string, name: string, code: string, componentType: string, isActive: boolean } };
+
+export type UpsertSalaryStructureMutationVariables = Exact<{
+  input: UpsertSalaryStructureInput;
+}>;
+
+
+export type UpsertSalaryStructureMutation = { __typename?: 'Mutation', upsertSalaryStructure: { __typename?: 'SalaryStructure', id: string, name: string, components: Array<{ __typename?: 'SalaryStructureComponent', id: string, componentCode: string, calculationBasis: string, calculationValue?: string | null }> } };
+
+export type AssignEmployeeSalaryStructureMutationVariables = Exact<{
+  input: AssignEmployeeSalaryStructureInput;
+}>;
+
+
+export type AssignEmployeeSalaryStructureMutation = { __typename?: 'Mutation', assignEmployeeSalaryStructure: { __typename?: 'EmployeeSalaryStructure', id: string, employeeId: string, salaryStructureId: string, ctc: string, effectiveFrom: any } };
+
+export type EmployeeSalaryBreakupPreviewQueryVariables = Exact<{
+  employeeId: Scalars['ID']['input'];
+  asOf?: InputMaybe<Scalars['NaiveDate']['input']>;
+}>;
+
+
+export type EmployeeSalaryBreakupPreviewQuery = { __typename?: 'Query', employeeSalaryBreakupPreview?: { __typename?: 'SalaryBreakupPreview', employeeId: string, annualCtc: string, monthlyGross: string, monthlyDeductions: string, monthlyNetBeforeStatutory: string, lines: Array<{ __typename?: 'SalaryBreakupLine', salaryComponentId: string, componentName: string, componentCode: string, componentType: string, calculationBasis: string, calculationValue: string, annualAmount: string, monthlyAmount: string, isOverride: boolean }> } | null };
+
+export type AssetsBoardQueryVariables = Exact<{
+  withInventory: Scalars['Boolean']['input'];
+  limit?: Scalars['Int']['input'];
+}>;
+
+
+export type AssetsBoardQuery = { __typename?: 'Query', assetCategories?: Array<{ __typename?: 'AssetCategory', id: string, name: string, code?: string | null }>, assets?: Array<{ __typename?: 'Asset', id: string, name: string, assetCategoryId: string, serialNumber?: string | null, assetTag?: string | null, status: string, purchaseDate?: any | null, purchaseValue?: string | null }>, assetAssignments: Array<{ __typename?: 'AssetAssignment', id: string, assetId: string, employeeId: string, assetName: string, assetTag?: string | null, serialNumber?: string | null, purchaseValue?: string | null, allocatedOn: any, expectedReturnOn?: any | null, conditionAtAllocation?: string | null, status: string }> };
+
+export type AssignAssetToEmployeeMutationVariables = Exact<{
+  input: AssignAssetInput;
+}>;
+
+
+export type AssignAssetToEmployeeMutation = { __typename?: 'Mutation', assignAssetToEmployee: { __typename?: 'AssetAssignment', id: string, assetId: string, employeeId: string, assetName: string, status: string } };
+
+export type ReturnEmployeeAssetMutationVariables = Exact<{
+  input: ReturnAssetInput;
+}>;
+
+
+export type ReturnEmployeeAssetMutation = { __typename?: 'Mutation', returnEmployeeAsset: { __typename?: 'AssetAssignment', id: string, assetId: string, employeeId: string, assetName: string, status: string } };
+
+export type AssetsEmployeeOptionsQueryVariables = Exact<{
+  limit?: Scalars['Int']['input'];
+}>;
+
+
+export type AssetsEmployeeOptionsQuery = { __typename?: 'Query', employees: Array<{ __typename?: 'Employee', id: string, employeeCode: string, fullName: string, status: string }> };
+
 
 export const LeaveBalancesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"LeaveBalances"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"20"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"year"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"leaveBalances"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"year"},"value":{"kind":"Variable","name":{"kind":"Name","value":"year"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"leaveTypeId"}},{"kind":"Field","name":{"kind":"Name","value":"year"}},{"kind":"Field","name":{"kind":"Name","value":"balanceDays"}},{"kind":"Field","name":{"kind":"Name","value":"entitledDays"}},{"kind":"Field","name":{"kind":"Name","value":"pendingDays"}},{"kind":"Field","name":{"kind":"Name","value":"usedDays"}},{"kind":"Field","name":{"kind":"Name","value":"carriedForwardDays"}}]}}]}}]} as unknown as DocumentNode<LeaveBalancesQuery, LeaveBalancesQueryVariables>;
 export const ClientOpsUpcomingHolidaysDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ClientOpsUpcomingHolidays"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"15"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"upcomingHolidays"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"fromDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"holidayDate"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"calendarName"}},{"kind":"Field","name":{"kind":"Name","value":"holidayType"}}]}}]}}]} as unknown as DocumentNode<ClientOpsUpcomingHolidaysQuery, ClientOpsUpcomingHolidaysQueryVariables>;
@@ -5536,7 +5928,7 @@ export const UpsertTimesheetProjectHrDocument = {"kind":"Document","definitions"
 export const UpsertTimesheetTaskTypesHrDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpsertTimesheetTaskTypesHr"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectCode"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"taskCodes"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"upsertTimesheetTaskTypes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectCode"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectCode"}}},{"kind":"Argument","name":{"kind":"Name","value":"taskCodes"},"value":{"kind":"Variable","name":{"kind":"Name","value":"taskCodes"}}}]}]}}]} as unknown as DocumentNode<UpsertTimesheetTaskTypesHrMutation, UpsertTimesheetTaskTypesHrMutationVariables>;
 export const TaxComputationsListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TaxComputationsList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"taxComputations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fiscalYear"}},{"kind":"Field","name":{"kind":"Name","value":"taxConfigVersionId"}},{"kind":"Field","name":{"kind":"Name","value":"taxRegimeChosen"}},{"kind":"Field","name":{"kind":"Name","value":"grossIncome"}},{"kind":"Field","name":{"kind":"Name","value":"totalDeductions"}},{"kind":"Field","name":{"kind":"Name","value":"taxableIncome"}},{"kind":"Field","name":{"kind":"Name","value":"finalTax"}},{"kind":"Field","name":{"kind":"Name","value":"tdsPerMonth"}},{"kind":"Field","name":{"kind":"Name","value":"computedAt"}}]}}]}}]} as unknown as DocumentNode<TaxComputationsListQuery, TaxComputationsListQueryVariables>;
 export const TaxProofLinesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TaxProofLines"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"taxConfigVersionId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fiscalYear"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"taxProofLines"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}},{"kind":"Argument","name":{"kind":"Name","value":"taxConfigVersionId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"taxConfigVersionId"}}},{"kind":"Argument","name":{"kind":"Name","value":"fiscalYear"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fiscalYear"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"sectionCode"}},{"kind":"Field","name":{"kind":"Name","value":"declaredAmount"}},{"kind":"Field","name":{"kind":"Name","value":"actualAmount"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"fileStorageId"}},{"kind":"Field","name":{"kind":"Name","value":"rejectionReason"}},{"kind":"Field","name":{"kind":"Name","value":"fiscalYear"}}]}}]}}]} as unknown as DocumentNode<TaxProofLinesQuery, TaxProofLinesQueryVariables>;
-export const OrgDocumentsListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"OrgDocumentsList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"tlim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"dlim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentTypes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"tlim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"isRequired"}}]}},{"kind":"Field","name":{"kind":"Name","value":"employeeDocuments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"dlim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"documentTypeId"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"uploadedAt"}},{"kind":"Field","name":{"kind":"Name","value":"expiryDate"}}]}}]}}]} as unknown as DocumentNode<OrgDocumentsListQuery, OrgDocumentsListQueryVariables>;
+export const OrgDocumentsListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"OrgDocumentsList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"tlim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"dlim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"companyDocuments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fileStorageId"}},{"kind":"Field","name":{"kind":"Name","value":"originalFileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"visibleToEmployees"}},{"kind":"Field","name":{"kind":"Name","value":"uploadedByUserId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"documentTypes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"tlim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"isRequired"}}]}},{"kind":"Field","name":{"kind":"Name","value":"employeeDocuments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"dlim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"documentTypeId"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"uploadedAt"}},{"kind":"Field","name":{"kind":"Name","value":"expiryDate"}}]}}]}}]} as unknown as DocumentNode<OrgDocumentsListQuery, OrgDocumentsListQueryVariables>;
 export const ClientOpsPayslipsListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ClientOpsPayslipsList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"payslips"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"netSalary"}},{"kind":"Field","name":{"kind":"Name","value":"grossSalary"}},{"kind":"Field","name":{"kind":"Name","value":"totalDeductions"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"generatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"lines"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"salaryComponentId"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"componentType"}}]}}]}}]}}]} as unknown as DocumentNode<ClientOpsPayslipsListQuery, ClientOpsPayslipsListQueryVariables>;
 export const IndiaTdsMonthlySummaryCsvDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"IndiaTdsMonthlySummaryCsv"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"month"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"year"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"indiaTdsMonthlySummaryCsv"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"month"},"value":{"kind":"Variable","name":{"kind":"Name","value":"month"}}},{"kind":"Argument","name":{"kind":"Name","value":"year"},"value":{"kind":"Variable","name":{"kind":"Name","value":"year"}}}]}]}}]} as unknown as DocumentNode<IndiaTdsMonthlySummaryCsvQuery, IndiaTdsMonthlySummaryCsvQueryVariables>;
 export const IndiaPfEsiMonthlySummaryCsvDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"IndiaPfEsiMonthlySummaryCsv"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"month"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"year"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"indiaPfEsiMonthlySummaryCsv"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"month"},"value":{"kind":"Variable","name":{"kind":"Name","value":"month"}}},{"kind":"Argument","name":{"kind":"Name","value":"year"},"value":{"kind":"Variable","name":{"kind":"Name","value":"year"}}}]}]}}]} as unknown as DocumentNode<IndiaPfEsiMonthlySummaryCsvQuery, IndiaPfEsiMonthlySummaryCsvQueryVariables>;
@@ -5600,7 +5992,8 @@ export const RejectTaxProofLineDocument = {"kind":"Document","definitions":[{"ki
 export const CreateEmployeeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateEmployee"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateEmployeeInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createEmployee"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfJoining"}},{"kind":"Field","name":{"kind":"Name","value":"reportingManagerId"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserUsername"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserEmail"}}]}}]}}]} as unknown as DocumentNode<CreateEmployeeMutation, CreateEmployeeMutationVariables>;
 export const ProvisionEmployeeLoginDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ProvisionEmployeeLogin"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ProvisionEmployeeLoginInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"provisionEmployeeLogin"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserUsername"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserEmail"}}]}}]}}]} as unknown as DocumentNode<ProvisionEmployeeLoginMutation, ProvisionEmployeeLoginMutationVariables>;
 export const ResetEmployeePasswordDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ResetEmployeePassword"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ResetEmployeePasswordInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resetEmployeePassword"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<ResetEmployeePasswordMutation, ResetEmployeePasswordMutationVariables>;
-export const UpdateEmployeeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateEmployee"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateEmployeeInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateEmployee"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfJoining"}},{"kind":"Field","name":{"kind":"Name","value":"departmentId"}},{"kind":"Field","name":{"kind":"Name","value":"designationId"}},{"kind":"Field","name":{"kind":"Name","value":"employmentType"}},{"kind":"Field","name":{"kind":"Name","value":"reportingManagerId"}}]}}]}}]} as unknown as DocumentNode<UpdateEmployeeMutation, UpdateEmployeeMutationVariables>;
+export const UpdateEmployeeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateEmployee"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateEmployeeInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateEmployee"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfJoining"}},{"kind":"Field","name":{"kind":"Name","value":"departmentId"}},{"kind":"Field","name":{"kind":"Name","value":"designationId"}},{"kind":"Field","name":{"kind":"Name","value":"employmentType"}},{"kind":"Field","name":{"kind":"Name","value":"reportingManagerId"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserEmail"}}]}}]}}]} as unknown as DocumentNode<UpdateEmployeeMutation, UpdateEmployeeMutationVariables>;
+export const CompanyDocumentAttachmentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"CompanyDocumentAttachment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companyDocumentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"companyDocumentAttachment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"companyDocumentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companyDocumentId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"contentBase64"}}]}}]}}]} as unknown as DocumentNode<CompanyDocumentAttachmentQuery, CompanyDocumentAttachmentQueryVariables>;
 export const UpdateEmployeePersonalProfileDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateEmployeePersonalProfile"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateEmployeePersonalProfileInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateEmployeePersonalProfile"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfBirth"}},{"kind":"Field","name":{"kind":"Name","value":"gender"}},{"kind":"Field","name":{"kind":"Name","value":"nationality"}},{"kind":"Field","name":{"kind":"Name","value":"bloodGroup"}},{"kind":"Field","name":{"kind":"Name","value":"emergencyContactName"}},{"kind":"Field","name":{"kind":"Name","value":"emergencyContactPhone"}},{"kind":"Field","name":{"kind":"Name","value":"emergencyContactRelation"}}]}}]}}]} as unknown as DocumentNode<UpdateEmployeePersonalProfileMutation, UpdateEmployeePersonalProfileMutationVariables>;
 export const UpsertEmployeePrimaryBankDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpsertEmployeePrimaryBank"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpsertEmployeePrimaryBankInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"upsertEmployeePrimaryBank"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"bankName"}},{"kind":"Field","name":{"kind":"Name","value":"accountNumberMasked"}},{"kind":"Field","name":{"kind":"Name","value":"ifscCode"}},{"kind":"Field","name":{"kind":"Name","value":"accountType"}},{"kind":"Field","name":{"kind":"Name","value":"isVerified"}}]}}]}}]} as unknown as DocumentNode<UpsertEmployeePrimaryBankMutation, UpsertEmployeePrimaryBankMutationVariables>;
 export const UpsertEmployeePrimaryPanDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpsertEmployeePrimaryPan"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpsertEmployeePrimaryPanInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"upsertEmployeePrimaryPan"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"maskedPan"}},{"kind":"Field","name":{"kind":"Name","value":"isVerified"}}]}}]}}]} as unknown as DocumentNode<UpsertEmployeePrimaryPanMutation, UpsertEmployeePrimaryPanMutationVariables>;
@@ -5620,7 +6013,10 @@ export const DeleteEmployeeWorkExperienceDocument = {"kind":"Document","definiti
 export const LinkEmployeeWorkExperienceEvidenceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"LinkEmployeeWorkExperienceEvidence"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"workExperienceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeDocumentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"linkEmployeeWorkExperienceEvidence"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}},{"kind":"Argument","name":{"kind":"Name","value":"workExperienceId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"workExperienceId"}}},{"kind":"Argument","name":{"kind":"Name","value":"employeeDocumentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeDocumentId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"verificationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"evidenceDocumentIds"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<LinkEmployeeWorkExperienceEvidenceMutation, LinkEmployeeWorkExperienceEvidenceMutationVariables>;
 export const UploadEmployeeWorkExperienceEvidenceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UploadEmployeeWorkExperienceEvidence"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"workExperienceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UploadEmployeeDocumentInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uploadEmployeeWorkExperienceEvidence"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"workExperienceId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"workExperienceId"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"verificationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"evidenceDocumentIds"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<UploadEmployeeWorkExperienceEvidenceMutation, UploadEmployeeWorkExperienceEvidenceMutationVariables>;
 export const ResolveEmployeeWorkExperienceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ResolveEmployeeWorkExperience"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"workExperienceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"approved"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rejectionReason"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resolveEmployeeWorkExperience"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"workExperienceId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"workExperienceId"}}},{"kind":"Argument","name":{"kind":"Name","value":"approved"},"value":{"kind":"Variable","name":{"kind":"Name","value":"approved"}}},{"kind":"Argument","name":{"kind":"Name","value":"rejectionReason"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rejectionReason"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"verificationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"rejectionReason"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<ResolveEmployeeWorkExperienceMutation, ResolveEmployeeWorkExperienceMutationVariables>;
-export const UploadTenantFileDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UploadTenantFile"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UploadTenantFileInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uploadTenantFile"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"tenantId"}},{"kind":"Field","name":{"kind":"Name","value":"originalFileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<UploadTenantFileMutation, UploadTenantFileMutationVariables>;
+export const UploadTenantFileDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UploadTenantFile"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UploadTenantFileInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uploadTenantFile"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"tenantId"}},{"kind":"Field","name":{"kind":"Name","value":"originalFileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<UploadTenantFileMutation, UploadTenantFileMutationVariables>;
+export const TenantFileAttachmentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TenantFileAttachment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fileStorageId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tenantFileAttachment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"fileStorageId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fileStorageId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"contentBase64"}}]}}]}}]} as unknown as DocumentNode<TenantFileAttachmentQuery, TenantFileAttachmentQueryVariables>;
+export const CreateCompanyDocumentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateCompanyDocument"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateCompanyDocumentInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createCompanyDocument"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"fileStorageId"}},{"kind":"Field","name":{"kind":"Name","value":"originalFileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"visibleToEmployees"}},{"kind":"Field","name":{"kind":"Name","value":"uploadedByUserId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<CreateCompanyDocumentMutation, CreateCompanyDocumentMutationVariables>;
+export const DeleteCompanyDocumentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteCompanyDocument"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companyDocumentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteCompanyDocument"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"companyDocumentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companyDocumentId"}}}]}]}}]} as unknown as DocumentNode<DeleteCompanyDocumentMutation, DeleteCompanyDocumentMutationVariables>;
 export const ResolveEmployeeDocumentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ResolveEmployeeDocument"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeDocumentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"approved"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resolveEmployeeDocument"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeDocumentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeDocumentId"}}},{"kind":"Argument","name":{"kind":"Name","value":"approved"},"value":{"kind":"Variable","name":{"kind":"Name","value":"approved"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<ResolveEmployeeDocumentMutation, ResolveEmployeeDocumentMutationVariables>;
 export const OrgDepartmentsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"OrgDepartments"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"departments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"parentDepartmentId"}}]}}]}}]} as unknown as DocumentNode<OrgDepartmentsQuery, OrgDepartmentsQueryVariables>;
 export const ExpensePolicyDirectoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ExpensePolicyDirectory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"lim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"320"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"departments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"lim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"parentDepartmentId"}}]}},{"kind":"Field","name":{"kind":"Name","value":"designations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"lim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"departmentId"}},{"kind":"Field","name":{"kind":"Name","value":"level"}}]}},{"kind":"Field","name":{"kind":"Name","value":"expenseAssignableRoles"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"lim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"isSystemRole"}}]}}]}}]} as unknown as DocumentNode<ExpensePolicyDirectoryQuery, ExpensePolicyDirectoryQueryVariables>;
@@ -5667,16 +6063,16 @@ export const HolidaysInCalendarDocument = {"kind":"Document","definitions":[{"ki
 export const AttendanceBoardDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AttendanceBoard"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"400"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"toDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"shifts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"startTime"}},{"kind":"Field","name":{"kind":"Name","value":"endTime"}},{"kind":"Field","name":{"kind":"Name","value":"workHours"}},{"kind":"Field","name":{"kind":"Name","value":"isNightShift"}}]}},{"kind":"Field","name":{"kind":"Name","value":"attendance"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"fromDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"toDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"workDate"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLng"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLng"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"lateMinutes"}}]}}]}}]} as unknown as DocumentNode<AttendanceBoardQuery, AttendanceBoardQueryVariables>;
 export const PunchDaySummaryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PunchDaySummary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"punchDaySummary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workDate"}},{"kind":"Field","name":{"kind":"Name","value":"totalWorkedMinutes"}},{"kind":"Field","name":{"kind":"Name","value":"openSegment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLng"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLng"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"segments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLng"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLng"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]}}]} as unknown as DocumentNode<PunchDaySummaryQuery, PunchDaySummaryQueryVariables>;
 export const OnLeaveTodayDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"OnLeaveToday"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"orgLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"500"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"typeLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"today"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"leaveRequests"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"fromDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"today"}}},{"kind":"Argument","name":{"kind":"Name","value":"toDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"today"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"leaveTypeId"}},{"kind":"Field","name":{"kind":"Name","value":"fromDate"}},{"kind":"Field","name":{"kind":"Name","value":"toDate"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"isHalfDay"}},{"kind":"Field","name":{"kind":"Name","value":"halfDaySession"}}]}},{"kind":"Field","name":{"kind":"Name","value":"leaveTypes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"typeLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}}]}},{"kind":"Field","name":{"kind":"Name","value":"orgChart"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"orgLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}}]}}]}}]} as unknown as DocumentNode<OnLeaveTodayQuery, OnLeaveTodayQueryVariables>;
-export const NotificationBoardDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"NotificationBoard"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"20"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"unreadNotificationCount"}},{"kind":"Field","name":{"kind":"Name","value":"announcements"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"body"}},{"kind":"Field","name":{"kind":"Name","value":"targetAudience"}},{"kind":"Field","name":{"kind":"Name","value":"targetDepartmentId"}},{"kind":"Field","name":{"kind":"Name","value":"targetLocationId"}},{"kind":"Field","name":{"kind":"Name","value":"postSource"}},{"kind":"Field","name":{"kind":"Name","value":"publishAt"}},{"kind":"Field","name":{"kind":"Name","value":"expiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"imageReadUrl"}},{"kind":"Field","name":{"kind":"Name","value":"documentReadUrl"}}]}},{"kind":"Field","name":{"kind":"Name","value":"notifications"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"actionUrl"}},{"kind":"Field","name":{"kind":"Name","value":"isRead"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<NotificationBoardQuery, NotificationBoardQueryVariables>;
+export const NotificationBoardDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"NotificationBoard"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"20"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"unreadNotificationCount"}},{"kind":"Field","name":{"kind":"Name","value":"announcements"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"body"}},{"kind":"Field","name":{"kind":"Name","value":"targetAudience"}},{"kind":"Field","name":{"kind":"Name","value":"targetDepartmentId"}},{"kind":"Field","name":{"kind":"Name","value":"targetLocationId"}},{"kind":"Field","name":{"kind":"Name","value":"postSource"}},{"kind":"Field","name":{"kind":"Name","value":"publishAt"}},{"kind":"Field","name":{"kind":"Name","value":"expiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"imageAttachment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"contentBase64"}}]}},{"kind":"Field","name":{"kind":"Name","value":"documentAttachment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"contentBase64"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"notifications"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"actionUrl"}},{"kind":"Field","name":{"kind":"Name","value":"isRead"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<NotificationBoardQuery, NotificationBoardQueryVariables>;
 export const MyNotificationPreferencesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MyNotificationPreferences"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myNotificationPreferences"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"inAppEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"announcementsEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"mutedTopics"}}]}}]}}]} as unknown as DocumentNode<MyNotificationPreferencesQuery, MyNotificationPreferencesQueryVariables>;
 export const UpdateNotificationPreferencesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateNotificationPreferences"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateNotificationPreferencesInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateNotificationPreferences"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"inAppEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"announcementsEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"mutedTopics"}}]}}]}}]} as unknown as DocumentNode<UpdateNotificationPreferencesMutation, UpdateNotificationPreferencesMutationVariables>;
-export const AdminNotificationsConsoleDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminNotificationsConsole"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"annLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"100"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"notLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"150"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"empLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"200"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"deptLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminAnnouncements"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"annLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"body"}},{"kind":"Field","name":{"kind":"Name","value":"targetAudience"}},{"kind":"Field","name":{"kind":"Name","value":"targetDepartmentId"}},{"kind":"Field","name":{"kind":"Name","value":"targetLocationId"}},{"kind":"Field","name":{"kind":"Name","value":"postSource"}},{"kind":"Field","name":{"kind":"Name","value":"publishAt"}},{"kind":"Field","name":{"kind":"Name","value":"expiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"imageReadUrl"}},{"kind":"Field","name":{"kind":"Name","value":"documentReadUrl"}}]}},{"kind":"Field","name":{"kind":"Name","value":"adminNotifications"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"notLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"actionUrl"}},{"kind":"Field","name":{"kind":"Name","value":"isRead"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"employees"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"empLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserEmail"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserUsername"}}]}},{"kind":"Field","name":{"kind":"Name","value":"departments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"deptLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<AdminNotificationsConsoleQuery, AdminNotificationsConsoleQueryVariables>;
+export const AdminNotificationsConsoleDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminNotificationsConsole"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"annLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"100"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"notLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"150"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"empLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"200"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"deptLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminAnnouncements"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"annLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"body"}},{"kind":"Field","name":{"kind":"Name","value":"targetAudience"}},{"kind":"Field","name":{"kind":"Name","value":"targetDepartmentId"}},{"kind":"Field","name":{"kind":"Name","value":"targetLocationId"}},{"kind":"Field","name":{"kind":"Name","value":"postSource"}},{"kind":"Field","name":{"kind":"Name","value":"publishAt"}},{"kind":"Field","name":{"kind":"Name","value":"expiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"adminNotifications"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"notLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"actionUrl"}},{"kind":"Field","name":{"kind":"Name","value":"isRead"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"employees"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"empLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserEmail"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserUsername"}}]}},{"kind":"Field","name":{"kind":"Name","value":"departments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"deptLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<AdminNotificationsConsoleQuery, AdminNotificationsConsoleQueryVariables>;
 export const UpdateAnnouncementDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateAnnouncement"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateAnnouncementInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateAnnouncement"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"postSource"}}]}}]}}]} as unknown as DocumentNode<UpdateAnnouncementMutation, UpdateAnnouncementMutationVariables>;
 export const DeleteAnnouncementDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteAnnouncement"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteAnnouncement"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteAnnouncementMutation, DeleteAnnouncementMutationVariables>;
 export const CreateDirectNotificationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateDirectNotifications"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateDirectNotificationsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createDirectNotifications"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<CreateDirectNotificationsMutation, CreateDirectNotificationsMutationVariables>;
 export const UpdateNotificationAdminDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateNotificationAdmin"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateNotificationAdminInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateNotificationAdmin"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<UpdateNotificationAdminMutation, UpdateNotificationAdminMutationVariables>;
 export const DeleteNotificationAdminDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteNotificationAdmin"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteNotificationAdmin"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteNotificationAdminMutation, DeleteNotificationAdminMutationVariables>;
-export const CreateAnnouncementDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateAnnouncement"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateAnnouncementInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createAnnouncement"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"body"}},{"kind":"Field","name":{"kind":"Name","value":"postSource"}},{"kind":"Field","name":{"kind":"Name","value":"imageReadUrl"}},{"kind":"Field","name":{"kind":"Name","value":"documentReadUrl"}}]}}]}}]} as unknown as DocumentNode<CreateAnnouncementMutation, CreateAnnouncementMutationVariables>;
+export const CreateAnnouncementDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateAnnouncement"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateAnnouncementInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createAnnouncement"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"body"}},{"kind":"Field","name":{"kind":"Name","value":"postSource"}}]}}]}}]} as unknown as DocumentNode<CreateAnnouncementMutation, CreateAnnouncementMutationVariables>;
 export const ClientOpsNotificationPreviewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ClientOpsNotificationPreview"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"20"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"unreadNotificationCount"}},{"kind":"Field","name":{"kind":"Name","value":"notifications"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"isRead"}}]}}]}}]} as unknown as DocumentNode<ClientOpsNotificationPreviewQuery, ClientOpsNotificationPreviewQueryVariables>;
 export const ClientOpsLeaveTypeNamesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ClientOpsLeaveTypeNames"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"leaveTypes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}}]}}]}}]} as unknown as DocumentNode<ClientOpsLeaveTypeNamesQuery, ClientOpsLeaveTypeNamesQueryVariables>;
 export const PayrollBoardDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PayrollBoard"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"20"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"salaryComponents"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"componentType"}},{"kind":"Field","name":{"kind":"Name","value":"isTaxable"}},{"kind":"Field","name":{"kind":"Name","value":"isFixed"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}}]}},{"kind":"Field","name":{"kind":"Name","value":"payrollCycles"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"month"}},{"kind":"Field","name":{"kind":"Name","value":"year"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"paymentDate"}}]}}]}}]} as unknown as DocumentNode<PayrollBoardQuery, PayrollBoardQueryVariables>;
@@ -5692,7 +6088,7 @@ export const ClientOpsAdminAttendancePolicyDocument = {"kind":"Document","defini
 export const ClientOpsUpsertAttendancePunchPolicyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ClientOpsUpsertAttendancePunchPolicy"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpsertAttendancePunchPolicyInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"upsertAttendancePunchPolicy"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"isEnforced"}},{"kind":"Field","name":{"kind":"Name","value":"siteLatitude"}},{"kind":"Field","name":{"kind":"Name","value":"siteLongitude"}},{"kind":"Field","name":{"kind":"Name","value":"maxDistanceMeters"}},{"kind":"Field","name":{"kind":"Name","value":"ipAllowlist"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<ClientOpsUpsertAttendancePunchPolicyMutation, ClientOpsUpsertAttendancePunchPolicyMutationVariables>;
 export const ClientOpsEmployeesDirectoryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ClientOpsEmployeesDirectory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"100"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"after"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeDirectoryPage"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"after"},"value":{"kind":"Variable","name":{"kind":"Name","value":"after"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"rows"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"employmentType"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfJoining"}},{"kind":"Field","name":{"kind":"Name","value":"departmentName"}},{"kind":"Field","name":{"kind":"Name","value":"designationTitle"}},{"kind":"Field","name":{"kind":"Name","value":"reportingManagerId"}},{"kind":"Field","name":{"kind":"Name","value":"reportingManagerName"}}]}},{"kind":"Field","name":{"kind":"Name","value":"nextCursor"}},{"kind":"Field","name":{"kind":"Name","value":"hasMore"}}]}}]}}]} as unknown as DocumentNode<ClientOpsEmployeesDirectoryQuery, ClientOpsEmployeesDirectoryQueryVariables>;
 export const EmployeeProfileAccessDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeProfileAccess"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeProfileAccess"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isSelf"}},{"kind":"Field","name":{"kind":"Name","value":"canViewPrivateProfile"}},{"kind":"Field","name":{"kind":"Name","value":"canEditPersonalProfile"}},{"kind":"Field","name":{"kind":"Name","value":"canManageOrganizationFields"}},{"kind":"Field","name":{"kind":"Name","value":"canReviewProfileChanges"}},{"kind":"Field","name":{"kind":"Name","value":"directoryEntry"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"employmentType"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfJoining"}},{"kind":"Field","name":{"kind":"Name","value":"departmentName"}},{"kind":"Field","name":{"kind":"Name","value":"designationTitle"}},{"kind":"Field","name":{"kind":"Name","value":"reportingManagerId"}},{"kind":"Field","name":{"kind":"Name","value":"reportingManagerName"}}]}}]}}]}}]} as unknown as DocumentNode<EmployeeProfileAccessQuery, EmployeeProfileAccessQueryVariables>;
-export const EmployeeDocumentSignedReadUrlDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeDocumentSignedReadUrl"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeDocumentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ttlSeconds"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"600"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeDocumentSignedReadUrl"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeDocumentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeDocumentId"}}},{"kind":"Argument","name":{"kind":"Name","value":"ttlSeconds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ttlSeconds"}}}]}]}}]} as unknown as DocumentNode<EmployeeDocumentSignedReadUrlQuery, EmployeeDocumentSignedReadUrlQueryVariables>;
+export const EmployeeDocumentAttachmentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeDocumentAttachment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeDocumentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeDocumentAttachment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeDocumentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeDocumentId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSizeBytes"}},{"kind":"Field","name":{"kind":"Name","value":"contentBase64"}}]}}]}}]} as unknown as DocumentNode<EmployeeDocumentAttachmentQuery, EmployeeDocumentAttachmentQueryVariables>;
 export const EmployeeProfileReviewQueueDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeProfileReviewQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"status"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}},"defaultValue":{"kind":"StringValue","value":"PENDING","block":false}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeProfileReviewQueue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"status"},"value":{"kind":"Variable","name":{"kind":"Name","value":"status"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"employeeName"}},{"kind":"Field","name":{"kind":"Name","value":"hasSupportingDocument"}},{"kind":"Field","name":{"kind":"Name","value":"request"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"requestType"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"requestedSummary"}},{"kind":"Field","name":{"kind":"Name","value":"supportingDocumentId"}},{"kind":"Field","name":{"kind":"Name","value":"reviewedAt"}},{"kind":"Field","name":{"kind":"Name","value":"rejectionReason"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]}}]} as unknown as DocumentNode<EmployeeProfileReviewQueueQuery, EmployeeProfileReviewQueueQueryVariables>;
 export const EmployeeProfileChangeReviewDetailDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeProfileChangeReviewDetail"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"requestId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeProfileChangeReviewDetail"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"requestId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"requestId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"employeeName"}},{"kind":"Field","name":{"kind":"Name","value":"currentValues"}},{"kind":"Field","name":{"kind":"Name","value":"requestedValues"}},{"kind":"Field","name":{"kind":"Name","value":"request"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"requestType"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"requestedSummary"}},{"kind":"Field","name":{"kind":"Name","value":"supportingDocumentId"}},{"kind":"Field","name":{"kind":"Name","value":"reviewedAt"}},{"kind":"Field","name":{"kind":"Name","value":"rejectionReason"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]}}]} as unknown as DocumentNode<EmployeeProfileChangeReviewDetailQuery, EmployeeProfileChangeReviewDetailQueryVariables>;
 export const EmployeeEvidenceReviewQueueDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeEvidenceReviewQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeEvidenceReviewQueue"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"recordId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"employeeName"}},{"kind":"Field","name":{"kind":"Name","value":"evidenceType"}},{"kind":"Field","name":{"kind":"Name","value":"summary"}},{"kind":"Field","name":{"kind":"Name","value":"evidenceDocumentIds"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<EmployeeEvidenceReviewQueueQuery, EmployeeEvidenceReviewQueueQueryVariables>;
@@ -5749,3 +6145,12 @@ export const AnalyticsHealthDocument = {"kind":"Document","definitions":[{"kind"
 export const TenantsHealthDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TenantsHealth"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tenants"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<TenantsHealthQuery, TenantsHealthQueryVariables>;
 export const BillingHealthDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"BillingHealth"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invoices"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"invoiceNumber"}}]}}]}}]} as unknown as DocumentNode<BillingHealthQuery, BillingHealthQueryVariables>;
 export const OperatorHealthDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"OperatorHealth"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"operatorUsers"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}}]}}]} as unknown as DocumentNode<OperatorHealthQuery, OperatorHealthQueryVariables>;
+export const PayrollCompensationBoardDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PayrollCompensationBoard"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeLimit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"300"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employees"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeLimit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfJoining"}}]}},{"kind":"Field","name":{"kind":"Name","value":"salaryComponents"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"200"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"componentType"}},{"kind":"Field","name":{"kind":"Name","value":"isTaxable"}},{"kind":"Field","name":{"kind":"Name","value":"isFixed"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}}]}},{"kind":"Field","name":{"kind":"Name","value":"salaryStructures"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"components"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"salaryComponentId"}},{"kind":"Field","name":{"kind":"Name","value":"componentName"}},{"kind":"Field","name":{"kind":"Name","value":"componentCode"}},{"kind":"Field","name":{"kind":"Name","value":"componentType"}},{"kind":"Field","name":{"kind":"Name","value":"calculationBasis"}},{"kind":"Field","name":{"kind":"Name","value":"calculationValue"}},{"kind":"Field","name":{"kind":"Name","value":"displayOrder"}}]}}]}}]}}]} as unknown as DocumentNode<PayrollCompensationBoardQuery, PayrollCompensationBoardQueryVariables>;
+export const UpsertSalaryComponentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpsertSalaryComponent"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpsertSalaryComponentInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"upsertSalaryComponent"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"componentType"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}}]}}]}}]} as unknown as DocumentNode<UpsertSalaryComponentMutation, UpsertSalaryComponentMutationVariables>;
+export const UpsertSalaryStructureDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpsertSalaryStructure"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpsertSalaryStructureInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"upsertSalaryStructure"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"components"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"componentCode"}},{"kind":"Field","name":{"kind":"Name","value":"calculationBasis"}},{"kind":"Field","name":{"kind":"Name","value":"calculationValue"}}]}}]}}]}}]} as unknown as DocumentNode<UpsertSalaryStructureMutation, UpsertSalaryStructureMutationVariables>;
+export const AssignEmployeeSalaryStructureDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AssignEmployeeSalaryStructure"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AssignEmployeeSalaryStructureInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assignEmployeeSalaryStructure"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"salaryStructureId"}},{"kind":"Field","name":{"kind":"Name","value":"ctc"}},{"kind":"Field","name":{"kind":"Name","value":"effectiveFrom"}}]}}]}}]} as unknown as DocumentNode<AssignEmployeeSalaryStructureMutation, AssignEmployeeSalaryStructureMutationVariables>;
+export const EmployeeSalaryBreakupPreviewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeSalaryBreakupPreview"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"asOf"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeSalaryBreakupPreview"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}},{"kind":"Argument","name":{"kind":"Name","value":"asOf"},"value":{"kind":"Variable","name":{"kind":"Name","value":"asOf"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"annualCtc"}},{"kind":"Field","name":{"kind":"Name","value":"monthlyGross"}},{"kind":"Field","name":{"kind":"Name","value":"monthlyDeductions"}},{"kind":"Field","name":{"kind":"Name","value":"monthlyNetBeforeStatutory"}},{"kind":"Field","name":{"kind":"Name","value":"lines"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"salaryComponentId"}},{"kind":"Field","name":{"kind":"Name","value":"componentName"}},{"kind":"Field","name":{"kind":"Name","value":"componentCode"}},{"kind":"Field","name":{"kind":"Name","value":"componentType"}},{"kind":"Field","name":{"kind":"Name","value":"calculationBasis"}},{"kind":"Field","name":{"kind":"Name","value":"calculationValue"}},{"kind":"Field","name":{"kind":"Name","value":"annualAmount"}},{"kind":"Field","name":{"kind":"Name","value":"monthlyAmount"}},{"kind":"Field","name":{"kind":"Name","value":"isOverride"}}]}}]}}]}}]} as unknown as DocumentNode<EmployeeSalaryBreakupPreviewQuery, EmployeeSalaryBreakupPreviewQueryVariables>;
+export const AssetsBoardDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AssetsBoard"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"withInventory"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assetCategories"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"100"}}],"directives":[{"kind":"Directive","name":{"kind":"Name","value":"include"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"if"},"value":{"kind":"Variable","name":{"kind":"Name","value":"withInventory"}}}]}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assets"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"directives":[{"kind":"Directive","name":{"kind":"Name","value":"include"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"if"},"value":{"kind":"Variable","name":{"kind":"Name","value":"withInventory"}}}]}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"assetCategoryId"}},{"kind":"Field","name":{"kind":"Name","value":"serialNumber"}},{"kind":"Field","name":{"kind":"Name","value":"assetTag"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"purchaseDate"}},{"kind":"Field","name":{"kind":"Name","value":"purchaseValue"}}]}},{"kind":"Field","name":{"kind":"Name","value":"assetAssignments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"activeOnly"},"value":{"kind":"BooleanValue","value":false}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"assetId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"assetName"}},{"kind":"Field","name":{"kind":"Name","value":"assetTag"}},{"kind":"Field","name":{"kind":"Name","value":"serialNumber"}},{"kind":"Field","name":{"kind":"Name","value":"purchaseValue"}},{"kind":"Field","name":{"kind":"Name","value":"allocatedOn"}},{"kind":"Field","name":{"kind":"Name","value":"expectedReturnOn"}},{"kind":"Field","name":{"kind":"Name","value":"conditionAtAllocation"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<AssetsBoardQuery, AssetsBoardQueryVariables>;
+export const AssignAssetToEmployeeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AssignAssetToEmployee"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AssignAssetInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assignAssetToEmployee"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"assetId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"assetName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<AssignAssetToEmployeeMutation, AssignAssetToEmployeeMutationVariables>;
+export const ReturnEmployeeAssetDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ReturnEmployeeAsset"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ReturnAssetInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"returnEmployeeAsset"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"assetId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"assetName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<ReturnEmployeeAssetMutation, ReturnEmployeeAssetMutationVariables>;
+export const AssetsEmployeeOptionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AssetsEmployeeOptions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"200"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employees"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<AssetsEmployeeOptionsQuery, AssetsEmployeeOptionsQueryVariables>;

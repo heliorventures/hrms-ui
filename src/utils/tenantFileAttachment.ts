@@ -1,21 +1,13 @@
-import { privateFileObjectUrl, type PrivateFileAttachment } from './privateFileAttachment';
+import { privateFileObjectUrl } from './privateFileAttachment';
+import {
+  TenantFileAttachmentDocument,
+  type TenantFileAttachmentQuery,
+} from '../api/graphql/graphql';
 
-export type TenantFileAttachment = PrivateFileAttachment;
+export { TenantFileAttachmentDocument };
 
-export interface TenantFileAttachmentResponse {
-  tenantFileAttachment: TenantFileAttachment;
-}
-
-export const TenantFileAttachmentDocument = `
-  query TenantFileAttachment($fileStorageId: ID!) {
-    tenantFileAttachment(fileStorageId: $fileStorageId) {
-      fileName
-      mimeType
-      fileSizeBytes
-      contentBase64
-    }
-  }
-`;
+export type TenantFileAttachment = TenantFileAttachmentQuery['tenantFileAttachment'];
+export type TenantFileAttachmentResponse = TenantFileAttachmentQuery;
 
 export const tenantFileObjectUrl = (attachment: TenantFileAttachment) =>
   privateFileObjectUrl(attachment);

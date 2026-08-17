@@ -1,21 +1,13 @@
-import { privateFileObjectUrl, type PrivateFileAttachment } from '../../utils/privateFileAttachment';
+import { privateFileObjectUrl } from '../../utils/privateFileAttachment';
+import {
+  EmployeeDocumentAttachmentDocument,
+  type EmployeeDocumentAttachmentQuery,
+} from '../../api/graphql/graphql';
 
-export type EmployeeDocumentAttachment = PrivateFileAttachment;
+export { EmployeeDocumentAttachmentDocument };
 
-export interface EmployeeDocumentAttachmentResponse {
-  employeeDocumentAttachment: EmployeeDocumentAttachment;
-}
+export type EmployeeDocumentAttachment = EmployeeDocumentAttachmentQuery['employeeDocumentAttachment'];
+export type EmployeeDocumentAttachmentResponse = EmployeeDocumentAttachmentQuery;
 
-export const EmployeeDocumentAttachmentDocument = `
-  query EmployeeDocumentAttachment($employeeDocumentId: ID!) {
-    employeeDocumentAttachment(employeeDocumentId: $employeeDocumentId) {
-      fileName
-      mimeType
-      fileSizeBytes
-      contentBase64
-    }
-  }
-`;
-
-export const employeeDocumentObjectUrl = (attachment: PrivateFileAttachment) =>
+export const employeeDocumentObjectUrl = (attachment: EmployeeDocumentAttachment) =>
   privateFileObjectUrl(attachment);

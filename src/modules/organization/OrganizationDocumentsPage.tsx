@@ -9,59 +9,15 @@ import { PERMISSIONS } from '../../auth/permissions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import { privateFileObjectUrl } from '../../utils/privateFileAttachment';
 import { uploadTenantFile, validateTenantUploadFile } from '../../utils/tenantFileUpload';
 import {
   CompanyDocumentAttachmentDocument,
-  companyDocumentObjectUrl,
-  type CompanyDocumentAttachmentResponse,
-} from './companyDocumentAttachment';
-
-const OrgDocumentsListDocument = `
-  query OrgDocumentsList($tlim: Int! = 50, $dlim: Int! = 50) {
-    companyDocuments(limit: 100) {
-      id
-      category
-      title
-      description
-      fileStorageId
-      originalFileName
-      mimeType
-      fileSizeBytes
-      status
-      visibleToEmployees
-      uploadedByUserId
-      createdAt
-      updatedAt
-    }
-    documentTypes(limit: $tlim) {
-      id
-      name
-      category
-      isRequired
-    }
-    employeeDocuments(limit: $dlim) {
-      id
-      documentTypeId
-      status
-      uploadedAt
-      expiryDate
-    }
-  }
-`;
-
-const CreateCompanyDocumentDocument = `
-  mutation CreateCompanyDocument($input: CreateCompanyDocumentInput!) {
-    createCompanyDocument(input: $input) {
-      id
-    }
-  }
-`;
-
-const DeleteCompanyDocumentDocument = `
-  mutation DeleteCompanyDocument($companyDocumentId: ID!) {
-    deleteCompanyDocument(companyDocumentId: $companyDocumentId)
-  }
-`;
+  CreateCompanyDocumentDocument,
+  DeleteCompanyDocumentDocument,
+  OrgDocumentsListDocument,
+  type OrgDocumentsListQuery,
+} from '../../api/graphql/graphql';
 
 const COMPANY_DOCUMENT_CATEGORIES = [
   { value: 'COMPANY_POLICY', label: 'Company Policy' },
@@ -69,42 +25,9 @@ const COMPANY_DOCUMENT_CATEGORIES = [
   { value: 'EXIT_FORMALITY', label: 'Exit Formality' },
 ] as const;
 
-interface DocumentTypeRow {
-  id: string;
-  name: string;
-  category?: string | null;
-  isRequired: boolean;
-}
-
-interface EmployeeDocumentRow {
-  id: string;
-  documentTypeId: string;
-  status: string;
-  uploadedAt: string;
-  expiryDate?: string | null;
-}
-
-interface CompanyDocumentRow {
-  id: string;
-  category: string;
-  title: string;
-  description?: string | null;
-  fileStorageId: string;
-  originalFileName?: string | null;
-  mimeType?: string | null;
-  fileSizeBytes?: number | null;
-  status: string;
-  visibleToEmployees: boolean;
-  uploadedByUserId?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface OrgDocumentsResponse {
-  companyDocuments: CompanyDocumentRow[];
-  documentTypes: DocumentTypeRow[];
-  employeeDocuments: EmployeeDocumentRow[];
-}
+type CompanyDocumentRow = OrgDocumentsListQuery['companyDocuments'][number];
+type DocumentTypeRow = OrgDocumentsListQuery['documentTypes'][number];
+type EmployeeDocumentRow = OrgDocumentsListQuery['employeeDocuments'][number];
 
 interface UploadFormState {
   category: string;
@@ -154,7 +77,7 @@ const OrganizationDocumentsPage = () => {
   const loadDocuments = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const response = await client.request<OrgDocumentsResponse>(OrgDocumentsListDocument, {
+    const response = await client.request(OrgDocumentsListDocument, {
       tlim: 50,
       dlim: 50,
     });
@@ -226,11 +149,10 @@ const OrganizationDocumentsPage = () => {
   const downloadCompanyDocument = async (document: CompanyDocumentRow) => {
     try {
       setError(null);
-      const result = await client.request<CompanyDocumentAttachmentResponse>(
-        CompanyDocumentAttachmentDocument,
-        { companyDocumentId: document.id }
-      );
-      const url = companyDocumentObjectUrl(result.companyDocumentAttachment);
+      const result = await client.request(CompanyDocumentAttachmentDocument, {
+        companyDocumentId: document.id,
+      });
+      const url = privateFileObjectUrl(result.companyDocumentAttachment);
       const anchor = window.document.createElement('a');
       anchor.href = url;
       anchor.download =
