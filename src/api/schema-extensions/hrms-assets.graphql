@@ -58,6 +58,18 @@ type AssetLocationOption {
   name: String!
 }
 
+type AssetEmployeeOption {
+  employeeId: ID!
+  employeeCode: String!
+  fullName: String!
+  status: String!
+}
+
+type AssetEmployeeOptionPage {
+  rows: [AssetEmployeeOption!]!
+  pageInfo: PageInfo!
+}
+
 input UpsertAssetCategoryInput {
   id: ID
   name: String!
@@ -77,6 +89,11 @@ input UpsertAssetInput {
 
 extend type Query {
   assetLocationOptions(limit: Int! = 100): [AssetLocationOption!]!
+  """
+  Returns only ACTIVE employees. Tenant and status filtering occurs before search, ordering,
+  and pagination.
+  """
+  assetEmployeeOptionsPage(page: PageInput!, search: String): AssetEmployeeOptionPage!
   assetCategoriesPage(
     page: PageInput
     search: String

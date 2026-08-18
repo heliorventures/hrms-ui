@@ -1,12 +1,30 @@
 import type { AnnouncementAttachment } from './notificationTypes';
+import { deferObjectUrlRevocation, privateFileObjectUrl } from '../../utils/privateFileAttachment';
 
 const DEFAULT_ATTACHMENT_MIME_TYPE = 'application/octet-stream';
 const DEFAULT_ATTACHMENT_FILE_NAME = 'attachment';
 
-export const announcementImageSrc = (attachment: AnnouncementAttachment | null | undefined) => {
-  if (!attachment?.contentBase64) return null;
-  return `data:${attachment.mimeType || DEFAULT_ATTACHMENT_MIME_TYPE};base64,${attachment.contentBase64}`;
+export type AnnouncementAttachmentKind = 'IMAGE' | 'DOCUMENT';
+
+type AnnouncementAttachmentPresence = {
+  hasImageAttachment?: boolean | null;
+  hasDocumentAttachment?: boolean | null;
 };
+
+export const attachmentKindFor = (kind: 'image' | 'document'): AnnouncementAttachmentKind =>
+  kind === 'image' ? 'IMAGE' : 'DOCUMENT';
+
+export const hasAnnouncementAttachment = (
+  announcement: AnnouncementAttachmentPresence,
+  kind: AnnouncementAttachmentKind
+) =>
+  kind === 'IMAGE'
+    ? Boolean(announcement.hasImageAttachment)
+    : Boolean(announcement.hasDocumentAttachment);
+
+export const announcementImageObjectUrl = (
+  attachment: AnnouncementAttachment | null | undefined
+) => (attachment?.contentBase64 ? privateFileObjectUrl(attachment) : null);
 
 export const downloadAnnouncementAttachment = (attachment: AnnouncementAttachment) => {
   const binary = globalThis.atob(attachment.contentBase64);
@@ -25,5 +43,5 @@ export const downloadAnnouncementAttachment = (attachment: AnnouncementAttachmen
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  deferObjectUrlRevocation(url);
 };

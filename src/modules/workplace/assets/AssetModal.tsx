@@ -3,30 +3,43 @@ import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Select from '../../../components/common/Select';
+import AssetOptionPicker from './AssetOptionPicker';
 import { hasErrors, validateAsset } from './assetValidation';
 import type {
   AssetCategoryRow,
+  AssetPageInfo,
   AssetFormValues,
   AssetRow,
   FieldErrors,
   LocationOption,
+  PageFilter,
 } from './assetTypes';
 
 interface AssetModalProps {
   editing?: AssetRow;
   categories: AssetCategoryRow[];
+  categoryFilter: PageFilter;
+  categoryPageInfo: AssetPageInfo;
+  categoryLoading: boolean;
+  categoryError?: string | null;
   locations: LocationOption[];
   saving: boolean;
   onClose: () => void;
+  onCategoryFilterChange: (filter: PageFilter) => void;
   onSave: (values: AssetFormValues) => Promise<boolean>;
 }
 
 export default function AssetModal({
   editing,
   categories,
+  categoryFilter,
+  categoryPageInfo,
+  categoryLoading,
+  categoryError,
   locations,
   saving,
   onClose,
+  onCategoryFilterChange,
   onSave,
 }: AssetModalProps) {
   const [values, setValues] = useState<AssetFormValues>({
@@ -47,23 +60,36 @@ export default function AssetModal({
     if (await onSave(values)) onClose();
   };
   return (
-    <Modal isOpen onClose={onClose} title={editing ? 'Edit Asset' : 'New Asset'} size="lg">
+    <Modal
+      isOpen
+      isDismissible={!saving}
+      onClose={onClose}
+      title={editing ? 'Edit Asset' : 'New Asset'}
+      size="lg"
+    >
       <form className="grid gap-4 md:grid-cols-2" onSubmit={(event) => void submit(event)}>
-        <Select
+        <AssetOptionPicker
           label="Category"
           value={values.assetCategoryId}
-          error={errors.assetCategoryId}
-          required
-          fullWidth
-          options={[
-            { value: '', label: 'Select category' },
-            ...categories
-              .filter((row) => row.isActive)
-              .map((row) => ({ value: row.id, label: `${row.name} (${row.code || 'no code'})` })),
-          ]}
-          onChange={(event) =>
-            setValues((current) => ({ ...current, assetCategoryId: event.target.value }))
+          options={categories.map((row) => ({
+            value: row.id,
+            label: `${row.name} (${row.code || 'no code'})`,
+          }))}
+          filter={categoryFilter}
+          pageInfo={categoryPageInfo}
+          loading={categoryLoading}
+          error={categoryError ?? errors.assetCategoryId}
+          emptyLabel="Select category"
+          selectedLabel={
+            editing?.categoryName
+              ? `${editing.categoryName}${editing.categoryCode ? ` (${editing.categoryCode})` : ''}`
+              : undefined
           }
+          required
+          onChange={(assetCategoryId) =>
+            setValues((current) => ({ ...current, assetCategoryId }))
+          }
+          onFilterChange={onCategoryFilterChange}
         />
         <Input
           label="Asset Name"

@@ -33,10 +33,10 @@ export default function AssetReturnModal({
     if (await onSave(values)) onClose();
   };
   return (
-    <Modal isOpen onClose={onClose} title={`Return ${assignment.assetName}`}>
+    <Modal isOpen isDismissible={!saving} onClose={onClose} title={`Return ${assignment.assetName}`}>
       <form className="space-y-4" onSubmit={(event) => void submit(event)}>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Assigned to {assignment.employeeName || assignment.employeeCode || assignment.employeeId}{' '}
+          Assigned to {assignment.employeeName || assignment.employeeCode || 'Unknown employee'}{' '}
           on {assignment.allocatedOn}.
         </p>
         <Input

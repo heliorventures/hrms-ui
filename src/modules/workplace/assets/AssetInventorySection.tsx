@@ -3,19 +3,31 @@ import Card from '../../../components/common/Card';
 import Select from '../../../components/common/Select';
 import Table from '../../../components/common/Table';
 import AssetPager from './AssetPager';
+import AssetOptionPicker from './AssetOptionPicker';
 import AssetSectionToolbar from './AssetSectionToolbar';
 import AssetStatusBadge from './AssetStatusBadge';
-import type { AssetCategoryRow, AssetPageInfo, AssetRow, InventoryFilter } from './assetTypes';
+import type {
+  AssetCategoryRow,
+  AssetPageInfo,
+  AssetRow,
+  InventoryFilter,
+  PageFilter,
+} from './assetTypes';
 
 interface AssetInventorySectionProps {
   rows: AssetRow[];
   categories: AssetCategoryRow[];
+  categoryFilter: PageFilter;
+  categoryPageInfo: AssetPageInfo;
+  categoryLoading: boolean;
+  categoryError?: string | null;
   filter: InventoryFilter;
   pageInfo: AssetPageInfo;
   loading: boolean;
   error?: string | null;
   canManage: boolean;
   onFilterChange: (filter: InventoryFilter) => void;
+  onCategoryFilterChange: (filter: PageFilter) => void;
   onCreate: () => void;
   onEdit: (row: AssetRow) => void;
   onRetire: (row: AssetRow) => void;
@@ -89,18 +101,19 @@ export default function AssetInventorySection(props: AssetInventorySectionProps)
         onSearch={(search) => props.onFilterChange({ ...props.filter, page: 1, search })}
       >
         <div className="flex flex-wrap gap-2">
-          <Select
-            aria-label="Filter inventory by category"
+          <AssetOptionPicker
+            label="Category"
             value={props.filter.categoryId}
-            options={[
-              { value: '', label: 'All categories' },
-              ...props.categories
-                .filter((row) => row.isActive)
-                .map((row) => ({ value: row.id, label: row.name })),
-            ]}
-            onChange={(event) =>
-              props.onFilterChange({ ...props.filter, page: 1, categoryId: event.target.value })
+            options={props.categories.map((row) => ({ value: row.id, label: row.name }))}
+            filter={props.categoryFilter}
+            pageInfo={props.categoryPageInfo}
+            loading={props.categoryLoading}
+            error={props.categoryError}
+            emptyLabel="All categories"
+            onChange={(categoryId) =>
+              props.onFilterChange({ ...props.filter, page: 1, categoryId })
             }
+            onFilterChange={props.onCategoryFilterChange}
           />
           <Select
             aria-label="Filter inventory by status"

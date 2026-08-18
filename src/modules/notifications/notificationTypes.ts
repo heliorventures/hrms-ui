@@ -19,8 +19,8 @@ export interface AnnouncementRow {
   publishAt?: string | null;
   expiresAt?: string | null;
   postSource?: string | null;
-  imageAttachment?: AnnouncementAttachment | null;
-  documentAttachment?: AnnouncementAttachment | null;
+  hasImageAttachment: boolean;
+  hasDocumentAttachment: boolean;
 }
 
 export interface NotificationRow {

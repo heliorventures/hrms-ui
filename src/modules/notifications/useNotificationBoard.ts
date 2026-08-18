@@ -5,9 +5,10 @@ import {
   MarkAllNotificationsReadDocument,
   MarkNotificationReadDocument,
   OrgDepartmentsDocument,
+  NotificationBoardSummaryDocument,
+  type NotificationBoardSummaryQuery,
   type OrgDepartmentsQuery,
 } from '../../api/graphql/graphql';
-import { NotificationBoardWithAttachmentsDocument } from './notificationQueries';
 import type { NotificationBoardData, NotificationFilter } from './notificationTypes';
 
 const NOTIFICATION_BOARD_LIMIT = 20;
@@ -23,7 +24,7 @@ export const useNotificationBoard = () => {
   const [actionBusy, setActionBusy] = useState(false);
 
   const loadBoard = useCallback(async () => {
-    return client.request<NotificationBoardData>(NotificationBoardWithAttachmentsDocument, {
+    return client.request<NotificationBoardSummaryQuery>(NotificationBoardSummaryDocument, {
       limit: NOTIFICATION_BOARD_LIMIT,
     });
   }, [client]);

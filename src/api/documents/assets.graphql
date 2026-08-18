@@ -80,13 +80,27 @@ query AssetAllocationsPage($page: PageInput, $search: String, $employeeId: ID, $
   }
 }
 
-query AssetsEmployeeOptions($employeeLimit: Int! = 200, $locationLimit: Int! = 100) {
-  employees(limit: $employeeLimit) {
-    id
-    employeeCode
-    fullName
-    status
+# Returns only ACTIVE employees. Tenant/status filtering occurs before search, ordering, and paging.
+query AssetEmployeeOptionsPage($page: PageInput!, $search: String) {
+  assetEmployeeOptionsPage(page: $page, search: $search) {
+    rows {
+      employeeId
+      employeeCode
+      fullName
+      status
+    }
+    pageInfo {
+      totalCount
+      totalPages
+      currentPage
+      perPage
+      hasNextPage
+      hasPrevPage
+    }
   }
+}
+
+query AssetLocationOptions($locationLimit: Int! = 100) {
   assetLocationOptions(limit: $locationLimit) {
     id
     name

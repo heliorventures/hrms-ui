@@ -43,6 +43,43 @@ describe('graphQlUserMessage', () => {
     );
   });
 
+  it('explains an asset tag conflict using the stable GraphQL code', () => {
+    const err = new ClientError(
+      {
+        errors: [
+          new GraphQLError('Unique constraint violated.', {
+            extensions: { code: 'ASSET_TAG_CONFLICT' },
+          }),
+        ],
+        status: 409,
+        headers: new Headers(),
+      },
+      { query: 'mutation UpsertAsset { upsertAsset }' }
+    );
+
+    expect(graphQlUserMessage(err)).toBe(
+      'An asset already uses this asset tag. Choose a different tag and try again.'
+    );
+  });
+
+  it('tells the user to upload again when a company-document stage expires', () => {
+    const err = Object.assign(new Error('Staged upload expired.'), {
+      code: 'COMPANY_DOCUMENT_UPLOAD_EXPIRED',
+    });
+
+    expect(graphQlUserMessage(err)).toBe('This upload expired. Upload the file again.');
+  });
+
+  it('does not expose staged-upload ownership details', () => {
+    const err = Object.assign(new Error('Staged upload belongs to another user.'), {
+      code: 'COMPANY_DOCUMENT_UPLOAD_INVALID',
+    });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'This staged upload is not valid for this company document.'
+    );
+  });
+
   it('maps overlapping leave requests to a date-specific message', () => {
     const err = Object.assign(new Error('Active leave request overlaps.'), {
       code: 'LEAVE_DATE_OVERLAP',

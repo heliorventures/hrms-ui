@@ -31,7 +31,12 @@ export default function AssetCategoryModal({
     if (await onSave(values)) onClose();
   };
   return (
-    <Modal isOpen onClose={onClose} title={editing ? 'Edit Asset Category' : 'New Asset Category'}>
+    <Modal
+      isOpen
+      isDismissible={!saving}
+      onClose={onClose}
+      title={editing ? 'Edit Asset Category' : 'New Asset Category'}
+    >
       <form className="space-y-4" onSubmit={(event) => void submit(event)}>
         <Input
           label="Name"

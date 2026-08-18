@@ -3,22 +3,30 @@ import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Select from '../../../components/common/Select';
+import AssetOptionPicker from './AssetOptionPicker';
 import { hasErrors, validateAssetAssignment } from './assetValidation';
 import type {
   AssetAssignmentFormValues,
+  AssetPageInfo,
   AssetRow,
   EmployeeOption,
   FieldErrors,
+  PageFilter,
 } from './assetTypes';
 import { today } from './assetTypes';
 
 interface AssetAssignmentModalProps {
   assets: AssetRow[];
   employees: EmployeeOption[];
+  employeeFilter: PageFilter;
+  employeePageInfo: AssetPageInfo;
   loadingAssets: boolean;
+  loadingEmployees: boolean;
   assetError?: string | null;
+  employeeError?: string | null;
   saving: boolean;
   onSearchAssets: (search?: string) => Promise<void>;
+  onEmployeeFilterChange: (filter: PageFilter) => void;
   onClose: () => void;
   onSave: (values: AssetAssignmentFormValues) => Promise<boolean>;
 }
@@ -33,9 +41,11 @@ export default function AssetAssignmentModal(props: AssetAssignmentModalProps) {
   });
   const [errors, setErrors] = useState<FieldErrors<AssetAssignmentFormValues>>({});
   const [assetSearch, setAssetSearch] = useState('');
+
   useEffect(() => {
     void props.onSearchAssets();
   }, [props.onSearchAssets]);
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const nextErrors = validateAssetAssignment(values);
@@ -43,8 +53,9 @@ export default function AssetAssignmentModal(props: AssetAssignmentModalProps) {
     if (hasErrors(nextErrors)) return;
     if (await props.onSave(values)) props.onClose();
   };
+
   return (
-    <Modal isOpen onClose={props.onClose} title="Assign Asset" size="lg">
+    <Modal isOpen isDismissible={!props.saving} onClose={props.onClose} title="Assign Asset" size="lg">
       <form className="space-y-4" onSubmit={(event) => void submit(event)}>
         <div className="flex items-end gap-2">
           <Input
@@ -85,22 +96,21 @@ export default function AssetAssignmentModal(props: AssetAssignmentModalProps) {
             setValues((current) => ({ ...current, assetId: event.target.value }))
           }
         />
-        <Select
+        <AssetOptionPicker
           label="Employee"
           value={values.employeeId}
-          error={errors.employeeId}
+          options={props.employees.map((employee) => ({
+            value: employee.employeeId,
+            label: `${employee.employeeCode} · ${employee.fullName}`,
+          }))}
+          filter={props.employeeFilter}
+          pageInfo={props.employeePageInfo}
+          loading={props.loadingEmployees}
+          error={props.employeeError ?? errors.employeeId}
+          emptyLabel="Select employee"
           required
-          fullWidth
-          options={[
-            { value: '', label: 'Select employee' },
-            ...props.employees.map((employee) => ({
-              value: employee.id,
-              label: `${employee.employeeCode} · ${employee.fullName}`,
-            })),
-          ]}
-          onChange={(event) =>
-            setValues((current) => ({ ...current, employeeId: event.target.value }))
-          }
+          onChange={(employeeId) => setValues((current) => ({ ...current, employeeId }))}
+          onFilterChange={props.onEmployeeFilterChange}
         />
         <div className="grid gap-4 md:grid-cols-2">
           <Input
@@ -135,7 +145,7 @@ export default function AssetAssignmentModal(props: AssetAssignmentModalProps) {
           }
         />
         <div className="flex gap-3">
-          <Button type="submit" disabled={props.saving || props.loadingAssets}>
+          <Button type="submit" disabled={props.saving || props.loadingAssets || props.loadingEmployees}>
             {props.saving ? 'Assigning...' : 'Assign Asset'}
           </Button>
           <Button variant="outline" onClick={props.onClose} disabled={props.saving}>

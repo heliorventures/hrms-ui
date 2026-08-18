@@ -1,9 +1,6 @@
 import Badge from '../../../components/common/Badge';
-import {
-  shortId,
-} from '../notificationPresentation';
-import { announcementImageSrc, downloadAnnouncementAttachment } from '../announcementAttachment';
 import type { AnnouncementRow } from '../notificationTypes';
+import AnnouncementAttachmentAction from './AnnouncementAttachmentAction';
 
 interface AnnouncementListProps {
   announcements: AnnouncementRow[];
@@ -33,30 +30,16 @@ const AnnouncementList = ({ announcements, deptNameById, loading }: Announcement
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 {announcement.body ?? 'No Announcement Body Provided.'}
               </p>
-              {announcement.imageAttachment && (
-                <div className="mt-3">
-                  <img
-                    src={announcementImageSrc(announcement.imageAttachment) ?? undefined}
-                    alt=""
-                    className="max-h-48 max-w-full rounded-md border border-gray-200 object-contain dark:border-gray-600"
-                  />
-                </div>
-              )}
-              {announcement.documentAttachment && (
-                <div className="mt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (announcement.documentAttachment) {
-                        downloadAnnouncementAttachment(announcement.documentAttachment);
-                      }
-                    }}
-                    className="text-sm text-primary-600 hover:underline dark:text-primary-400"
-                  >
-                    Download attachment
-                  </button>
-                </div>
-              )}
+              <AnnouncementAttachmentAction
+                announcementId={announcement.id}
+                available={announcement.hasImageAttachment}
+                kind="IMAGE"
+              />
+              <AnnouncementAttachmentAction
+                announcementId={announcement.id}
+                available={announcement.hasDocumentAttachment}
+                kind="DOCUMENT"
+              />
             </div>
             <div className="flex flex-col items-end gap-1">
               <Badge variant="info">{announcement.targetAudience ?? 'ALL'}</Badge>
@@ -73,15 +56,13 @@ const AnnouncementList = ({ announcements, deptNameById, loading }: Announcement
             <div className="mt-2 flex flex-wrap gap-2">
               {announcement.targetDepartmentId ? (
                 <Badge variant="neutral" size="sm">
-                  Dept{' '}
-                  {deptNameById.get(announcement.targetDepartmentId) ??
-                    shortId(announcement.targetDepartmentId)}
+                  {deptNameById.has(announcement.targetDepartmentId)
+                    ? `Department ${deptNameById.get(announcement.targetDepartmentId)}`
+                    : 'Department'}
                 </Badge>
               ) : null}
               {announcement.targetLocationId ? (
-                <Badge variant="neutral" size="sm">
-                  Location {shortId(announcement.targetLocationId)}
-                </Badge>
+                <Badge variant="neutral" size="sm">Location</Badge>
               ) : null}
               {announcement.targetAudience?.startsWith('ROLE:') ? (
                 <Badge variant="neutral" size="sm">

@@ -1,0 +1,34 @@
+query NotificationBoardSummary($limit: Int! = 20) {
+  unreadNotificationCount
+  announcements(limit: $limit) {
+    id
+    title
+    body
+    targetAudience
+    targetDepartmentId
+    targetLocationId
+    postSource
+    publishAt
+    expiresAt
+    hasImageAttachment
+    hasDocumentAttachment
+  }
+  notifications(limit: $limit) {
+    id
+    kind
+    title
+    message
+    actionUrl
+    isRead
+    createdAt
+  }
+}
+
+query AnnouncementAttachment($announcementId: ID!, $kind: AnnouncementAttachmentKind!) {
+  announcementAttachment(announcementId: $announcementId, kind: $kind) {
+    fileName
+    mimeType
+    fileSizeBytes
+    contentBase64
+  }
+}

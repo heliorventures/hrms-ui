@@ -43,7 +43,7 @@ export default function AssetAllocationsSection(props: AssetAllocationsSectionPr
             render: (row: AssetAssignmentRow) => (
               <div>
                 <p>{row.employeeName || 'Unknown employee'}</p>
-                <p className="text-xs text-slate-500">{row.employeeCode || row.employeeId}</p>
+                {row.employeeCode ? <p className="text-xs text-slate-500">{row.employeeCode}</p> : null}
               </div>
             ),
           },

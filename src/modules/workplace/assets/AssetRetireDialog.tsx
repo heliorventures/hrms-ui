@@ -18,7 +18,7 @@ export default function AssetRetireDialog({
 }: AssetRetireDialogProps) {
   const label = kind === 'asset' ? 'asset' : 'asset category';
   return (
-    <Modal isOpen onClose={onClose} title={`Retire ${label}`} size="sm">
+    <Modal isOpen isDismissible={!saving} onClose={onClose} title={`Retire ${label}`} size="sm">
       <div className="space-y-4">
         <p className="text-sm text-slate-700 dark:text-slate-200">
           Retire <strong>{name}</strong>? Retired records remain in history and cannot be edited or

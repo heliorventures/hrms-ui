@@ -72,6 +72,11 @@ type AnnouncementAttachment {
   contentBase64: String!
 }
 
+enum AnnouncementAttachmentKind {
+  IMAGE
+  DOCUMENT
+}
+
 input UpdateNotificationPreferencesInput {
   inAppEnabled: Boolean!
   announcementsEnabled: Boolean!
@@ -82,13 +87,15 @@ extend type Announcement {
   postSource: String!
   targetDepartmentId: ID
   targetLocationId: ID
-  imageFileStorageId: ID
-  documentFileStorageId: ID
-  imageAttachment: AnnouncementAttachment
-  documentAttachment: AnnouncementAttachment
+  hasImageAttachment: Boolean!
+  hasDocumentAttachment: Boolean!
 }
 
 extend type Query {
+  announcementAttachment(
+    announcementId: ID!
+    kind: AnnouncementAttachmentKind!
+  ): AnnouncementAttachment!
   adminAnnouncements(limit: Int = 100): [Announcement!]!
   adminNotifications(limit: Int = 100): [Notification!]!
   unreadNotificationCount: Int!

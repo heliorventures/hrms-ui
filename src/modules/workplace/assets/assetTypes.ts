@@ -1,16 +1,17 @@
 import type {
   AssetAllocationsPageQuery,
   AssetCategoriesPageQuery,
+  AssetEmployeeOptionsPageQuery,
   AssetInventoryPageQuery,
-  AssetsEmployeeOptionsQuery,
+  AssetLocationOptionsQuery,
 } from '../../../api/graphql/graphql';
 
 export type AssetCategoryRow = AssetCategoriesPageQuery['assetCategoriesPage']['rows'][number];
 export type AssetRow = AssetInventoryPageQuery['assetInventoryPage']['rows'][number];
 export type AssetAssignmentRow = AssetAllocationsPageQuery['assetAllocationsPage']['rows'][number];
 export type AssetPageInfo = AssetInventoryPageQuery['assetInventoryPage']['pageInfo'];
-export type EmployeeOption = AssetsEmployeeOptionsQuery['employees'][number];
-export type LocationOption = AssetsEmployeeOptionsQuery['assetLocationOptions'][number];
+export type EmployeeOption = AssetEmployeeOptionsPageQuery['assetEmployeeOptionsPage']['rows'][number];
+export type LocationOption = AssetLocationOptionsQuery['assetLocationOptions'][number];
 
 export interface AssetCategoryFormValues {
   name: string;
@@ -63,4 +64,11 @@ export const emptyPageInfo = (perPage: number): AssetPageInfo => ({
   hasPrevPage: false,
 });
 
-export const today = () => new Date().toISOString().slice(0, 10);
+export const localDateInputValue = (date: Date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const today = () => localDateInputValue();

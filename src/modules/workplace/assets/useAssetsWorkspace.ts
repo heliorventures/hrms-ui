@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AssetAllocationsPageDocument,
   AssetCategoriesPageDocument,
+  AssetEmployeeOptionsPageDocument,
   AssetInventoryPageDocument,
-  AssetsEmployeeOptionsDocument,
+  AssetLocationOptionsDocument,
   AssignAssetToEmployeeDocument,
   RetireAssetCategoryDocument,
   RetireAssetDocument,
@@ -12,8 +13,9 @@ import {
   UpsertAssetDocument,
   type AssetAllocationsPageQuery,
   type AssetCategoriesPageQuery,
+  type AssetEmployeeOptionsPageQuery,
   type AssetInventoryPageQuery,
-  type AssetsEmployeeOptionsQuery,
+  type AssetLocationOptionsQuery,
   type AssignAssetInput,
   type ReturnAssetInput,
   type UpsertAssetCategoryInput,
@@ -24,6 +26,7 @@ import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type {
   AssetAssignmentRow,
   AssetCategoryRow,
+  EmployeeOption,
   AssetRow,
   InventoryFilter,
   PageFilter,
@@ -52,10 +55,9 @@ export function useAssetsWorkspace({
   const [inventory, setInventory] = useState<AssetRow[]>([]);
   const [activeAssignments, setActiveAssignments] = useState<AssetAssignmentRow[]>([]);
   const [history, setHistory] = useState<AssetAssignmentRow[]>([]);
-  const [employees, setEmployees] = useState<AssetsEmployeeOptionsQuery['employees']>([]);
-  const [locations, setLocations] = useState<AssetsEmployeeOptionsQuery['assetLocationOptions']>(
-    []
-  );
+  const [categoryOptions, setCategoryOptions] = useState<AssetCategoryRow[]>([]);
+  const [employees, setEmployees] = useState<EmployeeOption[]>([]);
+  const [locations, setLocations] = useState<AssetLocationOptionsQuery['assetLocationOptions']>([]);
   const [assignmentAssets, setAssignmentAssets] = useState<AssetRow[]>([]);
   const [assignmentAssetsLoading, setAssignmentAssetsLoading] = useState(false);
   const [assignmentAssetsError, setAssignmentAssetsError] = useState<string | null>(null);
@@ -64,23 +66,30 @@ export function useAssetsWorkspace({
   const [inventoryFilter, setInventoryFilter] = useState<InventoryFilter>(initialInventoryFilter);
   const [allocationFilter, setAllocationFilter] = useState<PageFilter>(initialPageFilter);
   const [historyFilter, setHistoryFilter] = useState<PageFilter>(initialPageFilter);
+  const [categoryOptionFilter, setCategoryOptionFilter] = useState<PageFilter>(initialPageFilter);
+  const [employeeOptionFilter, setEmployeeOptionFilter] = useState<PageFilter>(initialPageFilter);
 
   const [categoryPageInfo, setCategoryPageInfo] = useState(emptyPageInfo(PAGE_SIZE));
   const [inventoryPageInfo, setInventoryPageInfo] = useState(emptyPageInfo(PAGE_SIZE));
   const [allocationPageInfo, setAllocationPageInfo] = useState(emptyPageInfo(PAGE_SIZE));
   const [historyPageInfo, setHistoryPageInfo] = useState(emptyPageInfo(PAGE_SIZE));
+  const [categoryOptionPageInfo, setCategoryOptionPageInfo] = useState(emptyPageInfo(PAGE_SIZE));
+  const [employeeOptionPageInfo, setEmployeeOptionPageInfo] = useState(emptyPageInfo(PAGE_SIZE));
 
   const [loading, setLoading] = useState({
     categories: canReadInventory,
     inventory: canReadInventory,
     allocations: true,
     history: true,
-    options: canManageAssets,
+    categoryOptions: canReadInventory,
+    employeeOptions: canManageAssets,
+    locations: canManageAssets,
   });
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionOk, setActionOk] = useState<string | null>(null);
+  const inFlightActions = useRef(new Set<string>());
 
   const setSectionLoading = useCallback((key: keyof typeof loading, value: boolean) => {
     setLoading((current) => ({ ...current, [key]: value }));
@@ -107,6 +116,26 @@ export function useAssetsWorkspace({
     });
     return result.assetInventoryPage;
   }, [client, inventoryFilter]);
+
+  const loadCategoryOptions = useCallback(async () => {
+    const result = await client.request<AssetCategoriesPageQuery>(AssetCategoriesPageDocument, {
+      page: { page: categoryOptionFilter.page, perPage: categoryOptionFilter.perPage },
+      search: categoryOptionFilter.search.trim() || null,
+      activeOnly: true,
+    });
+    return result.assetCategoriesPage;
+  }, [categoryOptionFilter, client]);
+
+  const loadEmployeeOptions = useCallback(async () => {
+    const result = await client.request<AssetEmployeeOptionsPageQuery>(
+      AssetEmployeeOptionsPageDocument,
+      {
+        page: { page: employeeOptionFilter.page, perPage: employeeOptionFilter.perPage },
+        search: employeeOptionFilter.search.trim() || null,
+      }
+    );
+    return result.assetEmployeeOptionsPage;
+  }, [client, employeeOptionFilter]);
 
   const loadAllocations = useCallback(async () => {
     const result = await client.request<AssetAllocationsPageQuery>(AssetAllocationsPageDocument, {
@@ -167,6 +196,27 @@ export function useAssetsWorkspace({
   }, [canReadInventory, loadInventory, setSectionError, setSectionLoading]);
 
   useEffect(() => {
+    if (!canReadInventory) return;
+    let cancelled = false;
+    setSectionLoading('categoryOptions', true);
+    setSectionError('categoryOptions', null);
+    void loadCategoryOptions()
+      .then((result) => {
+        if (!cancelled) {
+          setCategoryOptions(result.rows);
+          setCategoryOptionPageInfo(result.pageInfo);
+        }
+      })
+      .catch(
+        (error) => !cancelled && setSectionError('categoryOptions', graphQlUserMessage(error))
+      )
+      .finally(() => !cancelled && setSectionLoading('categoryOptions', false));
+    return () => {
+      cancelled = true;
+    };
+  }, [canReadInventory, loadCategoryOptions, setSectionError, setSectionLoading]);
+
+  useEffect(() => {
     let cancelled = false;
     setSectionLoading('allocations', true);
     setSectionError('allocations', null);
@@ -205,27 +255,34 @@ export function useAssetsWorkspace({
   useEffect(() => {
     if (!canManageAssets) return;
     let cancelled = false;
-    setSectionLoading('options', true);
-    setSectionError('options', null);
-    void client
-      .request<AssetsEmployeeOptionsQuery>(AssetsEmployeeOptionsDocument, {
-        employeeLimit: 300,
-        locationLimit: 200,
-      })
-      .then((result: AssetsEmployeeOptionsQuery) => {
+    setSectionLoading('employeeOptions', true);
+    setSectionError('employeeOptions', null);
+    void loadEmployeeOptions()
+      .then((result) => {
         if (!cancelled) {
-          setEmployees(
-            result.employees.filter((employee: AssetsEmployeeOptionsQuery['employees'][number]) =>
-              ['ACTIVE', 'PROBATION'].includes(employee.status.trim().toUpperCase())
-            )
-          );
-          setLocations(result.assetLocationOptions);
+          setEmployees(result.rows);
+          setEmployeeOptionPageInfo(result.pageInfo);
         }
       })
       .catch(
-        (error: unknown) => !cancelled && setSectionError('options', graphQlUserMessage(error))
+        (error) => !cancelled && setSectionError('employeeOptions', graphQlUserMessage(error))
       )
-      .finally(() => !cancelled && setSectionLoading('options', false));
+      .finally(() => !cancelled && setSectionLoading('employeeOptions', false));
+    return () => {
+      cancelled = true;
+    };
+  }, [canManageAssets, loadEmployeeOptions, setSectionError, setSectionLoading]);
+
+  useEffect(() => {
+    if (!canManageAssets) return;
+    let cancelled = false;
+    setSectionLoading('locations', true);
+    setSectionError('locations', null);
+    void client
+      .request<AssetLocationOptionsQuery>(AssetLocationOptionsDocument, { locationLimit: 200 })
+      .then((result) => !cancelled && setLocations(result.assetLocationOptions))
+      .catch((error) => !cancelled && setSectionError('locations', graphQlUserMessage(error)))
+      .finally(() => !cancelled && setSectionLoading('locations', false));
     return () => {
       cancelled = true;
     };
@@ -241,6 +298,11 @@ export function useAssetsWorkspace({
     setInventory(result.rows);
     setInventoryPageInfo(result.pageInfo);
   }, [loadInventory]);
+  const refreshCategoryOptions = useCallback(async () => {
+    const result = await loadCategoryOptions();
+    setCategoryOptions(result.rows);
+    setCategoryOptionPageInfo(result.pageInfo);
+  }, [loadCategoryOptions]);
   const refreshAllocations = useCallback(async () => {
     const result = await loadAllocations();
     setActiveAssignments(result.rows);
@@ -280,6 +342,8 @@ export function useAssetsWorkspace({
       action: () => Promise<unknown>,
       refresh: () => Promise<unknown>
     ) => {
+      if (inFlightActions.current.has(key)) return false;
+      inFlightActions.current.add(key);
       setBusyAction(key);
       setActionError(null);
       setActionOk(null);
@@ -298,6 +362,7 @@ export function useAssetsWorkspace({
         setActionError(graphQlUserMessage(error));
         return false;
       } finally {
+        inFlightActions.current.delete(key);
         setBusyAction(null);
       }
     },
@@ -310,9 +375,9 @@ export function useAssetsWorkspace({
         'category',
         input.id ? 'Asset category updated.' : 'Asset category created.',
         () => client.request(UpsertAssetCategoryDocument, { input }),
-        refreshCategories
+        () => Promise.all([refreshCategories(), refreshCategoryOptions()])
       ),
-    [client, refreshCategories, runAction]
+    [client, refreshCategories, refreshCategoryOptions, runAction]
   );
   const retireCategory = useCallback(
     (assetCategoryId: string) =>
@@ -320,9 +385,9 @@ export function useAssetsWorkspace({
         'retire-category',
         'Asset category retired.',
         () => client.request(RetireAssetCategoryDocument, { assetCategoryId }),
-        refreshCategories
+        () => Promise.all([refreshCategories(), refreshCategoryOptions()])
       ),
-    [client, refreshCategories, runAction]
+    [client, refreshCategories, refreshCategoryOptions, runAction]
   );
   const saveAsset = useCallback(
     (input: UpsertAssetInput) =>
@@ -369,14 +434,9 @@ export function useAssetsWorkspace({
     () => assignmentAssets.filter((asset) => asset.status === 'AVAILABLE' && !asset.retiredAt),
     [assignmentAssets]
   );
-  const activeCategories = useMemo(
-    () => categories.filter((category) => category.isActive),
-    [categories]
-  );
-
   return {
     categories,
-    activeCategories,
+    categoryOptions,
     inventory,
     availableAssets,
     assignmentAssetsLoading,
@@ -386,10 +446,14 @@ export function useAssetsWorkspace({
     employees,
     locations,
     categoryFilter,
+    categoryOptionFilter,
+    employeeOptionFilter,
     inventoryFilter,
     allocationFilter,
     historyFilter,
     categoryPageInfo,
+    categoryOptionPageInfo,
+    employeeOptionPageInfo,
     inventoryPageInfo,
     allocationPageInfo,
     historyPageInfo,
@@ -399,6 +463,8 @@ export function useAssetsWorkspace({
     actionError,
     actionOk,
     setCategoryFilter,
+    setCategoryOptionFilter,
+    setEmployeeOptionFilter,
     setInventoryFilter,
     setAllocationFilter,
     setHistoryFilter,

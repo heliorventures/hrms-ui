@@ -20,6 +20,31 @@ function codeToMessage(code: string): string | null {
       return 'Amount exceeds the permitted category limit. Review the limit shown above.';
     case 'EXPENSE_MONTHLY_LIMIT_EXCEEDED':
       return 'This claim would exceed the monthly category limit.';
+    case 'ASSET_CATEGORY_CODE_CONFLICT':
+      return 'An asset category already uses this code. Choose a different code and try again.';
+    case 'ASSET_TAG_CONFLICT':
+      return 'An asset already uses this asset tag. Choose a different tag and try again.';
+    case 'ASSET_SERIAL_NUMBER_CONFLICT':
+      return 'An asset already uses this serial number. Check the existing inventory record.';
+    case 'ASSET_ACTIVE_ALLOCATION_CONFLICT':
+    case 'ASSET_ALLOCATION_CONFLICT':
+      return 'This asset is already assigned. Refresh the inventory before trying again.';
+    case 'ASSET_RETURN_CONFLICT':
+      return 'This assignment has already been returned. Refresh the allocation history.';
+    case 'ASSET_CATEGORY_IN_USE':
+      return 'Retire or move the remaining active assets before retiring this category.';
+    case 'ASSET_NOT_AVAILABLE':
+      return 'This asset is no longer available. Refresh the inventory and choose another asset.';
+    case 'ASSET_RETIRED':
+      return 'This asset is retired and cannot be changed or assigned.';
+    case 'ASSET_EMPLOYEE_INACTIVE':
+      return 'This employee is no longer active. Choose an active employee.';
+    case 'COMPANY_DOCUMENT_UPLOAD_EXPIRED':
+      return 'This upload expired. Upload the file again.';
+    case 'COMPANY_DOCUMENT_UPLOAD_CLAIMED':
+      return 'This upload was already used. Upload the file again.';
+    case 'COMPANY_DOCUMENT_UPLOAD_INVALID':
+      return 'This staged upload is not valid for this company document.';
     case 'CONFLICT':
       return 'This record conflicts with an existing value.';
     case 'FORBIDDEN':
@@ -149,10 +174,14 @@ function errorCode(err: unknown): string | null {
 
 export function graphQlUserMessage(err: unknown): string {
   if (err instanceof ClientError) {
+    const code = errorCode(err);
+    if (code?.toUpperCase() !== 'VALIDATION_ERROR') {
+      const mapped = code ? codeToMessage(code) : null;
+      if (mapped) return mapped;
+    }
     const joined = err.response.errors?.map((item) => item.message).join(' ') ?? err.message;
     const mapped = rawTextToMessage(joined);
     if (mapped !== FALLBACK_MESSAGE) return mapped;
-    const code = errorCode(err);
     if (code?.toUpperCase() === 'VALIDATION_ERROR') {
       return codeToMessage(code) ?? FALLBACK_MESSAGE;
     }

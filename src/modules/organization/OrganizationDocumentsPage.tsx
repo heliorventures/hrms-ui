@@ -9,8 +9,12 @@ import { PERMISSIONS } from '../../auth/permissions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
-import { privateFileObjectUrl } from '../../utils/privateFileAttachment';
-import { uploadTenantFile, validateTenantUploadFile } from '../../utils/tenantFileUpload';
+import { deferObjectUrlRevocation, privateFileObjectUrl } from '../../utils/privateFileAttachment';
+import { validateTenantUploadFile } from '../../utils/tenantFileUpload';
+import {
+  buildCreateCompanyDocumentInput,
+  stageCompanyDocumentFile,
+} from './companyDocumentUpload';
 import {
   CompanyDocumentAttachmentDocument,
   CreateCompanyDocumentDocument,
@@ -126,15 +130,15 @@ const OrganizationDocumentsPage = () => {
 
     try {
       setBusy(true);
-      const fileStorageId = await uploadTenantFile(client, form.file);
+      const stagedUploadId = await stageCompanyDocumentFile(client, form.file);
       await client.request(CreateCompanyDocumentDocument, {
-        input: {
+        input: buildCreateCompanyDocumentInput({
           category: form.category,
           title,
           description: form.description.trim() || null,
-          fileStorageId,
+          stagedUploadId,
           visibleToEmployees: form.visibleToEmployees,
-        },
+        }),
       });
       setForm(initialForm);
       await loadDocuments();
@@ -160,7 +164,7 @@ const OrganizationDocumentsPage = () => {
       window.document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(url);
+      deferObjectUrlRevocation(url);
     } catch (e) {
       setError(graphQlUserMessage(e));
     }

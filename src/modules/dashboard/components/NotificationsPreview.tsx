@@ -6,11 +6,9 @@ import Badge from '../../../components/common/Badge';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import CreateAnnouncementModal from '../../notifications/CreateAnnouncementModal';
 import {
-  announcementImageSrc,
-  downloadAnnouncementAttachment,
-} from '../../notifications/announcementAttachment';
-import { NotificationBoardWithAttachmentsDocument } from '../../notifications/notificationQueries';
-import type { AnnouncementAttachment } from '../../notifications/notificationTypes';
+  NotificationBoardSummaryDocument,
+} from '../../../api/graphql/graphql';
+import AnnouncementAttachmentAction from '../../notifications/components/AnnouncementAttachmentAction';
 
 interface AnnouncementRow {
   id: string;
@@ -22,8 +20,8 @@ interface AnnouncementRow {
   postSource?: string | null;
   publishAt?: string | null;
   expiresAt?: string | null;
-  imageAttachment?: AnnouncementAttachment | null;
-  documentAttachment?: AnnouncementAttachment | null;
+  hasImageAttachment: boolean;
+  hasDocumentAttachment: boolean;
 }
 
 interface NotificationRow {
@@ -43,12 +41,6 @@ interface NotificationsPreviewProps {
   fullHeight?: boolean;
 }
 
-const shortId = (id: string | null | undefined, len = 8) => {
-  if (!id) return '';
-  const t = id.replace(/-/g, '');
-  return t.length <= len ? id : `${t.slice(0, len)}…`;
-};
-
 const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps) => {
   const client = useGraphClient('client');
   const limit = fullHeight ? 20 : 3;
@@ -58,7 +50,7 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
 
   const loadBoard = useCallback(async () => {
     const result = await client.request<NotificationBoardResult>(
-      NotificationBoardWithAttachmentsDocument,
+      NotificationBoardSummaryDocument,
       { limit }
     );
     return result;
@@ -139,26 +131,18 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
                 <p className="mt-1 line-clamp-3 text-xs text-gray-600 dark:text-gray-300">
                   {announcement.body ?? 'No Body Provided.'}
                 </p>
-                {announcement.imageAttachment ? (
-                  <img
-                    src={announcementImageSrc(announcement.imageAttachment) ?? undefined}
-                    alt=""
-                    className="mt-2 max-h-32 max-w-full rounded border border-gray-200 object-contain dark:border-gray-600"
+                  <AnnouncementAttachmentAction
+                    announcementId={announcement.id}
+                    available={announcement.hasImageAttachment}
+                    kind="IMAGE"
+                    compact
                   />
-                ) : null}
-                {announcement.documentAttachment ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (announcement.documentAttachment) {
-                        downloadAnnouncementAttachment(announcement.documentAttachment);
-                      }
-                    }}
-                    className="mt-2 inline-block text-xs text-primary-600 hover:underline dark:text-primary-400"
-                  >
-                    Download attachment
-                  </button>
-                ) : null}
+                  <AnnouncementAttachmentAction
+                    announcementId={announcement.id}
+                    available={announcement.hasDocumentAttachment}
+                    kind="DOCUMENT"
+                    compact
+                />
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
                 <Badge variant="info" size="sm">
@@ -171,20 +155,6 @@ const NotificationsPreview = ({ fullHeight = false }: NotificationsPreviewProps)
                 ) : null}
               </div>
             </div>
-            {(announcement.targetDepartmentId || announcement.targetLocationId) ? (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {announcement.targetDepartmentId ? (
-                  <Badge variant="neutral" size="sm">
-                    Dept {shortId(announcement.targetDepartmentId)}
-                  </Badge>
-                ) : null}
-                {announcement.targetLocationId ? (
-                  <Badge variant="neutral" size="sm">
-                    Loc {shortId(announcement.targetLocationId)}
-                  </Badge>
-                ) : null}
-              </div>
-            ) : null}
           </div>
         ))}
       </div>

@@ -41,7 +41,6 @@ extend type Query {
   companyDocuments(category: String, activeOnly: Boolean! = true, limit: Int! = 100): [CompanyDocument!]!
   companyDocumentAttachment(companyDocumentId: ID!): TenantFileAttachment!
   employeeDocumentAttachment(employeeDocumentId: ID!): EmployeeDocumentAttachment!
-  tenantFileAttachment(fileStorageId: ID!): TenantFileAttachment!
   employeeEducationRecords(employeeId: ID!): [EmployeeEducation!]!
   employeeWorkExperienceRecords(employeeId: ID!): [EmployeeWorkExperience!]!
 }
@@ -123,7 +122,6 @@ type CompanyDocument {
   category: String!
   title: String!
   description: String
-  fileStorageId: ID!
   originalFileName: String
   mimeType: String
   fileSizeBytes: Int
@@ -316,8 +314,22 @@ input CreateCompanyDocumentInput {
   category: String!
   title: String!
   description: String
-  fileStorageId: ID!
+  stagedUploadId: ID!
   visibleToEmployees: Boolean! = true
+}
+
+input UploadCompanyDocumentFileInput {
+  fileName: String!
+  mimeType: String
+  contentBase64: String!
+}
+
+type StagedCompanyDocumentUpload {
+  id: ID!
+  originalFileName: String
+  mimeType: String
+  fileSizeBytes: Int
+  expiresAt: DateTime!
 }
 
 type UploadedTenantFile {
@@ -378,6 +390,7 @@ extend type Mutation {
   upsertEmployeePrimaryAadhaar(input: UpsertEmployeePrimaryAadhaarInput!): EmployeeAadhaarRecord!
   uploadEmployeeDocument(input: UploadEmployeeDocumentInput!): EmployeeDocument!
   uploadTenantFile(input: UploadTenantFileInput!): UploadedTenantFile!
+  uploadCompanyDocumentFile(input: UploadCompanyDocumentFileInput!): StagedCompanyDocumentUpload!
   createCompanyDocument(input: CreateCompanyDocumentInput!): CompanyDocument!
   archiveCompanyDocument(companyDocumentId: ID!): CompanyDocument!
   deleteCompanyDocument(companyDocumentId: ID!): Boolean!

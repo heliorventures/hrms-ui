@@ -183,7 +183,6 @@ query OrgDocumentsList($tlim: Int! = 50, $dlim: Int! = 50) {
     category
     title
     description
-    fileStorageId
     originalFileName
     mimeType
     fileSizeBytes
@@ -1068,12 +1067,13 @@ mutation UploadTenantFile($input: UploadTenantFileInput!) {
   }
 }
 
-query TenantFileAttachment($fileStorageId: ID!) {
-  tenantFileAttachment(fileStorageId: $fileStorageId) {
-    fileName
+mutation UploadCompanyDocumentFile($input: UploadCompanyDocumentFileInput!) {
+  uploadCompanyDocumentFile(input: $input) {
+    id
+    originalFileName
     mimeType
     fileSizeBytes
-    contentBase64
+    expiresAt
   }
 }
 
@@ -1083,7 +1083,6 @@ mutation CreateCompanyDocument($input: CreateCompanyDocumentInput!) {
     category
     title
     description
-    fileStorageId
     originalFileName
     mimeType
     fileSizeBytes
@@ -1846,42 +1845,6 @@ query OnLeaveToday($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50, 
     employeeId
     fullName
     employeeCode
-  }
-}
-
-query NotificationBoard($limit: Int! = 20) {
-  unreadNotificationCount
-  announcements(limit: $limit) {
-    id
-    title
-    body
-    targetAudience
-    targetDepartmentId
-    targetLocationId
-    postSource
-    publishAt
-    expiresAt
-    imageAttachment {
-      fileName
-      mimeType
-      fileSizeBytes
-      contentBase64
-    }
-    documentAttachment {
-      fileName
-      mimeType
-      fileSizeBytes
-      contentBase64
-    }
-  }
-  notifications(limit: $limit) {
-    id
-    kind
-    title
-    message
-    actionUrl
-    isRead
-    createdAt
   }
 }
 

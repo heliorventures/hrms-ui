@@ -106,10 +106,10 @@ const AssetsPage = () => {
           </p>
         </Card>
       ) : null}
-      {model.errors.options ? (
+      {model.errors.locations ? (
         <Card>
           <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            Employee or location options could not be loaded: {model.errors.options}
+            Location options could not be loaded: {model.errors.locations}
           </p>
         </Card>
       ) : null}
@@ -118,13 +118,18 @@ const AssetsPage = () => {
         <>
           <AssetInventorySection
             rows={model.inventory}
-            categories={model.categories}
+            categories={model.categoryOptions}
+            categoryFilter={model.categoryOptionFilter}
+            categoryPageInfo={model.categoryOptionPageInfo}
+            categoryLoading={model.loading.categoryOptions}
+            categoryError={model.errors.categoryOptions}
             filter={model.inventoryFilter}
             pageInfo={model.inventoryPageInfo}
             loading={model.loading.inventory}
             error={model.errors.inventory}
             canManage={canManageAssets}
             onFilterChange={model.setInventoryFilter}
+            onCategoryFilterChange={model.setCategoryOptionFilter}
             onCreate={() => openAction(() => setAssetEditor(null))}
             onEdit={(row) => openAction(() => setAssetEditor(row))}
             onRetire={(row) => openAction(() => setRetireTarget({ kind: 'asset', row }))}
@@ -179,10 +184,15 @@ const AssetsPage = () => {
         <AssetModal
           key={assetEditor?.id ?? 'new-asset'}
           editing={assetEditor ?? undefined}
-          categories={model.activeCategories}
+          categories={model.categoryOptions}
+          categoryFilter={model.categoryOptionFilter}
+          categoryPageInfo={model.categoryOptionPageInfo}
+          categoryLoading={model.loading.categoryOptions}
+          categoryError={model.errors.categoryOptions}
           locations={model.locations}
           saving={model.busyAction === 'asset'}
           onClose={() => setAssetEditor(undefined)}
+          onCategoryFilterChange={model.setCategoryOptionFilter}
           onSave={saveAsset}
         />
       ) : null}
@@ -190,10 +200,15 @@ const AssetsPage = () => {
         <AssetAssignmentModal
           assets={model.availableAssets}
           employees={model.employees}
+          employeeFilter={model.employeeOptionFilter}
+          employeePageInfo={model.employeeOptionPageInfo}
           loadingAssets={model.assignmentAssetsLoading}
+          loadingEmployees={model.loading.employeeOptions}
           assetError={model.assignmentAssetsError}
+          employeeError={model.errors.employeeOptions}
           saving={model.busyAction === 'assign'}
           onSearchAssets={model.searchAvailableAssets}
+          onEmployeeFilterChange={model.setEmployeeOptionFilter}
           onClose={() => setAssignmentOpen(false)}
           onSave={assignAsset}
         />

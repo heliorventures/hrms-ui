@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  localDateInputValue,
   validateAsset,
   validateAssetAssignment,
   validateAssetCategory,
@@ -7,6 +8,10 @@ import {
 } from './assetValidation';
 
 describe('asset validation', () => {
+  it('preserves a local calendar date when creating a date input default', () => {
+    expect(localDateInputValue(new Date(2026, 0, 2))).toBe('2026-01-02');
+  });
+
   it('requires category identity fields', () => {
     expect(validateAssetCategory({ name: ' ', code: '' })).toEqual({
       name: 'Category name is required.',
