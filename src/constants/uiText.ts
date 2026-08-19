@@ -13,15 +13,15 @@ export const UI_ACTION_TEXT = {
 } as const;
 
 export const UI_STATUS_TEXT = {
-  creating: 'Creating...',
-  deleting: 'Deleting...',
-  downloading: 'Downloading...',
-  loading: 'Loading...',
-  publishing: 'Publishing...',
-  removing: 'Removing...',
-  saving: 'Saving...',
-  submitting: 'Submitting...',
-  uploading: 'Uploading...',
+  creating: 'Creating…',
+  deleting: 'Deleting…',
+  downloading: 'Downloading…',
+  loading: 'Loading…',
+  publishing: 'Publishing…',
+  removing: 'Removing…',
+  saving: 'Saving…',
+  submitting: 'Submitting…',
+  uploading: 'Uploading…',
 } as const;
 
 export const UI_EMPTY_TEXT = {
@@ -45,8 +45,8 @@ export const UI_A11Y_TEXT = {
 } as const;
 
 export const UI_FORM_TEXT = {
-  chooseAny: 'Choose...',
-  chooseEmployee: 'Choose An Employee...',
+  chooseAny: 'Choose…',
+  chooseEmployee: 'Choose An Employee…',
   chooseProject: 'Choose Project',
   loadingOption: '- Loading -',
   noneOption: '- None -',
@@ -62,10 +62,10 @@ export const UI_FIELD_LABELS = {
 } as const;
 
 export const UI_PLACEHOLDER_TEXT = {
-  employeeSearch: 'Search By Employee Code Or Name...',
-  globalSearch: 'Search Pages, People, Tools...',
-  sidebarFilter: 'Filter Menu, Pages...',
-  uuidEntitySearch: 'Search...',
+  employeeSearch: 'Search By Employee Code Or Name…',
+  globalSearch: 'Search Pages, People, Tools…',
+  sidebarFilter: 'Filter Menu, Pages…',
+  uuidEntitySearch: 'Search…',
 } as const;
 
 export const NAV_LABELS = {

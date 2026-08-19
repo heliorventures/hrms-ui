@@ -16,16 +16,18 @@ const variantStyles: Record<FlashToastState['variant'], string> = {
 /** Floating toast — sibling to main layout; keep above modals with high z-index. */
 const FlashToastBar = ({ toast, onDismiss }: Props) => {
   if (!toast) return null;
+  const isError = toast.variant === 'error';
   return (
     <div
-      role="alert"
+      role={isError ? 'alert' : 'status'}
+      aria-live={isError ? undefined : 'polite'}
       className={`fixed bottom-6 left-1/2 z-[100] max-w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border px-4 py-3 shadow-lg ${variantStyles[toast.variant]}`}
     >
       <div className="flex items-start justify-between gap-3">
         <p className="whitespace-pre-wrap text-sm font-medium leading-snug">{toast.text}</p>
         <button
           type="button"
-          className="shrink-0 rounded px-2 py-0.5 text-xs font-semibold opacity-70 hover:opacity-100"
+          className="shrink-0 rounded px-2 py-0.5 text-xs font-semibold opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
           onClick={onDismiss}
           aria-label="Dismiss"
         >

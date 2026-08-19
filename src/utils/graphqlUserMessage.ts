@@ -1,6 +1,6 @@
 import { ClientError } from 'graphql-request';
 
-const FALLBACK_MESSAGE = 'Something went wrong. Please try again.';
+const FALLBACK_MESSAGE = 'We could not complete this action. Try again.';
 
 function codeToMessage(code: string): string | null {
   switch (code.toUpperCase()) {
@@ -46,9 +46,9 @@ function codeToMessage(code: string): string | null {
     case 'COMPANY_DOCUMENT_UPLOAD_INVALID':
       return 'This staged upload is not valid for this company document.';
     case 'CONFLICT':
-      return 'This record conflicts with an existing value.';
+      return 'This information conflicts with an existing record. Review the details and try again.';
     case 'FORBIDDEN':
-      return 'You do not have permission to do this.';
+      return 'You do not have access to make this change. Contact your HR administrator if you need help.';
     case 'UNAUTHENTICATED':
       return 'Your session has expired. Sign in again.';
     case 'NOT_FOUND':
@@ -72,10 +72,24 @@ function codeToMessage(code: string): string | null {
 
 function rawTextToMessage(raw: string): string {
   const lower = raw.toLowerCase();
+  if (
+    lower.includes('failed to fetch') ||
+    lower.includes('network error') ||
+    lower.includes('networkerror') ||
+    lower.includes('connection refused')
+  ) {
+    return 'We could not connect right now. Check your connection and try again.';
+  }
+  if (lower.includes('timed out') || lower.includes('timeout')) {
+    return 'This is taking longer than expected. Try again.';
+  }
   if (lower.includes('workdate cannot be in the future') || lower.includes('future attendance')) {
     return 'Future attendance cannot be regularized.';
   }
-  if (lower.includes('checkintime must be before checkouttime') || lower.includes('punch in must be before punch out')) {
+  if (
+    lower.includes('checkintime must be before checkouttime') ||
+    lower.includes('punch in must be before punch out')
+  ) {
     return 'Punch In must be before Punch Out for the same calendar day.';
   }
   if (lower.includes('manual attendance overlaps') || lower.includes('punch range overlaps')) {
@@ -128,15 +142,23 @@ function rawTextToMessage(raw: string): string {
     lower.includes('unique constraint') ||
     lower.includes('already exists')
   ) {
-    return 'This record conflicts with an existing value.';
+    return 'This information conflicts with an existing record. Review the details and try again.';
   }
   if (lower.includes('foreign key') || lower.includes('violates foreign key constraint')) {
     return 'That reference is invalid or the related record was removed.';
   }
-  if (lower.includes('permission') || lower.includes('forbidden') || lower.includes('not authorized')) {
-    return 'You do not have permission to do this.';
+  if (
+    lower.includes('permission') ||
+    lower.includes('forbidden') ||
+    lower.includes('not authorized')
+  ) {
+    return 'You do not have access to make this change. Contact your HR administrator if you need help.';
   }
-  if (lower.includes('unauthenticated') || lower.includes('unauthorised') || lower.includes('unauthorized')) {
+  if (
+    lower.includes('unauthenticated') ||
+    lower.includes('unauthorised') ||
+    lower.includes('unauthorized')
+  ) {
     return 'Your session has expired. Sign in again.';
   }
   if (lower.includes('not found') || lower.includes('does not exist')) {
@@ -159,14 +181,14 @@ function rawTextToMessage(raw: string): string {
 function errorCode(err: unknown): string | null {
   if (err instanceof ClientError) {
     const graphqlCode = err.response.errors?.find((item) => {
-      const code = item.extensions?.code;
+      const { code } = item.extensions;
       return typeof code === 'string' && code.length > 0;
-    })?.extensions?.code;
+    })?.extensions.code;
     if (typeof graphqlCode === 'string') return graphqlCode;
   }
 
   if (err !== null && typeof err === 'object' && 'code' in err) {
-    const code = (err as { code?: unknown }).code;
+    const { code } = err as { code?: unknown };
     if (typeof code === 'string') return code;
   }
   return null;
@@ -175,15 +197,21 @@ function errorCode(err: unknown): string | null {
 export function graphQlUserMessage(err: unknown): string {
   if (err instanceof ClientError) {
     const code = errorCode(err);
-    if (code?.toUpperCase() !== 'VALIDATION_ERROR') {
+    const normalizedCode = code?.toUpperCase();
+    if (normalizedCode === 'VALIDATION_ERROR' || normalizedCode === 'FORBIDDEN') {
+      const joined = err.response.errors?.map((item) => item.message).join(' ') ?? err.message;
+      const mapped = rawTextToMessage(joined);
+      if (mapped !== FALLBACK_MESSAGE) return mapped;
+    }
+    if (normalizedCode !== 'VALIDATION_ERROR') {
       const mapped = code ? codeToMessage(code) : null;
       if (mapped) return mapped;
     }
     const joined = err.response.errors?.map((item) => item.message).join(' ') ?? err.message;
     const mapped = rawTextToMessage(joined);
     if (mapped !== FALLBACK_MESSAGE) return mapped;
-    if (code?.toUpperCase() === 'VALIDATION_ERROR') {
-      return codeToMessage(code) ?? FALLBACK_MESSAGE;
+    if (normalizedCode === 'VALIDATION_ERROR') {
+      return code ? (codeToMessage(code) ?? FALLBACK_MESSAGE) : FALLBACK_MESSAGE;
     }
   }
 

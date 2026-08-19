@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { useAuth } from '../../contexts/AuthContext';
-import { createPermissionService } from '../../auth/permissionService';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
-import { formatBackendTime } from '../../utils/timeFormat';
+import { createPermissionService } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import PageNotice from '../../components/common/PageNotice';
+import { useAuth } from '../../contexts/AuthContext';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { formatMinutesAsHhMm, segmentWorkedMinutes } from '../../utils/attendanceDuration';
+import { attendancePolicyMessage } from '../../utils/attendancePolicyMessage';
 import {
-  formatMinutesAsHhMm,
-  segmentWorkedMinutes,
-} from '../../utils/attendanceDuration';
-import { isoDateRangeContains, monthBoundsIso, parseIsoDate, toIsoDate } from '../../utils/calendarRange';
+  isoDateRangeContains,
+  monthBoundsIso,
+  parseIsoDate,
+  toIsoDate,
+} from '../../utils/calendarRange';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import { formatBackendTime } from '../../utils/timeFormat';
+
 import AttendanceSegmentsTable from './components/AttendanceSegmentsTable';
 import ManualAttendanceModal from './components/ManualAttendanceModal';
 import type { AttendanceBoardData, FlatSegmentRow } from './types';
@@ -76,6 +82,10 @@ const AttendancePage = () => {
   const [adjustDefaultSegment, setAdjustDefaultSegment] = useState<FlatSegmentRow | null>(null);
 
   const monthBounds = useMemo(() => monthBoundsIso(year, monthIndex), [year, monthIndex]);
+  const policyMessage = useMemo(
+    () => attendancePolicyMessage(adjustPolicyDays, canRegularize),
+    [adjustPolicyDays, canRegularize]
+  );
 
   const loadBoard = useCallback(async () => {
     return client.request<AttendanceBoardData>(AttendanceBoardRangeDocument, {
@@ -88,7 +98,7 @@ const AttendancePage = () => {
   const loadPolicy = useCallback(async () => {
     try {
       const r = await client.request(AttendanceAdjustmentPolicyDocument);
-      const raw = r.attendanceAdjustmentPolicy?.maxSelfAdjustDays;
+      const raw = r.attendanceAdjustmentPolicy.maxSelfAdjustDays;
       const n = typeof raw === 'number' ? raw : parseInt(String(raw ?? '14'), 10);
       setAdjustPolicyDays(Number.isFinite(n) ? n : 14);
     } catch {
@@ -120,6 +130,7 @@ const AttendancePage = () => {
   const refreshBoard = useCallback(async () => {
     try {
       setRefreshing(true);
+      setError(null);
       setSuccess(null);
       const b = await loadBoard();
       setBoard(b);
@@ -173,7 +184,7 @@ const AttendancePage = () => {
     };
   }, [filteredSegments]);
 
-  const attendanceLimitReached = (board?.attendance?.length ?? 0) >= ATTENDANCE_BOARD_LIMIT;
+  const attendanceLimitReached = (board?.attendance.length ?? 0) >= ATTENDANCE_BOARD_LIMIT;
 
   const shiftLimit = 12;
 
@@ -269,7 +280,7 @@ const AttendancePage = () => {
             disabled={refreshing}
             onClick={() => void refreshBoard()}
           >
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing ? 'Refreshing…' : 'Refresh'}
           </Button>
         </div>
       </Card>
@@ -296,38 +307,48 @@ const AttendancePage = () => {
       </div>
 
       <Card title="Self-Service Adjustment Policy">
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          You can normally add missed punch segments for dates within the last{' '}
-          <span className="font-medium">{adjustPolicyDays}</span> calendar days. Beyond that window,
-          the API rejects self-service updates unless an administrator uses attendance regularization
-          {canRegularize ? ' (your account has regularization access).' : '.'}
-        </p>
+        <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
+          <p>{policyMessage.employee}</p>
+          {policyMessage.regularizer ? <p>{policyMessage.regularizer}</p> : null}
+        </div>
       </Card>
 
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <PageNotice
+          variant="error"
+          title="Attendance could not be refreshed"
+          focusOnMount
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={refreshing}
+              onClick={() => void refreshBoard()}
+            >
+              {refreshing ? 'Trying again…' : 'Try again'}
+            </Button>
+          }
+        >
+          {error}
+        </PageNotice>
       )}
       {success && (
-        <Card>
-          <p className="text-sm text-green-700 dark:text-green-300">{success}</p>
-        </Card>
+        <PageNotice variant="success" onDismiss={() => setSuccess(null)}>
+          {success}
+        </PageNotice>
       )}
       {attendanceLimitReached && (
-        <Card>
-          <p className="text-sm text-amber-700 dark:text-amber-300">
-            Attendance results reached the {ATTENDANCE_BOARD_LIMIT}-row load limit. Narrow the
-            period or refresh after server-side paging is available before relying on this view for
-            payroll reconciliation.
-          </p>
-        </Card>
+        <PageNotice variant="warning" title="Some attendance history is not shown">
+          Only part of this period&apos;s attendance history is shown. Choose a shorter period and
+          refresh before using these totals for payroll review.
+        </PageNotice>
       )}
 
       <Card title="Shift Templates">
         {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
-        ) : board?.shifts?.length ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+        ) : board?.shifts.length ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {board.shifts.slice(0, shiftLimit).map((shift) => (
               <div
@@ -339,7 +360,9 @@ const AttendancePage = () => {
                   {formatBackendTime(shift.startTime ?? null)} -{' '}
                   {formatBackendTime(shift.endTime ?? null)}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">Nominal Hours: {shift.workHours ?? '-'}</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Nominal Hours: {shift.workHours ?? '-'}
+                </p>
               </div>
             ))}
           </div>
@@ -370,6 +393,8 @@ const AttendancePage = () => {
           defaultCheckIn={adjustDefaultSegment?.checkInTime}
           defaultCheckOut={adjustDefaultSegment?.checkOutTime}
           existingSegments={board?.attendance ?? []}
+          selfServiceDays={adjustPolicyDays}
+          canRegularize={canRegularize}
           onSaved={() => void refreshBoard()}
         />
       ) : null}

@@ -38,9 +38,7 @@ describe('graphQlUserMessage', () => {
       code: 'EXPENSE_MONTHLY_LIMIT_EXCEEDED',
     });
 
-    expect(graphQlUserMessage(err)).toBe(
-      'This claim would exceed the monthly category limit.'
-    );
+    expect(graphQlUserMessage(err)).toBe('This claim would exceed the monthly category limit.');
   });
 
   it('explains an asset tag conflict using the stable GraphQL code', () => {
@@ -104,9 +102,7 @@ describe('graphQlUserMessage', () => {
       { query: 'mutation SubmitTimesheetWeek { submitTimesheetWeek }' }
     );
 
-    expect(graphQlUserMessage(err)).toBe(
-      'Weekly timesheet total cannot exceed 40 hours.'
-    );
+    expect(graphQlUserMessage(err)).toBe('Weekly timesheet total cannot exceed 40 hours.');
   });
 
   it('maps submitted timesheet edit validation to an action-oriented message', () => {
@@ -167,5 +163,33 @@ describe('graphQlUserMessage', () => {
     expect(graphQlUserMessage(err)).toBe(
       'This date is outside the self-service attendance adjustment window. Contact HR to regularize it.'
     );
+  });
+
+  it('gives a next step when an action is forbidden', () => {
+    const err = Object.assign(new Error('forbidden'), { code: 'FORBIDDEN' });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'You do not have access to make this change. Contact your HR administrator if you need help.'
+    );
+  });
+
+  it('explains how to recover from a connectivity failure', () => {
+    expect(graphQlUserMessage(new Error('TypeError: Failed to fetch'))).toBe(
+      'We could not connect right now. Check your connection and try again.'
+    );
+  });
+
+  it('explains how to recover from a timeout', () => {
+    expect(graphQlUserMessage(new Error('request timed out after 30000ms'))).toBe(
+      'This is taking longer than expected. Try again.'
+    );
+  });
+
+  it('does not expose a database constraint name', () => {
+    expect(
+      graphQlUserMessage(
+        new Error('duplicate key value violates unique constraint employee_email_key')
+      )
+    ).toBe('This information conflicts with an existing record. Review the details and try again.');
   });
 });

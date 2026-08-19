@@ -10,7 +10,7 @@ export interface AttendanceSegmentInterval {
   checkOutTime?: string | null;
 }
 
-interface ManualAttendanceValidationInput {
+export interface ManualAttendanceValidationInput {
   workDate: string;
   checkIn: string;
   checkOut: string;
@@ -18,11 +18,23 @@ interface ManualAttendanceValidationInput {
   excludedSegmentId?: string | null;
 }
 
+export type ManualAttendanceField = 'workDate' | 'checkIn' | 'checkOut' | 'form';
+
+export interface ManualAttendanceValidationError {
+  field: ManualAttendanceField;
+  message: string;
+}
+
 function normalizeTime(value: string): string {
   return value.length === 5 ? `${value}:00` : value;
 }
 
-function intervalsOverlap(firstStart: number, firstEnd: number, secondStart: number, secondEnd: number) {
+function intervalsOverlap(
+  firstStart: number,
+  firstEnd: number,
+  secondStart: number,
+  secondEnd: number
+) {
   return firstStart < secondEnd && firstEnd > secondStart;
 }
 
@@ -32,14 +44,25 @@ export function validateManualAttendanceSegment({
   checkOut,
   existingSegments,
   excludedSegmentId,
-}: ManualAttendanceValidationInput): string | null {
-  if (!workDate || !checkIn || !checkOut) return 'Enter work date, punch in, and punch out.';
-  if (workDate > toIsoDate(new Date())) return 'Future attendance cannot be regularized.';
+}: ManualAttendanceValidationInput): ManualAttendanceValidationError | null {
+  const requiredMessage = 'Enter work date, punch in, and punch out.';
+  if (!workDate) return { field: 'workDate', message: requiredMessage };
+  if (workDate > toIsoDate(new Date())) {
+    return { field: 'workDate', message: 'Future attendance cannot be regularized.' };
+  }
+  if (!checkIn) return { field: 'checkIn', message: requiredMessage };
+  if (!checkOut) return { field: 'checkOut', message: requiredMessage };
 
   const start = naiveTimeToMinutes(normalizeTime(checkIn));
   const end = naiveTimeToMinutes(normalizeTime(checkOut));
-  if (Number.isNaN(start) || Number.isNaN(end)) return 'Enter valid punch times.';
-  if (start >= end) return 'Punch In must be before punch out for the same calendar day.';
+  if (Number.isNaN(start)) return { field: 'checkIn', message: 'Enter valid punch times.' };
+  if (Number.isNaN(end)) return { field: 'checkOut', message: 'Enter valid punch times.' };
+  if (start >= end) {
+    return {
+      field: 'checkOut',
+      message: 'Punch In must be before Punch Out for the same calendar day.',
+    };
+  }
 
   const newMinutes = end - start;
   const sameDaySegments = existingSegments.filter(
@@ -58,13 +81,19 @@ export function validateManualAttendanceSegment({
         ? { start: existingStart, end: existingEnd }
         : null;
 
-    if (existingInterval && intervalsOverlap(start, end, existingInterval.start, existingInterval.end)) {
-      return 'This punch range overlaps an existing attendance segment for the day.';
+    if (
+      existingInterval &&
+      intervalsOverlap(start, end, existingInterval.start, existingInterval.end)
+    ) {
+      return {
+        field: 'form',
+        message: 'This punch range overlaps an existing attendance segment for the day.',
+      };
     }
   }
 
   if (existingMinutes + newMinutes > MAX_ATTENDANCE_MINUTES_PER_DAY) {
-    return 'Total attendance for a day cannot exceed 24 hours.';
+    return { field: 'form', message: 'Total attendance for a day cannot exceed 24 hours.' };
   }
 
   return null;
