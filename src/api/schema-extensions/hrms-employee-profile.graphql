@@ -38,8 +38,6 @@ extend type Query {
   employeeProfileReviewQueue(status: String, limit: Int! = 50): [EmployeeProfileReviewQueueItem!]!
   employeeProfileChangeReviewDetail(requestId: ID!): EmployeeProfileChangeReviewDetail!
   employeeEvidenceReviewQueue(limit: Int! = 100): [EmployeeEvidenceReviewQueueItem!]!
-  companyDocuments(category: String, activeOnly: Boolean! = true, limit: Int! = 100): [CompanyDocument!]!
-  companyDocumentAttachment(companyDocumentId: ID!): TenantFileAttachment!
   employeeDocumentAttachment(employeeDocumentId: ID!): EmployeeDocumentAttachment!
   employeeEducationRecords(employeeId: ID!): [EmployeeEducation!]!
   employeeWorkExperienceRecords(employeeId: ID!): [EmployeeWorkExperience!]!
@@ -107,29 +105,6 @@ type EmployeeDocumentAttachment {
   mimeType: String!
   fileSizeBytes: Int
   contentBase64: String!
-}
-
-type TenantFileAttachment {
-  fileName: String!
-  mimeType: String!
-  fileSizeBytes: Int
-  contentBase64: String!
-}
-
-type CompanyDocument {
-  id: ID!
-  tenantId: ID!
-  category: String!
-  title: String!
-  description: String
-  originalFileName: String
-  mimeType: String
-  fileSizeBytes: Int
-  status: String!
-  visibleToEmployees: Boolean!
-  uploadedByUserId: ID
-  createdAt: DateTime!
-  updatedAt: DateTime!
 }
 
 type EmployeeEvidenceReviewQueueItem {
@@ -310,28 +285,6 @@ input UploadTenantFileInput {
   contentBase64: String!
 }
 
-input CreateCompanyDocumentInput {
-  category: String!
-  title: String!
-  description: String
-  stagedUploadId: ID!
-  visibleToEmployees: Boolean! = true
-}
-
-input UploadCompanyDocumentFileInput {
-  fileName: String!
-  mimeType: String
-  contentBase64: String!
-}
-
-type StagedCompanyDocumentUpload {
-  id: ID!
-  originalFileName: String
-  mimeType: String
-  fileSizeBytes: Int
-  expiresAt: DateTime!
-}
-
 type UploadedTenantFile {
   id: ID!
   tenantId: ID!
@@ -390,9 +343,5 @@ extend type Mutation {
   upsertEmployeePrimaryAadhaar(input: UpsertEmployeePrimaryAadhaarInput!): EmployeeAadhaarRecord!
   uploadEmployeeDocument(input: UploadEmployeeDocumentInput!): EmployeeDocument!
   uploadTenantFile(input: UploadTenantFileInput!): UploadedTenantFile!
-  uploadCompanyDocumentFile(input: UploadCompanyDocumentFileInput!): StagedCompanyDocumentUpload!
-  createCompanyDocument(input: CreateCompanyDocumentInput!): CompanyDocument!
-  archiveCompanyDocument(companyDocumentId: ID!): CompanyDocument!
-  deleteCompanyDocument(companyDocumentId: ID!): Boolean!
   resolveEmployeeDocument(employeeDocumentId: ID!, approved: Boolean!): EmployeeDocument!
 }

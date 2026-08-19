@@ -1435,24 +1435,6 @@ mutation SubmitGrievanceCase($input: SubmitGrievanceCaseInput!) {
   }
 }
 
-query WorkplaceAssets($calim: Int! = 40, $alim: Int! = 100) {
-  assetCategories(limit: $calim) {
-    id
-    name
-    code
-  }
-  assets(limit: $alim) {
-    id
-    name
-    assetCategoryId
-    serialNumber
-    assetTag
-    status
-    purchaseDate
-    purchaseValue
-  }
-}
-
 query WorkplaceLearning($slim: Int! = 80, $clim: Int! = 80) {
   skills(limit: $slim) {
     id
@@ -1939,16 +1921,6 @@ mutation CreateAnnouncement($input: CreateAnnouncementInput!) {
     title
     body
     postSource
-  }
-}
-
-query ClientOpsNotificationPreview($limit: Int! = 20) {
-  unreadNotificationCount
-  notifications(limit: $limit) {
-    id
-    title
-    message
-    isRead
   }
 }
 

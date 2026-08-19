@@ -47,7 +47,6 @@ const schema: CodegenConfig['schema'] = [
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-expense.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-notification.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-employee-profile.graphql'),
-  join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-assets.graphql'),
 ];
 
 const config: CodegenConfig = {

@@ -65,18 +65,6 @@ type NotificationPreferences {
   mutedTopics: [String!]!
 }
 
-type AnnouncementAttachment {
-  fileName: String!
-  mimeType: String!
-  fileSizeBytes: Int
-  contentBase64: String!
-}
-
-enum AnnouncementAttachmentKind {
-  IMAGE
-  DOCUMENT
-}
-
 input UpdateNotificationPreferencesInput {
   inAppEnabled: Boolean!
   announcementsEnabled: Boolean!
@@ -87,15 +75,9 @@ extend type Announcement {
   postSource: String!
   targetDepartmentId: ID
   targetLocationId: ID
-  hasImageAttachment: Boolean!
-  hasDocumentAttachment: Boolean!
 }
 
 extend type Query {
-  announcementAttachment(
-    announcementId: ID!
-    kind: AnnouncementAttachmentKind!
-  ): AnnouncementAttachment!
   adminAnnouncements(limit: Int = 100): [Announcement!]!
   adminNotifications(limit: Int = 100): [Notification!]!
   unreadNotificationCount: Int!
