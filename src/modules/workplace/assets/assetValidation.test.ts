@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { localDateInputValue } from './assetTypes';
 import {
-  localDateInputValue,
   validateAsset,
   validateAssetAssignment,
   validateAssetCategory,

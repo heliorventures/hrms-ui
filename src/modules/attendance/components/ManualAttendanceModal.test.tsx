@@ -61,9 +61,9 @@ describe('ManualAttendanceModal', () => {
   it('keeps entered values and focuses a persistent alert when saving fails', async () => {
     request.mockRejectedValueOnce(new Error('request rejected by upstream API'));
     renderModal();
-    const workDate = screen.getByLabelText('Work Date');
-    const punchIn = screen.getByLabelText('Punch In');
-    const punchOut = screen.getByLabelText('Punch Out');
+    const workDate = screen.getByLabelText<HTMLInputElement>('Work Date');
+    const punchIn = screen.getByLabelText<HTMLInputElement>('Punch In');
+    const punchOut = screen.getByLabelText<HTMLInputElement>('Punch Out');
 
     fireEvent.change(workDate, { target: { value: '2025-01-16' } });
     fireEvent.change(punchIn, { target: { value: '08:30' } });
