@@ -1,10 +1,12 @@
+@import './styles/semantic-tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-slate-50 antialiased text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+    @apply bg-canvas text-content-primary antialiased;
   }
 
   button,

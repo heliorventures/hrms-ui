@@ -39,6 +39,7 @@ import {
   buildDepartmentOptions,
   buildDesignationOptions,
   buildRoleOptions,
+  expensePolicyDirectorySelectionError,
 } from '../expensePolicyPickerOptions';
 
 export function useAdminExpenseCategories() {
@@ -55,7 +56,10 @@ export function useAdminExpenseCategories() {
   const [policyRows, setPolicyRows] = useState<ExpensePolicyRow[]>([]);
   const [policyLoading, setPolicyLoading] = useState(false);
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
-  const [policyForm, setPolicyForm] = useState<ExpensePolicyForm>(DEFAULT_EXPENSE_POLICY_FORM);
+  const [ownedPolicyForm, setOwnedPolicyForm] = useState(() => ({
+    owner: client,
+    value: DEFAULT_EXPENSE_POLICY_FORM,
+  }));
   const [policySaving, setPolicySaving] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [policyPickerBusy, setPolicyPickerBusy] = useState(false);
@@ -63,6 +67,7 @@ export function useAdminExpenseCategories() {
   const [policyPickerDesignations, setPolicyPickerDesignations] = useState<ExpensePolicyDesignationRow[]>([]);
   const [policyPickerRoles, setPolicyPickerRoles] = useState<ExpensePolicyRoleRow[]>([]);
   const [policyPickerOrgError, setPolicyPickerOrgError] = useState<string | null>(null);
+  const [policyPickerOwner, setPolicyPickerOwner] = useState<typeof client | null>(null);
 
   const loadCategories = useCallback(async () => {
     const result = await client.request<AdminExpenseCategoriesQuery>(AdminExpenseCategoriesDocument, {
@@ -143,6 +148,7 @@ export function useAdminExpenseCategories() {
       setPolicyPickerDesignations([]);
       setPolicyPickerRoles([]);
       setPolicyPickerOrgError(null);
+      setPolicyPickerOwner(null);
       setPolicyPickerBusy(false);
       return;
     }
@@ -159,12 +165,14 @@ export function useAdminExpenseCategories() {
         setPolicyPickerDepartments(result.departments ?? []);
         setPolicyPickerDesignations(result.designations ?? []);
         setPolicyPickerRoles(result.expenseAssignableRoles ?? []);
+        setPolicyPickerOwner(client);
       } catch (err) {
         if (!cancelled) {
           setPolicyPickerDepartments([]);
           setPolicyPickerDesignations([]);
           setPolicyPickerRoles([]);
           setPolicyPickerOrgError(graphQlUserMessage(err));
+          setPolicyPickerOwner(client);
         }
       } finally {
         if (!cancelled) setPolicyPickerBusy(false);
@@ -179,21 +187,48 @@ export function useAdminExpenseCategories() {
     setRows(await loadCategories());
   }, [loadCategories]);
 
+  const policyPickerOwnerConfirmed = policyPickerOwner === client;
+  const policyFormOwnerConfirmed = ownedPolicyForm.owner === client;
+  const policyForm = policyFormOwnerConfirmed
+    ? ownedPolicyForm.value
+    : DEFAULT_EXPENSE_POLICY_FORM;
+  const setPolicyForm = useCallback(
+    (nextForm: ExpensePolicyForm) => {
+      setOwnedPolicyForm({ owner: client, value: nextForm });
+    },
+    [client]
+  );
+  const currentPolicyPickerDepartments = policyPickerOwnerConfirmed
+    ? policyPickerDepartments
+    : [];
+  const currentPolicyPickerDesignations = policyPickerOwnerConfirmed
+    ? policyPickerDesignations
+    : [];
+  const currentPolicyPickerRoles = policyPickerOwnerConfirmed ? policyPickerRoles : [];
+  const currentPolicyPickerOrgError = policyPickerOwnerConfirmed ? policyPickerOrgError : null;
+  const currentPolicyPickerBusy =
+    rows.length > 0 && (!policyPickerOwnerConfirmed || policyPickerBusy);
+
   const departmentNameById = useMemo(() => {
     const labels = new Map<string, string>();
-    for (const department of policyPickerDepartments) labels.set(department.id, department.name);
+    for (const department of currentPolicyPickerDepartments) {
+      labels.set(department.id, department.name);
+    }
     return labels;
-  }, [policyPickerDepartments]);
+  }, [currentPolicyPickerDepartments]);
 
   const departmentLabels = useMemo(
-    () => buildDepartmentLabels(policyPickerDepartments),
-    [policyPickerDepartments]
+    () => buildDepartmentLabels(currentPolicyPickerDepartments),
+    [currentPolicyPickerDepartments]
   );
   const designationLabels = useMemo(
-    () => buildDesignationLabels(policyPickerDesignations, departmentNameById),
-    [departmentNameById, policyPickerDesignations]
+    () => buildDesignationLabels(currentPolicyPickerDesignations, departmentNameById),
+    [currentPolicyPickerDesignations, departmentNameById]
   );
-  const roleLabels = useMemo(() => buildRoleLabels(policyPickerRoles), [policyPickerRoles]);
+  const roleLabels = useMemo(
+    () => buildRoleLabels(currentPolicyPickerRoles),
+    [currentPolicyPickerRoles]
+  );
 
   const summarizePolicyScope = useCallback(
     (policy: ExpensePolicyRow) =>
@@ -202,23 +237,36 @@ export function useAdminExpenseCategories() {
   );
 
   const departmentOptions = useMemo(
-    () => buildDepartmentOptions(policyPickerDepartments, policyForm.departmentId),
-    [policyForm.departmentId, policyPickerDepartments]
+    () =>
+      buildDepartmentOptions(
+        currentPolicyPickerDepartments,
+        policyPickerOwnerConfirmed ? policyForm.departmentId : ''
+      ),
+    [currentPolicyPickerDepartments, policyForm.departmentId, policyPickerOwnerConfirmed]
   );
 
   const designationOptions = useMemo(
     () =>
       buildDesignationOptions(
-        policyPickerDesignations,
+        currentPolicyPickerDesignations,
         departmentNameById,
-        policyForm.designationId
+        policyPickerOwnerConfirmed ? policyForm.designationId : ''
       ),
-    [departmentNameById, policyForm.designationId, policyPickerDesignations]
+    [
+      currentPolicyPickerDesignations,
+      departmentNameById,
+      policyForm.designationId,
+      policyPickerOwnerConfirmed,
+    ]
   );
 
   const roleOptions = useMemo(
-    () => buildRoleOptions(policyPickerRoles, policyForm.roleId),
-    [policyForm.roleId, policyPickerRoles]
+    () =>
+      buildRoleOptions(
+        currentPolicyPickerRoles,
+        policyPickerOwnerConfirmed ? policyForm.roleId : ''
+      ),
+    [currentPolicyPickerRoles, policyForm.roleId, policyPickerOwnerConfirmed]
   );
 
   const openNewCategory = () => {
@@ -307,7 +355,38 @@ export function useAdminExpenseCategories() {
   const savePolicy = async (event: FormEvent) => {
     event.preventDefault();
     if (!policyCategoryId) return;
-    const applicableTo = policyForm.applicableTo.trim().toUpperCase();
+    const applicableTo = (
+      policyFormOwnerConfirmed ? policyForm.applicableTo : ownedPolicyForm.value.applicableTo
+    )
+      .trim()
+      .toUpperCase();
+    const usesDirectoryScope =
+      applicableTo === 'DEPARTMENT' || applicableTo === 'DESIGNATION' || applicableTo === 'ROLE';
+    if (usesDirectoryScope && !policyPickerOwnerConfirmed) {
+      setPolicyError(
+        'Please wait for the organization directory to finish loading before saving this policy.'
+      );
+      return;
+    }
+    if (!policyFormOwnerConfirmed) {
+      setPolicyError(
+        'Your organization context changed. Reopen the policy form before saving.'
+      );
+      return;
+    }
+    const directorySelectionError = currentPolicyPickerOrgError
+      ? null
+      : expensePolicyDirectorySelectionError(
+          applicableTo,
+          policyForm,
+          currentPolicyPickerDepartments,
+          currentPolicyPickerDesignations,
+          currentPolicyPickerRoles
+        );
+    if (directorySelectionError) {
+      setPolicyError(directorySelectionError);
+      return;
+    }
     try {
       setPolicySaving(true);
       setPolicyError(null);
@@ -367,16 +446,16 @@ export function useAdminExpenseCategories() {
     setPolicyCategoryId,
     policyRows,
     policyLoading,
-    policyModalOpen,
+    policyModalOpen: policyFormOwnerConfirmed && policyModalOpen,
     policyForm,
     setPolicyForm,
     policySaving,
     policyError,
-    policyPickerBusy,
-    policyPickerOrgError,
-    policyPickerDepartments,
-    policyPickerDesignations,
-    policyPickerRoles,
+    policyPickerBusy: currentPolicyPickerBusy,
+    policyPickerOrgError: currentPolicyPickerOrgError,
+    policyPickerDepartments: currentPolicyPickerDepartments,
+    policyPickerDesignations: currentPolicyPickerDesignations,
+    policyPickerRoles: currentPolicyPickerRoles,
     departmentOptions,
     designationOptions,
     roleOptions,

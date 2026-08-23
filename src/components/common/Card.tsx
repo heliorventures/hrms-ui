@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface CardProps {
   children: ReactNode;
@@ -11,10 +11,10 @@ const Card = ({ children, title, className = '', id }: CardProps) => {
   return (
     <div
       id={id}
-      className={`rounded-xl border border-slate-200/90 bg-white p-5 shadow-card dark:border-slate-700/80 dark:bg-slate-900/40 md:p-6 ${className}`}
+      className={`rounded-xl border border-line bg-surface p-5 text-content-primary shadow-card md:p-6 ${className}`}
     >
-      {title != null && title !== '' && (
-        <h3 className="mb-4 text-base font-semibold tracking-tight text-slate-900 dark:text-white">
+      {title !== null && title !== undefined && title !== '' && (
+        <h3 className="mb-4 text-base font-semibold tracking-tight text-content-primary">
           {title}
         </h3>
       )}

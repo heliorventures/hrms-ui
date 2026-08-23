@@ -1,5 +1,5 @@
 import { PanelLeftClose, PanelLeftOpen, Search, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { canAccessTenantPath } from '../../auth/navAccess';
@@ -17,6 +17,8 @@ import {
   groupNavigationDestinations,
 } from '../../navigation/navigationSelectors';
 import { AppLogo } from '../brand/AppLogo';
+import IconButton from '../common/IconButton';
+import { useDialogSurface } from '../common/useDialogSurface';
 
 import SidebarDestination from './SidebarDestination';
 import SidebarSection from './SidebarSection';
@@ -30,6 +32,26 @@ interface SidebarProps {
 }
 
 type ExpandedState = Record<NavigationSectionKey, boolean>;
+const DESKTOP_NAVIGATION_QUERY = '(min-width: 1024px)';
+
+function useDesktopNavigationViewport() {
+  const [matches, setMatches] = useState(() =>
+    typeof window === 'undefined' || typeof window.matchMedia !== 'function'
+      ? true
+      : window.matchMedia(DESKTOP_NAVIGATION_QUERY).matches
+  );
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const mediaQuery = window.matchMedia(DESKTOP_NAVIGATION_QUERY);
+    const update = (event: MediaQueryListEvent) => setMatches(event.matches);
+    setMatches(mediaQuery.matches);
+    mediaQuery.addEventListener('change', update);
+    return () => mediaQuery.removeEventListener('change', update);
+  }, []);
+
+  return matches;
+}
 
 function createExpandedState(activeSection: NavigationSectionKey | null): ExpandedState {
   return Object.fromEntries(
@@ -47,39 +69,37 @@ const Sidebar = ({
   const { can, clientSession } = useAuth();
   const location = useLocation();
   const asideRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const desktopViewport = useDesktopNavigationViewport();
+  const mobileDialogOpen = mobileOpen && !desktopViewport;
+  const sidebarInteractive = mobileDialogOpen || desktopViewport;
   const [menuFilter, setMenuFilter] = useState('');
   const activeSection = activeNavigationSection(location.pathname);
   const [expanded, setExpanded] = useState<ExpandedState>(() => createExpandedState(activeSection));
   const tenantNavOptions = useMemo(() => ({ can, clientSession }), [can, clientSession]);
 
+  useDialogSurface({
+    isOpen: mobileDialogOpen,
+    isDismissible: true,
+    onClose: onCloseMobile,
+    surfaceRef: asideRef,
+    initialFocusRef: closeButtonRef,
+    returnFocusRef: mobileTriggerRef,
+  });
+
+  useLayoutEffect(() => {
+    asideRef.current?.toggleAttribute('inert', !sidebarInteractive);
+  }, [sidebarInteractive]);
+
+  useEffect(() => {
+    if (!desktopViewport || !mobileOpen) return;
+    onCloseMobile();
+  }, [desktopViewport, mobileOpen, onCloseMobile]);
+
   useEffect(() => {
     if (!activeSection) return;
     setExpanded((current) => ({ ...current, [activeSection]: true }));
   }, [activeSection]);
-
-  useEffect(() => {
-    if (!mobileOpen) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const firstFocusable = asideRef.current?.querySelector<HTMLElement>(
-      'button:not([disabled]), a[href], input:not([disabled])'
-    );
-    firstFocusable?.focus();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      onCloseMobile();
-      mobileTriggerRef.current?.focus();
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [mobileOpen, mobileTriggerRef, onCloseMobile]);
 
   const accessible = useMemo(
     () =>
@@ -102,9 +122,10 @@ const Sidebar = ({
 
   return (
     <>
-      {mobileOpen ? (
+      {mobileDialogOpen ? (
         <button
           type="button"
+          data-overlay-background-exempt
           className="fixed inset-0 z-20 cursor-default bg-slate-950/55 backdrop-blur-[1px] lg:hidden"
           aria-label="Close navigation"
           onClick={onCloseMobile}
@@ -114,40 +135,42 @@ const Sidebar = ({
       <aside
         id="app-navigation"
         ref={asideRef}
+        role={mobileDialogOpen ? 'dialog' : undefined}
+        aria-modal={mobileDialogOpen ? true : undefined}
+        aria-hidden={sidebarInteractive ? undefined : true}
         aria-label="Main navigation"
         className={[
-          'fixed inset-y-0 left-0 z-30 w-72 transform border-r border-slate-200/90 bg-white transition-[transform,width] duration-200 ease-out motion-reduce:transition-none dark:border-slate-700/90 dark:bg-slate-900',
-          'lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-30 h-[100dvh] min-h-0 w-72 transform overscroll-contain border-r border-line bg-surface pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pt-[env(safe-area-inset-top)] transition-[transform,width] duration-200 ease-out motion-reduce:transition-none',
+          'lg:static lg:h-auto lg:translate-x-0 lg:pb-0 lg:pl-0 lg:pt-0',
           desktopCollapsed ? 'lg:w-20' : 'lg:w-72',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          mobileDialogOpen
+            ? 'visible translate-x-0 pointer-events-auto'
+            : 'invisible -translate-x-full pointer-events-none lg:visible lg:pointer-events-auto',
         ].join(' ')}
       >
         <div className="flex h-full flex-col">
           <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200/90 px-4 dark:border-slate-700/90">
             <AppLogo size="sm" showText className={desktopCollapsed ? 'lg:[&>span]:hidden' : ''} />
-            <button
-              type="button"
+            <IconButton
+              ref={closeButtonRef}
               onClick={onCloseMobile}
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden"
-              aria-label={UI_A11Y_TEXT.closeSidebar}
-            >
-              <X className="h-5 w-5" aria-hidden />
-            </button>
-            <button
-              type="button"
+              className="lg:hidden"
+              label={UI_A11Y_TEXT.closeSidebar}
+              icon={<X className="h-5 w-5" />}
+            />
+            <IconButton
               onClick={onToggleDesktop}
-              className={`hidden rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white lg:inline-flex ${
+              className={`hidden lg:inline-flex ${
                 desktopCollapsed ? 'ml-auto' : ''
               }`}
-              aria-label={desktopCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+              label={desktopCollapsed ? 'Expand navigation' : 'Collapse navigation'}
               title={desktopCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-            >
-              {desktopCollapsed ? (
+              icon={desktopCollapsed ? (
                 <PanelLeftOpen className="h-5 w-5" aria-hidden />
               ) : (
                 <PanelLeftClose className="h-5 w-5" aria-hidden />
               )}
-            </button>
+            />
           </div>
 
           <div
@@ -165,7 +188,7 @@ const Sidebar = ({
                 value={menuFilter}
                 onChange={(event) => setMenuFilter(event.target.value)}
                 placeholder={UI_PLACEHOLDER_TEXT.sidebarFilter}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 shadow-inner placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 shadow-inner placeholder:text-slate-400 focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                 aria-label={UI_A11Y_TEXT.filterSidebarMenu}
               />
             </div>

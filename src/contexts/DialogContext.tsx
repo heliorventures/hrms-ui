@@ -2,11 +2,15 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+
 import Modal from '../components/common/Modal';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import Button from '../components/common/Button';
 
 export type ConfirmOptions = {
@@ -24,8 +28,19 @@ export type AlertOptions = {
   okLabel?: string;
 };
 
-type ConfirmState = ConfirmOptions & { resolve: (v: boolean) => void };
-type AlertState = AlertOptions & { resolve: () => void };
+type ConfirmRequest = {
+  id: symbol;
+  kind: 'confirm';
+  options: ConfirmOptions;
+  resolve: (value: boolean) => void;
+};
+type AlertRequest = {
+  id: symbol;
+  kind: 'alert';
+  options: AlertOptions;
+  resolve: () => void;
+};
+type DialogRequest = ConfirmRequest | AlertRequest;
 
 type DialogContextValue = {
   confirm: (opts: ConfirmOptions) => Promise<boolean>;
@@ -43,40 +58,71 @@ export function useDialogs(): DialogContextValue {
 }
 
 export function DialogProvider({ children }: { children: ReactNode }) {
-  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
-  const [alertState, setAlertState] = useState<AlertState | null>(null);
+  const pendingRef = useRef<DialogRequest[]>([]);
+  const acceptedConfirmRef = useRef<symbol | null>(null);
+  const mountedRef = useRef(true);
+  const [activeRequest, setActiveRequest] = useState<DialogRequest | null>(null);
+
+  const publishActiveRequest = useCallback(() => {
+    if (mountedRef.current) setActiveRequest(pendingRef.current[0] ?? null);
+  }, []);
+
+  const enqueue = useCallback(
+    (request: DialogRequest) => {
+      pendingRef.current.push(request);
+      publishActiveRequest();
+    },
+    [publishActiveRequest]
+  );
 
   const confirm = useCallback((opts: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
-      setConfirmState({ ...opts, resolve });
+      enqueue({ id: Symbol('confirm-dialog'), kind: 'confirm', options: opts, resolve });
     });
-  }, []);
+  }, [enqueue]);
 
   const alertFn = useCallback((opts: AlertOptions) => {
     return new Promise<void>((resolve) => {
-      setAlertState({ ...opts, resolve });
+      enqueue({ id: Symbol('alert-dialog'), kind: 'alert', options: opts, resolve });
     });
-  }, []);
+  }, [enqueue]);
 
   const value = useMemo(
     () => ({ confirm, alert: alertFn }),
     [confirm, alertFn]
   );
 
-  const closeConfirm = (v: boolean) => {
-    confirmState?.resolve(v);
-    setConfirmState(null);
-  };
+  const settleRequest = useCallback(
+    (id: symbol, confirmed = false) => {
+      const requestIndex = pendingRef.current.findIndex((request) => request.id === id);
+      if (requestIndex === -1) return;
+      const [request] = pendingRef.current.splice(requestIndex, 1);
+      if (request.kind === 'confirm') request.resolve(confirmed);
+      else request.resolve();
+      publishActiveRequest();
+    },
+    [publishActiveRequest]
+  );
 
-  const closeAlert = () => {
-    alertState?.resolve();
-    setAlertState(null);
-  };
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      const pending = pendingRef.current.splice(0);
+      for (const request of pending) {
+        if (request.kind === 'confirm') request.resolve(false);
+        else request.resolve();
+      }
+    };
+  }, []);
+
+  const confirmState = activeRequest?.kind === 'confirm' ? activeRequest : null;
+  const alertState = activeRequest?.kind === 'alert' ? activeRequest : null;
 
   const alertAccent =
-    alertState?.variant === 'warning'
+    alertState?.options.variant === 'warning'
       ? 'border-l-4 border-amber-500 pl-3'
-      : alertState?.variant === 'success'
+      : alertState?.options.variant === 'success'
         ? 'border-l-4 border-emerald-500 pl-3'
         : 'border-l-4 border-sky-500 pl-3';
 
@@ -84,41 +130,45 @@ export function DialogProvider({ children }: { children: ReactNode }) {
     <DialogContext.Provider value={value}>
       {children}
 
-      {confirmState && (
-        <Modal
-          isOpen
-          onClose={() => closeConfirm(false)}
-          title={confirmState.title}
-          size="sm"
-        >
-          <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            {confirmState.message}
-          </p>
-          <div className="mt-6 flex flex-wrap justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => closeConfirm(false)}>
-              {confirmState.cancelLabel ?? 'Cancel'}
-            </Button>
-            <Button
-              type="button"
-              variant={confirmState.variant === 'danger' ? 'danger' : 'primary'}
-              onClick={() => closeConfirm(true)}
-            >
-              {confirmState.confirmLabel ?? 'Confirm'}
-            </Button>
-          </div>
-        </Modal>
-      )}
+      {confirmState ? (
+        <ConfirmDialog
+          open={Boolean(confirmState)}
+          title={confirmState.options.title}
+          description={confirmState.options.message}
+          confirmLabel={confirmState.options.confirmLabel ?? 'Confirm'}
+          cancelLabel={confirmState.options.cancelLabel ?? 'Cancel'}
+          onConfirm={() => {
+            acceptedConfirmRef.current = confirmState.id;
+          }}
+          onOpenChange={(nextOpen) => {
+            if (nextOpen) return;
+            const confirmed = acceptedConfirmRef.current === confirmState.id;
+            acceptedConfirmRef.current = null;
+            settleRequest(confirmState.id, confirmed);
+          }}
+          tone={confirmState.options.variant === 'danger' ? 'danger' : 'default'}
+        />
+      ) : null}
 
       {alertState && (
-        <Modal isOpen onClose={closeAlert} title={alertState.title} size="sm">
+        <Modal
+          isOpen
+          onClose={() => settleRequest(alertState.id)}
+          title={alertState.options.title}
+          size="sm"
+        >
           <p
             className={`text-sm leading-relaxed text-slate-700 dark:text-slate-300 ${alertAccent}`}
           >
-            {alertState.message}
+            {alertState.options.message}
           </p>
           <div className="mt-6 flex justify-end">
-            <Button type="button" variant="primary" onClick={closeAlert}>
-              {alertState.okLabel ?? 'OK'}
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => settleRequest(alertState.id)}
+            >
+              {alertState.options.okLabel ?? 'OK'}
             </Button>
           </div>
         </Modal>

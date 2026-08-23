@@ -1,6 +1,13 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 
-type Theme = 'light' | 'dark';
+import {
+  applyDocumentTheme,
+  persistThemePreference,
+  readThemePreference,
+  resolveInitialTheme,
+} from './themePreference';
+import type { Theme } from './themePreference';
 
 interface ThemeContextType {
   theme: Theme;
@@ -15,15 +22,13 @@ interface ThemeProviderProps {
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem('theme');
-    return (stored as Theme) || 'light';
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return resolveInitialTheme(readThemePreference(), prefersDark);
   });
 
   useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    localStorage.setItem('theme', theme);
+    applyDocumentTheme(theme);
+    persistThemePreference(theme);
   }, [theme]);
 
   const toggleTheme = () => {

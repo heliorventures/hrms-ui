@@ -1,169 +1,326 @@
-import { Navigate } from 'react-router-dom';
-import AdminAttendancePolicyPage from '../modules/admin/AdminAttendancePolicyPage';
-import AdminEmployeesPage from '../modules/admin/AdminEmployeesPage';
-import AdminExpenseCategoriesPage from '../modules/admin/AdminExpenseCategoriesPage';
-import AdminHrTimesheetSettingsPage from '../modules/admin/AdminHrTimesheetSettingsPage';
-import AdminLeaveSettingsPage from '../modules/admin/AdminLeaveSettingsPage';
-import AdminNotificationsPage from '../modules/admin/AdminNotificationsPage';
-import AdminReportsPage from '../modules/admin/AdminReportsPage';
-import AdminSettingsPage from '../modules/admin/AdminSettingsPage';
-import AdminWorkflowsPage from '../modules/admin/AdminWorkflowsPage';
-import ModuleHealth from '../modules/admin/ModuleHealth';
-import AttendancePage from '../modules/attendance/AttendancePage';
-import Dashboard from '../modules/dashboard/Dashboard';
-import ExpensesPage from '../modules/expenses/ExpensesPage';
-import HrAccessManagementPage from '../modules/hr/HrAccessManagementPage';
-import HrHomePage from '../modules/hr/HrHomePage';
-import HrLeavesPage from '../modules/hr/HrLeavesPage';
-import HrTimesheetProjectAssignmentsPage from '../modules/hr/HrTimesheetProjectAssignmentsPage';
-import HrTimesheetsPage from '../modules/hr/HrTimesheetsPage';
-import AnalyticsPage from '../modules/insights/AnalyticsPage';
-import LeavePage from '../modules/leave/LeavePage';
-import LeaveHolidaysPage from '../modules/leave/LeaveHolidaysPage';
-import LeaveTeamCalendarPage from '../modules/leave/LeaveTeamCalendarPage';
-import NotificationsPage from '../modules/notifications/NotificationsPage';
-import EmployeeDetailPage from '../modules/organization/EmployeeDetailPage';
-import OrgChartPage from '../modules/organization/OrgChartPage';
-import OrganizationDocumentsPage from '../modules/organization/OrganizationDocumentsPage';
-import OrganizationEmployeesPage from '../modules/organization/OrganizationEmployeesPage';
-import ProfileReviewPage from '../modules/organization/ProfileReviewPage';
-import PayrollCompensationPage from '../modules/payroll/PayrollCompensationPage';
-import PayrollPage from '../modules/payroll/PayrollPage';
-import PayrollPayPage from '../modules/payroll/PayrollPayPage';
-import PayrollTaxPage from '../modules/payroll/PayrollTaxPage';
-import ProfileSettingsPage from '../modules/profile/ProfileSettingsPage';
-import TimesheetPage from '../modules/timesheet/TimesheetPage';
-import AssetsPage from '../modules/workplace/AssetsPage';
-import BenefitsPage from '../modules/workplace/BenefitsPage';
-import CompensationPage from '../modules/workplace/CompensationPage';
-import GrievancePage from '../modules/workplace/GrievancePage';
-import LearningPage from '../modules/workplace/LearningPage';
-import OnboardingPage from '../modules/workplace/OnboardingPage';
-import PerformancePage from '../modules/workplace/PerformancePage';
-import RecruitmentPage from '../modules/workplace/RecruitmentPage';
-import SuccessionPage from '../modules/workplace/SuccessionPage';
-import type { Capability } from '../auth/permissionService';
-
-export interface AppChildRoute {
-  path?: string;
-  index?: boolean;
-  element: JSX.Element;
-  tenantPath?: string;
-  payrollCapability?: Capability;
-}
+import type { AppChildRoute } from './routeTypes';
 
 export const TENANT_APP_ROUTES: AppChildRoute[] = [
-  { index: true, element: <Navigate to="/dashboard" replace /> },
-  { path: 'dashboard', tenantPath: '/dashboard', element: <Dashboard /> },
-  { path: 'insights', tenantPath: '/insights', element: <AnalyticsPage /> },
-  { path: 'attendance', tenantPath: '/attendance', element: <AttendancePage /> },
-  { path: 'timesheet', tenantPath: '/timesheet', element: <TimesheetPage /> },
-  { path: 'leave/holidays', tenantPath: '/leave/holidays', element: <LeaveHolidaysPage /> },
-  { path: 'leave/team-calendar', tenantPath: '/leave/team-calendar', element: <LeaveTeamCalendarPage /> },
-  { path: 'leave', tenantPath: '/leave', element: <LeavePage /> },
-  { path: 'payroll', element: <Navigate to="/payroll/pay" replace /> },
-  { path: 'payroll/payslips', payrollCapability: 'route.payroll.admin', element: <PayrollPage /> },
-  { path: 'payroll/pay', payrollCapability: 'route.payroll.self', element: <PayrollPayPage /> },
-  { path: 'payroll/tax', payrollCapability: 'route.payroll.tax', element: <PayrollTaxPage /> },
+  { kind: 'redirect', index: true, to: '/dashboard' },
   {
+    kind: 'page',
+    path: 'dashboard',
+    title: 'Dashboard',
+    tenantPath: '/dashboard',
+    load: () => import('../modules/dashboard/Dashboard'),
+  },
+  {
+    kind: 'page',
+    path: 'insights',
+    title: 'Insights',
+    tenantPath: '/insights',
+    load: () => import('../modules/insights/AnalyticsPage'),
+  },
+  {
+    kind: 'page',
+    path: 'attendance',
+    title: 'Attendance',
+    tenantPath: '/attendance',
+    load: () => import('../modules/attendance/AttendancePage'),
+  },
+  {
+    kind: 'page',
+    path: 'timesheet',
+    title: 'Timesheet',
+    tenantPath: '/timesheet',
+    load: () => import('../modules/timesheet/TimesheetPage'),
+  },
+  {
+    kind: 'page',
+    path: 'leave/holidays',
+    title: 'Company holidays',
+    tenantPath: '/leave/holidays',
+    load: () => import('../modules/leave/LeaveHolidaysPage'),
+  },
+  {
+    kind: 'page',
+    path: 'leave/team-calendar',
+    title: 'Team leave calendar',
+    tenantPath: '/leave/team-calendar',
+    load: () => import('../modules/leave/LeaveTeamCalendarPage'),
+  },
+  {
+    kind: 'page',
+    path: 'leave',
+    title: 'Leave',
+    tenantPath: '/leave',
+    load: () => import('../modules/leave/LeavePage'),
+  },
+  { kind: 'redirect', path: 'payroll', to: '/payroll/pay' },
+  {
+    kind: 'page',
+    path: 'payroll/payslips',
+    title: 'Payroll processing',
+    payrollCapability: 'route.payroll.admin',
+    load: () => import('../modules/payroll/PayrollPage'),
+  },
+  {
+    kind: 'page',
+    path: 'payroll/pay',
+    title: 'Pay',
+    payrollCapability: 'route.payroll.self',
+    load: () => import('../modules/payroll/PayrollPayPage'),
+  },
+  {
+    kind: 'page',
+    path: 'payroll/tax',
+    title: 'Tax administration',
+    payrollCapability: 'route.payroll.tax',
+    load: () => import('../modules/payroll/PayrollTaxPage'),
+  },
+  {
+    kind: 'page',
     path: 'payroll/compensation',
+    title: 'Compensation setup',
     payrollCapability: 'route.payroll.compensation',
-    element: <PayrollCompensationPage />,
+    load: () => import('../modules/payroll/PayrollCompensationPage'),
   },
-  { path: 'expenses', tenantPath: '/expenses', element: <ExpensesPage /> },
-  { path: 'notifications', tenantPath: '/notifications', element: <NotificationsPage /> },
-  { path: 'profile/settings', tenantPath: '/profile/settings', element: <ProfileSettingsPage /> },
-  { path: 'organization/employees', tenantPath: '/organization/employees', element: <OrganizationEmployeesPage /> },
   {
-    path: 'organization/employees/:employeeId',
+    kind: 'page',
+    path: 'expenses',
+    title: 'Expenses',
+    tenantPath: '/expenses',
+    load: () => import('../modules/expenses/ExpensesPage'),
+  },
+  {
+    kind: 'page',
+    path: 'notifications',
+    title: 'Notifications',
+    tenantPath: '/notifications',
+    load: () => import('../modules/notifications/NotificationsPage'),
+  },
+  {
+    kind: 'page',
+    path: 'profile/settings',
+    title: 'Profile and settings',
+    tenantPath: '/profile/settings',
+    load: () => import('../modules/profile/ProfileSettingsPage'),
+  },
+  {
+    kind: 'page',
+    path: 'organization/employees',
+    title: 'Organization people',
     tenantPath: '/organization/employees',
-    element: <EmployeeDetailPage />,
+    load: () => import('../modules/organization/OrganizationEmployeesPage'),
   },
-  { path: 'organization/org-chart', tenantPath: '/organization/org-chart', element: <OrgChartPage /> },
-  { path: 'organization/documents', tenantPath: '/organization/documents', element: <OrganizationDocumentsPage /> },
-  { path: 'organization/profile-reviews', tenantPath: '/organization/profile-reviews', element: <ProfileReviewPage /> },
-  { path: 'workplace/benefits', tenantPath: '/workplace/benefits', element: <BenefitsPage /> },
   {
+    kind: 'page',
+    path: 'organization/employees/:employeeId',
+    title: 'Employee details',
+    tenantPath: '/organization/employees',
+    load: () => import('../modules/organization/EmployeeDetailPage'),
+  },
+  {
+    kind: 'page',
+    path: 'organization/org-chart',
+    title: 'Organization chart',
+    tenantPath: '/organization/org-chart',
+    load: () => import('../modules/organization/OrgChartPage'),
+  },
+  {
+    kind: 'page',
+    path: 'organization/documents',
+    title: 'Organization documents',
+    tenantPath: '/organization/documents',
+    load: () => import('../modules/organization/OrganizationDocumentsPage'),
+  },
+  {
+    kind: 'page',
+    path: 'organization/profile-reviews',
+    title: 'Profile reviews',
+    tenantPath: '/organization/profile-reviews',
+    load: () => import('../modules/organization/ProfileReviewPage'),
+  },
+  {
+    kind: 'page',
+    path: 'workplace/benefits',
+    title: 'Benefits',
+    tenantPath: '/workplace/benefits',
+    load: () => import('../modules/workplace/BenefitsPage'),
+  },
+  {
+    kind: 'page',
     path: 'workplace/recruitment',
+    title: 'Recruitment',
     tenantPath: '/workplace/recruitment',
-    element: <RecruitmentPage />,
+    load: () => import('../modules/workplace/RecruitmentPage'),
   },
   {
+    kind: 'page',
     path: 'workplace/onboarding',
+    title: 'Onboarding and exit',
     tenantPath: '/workplace/onboarding',
-    element: <OnboardingPage />,
+    load: () => import('../modules/workplace/OnboardingPage'),
   },
   {
+    kind: 'page',
     path: 'workplace/performance',
+    title: 'Performance',
     tenantPath: '/workplace/performance',
-    element: <PerformancePage />,
+    load: () => import('../modules/workplace/PerformancePage'),
   },
   {
+    kind: 'page',
     path: 'workplace/succession',
+    title: 'Succession planning',
     tenantPath: '/workplace/succession',
-    element: <SuccessionPage />,
+    load: () => import('../modules/workplace/SuccessionPage'),
   },
   {
+    kind: 'page',
     path: 'workplace/compensation',
+    title: 'Compensation',
     tenantPath: '/workplace/compensation',
-    element: <CompensationPage />,
+    load: () => import('../modules/workplace/CompensationPage'),
   },
-  { path: 'workplace/learning', tenantPath: '/workplace/learning', element: <LearningPage /> },
-  { path: 'workplace/assets', tenantPath: '/workplace/assets', element: <AssetsPage /> },
-  { path: 'workplace/grievance', tenantPath: '/workplace/grievance', element: <GrievancePage /> },
   {
+    kind: 'page',
+    path: 'workplace/learning',
+    title: 'Learning',
+    tenantPath: '/workplace/learning',
+    load: () => import('../modules/workplace/LearningPage'),
+  },
+  {
+    kind: 'page',
+    path: 'workplace/assets',
+    title: 'Assets',
+    tenantPath: '/workplace/assets',
+    load: () => import('../modules/workplace/AssetsPage'),
+  },
+  {
+    kind: 'page',
+    path: 'workplace/grievance',
+    title: 'Grievance and speak up',
+    tenantPath: '/workplace/grievance',
+    load: () => import('../modules/workplace/GrievancePage'),
+  },
+  {
+    kind: 'page',
     path: 'workplace/workflows',
+    title: 'Workflows',
     tenantPath: '/workplace/workflows',
-    element: <AdminWorkflowsPage />,
+    load: () => import('../modules/admin/AdminWorkflowsPage'),
   },
-  { path: 'hr', tenantPath: '/hr', element: <HrHomePage /> },
-  { path: 'hr/people', tenantPath: '/hr/people', element: <AdminEmployeesPage /> },
-  { path: 'hr/leaves', tenantPath: '/hr/leaves', element: <HrLeavesPage /> },
-  { path: 'hr/timesheets', tenantPath: '/hr/timesheets', element: <HrTimesheetsPage /> },
   {
+    kind: 'page',
+    path: 'hr',
+    title: 'HR workbench',
+    tenantPath: '/hr',
+    load: () => import('../modules/hr/HrHomePage'),
+  },
+  {
+    kind: 'page',
+    path: 'hr/people',
+    title: 'HR people',
+    tenantPath: '/hr/people',
+    load: () => import('../modules/admin/AdminEmployeesPage'),
+  },
+  {
+    kind: 'page',
+    path: 'hr/leaves',
+    title: 'Leave approvals',
+    tenantPath: '/hr/leaves',
+    load: () => import('../modules/hr/HrLeavesPage'),
+  },
+  {
+    kind: 'page',
+    path: 'hr/timesheets',
+    title: 'Timesheet approvals',
+    tenantPath: '/hr/timesheets',
+    load: () => import('../modules/hr/HrTimesheetsPage'),
+  },
+  {
+    kind: 'page',
     path: 'hr/timesheet-assignments',
+    title: 'Timesheet project access',
     tenantPath: '/hr/timesheet-assignments',
-    element: <HrTimesheetProjectAssignmentsPage />,
+    load: () => import('../modules/hr/HrTimesheetProjectAssignmentsPage'),
   },
   {
+    kind: 'redirect',
     path: 'hr/leave-settings',
+    to: '/admin/leave-settings',
     tenantPath: '/admin/leave-settings',
-    element: <Navigate to="/admin/leave-settings" replace />,
   },
   {
+    kind: 'redirect',
     path: 'hr/access',
+    to: '/admin/access',
     tenantPath: '/admin/access',
-    element: <Navigate to="/admin/access" replace />,
   },
   {
+    kind: 'page',
     path: 'admin/leave-settings',
+    title: 'Leave settings',
     tenantPath: '/admin/leave-settings',
-    element: <AdminLeaveSettingsPage />,
+    load: () => import('../modules/admin/AdminLeaveSettingsPage'),
   },
   {
+    kind: 'page',
     path: 'admin/expense-categories',
+    title: 'Expense categories',
     tenantPath: '/admin/expense-categories',
-    element: <AdminExpenseCategoriesPage />,
+    load: () => import('../modules/admin/AdminExpenseCategoriesPage'),
   },
   {
+    kind: 'page',
     path: 'admin/notifications',
+    title: 'Notification administration',
     tenantPath: '/admin/notifications',
-    element: <AdminNotificationsPage />,
+    load: () => import('../modules/admin/AdminNotificationsPage'),
   },
-  { path: 'admin/employees', tenantPath: '/admin/employees', element: <AdminEmployeesPage /> },
   {
+    kind: 'page',
+    path: 'admin/employees',
+    title: 'Employee administration',
+    tenantPath: '/admin/employees',
+    load: () => import('../modules/admin/AdminEmployeesPage'),
+  },
+  {
+    kind: 'page',
     path: 'admin/attendance-policy',
+    title: 'Attendance policy',
     tenantPath: '/admin/attendance-policy',
-    element: <AdminAttendancePolicyPage />,
+    load: () => import('../modules/admin/AdminAttendancePolicyPage'),
   },
   {
+    kind: 'page',
     path: 'admin/timesheet-settings',
+    title: 'Timesheet settings',
     tenantPath: '/admin/timesheet-settings',
-    element: <AdminHrTimesheetSettingsPage />,
+    load: () => import('../modules/admin/AdminHrTimesheetSettingsPage'),
   },
-  { path: 'admin/reports', tenantPath: '/admin/reports', element: <AdminReportsPage /> },
-  { path: 'admin/access', tenantPath: '/admin/access', element: <HrAccessManagementPage /> },
-  { path: 'admin/settings', tenantPath: '/admin/settings', element: <AdminSettingsPage /> },
-  { path: 'admin/module-health', tenantPath: '/admin/module-health', element: <ModuleHealth /> },
-  { path: '*', element: <Navigate to="/dashboard" replace /> },
+  {
+    kind: 'page',
+    path: 'admin/reports',
+    title: 'Reports',
+    tenantPath: '/admin/reports',
+    load: () => import('../modules/admin/AdminReportsPage'),
+  },
+  {
+    kind: 'page',
+    path: 'admin/access',
+    title: 'Roles and permissions',
+    tenantPath: '/admin/access',
+    load: () => import('../modules/hr/HrAccessManagementPage'),
+  },
+  {
+    kind: 'page',
+    path: 'admin/settings',
+    title: 'Administration settings',
+    tenantPath: '/admin/settings',
+    load: () => import('../modules/admin/AdminSettingsPage'),
+  },
+  {
+    kind: 'page',
+    path: 'admin/module-health',
+    title: 'Module health',
+    tenantPath: '/admin/module-health',
+    load: () => import('../modules/admin/ModuleHealth'),
+  },
 ];

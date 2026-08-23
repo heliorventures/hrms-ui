@@ -1,8 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
   clearLegacyClientRefreshToken,
+  clearOperatorSession,
+  getClientAccessToken,
   getClientRefreshToken,
+  getOperatorAccessToken,
+  getOperatorRefreshToken,
+  setClientAccessToken,
   setClientRefreshToken,
+  setOperatorAccessToken,
+  setOperatorRefreshToken,
 } from './tokenStore';
 
 const TENANT_A = 'e6d4fc13-feb8-52a0-93bd-f66c795969b1';
@@ -32,6 +40,8 @@ describe('tenant-keyed client refresh token storage', () => {
   beforeEach(() => {
     storage = createMemoryStorage();
     vi.stubGlobal('window', { localStorage: storage });
+    setClientAccessToken(null);
+    setOperatorAccessToken(null);
   });
 
   it('stores client refresh tokens independently per tenant', () => {
@@ -47,5 +57,19 @@ describe('tenant-keyed client refresh token storage', () => {
     clearLegacyClientRefreshToken();
 
     expect(storage.getItem('kabipay.client.refresh')).toBeNull();
+  });
+
+  it('clears the operator session without changing tenant tokens', () => {
+    setClientAccessToken('tenant-access');
+    setClientRefreshToken(TENANT_A, 'tenant-refresh');
+    setOperatorAccessToken('operator-access');
+    setOperatorRefreshToken('operator-refresh');
+
+    clearOperatorSession();
+
+    expect(getOperatorAccessToken()).toBeNull();
+    expect(getOperatorRefreshToken()).toBeNull();
+    expect(getClientAccessToken()).toBe('tenant-access');
+    expect(getClientRefreshToken(TENANT_A)).toBe('tenant-refresh');
   });
 });

@@ -18,34 +18,31 @@ import HolidaySummaryCard from './components/HolidaySummaryCard';
 import LeaveBalancesCard from './components/LeaveBalancesCard';
 import LeaveRejectModal from './components/LeaveRejectModal';
 import LeaveRequestsTableSection from './components/LeaveRequestsTableSection';
+import LeaveRecoveryNotice from './components/LeaveRecoveryNotice';
 import LeaveTypesCard from './components/LeaveTypesCard';
 import LeaveWorkflowTrailModal from './components/LeaveWorkflowTrailModal';
+import { useAllCompanyHolidays } from './hooks/useAllCompanyHolidays';
+import { useLeaveWorkflowTrail } from './hooks/useLeaveWorkflowTrail';
 import {
-  AllCompanyHolidaysDocument,
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
-  LeaveWorkflowTrailQueryDocument,
   OrgChartDocument,
-  type AllCompanyHolidaysQuery,
   type LeaveBoardQuery,
-  type LeaveWorkflowTrailQueryQuery,
   type OrgChartQuery,
 } from '../../api/graphql/graphql';
 import { LeaveBoardRangeDocument } from './leaveBoardQuery';
-
 type ApproveLeaveRequestMutation = {
   approveLeaveRequest: { status: string };
 };
-
 type LeaveRequestWithEmployee = LeaveBoardQuery['leaveRequests'][number] & {
   employeeName?: string | null;
   employeeCode?: string | null;
 };
-
-const BOARD_LIMIT = 20;
-const ORG_CHART_LIMIT = 500;
-const HOLIDAY_LIMIT = 450;
-
+type LeavePageFailure = {
+  message: string;
+  operation: 'board' | 'mutation';
+};
+const BOARD_LIMIT = 20, ORG_CHART_LIMIT = 500, HOLIDAY_LIMIT = 450;
 const LeavePage = () => {
   const { can, clientSession } = useAuth();
   const permissions = createPermissionService(clientSession);
@@ -56,19 +53,14 @@ const LeavePage = () => {
   const [orgChartRows, setOrgChartRows] = useState<OrgChartQuery['orgChart']>([]);
   const [data, setData] = useState<LeaveBoardQuery | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<LeavePageFailure | null>(null);
   const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
   const [applyOpen, setApplyOpen] = useState(false);
   const [rejectLeaveId, setRejectLeaveId] = useState<string | null>(null);
   const [approveBusyId, setApproveBusyId] = useState<string | null>(null);
   const [cancelBusyId, setCancelBusyId] = useState<string | null>(null);
-  const [trailSummaryRow, setTrailSummaryRow] = useState<LeaveBoardQuery['leaveRequests'][number] | null>(null);
-  const [trailLoading, setTrailLoading] = useState(false);
-  const [trailRows, setTrailRows] =
-    useState<LeaveWorkflowTrailQueryQuery['leaveRequestWorkflowTrail']>([]);
-  const [allHolOpen, setAllHolOpen] = useState(false);
-  const [allHolLoading, setAllHolLoading] = useState(false);
-  const [allHolRows, setAllHolRows] = useState<AllCompanyHolidaysQuery['upcomingHolidays']>([]);
+  const workflowTrail = useLeaveWorkflowTrail(client);
+  const allHolidays = useAllCompanyHolidays(client, HOLIDAY_LIMIT);
 
   const defaultYear = useMemo(() => new Date().getFullYear(), []);
   const [balanceYear, setBalanceYear] = useState(defaultYear);
@@ -132,69 +124,48 @@ const LeavePage = () => {
 
   const refreshBoard = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setFailure(null);
+    workflowTrail.clearFailure();
     try {
       const [result, orgRows] = await Promise.all([loadBoard(), loadOrgChart()]);
       setData(result);
       setOrgChartRows(orgRows);
     } catch (err) {
-      setError(graphQlUserMessage(err));
+      setFailure({ message: graphQlUserMessage(err), operation: 'board' });
     } finally {
       setLoading(false);
     }
-  }, [loadBoard, loadOrgChart]);
+  }, [loadBoard, loadOrgChart, workflowTrail.clearFailure]);
+
+  const retryBoard = useCallback(() => {
+    void refreshBoard();
+  }, [refreshBoard]);
 
   useEffect(() => {
     void refreshBoard();
   }, [refreshBoard]);
 
-  useEffect(() => {
-    if (!allHolOpen) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        setAllHolLoading(true);
-        const year = new Date().getFullYear();
-        const response = await client.request<AllCompanyHolidaysQuery>(AllCompanyHolidaysDocument, {
-          fromDate: `${year}-01-01`,
-          limit: HOLIDAY_LIMIT,
-        });
-        if (!cancelled) setAllHolRows(response.upcomingHolidays ?? []);
-      } catch {
-        if (!cancelled) setAllHolRows([]);
-      } finally {
-        if (!cancelled) setAllHolLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [allHolOpen, client]);
-
   const silentRefreshBoard = useCallback(async () => {
     try {
       setData(await loadBoard());
     } catch (err) {
-      const message = graphQlUserMessage(err);
-      setError(message);
-      flash.show(message, 'error');
+      setFailure({ message: graphQlUserMessage(err), operation: 'board' });
     }
-  }, [loadBoard, flash.show]);
+  }, [loadBoard]);
 
   const refreshAfterMutation = async () => {
     try {
       setData(await loadBoard());
     } catch (err) {
-      const message = graphQlUserMessage(err);
-      setError(message);
-      flash.show(`Could not refresh leave list: ${message}`, 'error');
+      setFailure({ message: graphQlUserMessage(err), operation: 'board' });
     }
   };
 
   const handleApprove = async (leaveRequestId: string) => {
     setApproveBusyId(leaveRequestId);
     setApproveWorkflowNotice(null);
-    setError(null);
+    setFailure(null);
+    workflowTrail.clearFailure();
     try {
       const result = await client.request<ApproveLeaveRequestMutation>(ApproveLeaveRequestDocument, {
         leaveRequestId,
@@ -205,9 +176,7 @@ const LeavePage = () => {
       setApproveWorkflowNotice(status === 'pending' ? pendingMessage : null);
       flash.show(status === 'pending' ? pendingMessage : 'Leave request approved.', status === 'pending' ? 'info' : 'success');
     } catch (err) {
-      const message = graphQlUserMessage(err);
-      setError(message);
-      flash.show(message, 'error');
+      setFailure({ message: graphQlUserMessage(err), operation: 'mutation' });
     } finally {
       setApproveBusyId(null);
     }
@@ -216,14 +185,13 @@ const LeavePage = () => {
 
   const handleCancelOwn = async (leaveRequestId: string) => {
     setCancelBusyId(leaveRequestId);
-    setError(null);
+    setFailure(null);
+    workflowTrail.clearFailure();
     try {
       await client.request(CancelLeaveRequestDocument, { leaveRequestId });
       flash.show('Leave request cancelled.', 'success');
     } catch (err) {
-      const message = graphQlUserMessage(err);
-      setError(message);
-      flash.show(message, 'error');
+      setFailure({ message: graphQlUserMessage(err), operation: 'mutation' });
     } finally {
       setCancelBusyId(null);
     }
@@ -288,24 +256,19 @@ const LeavePage = () => {
     [employeeLabelById]
   );
 
-  const openWorkflowTrail = async (row: LeaveBoardQuery['leaveRequests'][number]) => {
-    setTrailSummaryRow(row);
-    setTrailLoading(true);
-    setTrailRows([]);
-    setError(null);
-    try {
-      const response = await client.request<LeaveWorkflowTrailQueryQuery>(
-        LeaveWorkflowTrailQueryDocument,
-        { leaveRequestId: row.id }
-      );
-      setTrailRows(response.leaveRequestWorkflowTrail);
-    } catch (err) {
-      setError(graphQlUserMessage(err));
-      setTrailSummaryRow(null);
-    } finally {
-      setTrailLoading(false);
-    }
-  };
+  const openWorkflowTrail = useCallback(
+    (row: LeaveBoardQuery['leaveRequests'][number]) => {
+      setFailure(null);
+      void workflowTrail.open(row);
+    },
+    [workflowTrail.open]
+  );
+
+  const retryWorkflowTrail = useCallback(() => {
+    void workflowTrail.retry();
+  }, [workflowTrail.retry]);
+
+  const activeFailure = workflowTrail.failure ?? failure;
 
   return (
     <div className="space-y-6">
@@ -341,16 +304,21 @@ const LeavePage = () => {
         leaveRequestId={rejectLeaveId}
         onClose={() => setRejectLeaveId(null)}
         onRejected={async () => {
-          setError(null);
+          setFailure(null);
+          workflowTrail.clearFailure();
           flash.show('Leave request rejected.', 'success');
           await silentRefreshBoard();
         }}
       />
 
-      {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+      {activeFailure && (
+        <LeaveRecoveryNotice
+          message={activeFailure.message}
+          operation={activeFailure.operation}
+          onRefreshBoard={retryBoard}
+          onRetryWorkflowTrail={retryWorkflowTrail}
+          refreshing={loading || workflowTrail.loading}
+        />
       )}
       {approveWorkflowNotice && (
         <Card>
@@ -379,7 +347,7 @@ const LeavePage = () => {
         canManageLeave={permissions.canCapability('action.leave.manage')}
         holidays={data?.upcomingHolidays ?? []}
         loading={loading}
-        onViewAll={() => setAllHolOpen(true)}
+        onViewAll={() => void allHolidays.open()}
       />
       <LeaveTypesCard leaveTypes={data?.leaveTypes ?? []} loading={loading} />
 
@@ -408,21 +376,20 @@ const LeavePage = () => {
 
       <LeaveWorkflowTrailModal
         employeeLabel={employeeLabel}
-        isOpen={trailSummaryRow != null}
+        isOpen={workflowTrail.summaryRow != null}
         leaveTypeNameById={leaveTypeNameById}
-        loading={trailLoading}
-        rows={trailRows}
-        summaryRow={trailSummaryRow}
-        onClose={() => {
-          setTrailSummaryRow(null);
-          setTrailRows([]);
-        }}
+        loading={workflowTrail.loading}
+        rows={workflowTrail.rows}
+        summaryRow={workflowTrail.summaryRow}
+        onClose={workflowTrail.close}
       />
       <AllHolidaysModal
-        holidays={allHolRows}
-        isOpen={allHolOpen}
-        loading={allHolLoading}
-        onClose={() => setAllHolOpen(false)}
+        holidays={allHolidays.rows}
+        failure={allHolidays.failure}
+        isOpen={allHolidays.isOpen}
+        loading={allHolidays.loading}
+        onClose={allHolidays.close}
+        onRetry={() => void allHolidays.retry()}
       />
       <FlashToastBar toast={flash.flash} onDismiss={flash.clear} />
     </div>

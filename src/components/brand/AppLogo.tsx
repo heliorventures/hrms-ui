@@ -1,4 +1,5 @@
 import { useId } from 'react';
+
 import { APP_BRAND } from '@/constants/brand';
 
 type AppLogoSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -24,12 +25,12 @@ const textClasses: Record<AppLogoSize, string> = {
   xl: 'text-3xl',
 };
 
-export function AppLogo({
+export const AppLogo = ({
   size = 'md',
   showText = true,
   supportingText,
   className = '',
-}: AppLogoProps) {
+}: AppLogoProps) => {
   const gradientId = useId();
   const backgroundGradientId = `${gradientId}-helior-logo-bg`;
   const accentGradientId = `${gradientId}-helior-logo-accent`;
@@ -39,19 +40,34 @@ export function AppLogo({
       <svg
         className={`${sizeClasses[size]} shrink-0`}
         viewBox="0 0 64 64"
-        role="img"
-        aria-label={`${APP_BRAND.productName} logo`}
+        role={showText ? undefined : 'img'}
+        aria-hidden={showText ? true : undefined}
+        aria-label={showText ? undefined : `${APP_BRAND.productName} logo`}
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <linearGradient id={backgroundGradientId} x1="8" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stopColor="#2563EB" />
-            <stop offset="0.52" stopColor="#4F46E5" />
-            <stop offset="1" stopColor="#0F766E" />
+          <linearGradient
+            id={backgroundGradientId}
+            x1="8"
+            y1="6"
+            x2="58"
+            y2="58"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0" stopColor="rgb(var(--color-focus))" />
+            <stop offset="0.52" stopColor="rgb(var(--color-accent))" />
+            <stop offset="1" stopColor="rgb(var(--color-accent-active))" />
           </linearGradient>
-          <linearGradient id={accentGradientId} x1="18" y1="16" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stopColor="#E0F2FE" />
-            <stop offset="1" stopColor="#FFFFFF" />
+          <linearGradient
+            id={accentGradientId}
+            x1="18"
+            y1="16"
+            x2="48"
+            y2="48"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0" stopColor="rgb(var(--color-surface-selected))" />
+            <stop offset="1" stopColor="rgb(var(--color-content-inverse))" />
           </linearGradient>
         </defs>
         <rect width="64" height="64" rx="18" fill={`url(#${backgroundGradientId})`} />
@@ -61,27 +77,29 @@ export function AppLogo({
         />
         <path
           d="M24.5 32H16.5M47.5 32H39.5M32 28V21M32 36V43"
-          stroke="#BAE6FD"
+          stroke="rgb(var(--color-surface-selected))"
           strokeWidth="3"
           strokeLinecap="round"
         />
-        <circle cx="16" cy="32" r="4.25" fill="#FFFFFF" />
-        <circle cx="48" cy="32" r="4.25" fill="#FFFFFF" />
-        <circle cx="32" cy="20" r="4.25" fill="#FFFFFF" />
-        <circle cx="32" cy="44" r="4.25" fill="#FFFFFF" />
-        <circle cx="16" cy="32" r="1.75" fill="#2563EB" />
-        <circle cx="48" cy="32" r="1.75" fill="#0F766E" />
-        <circle cx="32" cy="20" r="1.75" fill="#4F46E5" />
-        <circle cx="32" cy="44" r="1.75" fill="#0F766E" />
+        <circle cx="16" cy="32" r="4.25" fill="rgb(var(--color-content-inverse))" />
+        <circle cx="48" cy="32" r="4.25" fill="rgb(var(--color-content-inverse))" />
+        <circle cx="32" cy="20" r="4.25" fill="rgb(var(--color-content-inverse))" />
+        <circle cx="32" cy="44" r="4.25" fill="rgb(var(--color-content-inverse))" />
+        <circle cx="16" cy="32" r="1.75" fill="rgb(var(--color-focus))" />
+        <circle cx="48" cy="32" r="1.75" fill="rgb(var(--color-accent-active))" />
+        <circle cx="32" cy="20" r="1.75" fill="rgb(var(--color-accent))" />
+        <circle cx="32" cy="44" r="1.75" fill="rgb(var(--color-accent-active))" />
       </svg>
 
       {showText ? (
         <span className="min-w-0 text-left">
-          <span className={`block font-semibold leading-tight tracking-tight text-slate-950 dark:text-white ${textClasses[size]}`}>
+          <span
+            className={`block font-semibold leading-tight tracking-tight text-content-primary ${textClasses[size]}`}
+          >
             {APP_BRAND.productName}
           </span>
           {supportingText ? (
-            <span className="mt-0.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span className="mt-0.5 block text-xs font-medium text-content-muted">
               {supportingText}
             </span>
           ) : null}
@@ -89,6 +107,6 @@ export function AppLogo({
       ) : null}
     </div>
   );
-}
+};
 
 export default AppLogo;

@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react';
+
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 
@@ -10,10 +11,12 @@ interface DepartmentOption {
 interface AnnouncementEditorFormProps {
   body: string;
   busy: boolean;
+  clearRoleAudience: boolean;
   departmentId: string;
   departments: DepartmentOption[];
   documentFile: File | null;
   employeePost: boolean;
+  existingRoleCode: string;
   expiresAt: string;
   imageFile: File | null;
   isEditing: boolean;
@@ -23,6 +26,7 @@ interface AnnouncementEditorFormProps {
   title: string;
   onBodyChange: (value: string) => void;
   onCancelEdit: () => void;
+  onClearRoleAudienceChange: (value: boolean) => void;
   onDepartmentChange: (value: string) => void;
   onDocumentChange: (file: File | null) => void;
   onEmployeePostChange: (value: boolean) => void;
@@ -35,126 +39,188 @@ interface AnnouncementEditorFormProps {
   onTitleChange: (value: string) => void;
 }
 
-const AnnouncementEditorForm = ({
-  body,
-  busy,
-  departmentId,
-  departments,
-  employeePost,
-  expiresAt,
-  isEditing,
-  locationId,
-  publishAt,
-  roleCode,
-  title,
-  onBodyChange,
-  onCancelEdit,
-  onDepartmentChange,
-  onDocumentChange,
-  onEmployeePostChange,
-  onExpiresAtChange,
-  onImageChange,
-  onLocationChange,
-  onPublishAtChange,
-  onRoleCodeChange,
-  onSubmit,
-  onTitleChange,
-}: AnnouncementEditorFormProps) => (
-  <form onSubmit={onSubmit} className="space-y-3">
-    <div className="flex flex-wrap gap-2">
-      {isEditing && (
-        <Button type="button" variant="outline" size="sm" onClick={onCancelEdit} disabled={busy}>
-          Cancel edit
-        </Button>
-      )}
-    </div>
-    <Input label="Title" value={title} onChange={(e) => onTitleChange(e.target.value)} required fullWidth />
-    <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Body</label>
+const EditorIdentityFields = ({ model }: { model: AnnouncementEditorFormProps }) => (
+  <>
+    <Input
+      label="Title"
+      name="announcementTitle"
+      autoComplete="off"
+      value={model.title}
+      onChange={(event) => model.onTitleChange(event.target.value)}
+      required
+      fullWidth
+    />
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Body</span>
       <textarea
-        value={body}
-        onChange={(e) => onBodyChange(e.target.value)}
+        name="announcementBody"
+        autoComplete="off"
+        value={model.body}
+        onChange={(event) => model.onBodyChange(event.target.value)}
         rows={3}
         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
       />
-    </div>
-    {!isEditing && (
+    </label>
+    {!model.isEditing ? (
       <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
         <input
+          name="employeePost"
           type="checkbox"
-          checked={employeePost}
-          onChange={(e) => onEmployeePostChange(e.target.checked)}
+          checked={model.employeePost}
+          onChange={(event) => model.onEmployeePostChange(event.target.checked)}
           className="rounded border-gray-300"
         />
         Employee-style post (unchecked = company announcement)
       </label>
-    )}
-    <div>
-      <label className="mb-1 block text-sm font-medium">Department</label>
+    ) : null}
+  </>
+);
+
+const EditorAudienceFields = ({ model }: { model: AnnouncementEditorFormProps }) => (
+  <>
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium">Department</span>
       <select
-        value={departmentId}
-        onChange={(e) => onDepartmentChange(e.target.value)}
+        name="targetDepartmentId"
+        autoComplete="off"
+        value={model.departmentId}
+        onChange={(event) => model.onDepartmentChange(event.target.value)}
         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
       >
         <option value="">All departments</option>
-        {departments.map((department) => (
+        {model.departments.map((department) => (
           <option key={department.id} value={department.id}>
             {department.name}
           </option>
         ))}
       </select>
-    </div>
+    </label>
     <Input
       label="Location ID (Optional UUID)"
-      value={locationId}
-      onChange={(e) => onLocationChange(e.target.value)}
+      name="targetLocationId"
+      autoComplete="off"
+      value={model.locationId}
+      onChange={(event) => model.onLocationChange(event.target.value)}
       fullWidth
     />
     <Input
       label="Target Role Code"
-      value={roleCode}
-      onChange={(e) => onRoleCodeChange(e.target.value)}
+      name="targetRoleCode"
+      autoComplete="off"
+      spellCheck={false}
+      value={model.roleCode}
+      onChange={(event) => model.onRoleCodeChange(event.target.value)}
+      disabled={model.clearRoleAudience}
       fullWidth
     />
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div>
-        <label className="mb-1 block text-sm font-medium">Publish at</label>
+    <RoleAudienceClearControl model={model} />
+  </>
+);
+
+const RoleAudienceClearControl = ({ model }: { model: AnnouncementEditorFormProps }) => {
+  if (!model.isEditing || !model.existingRoleCode) return null;
+  return (
+    <div className="space-y-1">
+      <label className="flex items-center gap-2 text-sm font-medium text-status-danger">
         <input
-          type="datetime-local"
-          value={publishAt}
-          onChange={(e) => onPublishAtChange(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          name="clearRoleAudience"
+          type="checkbox"
+          checked={model.clearRoleAudience}
+          onChange={(event) => model.onClearRoleAudienceChange(event.target.checked)}
+          disabled={model.busy}
+          aria-describedby={model.clearRoleAudience ? 'announcement-role-clear-warning' : undefined}
+          className="rounded border-gray-300"
         />
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium">Expires at</label>
-        <input
-          type="datetime-local"
-          value={expiresAt}
-          onChange={(e) => onExpiresAtChange(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        />
-      </div>
+        Clear role targeting
+      </label>
+      {model.clearRoleAudience ? (
+        <p id="announcement-role-clear-warning" className="text-sm text-status-danger">
+          Clearing role targeting can expand who receives this announcement. Review the remaining
+          audience before updating.
+        </p>
+      ) : null}
     </div>
-    <div>
-      <label className="text-sm font-medium">Image</label>
+  );
+};
+
+const EditorScheduleFields = ({ model }: { model: AnnouncementEditorFormProps }) => (
+  <div className="grid gap-3 sm:grid-cols-2">
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium">Publish at</span>
       <input
+        name="publishAt"
+        type="datetime-local"
+        autoComplete="off"
+        value={model.publishAt}
+        onChange={(event) => model.onPublishAtChange(event.target.value)}
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+      />
+    </label>
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium">Expires at</span>
+      <input
+        name="expiresAt"
+        type="datetime-local"
+        autoComplete="off"
+        value={model.expiresAt}
+        onChange={(event) => model.onExpiresAtChange(event.target.value)}
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+      />
+    </label>
+  </div>
+);
+
+const EditorAttachmentFields = ({ model }: { model: AnnouncementEditorFormProps }) => (
+  <>
+    <label className="block">
+      <span className="text-sm font-medium">Image</span>
+      <input
+        name="announcementImage"
         type="file"
         accept="image/*"
-        onChange={(e) => onImageChange(e.target.files?.[0] ?? null)}
+        onChange={(event) => model.onImageChange(event.target.files?.[0] ?? null)}
         className="mt-1 block w-full text-sm"
       />
-    </div>
-    <div>
-      <label className="text-sm font-medium">Document</label>
+    </label>
+    <label className="block">
+      <span className="text-sm font-medium">Document</span>
       <input
+        name="announcementDocument"
         type="file"
-        onChange={(e) => onDocumentChange(e.target.files?.[0] ?? null)}
+        onChange={(event) => model.onDocumentChange(event.target.files?.[0] ?? null)}
         className="mt-1 block w-full text-sm"
       />
-    </div>
-    <Button type="submit" variant="primary" disabled={busy}>
-      {busy ? 'Saving...' : isEditing ? 'Update Announcement' : 'Create Announcement'}
+    </label>
+  </>
+);
+
+const submitLabel = (busy: boolean, isEditing: boolean): string => {
+  if (busy) return 'Saving...';
+  if (isEditing) return 'Update Announcement';
+  return 'Create Announcement';
+};
+
+const AnnouncementEditorForm = (model: AnnouncementEditorFormProps) => (
+  <form onSubmit={model.onSubmit} className="space-y-3">
+    {model.isEditing ? (
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={model.onCancelEdit}
+          disabled={model.busy}
+        >
+          Cancel edit
+        </Button>
+      </div>
+    ) : null}
+    <EditorIdentityFields model={model} />
+    <EditorAudienceFields model={model} />
+    <EditorScheduleFields model={model} />
+    <EditorAttachmentFields model={model} />
+    <Button type="submit" variant="primary" disabled={model.busy}>
+      {submitLabel(model.busy, model.isEditing)}
     </Button>
   </form>
 );

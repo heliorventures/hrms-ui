@@ -19,13 +19,14 @@ import {
   refreshOps,
   type TokenPair,
 } from '../auth/authClient';
+import { authUserMessage } from '../auth/authUserMessage';
 import {
   parseClientAccessToken,
   personaToLegacyUserRole,
   type ClientPersona,
   type ParsedClientSession,
 } from '../auth/clientSession';
-import { endExpiredClientSession } from '../auth/sessionExpiry';
+import { endExpiredClientSession, endExpiredOperatorSession } from '../auth/sessionExpiry';
 import {
   claimClientSessionBootstrap,
   refreshTokenTenantId,
@@ -107,6 +108,7 @@ interface AuthContextType {
   login: (username: string, password: string, opts?: LoginOptions) => Promise<void>;
   loginOps: (email: string, password: string) => Promise<void>;
   expireClientSession: () => void;
+  expireOpsSession: () => void;
   logout: () => Promise<void>;
   logoutOps: () => Promise<void>;
 }
@@ -128,11 +130,7 @@ function devRoleSwitchEnabled(): boolean {
 }
 
 /** User shape from client JWT claims when no separate profile API has run yet. */
-function userFromClientTokenPair(
-  pair: TokenPair,
-  role: UserRole,
-  employeeId?: string
-): User {
+function userFromClientTokenPair(pair: TokenPair, role: UserRole, employeeId?: string): User {
   const displayName = pair.username ?? pair.email;
   return {
     id: pair.userId,
@@ -221,54 +219,60 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setOpsError(null);
   }, []);
 
-  const clearClientState = useCallback((tenantToClear: string | null = tenantId) => {
-    clearClientSession(tenantToClear);
-    setUser(null);
-    setTenantId(null);
-    setRole('employee');
-    setClientSession(null);
-  }, [tenantId]);
+  const clearClientState = useCallback(
+    (tenantToClear: string | null = tenantId) => {
+      clearClientSession(tenantToClear);
+      setUser(null);
+      setTenantId(null);
+      setRole('employee');
+      setClientSession(null);
+    },
+    [tenantId]
+  );
 
-  const refreshClientSession = useCallback(async (expectedTenantId: string): Promise<boolean> => {
-    const refresh = getClientRefreshToken(expectedTenantId);
-    if (!refresh) return false;
-    if (!sessionMatchesTenant(refreshTokenTenantId(refresh), expectedTenantId)) {
-      clearClientState(expectedTenantId);
-      return false;
-    }
-    if (clientRefreshPromiseRef.current?.tenantId === expectedTenantId) {
-      return clientRefreshPromiseRef.current.promise;
-    }
-
-    const refreshAttempt = (async () => {
-      try {
-        const pair = await refreshClient(refresh);
-        if (getClientRefreshToken(expectedTenantId) === refresh) {
-          applyTokens(pair, expectedTenantId);
-        }
-        return true;
-      } catch (e) {
-        if (
-          getClientRefreshToken(expectedTenantId) === refresh &&
-          e instanceof AuthError &&
-          (e.status === 401 || e.status === 403)
-        ) {
-          clearClientState(expectedTenantId);
-          setError(graphQlUserMessage(e));
-        }
+  const refreshClientSession = useCallback(
+    async (expectedTenantId: string): Promise<boolean> => {
+      const refresh = getClientRefreshToken(expectedTenantId);
+      if (!refresh) return false;
+      if (!sessionMatchesTenant(refreshTokenTenantId(refresh), expectedTenantId)) {
+        clearClientState(expectedTenantId);
         return false;
       }
-    })();
-
-    clientRefreshPromiseRef.current = { tenantId: expectedTenantId, promise: refreshAttempt };
-    try {
-      return await refreshAttempt;
-    } finally {
-      if (clientRefreshPromiseRef.current.promise === refreshAttempt) {
-        clientRefreshPromiseRef.current = null;
+      if (clientRefreshPromiseRef.current?.tenantId === expectedTenantId) {
+        return clientRefreshPromiseRef.current.promise;
       }
-    }
-  }, [applyTokens, clearClientState]);
+
+      const refreshAttempt = (async () => {
+        try {
+          const pair = await refreshClient(refresh);
+          if (getClientRefreshToken(expectedTenantId) === refresh) {
+            applyTokens(pair, expectedTenantId);
+          }
+          return true;
+        } catch (e) {
+          if (
+            getClientRefreshToken(expectedTenantId) === refresh &&
+            e instanceof AuthError &&
+            (e.status === 401 || e.status === 403)
+          ) {
+            clearClientState(expectedTenantId);
+            setError(graphQlUserMessage(e));
+          }
+          return false;
+        }
+      })();
+
+      clientRefreshPromiseRef.current = { tenantId: expectedTenantId, promise: refreshAttempt };
+      try {
+        return await refreshAttempt;
+      } finally {
+        if (clientRefreshPromiseRef.current.promise === refreshAttempt) {
+          clientRefreshPromiseRef.current = null;
+        }
+      }
+    },
+    [applyTokens, clearClientState]
+  );
 
   // Tenant sessions must pass the login captcha after a fresh app load. Claiming the resolved
   // tenant keeps StrictMode or later auth-state effect replays from clearing newly issued tokens.
@@ -313,7 +317,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     ) {
       return;
     }
-    const delay = Math.max(5_000, clientSession.expiresAtMs - Date.now() - CLIENT_REFRESH_LEEWAY_MS);
+    const delay = Math.max(
+      5_000,
+      clientSession.expiresAtMs - Date.now() - CLIENT_REFRESH_LEEWAY_MS
+    );
     const timer = window.setTimeout(() => {
       void refreshClientSession(tenantId);
     }, delay);
@@ -353,17 +360,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const pair = await loginClient(username.trim(), password, tenant);
         applyTokens(pair, tenant);
       } catch (e) {
-        if (e instanceof AuthError) {
-          const friendly =
-            e.code === 'UNAUTHENTICATED' ? 'Username or password is incorrect.' : graphQlUserMessage(e);
-          setError(friendly);
-        } else if (e instanceof TypeError) {
-          setError(
-            `Cannot reach the authentication service at ${getAppConfig().authUrl}.`
-          );
-        } else {
-          setError('Login failed. Please try again.');
-        }
+        setError(authUserMessage(e, 'tenant-login'));
         throw e;
       } finally {
         setLoading(false);
@@ -380,17 +377,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const pair = await loginOps(email.trim(), password);
         applyOpsTokens(pair);
       } catch (e) {
-        if (e instanceof AuthError) {
-          const friendly =
-            e.code === 'UNAUTHENTICATED' ? 'Email or password is incorrect.' : graphQlUserMessage(e);
-          setOpsError(friendly);
-        } else if (e instanceof TypeError) {
-          setOpsError(
-            `Cannot reach the authentication service at ${getAppConfig().authUrl}.`
-          );
-        } else {
-          setOpsError('Login failed. Please try again.');
-        }
+        setOpsError(authUserMessage(e, 'operator-login'));
         throw e;
       } finally {
         setLoading(false);
@@ -402,6 +389,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const expireClientSession = useCallback(() => {
     endExpiredClientSession(tenantId, clearClientState, setError);
   }, [clearClientState, tenantId]);
+
+  const expireOpsSession = useCallback(() => {
+    endExpiredOperatorSession(() => {
+      clearOperatorSession();
+      setOpsUser(null);
+    }, setOpsError);
+  }, []);
 
   const logout = useCallback(async () => {
     const authenticatedTenantId = tenantId;
@@ -459,6 +453,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       login,
       loginOps: loginOpsHandler,
       expireClientSession,
+      expireOpsSession,
       logout,
       logoutOps,
     }),
@@ -481,6 +476,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       login,
       loginOpsHandler,
       expireClientSession,
+      expireOpsSession,
       logout,
       logoutOps,
     ]

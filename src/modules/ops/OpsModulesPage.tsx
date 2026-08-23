@@ -5,6 +5,7 @@ import PageHeader from '@/components/common/PageHeader';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { useGraphClient } from '@/hooks/useGraphClient';
+import { useDialogs } from '@/contexts/DialogContext';
 import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
 import {
   SUBSCRIPTION_OVERAGE_OPTIONS,
@@ -24,6 +25,7 @@ import {
 
 const OpsModulesPage = () => {
   const client = useGraphClient('operator');
+  const { confirm } = useDialogs();
   const [modules, setModules] = useState<ModuleRow[]>([]);
   const [tenants, setTenants] = useState<TenantRow[]>([]);
   const [subs, setSubs] = useState<SubRow[]>([]);
@@ -129,9 +131,15 @@ const OpsModulesPage = () => {
   };
 
   const onRemoveSubscription = async (r: SubRow) => {
-    if (!window.confirm(`Remove subscription for module ${moduleNameById.get(r.moduleId) ?? r.moduleId}?`)) {
-      return;
-    }
+    const tenantName = tenantNameById.get(r.tenantId) ?? r.tenantId;
+    const moduleName = moduleNameById.get(r.moduleId) ?? r.moduleId;
+    const ok = await confirm({
+      title: 'Remove tenant subscription',
+      message: `Remove ${moduleName} from ${tenantName}? This immediately disables module access for that tenant.`,
+      confirmLabel: 'Remove subscription',
+      variant: 'danger',
+    });
+    if (!ok) return;
     setError(null);
     try {
       await client.request(OPS_REMOVE_SUBSCRIPTION, { subscriptionId: r.id });

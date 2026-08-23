@@ -1,45 +1,121 @@
-import { InputHTMLAttributes, forwardRef, useId } from 'react';
+import { forwardRef, useId } from 'react';
+import type { InputHTMLAttributes } from 'react';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+import FormField, { mergeDescribedBy } from './FormField';
+import { requireAccessibleName } from './accessibleName';
+
+type AccessibleNameProps =
+  | {
+      label: string;
+      'aria-label'?: string;
+      'aria-labelledby'?: string;
+    }
+  | {
+      label?: undefined;
+      'aria-label': string;
+      'aria-labelledby'?: string;
+    }
+  | {
+      label?: undefined;
+      'aria-label'?: string;
+      'aria-labelledby': string;
+    };
+
+export type InputProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'aria-label' | 'aria-labelledby'
+> &
+  AccessibleNameProps & {
+  description?: string;
   error?: string;
+  optionalLabel?: string;
   fullWidth?: boolean;
-}
+};
+
+const baseInputClasses =
+  'min-h-11 rounded-lg border border-line bg-surface px-3 py-2 text-base text-content-primary placeholder:text-content-muted transition-colors focus-visible:border-focus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30 disabled:cursor-not-allowed disabled:bg-canvas disabled:text-content-muted disabled:opacity-70 read-only:bg-canvas md:min-h-9 md:text-sm';
+const errorInputClasses =
+  'border-status-danger focus-visible:border-status-danger focus-visible:ring-status-danger/30';
+const when = (condition: boolean, value: string) => (condition ? value : '');
+const messageId = (message: string | undefined, inputId: string, suffix: string) =>
+  message ? `${inputId}-${suffix}` : undefined;
+const invalidValue = (
+  invalid: boolean,
+  callerInvalid: InputHTMLAttributes<HTMLInputElement>['aria-invalid']
+) => (invalid ? true : callerInvalid);
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, fullWidth = false, className = '', id, ...props }, ref) => {
+  (
+    {
+      label,
+      description,
+      error,
+      optionalLabel,
+      fullWidth = false,
+      className = '',
+      id,
+      required,
+      'aria-describedby': callerDescribedBy,
+      'aria-invalid': callerInvalid,
+      ...props
+    },
+    ref
+  ) => {
     const generatedId = useId();
     const inputId = id ?? generatedId;
-    const errorId = `${inputId}-error`;
+    const visibleLabel = requireAccessibleName('Input', {
+      label,
+      ariaLabel: props['aria-label'],
+      ariaLabelledBy: props['aria-labelledby'],
+    });
+    const controlClassName = `${baseInputClasses} ${when(Boolean(error), errorInputClasses)} ${when(
+      fullWidth,
+      'w-full'
+    )} ${className}`;
+    const renderInput = (describedBy?: string, invalid = false) => (
+      <input
+        {...props}
+        ref={ref}
+        id={inputId}
+        required={required}
+        aria-invalid={invalidValue(invalid, callerInvalid)}
+        aria-describedby={mergeDescribedBy(callerDescribedBy, describedBy)}
+        className={controlClassName}
+      />
+    );
+
+    if (!visibleLabel) {
+      const descriptionId = messageId(description, inputId, 'description');
+      const errorId = messageId(error, inputId, 'error');
+      return (
+        <div className={`space-y-1.5 ${when(fullWidth, 'w-full')}`}>
+          {renderInput(mergeDescribedBy(descriptionId, errorId), Boolean(error))}
+          {description ? (
+            <p id={descriptionId} className="text-sm text-content-muted">
+              {description}
+            </p>
+          ) : null}
+          {error ? (
+            <p id={errorId} role="alert" className="text-sm font-medium text-status-danger">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
 
     return (
-      <div className={fullWidth ? 'w-full' : ''}>
-        {label && (
-          <label
-            htmlFor={inputId}
-            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            {label}
-          </label>
-        )}
-        <input
-          ref={ref}
+      <div className={when(fullWidth, 'w-full')}>
+        <FormField
           id={inputId}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
-          className={`rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500 ${
-            error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
-          } ${fullWidth ? 'w-full' : ''} ${className}`}
-          {...props}
-        />
-        {error && (
-          <p
-            id={errorId}
-            className="mt-1 text-sm text-red-600 dark:text-red-400"
-          >
-            {error}
-          </p>
-        )}
+          label={visibleLabel}
+          description={description}
+          error={error}
+          required={required}
+          optionalLabel={optionalLabel || ''}
+        >
+          {({ describedBy, invalid }) => renderInput(describedBy, invalid)}
+        </FormField>
       </div>
     );
   }

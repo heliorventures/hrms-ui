@@ -1,17 +1,35 @@
-import { Navigate } from 'react-router-dom';
-import OpsBillingPage from '../modules/ops/OpsBillingPage';
-import OpsFeatureFlagsPage from '../modules/ops/OpsFeatureFlagsPage';
-import OpsModulesPage from '../modules/ops/OpsModulesPage';
-import OpsOperatorsPage from '../modules/ops/OpsOperatorsPage';
-import OpsTenantsPage from '../modules/ops/OpsTenantsPage';
-import type { AppChildRoute } from './appRouteConfig';
+import type { AppChildRoute } from './routeTypes';
 
 export const OPS_CHILD_ROUTES: AppChildRoute[] = [
-  { index: true, element: <Navigate to="/ops/tenants" replace /> },
-  { path: 'tenants', element: <OpsTenantsPage /> },
-  { path: 'modules', element: <OpsModulesPage /> },
-  { path: 'billing', element: <OpsBillingPage /> },
-  { path: 'operators', element: <OpsOperatorsPage /> },
-  { path: 'feature-flags', element: <OpsFeatureFlagsPage /> },
-  { path: '*', element: <Navigate to="/ops/tenants" replace /> },
+  { kind: 'redirect', index: true, to: '/ops/tenants' },
+  {
+    kind: 'page',
+    path: 'tenants',
+    title: 'Tenants',
+    load: () => import('../modules/ops/OpsTenantsPage'),
+  },
+  {
+    kind: 'page',
+    path: 'modules',
+    title: 'Modules and subscriptions',
+    load: () => import('../modules/ops/OpsModulesPage'),
+  },
+  {
+    kind: 'page',
+    path: 'billing',
+    title: 'Billing',
+    load: () => import('../modules/ops/OpsBillingPage'),
+  },
+  {
+    kind: 'page',
+    path: 'operators',
+    title: 'Operator users',
+    load: () => import('../modules/ops/OpsOperatorsPage'),
+  },
+  {
+    kind: 'page',
+    path: 'feature-flags',
+    title: 'Feature flags',
+    load: () => import('../modules/ops/OpsFeatureFlagsPage'),
+  },
 ];

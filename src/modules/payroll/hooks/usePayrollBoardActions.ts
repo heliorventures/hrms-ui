@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
+import { useDialogs } from '../../../contexts/DialogContext';
 import {
   CreatePayrollArrearDocument,
   CreatePayrollCycleDocument,
@@ -51,6 +52,7 @@ export function usePayrollBoardActions({
   complianceForm,
   reload,
 }: PayrollBoardActionsParams) {
+  const { confirm } = useDialogs();
   const [cycleForm, setCycleForm] = useState<PayrollCycleFormState>(DEFAULT_CYCLE_FORM);
   const [arrearForm, setArrearForm] = useState<PayrollArrearFormState>(DEFAULT_ARREAR_FORM);
   const [createBusy, setCreateBusy] = useState(false);
@@ -207,9 +209,14 @@ export function usePayrollBoardActions({
 
   const runPayroll = useCallback(
     async (payrollCycleId: string) => {
-      const confirmed = window.confirm(
-        'Run payroll for this cycle now? This calculates salary, arrears, and processed payslips for the cycle.'
-      );
+      const confirmed = await confirm({
+        title: 'Run payroll for this cycle?',
+        message:
+          'The cycle will be processed and salary, arrears, and payslips will be calculated. Review the cycle details before you continue.',
+        confirmLabel: 'Run payroll',
+        cancelLabel: 'Keep cycle unchanged',
+        variant: 'danger',
+      });
       if (!confirmed) return;
       setRunBusy(payrollCycleId);
       setRunError(null);
@@ -226,7 +233,7 @@ export function usePayrollBoardActions({
         setRunBusy(null);
       }
     },
-    [client, reload]
+    [client, confirm, reload]
   );
 
   return {

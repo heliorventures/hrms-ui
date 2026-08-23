@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CLIENT_SESSION_EXPIRED_MESSAGE,
+  OPERATOR_SESSION_EXPIRED_MESSAGE,
   endExpiredClientSession,
+  endExpiredOperatorSession,
   handleGraphResponse,
   isUnauthenticatedGraphResponse,
 } from './sessionExpiry';
@@ -13,9 +15,7 @@ function clientError(status: number, code?: string): ClientError {
   return new ClientError(
     {
       status,
-      errors: code
-        ? [new GraphQLError('Request rejected', { extensions: { code } })]
-        : undefined,
+      errors: code ? [new GraphQLError('Request rejected', { extensions: { code } })] : undefined,
     },
     { query: 'query SessionProbe { __typename }' }
   );
@@ -35,17 +35,33 @@ describe('client session expiry', () => {
     expect(isUnauthenticatedGraphResponse(new Error('network unavailable'))).toBe(false);
   });
 
-  it('notifies only the tenant GraphQL plane about expiry', () => {
+  it('notifies each GraphQL plane through its supplied expiry callback', () => {
+    let clientNotifications = 0;
+    let operatorNotifications = 0;
+    const unauthenticated = clientError(200, 'UNAUTHENTICATED');
+
+    handleGraphResponse('client', unauthenticated, () => {
+      clientNotifications += 1;
+    });
+    handleGraphResponse('operator', unauthenticated, () => {
+      operatorNotifications += 1;
+    });
+
+    expect(clientNotifications).toBe(1);
+    expect(operatorNotifications).toBe(1);
+  });
+
+  it('reports every repeated unauthenticated response to the plane callback', () => {
     let notifications = 0;
     const notify = () => {
       notifications += 1;
     };
-    const unauthenticated = clientError(200, 'UNAUTHENTICATED');
+    const unauthenticated = clientError(401);
 
     handleGraphResponse('operator', unauthenticated, notify);
-    handleGraphResponse('client', unauthenticated, notify);
+    handleGraphResponse('operator', unauthenticated, notify);
 
-    expect(notifications).toBe(1);
+    expect(notifications).toBe(2);
   });
 
   it('clears an authenticated tenant and reports the expiry notice', () => {
@@ -82,5 +98,22 @@ describe('client session expiry', () => {
 
     expect(transitioned).toBe(false);
     expect(stateChanged).toBe(false);
+  });
+
+  it('clears only local operator state and reports the operator expiry notice', () => {
+    let clears = 0;
+    let reportedMessage: string | null = null;
+
+    endExpiredOperatorSession(
+      () => {
+        clears += 1;
+      },
+      (message) => {
+        reportedMessage = message;
+      }
+    );
+
+    expect(clears).toBe(1);
+    expect(reportedMessage).toBe(OPERATOR_SESSION_EXPIRED_MESSAGE);
   });
 });

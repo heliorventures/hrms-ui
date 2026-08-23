@@ -97,6 +97,7 @@ const OrganizationEmployeesPage = () => {
         </div>
         <div className="w-full sm:w-80">
           <Input
+            aria-label="Search employees"
             type="search"
             placeholder="Search by name, employee code, status..."
             value={searchQuery}

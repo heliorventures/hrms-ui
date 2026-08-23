@@ -1,3 +1,5 @@
+import { canAccessTenantPath, type NavAccessOptions } from '../auth/navAccess';
+
 export const normalizeInternalActionUrl = (url: string | null | undefined) => {
   const trimmed = url?.trim();
   if (!trimmed) return null;
@@ -10,6 +12,17 @@ export const normalizeInternalActionUrl = (url: string | null | undefined) => {
     return null;
   }
 };
+
+export function authorizedNotificationActionUrl(
+  url: string | null | undefined,
+  access: NavAccessOptions
+): string | null {
+  const destination = normalizeInternalActionUrl(url);
+  if (!destination) return null;
+
+  const { pathname } = new URL(destination, window.location.origin);
+  return canAccessTenantPath(pathname, access) ? destination : null;
+}
 
 export const notificationActionDestination = (url: string | null | undefined) =>
   normalizeInternalActionUrl(url) ?? '/notifications';

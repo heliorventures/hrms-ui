@@ -1,7 +1,15 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
 import App from './App';
 import { loadAppConfig } from './config';
+import {
+  applyDocumentTheme,
+  persistThemePreference,
+  readThemePreference,
+  resolveInitialTheme,
+} from './contexts/themePreference';
+import { ConfigurationError } from './startup/ConfigurationError';
 import './index.css';
 
 const rootEl = document.getElementById('root');
@@ -10,21 +18,25 @@ void (async () => {
   if (!rootEl) {
     return;
   }
+
+  const preference = readThemePreference();
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = resolveInitialTheme(preference, prefersDark);
+  if (preference) {
+    persistThemePreference(preference);
+  }
+  applyDocumentTheme(theme);
+
   try {
     await loadAppConfig();
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    rootEl.innerHTML = `<div style="font-family:system-ui,sans-serif;padding:1.5rem;max-width:32rem">
-      <h1 style="font-size:1.1rem">Configuration error</h1>
-      <p style="color:#b91c1c">${msg}</p>
-      <p style="color:#64748b;font-size:0.9rem">Fix <code>public/config.json</code> and reload.</p>
-    </div>`;
+    createRoot(rootEl).render(<ConfigurationError error={e} />);
     return;
   }
 
-  ReactDOM.createRoot(rootEl).render(
-    <React.StrictMode>
+  createRoot(rootEl).render(
+    <StrictMode>
       <App />
-    </React.StrictMode>
+    </StrictMode>
   );
 })();

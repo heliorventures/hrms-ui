@@ -77,7 +77,7 @@ const PayrollPayslipTab = ({
             </label>
             <select
               id="payslip-period"
-              className="max-w-sm rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              className="max-w-sm rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               value={selectedCycleId ?? ''}
               onChange={(event) => onSelectedCycleChange(event.target.value || null)}
             >

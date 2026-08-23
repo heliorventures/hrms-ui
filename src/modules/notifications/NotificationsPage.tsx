@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Card from '../../components/common/Card';
+
+import { canManageNotifications } from '../../auth/navAccess';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../contexts/AuthContext';
-import { canManageNotifications } from '../../auth/navAccess';
+
 import CreateAnnouncementModal from './CreateAnnouncementModal';
-import AnnouncementList from './components/AnnouncementList';
-import PrivateNotificationList from './components/PrivateNotificationList';
+import NotificationBoardContent from './NotificationBoardContent';
 import { useNotificationBoard } from './useNotificationBoard';
 
 const NotificationsPage = () => {
@@ -15,19 +15,7 @@ const NotificationsPage = () => {
   const showAdminNotifLink = canManageNotifications(navOpts);
   const composeLabel = showAdminNotifLink ? 'New announcement' : 'New team post';
   const [composeOpen, setComposeOpen] = useState(false);
-  const {
-    actionBusy,
-    announcements,
-    deptNameById,
-    error,
-    filter,
-    filteredNotifications,
-    loading,
-    markAllRead,
-    markRead,
-    refreshBoard,
-    setFilter,
-  } = useNotificationBoard();
+  const board = useNotificationBoard();
 
   return (
     <div className="space-y-6">
@@ -51,7 +39,7 @@ const NotificationsPage = () => {
           {showAdminNotifLink ? (
             <Link
               to="/admin/notifications"
-              className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-offset-2 focus:ring-offset-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/80 dark:focus:ring-offset-slate-900"
+              className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/80 dark:focus-visible:ring-offset-slate-900"
             >
               Admin console
             </Link>
@@ -65,57 +53,10 @@ const NotificationsPage = () => {
       <CreateAnnouncementModal
         isOpen={composeOpen}
         onClose={() => setComposeOpen(false)}
-        onCreated={() => void refreshBoard()}
+        onCreated={() => void board.refreshBoard()}
       />
 
-      {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
-      )}
-
-      <Card title="Public Announcements">
-        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-          Company updates, celebrations, and posts shared with everyone. Your personal alerts appear below.
-        </p>
-        <AnnouncementList
-          announcements={announcements}
-          deptNameById={deptNameById}
-          loading={loading}
-        />
-      </Card>
-
-      <Card title="Your Private Notifications">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Unread filtering and read status apply only to your private notifications.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setFilter(filter === 'all' ? 'unread' : 'all')}
-            >
-              {filter === 'all' ? 'Show unread private' : 'Show all private'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={actionBusy}
-              onClick={() => void markAllRead()}
-            >
-              {actionBusy ? 'Working...' : 'Mark all private read'}
-            </Button>
-          </div>
-        </div>
-        <PrivateNotificationList
-          actionBusy={actionBusy}
-          filter={filter}
-          loading={loading}
-          notifications={filteredNotifications}
-          onMarkRead={(id) => void markRead(id)}
-        />
-      </Card>
+      <NotificationBoardContent board={board} />
     </div>
   );
 };

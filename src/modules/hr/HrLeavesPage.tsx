@@ -15,23 +15,28 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import ApplyLeaveModal from '../leave/components/ApplyLeaveModal';
 import LeaveRejectModal from '../leave/components/LeaveRejectModal';
 import LeaveRequestsTableSection from '../leave/components/LeaveRequestsTableSection';
+import LeaveRecoveryNotice from '../leave/components/LeaveRecoveryNotice';
 import LeaveWorkflowTrailModal from '../leave/components/LeaveWorkflowTrailModal';
+import { useLeaveWorkflowTrail } from '../leave/hooks/useLeaveWorkflowTrail';
 import HrLeaveFilterTabs, { type HrLeaveFilter } from './components/HrLeaveFilterTabs';
 import HrLeaveSummaryCards from './components/HrLeaveSummaryCards';
 import LeaveTeamCalendar from './components/LeaveTeamCalendar';
 import {
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
-  LeaveWorkflowTrailQueryDocument,
   OrgChartDocument,
   type LeaveBoardQuery,
-  type LeaveWorkflowTrailQueryQuery,
   type OrgChartQuery,
 } from '../../api/graphql/graphql';
 import { LeaveBoardRangeDocument } from '../leave/leaveBoardQuery';
 
 type ApproveLeaveRequestMutation = {
   approveLeaveRequest: { status: string };
+};
+
+type HrLeaveFailure = {
+  message: string;
+  operation: 'board' | 'mutation';
 };
 
 const HR_LEAVE_LIMIT = 120;
@@ -46,17 +51,14 @@ const HrLeavesPage = () => {
   const [orgChartRows, setOrgChartRows] = useState<OrgChartQuery['orgChart']>([]);
   const [orgLabels, setOrgLabels] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<HrLeaveFailure | null>(null);
   const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
   const [filter, setFilter] = useState<HrLeaveFilter>('pending');
   const [applyOpen, setApplyOpen] = useState(false);
   const [rejectLeaveId, setRejectLeaveId] = useState<string | null>(null);
   const [approveBusyId, setApproveBusyId] = useState<string | null>(null);
   const [cancelBusyId, setCancelBusyId] = useState<string | null>(null);
-  const [trailSummaryRow, setTrailSummaryRow] = useState<LeaveBoardQuery['leaveRequests'][number] | null>(null);
-  const [trailLoading, setTrailLoading] = useState(false);
-  const [trailRows, setTrailRows] =
-    useState<LeaveWorkflowTrailQueryQuery['leaveRequestWorkflowTrail']>([]);
+  const workflowTrail = useLeaveWorkflowTrail(client);
 
   const canConfigureLeaveSettings = useMemo(
     () => canAccessTenantPath('/admin/leave-settings', { can, clientSession }),
@@ -104,17 +106,22 @@ const HrLeavesPage = () => {
   const reloadBoardAndLabels = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
+      setFailure(null);
+      workflowTrail.clearFailure();
       const [board, orgData] = await Promise.all([loadBoard(), loadOrgChart()]);
       setData(board);
       setOrgLabels(orgData.labels);
       setOrgChartRows(orgData.rows);
     } catch (err) {
-      setError(graphQlUserMessage(err));
+      setFailure({ message: graphQlUserMessage(err), operation: 'board' });
     } finally {
       setLoading(false);
     }
-  }, [loadBoard, loadOrgChart]);
+  }, [loadBoard, loadOrgChart, workflowTrail.clearFailure]);
+
+  const retryBoard = useCallback(() => {
+    void reloadBoardAndLabels();
+  }, [reloadBoardAndLabels]);
 
   useEffect(() => {
     void reloadBoardAndLabels();
@@ -124,26 +131,23 @@ const HrLeavesPage = () => {
     try {
       setData(await loadBoard());
     } catch (err) {
-      const message = graphQlUserMessage(err);
-      setError(message);
-      flash.show(message, 'error');
+      setFailure({ message: graphQlUserMessage(err), operation: 'board' });
     }
-  }, [loadBoard, flash.show]);
+  }, [loadBoard]);
 
   const refreshAfterMutation = async () => {
     try {
       setData(await loadBoard());
     } catch (err) {
-      const message = graphQlUserMessage(err);
-      setError(message);
-      flash.show(`Could not refresh leave list: ${message}`, 'error');
+      setFailure({ message: graphQlUserMessage(err), operation: 'board' });
     }
   };
 
   const handleApprove = async (leaveRequestId: string) => {
     setApproveBusyId(leaveRequestId);
     setApproveWorkflowNotice(null);
-    setError(null);
+    setFailure(null);
+    workflowTrail.clearFailure();
     try {
       const result = await client.request<ApproveLeaveRequestMutation>(ApproveLeaveRequestDocument, {
         leaveRequestId,
@@ -154,9 +158,7 @@ const HrLeavesPage = () => {
       setApproveWorkflowNotice(status === 'pending' ? pendingMessage : null);
       flash.show(status === 'pending' ? pendingMessage : 'Leave request approved.', status === 'pending' ? 'info' : 'success');
     } catch (err) {
-      const message = graphQlUserMessage(err);
-      setError(message);
-      flash.show(message, 'error');
+      setFailure({ message: graphQlUserMessage(err), operation: 'mutation' });
     } finally {
       setApproveBusyId(null);
     }
@@ -165,14 +167,13 @@ const HrLeavesPage = () => {
 
   const handleCancelOwn = async (leaveRequestId: string) => {
     setCancelBusyId(leaveRequestId);
-    setError(null);
+    setFailure(null);
+    workflowTrail.clearFailure();
     try {
       await client.request(CancelLeaveRequestDocument, { leaveRequestId });
       flash.show('Leave request cancelled.', 'success');
     } catch (err) {
-      const message = graphQlUserMessage(err);
-      setError(message);
-      flash.show(message, 'error');
+      setFailure({ message: graphQlUserMessage(err), operation: 'mutation' });
     } finally {
       setCancelBusyId(null);
     }
@@ -229,24 +230,19 @@ const HrLeavesPage = () => {
     [orgLabels]
   );
 
-  const openWorkflowTrail = async (row: LeaveBoardQuery['leaveRequests'][number]) => {
-    setTrailSummaryRow(row);
-    setTrailLoading(true);
-    setTrailRows([]);
-    setError(null);
-    try {
-      const response = await client.request<LeaveWorkflowTrailQueryQuery>(
-        LeaveWorkflowTrailQueryDocument,
-        { leaveRequestId: row.id }
-      );
-      setTrailRows(response.leaveRequestWorkflowTrail);
-    } catch (err) {
-      setError(graphQlUserMessage(err));
-      setTrailSummaryRow(null);
-    } finally {
-      setTrailLoading(false);
-    }
-  };
+  const openWorkflowTrail = useCallback(
+    (row: LeaveBoardQuery['leaveRequests'][number]) => {
+      setFailure(null);
+      void workflowTrail.open(row);
+    },
+    [workflowTrail.open]
+  );
+
+  const retryWorkflowTrail = useCallback(() => {
+    void workflowTrail.retry();
+  }, [workflowTrail.retry]);
+
+  const activeFailure = workflowTrail.failure ?? failure;
 
   return (
     <div className="space-y-6">
@@ -284,7 +280,8 @@ const HrLeavesPage = () => {
         upcomingHolidays={data?.upcomingHolidays ?? []}
         onClose={() => setApplyOpen(false)}
         onSubmitted={async () => {
-          setError(null);
+          setFailure(null);
+          workflowTrail.clearFailure();
           await silentRefreshBoard();
         }}
       />
@@ -293,16 +290,21 @@ const HrLeavesPage = () => {
         leaveRequestId={rejectLeaveId}
         onClose={() => setRejectLeaveId(null)}
         onRejected={async () => {
-          setError(null);
+          setFailure(null);
+          workflowTrail.clearFailure();
           flash.show('Leave request rejected.', 'success');
           await silentRefreshBoard();
         }}
       />
 
-      {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+      {activeFailure && (
+        <LeaveRecoveryNotice
+          message={activeFailure.message}
+          operation={activeFailure.operation}
+          onRefreshBoard={retryBoard}
+          onRetryWorkflowTrail={retryWorkflowTrail}
+          refreshing={loading || workflowTrail.loading}
+        />
       )}
       {approveWorkflowNotice && (
         <Card>
@@ -348,15 +350,12 @@ const HrLeavesPage = () => {
 
       <LeaveWorkflowTrailModal
         employeeLabel={employeeLabel}
-        isOpen={trailSummaryRow != null}
+        isOpen={workflowTrail.summaryRow != null}
         leaveTypeNameById={leaveTypeNameById}
-        loading={trailLoading}
-        rows={trailRows}
-        summaryRow={trailSummaryRow}
-        onClose={() => {
-          setTrailSummaryRow(null);
-          setTrailRows([]);
-        }}
+        loading={workflowTrail.loading}
+        rows={workflowTrail.rows}
+        summaryRow={workflowTrail.summaryRow}
+        onClose={workflowTrail.close}
       />
       <FlashToastBar toast={flash.flash} onDismiss={flash.clear} />
     </div>

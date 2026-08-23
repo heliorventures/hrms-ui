@@ -1,8 +1,11 @@
+import { UI_A11Y_TEXT } from '../../constants/uiText';
+
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
+  label?: string;
 }
 
-const LoadingSpinner = ({ size = 'md' }: LoadingSpinnerProps) => {
+const LoadingSpinner = ({ size = 'md', label = UI_A11Y_TEXT.loading }: LoadingSpinnerProps) => {
   const sizeClasses = {
     sm: 'h-4 w-4',
     md: 'h-8 w-8',
@@ -10,9 +13,16 @@ const LoadingSpinner = ({ size = 'md' }: LoadingSpinnerProps) => {
   };
 
   return (
-    <div className="flex items-center justify-center">
+    <div
+      role="status"
+      aria-label={label}
+      aria-live="polite"
+      aria-atomic="true"
+      className="flex items-center justify-center"
+    >
       <div
-        className={`animate-spin rounded-full border-b-2 border-primary-600 ${sizeClasses[size]}`}
+        aria-hidden="true"
+        className={`animate-spin rounded-full border-2 border-line border-t-accent motion-reduce:animate-none ${sizeClasses[size]}`}
       />
     </div>
   );

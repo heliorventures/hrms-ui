@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react';
+
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
@@ -50,10 +51,10 @@ const ExpensePolicyModal = ({
   >
     <form onSubmit={onSubmit} className="space-y-4">
       {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label className="block">
+        <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Applicable to
-        </label>
+        </span>
         <select
           value={form.applicableTo}
           onChange={(event) => onChange({ ...form, applicableTo: event.target.value })}
@@ -65,9 +66,11 @@ const ExpensePolicyModal = ({
             </option>
           ))}
         </select>
-      </div>
+      </label>
       {directoryLoading ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400">Loading Organization Directory...</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Loading Organization Directory...
+        </p>
       ) : null}
       {directoryError ? (
         <p className="text-xs text-amber-700 dark:text-amber-400">{directoryError}</p>
@@ -148,6 +151,17 @@ interface ExpensePolicyScopeFieldsProps {
   onChange: (form: ExpensePolicyForm) => void;
 }
 
+const directoryPickerStateFor = (options: readonly UuidEntityOption[], loading: boolean) => {
+  if (options.length > 0) return { availability: 'ready' as const };
+  if (loading) {
+    return {
+      availability: 'loading' as const,
+      stateMessage: 'Loading organization directory.',
+    };
+  }
+  return { availability: 'ready' as const };
+};
+
 const ExpensePolicyScopeFields = ({
   form,
   directoryLoading,
@@ -179,7 +193,7 @@ const ExpensePolicyScopeFields = ({
         emptyLabel="Choose A Department..."
         options={departmentOptions}
         valueId={form.departmentId}
-        disabled={directoryLoading}
+        {...directoryPickerStateFor(departmentOptions, directoryLoading)}
         required
         onChangeId={(departmentId) => onChange({ ...form, departmentId })}
       />
@@ -205,7 +219,7 @@ const ExpensePolicyScopeFields = ({
         emptyLabel="Choose A Designation..."
         options={designationOptions}
         valueId={form.designationId}
-        disabled={directoryLoading}
+        {...directoryPickerStateFor(designationOptions, directoryLoading)}
         required
         onChangeId={(designationId) => onChange({ ...form, designationId })}
       />
@@ -231,7 +245,7 @@ const ExpensePolicyScopeFields = ({
         emptyLabel="Choose A Role..."
         options={roleOptions}
         valueId={form.roleId}
-        disabled={directoryLoading}
+        {...directoryPickerStateFor(roleOptions, directoryLoading)}
         required
         onChangeId={(roleId) => onChange({ ...form, roleId })}
       />

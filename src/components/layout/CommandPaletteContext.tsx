@@ -4,39 +4,55 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from 'react';
 
 type CommandPaletteContextValue = {
-  open: () => void;
+  open: (opener?: HTMLElement | null) => void;
   close: () => void;
-  toggle: () => void;
+  toggle: (opener?: HTMLElement | null) => void;
   isOpen: boolean;
+  openerRef: RefObject<HTMLElement>;
 };
 
 const CommandPaletteContext = createContext<CommandPaletteContextValue | undefined>(undefined);
 
 export function CommandPaletteProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const openerRef = useRef<HTMLElement | null>(null);
 
-  const open = useCallback(() => setIsOpen(true), []);
+  const open = useCallback((opener?: HTMLElement | null) => {
+    openerRef.current =
+      opener ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    setIsOpen(true);
+  }, []);
   const close = useCallback(() => setIsOpen(false), []);
-  const toggle = useCallback(() => setIsOpen((v) => !v), []);
+  const toggle = useCallback((opener?: HTMLElement | null) => {
+    setIsOpen((current) => {
+      if (!current) {
+        openerRef.current =
+          opener ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+      }
+      return !current;
+    });
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setIsOpen((v) => !v);
+        toggle();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [toggle]);
 
   const value = useMemo(
-    () => ({ open, close, toggle, isOpen }),
+    () => ({ open, close, toggle, isOpen, openerRef }),
     [open, close, toggle, isOpen]
   );
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Card from '../../components/common/Card';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { useDialogs } from '../../contexts/DialogContext';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   PermissionIdsForRoleDocument,
@@ -60,6 +61,7 @@ const RbacAdminBoardWithUsernameDocument = `
 
 const HrAccessManagementPage = () => {
   const client = useGraphClient('client');
+  const { confirm } = useDialogs();
   const [tab, setTab] = useState<RbacAccessTab>('users');
   const [board, setBoard] = useState<RbacAdminBoardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -209,9 +211,12 @@ const HrAccessManagementPage = () => {
   const saveUserRoles = async () => {
     if (!selectedUserId) return;
     const user = board?.tenantDirectoryUsers.find((row) => row.id === selectedUserId);
-    const confirmed = window.confirm(
-      `Replace assigned roles for ${user?.username ?? selectedUserId} with ${userRoleIds.size} role(s)?`
-    );
+    const confirmed = await confirm({
+      title: 'Update assigned roles',
+      message: `This replaces the role list for ${user?.username ?? selectedUserId}. Affected users may need to sign out and sign in again for new permissions to apply.`,
+      confirmLabel: `Save ${userRoleIds.size} role(s)`,
+      variant: 'default',
+    });
     if (!confirmed) return;
     setInfo(null);
     setError(null);
@@ -229,9 +234,12 @@ const HrAccessManagementPage = () => {
   const saveRolePerms = async () => {
     if (!selectedRoleId) return;
     const role = board?.tenantDirectoryRoles.find((row) => row.id === selectedRoleId);
-    const confirmed = window.confirm(
-      `Replace permissions for ${role?.name ?? selectedRoleId} with ${permIds.size} permission(s)?`
-    );
+    const confirmed = await confirm({
+      title: 'Update role permissions',
+      message: `This replaces all permissions for ${role?.name ?? selectedRoleId}. Review once before saving because access for that role changes immediately.`,
+      confirmLabel: `Save ${permIds.size} permission(s)`,
+      variant: 'default',
+    });
     if (!confirmed) return;
     setInfo(null);
     setError(null);
@@ -281,11 +289,14 @@ const HrAccessManagementPage = () => {
     }
     const role = board?.tenantDirectoryRoles.find((row) => row.id === scopeRoleId);
     const hasAllScope = normalizedScopes.some((row) => row.scopeType === 'ALL');
-    const confirmed = window.confirm(
-      `Replace permission scopes for ${role?.name ?? scopeRoleId} with ${normalizedScopes.length} scope row(s)?${
-        hasAllScope ? ' This includes ALL scope.' : ''
-      }`
-    );
+    const confirmed = await confirm({
+      title: 'Update permission scopes',
+      message:
+        `This replaces all permission scope rules for ${role?.name ?? scopeRoleId}.` +
+        (hasAllScope ? ' This includes ALL-scope, which applies tenant-wide.' : ''),
+      confirmLabel: `Save ${normalizedScopes.length} scope row(s)`,
+      variant: hasAllScope ? 'danger' : 'default',
+    });
     if (!confirmed) return;
     setInfo(null);
     setError(null);

@@ -2,12 +2,32 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import EmployeeSearchSelect from '../../../components/common/EmployeeSearchSelect';
 import Input from '../../../components/common/Input';
+import type { SearchableSelectAvailability } from '../../../components/common/SearchableSelect';
 import type { AdminLeaveSettingsModel } from '../hooks/useAdminLeaveSettings';
 import { selectFieldClass } from '../leaveSettingsUtils';
 
 interface LeaveBalancesSectionProps {
   model: AdminLeaveSettingsModel;
 }
+
+interface EmployeePickerState {
+  availability: SearchableSelectAvailability;
+  stateMessage?: string;
+}
+
+const employeePickerStateFor = (model: AdminLeaveSettingsModel): EmployeePickerState => {
+  if (model.data) return { availability: 'ready' };
+  if (model.loading) {
+    return { availability: 'loading', stateMessage: 'Loading employee options.' };
+  }
+  if (model.error) {
+    return {
+      availability: 'unavailable',
+      stateMessage: 'Employee options could not be loaded. Refresh leave settings to try again.',
+    };
+  }
+  return { availability: 'unavailable', stateMessage: 'Employee options are unavailable.' };
+};
 
 const LeaveBalancesSection = ({ model }: LeaveBalancesSectionProps) => (
   <div className="space-y-6">
@@ -49,6 +69,7 @@ const ProvisionBalancesCard = ({ model }: LeaveBalancesSectionProps) => (
 
 const BalanceFormCard = ({ model }: LeaveBalancesSectionProps) => {
   const form = model.balanceForm;
+  const employeePickerState = employeePickerStateFor(model);
   return (
     <Card title="Upsert Balance Row">
       <p className="mb-3 text-xs text-gray-500">
@@ -60,18 +81,48 @@ const BalanceFormCard = ({ model }: LeaveBalancesSectionProps) => {
           valueId={form.employeeId}
           onChangeId={(employeeId) => model.setBalanceForm({ ...form, employeeId })}
           required
-          disabled={model.loading}
+          {...employeePickerState}
         />
         <LeaveTypeSelect
           value={form.leaveTypeId}
           leaveTypes={model.data?.leaveTypes ?? []}
           onChange={(leaveTypeId) => model.setBalanceForm({ ...form, leaveTypeId })}
         />
-        <Input label="Year" value={form.year} onChange={(e) => model.setBalanceForm({ ...form, year: e.target.value })} fullWidth required />
-        <Input label="Entitled Days" value={form.entitled} onChange={(e) => model.setBalanceForm({ ...form, entitled: e.target.value })} fullWidth required />
-        <Input label="Used Days" value={form.used} onChange={(e) => model.setBalanceForm({ ...form, used: e.target.value })} fullWidth required />
-        <Input label="Pending Days" value={form.pending} onChange={(e) => model.setBalanceForm({ ...form, pending: e.target.value })} fullWidth required />
-        <Input label="Carried Forward" value={form.carried} onChange={(e) => model.setBalanceForm({ ...form, carried: e.target.value })} fullWidth required />
+        <Input
+          label="Year"
+          value={form.year}
+          onChange={(e) => model.setBalanceForm({ ...form, year: e.target.value })}
+          fullWidth
+          required
+        />
+        <Input
+          label="Entitled Days"
+          value={form.entitled}
+          onChange={(e) => model.setBalanceForm({ ...form, entitled: e.target.value })}
+          fullWidth
+          required
+        />
+        <Input
+          label="Used Days"
+          value={form.used}
+          onChange={(e) => model.setBalanceForm({ ...form, used: e.target.value })}
+          fullWidth
+          required
+        />
+        <Input
+          label="Pending Days"
+          value={form.pending}
+          onChange={(e) => model.setBalanceForm({ ...form, pending: e.target.value })}
+          fullWidth
+          required
+        />
+        <Input
+          label="Carried Forward"
+          value={form.carried}
+          onChange={(e) => model.setBalanceForm({ ...form, carried: e.target.value })}
+          fullWidth
+          required
+        />
         <Button type="submit" variant="primary">
           Save Balance
         </Button>
@@ -82,6 +133,7 @@ const BalanceFormCard = ({ model }: LeaveBalancesSectionProps) => {
 
 const AdjustmentFormCard = ({ model }: LeaveBalancesSectionProps) => {
   const form = model.adjustmentForm;
+  const employeePickerState = employeePickerStateFor(model);
   return (
     <Card title="Adjust Entitlement">
       <p className="mb-3 text-xs text-gray-500">
@@ -93,20 +145,34 @@ const AdjustmentFormCard = ({ model }: LeaveBalancesSectionProps) => {
           valueId={form.employeeId}
           onChangeId={(employeeId) => model.setAdjustmentForm({ ...form, employeeId })}
           required
-          disabled={model.loading}
+          {...employeePickerState}
         />
         <LeaveTypeSelect
           value={form.leaveTypeId}
           leaveTypes={model.data?.leaveTypes ?? []}
           onChange={(leaveTypeId) => model.setAdjustmentForm({ ...form, leaveTypeId })}
         />
-        <Input label="Year" value={form.year} onChange={(e) => model.setAdjustmentForm({ ...form, year: e.target.value })} fullWidth required />
-        <Input label="Entitled Delta (+/- Decimal)" value={form.delta} onChange={(e) => model.setAdjustmentForm({ ...form, delta: e.target.value })} fullWidth required />
+        <Input
+          label="Year"
+          value={form.year}
+          onChange={(e) => model.setAdjustmentForm({ ...form, year: e.target.value })}
+          fullWidth
+          required
+        />
+        <Input
+          label="Entitled Delta (+/- Decimal)"
+          value={form.delta}
+          onChange={(e) => model.setAdjustmentForm({ ...form, delta: e.target.value })}
+          fullWidth
+          required
+        />
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
             checked={form.alsoCredit}
-            onChange={(event) => model.setAdjustmentForm({ ...form, alsoCredit: event.target.checked })}
+            onChange={(event) =>
+              model.setAdjustmentForm({ ...form, alsoCredit: event.target.checked })
+            }
           />
           Also add delta to available balance
         </label>
@@ -125,9 +191,14 @@ interface LeaveTypeSelectProps {
 }
 
 const LeaveTypeSelect = ({ value, leaveTypes, onChange }: LeaveTypeSelectProps) => (
-  <>
-    <label className="block text-sm font-medium">Leave type</label>
-    <select className={selectFieldClass} value={value} onChange={(event) => onChange(event.target.value)} required>
+  <label className="block text-sm font-medium">
+    <span>Leave type</span>
+    <select
+      className={selectFieldClass}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      required
+    >
       <option value="">Select...</option>
       {leaveTypes.map((type) => (
         <option key={type.id} value={type.id}>
@@ -135,7 +206,7 @@ const LeaveTypeSelect = ({ value, leaveTypes, onChange }: LeaveTypeSelectProps) 
         </option>
       ))}
     </select>
-  </>
+  </label>
 );
 
 export default LeaveBalancesSection;

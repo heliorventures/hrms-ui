@@ -1,6 +1,11 @@
-export const NotificationDropdownDocument = `
-  query NotificationDropdown($limit: Int! = 15) {
+export const UnreadNotificationCountDocument = `
+  query NotificationUnreadCount {
     unreadNotificationCount
+  }
+`;
+
+export const NotificationPreviewDocument = `
+  query NotificationPreview($limit: Int! = 15) {
     notifications(limit: $limit) {
       id
       title
