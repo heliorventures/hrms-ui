@@ -7,6 +7,7 @@ import Button from '../common/Button';
 import PageNotice from '../common/PageNotice';
 import type { useAnchoredPopoverPosition } from '../common/useAnchoredPopoverPosition';
 import type { usePopover } from '../common/usePopover';
+import { notificationActionDestination } from '../../utils/actionUrl';
 
 import type { BoardNotification } from './useNotificationDropdownData';
 
@@ -134,6 +135,14 @@ const NotificationPreviewItem = ({
             <span className="mt-1 block text-xs text-content-muted">
               {formatRelativeDate(String(notification.createdAt))}
             </span>
+            {notification.actionUrl ? (
+              <span className="mt-1 block break-words text-xs text-content-muted [overflow-wrap:anywhere]">
+                Action URL:{' '}
+                <span className="font-mono">
+                  {notificationActionDestination(notification.actionUrl)}
+                </span>
+              </span>
+            ) : null}
             {!notification.isRead ? <span className="sr-only">Unread notification</span> : null}
           </span>
           {!notification.isRead ? (

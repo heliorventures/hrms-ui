@@ -98,8 +98,17 @@ function rawTextToMessage(raw: string): string {
   if (lower.includes('complete the open punch before adjusting manual attendance')) {
     return 'Complete the open punch before adjusting attendance for this day.';
   }
-  if (lower.includes('total attendance for a day cannot exceed 24 hours')) {
+  if (
+    lower.includes('total attendance for a day cannot exceed 24 hours') ||
+    lower.includes('total attendance for a day must be less than 24 hours')
+  ) {
     return 'Total attendance for a day cannot exceed 24 hours.';
+  }
+  if (lower.includes('amount exceeds the permitted category limit')) {
+    return 'Amount exceeds the permitted category limit. Review the limit shown above.';
+  }
+  if (lower.includes('monthly category limit')) {
+    return 'This claim would exceed the monthly category limit.';
   }
   if (lower.includes('manual attendance is limited to the last')) {
     return 'This date is outside the self-service attendance adjustment window. Contact HR to regularize it.';

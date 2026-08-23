@@ -39,6 +39,16 @@ describe('NotificationDropdown', () => {
     expect(await screen.findByText('Policy update')).toBeTruthy();
   });
 
+  it('shows direct notification action URLs in the receiver preview', async () => {
+    renderNotifications();
+
+    await screen.findByRole('button', { name: 'Notifications, 3 unread' });
+    fireEvent.click(screen.getByRole('button', { name: 'Notifications, 3 unread' }));
+
+    expect(await screen.findByText('Action URL:', { exact: false })).toBeTruthy();
+    expect(screen.getByText('/leave')).toBeTruthy();
+  });
+
   it('preserves successful count and preview independently and offers inline retries', async () => {
     let countFails = false;
     let previewFails = false;

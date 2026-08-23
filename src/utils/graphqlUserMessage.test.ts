@@ -33,6 +33,14 @@ describe('graphQlUserMessage', () => {
     );
   });
 
+  it('does not lose the category cap message after a submit modal receives a plain Error', () => {
+    expect(
+      graphQlUserMessage(
+        new Error('Amount exceeds the permitted category limit. Review the limit shown above.')
+      )
+    ).toBe('Amount exceeds the permitted category limit. Review the limit shown above.');
+  });
+
   it('maps monthly category limit failures', () => {
     const err = Object.assign(new Error('Monthly category limit exceeded.'), {
       code: 'EXPENSE_MONTHLY_LIMIT_EXCEEDED',

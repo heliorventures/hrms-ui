@@ -5,11 +5,12 @@ import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import { formatMinutesAsHhMm, segmentWorkedMinutes } from '../../utils/attendanceDuration';
 import { formatBackendTime } from '../../utils/timeFormat';
 import { titleCaseLabel } from '../../utils/uiLabel';
 import AttendanceReportDetails from './components/AttendanceReportDetails';
 
-const REPORT_EMPLOYEE_LIMIT = 100;
+const REPORT_EMPLOYEE_LIMIT = 1000;
 const REPORT_ATTENDANCE_LIMIT = 500;
 const REPORT_LEAVE_LIMIT = 200;
 const REPORT_PAYROLL_CYCLE_LIMIT = 60;
@@ -267,20 +268,39 @@ const AdminReportsPage = () => {
   const getAttendanceStats = () => {
     if (!data) return null;
 
-    const totalPresent = filteredAttendance.filter(
-      (a) => a.status === 'PRESENT' || a.status === 'present'
-    ).length;
-    const totalAbsent = filteredAttendance.filter(
-      (a) => a.status === 'ABSENT' || a.status === 'absent'
-    ).length;
-    const totalHalfDay = filteredAttendance.filter(
-      (a) => a.status === 'HALF_DAY' || a.status === 'half-day'
-    ).length;
-    const withBothTimes = filteredAttendance.filter((a) => a.checkInTime && a.checkOutTime);
-    const avgTracked =
-      withBothTimes.length > 0 ? withBothTimes.length / filteredAttendance.length : 0;
+    const employeeDayKey = (row: AttendanceRow) => `${row.employeeId}:${row.workDate}`;
+    const employeeDays = new Set(filteredAttendance.map(employeeDayKey));
+    const presentDays = new Set(
+      filteredAttendance
+        .filter((row) => row.status?.toLowerCase() === 'present')
+        .map(employeeDayKey)
+    );
+    const absentDays = new Set(
+      filteredAttendance.filter((row) => row.status?.toLowerCase() === 'absent').map(employeeDayKey)
+    );
+    const halfDays = new Set(
+      filteredAttendance
+        .filter((row) => ['half_day', 'half-day'].includes(row.status?.toLowerCase() ?? ''))
+        .map(employeeDayKey)
+    );
+    const trackedDays = new Set(
+      filteredAttendance
+        .filter((row) => segmentWorkedMinutes(row.checkInTime, row.checkOutTime) != null)
+        .map(employeeDayKey)
+    );
+    const totalLoggedMinutes = filteredAttendance.reduce(
+      (sum, row) => sum + (segmentWorkedMinutes(row.checkInTime, row.checkOutTime) ?? 0),
+      0
+    );
+    const trackedCoverage = employeeDays.size > 0 ? trackedDays.size / employeeDays.size : 0;
 
-    return { totalPresent, totalAbsent, totalHalfDay, avgTracked };
+    return {
+      totalPresent: presentDays.size,
+      totalAbsent: absentDays.size,
+      totalHalfDay: halfDays.size,
+      totalLoggedMinutes,
+      trackedCoverage,
+    };
   };
 
   const getLeaveStats = () => {
@@ -368,15 +388,15 @@ const AdminReportsPage = () => {
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Half Days</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Total Logged Time</div>
               <div className="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-                {stats.totalHalfDay}
+                {formatMinutesAsHhMm(stats.totalLoggedMinutes)}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <div className="text-sm text-gray-500 dark:text-gray-400">Time Tracked Coverage</div>
               <div className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {(stats.avgTracked * 100).toFixed(0)}%
+                {(stats.trackedCoverage * 100).toFixed(0)}%
               </div>
             </div>
           </div>

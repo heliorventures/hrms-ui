@@ -182,7 +182,7 @@ export function useExpenseActions({ client, refresh, setNotice }: UseExpenseActi
         await refresh();
         setNotice({ variant: 'success', message: 'Expense claim submitted.' });
       } catch (err) {
-        throw new Error(graphQlUserMessage(err));
+        throw err;
       } finally {
         setSubmittingExpense(false);
       }
