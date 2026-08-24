@@ -161,6 +161,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [clientSession, setClientSession] = useState<ParsedClientSession | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [clientBootstrapPending, setClientBootstrapPending] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [opsError, setOpsError] = useState<string | null>(null);
   const clientRefreshPromiseRef = useRef<{ tenantId: string; promise: Promise<boolean> } | null>(
@@ -274,15 +275,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     [applyTokens, clearClientState]
   );
 
-  // Tenant sessions must pass the login captcha after a fresh app load. Claiming the resolved
-  // tenant keeps StrictMode or later auth-state effect replays from clearing newly issued tokens.
+  // Claiming the resolved tenant keeps StrictMode or later auth-state effect replays from
+  // re-running bootstrap work. Tenant-keyed refresh tokens are restored only when they match the
+  // resolved workspace, so a stale token from another tenant cannot leak into this tenant.
   useEffect(() => {
-    if (resolutionStatus !== 'resolved' || !currentTenant.id) return;
-    if (!claimClientSessionBootstrap(clientBootstrapTenantRef, currentTenant.id)) return;
+    if (resolutionStatus !== 'resolved' || !currentTenant.id) {
+      setClientBootstrapPending(resolutionStatus === 'resolving');
+      return;
+    }
+    if (!claimClientSessionBootstrap(clientBootstrapTenantRef, currentTenant.id)) {
+      setClientBootstrapPending(false);
+      return;
+    }
 
     clearLegacyClientRefreshToken();
-    clearClientSession(currentTenant.id);
-  }, [currentTenant.id, resolutionStatus]);
+    let cancelled = false;
+    setClientBootstrapPending(true);
+    void refreshClientSession(currentTenant.id).finally(() => {
+      if (!cancelled) setClientBootstrapPending(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentTenant.id, refreshClientSession, resolutionStatus]);
 
   // Operator sessions restore independently of tenant resolution.
   useEffect(() => {
@@ -446,7 +461,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       isAuthenticated: !!user,
       isOpsAuthenticated: !!opsUser,
       tenantId,
-      loading,
+      loading: loading || clientBootstrapPending,
       error,
       opsError,
       switchRole,
@@ -470,6 +485,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       clientSession,
       tenantId,
       loading,
+      clientBootstrapPending,
       error,
       opsError,
       switchRole,

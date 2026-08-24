@@ -117,6 +117,9 @@ const PrivateNotificationList = ({
                     {actionUrl && (
                       <Link
                         to={actionUrl}
+                        onClick={() => {
+                          if (!notification.isRead) onMarkRead(notification.id);
+                        }}
                         className="inline-flex min-h-11 items-center justify-center rounded-md bg-accent px-3 py-2 text-sm font-medium text-content-inverse shadow-sm transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas md:min-h-8 md:py-1.5"
                       >
                         View

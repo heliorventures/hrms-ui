@@ -16,6 +16,12 @@ function codeToMessage(code: string): string | null {
       return 'An active leave request already covers all or part of those dates.';
     case 'LEAVE_POLICY_DUPLICATE':
       return 'Only one leave policy can be configured for each leave type.';
+    case 'USER_EMAIL_CONFLICT':
+      return 'A login account already uses this email address. Use a different email or leave it blank.';
+    case 'USER_USERNAME_CONFLICT':
+      return 'A login account already uses this username. Choose a different username.';
+    case 'EMPLOYEE_CODE_CONFLICT':
+      return 'An employee already uses this employee code. Choose a different code.';
     case 'EXPENSE_CLAIM_LIMIT_EXCEEDED':
       return 'Amount exceeds the permitted category limit. Review the limit shown above.';
     case 'EXPENSE_MONTHLY_LIMIT_EXCEEDED':

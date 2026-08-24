@@ -10,6 +10,7 @@ import {
   getOperatorAccessToken,
   getOperatorRefreshToken,
   setClientAccessToken,
+  setClientRefreshToken,
   setOperatorAccessToken,
 } from '../auth/tokenStore';
 
@@ -163,6 +164,20 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('operator session expiry isolation', () => {
+  it('restores the tenant session from the tenant-keyed refresh token after browser refresh', async () => {
+    setClientRefreshToken(TENANT_ID, `${TENANT_ID}.stored-refresh`);
+    authClient.refreshClient.mockResolvedValueOnce({
+      ...tenantPair,
+      refresh: `${TENANT_ID}.rotated-refresh`,
+    });
+
+    renderAuthProvider();
+
+    await waitFor(() => expect(screen.getByTestId('tenant-user').textContent).toBe('tenant-user'));
+    expect(authClient.refreshClient).toHaveBeenCalledWith(`${TENANT_ID}.stored-refresh`);
+    expect(getClientRefreshToken(TENANT_ID)).toBe(`${TENANT_ID}.rotated-refresh`);
+  });
+
   it('expires only operator state and remains safe when responses repeat', async () => {
     renderAuthProvider();
     await seedBothSessionsAndTenantError();

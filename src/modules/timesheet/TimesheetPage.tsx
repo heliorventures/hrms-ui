@@ -25,6 +25,7 @@ import TimesheetControlsCard from './components/TimesheetControlsCard';
 import {
   downloadTextFile,
   earliestEditableMondayIso,
+  formatTimesheetHours,
   parseTimesheetHours,
   timesheetEntryCanDelete,
   timesheetEntryCanEdit,
@@ -246,7 +247,7 @@ const TimesheetPage = () => {
     if (!timesheetEntryCanDelete(row.status)) return;
     const ok = await confirm({
       title: 'Delete Timesheet Entry',
-      message: `Delete the ${row.hoursWorked}h entry for ${row.workDate}?`,
+      message: `Delete the ${formatTimesheetHours(row.hoursWorked)}h entry for ${row.workDate}?`,
       confirmLabel: 'Delete Entry',
       variant: 'danger',
     });

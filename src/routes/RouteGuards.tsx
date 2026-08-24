@@ -28,11 +28,14 @@ const AuthorizedOpsLayout = () => {
 };
 
 export const ProtectedLayout = () => {
-  const { clientSession, isAuthenticated, tenantId } = useAuth();
+  const { clientSession, isAuthenticated, loading, tenantId } = useAuth();
   const { currentTenant, resolutionStatus } = useTenant();
   const location = useLocation();
   if (resolutionStatus !== 'resolved') {
     return <Navigate to="/" replace />;
+  }
+  if (loading) {
+    return <RouteStatePage state="loading" statusLabel="Restoring session" />;
   }
   if (!isAuthenticated || !sessionMatchesTenant(tenantId, currentTenant.id)) {
     return <Navigate to="/login" replace />;

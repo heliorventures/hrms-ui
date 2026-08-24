@@ -102,6 +102,25 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   const [roleOptions, setRoleOptions] = useState<SelectOption[]>([]);
   const [orgLoadError, setOrgLoadError] = useState<string | null>(null);
 
+  const resetForm = useCallback(() => {
+    setCreateLogin(canManageLoginAccounts);
+    setUsername('');
+    setEmail('');
+    setInitialPassword('');
+    setConfirmPassword('');
+    setRoleId('');
+    setFormError(null);
+    setEmployeeCode('');
+    setFirstName('');
+    setLastName('');
+    setDateOfJoining(toDateInputValue());
+    setStatus('ACTIVE');
+    setDepartmentId('');
+    setDesignationId('');
+    setReportingManagerId('');
+    setOrgLoadError(null);
+  }, [canManageLoginAccounts]);
+
   const loadOrg = useCallback(async () => {
     if (!isOpen) return;
     setOrgLoadError(null);
@@ -136,8 +155,14 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
 
   useEffect(() => {
     if (!isOpen) return;
-    setCreateLogin(canManageLoginAccounts);
-  }, [canManageLoginAccounts, isOpen]);
+    resetForm();
+  }, [isOpen, resetForm]);
+
+  const handleClose = useCallback(() => {
+    if (submitting) return;
+    resetForm();
+    onClose();
+  }, [onClose, resetForm, submitting]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,19 +213,8 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       }
       await client.request(CreateEmployeeDocument, { input: input as CreateEmployeeInput });
       onCreated();
+      resetForm();
       onClose();
-      setEmployeeCode('');
-      setFirstName('');
-      setLastName('');
-      setDepartmentId('');
-      setDesignationId('');
-      setReportingManagerId('');
-      setCreateLogin(true);
-      setUsername('');
-      setEmail('');
-      setInitialPassword('');
-      setConfirmPassword('');
-      setRoleId('');
     } catch (err) {
       setFormError(graphQlUserMessage(err));
     } finally {
@@ -209,7 +223,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Employee">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add Employee">
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
         {orgLoadError && (
@@ -217,7 +231,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         )}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
-            label={`${UI_FIELD_LABELS.employeeCode} *`}
+            label={UI_FIELD_LABELS.employeeCode}
             value={employeeCode}
             onChange={(e) => {
               setEmployeeCode(e.target.value);
@@ -228,7 +242,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
           />
           <Input
             type="date"
-            label={`${UI_FIELD_LABELS.dateOfJoining} *`}
+            label={UI_FIELD_LABELS.dateOfJoining}
             value={dateOfJoining}
             onChange={(e) => {
               setDateOfJoining(e.target.value);
@@ -239,7 +253,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
-            label={`${UI_FIELD_LABELS.firstName} *`}
+            label={UI_FIELD_LABELS.firstName}
             value={firstName}
             onChange={(e) => {
               setFirstName(e.target.value);
@@ -248,7 +262,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
             required
           />
           <Input
-            label={`${UI_FIELD_LABELS.lastName} *`}
+            label={UI_FIELD_LABELS.lastName}
             value={lastName}
             onChange={(e) => {
               setLastName(e.target.value);
@@ -312,7 +326,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
             <div className="mt-3 space-y-3">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <Input
-                  label="Username *"
+                  label="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   fullWidth
@@ -332,7 +346,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
               </div>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <Input
-                  label="Initial Password *"
+                  label="Initial Password"
                   type="password"
                   value={initialPassword}
                   onChange={(e) => setInitialPassword(e.target.value)}
@@ -342,7 +356,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
                   autoComplete="new-password"
                 />
                 <Input
-                  label="Confirm Password *"
+                  label="Confirm Password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -374,7 +388,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? UI_STATUS_TEXT.creating : UI_ACTION_TEXT.create}
           </Button>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
             {UI_ACTION_TEXT.cancel}
           </Button>
         </div>

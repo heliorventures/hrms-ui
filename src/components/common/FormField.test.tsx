@@ -58,4 +58,16 @@ describe('FormField', () => {
 
     expect(screen.getByText('Optional').textContent).toBe('Optional');
   });
+
+  it('shows a centralized required marker that does not become part of the accessible label', () => {
+    render(
+      <FormField label="Employee Code" required>
+        {({ inputId }) => <input id={inputId} />}
+      </FormField>
+    );
+
+    expect(screen.getByLabelText('Employee Code')).toBeTruthy();
+    const marker = screen.getByText('*');
+    expect(marker.getAttribute('aria-hidden')).toBe('true');
+  });
 });

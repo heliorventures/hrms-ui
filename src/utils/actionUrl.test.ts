@@ -64,6 +64,11 @@ describe('directNotificationActionUrl', () => {
     expect(directNotificationActionUrl('')).toBe('/notifications');
   });
 
+  it('does not create direct notifications that navigate back to the dashboard root', () => {
+    expect(directNotificationActionUrl('/')).toBe('/notifications');
+    expect(directNotificationActionUrl('https://heliorsoft.com/')).toBe('/notifications');
+  });
+
   it('rejects external and protocol-relative routes', () => {
     expect(directNotificationActionUrl('https://evil.example/path')).toBe('/notifications');
     expect(directNotificationActionUrl('//evil.example/path')).toBe('/notifications');

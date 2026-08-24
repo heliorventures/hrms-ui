@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -53,7 +53,11 @@ const routerFuture = {
   v7_startTransition: true,
 };
 
-function notificationList(actionUrl: string, overrides: Partial<typeof notification> = {}) {
+function notificationList(
+  actionUrl: string,
+  overrides: Partial<typeof notification> = {},
+  onMarkRead = vi.fn()
+) {
   return (
     <MemoryRouter future={routerFuture}>
       <PrivateNotificationList
@@ -61,7 +65,7 @@ function notificationList(actionUrl: string, overrides: Partial<typeof notificat
         filter="all"
         loading={false}
         notifications={[{ ...notification, ...overrides, actionUrl }]}
-        onMarkRead={vi.fn()}
+        onMarkRead={onMarkRead}
       />
     </MemoryRouter>
   );
@@ -93,6 +97,18 @@ describe('PrivateNotificationList', () => {
     expect(view.getAttribute('href')).toBe('/notifications');
     expect(view.className).not.toBe('');
     expect(view.querySelector('button')).toBeNull();
+  });
+
+  it('marks an unread notification as read when the user opens its destination', () => {
+    const onMarkRead = vi.fn();
+    authState.clientSession = employeeSession();
+    authState.tenantId = tenantA;
+    authState.resolvedTenantId = tenantA;
+    render(notificationList('/notifications', { isRead: false }, onMarkRead));
+
+    fireEvent.click(screen.getByRole('link', { name: 'View' }));
+
+    expect(onMarkRead).toHaveBeenCalledWith('notification-1');
   });
 
   it('suppresses destinations while the resolved tenant differs from the authenticated session tenant', () => {

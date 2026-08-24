@@ -28,5 +28,6 @@ export const notificationActionDestination = (url: string | null | undefined) =>
   normalizeInternalActionUrl(url) ?? '/notifications';
 
 export const directNotificationActionUrl = (url: string | null | undefined) => {
-  return normalizeInternalActionUrl(url) ?? '/notifications';
+  const destination = normalizeInternalActionUrl(url);
+  return destination && destination !== '/' ? destination : '/notifications';
 };

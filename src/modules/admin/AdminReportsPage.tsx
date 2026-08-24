@@ -5,10 +5,11 @@ import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
-import { formatMinutesAsHhMm, segmentWorkedMinutes } from '../../utils/attendanceDuration';
+import { formatMinutesAsHhMm } from '../../utils/attendanceDuration';
 import { formatBackendTime } from '../../utils/timeFormat';
 import { titleCaseLabel } from '../../utils/uiLabel';
 import AttendanceReportDetails from './components/AttendanceReportDetails';
+import { buildAttendanceReportStats } from './attendanceReportStats';
 
 const REPORT_EMPLOYEE_LIMIT = 1000;
 const REPORT_ATTENDANCE_LIMIT = 500;
@@ -267,40 +268,7 @@ const AdminReportsPage = () => {
 
   const getAttendanceStats = () => {
     if (!data) return null;
-
-    const employeeDayKey = (row: AttendanceRow) => `${row.employeeId}:${row.workDate}`;
-    const employeeDays = new Set(filteredAttendance.map(employeeDayKey));
-    const presentDays = new Set(
-      filteredAttendance
-        .filter((row) => row.status?.toLowerCase() === 'present')
-        .map(employeeDayKey)
-    );
-    const absentDays = new Set(
-      filteredAttendance.filter((row) => row.status?.toLowerCase() === 'absent').map(employeeDayKey)
-    );
-    const halfDays = new Set(
-      filteredAttendance
-        .filter((row) => ['half_day', 'half-day'].includes(row.status?.toLowerCase() ?? ''))
-        .map(employeeDayKey)
-    );
-    const trackedDays = new Set(
-      filteredAttendance
-        .filter((row) => segmentWorkedMinutes(row.checkInTime, row.checkOutTime) != null)
-        .map(employeeDayKey)
-    );
-    const totalLoggedMinutes = filteredAttendance.reduce(
-      (sum, row) => sum + (segmentWorkedMinutes(row.checkInTime, row.checkOutTime) ?? 0),
-      0
-    );
-    const trackedCoverage = employeeDays.size > 0 ? trackedDays.size / employeeDays.size : 0;
-
-    return {
-      totalPresent: presentDays.size,
-      totalAbsent: absentDays.size,
-      totalHalfDay: halfDays.size,
-      totalLoggedMinutes,
-      trackedCoverage,
-    };
+    return buildAttendanceReportStats(filteredAttendance);
   };
 
   const getLeaveStats = () => {
@@ -374,7 +342,7 @@ const AdminReportsPage = () => {
         const stats = getAttendanceStats();
         if (!stats) return <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>;
         return (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <div className="text-sm text-gray-500 dark:text-gray-400">Total Present</div>
               <div className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
@@ -388,14 +356,20 @@ const AdminReportsPage = () => {
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Total Logged Time</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Half Days</div>
               <div className="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                {stats.totalHalfDay}
+              </div>
+            </div>
+            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <div className="text-sm text-gray-500 dark:text-gray-400">Total Logged Time</div>
+              <div className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
                 {formatMinutesAsHhMm(stats.totalLoggedMinutes)}
               </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <div className="text-sm text-gray-500 dark:text-gray-400">Time Tracked Coverage</div>
-              <div className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="mt-2 text-3xl font-bold text-indigo-600 dark:text-indigo-400">
                 {(stats.trackedCoverage * 100).toFixed(0)}%
               </div>
             </div>

@@ -1,7 +1,6 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { createPermissionService } from '../../auth/permissionService';
-import Badge from '../../components/common/Badge';
 import PunchInOut from './components/PunchInOut';
 import LeaveBalanceCard from './components/LeaveBalanceCard';
 import NotificationsPreview from './components/NotificationsPreview';
@@ -27,11 +26,6 @@ const Dashboard = () => {
               {currentTenant.name} · {user?.designation ?? 'Employee'}
             </p>
           </div>
-          {user?.employeeId ? (
-            <Badge variant="neutral" size="md">
-              ID {user.employeeId}
-            </Badge>
-          ) : null}
         </div>
 
         {canPunchAttendance ? <PunchInOut /> : null}

@@ -96,6 +96,16 @@ describe('graphQlUserMessage', () => {
     );
   });
 
+  it('maps login email conflicts to a field-specific correction', () => {
+    const err = Object.assign(new Error('email is already in use in this tenant'), {
+      code: 'USER_EMAIL_CONFLICT',
+    });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'A login account already uses this email address. Use a different email or leave it blank.'
+    );
+  });
+
   it('preserves timesheet validation detail when GraphQL exposes VALIDATION_ERROR', () => {
     const err = new ClientError(
       {
