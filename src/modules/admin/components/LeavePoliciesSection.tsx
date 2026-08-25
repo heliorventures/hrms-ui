@@ -2,6 +2,7 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
+import Select from '../../../components/common/Select';
 import Table from '../../../components/common/Table';
 import type { AdminLeaveSettingsModel } from '../hooks/useAdminLeaveSettings';
 import {
@@ -31,7 +32,7 @@ const LeavePoliciesSection = ({ model }: LeavePoliciesSectionProps) => (
         {
           key: 'leaveType',
           label: 'Leave Type',
-          render: (row) => model.leaveTypeCodeById.get(row.leaveTypeId) ?? row.leaveTypeId.slice(0, 8),
+          render: (row) => model.leaveTypeCodeById.get(row.leaveTypeId) ?? 'Unknown leave type',
         },
         { key: 'freq', label: 'Accrual', render: formatLeavePolicyAccrual },
         { key: 'entitlement', label: 'Annual', render: (row) => row.annualEntitlement ?? '-' },
@@ -75,19 +76,17 @@ const LeavePolicyModal = ({ model }: LeavePoliciesSectionProps) => {
       title={model.editPolicyId ? 'Edit policy' : 'New policy'}
     >
       <form className="space-y-3" onSubmit={(event) => void model.savePolicy(event)}>
-        <label className="block text-sm font-medium">Leave type</label>
-        <select
-          className={selectFieldClass}
+        <Select
+          label="Leave type"
           value={form.leaveTypeId}
           onChange={(event) => model.setPolicyForm({ ...form, leaveTypeId: event.target.value })}
+          options={(model.data?.leaveTypes ?? []).map((type) => ({
+            value: type.id,
+            label: `${type.name} (${type.code})`,
+          }))}
           required
-        >
-          {model.data?.leaveTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name} ({type.code})
-            </option>
-          ))}
-        </select>
+          fullWidth
+        />
         <Input
           label="Applicable To (Optional)"
           value={form.applicableTo}

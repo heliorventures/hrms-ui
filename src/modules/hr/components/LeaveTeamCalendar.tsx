@@ -314,7 +314,7 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
               {employees.map((emp) => (
                 <tr key={emp.employeeId}>
                   <td className="sticky left-0 z-10 max-w-[200px] truncate border border-gray-200 bg-white px-2 py-0.5 dark:border-gray-700 dark:bg-gray-900">
-                    {emp.fullName || emp.employeeCode || emp.employeeId.slice(0, 8)}
+                    {emp.fullName || emp.employeeCode || 'Employee details unavailable'}
                   </td>
                   {monthDays.map((day) => {
                     const hol = holidaysInMonth.has(day);

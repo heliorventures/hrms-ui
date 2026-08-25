@@ -40,7 +40,9 @@ const TravelRequestsTable = ({
           {
             key: 'employeeId',
             label: 'Employee',
-            render: (row) => <span>{employeeLabels[row.employeeId] ?? row.employeeId}</span>,
+            render: (row) => (
+              <span>{employeeLabels[row.employeeId] ?? 'Employee details unavailable'}</span>
+            ),
           },
           {
             key: 'purpose',

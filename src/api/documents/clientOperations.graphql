@@ -225,7 +225,7 @@ query ClientOpsPayslipsList($limit: Int! = 10) {
 }
 
 # India statutory stub: CSV from payslip rows for the payroll cycle (month + calendar year).
-# Requires payroll:statutory_export or HR / tenant admin (see JWT RBAC).
+# Requires the effective payroll:statutory_export permission from the signed-in session.
 query IndiaTdsMonthlySummaryCsv($month: Int!, $year: Int!) {
   indiaTdsMonthlySummaryCsv(month: $month, year: $year)
 }
@@ -1251,7 +1251,7 @@ query AdminWorkflowsStepsData($wl: Int! = 30) {
   }
 }
 
-# kabipay-workflow (HR / `workflow:manage` or admin roles)
+# kabipay-workflow (`workflow:manage` permission)
 mutation AdminCreateWorkflow($input: CreateWorkflowInput!) {
   createWorkflow(input: $input) {
     id
@@ -1617,6 +1617,8 @@ query LeaveBoard($limit: Int! = 20, $balanceYear: Int, $fromDate: NaiveDate, $to
   leaveRequests(limit: $limit, fromDate: $fromDate, toDate: $toDate) {
     id
     employeeId
+    employeeName
+    employeeCode
     leaveTypeId
     fromDate
     toDate
@@ -1628,6 +1630,8 @@ query LeaveBoard($limit: Int! = 20, $balanceYear: Int, $fromDate: NaiveDate, $to
     halfDaySession
     appliedAt
     workflowInstanceId
+    pendingApprovalStage
+    viewerMayApprove
     supportingDocumentReference
   }
   leaveBalances(limit: $limit, year: $balanceYear) {
@@ -1852,6 +1856,109 @@ query ManagedAttendancePage(
   }
 }
 
+query AdminAttendanceDailyReport(
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeId: ID
+  $employeeSearch: String
+  $first: Int = 50
+  $after: String
+) {
+  attendanceDailyReport(
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeId: $employeeId
+    employeeSearch: $employeeSearch
+    first: $first
+    after: $after
+  ) {
+    edges {
+      cursor
+      node {
+        employeeId
+        employeeName
+        employeeCode
+        workDate
+        timezone
+        firstCheckInAt
+        lastCheckOutAt
+        loggedMinutes
+        expectedMinutes
+        status
+        segmentCount
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+query AdminAttendanceReportSummary(
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeId: ID
+  $employeeSearch: String
+) {
+  attendanceReportSummary(
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeId: $employeeId
+    employeeSearch: $employeeSearch
+  ) {
+    totalDays
+    presentDays
+    halfDays
+    absentDays
+    onLeaveDays
+    holidayDays
+    weeklyOffDays
+    incompleteDays
+    unscheduledDays
+    totalLoggedMinutes
+  }
+}
+
+query AdminAttendanceExportPage(
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeId: ID
+  $employeeSearch: String
+  $first: Int = 100
+  $after: String
+) {
+  attendanceDailyReport(
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeId: $employeeId
+    employeeSearch: $employeeSearch
+    first: $first
+    after: $after
+  ) {
+    edges {
+      cursor
+      node {
+        employeeId
+        employeeName
+        employeeCode
+        workDate
+        timezone
+        firstCheckInAt
+        lastCheckOutAt
+        loggedMinutes
+        expectedMinutes
+        status
+        segmentCount
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
 mutation AddManagedAttendanceSegment($input: AddManagedAttendanceSegmentInput!) {
   addManagedAttendanceSegment(input: $input) {
     id
@@ -1915,7 +2022,7 @@ query PunchDaySummary {
   }
 }
 
-query OnLeaveToday($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50, $today: NaiveDate) {
+query OnLeaveToday($limit: Int! = 50, $typeLim: Int! = 50, $today: NaiveDate) {
   leaveRequests(limit: $limit, fromDate: $today, toDate: $today) {
     id
     employeeId
@@ -1925,16 +2032,13 @@ query OnLeaveToday($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50, 
     status
     isHalfDay
     halfDaySession
+    employeeName
+    employeeCode
   }
   leaveTypes(limit: $typeLim) {
     id
     name
     code
-  }
-  orgChart(limit: $orgLim) {
-    employeeId
-    fullName
-    employeeCode
   }
 }
 

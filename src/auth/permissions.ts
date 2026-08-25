@@ -5,6 +5,7 @@ export const PERMISSIONS = {
   assetsSelf: 'assets:self',
   attendancePunchPolicy: 'attendance:punch_policy',
   attendancePunchSelf: 'attendance:punch_self',
+  attendanceRead: 'attendance:read',
   attendanceRegularize: 'attendance:regularize',
   benefitsManage: 'benefits:manage',
   benefitsSelf: 'benefits:self',
@@ -33,5 +34,3 @@ export const PERMISSIONS = {
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
-
-export const HR_ADMIN_ROLE_CODES = ['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN'] as const;

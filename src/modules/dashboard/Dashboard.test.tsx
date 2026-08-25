@@ -11,6 +11,7 @@ const authState = vi.hoisted(() => ({
   clientSession: {
     jwtRoles: [],
     permissions: new Set<string>(),
+    permissionScopes: {},
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,

@@ -3,7 +3,12 @@ import Button from '../../../components/common/Button';
 import Table from '../../../components/common/Table';
 import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
 
-export type LeaveRequestRow = LeaveBoardQuery['leaveRequests'][number];
+export type LeaveRequestRow = LeaveBoardQuery['leaveRequests'][number] & {
+  employeeName?: string | null;
+  employeeCode?: string | null;
+  pendingApprovalStage?: string | null;
+  viewerMayApprove?: boolean;
+};
 
 export function statusVariant(status: string): 'success' | 'danger' | 'warning' | 'neutral' {
   switch (status.toLowerCase()) {
@@ -27,10 +32,8 @@ interface LeaveRequestsTableSectionProps {
   employeeLabel?: (employeeId: string) => string;
   /** Hide Employee column when the viewer only sees their own requests. */
   hideEmployeeColumn?: boolean;
-  /** Show Approvals column when true (still gated per-row by `canApproveRow`). */
+  /** Show Approvals column when true; the server remains authoritative per row. */
   showApprovalColumn: boolean;
-  /** Optional per-row gate (e.g. direct manager vs plain employee). Defaults to true. */
-  canApproveRow?: (row: LeaveRequestRow) => boolean;
   viewerId?: string;
   approveBusyId: string | null;
   cancelBusyId: string | null;
@@ -48,7 +51,6 @@ const LeaveRequestsTableSection = ({
   employeeLabel,
   hideEmployeeColumn = false,
   showApprovalColumn,
-  canApproveRow = () => true,
   viewerId,
   approveBusyId,
   cancelBusyId,
@@ -117,7 +119,14 @@ const LeaveRequestsTableSection = ({
           key: 'status',
           label: 'Status',
           render: (row: LeaveRequestRow) => (
-            <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
+            <div className="space-y-1">
+              <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
+              {row.pendingApprovalStage && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Awaiting {row.pendingApprovalStage}
+                </p>
+              )}
+            </div>
           ),
         },
         {
@@ -155,7 +164,7 @@ const LeaveRequestsTableSection = ({
                 key: 'actions',
                 label: 'Actions',
                 render: (row: LeaveRequestRow) =>
-                  row.status.toLowerCase() === 'pending' && canApproveRow(row) ? (
+                  row.status.toLowerCase() === 'pending' && row.viewerMayApprove === true ? (
                     <div className="flex flex-wrap gap-2">
                       <Button
                         variant="primary"

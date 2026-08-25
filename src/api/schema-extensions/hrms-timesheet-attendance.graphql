@@ -38,6 +38,43 @@ type TimesheetProjectOption {
   name: String!
 }
 
+type AttendanceDailyReportRow {
+  employeeId: ID!
+  employeeName: String!
+  employeeCode: String!
+  workDate: NaiveDate!
+  timezone: String!
+  firstCheckInAt: DateTime
+  lastCheckOutAt: DateTime
+  loggedMinutes: Int!
+  expectedMinutes: Int
+  status: String!
+  segmentCount: Int!
+}
+
+type AttendanceDailyReportEdge {
+  cursor: String!
+  node: AttendanceDailyReportRow!
+}
+
+type AttendanceDailyReportConnection {
+  edges: [AttendanceDailyReportEdge!]!
+  pageInfo: AttendancePageInfo!
+}
+
+type AttendanceReportSummary {
+  totalDays: Int!
+  presentDays: Int!
+  halfDays: Int!
+  absentDays: Int!
+  onLeaveDays: Int!
+  holidayDays: Int!
+  weeklyOffDays: Int!
+  incompleteDays: Int!
+  unscheduledDays: Int!
+  totalLoggedMinutes: Int!
+}
+
 input UpdateTimesheetEntryInput {
   id: ID!
   workDate: NaiveDate!
@@ -65,6 +102,20 @@ extend type Query {
   attendanceAdjustmentPolicy: AttendanceAdjustmentPolicy!
   timesheetLockPolicy: TimesheetLockPolicy!
   timesheetWeekBatches(status: String, limit: Int): [TimesheetWeekBatch!]!
+  attendanceDailyReport(
+    fromDate: NaiveDate!
+    toDate: NaiveDate!
+    employeeId: ID
+    employeeSearch: String
+    first: Int
+    after: String
+  ): AttendanceDailyReportConnection!
+  attendanceReportSummary(
+    fromDate: NaiveDate!
+    toDate: NaiveDate!
+    employeeId: ID
+    employeeSearch: String
+  ): AttendanceReportSummary!
 }
 
 extend type Mutation {

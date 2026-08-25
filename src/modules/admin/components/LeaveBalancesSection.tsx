@@ -2,9 +2,9 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import EmployeeSearchSelect from '../../../components/common/EmployeeSearchSelect';
 import Input from '../../../components/common/Input';
+import Select from '../../../components/common/Select';
 import type { SearchableSelectAvailability } from '../../../components/common/SearchableSelect';
 import type { AdminLeaveSettingsModel } from '../hooks/useAdminLeaveSettings';
-import { selectFieldClass } from '../leaveSettingsUtils';
 
 interface LeaveBalancesSectionProps {
   model: AdminLeaveSettingsModel;
@@ -191,22 +191,17 @@ interface LeaveTypeSelectProps {
 }
 
 const LeaveTypeSelect = ({ value, leaveTypes, onChange }: LeaveTypeSelectProps) => (
-  <label className="block text-sm font-medium">
-    <span>Leave type</span>
-    <select
-      className={selectFieldClass}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      required
-    >
-      <option value="">Select...</option>
-      {leaveTypes.map((type) => (
-        <option key={type.id} value={type.id}>
-          {type.code}
-        </option>
-      ))}
-    </select>
-  </label>
+  <Select
+    label="Leave type"
+    value={value}
+    onChange={(event) => onChange(event.target.value)}
+    options={[
+      { value: '', label: 'Select...' },
+      ...leaveTypes.map((type) => ({ value: type.id, label: type.code })),
+    ]}
+    required
+    fullWidth
+  />
 );
 
 export default LeaveBalancesSection;

@@ -39,6 +39,7 @@ const sessionFor = (
 ): ParsedClientSession => ({
   jwtRoles: [],
   permissions,
+  permissionScopes: {},
   resourceScopes: {},
   persona,
   mustChangePassword: false,

@@ -3,10 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import FlashToastBar from '../../components/common/FlashToastBar';
-import {
-  canApproveLeaveRequestRow,
-  showLeaveApprovalColumn,
-} from '../../auth/leaveApprovalUi';
 import { canAccessTenantPath } from '../../auth/navAccess';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -14,7 +10,9 @@ import { useFlashToast } from '../../hooks/useFlashToast';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import ApplyLeaveModal from '../leave/components/ApplyLeaveModal';
 import LeaveRejectModal from '../leave/components/LeaveRejectModal';
-import LeaveRequestsTableSection from '../leave/components/LeaveRequestsTableSection';
+import LeaveRequestsTableSection, {
+  type LeaveRequestRow,
+} from '../leave/components/LeaveRequestsTableSection';
 import LeaveRecoveryNotice from '../leave/components/LeaveRecoveryNotice';
 import LeaveWorkflowTrailModal from '../leave/components/LeaveWorkflowTrailModal';
 import { useLeaveWorkflowTrail } from '../leave/hooks/useLeaveWorkflowTrail';
@@ -24,9 +22,7 @@ import LeaveTeamCalendar from './components/LeaveTeamCalendar';
 import {
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
-  OrgChartDocument,
   type LeaveBoardQuery,
-  type OrgChartQuery,
 } from '../../api/graphql/graphql';
 import { LeaveBoardRangeDocument } from '../leave/leaveBoardQuery';
 
@@ -39,17 +35,18 @@ type HrLeaveFailure = {
   operation: 'board' | 'mutation';
 };
 
+type LeaveBoardData = Omit<LeaveBoardQuery, 'leaveRequests'> & {
+  leaveRequests: LeaveRequestRow[];
+};
+
 const HR_LEAVE_LIMIT = 120;
-const ORG_CHART_LIMIT = 500;
 
 const HrLeavesPage = () => {
   const navigate = useNavigate();
   const { can, clientSession } = useAuth();
   const client = useGraphClient('client');
   const flash = useFlashToast();
-  const [data, setData] = useState<LeaveBoardQuery | null>(null);
-  const [orgChartRows, setOrgChartRows] = useState<OrgChartQuery['orgChart']>([]);
-  const [orgLabels, setOrgLabels] = useState<Map<string, string>>(new Map());
+  const [data, setData] = useState<LeaveBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState<HrLeaveFailure | null>(null);
   const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
@@ -81,7 +78,7 @@ const HrLeavesPage = () => {
 
   const loadBoard = useCallback(
     () =>
-      client.request<LeaveBoardQuery>(LeaveBoardRangeDocument, {
+      client.request<LeaveBoardData>(LeaveBoardRangeDocument, {
         limit: HR_LEAVE_LIMIT,
         balanceYear,
         fromDate: requestYearRange.fromDate,
@@ -90,34 +87,18 @@ const HrLeavesPage = () => {
     [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]
   );
 
-  const loadOrgChart = useCallback(async () => {
-    const response = await client.request<OrgChartQuery>(OrgChartDocument, { limit: ORG_CHART_LIMIT });
-    return {
-      labels: new Map(
-        (response.orgChart ?? []).map((row) => [
-          row.employeeId,
-          `${row.fullName}${row.employeeCode ? ` (${row.employeeCode})` : ''}`,
-        ])
-      ),
-      rows: response.orgChart ?? [],
-    };
-  }, [client]);
-
   const reloadBoardAndLabels = useCallback(async () => {
     try {
       setLoading(true);
       setFailure(null);
       workflowTrail.clearFailure();
-      const [board, orgData] = await Promise.all([loadBoard(), loadOrgChart()]);
-      setData(board);
-      setOrgLabels(orgData.labels);
-      setOrgChartRows(orgData.rows);
+      setData(await loadBoard());
     } catch (err) {
       setFailure({ message: graphQlUserMessage(err), operation: 'board' });
     } finally {
       setLoading(false);
     }
-  }, [loadBoard, loadOrgChart, workflowTrail.clearFailure]);
+  }, [loadBoard, workflowTrail.clearFailure]);
 
   const retryBoard = useCallback(() => {
     void reloadBoardAndLabels();
@@ -186,30 +167,9 @@ const HrLeavesPage = () => {
   );
 
   const viewerId = data?.viewerEmployeeId;
-  const directReportIds = useMemo(() => {
-    if (!viewerId) return new Set<string>();
-    return new Set(
-      orgChartRows
-        .filter((row) => row.reportingManagerId === viewerId)
-        .map((row) => row.employeeId)
-    );
-  }, [viewerId, orgChartRows]);
-
   const showApprovalColumn = useMemo(
-    () => showLeaveApprovalColumn({ can, clientSession, managesDirectReports: directReportIds.size > 0 }),
-    [can, clientSession, directReportIds]
-  );
-
-  const canApproveRowForTable = useCallback(
-    (row: LeaveBoardQuery['leaveRequests'][number]) =>
-      canApproveLeaveRequestRow({
-        rowEmployeeId: row.employeeId,
-        viewerEmployeeId: viewerId,
-        can,
-        clientSession,
-        directReportIds,
-      }),
-    [viewerId, can, clientSession, directReportIds]
+    () => (data?.leaveRequests ?? []).some((row) => row.viewerMayApprove === true),
+    [data?.leaveRequests]
   );
 
   const pendingCount = useMemo(
@@ -225,9 +185,21 @@ const HrLeavesPage = () => {
     );
   }, [data?.leaveRequests, filter]);
 
+  const employeeLabelById = useMemo(
+    () =>
+      new Map(
+        (data?.leaveRequests ?? []).flatMap((row) =>
+          row.employeeName
+            ? [[row.employeeId, `${row.employeeName}${row.employeeCode ? ` (${row.employeeCode})` : ''}`] as const]
+            : []
+        )
+      ),
+    [data?.leaveRequests]
+  );
+
   const employeeLabel = useCallback(
-    (employeeId: string) => orgLabels.get(employeeId) ?? `${employeeId.slice(0, 8)}...`,
-    [orgLabels]
+    (employeeId: string) => employeeLabelById.get(employeeId) ?? 'Employee details unavailable',
+    [employeeLabelById]
   );
 
   const openWorkflowTrail = useCallback(
@@ -332,7 +304,6 @@ const HrLeavesPage = () => {
         ) : (
           <LeaveRequestsTableSection
             approveBusyId={approveBusyId}
-            canApproveRow={canApproveRowForTable}
             cancelBusyId={cancelBusyId}
             employeeLabel={employeeLabel}
             emptyLabel="No Requests In This Tab."

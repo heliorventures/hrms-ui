@@ -3,7 +3,7 @@ import { timesheetWeekRangeIso } from '../../utils/timesheetWeek';
 
 export const MAX_TIMESHEET_ENTRY_HOURS = 24;
 export const MAX_TIMESHEET_WEEK_HOURS = 40;
-const DECIMAL_HOURS_PATTERN = /^(?:\d+|\d+\.\d+|\.\d+)$/;
+const DECIMAL_HOURS_PATTERN = /^(?:\d+(?:\.\d{0,2})?|\.\d{1,2})$/;
 
 export const statusUpper = (status: string) => status.trim().toUpperCase();
 

@@ -65,6 +65,7 @@ function session(
     persona: 'EMPLOYEE',
     mustChangePassword: false,
     ...overrides,
+    permissionScopes: overrides.permissionScopes ?? {},
   };
 }
 

@@ -77,9 +77,8 @@ interface CreateEmployeeModalProps {
 
 const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModalProps) => {
   const client = useGraphClient('client');
-  const { can, hasAnyJwtRole } = useAuth();
-  const canManageLoginAccounts =
-    can('role:manage') || hasAnyJwtRole(['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN']);
+  const { can } = useAuth();
+  const canManageLoginAccounts = can('role:manage');
   const [createLogin, setCreateLogin] = useState(false);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');

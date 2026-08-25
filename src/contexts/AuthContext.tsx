@@ -63,6 +63,7 @@ interface LoginOptions {
 const emptySession = (): ParsedClientSession => ({
   jwtRoles: [],
   permissions: new Set(),
+  permissionScopes: {},
   resourceScopes: {},
   employeeId: undefined,
   persona: 'EMPLOYEE',
@@ -79,13 +80,9 @@ interface AuthContextType {
   role: UserRole;
   /** JWT-derived persona (from role names on token) — display / dev switch only; gates use `can()`. */
   persona: ClientPersona;
-  /** True when UI legacy role is `admin` (persona or dev switcher) — not used for RBAC screens. */
-  isElevated: boolean;
   /** Permission from current client access token (`resource:action`). */
   can: (permission: string) => boolean;
   canAny: (permissions: readonly string[]) => boolean;
-  hasJwtRole: (roleName: string) => boolean;
-  hasAnyJwtRole: (roleNames: readonly string[]) => boolean;
   /** Parsed client session from JWT; empty when logged out. */
   clientSession: ParsedClientSession | null;
   /** Tenant (employee) app session. */
@@ -170,9 +167,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const clientBootstrapTenantRef = useRef<string | null>(null);
 
   const persona = clientSession?.persona ?? 'EMPLOYEE';
-  /** Legacy “admin shell” flag for a few non-RBAC UI toggles only (persona + dev role switch). */
-  const isElevated = user !== null && user.role !== 'employee';
-
   const can = useCallback(
     (permission: string) => clientSession?.permissions.has(permission) ?? false,
     [clientSession]
@@ -181,19 +175,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const canAny = useCallback(
     (permissions: readonly string[]) => permissions.some((p) => can(p)),
     [can]
-  );
-
-  const hasJwtRole = useCallback(
-    (roleName: string) => {
-      const u = roleName.trim().toUpperCase();
-      return clientSession?.jwtRoles.some((r) => r.trim().toUpperCase() === u) ?? false;
-    },
-    [clientSession]
-  );
-
-  const hasAnyJwtRole = useCallback(
-    (roleNames: readonly string[]) => roleNames.some((n) => hasJwtRole(n)),
-    [hasJwtRole]
   );
 
   const applyTokens = useCallback((pair: TokenPair, expectedTenantId: string) => {
@@ -452,11 +433,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       opsUser,
       role,
       persona,
-      isElevated,
       can,
       canAny,
-      hasJwtRole,
-      hasAnyJwtRole,
       clientSession,
       isAuthenticated: !!user,
       isOpsAuthenticated: !!opsUser,
@@ -477,11 +455,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       opsUser,
       role,
       persona,
-      isElevated,
       can,
       canAny,
-      hasJwtRole,
-      hasAnyJwtRole,
       clientSession,
       tenantId,
       loading,

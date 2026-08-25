@@ -66,6 +66,7 @@ describe('navigation selectors', () => {
     const session: ParsedClientSession = {
       jwtRoles: [],
       permissions: new Set(['attendance:regularize']),
+      permissionScopes: {},
       resourceScopes: {},
       persona: 'EMPLOYEE',
       mustChangePassword: false,

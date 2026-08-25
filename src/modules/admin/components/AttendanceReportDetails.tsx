@@ -1,132 +1,105 @@
+import type { AdminAttendanceDailyReportQuery } from '../../../api/graphql/graphql';
+import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Table from '../../../components/common/Table';
-import { formatMinutesAsHhMm, segmentWorkedMinutes } from '../../../utils/attendanceDuration';
-import { formatBackendTime } from '../../../utils/timeFormat';
+import { formatMinutesAsHhMm } from '../../../utils/attendanceDuration';
+import { titleCaseLabel } from '../../../utils/uiLabel';
 
-export interface AttendanceReportEmployeeRow {
-  id: string;
-  employeeCode: string;
-  fullName: string;
-}
-
-export interface AttendanceReportRow {
-  id: string;
-  employeeId: string;
-  workDate: string;
-  status?: string | null;
-  checkInTime?: string | null;
-  checkOutTime?: string | null;
-}
-
-interface AttendanceDailyReportRow {
-  key: string;
-  employeeId: string;
-  workDate: string;
-  totalMinutes: number;
-  segmentCount: number;
-  status: string;
-}
+export type AttendanceDailyRow =
+  AdminAttendanceDailyReportQuery['attendanceDailyReport']['edges'][number]['node'];
 
 interface AttendanceReportDetailsProps {
-  employees: AttendanceReportEmployeeRow[];
-  rows: AttendanceReportRow[];
+  rows: AttendanceDailyRow[];
+  loading: boolean;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  onPrevious: () => void;
+  onNext: () => void;
 }
 
-function buildDailyRows(rows: AttendanceReportRow[]) {
-  const grouped = new Map<string, AttendanceDailyReportRow>();
-  for (const row of rows) {
-    const key = `${row.employeeId}:${row.workDate}`;
-    const current =
-      grouped.get(key) ??
-      ({
-        key,
-        employeeId: row.employeeId,
-        workDate: row.workDate,
-        totalMinutes: 0,
-        segmentCount: 0,
-        status: row.status ?? '-',
-      } satisfies AttendanceDailyReportRow);
-    const workedMinutes = segmentWorkedMinutes(row.checkInTime, row.checkOutTime);
-    grouped.set(key, {
-      ...current,
-      totalMinutes: current.totalMinutes + (workedMinutes ?? 0),
-      segmentCount: current.segmentCount + 1,
-      status: row.status ?? current.status,
-    });
+function formatInstant(value: unknown, timezone: string): string {
+  if (typeof value !== 'string' || !value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).format(date);
+  } catch {
+    return '-';
   }
-  return [...grouped.values()].sort((first, second) => {
-    const dateOrder = second.workDate.localeCompare(first.workDate);
-    return dateOrder !== 0 ? dateOrder : first.employeeId.localeCompare(second.employeeId);
-  });
 }
 
-const AttendanceReportDetails = ({ employees, rows }: AttendanceReportDetailsProps) => {
-  const employeeNameById = new Map(employees.map((employee) => [employee.id, employee]));
-  const employeeLabel = (employeeId: string) => {
-    const employee = employeeNameById.get(employeeId);
-    return employee ? `${employee.fullName} (${employee.employeeCode})` : employeeId.slice(0, 8);
-  };
-  const dailyRows = buildDailyRows(rows);
-
-  return (
-    <Card title="Attendance Details">
-      {dailyRows.length ? (
-        <Table
-          data={dailyRows}
-          keyExtractor={(row) => row.key}
-          columns={[
-            {
-              key: 'employee',
-              label: 'Employee',
-              render: (row: AttendanceDailyReportRow) => employeeLabel(row.employeeId),
-            },
-            { key: 'workDate', label: 'Date', render: (row) => row.workDate },
-            {
-              key: 'total',
-              label: 'Total Time',
-              render: (row: AttendanceDailyReportRow) =>
-                row.totalMinutes > 0 ? formatMinutesAsHhMm(row.totalMinutes) : '-',
-            },
-            {
-              key: 'segments',
-              label: 'Punch Segments',
-              render: (row: AttendanceDailyReportRow) => row.segmentCount,
-            },
-            { key: 'status', label: 'Status', render: (row) => row.status },
-          ]}
-        />
-      ) : (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          No Attendance Records Match The Selected Filters.
-        </p>
-      )}
-      <div className="mt-4">
-        <Table
-          data={rows}
-          keyExtractor={(row) => row.id}
-          columns={[
-            {
-              key: 'employee',
-              label: 'Employee',
-              render: (row: AttendanceReportRow) => employeeLabel(row.employeeId),
-            },
-            { key: 'workDate', label: 'Date', render: (row) => row.workDate },
-            {
-              key: 'in',
-              label: 'Punch In',
-              render: (row: AttendanceReportRow) => formatBackendTime(row.checkInTime),
-            },
-            {
-              key: 'out',
-              label: 'Punch Out',
-              render: (row: AttendanceReportRow) => formatBackendTime(row.checkOutTime),
-            },
-            { key: 'status', label: 'Status', render: (row) => row.status ?? '-' },
-          ]}
-        />
-      </div>
-    </Card>
-  );
-};
+const AttendanceReportDetails = ({
+  rows,
+  loading,
+  canGoBack,
+  canGoForward,
+  onPrevious,
+  onNext,
+}: AttendanceReportDetailsProps) => (
+  <Card title="Attendance Details">
+    {loading ? (
+      <p className="text-sm text-gray-500 dark:text-gray-400">Loading Attendance Report...</p>
+    ) : rows.length ? (
+      <Table
+        data={rows}
+        keyExtractor={(row) => `${row.employeeId}:${String(row.workDate)}`}
+        columns={[
+          {
+            key: 'employee',
+            label: 'Employee',
+            render: (row: AttendanceDailyRow) => `${row.employeeName} (${row.employeeCode})`,
+          },
+          { key: 'workDate', label: 'Date', render: (row) => String(row.workDate) },
+          {
+            key: 'firstIn',
+            label: 'First Punch In',
+            render: (row: AttendanceDailyRow) =>
+              formatInstant(row.firstCheckInAt, row.timezone),
+          },
+          {
+            key: 'lastOut',
+            label: 'Last Punch Out',
+            render: (row: AttendanceDailyRow) =>
+              formatInstant(row.lastCheckOutAt, row.timezone),
+          },
+          {
+            key: 'total',
+            label: 'Total Time',
+            render: (row: AttendanceDailyRow) => formatMinutesAsHhMm(row.loggedMinutes),
+          },
+          {
+            key: 'expected',
+            label: 'Expected Time',
+            render: (row: AttendanceDailyRow) =>
+              row.expectedMinutes == null ? '-' : formatMinutesAsHhMm(row.expectedMinutes),
+          },
+          { key: 'segments', label: 'Punch Segments', render: (row) => row.segmentCount },
+          {
+            key: 'status',
+            label: 'Status',
+            render: (row: AttendanceDailyRow) => titleCaseLabel(row.status),
+          },
+        ]}
+      />
+    ) : (
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        No Attendance Records Match The Selected Filters.
+      </p>
+    )}
+    <div className="mt-4 flex justify-end gap-2">
+      <Button variant="secondary" disabled={!canGoBack || loading} onClick={onPrevious}>
+        Previous
+      </Button>
+      <Button variant="secondary" disabled={!canGoForward || loading} onClick={onNext}>
+        Next
+      </Button>
+    </div>
+  </Card>
+);
 
 export default AttendanceReportDetails;

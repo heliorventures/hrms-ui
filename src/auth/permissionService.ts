@@ -1,6 +1,5 @@
-import { hasBroadDataScopeForResource } from './approvalScope';
 import type { ParsedClientSession } from './clientSession';
-import { HR_ADMIN_ROLE_CODES, PERMISSIONS, type PermissionCode } from './permissions';
+import { PERMISSIONS, type PermissionCode } from './permissions';
 
 export type Capability =
   | 'action.attendance.punch'
@@ -70,25 +69,12 @@ function hasAnyPermission(
   return permissions.some((permission) => session?.permissions.has(permission) ?? false);
 }
 
-function hasHrAdminLikeRole(session: ParsedClientSession | null): boolean {
-  const roles = session?.jwtRoles ?? [];
-  return roles.some((role) =>
-    HR_ADMIN_ROLE_CODES.some((allowed) => allowed === role.trim().toUpperCase())
-  );
-}
-
 function canApproveLeave(session: ParsedClientSession | null): boolean {
-  return (
-    hasAnyPermission(session, [PERMISSIONS.leaveApprove]) ||
-    hasBroadDataScopeForResource(session, 'leave')
-  );
+  return hasAnyPermission(session, [PERMISSIONS.leaveApprove]);
 }
 
 function canApproveTimesheet(session: ParsedClientSession | null): boolean {
-  return (
-    hasAnyPermission(session, [PERMISSIONS.timesheetApprove]) ||
-    hasBroadDataScopeForResource(session, 'timesheet')
-  );
+  return hasAnyPermission(session, [PERMISSIONS.timesheetApprove]);
 }
 
 function canUseHrWorkbench(session: ParsedClientSession | null): boolean {
@@ -149,17 +135,13 @@ export function createPermissionService(
       case 'route.timesheet':
         return session != null;
       case 'action.expense.approve':
-        return (
-          canPermission(PERMISSIONS.expenseApprove) ||
-          hasBroadDataScopeForResource(session, 'expense') ||
-          hasHrAdminLikeRole(session)
-        );
+        return canPermission(PERMISSIONS.expenseApprove);
       case 'action.expense.pay':
         return canPermission(PERMISSIONS.expensePay);
       case 'action.leave.approve':
         return canApproveLeave(session);
       case 'action.notifications.manage':
-        return canPermission(PERMISSIONS.notificationManage) || hasHrAdminLikeRole(session);
+        return canPermission(PERMISSIONS.notificationManage);
       case 'action.onboarding.manage':
         return canPermission(PERMISSIONS.onboardingManage) || canPermission(PERMISSIONS.employeeWrite);
       case 'action.people.search':
@@ -181,8 +163,7 @@ export function createPermissionService(
       case 'route.payroll.compensation':
         return (
           canPermission(PERMISSIONS.compensationManage) ||
-          canPermission(PERMISSIONS.payrollStatutoryExport) ||
-          hasHrAdminLikeRole(session)
+          canPermission(PERMISSIONS.payrollStatutoryExport)
         );
       case 'route.payroll.admin':
         return (
@@ -205,10 +186,7 @@ export function createPermissionService(
       case 'route.admin.notifications':
         return canCapability('action.notifications.manage');
       case 'route.admin.reports':
-        return (
-          canPermission(PERMISSIONS.payrollStatutoryExport) ||
-          canPermission(PERMISSIONS.employeeWrite)
-        );
+        return canPermission(PERMISSIONS.attendanceRead);
       case 'route.workplace.benefits':
         return canPermission(PERMISSIONS.benefitsManage) || canPermission(PERMISSIONS.benefitsSelf);
       case 'route.workplace.assets':

@@ -169,7 +169,7 @@ const AdminAttendancePolicyPage = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance punch policy</h1>
       <p className="text-sm text-gray-600 dark:text-gray-300">
-        Requires HR / tenant admin JWT claims (`attendance:punch_policy` or admin roles). Shift
+        Requires the `attendance:punch_policy` permission. Shift
         templates are read-only here.
       </p>
       {error && (

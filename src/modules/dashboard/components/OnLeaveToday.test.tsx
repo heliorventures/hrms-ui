@@ -5,6 +5,7 @@ import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { OnLeaveTodayDocument } from '../../../api/graphql/graphql';
 import { toDateInputValue } from '../../../utils/dateInput';
 
 import OnLeaveToday from './OnLeaveToday';
@@ -41,6 +42,8 @@ const leaveRequest = (index: number) => ({
   status: 'approved',
   isHalfDay: false,
   halfDaySession: null,
+  employeeName: `Employee ${index}`,
+  employeeCode: `E${index}`,
 });
 
 const leaveType = (index: number) => ({
@@ -49,16 +52,9 @@ const leaveType = (index: number) => ({
   code: `LT${index}`,
 });
 
-const orgRow = (index: number) => ({
-  employeeId: `employee-${index}`,
-  fullName: `Employee ${index}`,
-  employeeCode: `E${index}`,
-});
-
-const payload = (requestCount = 1, orgCount = 1, typeCount = 1) => ({
+const payload = (requestCount = 1, typeCount = 1) => ({
   leaveRequests: Array.from({ length: requestCount }, (_, index) => leaveRequest(index)),
   leaveTypes: Array.from({ length: typeCount }, (_, index) => leaveType(index)),
-  orgChart: Array.from({ length: orgCount }, (_, index) => orgRow(index)),
 });
 
 function renderCard() {
@@ -90,7 +86,7 @@ describe('OnLeaveToday truthful states', () => {
   });
 
   it('renders intentional empty copy after a successful empty response', async () => {
-    graphState.client.request.mockResolvedValue(payload(0, 0, 0));
+    graphState.client.request.mockResolvedValue(payload(0, 0));
     renderCard();
 
     expect(await screen.findByText('No One Is on Leave Today.')).toBeTruthy();
@@ -109,37 +105,33 @@ describe('OnLeaveToday truthful states', () => {
     expect(screen.getByText('Loading Leave Requests…')).toBeTruthy();
 
     act(() => retry.resolve(payload()));
-    expect(await screen.findByText('Employee 0')).toBeTruthy();
+    expect(await screen.findByText('Employee 0 (E0)')).toBeTruthy();
   });
 
   it('retains the last loaded leave list after a refresh failure', async () => {
     const user = userEvent.setup();
     renderCard();
-    await screen.findByText('Employee 0');
+    await screen.findByText('Employee 0 (E0)');
     graphState.client.request.mockRejectedValue(new Error('Failed to fetch'));
 
     await user.click(screen.getByRole('button', { name: 'Refresh Leave Requests' }));
 
     expect(await screen.findByText('Leave Requests May Be Out of Date')).toBeTruthy();
-    expect(screen.getByText('Employee 0')).toBeTruthy();
+    expect(screen.getByText('Employee 0 (E0)')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
   });
 
   it('shows possibility wording for every source collection at its exact cap', async () => {
-    graphState.client.request.mockResolvedValue(payload(50, 500, 50));
+    graphState.client.request.mockResolvedValue(payload(50, 50));
     renderCard();
 
-    await screen.findByText('Employee 0');
+    await screen.findByText('Employee 0 (E0)');
     expect(
       screen.getByText('Showing up to 50 leave requests. More may be available.')
     ).toBeTruthy();
-    expect(
-      screen.getByText('Showing up to 500 organization records. More may be available.')
-    ).toBeTruthy();
     expect(screen.getByText('Showing up to 50 leave types. More may be available.')).toBeTruthy();
-    expect(graphState.client.request).toHaveBeenCalledWith(expect.anything(), {
+    expect(graphState.client.request).toHaveBeenCalledWith(OnLeaveTodayDocument, {
       limit: 50,
-      orgLim: 500,
       typeLim: 50,
       today: toDateInputValue(new Date()),
     });
@@ -152,7 +144,6 @@ describe('OnLeaveToday truthful states', () => {
         status: 'pending',
       })),
       leaveTypes: [],
-      orgChart: [],
     });
     renderCard();
 
@@ -166,20 +157,25 @@ describe('OnLeaveToday truthful states', () => {
     ).toBeTruthy();
   });
 
-  it('contains long employee fallback identifiers and uses a Title Case calendar link', async () => {
+  it('uses backend employee labels and never falls back to an employee UUID', async () => {
     const longEmployeeId = `employee-${'Y'.repeat(180)}`;
     graphState.client.request.mockResolvedValue({
-      leaveRequests: [{ ...leaveRequest(0), employeeId: longEmployeeId }],
+      leaveRequests: [{
+        ...leaveRequest(0),
+        employeeId: longEmployeeId,
+        employeeName: 'Asha Rao',
+        employeeCode: 'EMP-0042',
+      }],
       leaveTypes: [leaveType(0)],
-      orgChart: [],
     });
     renderCard();
 
-    const employeeName = await screen.findByText(longEmployeeId);
+    const employeeName = await screen.findByText('Asha Rao (EMP-0042)');
     expect(employeeName.className).toContain('break-words');
     expect(employeeName.className).toContain('[overflow-wrap:anywhere]');
     expect(employeeName.parentElement?.className).toContain('min-w-0');
     expect(employeeName.parentElement?.className).toContain('flex-1');
+    expect(screen.queryByText(longEmployeeId)).toBeNull();
     expect(screen.getByRole('link', { name: 'Show All on Calendar →' })).toBeTruthy();
   });
 });

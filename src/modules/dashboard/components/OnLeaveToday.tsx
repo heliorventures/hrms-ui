@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
-import { type OnLeaveTodayQuery } from '../../../api/graphql/graphql';
+import { OnLeaveTodayDocument, type OnLeaveTodayQuery } from '../../../api/graphql/graphql';
 import AsyncState from '../../../components/common/AsyncState';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
@@ -12,46 +12,11 @@ import { toIsoDate } from '../../../utils/calendarRange';
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
 
 const LEAVE_REQUEST_LIMIT = 50;
-const ORG_CHART_LIMIT = 500;
 const LEAVE_TYPE_LIMIT = 50;
-
-const OnLeaveTodayRangeDocument = `
-  query OnLeaveTodayRange($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50, $today: NaiveDate) {
-    leaveRequests(limit: $limit, fromDate: $today, toDate: $today) {
-      id
-      employeeId
-      leaveTypeId
-      fromDate
-      toDate
-      status
-      isHalfDay
-      halfDaySession
-    }
-    leaveTypes(limit: $typeLim) {
-      id
-      name
-      code
-    }
-    orgChart(limit: $orgLim) {
-      employeeId
-      fullName
-      employeeCode
-    }
-  }
-`;
 
 type LeavePerson = OnLeaveTodayQuery['leaveRequests'][number];
 type LeavePayload = OnLeaveTodayQuery;
 type LeaveTypeMap = Map<string, { code: string; name: string }>;
-
-const buildEmployeeNameMap = (payload: LeavePayload | null) => {
-  const names = new Map<string, string>();
-  for (const row of payload?.orgChart ?? []) {
-    const label = row.fullName.trim() || row.employeeCode.trim() || row.employeeId;
-    names.set(row.employeeId, label);
-  }
-  return names;
-};
 
 const buildLeaveTypeMap = (payload: LeavePayload | null) => {
   const leaveTypes: LeaveTypeMap = new Map();
@@ -106,14 +71,12 @@ const leaveTypeLabel = (person: LeavePerson, leaveTypeById: LeaveTypeMap) => {
 interface OnLeaveTodayListProps {
   capped: boolean;
   leaveTypeById: LeaveTypeMap;
-  nameByEmployeeId: Map<string, string>;
   people: LeavePerson[];
 }
 
 const OnLeaveTodayList = ({
   capped,
   leaveTypeById,
-  nameByEmployeeId,
   people,
 }: OnLeaveTodayListProps) => {
   if (people.length === 0 && capped) {
@@ -139,7 +102,7 @@ const OnLeaveTodayList = ({
   return (
     <div className="space-y-2">
       {people.map((person) => {
-        const displayName = nameByEmployeeId.get(person.employeeId) ?? person.employeeId;
+        const displayName = `${person.employeeName!.trim()} (${person.employeeCode!.trim()})`;
         const from = String(person.fromDate).slice(0, 10);
         const to = String(person.toDate).slice(0, 10);
         return (
@@ -185,11 +148,6 @@ const OnLeaveTodayCaps = ({ payload, requestsCapped }: OnLeaveTodayCapsProps) =>
         Showing up to {LEAVE_REQUEST_LIMIT} leave requests. More may be available.
       </p>
     ) : null}
-    {payload.orgChart.length === ORG_CHART_LIMIT ? (
-      <p role="status" className="mt-2 text-xs text-content-secondary">
-        Showing up to {ORG_CHART_LIMIT} organization records. More may be available.
-      </p>
-    ) : null}
     {payload.leaveTypes.length === LEAVE_TYPE_LIMIT ? (
       <p role="status" className="mt-2 text-xs text-content-secondary">
         Showing up to {LEAVE_TYPE_LIMIT} leave types. More may be available.
@@ -203,18 +161,19 @@ const OnLeaveToday = () => {
   const today = toIsoDate(new Date());
   const loadLeaveRequests = useCallback(
     () =>
-      client.request<OnLeaveTodayQuery>(OnLeaveTodayRangeDocument, {
+      client.request<OnLeaveTodayQuery>(OnLeaveTodayDocument, {
         limit: LEAVE_REQUEST_LIMIT,
-        orgLim: ORG_CHART_LIMIT,
         typeLim: LEAVE_TYPE_LIMIT,
         today,
       }),
     [client, today]
   );
   const { data: payload, error, phase, refresh } = useRetainedQuery(loadLeaveRequests);
-  const nameByEmployeeId = useMemo(() => buildEmployeeNameMap(payload), [payload]);
   const leaveTypeById = useMemo(() => buildLeaveTypeMap(payload), [payload]);
   const onLeaveToday = useMemo(() => selectOnLeaveToday(payload, today), [payload, today]);
+  const hasMissingEmployeeLabels = onLeaveToday.some(
+    (person) => !person.employeeName?.trim() || !person.employeeCode?.trim()
+  );
   const leaveRequestsMayBeCapped = payload?.leaveRequests.length === LEAVE_REQUEST_LIMIT;
   const onRefresh = () => void refresh();
 
@@ -246,12 +205,19 @@ const OnLeaveToday = () => {
         error={error}
         onRetry={onRefresh}
       />
-      <OnLeaveTodayList
-        capped={leaveRequestsMayBeCapped}
-        leaveTypeById={leaveTypeById}
-        nameByEmployeeId={nameByEmployeeId}
-        people={onLeaveToday}
-      />
+      {hasMissingEmployeeLabels ? (
+        <AsyncState
+          kind="unavailable"
+          title="Employee Details Could Not Be Loaded."
+          description="Refresh the leave list. If the issue continues, ask an administrator to verify employee records."
+        />
+      ) : (
+        <OnLeaveTodayList
+          capped={leaveRequestsMayBeCapped}
+          leaveTypeById={leaveTypeById}
+          people={onLeaveToday}
+        />
+      )}
       <OnLeaveTodayCaps payload={payload} requestsCapped={leaveRequestsMayBeCapped} />
       <OnLeaveTodayFooter hasData phase={phase} onRefresh={onRefresh} />
     </Card>

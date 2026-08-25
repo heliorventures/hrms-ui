@@ -13,6 +13,7 @@ function session(permissions: readonly string[] = []): ParsedClientSession {
   return {
     jwtRoles: [],
     permissions: new Set(permissions),
+    permissionScopes: {},
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,

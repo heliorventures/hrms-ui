@@ -35,10 +35,15 @@ type WorkflowStep {
   stepName: String!
   approverType: String
   approverRoleId: ID
+  approverPermission: String
   canSkip: Boolean!
   slaHours: Int
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+extend input CreateWorkflowStepInput {
+  approverPermission: String
 }
 
 type WorkflowWithSteps {
@@ -72,4 +77,10 @@ extend type Query {
 extend type Mutation {
   deleteWorkflowStep(stepId: ID!): Boolean!
   reorderWorkflowSteps(workflowId: ID!, stepIdsOrdered: [ID!]!): [WorkflowStep!]!
+}
+
+# Leave approval inbox state, merged locally until the federated gateway is restarted.
+extend type LeaveRequest {
+  pendingApprovalStage: String
+  viewerMayApprove: Boolean!
 }

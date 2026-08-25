@@ -86,12 +86,67 @@ describe('validateManualAttendanceSegment', () => {
       })
     ).toEqual({
       field: 'form',
-      message: 'Total attendance for a day cannot exceed 24 hours.',
+      message: 'Total attendance for a day must be less than 24 hours.',
+    });
+
+    expect(
+      validateManualAttendanceSegment({
+        ...validInput,
+        checkIn: '23:00',
+        checkOut: '23:30',
+        existingSegments: [
+          {
+            id: 'existing-exact-cap-1',
+            workDate: validInput.workDate,
+            checkInTime: '00:00:00',
+            checkOutTime: '12:00:00',
+          },
+          {
+            id: 'existing-exact-cap-2',
+            workDate: validInput.workDate,
+            checkInTime: '00:00:00',
+            checkOutTime: '11:30:00',
+          },
+        ],
+      })
+    ).toEqual({
+      field: 'form',
+      message: 'Total attendance for a day must be less than 24 hours.',
     });
   });
 
   it('accepts a valid non-overlapping interval', () => {
     expect(validateManualAttendanceSegment(validInput)).toBeNull();
+  });
+
+  it('normalizes hidden seconds only for legacy manual segments', () => {
+    const existingSegment = {
+      id: 'legacy-segment',
+      workDate: validInput.workDate,
+      checkInTime: '08:00:45',
+      checkOutTime: '09:00:45',
+    };
+    const request = {
+      ...validInput,
+      checkIn: '09:00',
+      checkOut: '10:00',
+    };
+
+    expect(
+      validateManualAttendanceSegment({
+        ...request,
+        existingSegments: [{ ...existingSegment, source: 'WEB+MANUAL' }],
+      })
+    ).toBeNull();
+    expect(
+      validateManualAttendanceSegment({
+        ...request,
+        existingSegments: [{ ...existingSegment, source: 'BIOMETRIC' }],
+      })
+    ).toEqual({
+      field: 'form',
+      message: 'This punch range overlaps an existing attendance segment for the day.',
+    });
   });
 
   it('defers overlap and daily-cap checks when existing segments are incomplete', () => {

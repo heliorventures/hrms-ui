@@ -125,11 +125,9 @@ interface EditEmployeeModalProps {
 
 const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmployeeModalProps) => {
   const client = useGraphClient('client');
-  const { can, hasAnyJwtRole } = useAuth();
-  const hasElevatedEmployeeRole = hasAnyJwtRole(['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN']);
-  const canManageLoginAccounts =
-    can('employee:write') || hasElevatedEmployeeRole;
-  const canReadRoleDirectory = can('role:manage') || hasElevatedEmployeeRole;
+  const { can } = useAuth();
+  const canManageLoginAccounts = can('role:manage');
+  const canReadRoleDirectory = can('role:manage');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');

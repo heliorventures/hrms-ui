@@ -3,10 +3,6 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import FlashToastBar from '../../components/common/FlashToastBar';
-import {
-  canApproveLeaveRequestRow,
-  showLeaveApprovalColumn,
-} from '../../auth/leaveApprovalUi';
 import { createPermissionService } from '../../auth/permissionService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -17,7 +13,9 @@ import ApplyLeaveModal from './components/ApplyLeaveModal';
 import HolidaySummaryCard from './components/HolidaySummaryCard';
 import LeaveBalancesCard from './components/LeaveBalancesCard';
 import LeaveRejectModal from './components/LeaveRejectModal';
-import LeaveRequestsTableSection from './components/LeaveRequestsTableSection';
+import LeaveRequestsTableSection, {
+  type LeaveRequestRow,
+} from './components/LeaveRequestsTableSection';
 import LeaveRecoveryNotice from './components/LeaveRecoveryNotice';
 import LeaveTypesCard from './components/LeaveTypesCard';
 import LeaveWorkflowTrailModal from './components/LeaveWorkflowTrailModal';
@@ -26,32 +24,28 @@ import { useLeaveWorkflowTrail } from './hooks/useLeaveWorkflowTrail';
 import {
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
-  OrgChartDocument,
   type LeaveBoardQuery,
-  type OrgChartQuery,
 } from '../../api/graphql/graphql';
 import { LeaveBoardRangeDocument } from './leaveBoardQuery';
 type ApproveLeaveRequestMutation = {
   approveLeaveRequest: { status: string };
 };
-type LeaveRequestWithEmployee = LeaveBoardQuery['leaveRequests'][number] & {
-  employeeName?: string | null;
-  employeeCode?: string | null;
+type LeaveBoardData = Omit<LeaveBoardQuery, 'leaveRequests'> & {
+  leaveRequests: LeaveRequestRow[];
 };
 type LeavePageFailure = {
   message: string;
   operation: 'board' | 'mutation';
 };
-const BOARD_LIMIT = 20, ORG_CHART_LIMIT = 500, HOLIDAY_LIMIT = 450;
+const BOARD_LIMIT = 20, HOLIDAY_LIMIT = 450;
 const LeavePage = () => {
-  const { can, clientSession } = useAuth();
+  const { clientSession } = useAuth();
   const permissions = createPermissionService(clientSession);
   const client = useGraphClient('client');
   const flash = useFlashToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const [orgChartRows, setOrgChartRows] = useState<OrgChartQuery['orgChart']>([]);
-  const [data, setData] = useState<LeaveBoardQuery | null>(null);
+  const [data, setData] = useState<LeaveBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState<LeavePageFailure | null>(null);
   const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
@@ -80,7 +74,7 @@ const LeavePage = () => {
 
   const loadBoard = useCallback(
     () =>
-      client.request<LeaveBoardQuery>(LeaveBoardRangeDocument, {
+      client.request<LeaveBoardData>(LeaveBoardRangeDocument, {
         limit: BOARD_LIMIT,
         balanceYear,
         fromDate: requestYearRange.fromDate,
@@ -88,19 +82,6 @@ const LeavePage = () => {
       }),
     [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]
   );
-
-  const loadOrgChart = useCallback(async () => {
-    try {
-      const response = await client.request<OrgChartQuery>(OrgChartDocument, {
-        limit: ORG_CHART_LIMIT,
-      });
-      return response.orgChart ?? [];
-    } catch {
-      // The leave list and its employee labels are authoritative. Org Chart is
-      // only supplementary UI context for manager action presentation.
-      return [];
-    }
-  }, [client]);
 
   useEffect(() => {
     if (searchParams.get('apply') === '1') {
@@ -127,15 +108,13 @@ const LeavePage = () => {
     setFailure(null);
     workflowTrail.clearFailure();
     try {
-      const [result, orgRows] = await Promise.all([loadBoard(), loadOrgChart()]);
-      setData(result);
-      setOrgChartRows(orgRows);
+      setData(await loadBoard());
     } catch (err) {
       setFailure({ message: graphQlUserMessage(err), operation: 'board' });
     } finally {
       setLoading(false);
     }
-  }, [loadBoard, loadOrgChart, workflowTrail.clearFailure]);
+  }, [loadBoard, workflowTrail.clearFailure]);
 
   const retryBoard = useCallback(() => {
     void refreshBoard();
@@ -205,30 +184,9 @@ const LeavePage = () => {
 
   const viewerId = data?.viewerEmployeeId;
 
-  const directReportIds = useMemo(() => {
-    if (!viewerId) return new Set<string>();
-    return new Set(
-      orgChartRows
-        .filter((row) => row.reportingManagerId === viewerId)
-        .map((row) => row.employeeId)
-    );
-  }, [viewerId, orgChartRows]);
-
   const showApprovalColumn = useMemo(
-    () => showLeaveApprovalColumn({ can, clientSession, managesDirectReports: directReportIds.size > 0 }),
-    [can, clientSession, directReportIds]
-  );
-
-  const canApproveRowForTable = useCallback(
-    (row: LeaveBoardQuery['leaveRequests'][number]) =>
-      canApproveLeaveRequestRow({
-        rowEmployeeId: row.employeeId,
-        viewerEmployeeId: viewerId,
-        can,
-        clientSession,
-        directReportIds,
-      }),
-    [viewerId, can, clientSession, directReportIds]
+    () => (data?.leaveRequests ?? []).some((row) => row.viewerMayApprove === true),
+    [data?.leaveRequests]
   );
 
   const hideEmployeeColumn = useMemo(() => {
@@ -241,7 +199,7 @@ const LeavePage = () => {
 
   const employeeLabelById = useMemo(() => {
     const labels = new Map<string, string>();
-    for (const row of (data?.leaveRequests ?? []) as LeaveRequestWithEmployee[]) {
+    for (const row of data?.leaveRequests ?? []) {
       if (!row.employeeName) continue;
       labels.set(
         row.employeeId,
@@ -252,7 +210,7 @@ const LeavePage = () => {
   }, [data?.leaveRequests]);
 
   const employeeLabel = useCallback(
-    (employeeId: string) => employeeLabelById.get(employeeId) ?? `${employeeId.slice(0, 8)}...`,
+    (employeeId: string) => employeeLabelById.get(employeeId) ?? 'Employee details unavailable',
     [employeeLabelById]
   );
 
@@ -357,7 +315,6 @@ const LeavePage = () => {
         ) : (
           <LeaveRequestsTableSection
             approveBusyId={approveBusyId}
-            canApproveRow={canApproveRowForTable}
             cancelBusyId={cancelBusyId}
             employeeLabel={hideEmployeeColumn ? undefined : employeeLabel}
             emptyLabel="No Leave Requests Found."

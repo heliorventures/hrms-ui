@@ -98,7 +98,7 @@ const HrTimesheetsPage = () => {
     if (name && code) return `${name} (${code})`;
     if (name) return name;
     if (code) return code;
-    return row.employeeId.slice(0, 8);
+    return 'Employee details unavailable';
   }, []);
 
   const silentRefresh = useCallback(async () => {

@@ -33,6 +33,7 @@ function employeeSession(): ParsedClientSession {
   return {
     jwtRoles: [],
     permissions: new Set(),
+    permissionScopes: {},
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,

@@ -63,11 +63,13 @@ function fileSizeLabel(size?: number | null): string {
 
 const OrganizationDocumentsPage = () => {
   const client = useGraphClient('client');
-  const { canAny, hasAnyJwtRole } = useAuth();
+  const { canAny } = useAuth();
   const { confirm } = useDialogs();
-  const canManageCompanyDocuments =
-    canAny([PERMISSIONS.employeeWrite, PERMISSIONS.onboardingManage, PERMISSIONS.roleManage]) ||
-    hasAnyJwtRole(['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN']);
+  const canManageCompanyDocuments = canAny([
+    PERMISSIONS.employeeWrite,
+    PERMISSIONS.onboardingManage,
+    PERMISSIONS.roleManage,
+  ]);
 
   const [companyDocuments, setCompanyDocuments] = useState<CompanyDocumentRow[]>([]);
   const [types, setTypes] = useState<DocumentTypeRow[]>([]);

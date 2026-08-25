@@ -129,6 +129,7 @@ function tenantStateSnapshot() {
       ? {
           ...session,
           permissions: [...session.permissions].sort(),
+          permissionScopes: { ...session.permissionScopes },
           resourceScopes: { ...session.resourceScopes },
         }
       : null,
@@ -188,6 +189,7 @@ describe('operator session expiry isolation', () => {
     expect(tenantStateBefore.clientSession).toStrictEqual({
       jwtRoles: ['HR_ADMIN', 'PAYROLL_VIEWER'],
       permissions: ['dashboard:view', 'payroll:view'],
+      permissionScopes: {},
       resourceScopes: { department: 'finance', region: 'west' },
       employeeId: 'employee-42',
       persona: 'HR',

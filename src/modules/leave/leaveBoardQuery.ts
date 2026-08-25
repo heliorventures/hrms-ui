@@ -45,6 +45,8 @@ export const LeaveBoardRangeDocument = `
       halfDaySession
       appliedAt
       workflowInstanceId
+      pendingApprovalStage
+      viewerMayApprove
       supportingDocumentReference
     }
     leaveBalances(limit: $limit, year: $balanceYear) {

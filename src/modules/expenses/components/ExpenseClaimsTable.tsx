@@ -21,7 +21,7 @@ interface ExpenseClaimsTableProps {
 }
 
 function categoryName(categories: ExpenseCategoryRow[], categoryId: string): string {
-  return categories.find((category) => category.id === categoryId)?.name ?? categoryId;
+  return categories.find((category) => category.id === categoryId)?.name ?? 'Category unavailable';
 }
 
 function canShowPaidAction(row: ExpenseRow, canMarkPayment: boolean): boolean {
@@ -59,7 +59,7 @@ const ExpenseClaimsTable = ({
             key: 'employeeId',
             label: 'Employee',
             render: (expense) => (
-              <span>{employeeLabels[expense.employeeId] ?? expense.employeeId}</span>
+              <span>{employeeLabels[expense.employeeId] ?? 'Employee details unavailable'}</span>
             ),
           },
           {

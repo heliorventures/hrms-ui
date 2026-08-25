@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import * as React from 'react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CreateEmployeeModal from './CreateEmployeeModal';
@@ -15,7 +15,6 @@ vi.mock('../../../hooks/useGraphClient', () => ({
 vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
     can: (permission: string) => permission === 'role:manage',
-    hasAnyJwtRole: () => false,
   }),
 }));
 
@@ -29,7 +28,7 @@ function directoryResponse() {
 }
 
 const Harness = () => {
-  const [open, setOpen] = React.useState(true);
+  const [open, setOpen] = useState(true);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
