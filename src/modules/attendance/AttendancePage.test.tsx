@@ -157,7 +157,7 @@ describe('AttendancePage', () => {
       const requests = graphClient.request.mock.calls.filter(
         ([document]) => document === MyAttendanceBoardDocument
       );
-      expect(requests.at(-1)?.[1]).toEqual(
+      expect(requests[requests.length - 1]?.[1]).toEqual(
         expect.objectContaining({ after: undefined, first: 50 })
       );
     });
@@ -183,7 +183,7 @@ describe('AttendancePage', () => {
       const requests = graphClient.request.mock.calls.filter(
         ([document]) => document === MyAttendanceBoardDocument
       );
-      expect(requests.at(-1)?.[1]).toEqual(
+      expect(requests[requests.length - 1]?.[1]).toEqual(
         expect.objectContaining({ after: undefined, first: 50 })
       );
     });
@@ -207,7 +207,9 @@ describe('AttendancePage', () => {
       const requests = graphClient.request.mock.calls.filter(
         ([document]) => document === MyAttendanceBoardDocument
       );
-      expect(requests.at(-1)?.[1]).toEqual(expect.objectContaining({ after: 'opaque-next' }));
+      expect(requests[requests.length - 1]?.[1]).toEqual(
+        expect.objectContaining({ after: 'opaque-next' })
+      );
     });
   });
 
@@ -295,7 +297,9 @@ describe('AttendancePage', () => {
       const requests = graphClient.request.mock.calls.filter(
         ([document]) => document === MyAttendanceBoardDocument
       );
-      expect(requests.at(-1)?.[1]).toEqual(expect.objectContaining({ after: 'cursor-one' }));
+      expect(requests[requests.length - 1]?.[1]).toEqual(
+        expect.objectContaining({ after: 'cursor-one' })
+      );
     });
   });
 
@@ -691,7 +695,7 @@ describe('AttendancePage', () => {
     renderPage();
 
     const addButton = await screen.findByRole('button', { name: 'Loading adjustment policy…' });
-    expect(addButton.disabled).toBe(true);
+    expect((addButton as HTMLButtonElement).disabled).toBe(true);
     expect(screen.queryByRole('button', { name: 'Adjust day' })).toBeNull();
     await advanceToNextPage();
     await waitFor(() => expect(graphClient.request).toHaveBeenCalledTimes(3));
@@ -700,6 +704,10 @@ describe('AttendancePage', () => {
       policy.resolve(policyResponse);
     });
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Add Missed Punches' }).disabled).toBe(false));
+    await waitFor(() =>
+      expect(
+        screen.getByRole<HTMLButtonElement>('button', { name: 'Add Missed Punches' }).disabled
+      ).toBe(false)
+    );
   });
 });

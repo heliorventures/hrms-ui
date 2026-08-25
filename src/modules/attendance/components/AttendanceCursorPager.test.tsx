@@ -19,7 +19,9 @@ describe('AttendanceCursorPager', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Previous page' }).disabled).toBe(true);
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Previous page' }).disabled
+    ).toBe(true);
   });
 
   it('passes the opaque end cursor when advancing', () => {
@@ -67,8 +69,12 @@ describe('AttendanceCursorPager', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Previous page' }).disabled).toBe(true);
-    expect(screen.getByRole('button', { name: 'Next page' }).disabled).toBe(true);
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Previous page' }).disabled
+    ).toBe(true);
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled
+    ).toBe(true);
   });
 
   it('cannot advance when the response has no end cursor', () => {
@@ -82,7 +88,9 @@ describe('AttendanceCursorPager', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Next page' }).disabled).toBe(true);
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled
+    ).toBe(true);
   });
 
   it('announces the current page status politely', () => {
