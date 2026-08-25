@@ -1,6 +1,10 @@
 import { ClientError } from 'graphql-request';
 
 const FALLBACK_MESSAGE = 'We could not complete this action. Try again.';
+export type GraphQlUserMessageContext = 'default' | 'attendance-management';
+
+const ATTENDANCE_CONFLICT_MESSAGE =
+  'This attendance record changed. Refresh it before trying again.';
 
 function codeToMessage(code: string): string | null {
   switch (code.toUpperCase()) {
@@ -209,7 +213,16 @@ function errorCode(err: unknown): string | null {
   return null;
 }
 
-export function graphQlUserMessage(err: unknown): string {
+export function graphQlUserMessage(
+  err: unknown,
+  context: GraphQlUserMessageContext = 'default'
+): string {
+  const contextualCode = errorCode(err)?.toUpperCase();
+  if (context === 'attendance-management') {
+    if (contextualCode === 'CONFLICT') return ATTENDANCE_CONFLICT_MESSAGE;
+    if (contextualCode === 'FORBIDDEN') return codeToMessage('FORBIDDEN') ?? FALLBACK_MESSAGE;
+  }
+
   if (err instanceof ClientError) {
     const code = errorCode(err);
     const normalizedCode = code?.toUpperCase();

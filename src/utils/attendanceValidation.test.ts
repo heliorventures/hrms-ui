@@ -93,4 +93,53 @@ describe('validateManualAttendanceSegment', () => {
   it('accepts a valid non-overlapping interval', () => {
     expect(validateManualAttendanceSegment(validInput)).toBeNull();
   });
+
+  it('defers overlap and daily-cap checks when existing segments are incomplete', () => {
+    const partialInput = {
+      ...validInput,
+      existingSegmentsComplete: false,
+      existingSegments: [
+        {
+          id: 'existing',
+          workDate: validInput.workDate,
+          checkInTime: '08:00:00',
+          checkOutTime: '18:00:00',
+        },
+      ],
+    };
+
+    expect(
+      validateManualAttendanceSegment({ ...partialInput, checkIn: '10:00', checkOut: '12:00' })
+    ).toBeNull();
+    expect(
+      validateManualAttendanceSegment({ ...partialInput, checkIn: '23:00', checkOut: '23:30' })
+    ).toBeNull();
+    expect(
+      validateManualAttendanceSegment({ ...partialInput, checkIn: '18:00', checkOut: '09:00' })
+    ).toEqual({
+      field: 'checkOut',
+      message: 'Punch In must be before Punch Out for the same calendar day.',
+    });
+  });
+
+  it('defers cross-segment checks outside the loaded coverage range', () => {
+    expect(
+      validateManualAttendanceSegment({
+        ...validInput,
+        workDate: '2026-08-24',
+        checkIn: '10:00',
+        checkOut: '12:00',
+        existingSegmentsComplete: true,
+        existingSegmentsCoverage: { fromDate: '2025-01-01', toDate: '2025-01-31' },
+        existingSegments: [
+          {
+            id: 'outside-coverage',
+            workDate: '2026-08-24',
+            checkInTime: '08:00:00',
+            checkOutTime: '11:00:00',
+          },
+        ],
+      })
+    ).toBeNull();
+  });
 });

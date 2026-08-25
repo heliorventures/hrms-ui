@@ -1,3 +1,5 @@
+import type { MyAttendanceBoardQuery } from '../../api/graphql/graphql';
+
 export interface ShiftRow {
   id: string;
   name: string;
@@ -29,4 +31,32 @@ export interface FlatSegmentRow extends AttendanceRow {
 export interface AttendanceBoardData {
   shifts: ShiftRow[];
   attendance: AttendanceRow[];
+  pageInfo: AttendancePageInfo;
+}
+
+export interface AttendancePageInfo {
+  endCursor?: string | null;
+  hasNextPage: boolean;
+}
+
+/**
+ * Converts the target-free GraphQL response into the employee attendance page model.
+ * The server is the authorization boundary; this additional check prevents a malformed
+ * client response from rendering another employee's rows.
+ */
+export function mapMyAttendanceBoard(
+  response: MyAttendanceBoardQuery,
+  employeeId: string | undefined
+): AttendanceBoardData {
+  const attendance = employeeId
+    ? response.myAttendance.edges
+        .map((edge) => edge.node)
+        .filter((row) => row.employeeId === employeeId)
+    : [];
+
+  return {
+    shifts: response.shifts,
+    attendance,
+    pageInfo: response.myAttendance.pageInfo,
+  };
 }

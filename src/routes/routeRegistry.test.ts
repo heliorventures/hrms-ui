@@ -184,6 +184,12 @@ describe('route registries', () => {
       },
       {
         kind: 'page',
+        path: 'hr/attendance',
+        title: 'Attendance management',
+        tenantPath: '/hr/attendance',
+      },
+      {
+        kind: 'page',
         path: 'hr/timesheets',
         title: 'Timesheet approvals',
         tenantPath: '/hr/timesheets',

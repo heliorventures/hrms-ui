@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
+import { AttendanceAdjustmentPolicyDocument, MyAttendanceBoardDocument } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -21,36 +21,49 @@ import { formatBackendTime } from '../../utils/timeFormat';
 
 import AttendanceSegmentsTable from './components/AttendanceSegmentsTable';
 import ManualAttendanceModal from './components/ManualAttendanceModal';
+import AttendanceCursorPager from './components/AttendanceCursorPager';
 import type { AttendanceBoardData, FlatSegmentRow } from './types';
+import { mapMyAttendanceBoard } from './types';
 
-const ATTENDANCE_BOARD_LIMIT = 800;
+const ATTENDANCE_PAGE_SIZE = 50;
+type AdjustmentPolicyStatus = 'loading' | 'ready';
+type CursorOwnerIdentity = {
+  client: ReturnType<typeof useGraphClient>;
+  employeeId: string | undefined;
+  fromDate: string;
+  toDate: string;
+};
+type BoardRequestIdentity = {
+  client: ReturnType<typeof useGraphClient>;
+  employeeId: string | undefined;
+  queryKey: string;
+};
+type RefreshIntent = { identity: BoardRequestIdentity; revision: number };
 
-const AttendanceBoardRangeDocument = `
-  query AttendanceBoardRange($limit: Int! = 400, $fromDate: NaiveDate, $toDate: NaiveDate) {
-    shifts(limit: $limit) {
-      id
-      name
-      startTime
-      endTime
-      workHours
-      isNightShift
-    }
-    attendance(limit: $limit, fromDate: $fromDate, toDate: $toDate) {
-      id
-      employeeId
-      workDate
-      checkInTime
-      checkOutTime
-      checkInLat
-      checkInLng
-      checkOutLat
-      checkOutLng
-      status
-      source
-      lateMinutes
-    }
-  }
-`;
+function cursorOwnerIdentityMatches(
+  left: CursorOwnerIdentity | null,
+  right: CursorOwnerIdentity
+): boolean {
+  return (
+    left !== null &&
+    left.client === right.client &&
+    left.employeeId === right.employeeId &&
+    left.fromDate === right.fromDate &&
+    left.toDate === right.toDate
+  );
+}
+
+function boardRequestIdentityMatches(
+  left: BoardRequestIdentity | null,
+  right: BoardRequestIdentity
+): boolean {
+  return (
+    left !== null &&
+    left.client === right.client &&
+    left.employeeId === right.employeeId &&
+    left.queryKey === right.queryKey
+  );
+}
 
 function calendarDaysBetweenWorkAndToday(workIso: string): number {
   const a = parseIsoDate(workIso);
@@ -70,80 +83,169 @@ const AttendancePage = () => {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [monthIndex, setMonthIndex] = useState(now.getMonth());
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
+  const [cursorStackOwner, setCursorStackOwner] = useState<CursorOwnerIdentity | null>(null);
 
   const [board, setBoard] = useState<AttendanceBoardData | null>(null);
+  const [boardSnapshotIdentity, setBoardSnapshotIdentity] = useState<BoardRequestIdentity | null>(
+    null
+  );
   const [adjustPolicyDays, setAdjustPolicyDays] = useState<number>(14);
+  const [policyStatus, setPolicyStatus] = useState<AdjustmentPolicyStatus>('loading');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshRevision, setRefreshRevision] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjustDefaultDate, setAdjustDefaultDate] = useState(toIsoDate(now));
   const [adjustDefaultSegment, setAdjustDefaultSegment] = useState<FlatSegmentRow | null>(null);
+  const boardRequestGeneration = useRef(0);
+  const committedRequestIdentityRef = useRef<BoardRequestIdentity | null>(null);
+  const refreshRevisionRef = useRef(0);
+  const refreshIntentRef = useRef<RefreshIntent | null>(null);
 
   const monthBounds = useMemo(() => monthBoundsIso(year, monthIndex), [year, monthIndex]);
+  const employeeId = clientSession?.employeeId;
+  const cursorOwnerIdentity = useMemo(
+    () => ({ client, employeeId, fromDate: monthBounds.start, toDate: monthBounds.end }),
+    [client, employeeId, monthBounds.end, monthBounds.start]
+  );
+  const cursorStackIsCurrent = cursorOwnerIdentityMatches(cursorStackOwner, cursorOwnerIdentity);
+  const effectiveCursorStack = cursorStackIsCurrent ? cursorStack : [];
+  const activeCursor = effectiveCursorStack.length
+    ? effectiveCursorStack[effectiveCursorStack.length - 1]
+    : undefined;
+  const queryKey = `${monthBounds.start}:${monthBounds.end}:${activeCursor ?? ''}`;
+  const requestIdentity = useMemo(
+    () => ({ client, employeeId, queryKey }),
+    [client, employeeId, queryKey]
+  );
+  const policyReady = policyStatus === 'ready';
   const policyMessage = useMemo(
     () => attendancePolicyMessage(adjustPolicyDays, canRegularize),
     [adjustPolicyDays, canRegularize]
   );
-
-  const loadBoard = useCallback(async () => {
-    return client.request<AttendanceBoardData>(AttendanceBoardRangeDocument, {
-      limit: ATTENDANCE_BOARD_LIMIT,
-      fromDate: monthBounds.start,
-      toDate: monthBounds.end,
-    });
-  }, [client, monthBounds.end, monthBounds.start]);
 
   const loadPolicy = useCallback(async () => {
     try {
       const r = await client.request(AttendanceAdjustmentPolicyDocument);
       const raw = r.attendanceAdjustmentPolicy.maxSelfAdjustDays;
       const n = typeof raw === 'number' ? raw : parseInt(String(raw ?? '14'), 10);
-      setAdjustPolicyDays(Number.isFinite(n) ? n : 14);
+      return Number.isFinite(n) ? n : 14;
     } catch {
-      setAdjustPolicyDays(14);
+      return 14;
     }
   }, [client]);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const [b] = await Promise.all([loadBoard(), loadPolicy()]);
-        if (!cancelled) setBoard(b);
-      } catch (e) {
-        if (!cancelled) {
-          setError(graphQlUserMessage(e));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+    setPolicyStatus('loading');
+    void loadPolicy().then((days) => {
+      if (!cancelled) {
+        setAdjustPolicyDays(days);
+        setPolicyStatus('ready');
       }
-    })();
+    });
     return () => {
       cancelled = true;
     };
-  }, [loadBoard, loadPolicy]);
+  }, [loadPolicy]);
 
-  const refreshBoard = useCallback(async () => {
-    try {
-      setRefreshing(true);
-      setError(null);
-      setSuccess(null);
-      const b = await loadBoard();
-      setBoard(b);
-      setSuccess('Attendance refreshed.');
-    } catch (e) {
-      setError(graphQlUserMessage(e));
-    } finally {
-      setRefreshing(false);
+  useLayoutEffect(() => {
+    if (cursorStackIsCurrent) return;
+    setCursorStack((current) => (current.length === 0 ? current : []));
+    setCursorStackOwner(cursorOwnerIdentity);
+  }, [cursorOwnerIdentity, cursorStackIsCurrent]);
+
+  useLayoutEffect(() => {
+    committedRequestIdentityRef.current = requestIdentity;
+    if (
+      refreshIntentRef.current &&
+      !boardRequestIdentityMatches(refreshIntentRef.current.identity, requestIdentity)
+    ) {
+      refreshIntentRef.current = null;
     }
-  }, [loadBoard]);
+  }, [requestIdentity]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const requestGeneration = ++boardRequestGeneration.current;
+    const refreshIntent = refreshIntentRef.current;
+    const isRefreshForThisRequest =
+      refreshIntent?.revision === refreshRevision &&
+      boardRequestIdentityMatches(refreshIntent.identity, requestIdentity);
+    const requestIsCurrent = () =>
+      !cancelled &&
+      requestGeneration === boardRequestGeneration.current &&
+      boardRequestIdentityMatches(committedRequestIdentityRef.current, requestIdentity);
+    setLoading(true);
+    setError(null);
+
+    void client
+      .request(MyAttendanceBoardDocument, {
+        fromDate: monthBounds.start,
+        toDate: monthBounds.end,
+        first: ATTENDANCE_PAGE_SIZE,
+        after: activeCursor,
+      })
+      .then((response) => {
+        if (!requestIsCurrent()) return;
+        setBoard(mapMyAttendanceBoard(response, employeeId));
+        setBoardSnapshotIdentity(requestIdentity);
+        if (
+          isRefreshForThisRequest &&
+          refreshIntentRef.current?.revision === refreshIntent.revision &&
+          boardRequestIdentityMatches(refreshIntentRef.current.identity, requestIdentity)
+        ) {
+          refreshIntentRef.current = null;
+          setSuccess('Attendance refreshed.');
+        }
+      })
+      .catch((error) => {
+        if (!requestIsCurrent()) return;
+        if (
+          isRefreshForThisRequest &&
+          refreshIntentRef.current?.revision === refreshIntent?.revision &&
+          boardRequestIdentityMatches(refreshIntentRef.current.identity, requestIdentity)
+        ) {
+          refreshIntentRef.current = null;
+        }
+        setError(graphQlUserMessage(error));
+      })
+      .finally(() => {
+        if (!requestIsCurrent()) return;
+        setLoading(false);
+        setRefreshing(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeCursor,
+    client,
+    employeeId,
+    monthBounds.end,
+    monthBounds.start,
+    queryKey,
+    requestIdentity,
+    refreshRevision,
+  ]);
+
+  const refreshBoard = useCallback(() => {
+    setError(null);
+    setSuccess(null);
+    setRefreshing(true);
+    const nextRevision = refreshRevisionRef.current + 1;
+    refreshRevisionRef.current = nextRevision;
+    refreshIntentRef.current = { identity: requestIdentity, revision: nextRevision };
+    setRefreshRevision(nextRevision);
+  }, [requestIdentity]);
+
+  const boardIsCurrent = boardRequestIdentityMatches(boardSnapshotIdentity, requestIdentity);
+  const currentBoard = boardIsCurrent ? board : null;
   const filteredSegments = useMemo(() => {
-    const rows = board?.attendance ?? [];
+    const rows = currentBoard?.attendance ?? [];
     const out: FlatSegmentRow[] = [];
     for (const r of rows) {
       if (!isoDateRangeContains(r.workDate, monthBounds.start, monthBounds.end)) continue;
@@ -160,9 +262,9 @@ const AttendancePage = () => {
       return tb.localeCompare(ta);
     });
     return out;
-  }, [board?.attendance, monthBounds.start, monthBounds.end]);
+  }, [currentBoard?.attendance, monthBounds.start, monthBounds.end]);
 
-  const monthlyStats = useMemo(() => {
+  const pageStats = useMemo(() => {
     let completedMinutes = 0;
     const workedDays = new Set<string>();
     for (const r of filteredSegments) {
@@ -184,9 +286,27 @@ const AttendancePage = () => {
     };
   }, [filteredSegments]);
 
-  const attendanceLimitReached = (board?.attendance.length ?? 0) >= ATTENDANCE_BOARD_LIMIT;
-
   const shiftLimit = 12;
+  const existingSegmentsComplete =
+    boardIsCurrent &&
+    currentBoard !== null &&
+    effectiveCursorStack.length === 0 &&
+    !currentBoard.pageInfo.hasNextPage;
+
+  const changeCursor = useCallback((nextCursor: string | undefined) => {
+    setCursorStack((current) => {
+      if (!nextCursor) return [];
+      if (current[current.length - 1] === nextCursor) return current;
+      if (current.length > 1 && current[current.length - 2] === nextCursor) {
+        return current.slice(0, -1);
+      }
+      return [...current, nextCursor];
+    });
+  }, []);
+
+  const resetCursorStack = useCallback(() => {
+    setCursorStack([]);
+  }, []);
 
   const openAdjust = (iso: string, segment: FlatSegmentRow | null = null) => {
     setAdjustDefaultDate(iso);
@@ -218,8 +338,14 @@ const AttendancePage = () => {
           </p>
         </div>
         {canPunchAttendance ? (
-          <Button variant="primary" type="button" onClick={() => openAdjust(toIsoDate(new Date()))}>
-            Add Missed Punches
+          <Button
+            variant="primary"
+            type="button"
+            disabled={!policyReady}
+            title={policyReady ? undefined : 'Loading adjustment policy'}
+            onClick={() => openAdjust(toIsoDate(new Date()))}
+          >
+            {policyReady ? 'Add Missed Punches' : 'Loading adjustment policy…'}
           </Button>
         ) : null}
       </div>
@@ -234,6 +360,7 @@ const AttendancePage = () => {
                 setYear((y) => y - 1);
                 setMonthIndex(11);
               } else setMonthIndex((m) => m - 1);
+              resetCursorStack();
             }}
           >
             Previous
@@ -242,7 +369,10 @@ const AttendancePage = () => {
             aria-label="Month"
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             value={monthIndex}
-            onChange={(e) => setMonthIndex(parseInt(e.target.value, 10))}
+            onChange={(e) => {
+              setMonthIndex(parseInt(e.target.value, 10));
+              resetCursorStack();
+            }}
           >
             {Array.from({ length: 12 }, (_, m) => (
               <option key={m} value={m}>
@@ -254,7 +384,10 @@ const AttendancePage = () => {
             aria-label="Year"
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             value={year}
-            onChange={(e) => setYear(parseInt(e.target.value, 10))}
+            onChange={(e) => {
+              setYear(parseInt(e.target.value, 10));
+              resetCursorStack();
+            }}
           >
             {Array.from({ length: 7 }, (_, i) => now.getFullYear() - 3 + i).map((y) => (
               <option key={y} value={y}>
@@ -270,6 +403,7 @@ const AttendancePage = () => {
                 setYear((y) => y + 1);
                 setMonthIndex(0);
               } else setMonthIndex((m) => m + 1);
+              resetCursorStack();
             }}
           >
             Next
@@ -286,30 +420,37 @@ const AttendancePage = () => {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card title="Avg. Hours / Worked Day">
+        <Card title="Avg. Hours / Worked Day on This Page">
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {monthlyStats.avgDisplay}
+            {pageStats.avgDisplay}
           </p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Completed segments only; denominator = days with at least one punch or open segment.
+            Current page data only. Completed segments; denominator = days with at least one punch
+            or open segment on this page.
           </p>
         </Card>
-        <Card title="Worked Days This Month">
+        <Card title="Worked Days on This Page">
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {monthlyStats.workedDays}
+            {pageStats.workedDays}
           </p>
         </Card>
-        <Card title="Total Time (Completed Segments)">
+        <Card title="Total Time on This Page">
           <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {monthlyStats.totalDisplay}
+            {pageStats.totalDisplay}
           </p>
         </Card>
       </div>
 
       <Card title="Self-Service Adjustment Policy">
         <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
-          <p>{policyMessage.employee}</p>
-          {policyMessage.regularizer ? <p>{policyMessage.regularizer}</p> : null}
+          {policyReady ? (
+            <>
+              <p>{policyMessage.employee}</p>
+              {policyMessage.regularizer ? <p>{policyMessage.regularizer}</p> : null}
+            </>
+          ) : (
+            <p role="status">Loading adjustment policy…</p>
+          )}
         </div>
       </Card>
 
@@ -338,19 +479,12 @@ const AttendancePage = () => {
           {success}
         </PageNotice>
       )}
-      {attendanceLimitReached && (
-        <PageNotice variant="warning" title="Some attendance history is not shown">
-          Only part of this period&apos;s attendance history is shown. Choose a shorter period and
-          refresh before using these totals for payroll review.
-        </PageNotice>
-      )}
-
       <Card title="Shift Templates">
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
-        ) : board?.shifts.length ? (
+        ) : currentBoard?.shifts.length ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {board.shifts.slice(0, shiftLimit).map((shift) => (
+            {currentBoard.shifts.slice(0, shiftLimit).map((shift) => (
               <div
                 key={shift.id}
                 className="rounded-lg border border-gray-200 p-3 dark:border-gray-700"
@@ -373,15 +507,22 @@ const AttendancePage = () => {
 
       <AttendanceSegmentsTable
         adjustPolicyDays={adjustPolicyDays}
-        canAdjust={canPunchAttendance}
+        canAdjust={canPunchAttendance && policyReady}
         canRegularize={canRegularize}
         loading={loading}
         rows={filteredSegments}
-        title={`Attendance - ${monthBounds.start} to ${monthBounds.end}`}
+        title={`Attendance - current page - ${monthBounds.start} to ${monthBounds.end}`}
         selfAdjustAllowedForDate={selfAdjustAllowedForDate}
         onAdjust={(row) => openAdjust(row.workDate, row)}
       />
-      {canPunchAttendance ? (
+      <AttendanceCursorPager
+        cursorStack={effectiveCursorStack}
+        endCursor={currentBoard?.pageInfo.endCursor}
+        hasNextPage={currentBoard?.pageInfo.hasNextPage ?? false}
+        loading={loading || refreshing}
+        onCursorChange={changeCursor}
+      />
+      {canPunchAttendance && policyReady ? (
         <ManualAttendanceModal
           isOpen={adjustOpen}
           onClose={() => {
@@ -392,7 +533,9 @@ const AttendancePage = () => {
           editingSegmentId={adjustDefaultSegment?.id}
           defaultCheckIn={adjustDefaultSegment?.checkInTime}
           defaultCheckOut={adjustDefaultSegment?.checkOutTime}
-          existingSegments={board?.attendance ?? []}
+          existingSegments={currentBoard?.attendance ?? []}
+          existingSegmentsComplete={existingSegmentsComplete}
+          existingSegmentsCoverage={{ fromDate: monthBounds.start, toDate: monthBounds.end }}
           selfServiceDays={adjustPolicyDays}
           canRegularize={canRegularize}
           onSaved={() => void refreshBoard()}

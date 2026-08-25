@@ -129,7 +129,7 @@ const AttendanceSegmentsTable = ({
       />
     ) : (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        No Punch Segments In This Month (Raise Limit Or Choose Another Month).
+        No Punch Segments On This Page.
       </p>
     )}
   </Card>

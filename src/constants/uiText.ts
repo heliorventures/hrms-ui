@@ -89,6 +89,7 @@ export const NAV_LABELS = {
   adminTimesheetSettings: 'Admin - Timesheet Settings',
   assets: 'Assets',
   attendance: 'Attendance',
+  attendanceManagement: 'Attendance Management',
   attendancePolicy: 'Attendance Policy',
   benefits: 'Benefits',
   compensation: 'Compensation',

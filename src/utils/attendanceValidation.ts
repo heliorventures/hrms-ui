@@ -10,11 +10,20 @@ export interface AttendanceSegmentInterval {
   checkOutTime?: string | null;
 }
 
+export interface ExistingSegmentsCoverage {
+  fromDate: string;
+  toDate: string;
+}
+
 export interface ManualAttendanceValidationInput {
   workDate: string;
   checkIn: string;
   checkOut: string;
   existingSegments: AttendanceSegmentInterval[];
+  /** False when cursor paging means this is not the complete day/month list. */
+  existingSegmentsComplete?: boolean;
+  /** Omit only when existingSegments is complete for every date the caller can submit. */
+  existingSegmentsCoverage?: ExistingSegmentsCoverage;
   excludedSegmentId?: string | null;
 }
 
@@ -43,6 +52,8 @@ export function validateManualAttendanceSegment({
   checkIn,
   checkOut,
   existingSegments,
+  existingSegmentsComplete = true,
+  existingSegmentsCoverage,
   excludedSegmentId,
 }: ManualAttendanceValidationInput): ManualAttendanceValidationError | null {
   const requiredMessage = 'Enter work date, punch in, and punch out.';
@@ -65,6 +76,11 @@ export function validateManualAttendanceSegment({
   }
 
   const newMinutes = end - start;
+  const isWithinLoadedCoverage =
+    existingSegmentsCoverage === undefined ||
+    (workDate >= existingSegmentsCoverage.fromDate && workDate <= existingSegmentsCoverage.toDate);
+  if (!existingSegmentsComplete || !isWithinLoadedCoverage) return null;
+
   const sameDaySegments = existingSegments.filter(
     (segment) => segment.workDate === workDate && segment.id !== excludedSegmentId
   );

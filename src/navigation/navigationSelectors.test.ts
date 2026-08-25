@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { NavigationDestination, NavigationSection } from './navigationModel';
+import type { ParsedClientSession } from '../auth/clientSession';
+import { createPermissionService } from '../auth/permissionService';
+import {
+  NAVIGATION_DESTINATIONS,
+  type NavigationDestination,
+  type NavigationSection,
+} from './navigationModel';
 import {
   accessibleDestinations,
   activeNavigationSection,
@@ -30,12 +36,20 @@ const destinations: NavigationDestination[] = [
     order: 2,
   },
   {
+    path: '/hr/attendance',
+    label: 'Attendance Management',
+    keywords: ['attendance', 'regularize', 'punches'],
+    section: 'hr',
+    sidebar: 'section',
+    order: 3,
+  },
+  {
     path: '/admin/access',
     label: 'Roles & Permissions',
     keywords: ['rbac', 'security'],
     section: 'admin',
     sidebar: 'section',
-    order: 3,
+    order: 4,
   },
 ];
 
@@ -45,7 +59,42 @@ describe('navigation selectors', () => {
       accessibleDestinations(destinations, (path) => path !== '/admin/access').map(
         (item) => item.path
       )
-    ).toEqual(['/dashboard', '/hr/leaves']);
+    ).toEqual(['/dashboard', '/hr/leaves', '/hr/attendance']);
+  });
+
+  it('shows Attendance Management only for the exact route permission', () => {
+    const session: ParsedClientSession = {
+      jwtRoles: [],
+      permissions: new Set(['attendance:regularize']),
+      resourceScopes: {},
+      persona: 'EMPLOYEE',
+      mustChangePassword: false,
+    };
+    const canRoute = createPermissionService(session).canRoute;
+
+    expect(
+      accessibleDestinations(NAVIGATION_DESTINATIONS, canRoute).map((destination) => destination.path)
+    ).toContain('/hr/attendance');
+    expect(
+      accessibleDestinations(
+        NAVIGATION_DESTINATIONS,
+        createPermissionService({ ...session, permissions: new Set(['employee:manage']) }).canRoute
+      ).map((destination) => destination.path)
+    ).not.toContain('/hr/attendance');
+  });
+
+  it('places Attendance Management immediately after Leave Approvals in HR navigation', () => {
+    const hrDestinations = NAVIGATION_DESTINATIONS.filter(
+      (destination) => destination.section === 'hr'
+    ).sort((left, right) => left.order - right.order);
+    const leaveApprovalsIndex = hrDestinations.findIndex(
+      (destination) => destination.path === '/hr/leaves'
+    );
+
+    expect(hrDestinations[leaveApprovalsIndex + 1]).toMatchObject({
+      path: '/hr/attendance',
+      label: 'Attendance Management',
+    });
   });
 
   it('matches HR terminology without returning unrelated destinations', () => {
@@ -66,8 +115,8 @@ describe('navigation selectors', () => {
 
   it('groups accessible destinations in configured section order', () => {
     expect(groupNavigationDestinations(destinations, sections)).toEqual([
-      { section: sections[0], destinations: [destinations[1]] },
-      { section: sections[1], destinations: [destinations[2]] },
+      { section: sections[0], destinations: [destinations[1], destinations[2]] },
+      { section: sections[1], destinations: [destinations[3]] },
     ]);
   });
 });

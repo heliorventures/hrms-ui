@@ -229,6 +229,13 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   },
   {
     kind: 'page',
+    path: 'hr/attendance',
+    title: 'Attendance management',
+    tenantPath: '/hr/attendance',
+    load: () => import('../modules/hr/HrAttendanceManagementPage'),
+  },
+  {
+    kind: 'page',
     path: 'hr/timesheets',
     title: 'Timesheet approvals',
     tenantPath: '/hr/timesheets',

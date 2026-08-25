@@ -5,6 +5,14 @@ import { describe, expect, it } from 'vitest';
 import { graphQlUserMessage } from './graphqlUserMessage';
 
 describe('graphQlUserMessage', () => {
+  it('maps managed-attendance conflicts and denials without exposing target details', () => {
+    expect(graphQlUserMessage({ code: 'CONFLICT' }, 'attendance-management')).toBe(
+      'This attendance record changed. Refresh it before trying again.'
+    );
+    expect(graphQlUserMessage({ code: 'FORBIDDEN', message: 'employee-secret is outside TEAM scope' }, 'attendance-management')).toBe(
+      'You do not have access to make this change. Contact your HR administrator if you need help.'
+    );
+  });
   it('distinguishes an incorrect current password from an expired session', () => {
     const err = Object.assign(new Error('The current password is incorrect.'), {
       code: 'CURRENT_PASSWORD_INCORRECT',

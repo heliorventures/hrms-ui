@@ -334,6 +334,14 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
     order: 310,
   },
   {
+    path: '/hr/attendance',
+    label: NAV_LABELS.attendanceManagement,
+    keywords: ['attendance management', 'regularize attendance', 'punch adjustments'],
+    section: 'hr',
+    sidebar: 'section',
+    order: 315,
+  },
+  {
     path: '/hr/timesheets',
     label: NAV_LABELS.timesheetApprovals,
     keywords: ['weekly hours', 'approve timesheet', 'reject timesheet', 'pending timesheet'],

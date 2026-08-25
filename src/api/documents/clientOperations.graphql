@@ -1778,6 +1778,114 @@ query AttendanceBoard($limit: Int! = 400, $fromDate: NaiveDate, $toDate: NaiveDa
   }
 }
 
+query MyAttendanceBoard($fromDate: NaiveDate, $toDate: NaiveDate, $first: Int = 50, $after: String) {
+  shifts(limit: 100) {
+    id
+    name
+    startTime
+    endTime
+    workHours
+    isNightShift
+  }
+  myAttendance(fromDate: $fromDate, toDate: $toDate, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        employeeId
+        workDate
+        checkInTime
+        checkOutTime
+        checkInLat
+        checkInLng
+        checkOutLat
+        checkOutLng
+        status
+        source
+        lateMinutes
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+query ManagedAttendancePage(
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeSearch: String
+  $employeeId: ID
+  $first: Int = 50
+  $after: String
+) {
+  managedAttendance(
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeSearch: $employeeSearch
+    employeeId: $employeeId
+    first: $first
+    after: $after
+  ) {
+    edges {
+      cursor
+      node {
+        id
+        employeeId
+        employeeName
+        employeeCode
+        workDate
+        checkInTime
+        checkOutTime
+        status
+        source
+        regularizationStatus
+        createdAt
+        updatedAt
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+mutation AddManagedAttendanceSegment($input: AddManagedAttendanceSegmentInput!) {
+  addManagedAttendanceSegment(input: $input) {
+    id
+    employeeId
+    employeeName
+    employeeCode
+    workDate
+    checkInTime
+    checkOutTime
+    status
+    source
+    regularizationStatus
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateManagedAttendanceSegment($input: UpdateManagedAttendanceSegmentInput!) {
+  updateManagedAttendanceSegment(input: $input) {
+    id
+    employeeId
+    employeeName
+    employeeCode
+    workDate
+    checkInTime
+    checkOutTime
+    status
+    source
+    regularizationStatus
+    createdAt
+    updatedAt
+  }
+}
+
 query PunchDaySummary {
   punchDaySummary {
     workDate

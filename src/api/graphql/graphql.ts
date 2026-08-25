@@ -49,6 +49,14 @@ export type Scalars = {
   _Any: { input: any; output: any; }
 };
 
+export type AddManagedAttendanceSegmentInput = {
+  checkInTime: Scalars['NaiveTime']['input'];
+  checkOutTime: Scalars['NaiveTime']['input'];
+  employeeId: Scalars['ID']['input'];
+  reason: Scalars['String']['input'];
+  workDate: Scalars['NaiveDate']['input'];
+};
+
 /**
  * Log a **completed** check-in and check-out for a **past or today** `workDate` when both
  * live punches were missed. Same calendar day only: check-in time must be before check-out.
@@ -248,6 +256,24 @@ export type Attendance = {
 export type AttendanceAdjustmentPolicy = {
   __typename?: 'AttendanceAdjustmentPolicy';
   maxSelfAdjustDays: Scalars['Int']['output'];
+};
+
+export type AttendanceConnection = {
+  __typename?: 'AttendanceConnection';
+  edges: Array<AttendanceEdge>;
+  pageInfo: AttendancePageInfo;
+};
+
+export type AttendanceEdge = {
+  __typename?: 'AttendanceEdge';
+  cursor: Scalars['String']['output'];
+  node: Attendance;
+};
+
+export type AttendancePageInfo = {
+  __typename?: 'AttendancePageInfo';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
 };
 
 /** Tenant policy for live punch: optional geofence around a site and/or IP allowlist. */
@@ -1113,6 +1139,41 @@ export type LeaveWorkflowAction = {
   workflowStepName: Scalars['String']['output'];
 };
 
+export type ManagedAttendance = {
+  __typename?: 'ManagedAttendance';
+  checkInLat?: Maybe<Scalars['String']['output']>;
+  checkInLng?: Maybe<Scalars['String']['output']>;
+  checkInTime?: Maybe<Scalars['NaiveTime']['output']>;
+  checkOutLat?: Maybe<Scalars['String']['output']>;
+  checkOutLng?: Maybe<Scalars['String']['output']>;
+  checkOutTime?: Maybe<Scalars['NaiveTime']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  employeeCode: Scalars['String']['output'];
+  employeeId: Scalars['ID']['output'];
+  employeeName: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  lateMinutes?: Maybe<Scalars['Int']['output']>;
+  regularizationStatus?: Maybe<Scalars['String']['output']>;
+  shiftId?: Maybe<Scalars['ID']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  tenantId: Scalars['ID']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  workDate: Scalars['NaiveDate']['output'];
+};
+
+export type ManagedAttendanceConnection = {
+  __typename?: 'ManagedAttendanceConnection';
+  edges: Array<ManagedAttendanceEdge>;
+  pageInfo: AttendancePageInfo;
+};
+
+export type ManagedAttendanceEdge = {
+  __typename?: 'ManagedAttendanceEdge';
+  cursor: Scalars['String']['output'];
+  node: ManagedAttendance;
+};
+
 export type Module = {
   __typename?: 'Module';
   category?: Maybe<Scalars['String']['output']>;
@@ -1127,6 +1188,7 @@ export type Module = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addManagedAttendanceSegment: ManagedAttendance;
   /**
    * Add a full **in + out** segment for a `workDate` (no future dates) when the user did not
    * punch live — does not modify `punch_today` behaviour.
@@ -1298,6 +1360,7 @@ export type Mutation = {
   updateEmployeePersonalProfile: Employee;
   /** Direct self-service fields that do not change legal identity or organization assignment. */
   updateEmployeeSelfServiceProfile: Employee;
+  updateManagedAttendanceSegment: ManagedAttendance;
   /** Update an existing manual attendance segment with server-side overlap and daily-cap checks. */
   updateManualAttendanceSegment: Attendance;
   updateNotificationAdmin: Notification;
@@ -1364,6 +1427,11 @@ export type Mutation = {
   upsertTimesheetLockPolicy: TimesheetLockPolicy;
   upsertTimesheetProject: Scalars['Boolean']['output'];
   upsertTimesheetTaskTypes: Scalars['Boolean']['output'];
+};
+
+
+export type MutationAddManagedAttendanceSegmentArgs = {
+  input: AddManagedAttendanceSegmentInput;
 };
 
 
@@ -1855,6 +1923,11 @@ export type MutationUpdateEmployeePersonalProfileArgs = {
 
 export type MutationUpdateEmployeeSelfServiceProfileArgs = {
   input: UpdateEmployeeSelfServiceProfileInput;
+};
+
+
+export type MutationUpdateManagedAttendanceSegmentArgs = {
+  input: UpdateManagedAttendanceSegmentInput;
 };
 
 
@@ -2465,7 +2538,11 @@ export type Query = {
   /** List leave types for the caller's tenant. */
   leaveTypes: Array<LeaveType>;
   lmsHealth: Scalars['String']['output'];
+  /** Cursor-paginated attendance for active employees within the caller's explicit attendance scope. */
+  managedAttendance: ManagedAttendanceConnection;
   modules: Array<Module>;
+  /** Cursor-paginated attendance for the JWT-linked employee only. */
+  myAttendance: AttendanceConnection;
   /** Signed-in employee's enrollments (`[]` until they enroll via `enroll_in_benefit_plan`). */
   myBenefitEnrollments: Array<BenefitEnrollment>;
   /**
@@ -3040,9 +3117,27 @@ export type QueryLeaveTypesArgs = {
 };
 
 
+export type QueryManagedAttendanceArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  employeeId?: InputMaybe<Scalars['ID']['input']>;
+  employeeSearch?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  fromDate: Scalars['NaiveDate']['input'];
+  toDate: Scalars['NaiveDate']['input'];
+};
+
+
 export type QueryModulesArgs = {
   includeInactive?: Scalars['Boolean']['input'];
   limit?: Scalars['Int']['input'];
+};
+
+
+export type QueryMyAttendanceArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  fromDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  toDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 
@@ -3920,6 +4015,15 @@ export type UpdateEmployeeSelfServiceProfileInput = {
   nationality?: InputMaybe<Scalars['String']['input']>;
   permanentAddress?: InputMaybe<Scalars['String']['input']>;
   personalPhone?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateManagedAttendanceSegmentInput = {
+  checkInTime: Scalars['NaiveTime']['input'];
+  checkOutTime: Scalars['NaiveTime']['input'];
+  expectedUpdatedAt: Scalars['DateTime']['input'];
+  id: Scalars['ID']['input'];
+  reason: Scalars['String']['input'];
+  workDate: Scalars['NaiveDate']['input'];
 };
 
 /** Update an existing completed attendance segment after client-side review. */
@@ -5554,6 +5658,42 @@ export type AttendanceBoardQueryVariables = Exact<{
 
 export type AttendanceBoardQuery = { __typename?: 'Query', shifts: Array<{ __typename?: 'Shift', id: string, name: string, startTime?: any | null, endTime?: any | null, workHours?: number | null, isNightShift: boolean }>, attendance: Array<{ __typename?: 'Attendance', id: string, employeeId: string, workDate: any, checkInTime?: any | null, checkOutTime?: any | null, checkInLat?: string | null, checkInLng?: string | null, checkOutLat?: string | null, checkOutLng?: string | null, status?: string | null, source?: string | null, lateMinutes?: number | null }> };
 
+export type MyAttendanceBoardQueryVariables = Exact<{
+  fromDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  toDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type MyAttendanceBoardQuery = { __typename?: 'Query', shifts: Array<{ __typename?: 'Shift', id: string, name: string, startTime?: any | null, endTime?: any | null, workHours?: number | null, isNightShift: boolean }>, myAttendance: { __typename?: 'AttendanceConnection', edges: Array<{ __typename?: 'AttendanceEdge', cursor: string, node: { __typename?: 'Attendance', id: string, employeeId: string, workDate: any, checkInTime?: any | null, checkOutTime?: any | null, checkInLat?: string | null, checkInLng?: string | null, checkOutLat?: string | null, checkOutLng?: string | null, status?: string | null, source?: string | null, lateMinutes?: number | null } }>, pageInfo: { __typename?: 'AttendancePageInfo', endCursor?: string | null, hasNextPage: boolean } } };
+
+export type ManagedAttendancePageQueryVariables = Exact<{
+  fromDate: Scalars['NaiveDate']['input'];
+  toDate: Scalars['NaiveDate']['input'];
+  employeeSearch?: InputMaybe<Scalars['String']['input']>;
+  employeeId?: InputMaybe<Scalars['ID']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type ManagedAttendancePageQuery = { __typename?: 'Query', managedAttendance: { __typename?: 'ManagedAttendanceConnection', edges: Array<{ __typename?: 'ManagedAttendanceEdge', cursor: string, node: { __typename?: 'ManagedAttendance', id: string, employeeId: string, employeeName: string, employeeCode: string, workDate: any, checkInTime?: any | null, checkOutTime?: any | null, status?: string | null, source?: string | null, regularizationStatus?: string | null, createdAt: any, updatedAt: any } }>, pageInfo: { __typename?: 'AttendancePageInfo', endCursor?: string | null, hasNextPage: boolean } } };
+
+export type AddManagedAttendanceSegmentMutationVariables = Exact<{
+  input: AddManagedAttendanceSegmentInput;
+}>;
+
+
+export type AddManagedAttendanceSegmentMutation = { __typename?: 'Mutation', addManagedAttendanceSegment: { __typename?: 'ManagedAttendance', id: string, employeeId: string, employeeName: string, employeeCode: string, workDate: any, checkInTime?: any | null, checkOutTime?: any | null, status?: string | null, source?: string | null, regularizationStatus?: string | null, createdAt: any, updatedAt: any } };
+
+export type UpdateManagedAttendanceSegmentMutationVariables = Exact<{
+  input: UpdateManagedAttendanceSegmentInput;
+}>;
+
+
+export type UpdateManagedAttendanceSegmentMutation = { __typename?: 'Mutation', updateManagedAttendanceSegment: { __typename?: 'ManagedAttendance', id: string, employeeId: string, employeeName: string, employeeCode: string, workDate: any, checkInTime?: any | null, checkOutTime?: any | null, status?: string | null, source?: string | null, regularizationStatus?: string | null, createdAt: any, updatedAt: any } };
+
 export type PunchDaySummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -6302,6 +6442,10 @@ export const LeaveWorkflowTrailQueryDocument = {"kind":"Document","definitions":
 export const AdminLeaveConsoleDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminLeaveConsole"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"80"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"policyLimit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"150"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"calendarYear"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employees"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}}]}},{"kind":"Field","name":{"kind":"Name","value":"leaveTypes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"tenantId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"isPaid"}},{"kind":"Field","name":{"kind":"Name","value":"carryForward"}},{"kind":"Field","name":{"kind":"Name","value":"maxCarryForwardDays"}},{"kind":"Field","name":{"kind":"Name","value":"sandwichRule"}},{"kind":"Field","name":{"kind":"Name","value":"halfDayAllowed"}},{"kind":"Field","name":{"kind":"Name","value":"requiresDocument"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"leavePolicies"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"policyLimit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"tenantId"}},{"kind":"Field","name":{"kind":"Name","value":"leaveTypeId"}},{"kind":"Field","name":{"kind":"Name","value":"applicableTo"}},{"kind":"Field","name":{"kind":"Name","value":"annualEntitlement"}},{"kind":"Field","name":{"kind":"Name","value":"accrualFrequency"}},{"kind":"Field","name":{"kind":"Name","value":"accrualDays"}},{"kind":"Field","name":{"kind":"Name","value":"maxConsecutiveDays"}},{"kind":"Field","name":{"kind":"Name","value":"minNoticeDays"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"holidayCalendars"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"year"},"value":{"kind":"Variable","name":{"kind":"Name","value":"calendarYear"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"24"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"tenantId"}},{"kind":"Field","name":{"kind":"Name","value":"locationId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"year"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<AdminLeaveConsoleQuery, AdminLeaveConsoleQueryVariables>;
 export const HolidaysInCalendarDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HolidaysInCalendar"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"calendarId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"200"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"holidaysInCalendar"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"calendarId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"calendarId"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"calendarId"}},{"kind":"Field","name":{"kind":"Name","value":"holidayDate"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"holidayType"}}]}}]}}]} as unknown as DocumentNode<HolidaysInCalendarQuery, HolidaysInCalendarQueryVariables>;
 export const AttendanceBoardDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AttendanceBoard"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"400"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"toDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"shifts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"startTime"}},{"kind":"Field","name":{"kind":"Name","value":"endTime"}},{"kind":"Field","name":{"kind":"Name","value":"workHours"}},{"kind":"Field","name":{"kind":"Name","value":"isNightShift"}}]}},{"kind":"Field","name":{"kind":"Name","value":"attendance"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"fromDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"toDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"workDate"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLng"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLng"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"lateMinutes"}}]}}]}}]} as unknown as DocumentNode<AttendanceBoardQuery, AttendanceBoardQueryVariables>;
+export const MyAttendanceBoardDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MyAttendanceBoard"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"toDate"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"first"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"50"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"after"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"shifts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"startTime"}},{"kind":"Field","name":{"kind":"Name","value":"endTime"}},{"kind":"Field","name":{"kind":"Name","value":"workHours"}},{"kind":"Field","name":{"kind":"Name","value":"isNightShift"}}]}},{"kind":"Field","name":{"kind":"Name","value":"myAttendance"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"fromDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"toDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"after"},"value":{"kind":"Variable","name":{"kind":"Name","value":"after"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"workDate"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLng"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLng"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"lateMinutes"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"pageInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"endCursor"}},{"kind":"Field","name":{"kind":"Name","value":"hasNextPage"}}]}}]}}]}}]} as unknown as DocumentNode<MyAttendanceBoardQuery, MyAttendanceBoardQueryVariables>;
+export const ManagedAttendancePageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ManagedAttendancePage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"toDate"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeSearch"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"first"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}},"defaultValue":{"kind":"IntValue","value":"50"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"after"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"managedAttendance"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"fromDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fromDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"toDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"toDate"}}},{"kind":"Argument","name":{"kind":"Name","value":"employeeSearch"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeSearch"}}},{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}},{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"after"},"value":{"kind":"Variable","name":{"kind":"Name","value":"after"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeName"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"workDate"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"regularizationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"pageInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"endCursor"}},{"kind":"Field","name":{"kind":"Name","value":"hasNextPage"}}]}}]}}]}}]} as unknown as DocumentNode<ManagedAttendancePageQuery, ManagedAttendancePageQueryVariables>;
+export const AddManagedAttendanceSegmentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AddManagedAttendanceSegment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AddManagedAttendanceSegmentInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"addManagedAttendanceSegment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeName"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"workDate"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"regularizationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<AddManagedAttendanceSegmentMutation, AddManagedAttendanceSegmentMutationVariables>;
+export const UpdateManagedAttendanceSegmentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateManagedAttendanceSegment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateManagedAttendanceSegmentInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateManagedAttendanceSegment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"employeeName"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"workDate"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"regularizationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<UpdateManagedAttendanceSegmentMutation, UpdateManagedAttendanceSegmentMutationVariables>;
 export const PunchDaySummaryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PunchDaySummary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"punchDaySummary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workDate"}},{"kind":"Field","name":{"kind":"Name","value":"totalWorkedMinutes"}},{"kind":"Field","name":{"kind":"Name","value":"openSegment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLng"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLng"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"segments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"checkInTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutTime"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkInLng"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLat"}},{"kind":"Field","name":{"kind":"Name","value":"checkOutLng"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]}}]} as unknown as DocumentNode<PunchDaySummaryQuery, PunchDaySummaryQueryVariables>;
 export const OnLeaveTodayDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"OnLeaveToday"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"orgLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"500"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"typeLim"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"50"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"today"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"leaveRequests"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"fromDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"today"}}},{"kind":"Argument","name":{"kind":"Name","value":"toDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"today"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"leaveTypeId"}},{"kind":"Field","name":{"kind":"Name","value":"fromDate"}},{"kind":"Field","name":{"kind":"Name","value":"toDate"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"isHalfDay"}},{"kind":"Field","name":{"kind":"Name","value":"halfDaySession"}}]}},{"kind":"Field","name":{"kind":"Name","value":"leaveTypes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"typeLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"code"}}]}},{"kind":"Field","name":{"kind":"Name","value":"orgChart"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"orgLim"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}}]}}]}}]} as unknown as DocumentNode<OnLeaveTodayQuery, OnLeaveTodayQueryVariables>;
 export const MyNotificationPreferencesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MyNotificationPreferences"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myNotificationPreferences"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"inAppEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"announcementsEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"mutedTopics"}}]}}]}}]} as unknown as DocumentNode<MyNotificationPreferencesQuery, MyNotificationPreferencesQueryVariables>;

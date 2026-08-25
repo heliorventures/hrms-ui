@@ -27,6 +27,7 @@ export type Capability =
   | 'route.admin.reports'
   | 'route.admin.settings'
   | 'route.admin.timesheetSettings'
+  | 'route.hr.attendance'
   | 'route.hr.home'
   | 'route.hr.leaves'
   | 'route.hr.people'
@@ -108,6 +109,7 @@ const DIRECT_CAPABILITY_PERMISSIONS: Partial<Record<Capability, PermissionCode>>
   'action.expense.manage': PERMISSIONS.expenseManage,
   'action.leave.manage': PERMISSIONS.leaveManage,
   'action.timesheet.manage': PERMISSIONS.timesheetManage,
+  'route.hr.attendance': PERMISSIONS.attendanceRegularize,
   'route.admin.access': PERMISSIONS.roleManage,
   'route.admin.attendancePolicy': PERMISSIONS.attendancePunchPolicy,
   'route.admin.expenseCategories': PERMISSIONS.expenseManage,
@@ -262,6 +264,7 @@ export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
   '/admin/timesheet-settings': 'route.admin.timesheetSettings',
   '/hr': 'route.hr.home',
   '/hr/access': 'route.admin.access',
+  '/hr/attendance': 'route.hr.attendance',
   '/hr/leave-settings': 'route.admin.leaveSettings',
   '/hr/leaves': 'route.hr.leaves',
   '/hr/people': 'route.hr.people',
