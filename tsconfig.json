@@ -12,6 +12,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
+    "rootDir": "./src",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,

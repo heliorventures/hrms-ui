@@ -170,7 +170,6 @@ describe('LeaveBalanceCard truthful states', () => {
     const typeName = await screen.findByText(longTypeName);
     expect(typeName.className).toContain('min-w-0');
     expect(typeName.className).toContain('break-words');
-    expect(typeName.className).toContain('[overflow-wrap:anywhere]');
     expect(screen.getByRole('link', { name: 'Open Leave Center →' })).toBeTruthy();
   });
 });

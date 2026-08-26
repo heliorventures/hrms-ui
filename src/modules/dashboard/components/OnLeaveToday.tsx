@@ -111,10 +111,10 @@ const OnLeaveTodayList = ({
             className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
           >
             <div className="min-w-0 flex-1">
-              <p className="break-words text-sm font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-white">
+              <p className="break-words text-sm font-medium text-gray-900 dark:text-white">
                 {displayName}
               </p>
-              <p className="break-words text-xs text-gray-500 [overflow-wrap:anywhere] dark:text-gray-400">
+              <p className="break-words text-xs text-gray-500 dark:text-gray-400">
                 {leaveTypeLabel(person, leaveTypeById)}
                 {person.isHalfDay ? ' · Half day' : ''}
                 {person.halfDaySession

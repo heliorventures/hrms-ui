@@ -90,7 +90,7 @@ const LeaveBalanceList = ({ rows, typeMap }: LeaveBalanceListProps) => {
           key={row.id}
           className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2 text-sm dark:border-gray-700"
         >
-          <span className="min-w-0 flex-1 break-words text-gray-600 [overflow-wrap:anywhere] dark:text-gray-300">
+          <span className="min-w-0 flex-1 break-words text-gray-600 dark:text-gray-300">
             {typeMap[row.leaveTypeId] ?? row.leaveTypeId}
           </span>
           <div className="flex flex-wrap items-center gap-2">

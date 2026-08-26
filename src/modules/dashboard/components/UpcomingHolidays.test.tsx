@@ -126,10 +126,8 @@ describe('UpcomingHolidays truthful states', () => {
     const holidayName = await screen.findByText(longHolidayName);
     expect(holidayName.className).toContain('min-w-0');
     expect(holidayName.className).toContain('break-words');
-    expect(holidayName.className).toContain('[overflow-wrap:anywhere]');
     const calendarName = screen.getByText((content) => content.includes(longCalendarName));
     expect(calendarName.className).toContain('break-words');
-    expect(calendarName.className).toContain('[overflow-wrap:anywhere]');
     expect(screen.getByRole('link', { name: 'Show All Holidays →' })).toBeTruthy();
   });
 });

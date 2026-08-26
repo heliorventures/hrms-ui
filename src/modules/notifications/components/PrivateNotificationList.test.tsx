@@ -142,9 +142,7 @@ describe('PrivateNotificationList', () => {
     const message = screen.getByText(longToken, { selector: 'p' });
     const view = screen.getByRole('link', { name: 'View' });
     expect(title.className).toContain('break-words');
-    expect(title.className).toContain('[overflow-wrap:anywhere]');
     expect(message.className).toContain('break-words');
-    expect(message.className).toContain('[overflow-wrap:anywhere]');
     expect(view.parentElement?.className).toContain('shrink-0');
   });
 });

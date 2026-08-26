@@ -59,7 +59,7 @@ const NotificationsPreviewHeader = ({
 }: NotificationsPreviewHeaderProps) => (
   <div className="mb-4 flex shrink-0 flex-wrap items-start justify-between gap-2">
     <div className="min-w-0">
-      <h3 className="break-words text-lg font-semibold text-gray-900 [overflow-wrap:anywhere] dark:text-white">
+      <h3 className="break-words text-lg font-semibold text-gray-900 dark:text-white">
         Announcements & Notifications
       </h3>
       {unread > 0 ? (
@@ -113,10 +113,10 @@ const AnnouncementsBlock = ({ announcements, limit }: AnnouncementsBlockProps) =
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="break-words text-sm font-semibold text-gray-900 [overflow-wrap:anywhere] dark:text-white">
+              <p className="break-words text-sm font-semibold text-gray-900 dark:text-white">
                 {announcement.title}
               </p>
-              <p className="mt-1 line-clamp-3 break-words text-xs text-gray-600 [overflow-wrap:anywhere] dark:text-gray-300">
+              <p className="mt-1 line-clamp-3 break-words text-xs text-gray-600 dark:text-gray-300">
                 {announcement.body ?? 'No Body Provided.'}
               </p>
               <AnnouncementAttachmentAction
@@ -216,10 +216,10 @@ const PrivateNotificationsBlock = ({
                   <NotificationStatusIcon isRead={notification.isRead} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="break-words text-sm font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-white">
+                  <p className="break-words text-sm font-medium text-gray-900 dark:text-white">
                     {notification.title ?? 'Untitled Notification'}
                   </p>
-                  <p className="mt-1 break-words text-xs text-gray-500 [overflow-wrap:anywhere] dark:text-gray-400">
+                  <p className="mt-1 break-words text-xs text-gray-500 dark:text-gray-400">
                     {notification.message ?? 'No Message Body Provided.'}
                   </p>
                 </div>

@@ -122,13 +122,13 @@ const NotificationPreviewItem = ({
           <span className="min-w-0 flex-1">
             <span
               data-notification-title
-              className="block break-words text-sm font-medium [overflow-wrap:anywhere]"
+              className="block break-words text-sm font-medium"
             >
               {notification.title ?? 'Notification'}
             </span>
             <span
               data-notification-message
-              className="mt-1 block break-words text-xs text-content-muted [overflow-wrap:anywhere]"
+              className="mt-1 block break-words text-xs text-content-muted"
             >
               {notification.message ?? 'No additional details.'}
             </span>
@@ -136,7 +136,7 @@ const NotificationPreviewItem = ({
               {formatRelativeDate(String(notification.createdAt))}
             </span>
             {notification.actionUrl ? (
-              <span className="mt-1 block break-words text-xs text-content-muted [overflow-wrap:anywhere]">
+              <span className="mt-1 block break-words text-xs text-content-muted">
                 Action URL:{' '}
                 <span className="font-mono">
                   {notificationActionDestination(notification.actionUrl)}

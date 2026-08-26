@@ -172,7 +172,6 @@ describe('OnLeaveToday truthful states', () => {
 
     const employeeName = await screen.findByText('Asha Rao (EMP-0042)');
     expect(employeeName.className).toContain('break-words');
-    expect(employeeName.className).toContain('[overflow-wrap:anywhere]');
     expect(employeeName.parentElement?.className).toContain('min-w-0');
     expect(employeeName.parentElement?.className).toContain('flex-1');
     expect(screen.queryByText(longEmployeeId)).toBeNull();

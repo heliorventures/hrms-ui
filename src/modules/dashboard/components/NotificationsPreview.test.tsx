@@ -219,7 +219,6 @@ describe('NotificationsPreview content resilience', () => {
     ]) {
       const { className } = screen.getByText(content);
       expect(className).toContain('break-words');
-      expect(className).toContain('[overflow-wrap:anywhere]');
     }
     expect(document.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
   });

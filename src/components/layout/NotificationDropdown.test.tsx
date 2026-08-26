@@ -457,7 +457,6 @@ describe('NotificationDropdown interaction and layout', () => {
     const message = screen.getByText(longToken, { selector: '[data-notification-message]' });
 
     expect(title.className).toContain('break-words');
-    expect(title.className).toContain('[overflow-wrap:anywhere]');
     expect(message.className).toContain('break-words');
     expect(trigger.hasAttribute('aria-haspopup')).toBe(false);
     expect(panel.getAttribute('aria-label')).toBeNull();
