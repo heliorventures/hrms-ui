@@ -8,13 +8,14 @@ const payrollPayTabs: { id: PayrollTabId; label: string }[] = [
 
 interface PayrollPayTabsProps {
   activeTab: PayrollTabId;
+  canReadTax: boolean;
   onChange: (tab: PayrollTabId) => void;
 }
 
-const PayrollPayTabs = ({ activeTab, onChange }: PayrollPayTabsProps) => (
+const PayrollPayTabs = ({ activeTab, canReadTax, onChange }: PayrollPayTabsProps) => (
   <div className="border-b border-slate-200 dark:border-slate-700">
     <nav className="-mb-px flex gap-6">
-      {payrollPayTabs.map((tab) => (
+      {payrollPayTabs.filter((tab) => tab.id !== 'incometax' || canReadTax).map((tab) => (
         <button
           key={tab.id}
           type="button"

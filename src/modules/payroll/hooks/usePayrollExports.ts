@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import {
   IndiaEpfMonthlyEcrPrepStubCsvDocument,
@@ -35,13 +35,21 @@ const DEFAULT_FY_STATUS: ExportStatus = {
   form16: { exporting: false, error: null },
 };
 
-export function usePayrollExports(client: GraphQLClient) {
+export function usePayrollExports(
+  client: GraphQLClient,
+  { enabled, ownerKey }: { enabled: boolean; ownerKey: string }
+) {
   const [month, setMonth] = useState(() => new Date().getMonth() + 1);
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [fyStartYear, setFyStartYear] = useState(() => indiaFyStartYearFromDate());
   const [fyQuarter, setFyQuarter] = useState(1);
   const [monthlyStatus, setMonthlyStatus] = useState<ExportStatus>(DEFAULT_MONTHLY_STATUS);
   const [fyStatus, setFyStatus] = useState<ExportStatus>(DEFAULT_FY_STATUS);
+
+  useEffect(() => {
+    setMonthlyStatus(DEFAULT_MONTHLY_STATUS);
+    setFyStatus(DEFAULT_FY_STATUS);
+  }, [enabled, ownerKey]);
 
   const setLatestCyclePeriod = useCallback((cycle?: { month: number; year: number } | null) => {
     if (!cycle) return;
@@ -65,6 +73,7 @@ export function usePayrollExports(client: GraphQLClient) {
 
   const downloadMonthly = useCallback(
     async (key: MonthlyPayrollExportKey) => {
+      if (!enabled) return;
       updateMonthlyStatus(key, true, null);
       try {
         const token = monthToken(month);
@@ -118,11 +127,12 @@ export function usePayrollExports(client: GraphQLClient) {
         updateMonthlyStatus(key, false, graphQlUserMessage(err));
       }
     },
-    [client, month, updateMonthlyStatus, year]
+    [client, enabled, month, updateMonthlyStatus, year]
   );
 
   const downloadFy = useCallback(
     async (key: FyPayrollExportKey) => {
+      if (!enabled) return;
       updateFyStatus(key, true, null);
       try {
         if (key === 'fyTotals') {
@@ -158,7 +168,7 @@ export function usePayrollExports(client: GraphQLClient) {
         updateFyStatus(key, false, graphQlUserMessage(err));
       }
     },
-    [client, fyQuarter, fyStartYear, updateFyStatus]
+    [client, enabled, fyQuarter, fyStartYear, updateFyStatus]
   );
 
   return {

@@ -46,18 +46,18 @@ describe('route registries', () => {
         tenantPath: '/leave/team-calendar',
       },
       { kind: 'page', path: 'leave', title: 'Leave', tenantPath: '/leave' },
-      { kind: 'redirect', path: 'payroll', to: '/payroll/pay' },
+      { kind: 'redirect', path: 'payroll', to: '/payroll/payslips' },
       {
         kind: 'page',
         path: 'payroll/payslips',
-        title: 'Payroll processing',
-        payrollCapability: 'route.payroll.admin',
+        title: 'Payslips and tax',
+        payrollCapability: 'route.payroll.payslips',
       },
       {
         kind: 'page',
         path: 'payroll/pay',
-        title: 'Pay',
-        payrollCapability: 'route.payroll.self',
+        title: 'Payroll processing',
+        payrollCapability: 'route.payroll.pay',
       },
       {
         kind: 'page',
@@ -298,5 +298,28 @@ describe('route registries', () => {
         expect('load' in route).toBe(false);
       }
     }
+  });
+
+  it('keeps self-service and payroll-processing page ownership aligned with route authority', async () => {
+    const payslipsRoute = TENANT_APP_ROUTES.find(
+      (route) => route.kind === 'page' && route.path === 'payroll/payslips'
+    );
+    const processingRoute = TENANT_APP_ROUTES.find(
+      (route) => route.kind === 'page' && route.path === 'payroll/pay'
+    );
+    if (payslipsRoute?.kind !== 'page' || processingRoute?.kind !== 'page') {
+      throw new Error('Expected payroll page routes.');
+    }
+
+    const [payslipsModule, processingModule, expectedSelfService, expectedProcessing] =
+      await Promise.all([
+        payslipsRoute.load(),
+        processingRoute.load(),
+        import('../modules/payroll/PayrollPayPage'),
+        import('../modules/payroll/PayrollPage'),
+      ]);
+
+    expect(payslipsModule.default).toBe(expectedSelfService.default);
+    expect(processingModule.default).toBe(expectedProcessing.default);
   });
 });

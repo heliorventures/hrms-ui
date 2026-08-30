@@ -82,5 +82,14 @@ extend type Mutation {
 # Leave approval inbox state, merged locally until the federated gateway is restarted.
 extend type LeaveRequest {
   pendingApprovalStage: String
+  pendingApprovalStepId: ID
   viewerMayApprove: Boolean!
+}
+
+extend type Expense {
+  pendingApprovalStepId: ID
+}
+
+extend type TravelRequest {
+  pendingApprovalStepId: ID
 }

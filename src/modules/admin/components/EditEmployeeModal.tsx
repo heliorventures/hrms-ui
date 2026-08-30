@@ -6,6 +6,7 @@ import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useAuth } from '../../../contexts/AuthContext';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import { parseEmployeeStatus } from '../../employeeStatus';
 import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
 import { type UpdateEmployeeInput } from '../../../api/graphql/graphql';
 import {
@@ -186,7 +187,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     if (!employee || !isOpen) return;
     setFirstName(employee.firstName ?? '');
     setLastName(employee.lastName ?? '');
-    setStatus(employee.status || 'ACTIVE');
+    setStatus(parseEmployeeStatus(employee.status) ?? '');
     setEmploymentType(employee.employmentType ?? '');
     setDepartmentId(employee.departmentId ?? '');
     setDesignationId(employee.designationId ?? '');
@@ -271,13 +272,18 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     e.preventDefault();
     if (!employee) return;
     setFormError(null);
+    const canonicalStatus = parseEmployeeStatus(status);
+    if (!canonicalStatus) {
+      setFormError('Select a valid employee status before saving.');
+      return;
+    }
     setSubmitting(true);
     try {
       const input: Record<string, unknown> = {
         id: employee.id,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        status,
+        status: canonicalStatus,
       };
       const et = employmentType.trim();
       if (et) {

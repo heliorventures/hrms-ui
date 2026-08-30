@@ -31,7 +31,6 @@ const modelFor = (overrides: Partial<LeaveBalancesModel>): LeaveBalancesModel =>
       leaveTypeId: '',
       year: '2026',
       delta: '1',
-      alsoCredit: true,
     },
     setBalanceForm: vi.fn(),
     setAdjustmentForm: vi.fn(),
@@ -84,5 +83,16 @@ describe('LeaveBalancesSection employee picker availability', () => {
     expect(
       screen.getAllByRole<HTMLSelectElement>('listbox').every((listbox) => !listbox.disabled)
     ).toBe(true);
+  });
+
+  it('explains invariant balance recomputation without exposing a credit toggle', () => {
+    render(<LeaveBalancesSection model={modelFor({})} />);
+
+    expect(screen.queryByRole('checkbox', { name: /available balance/i })).toBeNull();
+    expect(
+      screen.getByText(
+        'Adjusts entitlement and consistently recomputes available balance from entitlement, carried forward, used, and pending days.'
+      )
+    ).toBeTruthy();
   });
 });

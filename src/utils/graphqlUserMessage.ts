@@ -1,6 +1,8 @@
 import { ClientError } from 'graphql-request';
 
 const FALLBACK_MESSAGE = 'We could not complete this action. Try again.';
+export const LEAVE_WORKFLOW_REFRESH_MESSAGE =
+  'This leave request moved to another approval step. Refresh leave requests before trying again.';
 export type GraphQlUserMessageContext = 'default' | 'attendance-management';
 
 const ATTENDANCE_CONFLICT_MESSAGE =
@@ -20,6 +22,8 @@ function codeToMessage(code: string): string | null {
       return 'An active leave request already covers all or part of those dates.';
     case 'LEAVE_POLICY_DUPLICATE':
       return 'Only one leave policy can be configured for each leave type.';
+    case 'LEAVE_WORKFLOW_NOT_CURRENT':
+      return LEAVE_WORKFLOW_REFRESH_MESSAGE;
     case 'USER_EMAIL_CONFLICT':
       return 'A login account already uses this email address. Use a different email or leave it blank.';
     case 'USER_USERNAME_CONFLICT':

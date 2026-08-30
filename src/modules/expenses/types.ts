@@ -19,6 +19,7 @@ export interface ExpenseRow {
   title: string;
   status: string;
   pendingApprovalStage?: string | null;
+  pendingApprovalStepId?: string | null;
   viewerMayApprove: boolean;
   submittedAt: string;
   approvedAmount?: string | null;
@@ -40,6 +41,7 @@ export interface TravelRequestRow {
   currency: string;
   status: string;
   pendingApprovalStage?: string | null;
+  pendingApprovalStepId?: string | null;
   viewerMayApprove: boolean;
   rejectionReason?: string | null;
   approvedBy?: string | null;
@@ -49,9 +51,9 @@ export interface TravelRequestRow {
 }
 
 export interface ExpenseBoardData {
-  expenseCategories: ExpenseCategoryRow[];
-  expenses: ExpenseRow[];
-  travelRequests: TravelRequestRow[];
+  expenseCategories?: ExpenseCategoryRow[];
+  expenses?: ExpenseRow[];
+  travelRequests?: TravelRequestRow[];
   employeeLabels?: Record<string, string>;
 }
 
@@ -61,11 +63,12 @@ export type ExpenseNotice = {
 };
 
 export type RejectTarget =
-  | { kind: 'expense'; id: string }
-  | { kind: 'travel'; id: string };
+  | { kind: 'expense'; id: string; expectedWorkflowStepId: string }
+  | { kind: 'travel'; id: string; expectedWorkflowStepId: string };
 
 export type ApproveExpenseTarget = {
   id: string;
+  expectedWorkflowStepId: string;
   claimAmount: string;
   currency: string;
   draftApprove: string;

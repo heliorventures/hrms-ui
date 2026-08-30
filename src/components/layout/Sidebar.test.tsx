@@ -5,15 +5,32 @@ import { createRef, useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { ParsedClientSession } from '../../auth/clientSession';
+import { PERMISSIONS } from '../../auth/permissions';
+
 import Sidebar from './Sidebar';
 
-vi.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({ can: () => true, clientSession: null }),
+const sidebarAuth = vi.hoisted(() => ({
+  clientSession: null as ParsedClientSession | null,
 }));
 
-vi.mock('../../auth/navAccess', () => ({
-  canAccessTenantPath: () => true,
+vi.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    can: (permission: string) => sidebarAuth.clientSession?.permissions.has(permission) ?? false,
+    clientSession: sidebarAuth.clientSession,
+  }),
 }));
+
+function session(permissions: readonly string[], jwtRoles: string[] = []): ParsedClientSession {
+  return {
+    jwtRoles,
+    permissions: new Set(permissions),
+    permissionScopes: {},
+    resourceScopes: {},
+    persona: 'EMPLOYEE',
+    mustChangePassword: false,
+  };
+}
 
 let desktopViewport = true;
 let mediaListeners = new Set<(event: MediaQueryListEvent) => void>();
@@ -25,6 +42,7 @@ function setDesktopViewport(matches: boolean) {
 }
 
 beforeEach(() => {
+  sidebarAuth.clientSession = session(Object.values(PERMISSIONS));
   desktopViewport = true;
   mediaListeners = new Set();
   document.body.innerHTML = '<div id="root"></div>';
@@ -130,6 +148,24 @@ function renderStatefulSidebar() {
 }
 
 describe('Sidebar', () => {
+  it('does not expose self-service routes from JWT role names', () => {
+    sidebarAuth.clientSession = session([], ['HR_ADMIN']);
+    renderSidebar();
+
+    expect(screen.queryByRole('link', { name: 'Attendance' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Timesheet' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Leave' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Expenses & Travel' })).toBeNull();
+  });
+
+  it('exposes only self-service routes backed by exact permissions', () => {
+    sidebarAuth.clientSession = session(['timesheet:read'], ['EMPLOYEE']);
+    renderSidebar();
+
+    expect(screen.getByRole('link', { name: 'Timesheet' })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Attendance' })).toBeNull();
+  });
+
   it('keeps the mobile drawer closed by default while preserving desktop navigation', () => {
     renderSidebar();
 

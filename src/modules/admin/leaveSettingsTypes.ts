@@ -42,7 +42,6 @@ export interface LeaveBalanceAdjustmentForm {
   leaveTypeId: string;
   year: string;
   delta: string;
-  alsoCredit: boolean;
 }
 
 export interface HolidayCalendarForm {

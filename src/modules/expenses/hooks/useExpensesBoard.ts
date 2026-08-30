@@ -3,6 +3,7 @@ import {
   ExpenseBoardDocument,
   ExpenseSubmissionHintsDocument,
   OrgChartDocument,
+  type ExpenseBoardQueryVariables,
   type ExpenseSubmissionHintsQuery,
 } from '../../../api/graphql/graphql';
 import { useGraphClient } from '../../../hooks/useGraphClient';
@@ -10,7 +11,21 @@ import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { EXPENSE_BOARD_LIMIT } from '../constants';
 import type { ExpenseBoardData, ExpenseNotice, ExpenseSubmissionHints } from '../types';
 
-export function useExpensesBoard(userId?: string) {
+interface UseExpensesBoardOptions {
+  canReadEmployees: boolean;
+  canReadExpenses: boolean;
+  canReadTravel: boolean;
+  canSubmitExpenses: boolean;
+  ownerKey: string;
+}
+
+export function useExpensesBoard({
+  canReadEmployees,
+  canReadExpenses,
+  canReadTravel,
+  canSubmitExpenses,
+  ownerKey,
+}: UseExpensesBoardOptions) {
   const client = useGraphClient('client');
   const [data, setData] = useState<ExpenseBoardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,20 +33,28 @@ export function useExpensesBoard(userId?: string) {
   const [submissionHints, setSubmissionHints] = useState<ExpenseSubmissionHints | null>(null);
 
   const loadBoard = useCallback(async () => {
+    if (!canReadExpenses && !canReadTravel) return { employeeLabels: {} };
+    const variables: ExpenseBoardQueryVariables = {
+      includeExpenses: canReadExpenses,
+      includeTravel: canReadTravel,
+      limit: EXPENSE_BOARD_LIMIT,
+    };
     const [board, org] = await Promise.all([
-      client.request<ExpenseBoardData>(ExpenseBoardDocument, {
-        limit: EXPENSE_BOARD_LIMIT,
-      }),
-      client.request<{
-        orgChart: { employeeId: string; employeeCode: string; fullName: string }[];
-      }>(OrgChartDocument, { limit: 500 }).catch(() => ({ orgChart: [] })),
+      client.request<ExpenseBoardData>(ExpenseBoardDocument, variables),
+      canReadEmployees
+        ? client
+            .request<{
+              orgChart: { employeeId: string; employeeCode: string; fullName: string }[];
+            }>(OrgChartDocument, { limit: 500 })
+            .catch(() => ({ orgChart: [] }))
+        : Promise.resolve({ orgChart: [] }),
     ]);
     const employeeLabels: Record<string, string> = {};
     for (const row of org.orgChart ?? []) {
       employeeLabels[row.employeeId] = `${row.fullName} (${row.employeeCode})`;
     }
     return { ...board, employeeLabels };
-  }, [client]);
+  }, [canReadEmployees, canReadExpenses, canReadTravel, client]);
 
   const refresh = useCallback(async () => {
     const result = await loadBoard();
@@ -41,7 +64,7 @@ export function useExpensesBoard(userId?: string) {
 
   const loadSubmissionHints = useCallback(
     async (expenseCategoryId: string) => {
-      if (!expenseCategoryId.trim()) {
+      if (!canSubmitExpenses || !expenseCategoryId.trim()) {
         setSubmissionHints(null);
         return;
       }
@@ -55,10 +78,19 @@ export function useExpensesBoard(userId?: string) {
         setSubmissionHints(null);
       }
     },
-    [client]
+    [canSubmitExpenses, client]
   );
 
   useEffect(() => {
+    if (!canReadExpenses && !canReadTravel) {
+      setData(null);
+      setSubmissionHints(null);
+      setNotice(null);
+      setLoading(false);
+      return undefined;
+    }
+    setData(null);
+    setSubmissionHints(null);
     let cancelled = false;
     void (async () => {
       try {
@@ -77,7 +109,7 @@ export function useExpensesBoard(userId?: string) {
     return () => {
       cancelled = true;
     };
-  }, [loadBoard, userId]);
+  }, [canReadExpenses, canReadTravel, loadBoard, ownerKey]);
 
   return {
     client,

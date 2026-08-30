@@ -1,11 +1,11 @@
 import type { EmployeePrivateProfileQuery } from '../../../../api/graphql/graphql';
+import { employeeStatusForDisplay } from '../../../employeeStatus';
 import type {
   CompanyAssignment,
   CoreEmployeeRecord,
   DocumentRow,
   EducationEntry,
   EmployeeProfileModel,
-  EmploymentStatusUi,
   GrowthTimelineNode,
   IdentityRecord,
   PersonalInfoFields,
@@ -14,14 +14,6 @@ import type {
   SalaryHistoryEntry,
   VerificationStatus,
 } from '../types';
-
-function normalizeStatus(status: string): EmploymentStatusUi {
-  const u = status.toUpperCase();
-  if (u.includes('TERM')) return 'TERMINATED';
-  if (u.includes('LEAVE') || u === 'ON_LEAVE') return 'ON_LEAVE';
-  if (u.includes('SUSPEND')) return 'SUSPENDED';
-  return 'ACTIVE';
-}
 
 function mapCategory(cat?: string | null, name?: string | null): DocumentRow['category'] {
   const blob = `${cat ?? ''} ${name ?? ''}`.toUpperCase();
@@ -280,7 +272,7 @@ export function mapBundleToEmployeeProfileModel(
 
   return {
     core,
-    statusUi: normalizeStatus(emp.status),
+    statusUi: employeeStatusForDisplay(emp.status),
     personal,
     banking,
     identities,

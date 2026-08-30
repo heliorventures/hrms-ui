@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
+import { PERMISSIONS } from '../../auth/permissions';
 import Card from '../../components/common/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
@@ -13,10 +15,26 @@ import type { PayrollTabId } from './payrollTypes';
 
 const PayrollPayPage = () => {
   const client = useGraphClient('client');
-  const { user } = useAuth();
+  const { clientSession, user } = useAuth();
   const { currentTenant } = useTenant();
+  const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
+  const ownerKey = authorizationStateKey(clientSession);
+  const canReadPayroll = permissions.canScopedPermission(PERMISSIONS.payrollRead);
+  const canReadTax = permissions.canScopedPermission(PERMISSIONS.taxRead);
+  const canSubmitTax = permissions.canCapability('action.tax.submit');
   const [activeTab, setActiveTab] = useState<PayrollTabId>('salary');
-  const pay = usePayrollPayData(client, activeTab);
+  const pay = usePayrollPayData(client, activeTab, {
+    canReadPayroll,
+    canReadTax,
+    canSubmitTax,
+    ownerKey,
+  });
+
+  useEffect(() => {
+    if (activeTab === 'incometax' && !canReadTax) setActiveTab('salary');
+  }, [activeTab, canReadTax]);
+
+  if (!canReadPayroll) return null;
 
   return (
     <div className="space-y-6">
@@ -35,7 +53,7 @@ const PayrollPayPage = () => {
         </Card>
       )}
 
-      <PayrollPayTabs activeTab={activeTab} onChange={setActiveTab} />
+      <PayrollPayTabs activeTab={activeTab} canReadTax={canReadTax} onChange={setActiveTab} />
 
       {activeTab === 'salary' && (
         <PayrollSalaryTab
@@ -72,6 +90,7 @@ const PayrollPayPage = () => {
         <PayrollIncomeTaxTab
           activeTaxConfig={pay.activeTaxConfig}
           activeTaxSlabs={pay.activeTaxSlabs}
+          canSubmitTax={canSubmitTax}
           declDed={pay.declDed}
           declFy={pay.declFy}
           declGross={pay.declGross}

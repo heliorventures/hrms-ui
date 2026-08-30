@@ -10,10 +10,22 @@ import PunchInOut from './PunchInOut';
 
 const graphState = vi.hoisted(() => ({
   client: { request: vi.fn() },
+  permissions: new Set<string>(),
 }));
 
 vi.mock('../../../hooks/useGraphClient', () => ({
   useGraphClient: () => graphState.client,
+}));
+
+vi.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    clientSession: {
+      employeeId: 'employee-1',
+      permissions: graphState.permissions,
+      permissionScopes: {},
+      resourceScopes: {},
+    },
+  }),
 }));
 
 const deferred = <T,>() => {
@@ -59,6 +71,7 @@ function renderCard() {
 }
 
 beforeEach(() => {
+  graphState.permissions = new Set(['attendance:read', 'attendance:punch_self']);
   graphState.client.request = vi.fn((document) => {
     if (document === PunchDaySummaryDocument) return Promise.resolve(summary());
     return Promise.resolve({ punchToday: segment(2) });
@@ -72,6 +85,24 @@ afterEach(() => {
 });
 
 describe('PunchInOut truthful states', () => {
+  it('does not render or request attendance without attendance:read', async () => {
+    graphState.permissions = new Set();
+    const view = renderCard();
+
+    await act(async () => Promise.resolve());
+    expect(view.container.innerHTML).toBe('');
+    expect(graphState.client.request).not.toHaveBeenCalled();
+  });
+
+  it('loads attendance read-only without rendering punch controls', async () => {
+    graphState.permissions = new Set(['attendance:read']);
+    renderCard();
+
+    expect(await screen.findByText('Segment 1')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Punch In' })).toBeNull();
+    expect(graphState.client.request).toHaveBeenCalledWith(PunchDaySummaryDocument);
+  });
+
   it('renders an actionable summary failure and disables punching until summary data is ready', async () => {
     graphState.client.request.mockRejectedValue(new Error('Failed to fetch'));
     renderCard();

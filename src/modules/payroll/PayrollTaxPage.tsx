@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
+import { PERMISSIONS } from '../../auth/permissions';
 import Card from '../../components/common/Card';
+import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
@@ -53,7 +56,12 @@ const validateOptionalRate = (raw: string, label: string): string | null => {
   return value >= 0 && value <= 100 ? null : `${label} must be a percentage between 0 and 100.`;
 };
 
-const PayrollTaxPage = () => {
+interface PayrollTaxPageContentProps {
+  canManageTax: boolean;
+  canSubmitTax: boolean;
+}
+
+const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageContentProps) => {
   const client = useGraphClient('client');
   const [data, setData] = useState<TaxBoardData | null>(null);
   const [computations, setComputations] = useState<TaxComputationRow[] | null>(null);
@@ -178,6 +186,7 @@ const PayrollTaxPage = () => {
 
   const handleUpsertTaxConfiguration = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!canManageTax) return;
     setCfgUpsertBusy(true);
     setCfgUpsertMsg(null);
     try {
@@ -206,6 +215,7 @@ const PayrollTaxPage = () => {
 
   const handleUpsertSlab = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!canManageTax) return;
     if (!selectedConfigId) {
       setSlabMsg('Select a tax configuration first.');
       return;
@@ -254,6 +264,7 @@ const PayrollTaxPage = () => {
 
   const handleUpsertTaxSection = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!canManageTax) return;
     const sectionCode = secCode.trim().toUpperCase();
     if (!SECTION_CODE_PATTERN.test(sectionCode)) {
       setSecMsg('Section code must use A-Z, 0-9, underscore, or hyphen.');
@@ -294,6 +305,7 @@ const PayrollTaxPage = () => {
 
   const handleUpsert = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!canSubmitTax) return;
     if (!selectedConfigId) {
       setFormMsg('Select a tax configuration first.');
       return;
@@ -355,7 +367,7 @@ const PayrollTaxPage = () => {
         onChange={setSelectedConfigId}
       />
       <TaxConfigurationsCard configs={data?.taxConfigurations ?? []} loading={loading} />
-      <TaxSectionsCard
+      {canManageTax ? <TaxSectionsCard
         error={taxSectionsError}
         message={secMsg}
         sectionCode={secCode}
@@ -369,9 +381,9 @@ const PayrollTaxPage = () => {
         onMaxChange={setSecMax}
         onRegimeChange={setSecRegime}
         onSubmit={handleUpsertTaxSection}
-      />
+      /> : null}
       <TaxSlabsCard loading={loading} slabs={slabs} />
-      <TaxAdminFormsCard
+      {canManageTax ? <TaxAdminFormsCard
         configActive={cfgActive}
         configBusy={cfgUpsertBusy}
         configCountry={cfgCountry}
@@ -396,9 +408,9 @@ const PayrollTaxPage = () => {
         onSlabSubmit={handleUpsertSlab}
         onSlabSurchargeChange={setSlabSurcharge}
         onSlabToChange={setSlabTo}
-      />
+      /> : null}
       <TaxComputationsCard computations={computations} error={compError} loading={compLoading} />
-      <TaxDeclarationFormCard
+      {canSubmitTax ? <TaxDeclarationFormCard
         deductions={formDed}
         fiscalYear={formYear}
         grossIncome={formGross}
@@ -411,8 +423,23 @@ const PayrollTaxPage = () => {
         onGrossIncomeChange={setFormGross}
         onRegimeChange={setFormRegime}
         onSubmit={handleUpsert}
-      />
+      /> : null}
     </div>
+  );
+};
+
+const PayrollTaxPage = () => {
+  const { clientSession } = useAuth();
+  const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
+  const canReadTax = permissions.canScopedPermission(PERMISSIONS.taxRead);
+  if (!canReadTax) return null;
+
+  return (
+    <PayrollTaxPageContent
+      key={authorizationStateKey(clientSession)}
+      canManageTax={permissions.canCapability('action.tax.manage')}
+      canSubmitTax={permissions.canCapability('action.tax.submit')}
+    />
   );
 };
 

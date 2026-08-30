@@ -104,6 +104,16 @@ describe('graphQlUserMessage', () => {
     );
   });
 
+  it('tells an approver to refresh when the leave workflow step is stale', () => {
+    const err = Object.assign(new Error('The expected workflow step is no longer current.'), {
+      code: 'LEAVE_WORKFLOW_NOT_CURRENT',
+    });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'This leave request moved to another approval step. Refresh leave requests before trying again.'
+    );
+  });
+
   it('maps login email conflicts to a field-specific correction', () => {
     const err = Object.assign(new Error('email is already in use in this tenant'), {
       code: 'USER_EMAIL_CONFLICT',

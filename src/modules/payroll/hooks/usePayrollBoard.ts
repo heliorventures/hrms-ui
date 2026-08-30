@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import {
   PayrollArrearsListDocument,
@@ -35,45 +35,67 @@ function complianceFormFromQuery(
   };
 }
 
-export function usePayrollBoard(client: GraphQLClient) {
+interface PayrollBoardAuthorization {
+  enabled: boolean;
+  ownerKey: string;
+}
+
+export function usePayrollBoard(
+  client: GraphQLClient,
+  { enabled, ownerKey }: PayrollBoardAuthorization
+) {
   const [data, setData] = useState<PayrollBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [complianceForm, setComplianceForm] =
     useState<PayrollComplianceFormState>(DEFAULT_COMPLIANCE_FORM);
+  const requestGeneration = useRef(0);
 
   const loadData = useCallback(async () => {
+    const generation = ++requestGeneration.current;
+    if (!enabled) {
+      setData(null);
+      setLoading(false);
+      setError(null);
+      setComplianceForm(DEFAULT_COMPLIANCE_FORM);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const result = await client.request<PayrollBoardData>(PayrollBoardDocument, { limit: 20 });
-      let merged: PayrollBoardData = result;
-      try {
-        const arrears = await client.request<{ payrollArrears: PayrollArrearRow[] }>(
-          PayrollArrearsListDocument,
-          { limit: 100 }
-        );
-        merged = { ...result, payrollArrears: arrears.payrollArrears };
-      } catch {
-        merged = { ...result, payrollArrears: [] };
-      }
-      setData(merged);
-      try {
-        const settings =
-          await client.request<PayrollComplianceSettingQuery>(PayrollComplianceSettingDocument);
-        setComplianceForm(complianceFormFromQuery(settings.payrollComplianceSetting));
-      } catch {
-        setComplianceForm(DEFAULT_COMPLIANCE_FORM);
-      }
+      const [result, arrears, settings] = await Promise.all([
+        client.request<PayrollBoardData>(PayrollBoardDocument, { limit: 20 }),
+        client
+          .request<{ payrollArrears: PayrollArrearRow[] }>(PayrollArrearsListDocument, {
+            limit: 100,
+          })
+          .catch(() => ({ payrollArrears: [] })),
+        client
+          .request<PayrollComplianceSettingQuery>(PayrollComplianceSettingDocument)
+          .catch(() => null),
+      ]);
+      if (generation !== requestGeneration.current) return;
+      setData({ ...result, payrollArrears: arrears.payrollArrears });
+      setComplianceForm(
+        settings
+          ? complianceFormFromQuery(settings.payrollComplianceSetting)
+          : DEFAULT_COMPLIANCE_FORM
+      );
     } catch (err) {
+      if (generation !== requestGeneration.current) return;
+      setData(null);
       setError(graphQlUserMessage(err));
     } finally {
-      setLoading(false);
+      if (generation === requestGeneration.current) setLoading(false);
     }
-  }, [client]);
+  }, [client, enabled, ownerKey]);
 
   useEffect(() => {
     void loadData();
+    return () => {
+      requestGeneration.current += 1;
+    };
   }, [loadData]);
 
   const setComplianceField = useCallback(

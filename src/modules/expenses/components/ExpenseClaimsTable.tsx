@@ -17,7 +17,7 @@ interface ExpenseClaimsTableProps {
   travelRequestLabels: Record<string, string>;
   onApprove: (row: ExpenseRow) => void;
   onMarkPaid: (row: ExpenseRow) => void;
-  onReject: (expenseId: string) => void;
+  onReject: (row: ExpenseRow) => void;
 }
 
 function categoryName(categories: ExpenseCategoryRow[], categoryId: string): string {
@@ -150,7 +150,7 @@ const ExpenseClaimsTable = ({
                               variant="outline"
                               className="!px-2 !py-1 !text-xs"
                               disabled={busyKey === `${EXPENSE_BUSY_PREFIX.expense}:${expense.id}`}
-                              onClick={() => onReject(expense.id)}
+                              onClick={() => onReject(expense)}
                             >
                               Reject
                             </Button>

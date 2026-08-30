@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import {
   ClientOpsPayslipsForPayrollHubDocument,
+  ClientOpsPayrollTaxBoardDocument,
+  PayrollBoardDocument,
   PayrollComplianceSettingDocument,
-  PayrollSalaryComponentsDocument,
-  PayrollShellDocument,
   type PayrollComplianceSettingQuery,
 } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -28,7 +28,18 @@ import { useEmployeeTaxSelfService } from './useEmployeeTaxSelfService';
 
 const PAYSPLIP_LIMIT = 24;
 
-export function usePayrollPayData(client: GraphQLClient, activeTab: PayrollTabId) {
+interface PayrollPayAuthorization {
+  canReadPayroll: boolean;
+  canReadTax: boolean;
+  canSubmitTax: boolean;
+  ownerKey: string;
+}
+
+export function usePayrollPayData(
+  client: GraphQLClient,
+  activeTab: PayrollTabId,
+  { canReadPayroll, canReadTax, canSubmitTax, ownerKey }: PayrollPayAuthorization
+) {
   const [payrollCycles, setPayrollCycles] = useState<PayrollCycleRow[] | null>(null);
   const [taxConfigurations, setTaxConfigurations] = useState<TaxConfigurationRow[] | null>(null);
   const [taxSlabs, setTaxSlabs] = useState<TaxSlabRow[] | null>(null);
@@ -36,8 +47,8 @@ export function usePayrollPayData(client: GraphQLClient, activeTab: PayrollTabId
   const [payslips, setPayslips] = useState<PayslipRow[] | null>(null);
   const [payslipError, setPayslipError] = useState<string | null>(null);
   const [payslipMigrationRequired, setPayslipMigrationRequired] = useState(false);
-  const [loadingShell, setLoadingShell] = useState(true);
-  const [loadingSalary, setLoadingSalary] = useState(true);
+  const [loadingPayroll, setLoadingPayroll] = useState(false);
+  const [loadingTax, setLoadingTax] = useState(false);
   const [payslipsLoading, setPayslipsLoading] = useState(false);
   const [errorShell, setErrorShell] = useState<string | null>(null);
   const [errorSalary, setErrorSalary] = useState<string | null>(null);
@@ -48,63 +59,92 @@ export function usePayrollPayData(client: GraphQLClient, activeTab: PayrollTabId
   const [payslipLogoReadUrl, setPayslipLogoReadUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!canReadPayroll) {
+      setPayrollCycles(null);
+      setSalaryComponents(null);
+      setLoadingPayroll(false);
+      setErrorSalary(null);
+      setSalaryMigrationRequired(false);
+      return;
+    }
     let cancelled = false;
     void (async () => {
       try {
-        setLoadingShell(true);
+        setLoadingPayroll(true);
+        setErrorSalary(null);
+        setSalaryMigrationRequired(false);
+        const response = await client.request<{
+          payrollCycles: PayrollCycleRow[];
+          salaryComponents: SalaryComponentRow[];
+        }>(PayrollBoardDocument, { limit: 100 });
+        if (!cancelled) {
+          setPayrollCycles(response.payrollCycles);
+          setSalaryComponents(response.salaryComponents);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setPayrollCycles(null);
+          setSalaryComponents(null);
+          setSalaryMigrationRequired(isMissingPayrollCoreError(err));
+          setErrorSalary(graphQlUserMessage(err));
+        }
+      } finally {
+        if (!cancelled) setLoadingPayroll(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canReadPayroll, client, ownerKey]);
+
+  useEffect(() => {
+    if (!canReadTax) {
+      setTaxConfigurations(null);
+      setTaxSlabs(null);
+      setLoadingTax(false);
+      setErrorShell(null);
+      setShellMigrationRequired(false);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        setLoadingTax(true);
         setErrorShell(null);
         setShellMigrationRequired(false);
         const response = await client.request<{
-          payrollCycles: PayrollCycleRow[];
           taxConfigurations: TaxConfigurationRow[];
           taxSlabs: TaxSlabRow[];
-        }>(PayrollShellDocument);
+        }>(ClientOpsPayrollTaxBoardDocument, { limit: 100 });
         if (!cancelled) {
-          setPayrollCycles(response.payrollCycles);
           setTaxConfigurations(response.taxConfigurations);
           setTaxSlabs(response.taxSlabs);
         }
       } catch (err) {
         if (!cancelled) {
+          setTaxConfigurations(null);
+          setTaxSlabs(null);
           setShellMigrationRequired(isMissingPayrollCoreError(err));
           setErrorShell(graphQlUserMessage(err));
         }
       } finally {
-        if (!cancelled) setLoadingShell(false);
+        if (!cancelled) setLoadingTax(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [client]);
+  }, [canReadTax, client, ownerKey]);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        setLoadingSalary(true);
-        setErrorSalary(null);
-        setSalaryMigrationRequired(false);
-        const response = await client.request<{ salaryComponents: SalaryComponentRow[] }>(
-          PayrollSalaryComponentsDocument
-        );
-        if (!cancelled) setSalaryComponents(response.salaryComponents);
-      } catch (err) {
-        if (!cancelled) {
-          setSalaryMigrationRequired(isMissingPayrollCoreError(err));
-          setErrorSalary(graphQlUserMessage(err));
-        }
-      } finally {
-        if (!cancelled) setLoadingSalary(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [client]);
-
-  useEffect(() => {
-    if (activeTab !== 'payslip' && activeTab !== 'incometax') return;
+    if (!canReadPayroll || (activeTab !== 'payslip' && activeTab !== 'incometax')) {
+      setPayslips(null);
+      setPayslipError(null);
+      setPayslipMigrationRequired(false);
+      setPayslipsLoading(false);
+      setSelectedCycleId(null);
+      return;
+    }
     let cancelled = false;
     void (async () => {
       try {
@@ -128,10 +168,13 @@ export function usePayrollPayData(client: GraphQLClient, activeTab: PayrollTabId
     return () => {
       cancelled = true;
     };
-  }, [client, activeTab]);
+  }, [activeTab, canReadPayroll, client, ownerKey]);
 
   useEffect(() => {
-    if (activeTab !== 'payslip') return;
+    if (!canReadPayroll || activeTab !== 'payslip') {
+      setPayslipBranding(null);
+      return;
+    }
     let cancelled = false;
     void (async () => {
       try {
@@ -145,11 +188,11 @@ export function usePayrollPayData(client: GraphQLClient, activeTab: PayrollTabId
     return () => {
       cancelled = true;
     };
-  }, [client, activeTab]);
+  }, [activeTab, canReadPayroll, client, ownerKey]);
 
   useEffect(() => {
     const id = payslipBranding?.payslipLogoFileStorageId?.trim();
-    if (!id || activeTab !== 'payslip') {
+    if (!canReadPayroll || !id || activeTab !== 'payslip') {
       setPayslipLogoReadUrl(null);
       return;
     }
@@ -168,7 +211,7 @@ export function usePayrollPayData(client: GraphQLClient, activeTab: PayrollTabId
     return () => {
       cancelled = true;
     };
-  }, [client, activeTab, payslipBranding?.payslipLogoFileStorageId]);
+  }, [activeTab, canReadPayroll, client, ownerKey, payslipBranding?.payslipLogoFileStorageId]);
 
   const cycleById = useMemo(() => {
     const map = new Map<string, PayrollCycleRow>();
@@ -233,8 +276,12 @@ export function usePayrollPayData(client: GraphQLClient, activeTab: PayrollTabId
 
   const employeeTax = useEmployeeTaxSelfService(
     client,
-    activeTab === 'incometax',
-    activeTaxConfig
+    activeTaxConfig,
+    {
+      enabled: canReadTax && activeTab === 'incometax',
+      canSubmit: canSubmitTax,
+      ownerKey,
+    }
   );
 
   return {
@@ -244,8 +291,8 @@ export function usePayrollPayData(client: GraphQLClient, activeTab: PayrollTabId
     payslips,
     payslipError,
     payslipMigrationRequired,
-    loadingShell,
-    loadingSalary,
+    loadingShell: loadingTax,
+    loadingSalary: loadingPayroll,
     payslipsLoading,
     errorShell,
     errorSalary,

@@ -106,12 +106,13 @@ query TimesheetWeekBatches($status: String, $limit: Int! = 80) {
     submittedAt
     workflowInstanceId
     pendingApprovalStage
+    pendingApprovalStepId
     viewerMayApprove
   }
 }
 
-mutation ApproveTimesheetWeekBatch($id: ID!) {
-  approveTimesheetWeekBatch(id: $id) {
+mutation ApproveTimesheetWeekBatch($id: ID!, $expectedWorkflowStepId: ID!) {
+  approveTimesheetWeekBatch(id: $id, expectedWorkflowStepId: $expectedWorkflowStepId) {
     id
     status
     employeeId
@@ -120,8 +121,16 @@ mutation ApproveTimesheetWeekBatch($id: ID!) {
   }
 }
 
-mutation RejectTimesheetWeekBatch($id: ID!, $rejectionReason: String) {
-  rejectTimesheetWeekBatch(id: $id, rejectionReason: $rejectionReason)
+mutation RejectTimesheetWeekBatch(
+  $id: ID!
+  $expectedWorkflowStepId: ID!
+  $rejectionReason: String
+) {
+  rejectTimesheetWeekBatch(
+    id: $id
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    rejectionReason: $rejectionReason
+  )
 }
 
 mutation UpsertAttendanceAdjustmentPolicyHr($input: UpsertAttendanceAdjustmentPolicyInput!) {
@@ -376,8 +385,11 @@ mutation SubmitLeaveRequest($input: SubmitLeaveRequestInput!) {
   }
 }
 
-mutation ApproveLeaveRequest($leaveRequestId: ID!) {
-  approveLeaveRequest(leaveRequestId: $leaveRequestId) {
+mutation ApproveLeaveRequest($leaveRequestId: ID!, $expectedWorkflowStepId: ID!) {
+  approveLeaveRequest(
+    leaveRequestId: $leaveRequestId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+  ) {
     id
     status
     employeeId
@@ -388,8 +400,16 @@ mutation ApproveLeaveRequest($leaveRequestId: ID!) {
   }
 }
 
-mutation RejectLeaveRequest($leaveRequestId: ID!, $reason: String) {
-  rejectLeaveRequest(leaveRequestId: $leaveRequestId, reason: $reason) {
+mutation RejectLeaveRequest(
+  $leaveRequestId: ID!
+  $expectedWorkflowStepId: ID!
+  $reason: String
+) {
+  rejectLeaveRequest(
+    leaveRequestId: $leaveRequestId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    reason: $reason
+  ) {
     id
     status
     reason
@@ -513,8 +533,12 @@ mutation CreatePayrollArrear($input: CreatePayrollArrearInput!) {
   }
 }
 
-mutation ApproveExpense($expenseId: ID!, $approvedAmount: String) {
-  approveExpense(expenseId: $expenseId, approvedAmount: $approvedAmount) {
+mutation ApproveExpense($expenseId: ID!, $expectedWorkflowStepId: ID!, $approvedAmount: String) {
+  approveExpense(
+    expenseId: $expenseId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    approvedAmount: $approvedAmount
+  ) {
     id
     status
     amount
@@ -545,8 +569,12 @@ mutation MarkExpensePaymentStatus(
   }
 }
 
-mutation RejectExpense($expenseId: ID!, $reason: String) {
-  rejectExpense(expenseId: $expenseId, reason: $reason) {
+mutation RejectExpense($expenseId: ID!, $expectedWorkflowStepId: ID!, $reason: String) {
+  rejectExpense(
+    expenseId: $expenseId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    reason: $reason
+  ) {
     id
     status
     title
@@ -566,8 +594,11 @@ mutation SubmitTravelRequest($input: SubmitTravelRequestInput!) {
   }
 }
 
-mutation ApproveTravelRequest($travelRequestId: ID!) {
-  approveTravelRequest(travelRequestId: $travelRequestId) {
+mutation ApproveTravelRequest($travelRequestId: ID!, $expectedWorkflowStepId: ID!) {
+  approveTravelRequest(
+    travelRequestId: $travelRequestId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+  ) {
     id
     status
     approvedBy
@@ -577,8 +608,16 @@ mutation ApproveTravelRequest($travelRequestId: ID!) {
   }
 }
 
-mutation RejectTravelRequest($travelRequestId: ID!, $reason: String) {
-  rejectTravelRequest(travelRequestId: $travelRequestId, reason: $reason) {
+mutation RejectTravelRequest(
+  $travelRequestId: ID!
+  $expectedWorkflowStepId: ID!
+  $reason: String
+) {
+  rejectTravelRequest(
+    travelRequestId: $travelRequestId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    reason: $reason
+  ) {
     id
     status
     approvedBy
@@ -1536,14 +1575,18 @@ mutation EnrollInBenefitPlan($benefitPlanId: ID!) {
 }
 
 # Expenses, leave, attendance, notifications, dashboard widgets (codegen; §0.2)
-query ExpenseBoard($limit: Int! = 20) {
-  expenseCategories(limit: $limit) {
+query ExpenseBoard(
+  $limit: Int! = 20
+  $includeExpenses: Boolean!
+  $includeTravel: Boolean!
+) {
+  expenseCategories(limit: $limit) @include(if: $includeExpenses) {
     id
     name
     code
     maxAmountPerClaim
   }
-  expenses(limit: $limit) {
+  expenses(limit: $limit) @include(if: $includeExpenses) {
     id
     employeeId
     expenseCategoryId
@@ -1555,6 +1598,7 @@ query ExpenseBoard($limit: Int! = 20) {
     title
     status
     pendingApprovalStage
+    pendingApprovalStepId
     viewerMayApprove
     submittedAt
     approvedAmount
@@ -1563,7 +1607,7 @@ query ExpenseBoard($limit: Int! = 20) {
     paymentReference
     receiptFileStorageId
   }
-  travelRequests(limit: $limit) {
+  travelRequests(limit: $limit) @include(if: $includeTravel) {
     id
     employeeId
     originLocation
@@ -1575,6 +1619,7 @@ query ExpenseBoard($limit: Int! = 20) {
     currency
     status
     pendingApprovalStage
+    pendingApprovalStepId
     viewerMayApprove
     rejectionReason
     approvedBy
@@ -1631,6 +1676,7 @@ query LeaveBoard($limit: Int! = 20, $balanceYear: Int, $fromDate: NaiveDate, $to
     appliedAt
     workflowInstanceId
     pendingApprovalStage
+    pendingApprovalStepId
     viewerMayApprove
     supportingDocumentReference
   }

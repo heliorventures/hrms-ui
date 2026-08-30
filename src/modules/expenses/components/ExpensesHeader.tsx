@@ -3,12 +3,16 @@ import Button from '../../../components/common/Button';
 
 interface ExpensesHeaderProps {
   canManageExpense: boolean;
+  canSubmitExpense: boolean;
+  canSubmitTravel: boolean;
   onOpenExpense: () => void;
   onOpenTravel: () => void;
 }
 
 const ExpensesHeader = ({
   canManageExpense,
+  canSubmitExpense,
+  canSubmitTravel,
   onOpenExpense,
   onOpenTravel,
 }: ExpensesHeaderProps) => {
@@ -26,13 +30,12 @@ const ExpensesHeader = ({
             </Button>
           </Link>
         ) : null}
-        <Button onClick={onOpenExpense}>Submit Expense</Button>
-        <Button
-          variant="secondary"
-          onClick={onOpenTravel}
-        >
-          Request travel
-        </Button>
+        {canSubmitExpense ? <Button onClick={onOpenExpense}>Submit Expense</Button> : null}
+        {canSubmitTravel ? (
+          <Button variant="secondary" onClick={onOpenTravel}>
+            Request travel
+          </Button>
+        ) : null}
       </div>
     </div>
   );

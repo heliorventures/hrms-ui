@@ -12,6 +12,7 @@ import {
   UpsertLeavePolicyAdminDocument,
   UpsertLeaveTypeAdminDocument,
   type AdminLeaveConsoleQuery,
+  type AdjustLeaveBalanceEntitlementAdminMutationVariables,
 } from '../../../api/graphql/graphql';
 import type { LeavePolicyRow, LeaveSettingsTabKey, LeaveTypeForm, LeaveTypeRow } from '../leaveSettingsTypes';
 import {
@@ -241,15 +242,15 @@ export function useAdminLeaveSettings() {
     event.preventDefault();
     try {
       setError(null);
-      await client.request(AdjustLeaveBalanceEntitlementAdminDocument, {
+      const variables: AdjustLeaveBalanceEntitlementAdminMutationVariables = {
         input: {
           employeeId: adjustmentForm.employeeId.trim(),
           leaveTypeId: adjustmentForm.leaveTypeId,
           year: Number(adjustmentForm.year),
           entitledDelta: adjustmentForm.delta,
-          alsoCreditBalance: adjustmentForm.alsoCredit,
         },
-      });
+      };
+      await client.request(AdjustLeaveBalanceEntitlementAdminDocument, variables);
       await refresh();
     } catch (err) {
       setError(graphQlUserMessage(err));

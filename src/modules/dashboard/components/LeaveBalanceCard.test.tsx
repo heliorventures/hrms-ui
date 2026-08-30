@@ -9,10 +9,22 @@ import LeaveBalanceCard from './LeaveBalanceCard';
 
 const graphState = vi.hoisted(() => ({
   client: { request: vi.fn() },
+  permissions: new Set<string>(),
 }));
 
 vi.mock('../../../hooks/useGraphClient', () => ({
   useGraphClient: () => graphState.client,
+}));
+
+vi.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    clientSession: {
+      employeeId: 'employee-1',
+      permissions: graphState.permissions,
+      permissionScopes: {},
+      resourceScopes: {},
+    },
+  }),
 }));
 
 const routerFuture = {
@@ -58,6 +70,7 @@ function renderCard() {
 }
 
 beforeEach(() => {
+  graphState.permissions = new Set(['leave:read']);
   graphState.client.request = vi.fn((_document, variables) =>
     Promise.resolve(responseForVariables(variables as { limit: number }))
   );
@@ -69,6 +82,15 @@ afterEach(() => {
 });
 
 describe('LeaveBalanceCard truthful states', () => {
+  it('does not render or request balances without leave:read', async () => {
+    graphState.permissions = new Set();
+    const view = renderCard();
+
+    await act(async () => Promise.resolve());
+    expect(view.container.innerHTML).toBe('');
+    expect(graphState.client.request).not.toHaveBeenCalled();
+  });
+
   it('renders an actionable initial failure without valid empty copy', async () => {
     graphState.client.request = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
     renderCard();

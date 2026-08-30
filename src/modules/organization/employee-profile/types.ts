@@ -1,5 +1,7 @@
 /** Domain types for the employee profile shell (API core + enrichable sections). */
 
+import type { CanonicalEmployeeStatus } from '../../employeeStatus';
+
 export interface TenantDocumentTypeOption {
   id: string;
   name: string;
@@ -7,7 +9,7 @@ export interface TenantDocumentTypeOption {
   systemKey?: string | null;
 }
 
-export type EmploymentStatusUi = 'ACTIVE' | 'TERMINATED' | 'ON_LEAVE' | 'SUSPENDED';
+export type EmploymentStatusUi = CanonicalEmployeeStatus | 'UNKNOWN';
 
 export type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 

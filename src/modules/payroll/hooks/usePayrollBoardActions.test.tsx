@@ -42,7 +42,14 @@ describe('usePayrollBoardActions', () => {
     Object.defineProperty(client, 'request', { value: request });
     const reload = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(
-      () => usePayrollBoardActions({ client, complianceForm, reload }),
+      () =>
+        usePayrollBoardActions({
+          client,
+          complianceForm,
+          enabled: true,
+          ownerKey: 'payroll-admin|payroll:manage=ALL',
+          reload,
+        }),
       { wrapper }
     );
 
@@ -76,5 +83,29 @@ describe('usePayrollBoardActions', () => {
       payrollCycleId: 'cycle-approved',
     });
     expect(reload).toHaveBeenCalledOnce();
+  });
+
+  it('suppresses payroll mutations and confirmation when management authority is absent', async () => {
+    const request = vi.fn();
+    const client = new GraphQLClient('https://example.invalid/graphql');
+    Object.defineProperty(client, 'request', { value: request });
+    const reload = vi.fn();
+    const { result } = renderHook(
+      () =>
+        usePayrollBoardActions({
+          client,
+          complianceForm,
+          enabled: false,
+          ownerKey: 'employee|payroll:read=SELF',
+          reload,
+        }),
+      { wrapper }
+    );
+
+    await act(async () => result.current.runPayroll('cycle-denied'));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(request).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
   });
 });

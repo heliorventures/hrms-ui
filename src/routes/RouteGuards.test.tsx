@@ -216,7 +216,7 @@ describe('child authorization guards', () => {
           <Route
             path="/payroll/payslips"
             element={
-              <PayrollPermissionRoute capability="route.payroll.admin">
+              <PayrollPermissionRoute capability="route.payroll.payslips">
                 <RouteContent title="Payslips" load={loadDeniedPage} />
               </PayrollPermissionRoute>
             }
@@ -261,6 +261,79 @@ describe('child authorization guards', () => {
     expect(screen.queryByText('Denied tenant content')).toBeNull();
     expect(screen.getByTestId('location').textContent).toBe('/insights');
     expect(loadDeniedPage).not.toHaveBeenCalled();
+  });
+
+  it('renders an exact-permission tenant route and still denies an HR role without it', async () => {
+    const loadTimesheet = vi.fn(() =>
+      Promise.resolve({ default: () => <h1>Authorized timesheet</h1> })
+    );
+    state.auth = {
+      ...state.auth,
+      clientSession: session(['timesheet:read']),
+    };
+    const view = render(
+      <MemoryRouter initialEntries={['/timesheet']}>
+        <Routes>
+          <Route
+            path="/timesheet"
+            element={
+              <TenantPermissionRoute tenantPath="/timesheet">
+                <RouteContent title="Timesheet" load={loadTimesheet} />
+              </TenantPermissionRoute>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Authorized timesheet' })).toBeTruthy();
+    expect(loadTimesheet).toHaveBeenCalledTimes(1);
+
+    view.unmount();
+    loadTimesheet.mockClear();
+    state.auth = {
+      ...state.auth,
+      clientSession: session([], { jwtRoles: ['HR_ADMIN'] }),
+    };
+    render(
+      <MemoryRouter initialEntries={['/timesheet']}>
+        <Routes>
+          <Route
+            path="/timesheet"
+            element={
+              <TenantPermissionRoute tenantPath="/timesheet">
+                <RouteContent title="Timesheet" load={loadTimesheet} />
+              </TenantPermissionRoute>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Access denied' })).toBeTruthy();
+    expect(loadTimesheet).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['route.payroll.payslips', 'payroll:read', 'SELF'],
+    ['route.payroll.pay', 'payroll:manage', 'ALL'],
+    ['route.payroll.tax', 'tax:read', 'SELF'],
+  ] as const)('renders %s only with %s at %s scope', async (capability, permission, scope) => {
+    const loadPage = vi.fn(() => Promise.resolve({ default: () => <h1>Authorized payroll</h1> }));
+    state.auth = {
+      ...state.auth,
+      clientSession: session([permission], { permissionScopes: { [permission]: scope } }),
+    };
+    render(
+      <MemoryRouter>
+        <PayrollPermissionRoute capability={capability}>
+          <RouteContent title="Payroll" load={loadPage} />
+        </PayrollPermissionRoute>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Authorized payroll' })).toBeTruthy();
+    expect(loadPage).toHaveBeenCalledTimes(1);
   });
 });
 

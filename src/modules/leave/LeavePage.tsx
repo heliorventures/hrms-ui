@@ -13,9 +13,7 @@ import ApplyLeaveModal from './components/ApplyLeaveModal';
 import HolidaySummaryCard from './components/HolidaySummaryCard';
 import LeaveBalancesCard from './components/LeaveBalancesCard';
 import LeaveRejectModal from './components/LeaveRejectModal';
-import LeaveRequestsTableSection, {
-  type LeaveRequestRow,
-} from './components/LeaveRequestsTableSection';
+import LeaveRequestsTableSection from './components/LeaveRequestsTableSection';
 import LeaveRecoveryNotice from './components/LeaveRecoveryNotice';
 import LeaveTypesCard from './components/LeaveTypesCard';
 import LeaveWorkflowTrailModal from './components/LeaveWorkflowTrailModal';
@@ -24,15 +22,16 @@ import { useLeaveWorkflowTrail } from './hooks/useLeaveWorkflowTrail';
 import {
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
+  LeaveBoardDocument,
+  type ApproveLeaveRequestMutationVariables,
   type LeaveBoardQuery,
+  type LeaveBoardQueryVariables,
 } from '../../api/graphql/graphql';
-import { LeaveBoardRangeDocument } from './leaveBoardQuery';
-type ApproveLeaveRequestMutation = {
-  approveLeaveRequest: { status: string };
-};
-type LeaveBoardData = Omit<LeaveBoardQuery, 'leaveRequests'> & {
-  leaveRequests: LeaveRequestRow[];
-};
+import {
+  LEAVE_APPROVAL_REFRESH_MESSAGE,
+  leaveApprovalTarget,
+  type LeaveApprovalTarget,
+} from './leaveApproval';
 type LeavePageFailure = {
   message: string;
   operation: 'board' | 'mutation';
@@ -41,16 +40,19 @@ const BOARD_LIMIT = 20, HOLIDAY_LIMIT = 450;
 const LeavePage = () => {
   const { clientSession } = useAuth();
   const permissions = createPermissionService(clientSession);
+  const canReadLeave = permissions.canCapability('route.leave');
+  const canSubmitLeave = permissions.canCapability('action.leave.submit');
+  const canApproveLeave = permissions.canCapability('action.leave.approve');
   const client = useGraphClient('client');
   const flash = useFlashToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const [data, setData] = useState<LeaveBoardData | null>(null);
+  const [data, setData] = useState<LeaveBoardQuery | null>(null);
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState<LeavePageFailure | null>(null);
   const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
   const [applyOpen, setApplyOpen] = useState(false);
-  const [rejectLeaveId, setRejectLeaveId] = useState<string | null>(null);
+  const [rejectLeaveTarget, setRejectLeaveTarget] = useState<LeaveApprovalTarget | null>(null);
   const [approveBusyId, setApproveBusyId] = useState<string | null>(null);
   const [cancelBusyId, setCancelBusyId] = useState<string | null>(null);
   const workflowTrail = useLeaveWorkflowTrail(client);
@@ -72,25 +74,24 @@ const LeavePage = () => {
     return years;
   }, [defaultYear]);
 
-  const loadBoard = useCallback(
-    () =>
-      client.request<LeaveBoardData>(LeaveBoardRangeDocument, {
-        limit: BOARD_LIMIT,
-        balanceYear,
-        fromDate: requestYearRange.fromDate,
-        toDate: requestYearRange.toDate,
-      }),
-    [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]
-  );
+  const loadBoard = useCallback(() => {
+    const variables: LeaveBoardQueryVariables = {
+      limit: BOARD_LIMIT,
+      balanceYear,
+      fromDate: requestYearRange.fromDate,
+      toDate: requestYearRange.toDate,
+    };
+    return client.request(LeaveBoardDocument, variables);
+  }, [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]);
 
   useEffect(() => {
-    if (searchParams.get('apply') === '1') {
+    if (canSubmitLeave && searchParams.get('apply') === '1') {
       setApplyOpen(true);
       const next = new URLSearchParams(searchParams);
       next.delete('apply');
       setSearchParams(next, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [canSubmitLeave, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!loading && location.hash === '#leave-requests') {
@@ -104,6 +105,12 @@ const LeavePage = () => {
   }, [loading, location.hash]);
 
   const refreshBoard = useCallback(async () => {
+    if (!canReadLeave) {
+      setData(null);
+      setFailure(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setFailure(null);
     workflowTrail.clearFailure();
@@ -114,7 +121,7 @@ const LeavePage = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadBoard, workflowTrail.clearFailure]);
+  }, [canReadLeave, loadBoard, workflowTrail.clearFailure]);
 
   const retryBoard = useCallback(() => {
     void refreshBoard();
@@ -140,15 +147,26 @@ const LeavePage = () => {
     }
   };
 
-  const handleApprove = async (leaveRequestId: string) => {
+  const handleApprove = async (
+    leaveRequestId: string,
+    pendingApprovalStepId?: string | null
+  ) => {
+    if (!canApproveLeave) return;
+    const target = leaveApprovalTarget(leaveRequestId, pendingApprovalStepId);
+    if (!target) {
+      setFailure({ message: LEAVE_APPROVAL_REFRESH_MESSAGE, operation: 'mutation' });
+      return;
+    }
+    const variables: ApproveLeaveRequestMutationVariables = {
+      leaveRequestId: target.leaveRequestId,
+      expectedWorkflowStepId: target.expectedWorkflowStepId,
+    };
     setApproveBusyId(leaveRequestId);
     setApproveWorkflowNotice(null);
     setFailure(null);
     workflowTrail.clearFailure();
     try {
-      const result = await client.request<ApproveLeaveRequestMutation>(ApproveLeaveRequestDocument, {
-        leaveRequestId,
-      });
+      const result = await client.request(ApproveLeaveRequestDocument, variables);
       const status = result.approveLeaveRequest?.status?.toLowerCase() ?? '';
       const pendingMessage =
         'Approval was recorded, but another workflow step may still be pending.';
@@ -163,6 +181,7 @@ const LeavePage = () => {
   };
 
   const handleCancelOwn = async (leaveRequestId: string) => {
+    if (!canSubmitLeave) return;
     setCancelBusyId(leaveRequestId);
     setFailure(null);
     workflowTrail.clearFailure();
@@ -185,8 +204,10 @@ const LeavePage = () => {
   const viewerId = data?.viewerEmployeeId;
 
   const showApprovalColumn = useMemo(
-    () => (data?.leaveRequests ?? []).some((row) => row.viewerMayApprove === true),
-    [data?.leaveRequests]
+    () =>
+      canApproveLeave &&
+      (data?.leaveRequests ?? []).some((row) => row.viewerMayApprove === true),
+    [canApproveLeave, data?.leaveRequests]
   );
 
   const hideEmployeeColumn = useMemo(() => {
@@ -228,6 +249,8 @@ const LeavePage = () => {
 
   const activeFailure = workflowTrail.failure ?? failure;
 
+  if (!canReadLeave) return null;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -241,13 +264,20 @@ const LeavePage = () => {
           <Button variant="outline" type="button" onClick={() => void refreshBoard()} disabled={loading}>
             {loading ? 'Refreshing...' : 'Refresh'}
           </Button>
-          <Button variant="primary" type="button" onClick={() => setApplyOpen(true)} disabled={loading}>
-            Apply for leave
-          </Button>
+          {canSubmitLeave ? (
+            <Button
+              variant="primary"
+              type="button"
+              onClick={() => setApplyOpen(true)}
+              disabled={loading}
+            >
+              Apply for leave
+            </Button>
+          ) : null}
         </div>
       </div>
 
-      <ApplyLeaveModal
+      {canSubmitLeave ? <ApplyLeaveModal
         isOpen={applyOpen}
         leaveBalances={data?.leaveBalances ?? []}
         leavePolicies={data?.leavePolicies ?? []}
@@ -255,19 +285,20 @@ const LeavePage = () => {
         upcomingHolidays={data?.upcomingHolidays ?? []}
         onClose={() => setApplyOpen(false)}
         onSubmitted={refreshBoard}
-      />
+      /> : null}
 
-      <LeaveRejectModal
-        isOpen={rejectLeaveId != null}
-        leaveRequestId={rejectLeaveId}
-        onClose={() => setRejectLeaveId(null)}
+      {canApproveLeave ? <LeaveRejectModal
+        isOpen={rejectLeaveTarget != null}
+        leaveRequestId={rejectLeaveTarget?.leaveRequestId ?? null}
+        expectedWorkflowStepId={rejectLeaveTarget?.expectedWorkflowStepId ?? null}
+        onClose={() => setRejectLeaveTarget(null)}
         onRejected={async () => {
           setFailure(null);
           workflowTrail.clearFailure();
           flash.show('Leave request rejected.', 'success');
           await silentRefreshBoard();
         }}
-      />
+      /> : null}
 
       {activeFailure && (
         <LeaveRecoveryNotice
@@ -322,11 +353,19 @@ const LeavePage = () => {
             leaveTypeNameById={leaveTypeNameById}
             rows={data?.leaveRequests ?? []}
             showApprovalColumn={showApprovalColumn}
-            viewerId={viewerId}
+            viewerId={canSubmitLeave ? viewerId : undefined}
             onApprove={handleApprove}
             onCancelOwn={handleCancelOwn}
             onOpenTrail={openWorkflowTrail}
-            onRejectClick={setRejectLeaveId}
+            onRejectClick={(leaveRequestId, pendingApprovalStepId) => {
+              if (!canApproveLeave) return;
+              const target = leaveApprovalTarget(leaveRequestId, pendingApprovalStepId);
+              if (!target) {
+                setFailure({ message: LEAVE_APPROVAL_REFRESH_MESSAGE, operation: 'mutation' });
+                return;
+              }
+              setRejectLeaveTarget(target);
+            }}
           />
         )}
       </Card>

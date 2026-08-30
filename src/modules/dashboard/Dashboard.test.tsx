@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ParsedClientSession } from '../../auth/clientSession';
 
@@ -60,7 +60,32 @@ vi.mock('./components/UpcomingHolidays', () => ({
 
 afterEach(cleanup);
 
+beforeEach(() => {
+  authState.clientSession.permissions = new Set();
+});
+
 describe('Dashboard', () => {
+  it('omits every protected card when its read permission is missing', () => {
+    render(<Dashboard />);
+
+    expect(screen.queryByTestId('punch-in-out')).toBeNull();
+    expect(screen.queryByTestId('leave-balance')).toBeNull();
+    expect(screen.queryByTestId('on-leave-today')).toBeNull();
+    expect(screen.queryByTestId('upcoming-holidays')).toBeNull();
+    expect(screen.queryByTestId('notifications-preview')).toBeNull();
+  });
+
+  it('renders only cards backed by exact read permissions', () => {
+    authState.clientSession.permissions = new Set(['attendance:read', 'notification:read']);
+    render(<Dashboard />);
+
+    expect(screen.getByTestId('punch-in-out')).toBeTruthy();
+    expect(screen.getByTestId('notifications-preview')).toBeTruthy();
+    expect(screen.queryByTestId('leave-balance')).toBeNull();
+    expect(screen.queryByTestId('on-leave-today')).toBeNull();
+    expect(screen.queryByTestId('upcoming-holidays')).toBeNull();
+  });
+
   it('does not expose the opaque employee UUID in the welcome header', () => {
     render(<Dashboard />);
 

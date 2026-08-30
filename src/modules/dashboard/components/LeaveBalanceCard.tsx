@@ -5,10 +5,15 @@ import {
   ClientOpsLeaveTypeNamesDocument,
   LeaveBalancesDocument,
 } from '../../../api/graphql/graphql';
+import {
+  authorizationStateKey,
+  createPermissionService,
+} from '../../../auth/permissionService';
 import AsyncState from '../../../components/common/AsyncState';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 
@@ -105,7 +110,7 @@ const LeaveBalanceList = ({ rows, typeMap }: LeaveBalanceListProps) => {
   );
 };
 
-const LeaveBalanceCard = () => {
+const AuthorizedLeaveBalanceCard = () => {
   const client = useGraphClient('client');
   const loadBalances = useCallback(async (): Promise<LeaveBalanceResult> => {
     const [typesResult, balancesResult] = await Promise.all([
@@ -170,6 +175,12 @@ const LeaveBalanceCard = () => {
       <LeaveBalanceFooter hasData phase={phase} onRefresh={onRefresh} />
     </Card>
   );
+};
+
+const LeaveBalanceCard = () => {
+  const { clientSession } = useAuth();
+  if (!createPermissionService(clientSession).canCapability('dashboard.leave')) return null;
+  return <AuthorizedLeaveBalanceCard key={authorizationStateKey(clientSession)} />;
 };
 
 export default LeaveBalanceCard;

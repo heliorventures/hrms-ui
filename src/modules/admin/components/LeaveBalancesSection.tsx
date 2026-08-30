@@ -137,7 +137,8 @@ const AdjustmentFormCard = ({ model }: LeaveBalancesSectionProps) => {
   return (
     <Card title="Adjust Entitlement">
       <p className="mb-3 text-xs text-gray-500">
-        Adds days to an existing balance row and can credit available balance by the same delta.
+        Adjusts entitlement and consistently recomputes available balance from entitlement, carried
+        forward, used, and pending days.
       </p>
       <form className="space-y-3" onSubmit={(event) => void model.adjustBalance(event)}>
         <EmployeeSearchSelect
@@ -166,16 +167,6 @@ const AdjustmentFormCard = ({ model }: LeaveBalancesSectionProps) => {
           fullWidth
           required
         />
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={form.alsoCredit}
-            onChange={(event) =>
-              model.setAdjustmentForm({ ...form, alsoCredit: event.target.checked })
-            }
-          />
-          Also add delta to available balance
-        </label>
         <Button type="submit" variant="primary">
           Apply adjustment
         </Button>

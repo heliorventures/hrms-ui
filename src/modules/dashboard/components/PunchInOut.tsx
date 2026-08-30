@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PunchDaySummaryDocument, PunchTodayDocument } from '../../../api/graphql/graphql';
+import {
+  authorizationStateKey,
+  createPermissionService,
+} from '../../../auth/permissionService';
 import AsyncState from '../../../components/common/AsyncState';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import PageNotice from '../../../components/common/PageNotice';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -319,7 +324,11 @@ const PunchActionArea = ({
   </>
 );
 
-const PunchInOut = () => {
+interface AuthorizedPunchInOutProps {
+  canPunch: boolean;
+}
+
+const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
   const client = useGraphClient('client');
   const currentTime = useDashboardCardClock();
   const loadSummary = useCallback(async () => {
@@ -377,17 +386,32 @@ const PunchInOut = () => {
         {lastPunch ? (
           <LastPunchDetails lastPunch={lastPunch} lastEventCoords={lastEventCoords} />
         ) : null}
-        <PunchActionArea
-          buttonLabel={buttonLabel}
-          disabled={!summaryIsReady}
-          mutationError={mutationError}
-          onPunch={handlePunch}
-          onTrackLocationChange={setTrackLocation}
-          submitting={submitting}
-          trackLocation={trackLocation}
-        />
+        {canPunch ? (
+          <PunchActionArea
+            buttonLabel={buttonLabel}
+            disabled={!summaryIsReady}
+            mutationError={mutationError}
+            onPunch={handlePunch}
+            onTrackLocationChange={setTrackLocation}
+            submitting={submitting}
+            trackLocation={trackLocation}
+          />
+        ) : null}
       </div>
     </Card>
+  );
+};
+
+const PunchInOut = () => {
+  const { clientSession } = useAuth();
+  const permissions = createPermissionService(clientSession);
+  if (!permissions.canCapability('dashboard.attendance')) return null;
+
+  return (
+    <AuthorizedPunchInOut
+      key={authorizationStateKey(clientSession)}
+      canPunch={permissions.canCapability('action.attendance.punch')}
+    />
   );
 };
 

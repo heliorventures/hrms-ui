@@ -3,12 +3,20 @@ import Modal from '../../../components/common/Modal';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { RejectLeaveRequestDocument } from '../../../api/graphql/graphql';
+import {
+  RejectLeaveRequestDocument,
+  type RejectLeaveRequestMutationVariables,
+} from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import {
+  LEAVE_APPROVAL_REFRESH_MESSAGE,
+  leaveApprovalTarget,
+} from '../leaveApproval';
 
 interface LeaveRejectModalProps {
   isOpen: boolean;
   leaveRequestId: string | null;
+  expectedWorkflowStepId: string | null;
   onClose: () => void;
   onRejected: () => void;
 }
@@ -16,6 +24,7 @@ interface LeaveRejectModalProps {
 const LeaveRejectModal = ({
   isOpen,
   leaveRequestId,
+  expectedWorkflowStepId,
   onClose,
   onRejected,
 }: LeaveRejectModalProps) => {
@@ -33,6 +42,11 @@ const LeaveRejectModal = ({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!leaveRequestId) return;
+    const target = leaveApprovalTarget(leaveRequestId, expectedWorkflowStepId);
+    if (!target) {
+      setErr(LEAVE_APPROVAL_REFRESH_MESSAGE);
+      return;
+    }
     const r = reason.trim();
     if (!r) {
       setErr('A rejection reason is required.');
@@ -41,10 +55,12 @@ const LeaveRejectModal = ({
     setErr(null);
     setBusy(true);
     try {
-      await client.request(RejectLeaveRequestDocument, {
-        leaveRequestId,
+      const variables: RejectLeaveRequestMutationVariables = {
+        leaveRequestId: target.leaveRequestId,
+        expectedWorkflowStepId: target.expectedWorkflowStepId,
         reason: r,
-      });
+      };
+      await client.request(RejectLeaveRequestDocument, variables);
       onRejected();
       handleClose();
     } catch (ex) {

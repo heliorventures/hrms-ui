@@ -13,6 +13,10 @@ import {
   ViewerEmployeeIdDocument,
   type ViewerEmployeeIdQuery,
 } from '../../api/graphql/graphql';
+import {
+  TIMESHEET_APPROVAL_REFRESH_MESSAGE,
+  timesheetApprovalTarget,
+} from '../timesheet/timesheetApproval';
 import TimesheetBatchPreviewModal from './components/TimesheetBatchPreviewModal';
 
 const TIMESHEET_WEEK_BATCHES_DOCUMENT = `
@@ -27,6 +31,7 @@ const TIMESHEET_WEEK_BATCHES_DOCUMENT = `
       submittedAt
       workflowInstanceId
       pendingApprovalStage
+      pendingApprovalStepId
       viewerMayApprove
     }
   }
@@ -42,6 +47,7 @@ type BatchRow = {
   submittedAt?: string | null;
   workflowInstanceId?: string | null;
   pendingApprovalStage?: string | null;
+  pendingApprovalStepId?: string | null;
   viewerMayApprove?: boolean;
 };
 
@@ -109,12 +115,19 @@ const HrTimesheetsPage = () => {
     }
   }, [loadBatches]);
 
-  const handleApprove = async (id: string) => {
-    setBusyId(id);
+  const handleApprove = async (row: Pick<BatchRow, 'id' | 'pendingApprovalStepId'>) => {
+    const target = timesheetApprovalTarget(row.id, row.pendingApprovalStepId);
+    if (!target) {
+      setError(TIMESHEET_APPROVAL_REFRESH_MESSAGE);
+      setInfoNotice(null);
+      void silentRefresh();
+      return;
+    }
+    setBusyId(target.id);
     setError(null);
     setInfoNotice(null);
     try {
-      const result = await client.request(ApproveTimesheetWeekBatchDocument, { id });
+      const result = await client.request(ApproveTimesheetWeekBatchDocument, target);
       const exp = result.approveTimesheetWeekBatch;
       const st = exp?.status?.trim().toUpperCase() ?? '';
       if (st === 'PENDING' && exp?.workflowInstanceId) {
@@ -135,12 +148,21 @@ const HrTimesheetsPage = () => {
 
   const handleReject = async () => {
     if (!rejectFor) return;
+    const target = timesheetApprovalTarget(rejectFor.id, rejectFor.pendingApprovalStepId);
+    if (!target) {
+      setRejectFor(null);
+      setRejectReason('');
+      setError(TIMESHEET_APPROVAL_REFRESH_MESSAGE);
+      setInfoNotice(null);
+      void silentRefresh();
+      return;
+    }
     setBusyId(rejectFor.id);
     setError(null);
     setInfoNotice(null);
     try {
       await client.request(RejectTimesheetWeekBatchDocument, {
-        id: rejectFor.id,
+        ...target,
         rejectionReason: rejectReason.trim() || null,
       });
       setRejectFor(null);
@@ -234,7 +256,11 @@ const HrTimesheetsPage = () => {
                 render: (row: BatchRow) => {
                   const pending = row.status?.toUpperCase() === 'PENDING';
                   const ownSubmission = viewerEmployeeId != null && row.employeeId === viewerEmployeeId;
-                  const mayAct = pending && row.viewerMayApprove === true && !ownSubmission;
+                  const approvalTarget = timesheetApprovalTarget(row.id, row.pendingApprovalStepId);
+                  const staleApproval =
+                    pending && row.viewerMayApprove === true && !ownSubmission && !approvalTarget;
+                  const mayAct =
+                    pending && row.viewerMayApprove === true && !ownSubmission && !!approvalTarget;
                   const waiting = pending && row.viewerMayApprove === false;
                   const canPreview = pending || row.status?.toUpperCase() === 'REJECTED';
                   if (ownSubmission) {
@@ -242,6 +268,23 @@ const HrTimesheetsPage = () => {
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         Own Submission
                       </span>
+                    );
+                  }
+                  if (staleApproval) {
+                    return (
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="max-w-xs text-xs text-amber-700 dark:text-amber-300">
+                          {TIMESHEET_APPROVAL_REFRESH_MESSAGE}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="!py-1 !text-xs"
+                          onClick={() => void silentRefresh()}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
                     );
                   }
                   if (canPreview && !mayAct) {
@@ -274,7 +317,7 @@ const HrTimesheetsPage = () => {
                           variant="primary"
                           className="!py-1 !text-xs"
                           disabled={busyId === row.id}
-                          onClick={() => void handleApprove(row.id)}
+                          onClick={() => void handleApprove(row)}
                         >
                           {busyId === row.id ? '...' : 'Approve'}
                         </Button>
@@ -348,7 +391,7 @@ const HrTimesheetsPage = () => {
         employeeLabel={previewFor ? employeeLabel(previewFor) : ''}
         busy={busyId === previewFor?.id}
         onClose={() => setPreviewFor(null)}
-        onApprove={(id) => void handleApprove(id)}
+        onApprove={(batch) => void handleApprove(batch)}
         onReject={(batch) => {
           setPreviewFor(null);
           setRejectFor(batch);

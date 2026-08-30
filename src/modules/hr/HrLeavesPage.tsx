@@ -10,9 +10,7 @@ import { useFlashToast } from '../../hooks/useFlashToast';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import ApplyLeaveModal from '../leave/components/ApplyLeaveModal';
 import LeaveRejectModal from '../leave/components/LeaveRejectModal';
-import LeaveRequestsTableSection, {
-  type LeaveRequestRow,
-} from '../leave/components/LeaveRequestsTableSection';
+import LeaveRequestsTableSection from '../leave/components/LeaveRequestsTableSection';
 import LeaveRecoveryNotice from '../leave/components/LeaveRecoveryNotice';
 import LeaveWorkflowTrailModal from '../leave/components/LeaveWorkflowTrailModal';
 import { useLeaveWorkflowTrail } from '../leave/hooks/useLeaveWorkflowTrail';
@@ -22,21 +20,20 @@ import LeaveTeamCalendar from './components/LeaveTeamCalendar';
 import {
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
+  LeaveBoardDocument,
+  type ApproveLeaveRequestMutationVariables,
   type LeaveBoardQuery,
+  type LeaveBoardQueryVariables,
 } from '../../api/graphql/graphql';
-import { LeaveBoardRangeDocument } from '../leave/leaveBoardQuery';
-
-type ApproveLeaveRequestMutation = {
-  approveLeaveRequest: { status: string };
-};
+import {
+  LEAVE_APPROVAL_REFRESH_MESSAGE,
+  leaveApprovalTarget,
+  type LeaveApprovalTarget,
+} from '../leave/leaveApproval';
 
 type HrLeaveFailure = {
   message: string;
   operation: 'board' | 'mutation';
-};
-
-type LeaveBoardData = Omit<LeaveBoardQuery, 'leaveRequests'> & {
-  leaveRequests: LeaveRequestRow[];
 };
 
 const HR_LEAVE_LIMIT = 120;
@@ -46,13 +43,13 @@ const HrLeavesPage = () => {
   const { can, clientSession } = useAuth();
   const client = useGraphClient('client');
   const flash = useFlashToast();
-  const [data, setData] = useState<LeaveBoardData | null>(null);
+  const [data, setData] = useState<LeaveBoardQuery | null>(null);
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState<HrLeaveFailure | null>(null);
   const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
   const [filter, setFilter] = useState<HrLeaveFilter>('pending');
   const [applyOpen, setApplyOpen] = useState(false);
-  const [rejectLeaveId, setRejectLeaveId] = useState<string | null>(null);
+  const [rejectLeaveTarget, setRejectLeaveTarget] = useState<LeaveApprovalTarget | null>(null);
   const [approveBusyId, setApproveBusyId] = useState<string | null>(null);
   const [cancelBusyId, setCancelBusyId] = useState<string | null>(null);
   const workflowTrail = useLeaveWorkflowTrail(client);
@@ -76,16 +73,15 @@ const HrLeavesPage = () => {
     return years;
   }, [defaultYear]);
 
-  const loadBoard = useCallback(
-    () =>
-      client.request<LeaveBoardData>(LeaveBoardRangeDocument, {
-        limit: HR_LEAVE_LIMIT,
-        balanceYear,
-        fromDate: requestYearRange.fromDate,
-        toDate: requestYearRange.toDate,
-      }),
-    [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]
-  );
+  const loadBoard = useCallback(() => {
+    const variables: LeaveBoardQueryVariables = {
+      limit: HR_LEAVE_LIMIT,
+      balanceYear,
+      fromDate: requestYearRange.fromDate,
+      toDate: requestYearRange.toDate,
+    };
+    return client.request(LeaveBoardDocument, variables);
+  }, [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]);
 
   const reloadBoardAndLabels = useCallback(async () => {
     try {
@@ -124,15 +120,25 @@ const HrLeavesPage = () => {
     }
   };
 
-  const handleApprove = async (leaveRequestId: string) => {
+  const handleApprove = async (
+    leaveRequestId: string,
+    pendingApprovalStepId?: string | null
+  ) => {
+    const target = leaveApprovalTarget(leaveRequestId, pendingApprovalStepId);
+    if (!target) {
+      setFailure({ message: LEAVE_APPROVAL_REFRESH_MESSAGE, operation: 'mutation' });
+      return;
+    }
+    const variables: ApproveLeaveRequestMutationVariables = {
+      leaveRequestId: target.leaveRequestId,
+      expectedWorkflowStepId: target.expectedWorkflowStepId,
+    };
     setApproveBusyId(leaveRequestId);
     setApproveWorkflowNotice(null);
     setFailure(null);
     workflowTrail.clearFailure();
     try {
-      const result = await client.request<ApproveLeaveRequestMutation>(ApproveLeaveRequestDocument, {
-        leaveRequestId,
-      });
+      const result = await client.request(ApproveLeaveRequestDocument, variables);
       const status = result.approveLeaveRequest?.status?.toLowerCase() ?? '';
       const pendingMessage =
         'Approval was recorded, but another workflow step may still be pending.';
@@ -258,9 +264,10 @@ const HrLeavesPage = () => {
         }}
       />
       <LeaveRejectModal
-        isOpen={rejectLeaveId != null}
-        leaveRequestId={rejectLeaveId}
-        onClose={() => setRejectLeaveId(null)}
+        isOpen={rejectLeaveTarget != null}
+        leaveRequestId={rejectLeaveTarget?.leaveRequestId ?? null}
+        expectedWorkflowStepId={rejectLeaveTarget?.expectedWorkflowStepId ?? null}
+        onClose={() => setRejectLeaveTarget(null)}
         onRejected={async () => {
           setFailure(null);
           workflowTrail.clearFailure();
@@ -314,7 +321,14 @@ const HrLeavesPage = () => {
             onApprove={handleApprove}
             onCancelOwn={handleCancelOwn}
             onOpenTrail={openWorkflowTrail}
-            onRejectClick={setRejectLeaveId}
+            onRejectClick={(leaveRequestId, pendingApprovalStepId) => {
+              const target = leaveApprovalTarget(leaveRequestId, pendingApprovalStepId);
+              if (!target) {
+                setFailure({ message: LEAVE_APPROVAL_REFRESH_MESSAGE, operation: 'mutation' });
+                return;
+              }
+              setRejectLeaveTarget(target);
+            }}
           />
         )}
       </Card>
