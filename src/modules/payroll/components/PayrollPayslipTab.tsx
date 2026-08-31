@@ -18,10 +18,10 @@ interface PayrollPayslipTabProps {
   payslipPeriodOptions: PayslipPeriodOption[];
   payslips: PayslipRow[] | null;
   payslipsLoading: boolean;
-  selectedCycleId: string | null;
+  selectedPeriodKey: string | null;
   tenantId?: string;
   tenantName: string;
-  onSelectedCycleChange: (cycleId: string | null) => void;
+  onSelectedPeriodChange: (periodKey: string | null) => void;
 }
 
 const PayrollPayslipTab = ({
@@ -36,10 +36,10 @@ const PayrollPayslipTab = ({
   payslipPeriodOptions,
   payslips,
   payslipsLoading,
-  selectedCycleId,
+  selectedPeriodKey,
   tenantId,
   tenantName,
-  onSelectedCycleChange,
+  onSelectedPeriodChange,
 }: PayrollPayslipTabProps) => (
   <div className="space-y-4">
     {payslipsLoading && <p className="text-sm text-slate-500">Loading Payslips...</p>}
@@ -61,7 +61,7 @@ const PayrollPayslipTab = ({
       <p className="text-sm text-amber-800 dark:text-amber-200">{payslipError}</p>
     )}
 
-    {!payslipsLoading && !payslipError && payslips && payslips.length > 0 && (
+    {!payslipsLoading && !payslipError && payslips && payslipPeriodOptions.length > 0 && (
       <>
         <div className="no-print flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -74,11 +74,11 @@ const PayrollPayslipTab = ({
             <select
               id="payslip-period"
               className="max-w-sm rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-              value={selectedCycleId ?? ''}
-              onChange={(event) => onSelectedCycleChange(event.target.value || null)}
+              value={selectedPeriodKey ?? ''}
+              onChange={(event) => onSelectedPeriodChange(event.target.value || null)}
             >
               {payslipPeriodOptions.map((option) => (
-                <option key={option.cycleId} value={option.cycleId}>
+                <option key={option.periodKey} value={option.periodKey}>
                   {option.label}
                 </option>
               ))}
@@ -95,20 +95,25 @@ const PayrollPayslipTab = ({
             employeeCode={employeeCode}
             periodLabel={
               payslipPeriodOptions.find(
-                (option) => option.cycleId === activePayslip.payrollCycleId
+                (option) => option.payslip?.id === activePayslip.id
               )?.label ?? 'Payslip'
             }
             labelForLine={labelForLine}
             slip={activePayslip}
           />
         )}
-      </>
-    )}
 
-    {!payslipsLoading && !payslipError && payslips && payslips.length === 0 && (
-      <Card>
-        <p className="text-sm text-slate-500">No Payslips For Your Account Yet.</p>
-      </Card>
+        {!activePayslip && selectedPeriodKey && (
+          <Card>
+            <p className="text-sm text-slate-500">
+              No payslip is available for{' '}
+              {payslipPeriodOptions.find((option) => option.periodKey === selectedPeriodKey)
+                ?.label ?? 'the selected period'}{' '}
+              yet.
+            </p>
+          </Card>
+        )}
+      </>
     )}
   </div>
 );

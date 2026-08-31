@@ -27,8 +27,8 @@ const PayrollPayPage = () => {
     canReadPayroll,
     canReadTax,
     canSubmitTax,
-    employeeId: clientSession?.employeeId ?? user?.employeeId,
     ownerKey,
+    tenantTimezone: currentTenant.timezone,
   });
 
   useEffect(() => {
@@ -71,10 +71,10 @@ const PayrollPayPage = () => {
           payslipPeriodOptions={pay.payslipPeriodOptions}
           payslips={pay.payslips}
           payslipsLoading={pay.payslipsLoading}
-          selectedCycleId={pay.selectedCycleId}
+          selectedPeriodKey={pay.selectedPeriodKey}
           tenantId={currentTenant?.id}
           tenantName={currentTenant?.name ?? 'Organization'}
-          onSelectedCycleChange={pay.setSelectedCycleId}
+          onSelectedPeriodChange={pay.setSelectedPeriodKey}
         />
       )}
 

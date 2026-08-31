@@ -94,7 +94,7 @@ const ASSIGN_EMPLOYEE_SALARY_STRUCTURE = /* GraphQL */ `
 `;
 
 const SALARY_BREAKUP_PREVIEW = /* GraphQL */ `
-  query EmployeeSalaryBreakupPreview($employeeId: ID!, $asOf: NaiveDate) {
+  query EmployeeSalaryBreakupPreview($employeeId: ID, $asOf: NaiveDate) {
     employeeSalaryBreakupPreview(employeeId: $employeeId, asOf: $asOf) {
       employeeId
       annualCtc

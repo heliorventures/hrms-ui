@@ -15,6 +15,7 @@ import { authUserMessage } from '../auth/authUserMessage';
 import { getAppConfig } from '../config';
 import { APP_BRAND } from '../constants/brand';
 import type { Tenant } from '../types';
+import { normalizeTenantTimezone } from '../utils/tenantCalendar';
 
 export type TenantResolutionStatus = 'marketing' | 'resolving' | 'resolved' | 'not-found' | 'error';
 
@@ -47,6 +48,7 @@ function emptyTenant(): Tenant {
     id: '',
     name: APP_BRAND.productName,
     companyCode: 'HELIOR',
+    timezone: 'UTC',
   };
 }
 
@@ -59,6 +61,7 @@ function tenantFromResolved(row: ResolvedTenant): Tenant {
     status: row.status,
     slug: row.subdomain,
     primaryColor: row.primaryColor,
+    timezone: normalizeTenantTimezone(row.timezone),
   };
 }
 

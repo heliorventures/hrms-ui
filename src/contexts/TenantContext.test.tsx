@@ -24,6 +24,7 @@ const RESOLVED_TENANT: ResolvedTenant = {
   name: 'Acme Health',
   status: 'ACTIVE',
   subdomain: 'acme',
+  timezone: 'Asia/Kolkata',
 };
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -53,6 +54,7 @@ const TenantProbe = () => {
       <output data-testid="status">{tenant.resolutionStatus}</output>
       <output data-testid="error">{tenant.resolutionError ?? ''}</output>
       <output data-testid="tenant-name">{tenant.currentTenant.name}</output>
+      <output data-testid="tenant-timezone">{tenant.currentTenant.timezone}</output>
       <output data-testid="can-retry">{String(tenant.canRetryTenantResolution)}</output>
       <output data-testid="retry-result">{retryResult}</output>
       <button type="button" onClick={() => setRetryResult(String(tenant.retryTenantResolution()))}>
@@ -113,6 +115,21 @@ describe('resolveTenantBySlug', () => {
 });
 
 describe('TenantProvider resolution lifecycle', () => {
+  it.each([
+    ['a response without timezone', { ...RESOLVED_TENANT, timezone: undefined }],
+    ['an invalid IANA timezone', { ...RESOLVED_TENANT, timezone: 'Not/A-Timezone' }],
+  ])('fails closed for %s instead of using the browser timezone', async (_label, payload) => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(jsonResponse(payload))));
+
+    renderTenantProvider();
+
+    await waitFor(() => expectStatus('error'));
+    expect(screen.getByTestId('error').textContent).toBe(
+      'We could not open this organization right now. Try again.'
+    );
+    expect(screen.getByTestId('tenant-timezone').textContent).toBe('UTC');
+  });
+
   it('makes a 404 terminal and refuses retry without another request', async () => {
     const fetchMock = vi.fn(
       (_input: RequestInfo | URL, _init?: RequestInit): Promise<Response> =>
@@ -160,6 +177,7 @@ describe('TenantProvider resolution lifecycle', () => {
 
     await waitFor(() => expectStatus('resolved'));
     expect(screen.getByTestId('tenant-name').textContent).toBe('Acme Health');
+    expect(screen.getByTestId('tenant-timezone').textContent).toBe('Asia/Kolkata');
     expect(screen.getByTestId('can-retry').textContent).toBe('false');
     expect(screen.getByTestId('error').textContent).toBe('');
   });

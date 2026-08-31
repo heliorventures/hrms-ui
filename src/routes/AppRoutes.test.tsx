@@ -104,6 +104,7 @@ function resolvedTenant(slug: string, name: string): ResolvedTenant {
     name,
     status: 'ACTIVE',
     subdomain: slug,
+    timezone: 'Asia/Kolkata',
   };
 }
 

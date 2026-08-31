@@ -27,6 +27,7 @@ export interface ResolvedTenant {
   subdomain: string;
   logoUrl?: string;
   primaryColor?: string;
+  timezone: string;
 }
 
 export interface AuthErrorPayload {

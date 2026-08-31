@@ -17,7 +17,8 @@ const PayrollSalaryTab = ({ preview, loading, error }: PayrollSalaryTabProps) =>
 
     {!loading && !error && !preview ? (
       <p className="text-sm text-content-secondary">
-        No salary structure has been assigned to your employee record yet.
+        No salary structure is currently effective for your employee record. Contact HR if your
+        salary assignment should already be active.
       </p>
     ) : null}
 
@@ -42,7 +43,7 @@ const PayrollSalaryTab = ({ preview, loading, error }: PayrollSalaryTabProps) =>
         </dl>
 
         <Table
-          caption="Your salary breakup"
+          ariaLabel="Your salary breakup"
           data={preview.lines}
           emptyMessage="No salary breakup lines are available."
           keyExtractor={(line) => line.salaryComponentId}

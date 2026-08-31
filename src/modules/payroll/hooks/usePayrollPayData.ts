@@ -9,6 +9,11 @@ import {
   type PayrollComplianceSettingQuery,
 } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import {
+  millisecondsUntilNextMinute,
+  tenantCalendarPeriod,
+  type TenantCalendarPeriod,
+} from '../../../utils/tenantCalendar';
 import { PayslipLogoSignedReadUrlDocument } from '../documents';
 import { isMissingPayrollCoreError } from '../payrollFormatters';
 import type {
@@ -23,24 +28,67 @@ import type {
 import { useEmployeeTaxSelfService } from './useEmployeeTaxSelfService';
 
 const PAYSPLIP_LIMIT = 24;
+const PAY_PERIOD_FORMATTER = new Intl.DateTimeFormat('en-IN', {
+  month: 'long',
+  year: 'numeric',
+});
+
+interface OwnerBoundValue<T> {
+  ownerKey: string;
+  value: T;
+}
+
+function useCurrentTenantCalendarPeriod(timezone: string): TenantCalendarPeriod {
+  const [period, setPeriod] = useState(() => tenantCalendarPeriod(new Date(), timezone));
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const refreshPeriod = () => {
+      const next = tenantCalendarPeriod(new Date(), timezone);
+      setPeriod((current) =>
+        current.month === next.month && current.year === next.year ? current : next
+      );
+    };
+    const refreshAtNextMinute = () => {
+      const now = new Date();
+      timer = setTimeout(() => {
+        refreshPeriod();
+        refreshAtNextMinute();
+      }, millisecondsUntilNextMinute(now));
+    };
+    refreshPeriod();
+    refreshAtNextMinute();
+    return () => clearTimeout(timer);
+  }, [timezone]);
+
+  return period;
+}
 
 interface PayrollPayAuthorization {
   canReadPayroll: boolean;
   canReadTax: boolean;
   canSubmitTax: boolean;
-  employeeId?: string | null;
   ownerKey: string;
+  tenantTimezone: string;
 }
 
 export function usePayrollPayData(
   client: GraphQLClient,
   activeTab: PayrollTabId,
-  { canReadPayroll, canReadTax, canSubmitTax, employeeId, ownerKey }: PayrollPayAuthorization
+  {
+    canReadPayroll,
+    canReadTax,
+    canSubmitTax,
+    ownerKey,
+    tenantTimezone,
+  }: PayrollPayAuthorization
 ) {
-  const [salaryPreview, setSalaryPreview] = useState<EmployeeSalaryPreview>(null);
+  const [salaryPreviewState, setSalaryPreviewState] =
+    useState<OwnerBoundValue<EmployeeSalaryPreview> | null>(null);
   const [taxConfigurations, setTaxConfigurations] = useState<TaxConfigurationRow[] | null>(null);
   const [taxSlabs, setTaxSlabs] = useState<TaxSlabRow[] | null>(null);
-  const [payslips, setPayslips] = useState<PayslipRow[] | null>(null);
+  const [payslipState, setPayslipState] =
+    useState<OwnerBoundValue<PayslipRow[] | null> | null>(null);
   const [payslipError, setPayslipError] = useState<string | null>(null);
   const [payslipMigrationRequired, setPayslipMigrationRequired] = useState(false);
   const [loadingPayroll, setLoadingPayroll] = useState(false);
@@ -50,19 +98,19 @@ export function usePayrollPayData(
   const [errorSalary, setErrorSalary] = useState<string | null>(null);
   const [shellMigrationRequired, setShellMigrationRequired] = useState(false);
   const [salaryMigrationRequired, setSalaryMigrationRequired] = useState(false);
-  const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
+  const [selectedPeriodKey, setSelectedPeriodKey] = useState<string | null>(null);
   const [payslipBranding, setPayslipBranding] = useState<PayrollComplianceSettingRow>(null);
   const [payslipLogoReadUrl, setPayslipLogoReadUrl] = useState<string | null>(null);
+  const currentPeriod = useCurrentTenantCalendarPeriod(tenantTimezone);
+  const salaryPreview =
+    salaryPreviewState?.ownerKey === ownerKey ? salaryPreviewState.value : null;
+  const payslips = payslipState?.ownerKey === ownerKey ? payslipState.value : null;
 
   useEffect(() => {
-    if (!canReadPayroll || !employeeId) {
-      setSalaryPreview(null);
+    if (!canReadPayroll) {
+      setSalaryPreviewState(null);
       setLoadingPayroll(false);
-      setErrorSalary(
-        canReadPayroll && !employeeId
-          ? 'Your account is not linked to an employee record. Contact your HR administrator.'
-          : null
-      );
+      setErrorSalary(null);
       setSalaryMigrationRequired(false);
       return;
     }
@@ -75,19 +123,23 @@ export function usePayrollPayData(
     let cancelled = false;
     void (async () => {
       try {
+        setSalaryPreviewState(null);
         setLoadingPayroll(true);
         setErrorSalary(null);
         setSalaryMigrationRequired(false);
         const response = await client.request<EmployeeSalaryBreakupPreviewQuery>(
           EmployeeSalaryBreakupPreviewDocument,
-          { employeeId, asOf: null }
+          { asOf: null }
         );
         if (!cancelled) {
-          setSalaryPreview(response.employeeSalaryBreakupPreview ?? null);
+          setSalaryPreviewState({
+            ownerKey,
+            value: response.employeeSalaryBreakupPreview ?? null,
+          });
         }
       } catch (err) {
         if (!cancelled) {
-          setSalaryPreview(null);
+          setSalaryPreviewState(null);
           setSalaryMigrationRequired(isMissingPayrollCoreError(err));
           setErrorSalary(graphQlUserMessage(err));
         }
@@ -98,7 +150,7 @@ export function usePayrollPayData(
     return () => {
       cancelled = true;
     };
-  }, [activeTab, canReadPayroll, client, employeeId, ownerKey]);
+  }, [activeTab, canReadPayroll, client, ownerKey]);
 
   useEffect(() => {
     if (!canReadTax || activeTab !== 'incometax') {
@@ -141,16 +193,18 @@ export function usePayrollPayData(
 
   useEffect(() => {
     if (!canReadPayroll || (activeTab !== 'payslip' && activeTab !== 'incometax')) {
-      setPayslips(null);
+      setPayslipState(null);
       setPayslipError(null);
       setPayslipMigrationRequired(false);
       setPayslipsLoading(false);
-      setSelectedCycleId(null);
+      setSelectedPeriodKey(null);
       return;
     }
     let cancelled = false;
     void (async () => {
       try {
+        setPayslipState(null);
+        setSelectedPeriodKey(null);
         setPayslipsLoading(true);
         setPayslipError(null);
         setPayslipMigrationRequired(false);
@@ -158,9 +212,11 @@ export function usePayrollPayData(
           ClientOpsPayslipsForPayrollHubDocument,
           { limit: PAYSPLIP_LIMIT }
         );
-        if (!cancelled) setPayslips(response.payslips);
+        if (!cancelled) setPayslipState({ ownerKey, value: response.payslips });
       } catch (err) {
         if (!cancelled) {
+          setPayslipState(null);
+          setSelectedPeriodKey(null);
           setPayslipMigrationRequired(isMissingPayrollCoreError(err));
           setPayslipError(graphQlUserMessage(err));
         }
@@ -217,36 +273,42 @@ export function usePayrollPayData(
   }, [activeTab, canReadPayroll, client, ownerKey, payslipBranding?.payslipLogoFileStorageId]);
 
   const payslipPeriodOptions = useMemo(() => {
-    if (!payslips?.length) return [];
-    const seen = new Set<string>();
-    const options: PayslipPeriodOption[] = [];
+    if (!payslips) return [];
+    const currentYear = currentPeriod.year;
+    const currentMonth = currentPeriod.month;
+    const payslipByPeriod = new Map<string, PayslipRow>();
     for (const payslip of payslips) {
-      if (seen.has(payslip.payrollCycleId)) continue;
-      seen.add(payslip.payrollCycleId);
-      const generatedAt = new Date(payslip.generatedAt);
-      const validGeneratedAt = Number.isFinite(generatedAt.getTime());
-      options.push({
-        cycleId: payslip.payrollCycleId,
-        label: validGeneratedAt
-          ? `Generated ${generatedAt.toLocaleDateString('en-IN')}`
-          : `Payslip ${payslip.payrollCycleId.slice(0, 8)}`,
-        payslip,
-        sort: validGeneratedAt ? generatedAt.getTime() : 0,
-      });
+      const periodKey = `${payslip.periodYear}-${String(payslip.periodMonth).padStart(2, '0')}`;
+      if (!payslipByPeriod.has(periodKey)) payslipByPeriod.set(periodKey, payslip);
     }
-    return options.sort((a, b) => b.sort - a.sort);
-  }, [payslips]);
+    return Array.from({ length: currentMonth }, (_, index): PayslipPeriodOption => {
+      const month = currentMonth - index;
+      const periodKey = `${currentYear}-${String(month).padStart(2, '0')}`;
+      return {
+        periodKey,
+        label: PAY_PERIOD_FORMATTER.format(new Date(currentYear, month - 1, 1)),
+        month,
+        year: currentYear,
+        payslip: payslipByPeriod.get(periodKey) ?? null,
+      };
+    });
+  }, [currentPeriod.month, currentPeriod.year, payslips]);
 
   useEffect(() => {
-    if (payslipPeriodOptions.length && !selectedCycleId) {
-      setSelectedCycleId(payslipPeriodOptions[0].cycleId);
+    if (
+      payslipPeriodOptions.length &&
+      !payslipPeriodOptions.some((option) => option.periodKey === selectedPeriodKey)
+    ) {
+      setSelectedPeriodKey(payslipPeriodOptions[0].periodKey);
     }
-  }, [payslipPeriodOptions, selectedCycleId]);
+  }, [payslipPeriodOptions, selectedPeriodKey]);
 
   const activePayslip = useMemo(() => {
-    if (!selectedCycleId) return null;
-    return payslipPeriodOptions.find((option) => option.cycleId === selectedCycleId)?.payslip ?? null;
-  }, [payslipPeriodOptions, selectedCycleId]);
+    if (!selectedPeriodKey) return null;
+    return (
+      payslipPeriodOptions.find((option) => option.periodKey === selectedPeriodKey)?.payslip ?? null
+    );
+  }, [payslipPeriodOptions, selectedPeriodKey]);
 
   const labelForLine = useCallback(
     (line: { salaryComponentId: string; componentType?: string | null }) => {
@@ -297,8 +359,8 @@ export function usePayrollPayData(
     errorShell,
     errorSalary,
     showMigrationHint: shellMigrationRequired || salaryMigrationRequired,
-    selectedCycleId,
-    setSelectedCycleId,
+    selectedPeriodKey,
+    setSelectedPeriodKey,
     payslipBranding,
     payslipLogoReadUrl,
     payslipPeriodOptions,
