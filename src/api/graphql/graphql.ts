@@ -2504,7 +2504,7 @@ export type Query = {
    * belongs to another tenant (never leaks cross-tenant rows).
    */
   employee?: Maybe<Employee>;
-  /** Scoped company directory protected by exact `employee:read` authority. */
+  /** Company directory protected by exact `employee_directory:read=ALL` authority. */
   employeeDirectoryPage: EmployeeDirectoryPage;
   /** Private employee document bytes. Caller must be able to read the employee who owns the document. */
   employeeDocumentAttachment: EmployeeDocumentAttachment;
@@ -2534,9 +2534,9 @@ export type Query = {
   /**
    * Salary-bearing employment history, newest first.
    *
-   * Access is limited to the JWT-linked employee (`employee:self=SELF`), tenant HR
-   * (`employee:manage=ALL`), or tenant payroll (`payroll:read=ALL`). General employee
-   * directory scope never grants salary access.
+   * Access is limited to exact `payroll:read=SELF` for the JWT-linked employee or
+   * exact `payroll:read=ALL` for tenant payroll/HR/admin users. Employee directory
+   * and manager team scope never grant salary access.
    */
   employmentHistoryRecords: Array<EmploymentHistoryRecord>;
   /**
@@ -2647,7 +2647,7 @@ export type Query = {
    * Respects the same **`employee`** `resource_scopes` as **`employees`** (SELF / TEAM / DEPARTMENT / ALL).
    */
   orgChart: Array<OrgChartRow>;
-  /** Reporting hierarchy limited by the exact `employee:read` scope. */
+  /** Reporting hierarchy limited by exact `employee_directory:read=ALL`. */
   organizationDirectoryChart: Array<EmployeeDirectoryEntry>;
   /** **HR / directory admins only** — inspect transactional outbox rows (e.g. after leave approval). */
   outboxEvents: Array<OutboxEventRow>;
