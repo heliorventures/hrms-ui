@@ -11,7 +11,6 @@ import {
   User,
 } from 'lucide-react';
 
-import { useAuth } from '../../../contexts/AuthContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useEmployeeProfileData } from './hooks/useEmployeeProfileData';
 import { EmployeeHeader } from './components/EmployeeHeader';
@@ -28,7 +27,7 @@ import { GrowthTimelineTab } from './tabs/GrowthTimelineTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { EmploymentManagementTab } from './tabs/EmploymentManagementTab';
 import Button from '../../../components/common/Button';
-import { createPermissionService } from '../../../auth/permissionService';
+import { canShowPayrollSensitive } from './lib/profileAccess';
 
 const TAB_DEFS: ProfileTabDef[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -48,15 +47,16 @@ interface EmployeeProfileShellProps {
 
 export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) {
   const client = useGraphClient('client');
-  const { clientSession } = useAuth();
-  const isHr = createPermissionService(clientSession).canCapability('route.hr.people');
-
   const { loading, refreshing, error, model, access, documentTypes, refetch } = useEmployeeProfileData(
     client,
     employeeId
   );
 
-  const visibleTabs = useMemo(() => TAB_DEFS.filter((t) => (t.hrOnly ? isHr : true)), [isHr]);
+  const canManageOrganizationFields = access?.canManageOrganizationFields ?? false;
+  const visibleTabs = useMemo(
+    () => TAB_DEFS.filter((tab) => (tab.hrOnly ? canManageOrganizationFields : true)),
+    [canManageOrganizationFields]
+  );
 
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -135,8 +135,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
 
   if (!model || !access) return null;
 
-  const canManageOrganizationFields = access.canManageOrganizationFields;
-  const showSalary = canManageOrganizationFields;
+  const showSalary = canShowPayrollSensitive(access);
 
   return (
     <div className="min-h-[60vh] space-y-4 pb-8">
@@ -232,7 +231,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
                 onChanged={refetch}
               />
             ) : null}
-            {activeTab === 'employment' && isHr ? (
+            {activeTab === 'employment' && canManageOrganizationFields ? (
               <EmploymentManagementTab
                 employeeId={model.core.id}
                 client={client}

@@ -34,6 +34,7 @@ export type Capability =
   | 'action.tax.approve'
   | 'action.tax.manage'
   | 'action.tax.submit'
+  | 'action.timesheet.approve'
   | 'action.timesheet.write'
   | 'action.timesheet.manage'
   | 'action.travel.approve'
@@ -102,86 +103,23 @@ export function authorizationStateKey(session: ParsedClientSession | null): stri
   return `${session.employeeId ?? 'no-employee'}|${permissions}|${permissionScopes}`;
 }
 
-function hasAnyPermission(
-  session: ParsedClientSession | null,
-  permissions: readonly PermissionCode[]
-): boolean {
-  return permissions.some((permission) => session?.permissions.has(permission) ?? false);
-}
-
-function canApproveLeave(session: ParsedClientSession | null): boolean {
-  return hasAnyPermission(session, [PERMISSIONS.leaveApprove]);
-}
-
-function canApproveTimesheet(session: ParsedClientSession | null): boolean {
-  return hasAnyPermission(session, [PERMISSIONS.timesheetApprove]);
-}
-
-function canUseHrWorkbench(session: ParsedClientSession | null): boolean {
-  return (
-    hasAnyPermission(session, [
-      PERMISSIONS.employeeWrite,
-      PERMISSIONS.leaveManage,
-      PERMISSIONS.timesheetManage,
-    ]) ||
-    canApproveLeave(session) ||
-    canApproveTimesheet(session)
-  );
-}
-
-const DIRECT_CAPABILITY_PERMISSIONS: Partial<Record<Capability, PermissionCode>> = {
-  'dashboard.attendance': PERMISSIONS.attendanceRead,
-  'dashboard.leave': PERMISSIONS.leaveRead,
-  'dashboard.notifications': PERMISSIONS.notificationRead,
-  'action.attendance.regularize': PERMISSIONS.attendanceRegularize,
-  'action.attendance.punch': PERMISSIONS.attendancePunchSelf,
-  'action.expense.approve': PERMISSIONS.expenseApprove,
-  'action.expense.manage': PERMISSIONS.expenseManage,
-  'action.expense.pay': PERMISSIONS.expensePay,
-  'action.expense.submit': PERMISSIONS.expenseSubmit,
-  'action.leave.approve': PERMISSIONS.leaveApprove,
-  'action.leave.manage': PERMISSIONS.leaveManage,
-  'action.leave.submit': PERMISSIONS.leaveSubmit,
-  'action.notifications.manage': PERMISSIONS.notificationManage,
-  'action.payroll.manage': PERMISSIONS.payrollManage,
-  'action.tax.approve': PERMISSIONS.taxApprove,
-  'action.tax.manage': PERMISSIONS.taxManage,
-  'action.tax.submit': PERMISSIONS.taxSubmit,
-  'action.timesheet.write': PERMISSIONS.timesheetWrite,
-  'action.timesheet.manage': PERMISSIONS.timesheetManage,
-  'action.travel.approve': PERMISSIONS.travelApprove,
-  'action.travel.manage': PERMISSIONS.travelManage,
-  'action.travel.submit': PERMISSIONS.travelSubmit,
-  'route.attendance': PERMISSIONS.attendanceRead,
-  'route.leave': PERMISSIONS.leaveRead,
-  'route.notifications': PERMISSIONS.notificationRead,
-  'route.organization.employees': PERMISSIONS.employeeRead,
-  'route.organization.orgChart': PERMISSIONS.employeeRead,
-  'route.payroll.pay': PERMISSIONS.payrollManage,
-  'route.payroll.compensation': PERMISSIONS.payrollManage,
-  'route.payroll.payslips': PERMISSIONS.payrollRead,
-  'route.payroll.tax': PERMISSIONS.taxRead,
-  'route.profile.settings': PERMISSIONS.employeeSelf,
-  'route.timesheet': PERMISSIONS.timesheetRead,
-  'route.hr.attendance': PERMISSIONS.attendanceRegularize,
-  'route.admin.access': PERMISSIONS.roleManage,
-  'route.admin.attendancePolicy': PERMISSIONS.attendancePunchPolicy,
-  'route.admin.expenseCategories': PERMISSIONS.expenseManage,
-  'route.admin.leaveSettings': PERMISSIONS.leaveManage,
-  'route.admin.moduleHealth': PERMISSIONS.roleManage,
-  'route.admin.settings': PERMISSIONS.roleManage,
-  'route.insights': PERMISSIONS.analyticsRead,
-  'route.workplace.compensation': PERMISSIONS.compensationManage,
-  'route.workplace.learning': PERMISSIONS.learningManage,
-  'route.workplace.performance': PERMISSIONS.performanceManage,
-  'route.workplace.recruitment': PERMISSIONS.recruitmentManage,
-  'route.workplace.succession': PERMISSIONS.successionManage,
-  'route.workplace.workflows': PERMISSIONS.workflowManage,
-};
-
 const SCOPED_CAPABILITY_PERMISSIONS: Partial<
   Record<Capability, { permission: PermissionCode; scopes: readonly ExplicitPermissionScope[] }>
 > = {
+  'dashboard.attendance': { permission: PERMISSIONS.attendanceRead, scopes: ANY_EXPLICIT_SCOPE },
+  'dashboard.leave': { permission: PERMISSIONS.leaveRead, scopes: ANY_EXPLICIT_SCOPE },
+  'dashboard.notifications': {
+    permission: PERMISSIONS.notificationRead,
+    scopes: ANY_EXPLICIT_SCOPE,
+  },
+  'action.attendance.punch': {
+    permission: PERMISSIONS.attendancePunchSelf,
+    scopes: SELF_SCOPE,
+  },
+  'action.attendance.regularize': {
+    permission: PERMISSIONS.attendanceRegularize,
+    scopes: APPROVAL_SCOPES,
+  },
   'action.expense.approve': { permission: PERMISSIONS.expenseApprove, scopes: APPROVAL_SCOPES },
   'action.expense.manage': { permission: PERMISSIONS.expenseManage, scopes: ALL_SCOPE },
   'action.expense.pay': { permission: PERMISSIONS.expensePay, scopes: ALL_SCOPE },
@@ -194,17 +132,78 @@ const SCOPED_CAPABILITY_PERMISSIONS: Partial<
     permission: PERMISSIONS.payrollStatutoryExport,
     scopes: ALL_SCOPE,
   },
+  'action.notifications.manage': {
+    permission: PERMISSIONS.notificationManage,
+    scopes: ALL_SCOPE,
+  },
+  'action.leave.approve': { permission: PERMISSIONS.leaveApprove, scopes: APPROVAL_SCOPES },
+  'action.leave.manage': { permission: PERMISSIONS.leaveManage, scopes: ALL_SCOPE },
+  'action.leave.submit': { permission: PERMISSIONS.leaveSubmit, scopes: SELF_SCOPE },
   'action.tax.approve': { permission: PERMISSIONS.taxApprove, scopes: APPROVAL_SCOPES },
   'action.tax.manage': { permission: PERMISSIONS.taxManage, scopes: ALL_SCOPE },
   'action.tax.submit': { permission: PERMISSIONS.taxSubmit, scopes: SELF_SCOPE },
+  'action.timesheet.approve': {
+    permission: PERMISSIONS.timesheetApprove,
+    scopes: APPROVAL_SCOPES,
+  },
+  'action.timesheet.write': { permission: PERMISSIONS.timesheetWrite, scopes: SELF_SCOPE },
+  'action.timesheet.manage': { permission: PERMISSIONS.timesheetManage, scopes: ALL_SCOPE },
+  'route.attendance': { permission: PERMISSIONS.attendanceRead, scopes: ANY_EXPLICIT_SCOPE },
+  'route.leave': { permission: PERMISSIONS.leaveRead, scopes: ANY_EXPLICIT_SCOPE },
+  'route.notifications': {
+    permission: PERMISSIONS.notificationRead,
+    scopes: ANY_EXPLICIT_SCOPE,
+  },
+  'route.timesheet': { permission: PERMISSIONS.timesheetRead, scopes: ANY_EXPLICIT_SCOPE },
+  'route.hr.attendance': {
+    permission: PERMISSIONS.attendanceRegularize,
+    scopes: APPROVAL_SCOPES,
+  },
   'route.payroll.pay': { permission: PERMISSIONS.payrollManage, scopes: ALL_SCOPE },
   'route.payroll.compensation': { permission: PERMISSIONS.payrollManage, scopes: ALL_SCOPE },
   'route.payroll.payslips': { permission: PERMISSIONS.payrollRead, scopes: ANY_EXPLICIT_SCOPE },
-  'route.payroll.tax': { permission: PERMISSIONS.taxRead, scopes: ANY_EXPLICIT_SCOPE },
+  'route.payroll.tax': { permission: PERMISSIONS.taxManage, scopes: ALL_SCOPE },
+  'route.organization.employees': {
+    permission: PERMISSIONS.employeeDirectoryRead,
+    scopes: ALL_SCOPE,
+  },
+  'route.organization.orgChart': {
+    permission: PERMISSIONS.employeeDirectoryRead,
+    scopes: ALL_SCOPE,
+  },
+  'route.profile.settings': {
+    permission: PERMISSIONS.employeeRead,
+    scopes: ANY_EXPLICIT_SCOPE,
+  },
+  'route.admin.access': { permission: PERMISSIONS.roleManage, scopes: ALL_SCOPE },
+  'route.admin.attendancePolicy': {
+    permission: PERMISSIONS.attendancePunchPolicy,
+    scopes: ALL_SCOPE,
+  },
+  'route.admin.employees': { permission: PERMISSIONS.employeeManage, scopes: ALL_SCOPE },
+  'route.admin.expenseCategories': { permission: PERMISSIONS.expenseManage, scopes: ALL_SCOPE },
+  'route.admin.leaveSettings': { permission: PERMISSIONS.leaveManage, scopes: ALL_SCOPE },
+  'route.admin.moduleHealth': { permission: PERMISSIONS.roleManage, scopes: ALL_SCOPE },
+  'route.admin.settings': { permission: PERMISSIONS.roleManage, scopes: ALL_SCOPE },
+  'route.insights': { permission: PERMISSIONS.analyticsRead, scopes: ALL_SCOPE },
   'route.workplace.compensation': {
     permission: PERMISSIONS.compensationManage,
     scopes: ALL_SCOPE,
   },
+  'route.workplace.learning': { permission: PERMISSIONS.learningManage, scopes: ALL_SCOPE },
+  'route.workplace.performance': {
+    permission: PERMISSIONS.performanceManage,
+    scopes: ALL_SCOPE,
+  },
+  'route.workplace.recruitment': {
+    permission: PERMISSIONS.recruitmentManage,
+    scopes: ALL_SCOPE,
+  },
+  'route.workplace.succession': {
+    permission: PERMISSIONS.successionManage,
+    scopes: ALL_SCOPE,
+  },
+  'route.workplace.workflows': { permission: PERMISSIONS.workflowManage, scopes: ALL_SCOPE },
 };
 
 export function createPermissionService(
@@ -227,9 +226,6 @@ export function createPermissionService(
     if (scopedPermission) {
       return canScopedPermission(scopedPermission.permission, scopedPermission.scopes);
     }
-    const directPermission = DIRECT_CAPABILITY_PERMISSIONS[capability];
-    if (directPermission) return canPermission(directPermission);
-
     switch (capability) {
       case 'route.dashboard':
       case 'route.organization.documents':
@@ -241,56 +237,67 @@ export function createPermissionService(
         );
       case 'action.onboarding.manage':
         return (
-          canPermission(PERMISSIONS.onboardingManage) ||
-          canPermission(PERMISSIONS.employeeManage)
+          canScopedPermission(PERMISSIONS.onboardingManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.employeeManage, ALL_SCOPE)
         );
       case 'action.people.search':
-        return (
-          hasAnyPermission(session, [
-            PERMISSIONS.employeeRead,
-            PERMISSIONS.employeeWrite,
-            PERMISSIONS.employeeManage,
-            PERMISSIONS.roleManage,
-            PERMISSIONS.leaveManage,
-            PERMISSIONS.expenseManage,
-          ]) ||
-          canApproveLeave(session)
-        );
+        return canScopedPermission(PERMISSIONS.employeeDirectoryRead, ALL_SCOPE);
       case 'route.hr.home':
-        return canUseHrWorkbench(session);
+        return (
+          canScopedPermission(PERMISSIONS.employeeWrite, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.leaveManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE) ||
+          canCapability('action.leave.approve') ||
+          canCapability('action.timesheet.approve')
+        );
       case 'route.hr.people':
       case 'route.organization.profileReviews':
       case 'route.admin.employees':
-        return canPermission(PERMISSIONS.employeeManage);
+        return canScopedPermission(PERMISSIONS.employeeManage, ALL_SCOPE);
       case 'route.hr.leaves':
-        return canApproveLeave(session) || canPermission(PERMISSIONS.leaveManage);
+        return (
+          canCapability('action.leave.approve') ||
+          canScopedPermission(PERMISSIONS.leaveManage, ALL_SCOPE)
+        );
       case 'route.hr.timesheets':
-        return canApproveTimesheet(session);
+        return canCapability('action.timesheet.approve');
       case 'route.hr.timesheetAssignments':
-        return canPermission(PERMISSIONS.timesheetManage) || canApproveTimesheet(session);
-      case 'route.admin.attendancePolicy':
-        return canPermission(PERMISSIONS.attendancePunchPolicy);
+        return canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE);
+      case 'route.admin.reports':
+        return (
+          canScopedPermission(PERMISSIONS.attendanceRead, ALL_SCOPE) &&
+          canScopedPermission(PERMISSIONS.employeeRead, ALL_SCOPE) &&
+          canScopedPermission(PERMISSIONS.leaveRead, ALL_SCOPE) &&
+          canScopedPermission(PERMISSIONS.payrollManage, ALL_SCOPE)
+        );
       case 'route.admin.timesheetSettings':
         return (
-          canPermission(PERMISSIONS.timesheetManage) ||
-          canPermission(PERMISSIONS.attendancePunchPolicy)
+          canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE) &&
+          canScopedPermission(PERMISSIONS.attendancePunchPolicy, ALL_SCOPE)
         );
       case 'route.admin.notifications':
         return canCapability('action.notifications.manage');
-      case 'route.admin.reports':
-        return canPermission(PERMISSIONS.attendanceRead);
       case 'route.workplace.benefits':
-        return canPermission(PERMISSIONS.benefitsManage) || canPermission(PERMISSIONS.benefitsSelf);
+        return (
+          canScopedPermission(PERMISSIONS.benefitsManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.benefitsSelf, SELF_SCOPE)
+        );
       case 'route.workplace.assets':
         return (
-          canPermission(PERMISSIONS.assetsManage) ||
-          canPermission(PERMISSIONS.assetsRead) ||
-          canPermission(PERMISSIONS.assetsSelf)
+          canScopedPermission(PERMISSIONS.assetsManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.assetsRead, ANY_EXPLICIT_SCOPE) ||
+          canScopedPermission(PERMISSIONS.assetsSelf, SELF_SCOPE)
         );
       case 'route.workplace.onboarding':
-        return canPermission(PERMISSIONS.onboardingManage) || canPermission(PERMISSIONS.onboardingSelf);
+        return (
+          canScopedPermission(PERMISSIONS.onboardingManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.onboardingSelf, SELF_SCOPE)
+        );
       case 'route.workplace.grievance':
-        return canPermission(PERMISSIONS.grievanceManage) || canPermission(PERMISSIONS.grievanceSelf);
+        return (
+          canScopedPermission(PERMISSIONS.grievanceManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.grievanceSelf, SELF_SCOPE)
+        );
       default:
         return false;
     }

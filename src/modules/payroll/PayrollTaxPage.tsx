@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
-import { PERMISSIONS } from '../../auth/permissions';
 import Card from '../../components/common/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -431,13 +430,13 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
 const PayrollTaxPage = () => {
   const { clientSession } = useAuth();
   const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
-  const canReadTax = permissions.canScopedPermission(PERMISSIONS.taxRead);
-  if (!canReadTax) return null;
+  const canManageTax = permissions.canCapability('action.tax.manage');
+  if (!canManageTax) return null;
 
   return (
     <PayrollTaxPageContent
       key={authorizationStateKey(clientSession)}
-      canManageTax={permissions.canCapability('action.tax.manage')}
+      canManageTax={canManageTax}
       canSubmitTax={permissions.canCapability('action.tax.submit')}
     />
   );

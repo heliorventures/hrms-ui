@@ -66,7 +66,7 @@ describe('navigation selectors', () => {
     const session: ParsedClientSession = {
       jwtRoles: [],
       permissions: new Set(['attendance:regularize']),
-      permissionScopes: {},
+      permissionScopes: { 'attendance:regularize': 'TEAM' },
       resourceScopes: {},
       persona: 'EMPLOYEE',
       mustChangePassword: false,
@@ -96,6 +96,16 @@ describe('navigation selectors', () => {
       path: '/hr/attendance',
       label: 'Attendance Management',
     });
+  });
+
+  it('labels employee pay and company payroll routes by their actual authority', () => {
+    const labelsByPath = new Map(
+      NAVIGATION_DESTINATIONS.map((destination) => [destination.path, destination.label])
+    );
+
+    expect(labelsByPath.get('/payroll/payslips')).toBe('Payslips & Tax');
+    expect(labelsByPath.get('/payroll/pay')).toBe('Payroll Processing');
+    expect(labelsByPath.get('/payroll/tax')).toBe('Tax Admin');
   });
 
   it('matches HR terminology without returning unrelated destinations', () => {

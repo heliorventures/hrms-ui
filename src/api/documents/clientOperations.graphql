@@ -2421,6 +2421,7 @@ query EmployeeProfileAccess($employeeId: ID!) {
   employeeProfileAccess(employeeId: $employeeId) {
     isSelf
     canViewPrivateProfile
+    canViewPayrollSensitive
     canEditPersonalProfile
     canManageOrganizationFields
     canReviewProfileChanges
@@ -2550,14 +2551,6 @@ query EmployeePrivateProfile($employeeId: ID!) {
     name
     category
     systemKey
-  }
-  employmentHistoryRecords(employeeId: $employeeId, limit: 48) {
-    id
-    monthlySalary
-    effectiveFrom
-    effectiveTo
-    changeReason
-    updatedAt
   }
   employeePrimaryBank(employeeId: $employeeId) {
     id
@@ -2700,14 +2693,6 @@ query EmployeeProfileBundle($employeeId: ID!) {
     id
     name
     category
-  }
-  employmentHistoryRecords(employeeId: $employeeId, limit: 48) {
-    id
-    monthlySalary
-    effectiveFrom
-    effectiveTo
-    changeReason
-    updatedAt
   }
   employeePrimaryBank(employeeId: $employeeId) {
     id

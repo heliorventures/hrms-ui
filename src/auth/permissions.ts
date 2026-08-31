@@ -10,7 +10,7 @@ export const PERMISSIONS = {
   benefitsManage: 'benefits:manage',
   benefitsSelf: 'benefits:self',
   compensationManage: 'compensation:manage',
-  employeeSelf: 'employee:self',
+  employeeDirectoryRead: 'employee_directory:read',
   employeeRead: 'employee:read',
   employeeWrite: 'employee:write',
   employeeManage: 'employee:manage',

@@ -48,17 +48,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('payroll administration page authorization', () => {
-  it('suppresses tax page requests when tax:read lacks an explicit scope', async () => {
-    testState.permissions = new Set(['tax:read']);
+  it('suppresses tax administration requests for employee tax self-service', async () => {
+    testState.permissions = new Set(['tax:read', 'tax:submit']);
+    testState.permissionScopes = { 'tax:read': 'SELF', 'tax:submit': 'SELF' };
     const view = render(<PayrollTaxPage />);
 
     await waitFor(() => expect(view.container.innerHTML).toBe(''));
     expect(testState.request).not.toHaveBeenCalled();
   });
 
-  it('loads tax data with tax:read=SELF without requiring tax:manage', async () => {
-    testState.permissions = new Set(['tax:read']);
-    testState.permissionScopes = { 'tax:read': 'SELF' };
+  it('loads tax administration data only with tax:manage=ALL', async () => {
+    testState.permissions = new Set(['tax:manage']);
+    testState.permissionScopes = { 'tax:manage': 'ALL' };
     render(<PayrollTaxPage />);
 
     await waitFor(() => expect(testState.request).toHaveBeenCalled());

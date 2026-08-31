@@ -279,7 +279,7 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
   },
   {
     path: '/payroll/payslips',
-    label: NAV_LABELS.payrollProcessing,
+    label: NAV_LABELS.payslipsAndTax,
     keywords: ['salary', 'pay run', 'payroll cycle', 'statutory export', 'paysheet'],
     section: 'payroll',
     sidebar: 'section',
@@ -295,7 +295,7 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
   },
   {
     path: '/payroll/pay',
-    label: NAV_LABELS.incomeTaxSelf,
+    label: NAV_LABELS.payrollProcessing,
     keywords: ['declaration', 'proof upload', 'deductions', 'regime', 'old regime', 'new regime'],
     section: 'payroll',
     sidebar: 'section',

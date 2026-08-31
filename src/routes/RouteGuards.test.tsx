@@ -269,7 +269,9 @@ describe('child authorization guards', () => {
     );
     state.auth = {
       ...state.auth,
-      clientSession: session(['timesheet:read']),
+      clientSession: session(['timesheet:read'], {
+        permissionScopes: { 'timesheet:read': 'SELF' },
+      }),
     };
     const view = render(
       <MemoryRouter initialEntries={['/timesheet']}>
@@ -317,7 +319,7 @@ describe('child authorization guards', () => {
   it.each([
     ['route.payroll.payslips', 'payroll:read', 'SELF'],
     ['route.payroll.pay', 'payroll:manage', 'ALL'],
-    ['route.payroll.tax', 'tax:read', 'SELF'],
+    ['route.payroll.tax', 'tax:manage', 'ALL'],
   ] as const)('renders %s only with %s at %s scope', async (capability, permission, scope) => {
     const loadPage = vi.fn(() => Promise.resolve({ default: () => <h1>Authorized payroll</h1> }));
     state.auth = {

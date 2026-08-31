@@ -130,6 +130,7 @@ export const NAV_LABELS = {
   payTaxAdmin: 'Pay - Tax Admin',
   payroll: 'Payroll',
   payrollProcessing: 'Payroll Processing',
+  payslipsAndTax: 'Payslips & Tax',
   peopleAdmin: 'People Admin',
   performance: 'Performance',
   profileSettings: 'Profile & Settings',

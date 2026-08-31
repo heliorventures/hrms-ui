@@ -4,7 +4,9 @@ import type { GraphQLClient } from 'graphql-request';
 import {
   EmployeePrivateProfileDocument,
   EmployeeProfileAccessDocument,
+  PayrollEmploymentHistoryDocument,
   type EmployeeProfileAccessQuery,
+  type PayrollEmploymentHistoryQuery,
 } from '../../../../api/graphql/graphql';
 import type { EmployeeProfileModel, TenantDocumentTypeOption } from '../types';
 import { mapBundleToEmployeeProfileModel } from '../lib/mapBundleToModel';
@@ -72,10 +74,21 @@ export function useEmployeeProfileData(
           return;
         }
 
-        const result = await client.request(EmployeePrivateProfileDocument, { employeeId });
+        const canViewPayrollSensitive = nextAccess.canViewPayrollSensitive;
+        const [result, payrollResult] = await Promise.all([
+          client.request(EmployeePrivateProfileDocument, { employeeId }),
+          canViewPayrollSensitive
+            ? client.request(PayrollEmploymentHistoryDocument, { employeeId })
+            : Promise.resolve({
+                employmentHistoryRecords: [],
+              } satisfies PayrollEmploymentHistoryQuery),
+        ]);
         if (cancelled) return;
 
-        const base = mapBundleToEmployeeProfileModel(result);
+        const base = mapBundleToEmployeeProfileModel(
+          result,
+          payrollResult.employmentHistoryRecords
+        );
         if (!base) {
           if (initialLoad) {
             setModel(null);

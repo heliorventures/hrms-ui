@@ -25,7 +25,13 @@ function serviceWith(
 
 describe('HR attendance management route permission', () => {
   it('allows the route with attendance:regularize', () => {
-    expect(serviceWith(['attendance:regularize']).canRoute('/hr/attendance')).toBe(true);
+    expect(
+      serviceWith(
+        ['attendance:regularize'],
+        [],
+        { 'attendance:regularize': 'TEAM' }
+      ).canRoute('/hr/attendance')
+    ).toBe(true);
   });
 
   it('does not allow an HR_ADMIN role without attendance:regularize', () => {
@@ -54,17 +60,135 @@ describe('runtime authorization uses permissions instead of role names', () => {
     ).toBe(true);
   });
 
-  it('requires attendance:read for attendance reports', () => {
-    expect(serviceWith(['attendance:read']).canRoute('/admin/reports')).toBe(true);
+  it('requires every ALL-scoped permission used by the combined reports page', () => {
+    expect(serviceWith(['attendance:read']).canRoute('/admin/reports')).toBe(false);
+    expect(
+      serviceWith(
+        ['attendance:read', 'employee:read', 'leave:read', 'payroll:manage'],
+        [],
+        {
+          'attendance:read': 'ALL',
+          'employee:read': 'ALL',
+          'leave:read': 'ALL',
+          'payroll:manage': 'ALL',
+        }
+      ).canRoute(
+        '/admin/reports'
+      )
+    ).toBe(true);
+    expect(
+      serviceWith(
+        ['attendance:read', 'employee:read', 'leave:read', 'payroll:manage'],
+        [],
+        {
+          'attendance:read': 'ALL',
+          'employee:read': 'ALL',
+          'leave:read': 'SELF',
+          'payroll:manage': 'ALL',
+        }
+      ).canRoute('/admin/reports')
+    ).toBe(false);
     expect(serviceWith(['employee:write']).canRoute('/admin/reports')).toBe(false);
     expect(serviceWith(['payroll:statutory_export']).canRoute('/admin/reports')).toBe(false);
+  });
+
+  it('uses explicit approval scopes for HR workbench routes', () => {
+    const leaveTeam = serviceWith(
+      ['leave:approve'],
+      [],
+      { 'leave:approve': 'TEAM' }
+    );
+    const timesheetTeam = serviceWith(
+      ['timesheet:approve'],
+      [],
+      { 'timesheet:approve': 'TEAM' }
+    );
+
+    expect(leaveTeam.canCapability('action.leave.approve')).toBe(true);
+    expect(leaveTeam.canRoute('/hr')).toBe(true);
+    expect(leaveTeam.canRoute('/hr/leaves')).toBe(true);
+    expect(timesheetTeam.canCapability('action.timesheet.approve')).toBe(true);
+    expect(timesheetTeam.canRoute('/hr')).toBe(true);
+    expect(timesheetTeam.canRoute('/hr/timesheets')).toBe(true);
+
+    expect(
+      serviceWith(['leave:approve'], [], { 'leave:approve': 'SELF' }).canRoute('/hr/leaves')
+    ).toBe(false);
+    expect(
+      serviceWith(['timesheet:approve'], [], { 'timesheet:approve': 'SELF' }).canRoute(
+        '/hr/timesheets'
+      )
+    ).toBe(false);
+  });
+
+  it('keeps timesheet assignment administration separate from approval', () => {
+    expect(
+      serviceWith(['timesheet:approve'], [], { 'timesheet:approve': 'TEAM' }).canRoute(
+        '/hr/timesheet-assignments'
+      )
+    ).toBe(false);
+    expect(
+      serviceWith(['timesheet:manage'], [], { 'timesheet:manage': 'ALL' }).canRoute(
+        '/hr/timesheet-assignments'
+      )
+    ).toBe(true);
+  });
+
+  it('uses the company directory grant for people search', () => {
+    expect(
+      serviceWith(
+        ['employee_directory:read'],
+        [],
+        { 'employee_directory:read': 'ALL' }
+      ).canCapability('action.people.search')
+    ).toBe(true);
+    expect(serviceWith(['leave:manage'], [], { 'leave:manage': 'ALL' }).canCapability('action.people.search')).toBe(false);
+  });
+
+  it.each([
+    ['/admin/access', 'role:manage'],
+    ['/admin/attendance-policy', 'attendance:punch_policy'],
+    ['/admin/employees', 'employee:manage'],
+    ['/admin/expense-categories', 'expense:manage'],
+    ['/admin/leave-settings', 'leave:manage'],
+    ['/admin/module-health', 'role:manage'],
+    ['/admin/notifications', 'notification:manage'],
+    ['/admin/settings', 'role:manage'],
+  ] as const)('requires ALL scope for tenant administration route %s', (path, permission) => {
+    expect(serviceWith([permission], [], { [permission]: 'SELF' }).canRoute(path)).toBe(false);
+    expect(serviceWith([permission], [], { [permission]: 'ALL' }).canRoute(path)).toBe(true);
+  });
+
+  it('requires both ALL-scoped policy permissions for the combined timesheet settings page', () => {
+    expect(
+      serviceWith(['timesheet:manage'], [], { 'timesheet:manage': 'SELF' }).canRoute(
+        '/admin/timesheet-settings'
+      )
+    ).toBe(false);
+    expect(
+      serviceWith(['timesheet:manage'], [], { 'timesheet:manage': 'ALL' }).canRoute(
+        '/admin/timesheet-settings'
+      )
+    ).toBe(false);
+    expect(
+      serviceWith(['attendance:punch_policy'], [], { 'attendance:punch_policy': 'ALL' }).canRoute(
+        '/admin/timesheet-settings'
+      )
+    ).toBe(false);
+    expect(
+      serviceWith(
+        ['timesheet:manage', 'attendance:punch_policy'],
+        [],
+        { 'timesheet:manage': 'ALL', 'attendance:punch_policy': 'ALL' }
+      ).canRoute('/admin/timesheet-settings')
+    ).toBe(true);
   });
 });
 
 describe('canonical self-service authorization', () => {
   it('exports every canonical Rust-backed permission code used by React', () => {
     expect(PERMISSIONS).toMatchObject({
-      employeeSelf: 'employee:self',
+      employeeDirectoryRead: 'employee_directory:read',
       employeeRead: 'employee:read',
       employeeManage: 'employee:manage',
       attendanceRead: 'attendance:read',
@@ -87,6 +211,38 @@ describe('canonical self-service authorization', () => {
     });
   });
 
+  it('uses the directory permission only for company directory routes', () => {
+    const directoryAll = serviceWith(
+      ['employee_directory:read'],
+      [],
+      { 'employee_directory:read': 'ALL' }
+    );
+
+    expect(directoryAll.canRoute('/organization/employees')).toBe(true);
+    expect(directoryAll.canRoute('/organization/org-chart')).toBe(true);
+    expect(serviceWith(['employee_directory:read']).canRoute('/organization/employees')).toBe(false);
+    expect(
+      serviceWith(['employee:read'], [], { 'employee:read': 'ALL' }).canRoute(
+        '/organization/employees'
+      )
+    ).toBe(false);
+  });
+
+  it('uses an explicit employee:read scope for profile settings and retires employee:self', () => {
+    expect(
+      serviceWith(['employee:read'], [], { 'employee:read': 'SELF' }).canRoute(
+        '/profile/settings'
+      )
+    ).toBe(true);
+    expect(
+      serviceWith(['employee:read'], [], { 'employee:read': 'TEAM' }).canRoute(
+        '/profile/settings'
+      )
+    ).toBe(true);
+    expect(serviceWith(['employee:read'], [], {}).canRoute('/profile/settings')).toBe(false);
+    expect(serviceWith(['employee:self'], [], { 'employee:self': 'SELF' }).canRoute('/profile/settings')).toBe(false);
+  });
+
   it.each([
     ['/attendance', 'attendance:read'],
     ['/timesheet', 'timesheet:read'],
@@ -96,15 +252,30 @@ describe('canonical self-service authorization', () => {
     ['/notifications', 'notification:read'],
     ['/payroll/payslips', 'payroll:read'],
     ['/payroll/pay', 'payroll:manage'],
-    ['/payroll/tax', 'tax:read'],
+    ['/payroll/tax', 'tax:manage'],
   ])('requires %s to have exact permission %s', (path, permission) => {
     expect(serviceWith([]).canRoute(path)).toBe(false);
     expect(
       serviceWith(
         [permission],
         [],
-        { [permission]: permission === 'payroll:manage' ? 'ALL' : 'SELF' }
+        {
+          [permission]:
+            permission === 'payroll:manage' || permission === 'tax:manage' ? 'ALL' : 'SELF',
+        }
       ).canRoute(path)
+    ).toBe(true);
+  });
+
+  it('keeps employee tax self-service separate from Tax Admin', () => {
+    expect(serviceWith(['tax:read'], [], { 'tax:read': 'SELF' }).canRoute('/payroll/tax')).toBe(
+      false
+    );
+    expect(
+      serviceWith(['tax:manage'], [], { 'tax:manage': 'SELF' }).canRoute('/payroll/tax')
+    ).toBe(false);
+    expect(
+      serviceWith(['tax:manage'], [], { 'tax:manage': 'ALL' }).canRoute('/payroll/tax')
     ).toBe(true);
   });
 

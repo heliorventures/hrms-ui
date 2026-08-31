@@ -1,4 +1,7 @@
-import type { EmployeePrivateProfileQuery } from '../../../../api/graphql/graphql';
+import type {
+  EmployeePrivateProfileQuery,
+  PayrollEmploymentHistoryQuery,
+} from '../../../../api/graphql/graphql';
 import { employeeStatusForDisplay } from '../../../employeeStatus';
 import type {
   CompanyAssignment,
@@ -38,7 +41,8 @@ function verifyFromBool(v: boolean): VerificationStatus {
 
 /** Build full profile view model from `EmployeeProfileBundle`. */
 export function mapBundleToEmployeeProfileModel(
-  bundle: EmployeePrivateProfileQuery
+  bundle: EmployeePrivateProfileQuery,
+  employmentHistoryRecords: PayrollEmploymentHistoryQuery['employmentHistoryRecords'] = []
 ): EmployeeProfileModel | null {
   const emp = bundle.employee;
   if (!emp) return null;
@@ -134,7 +138,7 @@ export function mapBundleToEmployeeProfileModel(
     },
   ];
 
-  const hist = [...bundle.employmentHistoryRecords].sort((a, b) => {
+  const hist = [...employmentHistoryRecords].sort((a, b) => {
     const da = new Date(a.effectiveFrom).getTime();
     const db = new Date(b.effectiveFrom).getTime();
     return da - db;
@@ -220,8 +224,8 @@ export function mapBundleToEmployeeProfileModel(
   );
 
   const recentActivity: RecentActivityItem[] = [];
-  if (bundle.employmentHistoryRecords[0]) {
-    const r = bundle.employmentHistoryRecords[0];
+  if (employmentHistoryRecords[0]) {
+    const r = employmentHistoryRecords[0];
     recentActivity.push({
       id: 'act-salary',
       label: 'Compensation History Updated',
