@@ -1,16 +1,13 @@
 import Card from '../../../components/common/Card';
 import PayslipDocument from './PayslipDocument';
-import { formatPayrollPeriod } from '../payrollFormatters';
 import type {
   PayrollComplianceSettingRow,
-  PayrollCycleRow,
   PayslipPeriodOption,
   PayslipRow,
 } from '../payrollTypes';
 
 interface PayrollPayslipTabProps {
   activePayslip: PayslipRow | null;
-  cycleById: Map<string, PayrollCycleRow>;
   employeeCode: string;
   employeeName: string;
   labelForLine: (line: { salaryComponentId: string; componentType?: string | null }) => string;
@@ -29,7 +26,6 @@ interface PayrollPayslipTabProps {
 
 const PayrollPayslipTab = ({
   activePayslip,
-  cycleById,
   employeeCode,
   employeeName,
   labelForLine,
@@ -98,9 +94,9 @@ const PayrollPayslipTab = ({
             employeeName={employeeName}
             employeeCode={employeeCode}
             periodLabel={
-              cycleById.get(activePayslip.payrollCycleId)
-                ? formatPayrollPeriod(cycleById.get(activePayslip.payrollCycleId)!)
-                : '—'
+              payslipPeriodOptions.find(
+                (option) => option.cycleId === activePayslip.payrollCycleId
+              )?.label ?? 'Payslip'
             }
             labelForLine={labelForLine}
             slip={activePayslip}

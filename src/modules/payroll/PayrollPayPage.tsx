@@ -27,6 +27,7 @@ const PayrollPayPage = () => {
     canReadPayroll,
     canReadTax,
     canSubmitTax,
+    employeeId: clientSession?.employeeId ?? user?.employeeId,
     ownerKey,
   });
 
@@ -42,33 +43,24 @@ const PayrollPayPage = () => {
 
       {pay.showMigrationHint && <PayrollMigrationHint tenantId={currentTenant?.id} />}
 
-      {pay.errorShell && !pay.showMigrationHint && (
+      {activeTab === 'incometax' && pay.errorShell && !pay.showMigrationHint && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{pay.errorShell}</p>
         </Card>
       )}
-      {pay.errorSalary && !pay.showMigrationHint && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{pay.errorSalary}</p>
-        </Card>
-      )}
-
       <PayrollPayTabs activeTab={activeTab} canReadTax={canReadTax} onChange={setActiveTab} />
 
       {activeTab === 'salary' && (
         <PayrollSalaryTab
-          salaryComponents={pay.salaryComponents}
-          payrollCycles={pay.payrollCycles}
-          loadingSalary={pay.loadingSalary}
-          loadingShell={pay.loadingShell}
-          errorSalary={pay.errorSalary}
+          preview={pay.salaryPreview}
+          loading={pay.loadingSalary}
+          error={pay.errorSalary}
         />
       )}
 
       {activeTab === 'payslip' && (
         <PayrollPayslipTab
           activePayslip={pay.activePayslip}
-          cycleById={pay.cycleById}
           employeeCode={user?.employeeId ?? ''}
           employeeName={user?.name ?? 'Employee'}
           labelForLine={pay.labelForLine}

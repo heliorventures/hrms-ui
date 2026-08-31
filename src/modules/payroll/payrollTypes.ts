@@ -1,4 +1,5 @@
 import type {
+  EmployeeSalaryBreakupPreviewQuery,
   PayrollComplianceSettingQuery,
   TaxComputationsListQuery,
   TaxProofLinesQuery,
@@ -7,6 +8,9 @@ import type {
 import type { PayslipDocModel } from './components/PayslipDocument';
 
 export type PayrollTabId = 'salary' | 'payslip' | 'incometax';
+
+export type EmployeeSalaryPreview =
+  EmployeeSalaryBreakupPreviewQuery['employeeSalaryBreakupPreview'];
 
 export interface SalaryComponentRow {
   id: string;
