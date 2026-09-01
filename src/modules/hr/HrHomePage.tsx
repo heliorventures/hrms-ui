@@ -45,7 +45,7 @@ const HrHomePage = () => {
               <>
                 {' '}
                 Configuration of leave types and holidays requires{' '}
-                <span className="font-mono text-xs">leave:manage</span> (tenant admin / HR).
+                <span className="font-mono text-xs">leave:manage</span> permission.
               </>
             )}
           </p>

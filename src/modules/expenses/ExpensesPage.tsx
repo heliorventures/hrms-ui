@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
-import { createPermissionService } from '../../auth/permissionService';
+import {
+  authorizationStateKey,
+  createPermissionService,
+} from '../../auth/permissionService';
+import { PERMISSIONS } from '../../auth/permissions';
 import { useAuth } from '../../contexts/AuthContext';
 import ApproveExpenseModal from './components/ApproveExpenseModal';
 import ExpenseCategoryGrid from './components/ExpenseCategoryGrid';
@@ -16,21 +20,41 @@ import { useExpensesBoard } from './hooks/useExpensesBoard';
 import type { ExpenseRow } from './types';
 
 const ExpensesPage = () => {
-  const { isAuthenticated, user, clientSession } = useAuth();
+  const { clientSession } = useAuth();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [travelOpen, setTravelOpen] = useState(false);
   const [paymentTarget, setPaymentTarget] = useState<ExpenseRow | null>(null);
-  const { client, data, loadSubmissionHints, loading, notice, refresh, setNotice, submissionHints } =
-    useExpensesBoard(user?.id);
   const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
-  const canApprove =
-    isAuthenticated && permissions.canCapability('action.expense.approve');
+  const ownerKey = authorizationStateKey(clientSession);
+  const canReadExpenses = permissions.canScopedPermission(PERMISSIONS.expenseRead);
+  const canReadTravel = permissions.canScopedPermission(PERMISSIONS.travelRead);
+  const canReadEmployees = permissions.canScopedPermission(PERMISSIONS.employeeRead, [
+    'TEAM',
+    'DEPARTMENT',
+    'ALL',
+  ]);
+  const canSubmitExpense = permissions.canCapability('action.expense.submit');
+  const canSubmitTravel = permissions.canCapability('action.travel.submit');
+  const canApproveExpense = permissions.canCapability('action.expense.approve');
+  const canApproveTravel = permissions.canCapability('action.travel.approve');
   const canManageExpense = permissions.canCapability('action.expense.manage');
-  const canMarkPayment =
-    isAuthenticated && permissions.canCapability('action.expense.pay');
+  const canMarkPayment = permissions.canCapability('action.expense.pay');
+  const { client, data, loadSubmissionHints, loading, notice, refresh, setNotice, submissionHints } =
+    useExpensesBoard({
+      canReadEmployees,
+      canReadExpenses,
+      canReadTravel,
+      canSubmitExpenses: canSubmitExpense,
+      ownerKey,
+    });
 
   const actions = useExpenseActions({
+    canApproveExpense,
+    canApproveTravel,
+    canMarkExpensePaid: canMarkPayment,
+    canSubmitExpense,
     client,
+    ownerKey,
     refresh,
     setNotice,
   });
@@ -48,10 +72,14 @@ const ExpensesPage = () => {
     return labels;
   }, [travelRequests]);
 
+  if (!canReadExpenses && !canReadTravel) return null;
+
   return (
     <div className="space-y-6">
       <ExpensesHeader
         canManageExpense={canManageExpense}
+        canSubmitExpense={canSubmitExpense}
+        canSubmitTravel={canSubmitTravel}
         onOpenExpense={() => setSubmitOpen(true)}
         onOpenTravel={() => setTravelOpen(true)}
       />
@@ -61,7 +89,7 @@ const ExpensesPage = () => {
         onDismiss={() => setNotice(null)}
       />
 
-      <RejectReasonModal
+      {(canApproveExpense || canApproveTravel) ? <RejectReasonModal
         isOpen={actions.rejectTarget !== null}
         title={
           actions.rejectTarget?.kind === 'travel'
@@ -70,9 +98,9 @@ const ExpensesPage = () => {
         }
         onClose={() => actions.setRejectTarget(null)}
         onConfirm={actions.rejectFromModal}
-      />
+      /> : null}
 
-      <ApproveExpenseModal
+      {canApproveExpense ? <ApproveExpenseModal
         busy={Boolean(actions.busyKey)}
         error={actions.approveError}
         target={actions.approveTarget}
@@ -83,9 +111,9 @@ const ExpensesPage = () => {
         }}
         onChange={actions.setApproveTarget}
         onConfirm={() => void actions.approveExpense()}
-      />
+      /> : null}
 
-      <PaymentReferenceModal
+      {canMarkPayment ? <PaymentReferenceModal
         busy={Boolean(actions.busyKey)}
         target={paymentTarget}
         onCancel={() => {
@@ -98,15 +126,15 @@ const ExpensesPage = () => {
             if (saved) setPaymentTarget(null);
           });
         }}
-      />
+      /> : null}
 
-      <SubmitTravelModal
+      {canSubmitTravel ? <SubmitTravelModal
         isOpen={travelOpen}
         onClose={() => setTravelOpen(false)}
         onSubmitted={() => void refresh()}
-      />
+      /> : null}
 
-      <SubmitExpenseModal
+      {canSubmitExpense ? <SubmitExpenseModal
         categories={categories}
         isOpen={submitOpen}
         loading={loading}
@@ -116,16 +144,16 @@ const ExpensesPage = () => {
         onCategoryChange={loadSubmissionHints}
         onClose={() => setSubmitOpen(false)}
         onSubmit={actions.submitExpense}
-      />
+      /> : null}
 
-      <ExpenseCategoryGrid
+      {canReadExpenses ? <ExpenseCategoryGrid
         categories={categories}
         loading={loading}
-      />
+      /> : null}
 
-      <ExpenseClaimsTable
+      {canReadExpenses ? <ExpenseClaimsTable
         busyKey={actions.busyKey}
-        canApprove={canApprove}
+        canApprove={canApproveExpense}
         canMarkPayment={canMarkPayment}
         categories={categories}
         employeeLabels={employeeLabels}
@@ -134,20 +162,38 @@ const ExpensesPage = () => {
         travelRequestLabels={travelRequestLabels}
         onApprove={actions.openApproveExpense}
         onMarkPaid={setPaymentTarget}
-        onReject={(expenseId) => actions.setRejectTarget({ kind: 'expense', id: expenseId })}
-      />
+        onReject={(row) => {
+          if (!row.pendingApprovalStepId) {
+            setNotice({ variant: 'warning', message: 'Refresh the expense board before rejecting this claim.' });
+            return;
+          }
+          actions.setRejectTarget({
+            kind: 'expense',
+            id: row.id,
+            expectedWorkflowStepId: row.pendingApprovalStepId,
+          });
+        }}
+      /> : null}
 
-      <TravelRequestsTable
+      {canReadTravel ? <TravelRequestsTable
         busyKey={actions.busyKey}
-        canApprove={canApprove}
+        canApprove={canApproveTravel}
         employeeLabels={employeeLabels}
         loading={loading}
         rows={travelRequests}
-        onApprove={(travelRequestId) => void actions.approveTravel(travelRequestId)}
-        onReject={(travelRequestId) =>
-          actions.setRejectTarget({ kind: 'travel', id: travelRequestId })
-        }
-      />
+        onApprove={(row) => void actions.approveTravel(row)}
+        onReject={(row) => {
+          if (!row.pendingApprovalStepId) {
+            setNotice({ variant: 'warning', message: 'Refresh the travel requests before rejecting this request.' });
+            return;
+          }
+          actions.setRejectTarget({
+            kind: 'travel',
+            id: row.id,
+            expectedWorkflowStepId: row.pendingApprovalStepId,
+          });
+        }}
+      /> : null}
     </div>
   );
 };

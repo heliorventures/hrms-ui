@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
+import { useDialogs } from '../../../contexts/DialogContext';
 import {
   CreatePayrollArrearDocument,
   CreatePayrollCycleDocument,
@@ -43,14 +44,19 @@ const isValidIsoDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
 interface PayrollBoardActionsParams {
   client: GraphQLClient;
   complianceForm: PayrollComplianceFormState;
+  enabled: boolean;
+  ownerKey: string;
   reload: () => Promise<void>;
 }
 
 export function usePayrollBoardActions({
   client,
   complianceForm,
+  enabled,
+  ownerKey,
   reload,
 }: PayrollBoardActionsParams) {
+  const { confirm } = useDialogs();
   const [cycleForm, setCycleForm] = useState<PayrollCycleFormState>(DEFAULT_CYCLE_FORM);
   const [arrearForm, setArrearForm] = useState<PayrollArrearFormState>(DEFAULT_ARREAR_FORM);
   const [createBusy, setCreateBusy] = useState(false);
@@ -66,6 +72,21 @@ export function usePayrollBoardActions({
   const [complianceSaveError, setComplianceSaveError] = useState<string | null>(null);
   const [complianceSaveOk, setComplianceSaveOk] = useState<string | null>(null);
 
+  useEffect(() => {
+    setCreateBusy(false);
+    setCreateError(null);
+    setCreateOk(null);
+    setArrearBusy(false);
+    setArrearError(null);
+    setArrearOk(null);
+    setRunBusy(null);
+    setRunError(null);
+    setRunOk(null);
+    setComplianceSaveBusy(false);
+    setComplianceSaveError(null);
+    setComplianceSaveOk(null);
+  }, [enabled, ownerKey]);
+
   const setCycleField = useCallback((field: keyof PayrollCycleFormState, value: string | number) => {
     setCycleForm((current) => ({ ...current, [field]: value }));
   }, []);
@@ -75,6 +96,7 @@ export function usePayrollBoardActions({
   }, []);
 
   const savePayrollCompliance = useCallback(async () => {
+    if (!enabled) return;
     setComplianceSaveError(null);
     setComplianceSaveOk(null);
     const employerTan = complianceForm.employerTanInput.trim().toUpperCase();
@@ -117,9 +139,10 @@ export function usePayrollBoardActions({
     } finally {
       setComplianceSaveBusy(false);
     }
-  }, [client, complianceForm, reload]);
+  }, [client, complianceForm, enabled, reload]);
 
   const createCycle = useCallback(async () => {
+    if (!enabled) return;
     setCreateError(null);
     setCreateOk(null);
     const cycleName = cycleForm.newCycleName.trim();
@@ -166,9 +189,10 @@ export function usePayrollBoardActions({
     } finally {
       setCreateBusy(false);
     }
-  }, [client, cycleForm, reload]);
+  }, [client, cycleForm, enabled, reload]);
 
   const createArrear = useCallback(async () => {
+    if (!enabled) return;
     setArrearError(null);
     setArrearOk(null);
     const employeeId = arrearForm.arrearEmployeeId.trim();
@@ -203,13 +227,19 @@ export function usePayrollBoardActions({
     } finally {
       setArrearBusy(false);
     }
-  }, [arrearForm, client, reload]);
+  }, [arrearForm, client, enabled, reload]);
 
   const runPayroll = useCallback(
     async (payrollCycleId: string) => {
-      const confirmed = window.confirm(
-        'Run payroll for this cycle now? This calculates salary, arrears, and processed payslips for the cycle.'
-      );
+      if (!enabled) return;
+      const confirmed = await confirm({
+        title: 'Run payroll for this cycle?',
+        message:
+          'The cycle will be processed and salary, arrears, and payslips will be calculated. Review the cycle details before you continue.',
+        confirmLabel: 'Run payroll',
+        cancelLabel: 'Keep cycle unchanged',
+        variant: 'danger',
+      });
       if (!confirmed) return;
       setRunBusy(payrollCycleId);
       setRunError(null);
@@ -226,7 +256,7 @@ export function usePayrollBoardActions({
         setRunBusy(null);
       }
     },
-    [client, reload]
+    [client, confirm, enabled, reload]
   );
 
   return {

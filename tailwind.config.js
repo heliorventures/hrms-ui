@@ -23,6 +23,37 @@ export default {
         'card-md': '0 2px 4px -1px rgb(0 0 0 / 0.05), 0 4px 6px -2px rgb(0 0 0 / 0.04)',
       },
       colors: {
+        canvas: 'rgb(var(--color-canvas) / <alpha-value>)',
+        surface: {
+          DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
+          raised: 'rgb(var(--color-surface-raised) / <alpha-value>)',
+          selected: 'rgb(var(--color-surface-selected) / <alpha-value>)',
+        },
+        content: {
+          primary: 'rgb(var(--color-content-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--color-content-secondary) / <alpha-value>)',
+          muted: 'rgb(var(--color-content-muted) / <alpha-value>)',
+          inverse: 'rgb(var(--color-content-inverse) / <alpha-value>)',
+        },
+        line: {
+          subtle: 'rgb(var(--color-line-subtle) / <alpha-value>)',
+          DEFAULT: 'rgb(var(--color-line) / <alpha-value>)',
+          strong: 'rgb(var(--color-line-strong) / <alpha-value>)',
+        },
+        accent: {
+          DEFAULT: 'rgb(var(--color-accent) / <alpha-value>)',
+          hover: 'rgb(var(--color-accent-hover) / <alpha-value>)',
+          active: 'rgb(var(--color-accent-active) / <alpha-value>)',
+        },
+        focus: 'rgb(var(--color-focus) / <alpha-value>)',
+        status: {
+          neutral: 'rgb(var(--color-status-neutral) / <alpha-value>)',
+          info: 'rgb(var(--color-status-info) / <alpha-value>)',
+          success: 'rgb(var(--color-status-success) / <alpha-value>)',
+          warning: 'rgb(var(--color-status-warning) / <alpha-value>)',
+          danger: 'rgb(var(--color-status-danger) / <alpha-value>)',
+        },
+        // Legacy aliases remain while unchanged module callers migrate to semantic tokens.
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
+import { PERMISSIONS } from '../../auth/permissions';
 import Card from '../../components/common/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
@@ -13,10 +15,27 @@ import type { PayrollTabId } from './payrollTypes';
 
 const PayrollPayPage = () => {
   const client = useGraphClient('client');
-  const { user } = useAuth();
+  const { clientSession, user } = useAuth();
   const { currentTenant } = useTenant();
+  const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
+  const ownerKey = authorizationStateKey(clientSession);
+  const canReadPayroll = permissions.canScopedPermission(PERMISSIONS.payrollRead);
+  const canReadTax = permissions.canScopedPermission(PERMISSIONS.taxRead);
+  const canSubmitTax = permissions.canCapability('action.tax.submit');
   const [activeTab, setActiveTab] = useState<PayrollTabId>('salary');
-  const pay = usePayrollPayData(client, activeTab);
+  const pay = usePayrollPayData(client, activeTab, {
+    canReadPayroll,
+    canReadTax,
+    canSubmitTax,
+    ownerKey,
+    tenantTimezone: currentTenant.timezone,
+  });
+
+  useEffect(() => {
+    if (activeTab === 'incometax' && !canReadTax) setActiveTab('salary');
+  }, [activeTab, canReadTax]);
+
+  if (!canReadPayroll) return null;
 
   return (
     <div className="space-y-6">
@@ -24,33 +43,24 @@ const PayrollPayPage = () => {
 
       {pay.showMigrationHint && <PayrollMigrationHint tenantId={currentTenant?.id} />}
 
-      {pay.errorShell && !pay.showMigrationHint && (
+      {activeTab === 'incometax' && pay.errorShell && !pay.showMigrationHint && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{pay.errorShell}</p>
         </Card>
       )}
-      {pay.errorSalary && !pay.showMigrationHint && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{pay.errorSalary}</p>
-        </Card>
-      )}
-
-      <PayrollPayTabs activeTab={activeTab} onChange={setActiveTab} />
+      <PayrollPayTabs activeTab={activeTab} canReadTax={canReadTax} onChange={setActiveTab} />
 
       {activeTab === 'salary' && (
         <PayrollSalaryTab
-          salaryComponents={pay.salaryComponents}
-          payrollCycles={pay.payrollCycles}
-          loadingSalary={pay.loadingSalary}
-          loadingShell={pay.loadingShell}
-          errorSalary={pay.errorSalary}
+          preview={pay.salaryPreview}
+          loading={pay.loadingSalary}
+          error={pay.errorSalary}
         />
       )}
 
       {activeTab === 'payslip' && (
         <PayrollPayslipTab
           activePayslip={pay.activePayslip}
-          cycleById={pay.cycleById}
           employeeCode={user?.employeeId ?? ''}
           employeeName={user?.name ?? 'Employee'}
           labelForLine={pay.labelForLine}
@@ -61,10 +71,10 @@ const PayrollPayPage = () => {
           payslipPeriodOptions={pay.payslipPeriodOptions}
           payslips={pay.payslips}
           payslipsLoading={pay.payslipsLoading}
-          selectedCycleId={pay.selectedCycleId}
+          selectedPeriodKey={pay.selectedPeriodKey}
           tenantId={currentTenant?.id}
           tenantName={currentTenant?.name ?? 'Organization'}
-          onSelectedCycleChange={pay.setSelectedCycleId}
+          onSelectedPeriodChange={pay.setSelectedPeriodKey}
         />
       )}
 
@@ -72,6 +82,7 @@ const PayrollPayPage = () => {
         <PayrollIncomeTaxTab
           activeTaxConfig={pay.activeTaxConfig}
           activeTaxSlabs={pay.activeTaxSlabs}
+          canSubmitTax={canSubmitTax}
           declDed={pay.declDed}
           declFy={pay.declFy}
           declGross={pay.declGross}

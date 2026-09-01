@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Card from '../../components/common/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -12,24 +13,29 @@ import { usePayrollBoard } from './hooks/usePayrollBoard';
 import { usePayrollBoardActions } from './hooks/usePayrollBoardActions';
 import { usePayrollExports } from './hooks/usePayrollExports';
 
-const PAYROLL_ADMIN_CAPABILITIES = ['employee:write', 'payroll:statutory_export'];
-
 const PayrollPage = () => {
   const client = useGraphClient('client');
-  const { canAny } = useAuth();
-  const isPayrollAdmin = canAny(PAYROLL_ADMIN_CAPABILITIES);
-  const board = usePayrollBoard(client);
+  const { clientSession } = useAuth();
+  const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
+  const ownerKey = authorizationStateKey(clientSession);
+  const canManagePayroll = permissions.canCapability('action.payroll.manage');
+  const canExportPayroll = permissions.canCapability('action.payroll.export');
+  const board = usePayrollBoard(client, { enabled: canManagePayroll, ownerKey });
   const actions = usePayrollBoardActions({
     client,
     complianceForm: board.complianceForm,
+    enabled: canManagePayroll,
+    ownerKey,
     reload: board.loadData,
   });
-  const payrollExports = usePayrollExports(client);
+  const payrollExports = usePayrollExports(client, { enabled: canExportPayroll, ownerKey });
   const { setLatestCyclePeriod } = payrollExports;
 
   useEffect(() => {
     setLatestCyclePeriod(board.data?.payrollCycles?.[0]);
   }, [board.data?.payrollCycles, setLatestCyclePeriod]);
+
+  if (!canManagePayroll) return null;
 
   return (
     <div className="space-y-6">
@@ -40,7 +46,7 @@ const PayrollPage = () => {
         </p>
       </div>
 
-      {isPayrollAdmin && <PayrollAdminNotice />}
+      <PayrollAdminNotice />
 
       {board.error && (
         <Card>
@@ -48,8 +54,7 @@ const PayrollPage = () => {
         </Card>
       )}
 
-      {isPayrollAdmin && (
-        <>
+      <>
           <PayrollComplianceCard
             form={board.complianceForm}
             loading={board.loading}
@@ -87,7 +92,7 @@ const PayrollPage = () => {
             onCreate={() => void actions.createCycle()}
             onRun={(payrollCycleId) => void actions.runPayroll(payrollCycleId)}
           />
-          <PayrollExportsSection
+          {canExportPayroll ? <PayrollExportsSection
             month={payrollExports.month}
             year={payrollExports.year}
             fyStartYear={payrollExports.fyStartYear}
@@ -100,9 +105,8 @@ const PayrollPage = () => {
             onFyQuarterChange={payrollExports.setFyQuarter}
             onMonthlyDownload={(key) => void payrollExports.downloadMonthly(key)}
             onFyDownload={(key) => void payrollExports.downloadFy(key)}
-          />
-        </>
-      )}
+          /> : null}
+      </>
     </div>
   );
 };

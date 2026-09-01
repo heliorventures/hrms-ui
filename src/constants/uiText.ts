@@ -1,13 +1,13 @@
 export const UI_ACTION_TEXT = {
   add: 'Add',
   cancel: 'Cancel',
-  cancelEdit: 'Cancel Edit',
+  cancelEdit: 'Cancel edit',
   create: 'Create',
   delete: 'Delete',
   edit: 'Edit',
   remove: 'Remove',
   save: 'Save',
-  saveChanges: 'Save Changes',
+  saveChanges: 'Save changes',
   submit: 'Submit',
   update: 'Update',
 } as const;
@@ -25,46 +25,54 @@ export const UI_STATUS_TEXT = {
 } as const;
 
 export const UI_EMPTY_TEXT = {
-  employees: 'No Employees Found',
-  employeesWithPeriod: 'No Employees Found.',
-  employeesMatchSearch: 'No Employees Match This Search.',
-  matches: 'No Matches. Try Other Words.',
-  matchesTryAnotherSearch: 'No Matches - Try Another Search.',
-  notifications: 'No Notifications',
-  records: 'No Records Found.',
-  sidebarItems: 'No Items Match',
+  employees: 'No employees found',
+  employeesWithPeriod: 'No employees found.',
+  employeesMatchSearch: 'No employees match this search.',
+  matches: 'No matches. Try other words.',
+  matchesTryAnotherSearch: 'No matches. Try another search.',
+  notifications: 'No notifications',
+  records: 'No records found.',
+  sidebarItems: 'No items match',
 } as const;
 
 export const UI_A11Y_TEXT = {
-  closeModal: 'Close Modal',
-  closeSidebar: 'Close Sidebar',
-  commandPalette: 'Command Palette',
+  closeModal: 'Close modal',
+  closeSidebar: 'Close sidebar',
+  commandPalette: 'Command palette',
   dismiss: 'Dismiss',
-  dismissNotification: 'Dismiss Notification',
-  filterSidebarMenu: 'Filter Sidebar Menu',
+  dismissNotification: 'Dismiss notification',
+  filterSidebarMenu: 'Filter sidebar menu',
+  loading: 'Loading',
+} as const;
+
+export const UI_FEEDBACK_TEXT = {
+  copied: 'Copied.',
+  copyUnavailable: 'Copy is unavailable. Select the value and copy it manually.',
+  unknownStatus: 'Unknown status',
+  unavailable: 'Unavailable',
 } as const;
 
 export const UI_FORM_TEXT = {
   chooseAny: 'Choose…',
-  chooseEmployee: 'Choose An Employee…',
-  chooseProject: 'Choose Project',
-  loadingOption: '- Loading -',
-  noneOption: '- None -',
-  selectEmployeeOption: '- Select Employee -',
+  chooseEmployee: 'Choose an employee…',
+  chooseProject: 'Choose project',
+  loadingOption: 'Loading…',
+  noneOption: 'None',
+  selectEmployeeOption: 'Select employee',
 } as const;
 
 export const UI_FIELD_LABELS = {
-  dateOfJoining: 'Date Of Joining',
-  employeeCode: 'Employee Code',
-  firstName: 'First Name',
-  lastName: 'Last Name',
-  reportingManager: 'Reporting Manager',
+  dateOfJoining: 'Date of joining',
+  employeeCode: 'Employee code',
+  firstName: 'First name',
+  lastName: 'Last name',
+  reportingManager: 'Reporting manager',
 } as const;
 
 export const UI_PLACEHOLDER_TEXT = {
-  employeeSearch: 'Search By Employee Code Or Name…',
-  globalSearch: 'Search Pages, People, Tools…',
-  sidebarFilter: 'Filter Menu, Pages…',
+  employeeSearch: 'Search by employee code or name…',
+  globalSearch: 'Search pages, people, tools…',
+  sidebarFilter: 'Filter menu and pages…',
   uuidEntitySearch: 'Search…',
 } as const;
 
@@ -81,6 +89,7 @@ export const NAV_LABELS = {
   adminTimesheetSettings: 'Admin - Timesheet Settings',
   assets: 'Assets',
   attendance: 'Attendance',
+  attendanceManagement: 'Attendance Management',
   attendancePolicy: 'Attendance Policy',
   benefits: 'Benefits',
   compensation: 'Compensation',
@@ -121,6 +130,7 @@ export const NAV_LABELS = {
   payTaxAdmin: 'Pay - Tax Admin',
   payroll: 'Payroll',
   payrollProcessing: 'Payroll Processing',
+  payslipsAndTax: 'Payslips & Tax',
   peopleAdmin: 'People Admin',
   performance: 'Performance',
   profileSettings: 'Profile & Settings',

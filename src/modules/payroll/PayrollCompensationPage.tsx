@@ -1,5 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Card from '../../components/common/Card';
+import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
@@ -92,7 +94,7 @@ const ASSIGN_EMPLOYEE_SALARY_STRUCTURE = /* GraphQL */ `
 `;
 
 const SALARY_BREAKUP_PREVIEW = /* GraphQL */ `
-  query EmployeeSalaryBreakupPreview($employeeId: ID!, $asOf: NaiveDate) {
+  query EmployeeSalaryBreakupPreview($employeeId: ID, $asOf: NaiveDate) {
     employeeSalaryBreakupPreview(employeeId: $employeeId, asOf: $asOf) {
       employeeId
       annualCtc
@@ -135,7 +137,7 @@ const defaultLineDraft: StructureDraftLine = {
   calculationValue: '',
 };
 
-const PayrollCompensationPage = () => {
+const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll: boolean }) => {
   const client = useGraphClient('client');
   const [board, setBoard] = useState<BoardResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -180,6 +182,7 @@ const PayrollCompensationPage = () => {
 
   const addComponent = async (event: FormEvent) => {
     event.preventDefault();
+    if (!canManagePayroll) return;
     if (!componentForm.name.trim() || !componentForm.code.trim()) {
       setActionError('Component name and code are required.');
       return;
@@ -210,6 +213,7 @@ const PayrollCompensationPage = () => {
   };
 
   const addStructureLine = () => {
+    if (!canManagePayroll) return;
     if (!lineDraft.salaryComponentId || !validMoney(lineDraft.calculationValue)) {
       setActionError('Select a component and enter a valid calculation value.');
       return;
@@ -221,6 +225,7 @@ const PayrollCompensationPage = () => {
 
   const saveStructure = async (event: FormEvent) => {
     event.preventDefault();
+    if (!canManagePayroll) return;
     if (!structureName.trim()) {
       setActionError('Structure name is required.');
       return;
@@ -259,6 +264,7 @@ const PayrollCompensationPage = () => {
 
   const assignStructure = async (event: FormEvent) => {
     event.preventDefault();
+    if (!canManagePayroll) return;
     if (!assignmentForm.employeeId || !assignmentForm.salaryStructureId) {
       setActionError('Select employee and salary structure.');
       return;
@@ -352,6 +358,20 @@ const PayrollCompensationPage = () => {
       />
       {preview ? <SalaryBreakupPreviewSection preview={preview} /> : null}
     </div>
+  );
+};
+
+const PayrollCompensationPage = () => {
+  const { clientSession } = useAuth();
+  const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
+  const canManagePayroll = permissions.canCapability('action.payroll.manage');
+  if (!canManagePayroll) return null;
+
+  return (
+    <PayrollCompensationPageContent
+      key={authorizationStateKey(clientSession)}
+      canManagePayroll={canManagePayroll}
+    />
   );
 };
 

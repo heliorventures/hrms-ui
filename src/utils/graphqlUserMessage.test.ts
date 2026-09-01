@@ -5,6 +5,14 @@ import { describe, expect, it } from 'vitest';
 import { graphQlUserMessage } from './graphqlUserMessage';
 
 describe('graphQlUserMessage', () => {
+  it('maps managed-attendance conflicts and denials without exposing target details', () => {
+    expect(graphQlUserMessage({ code: 'CONFLICT' }, 'attendance-management')).toBe(
+      'This attendance record changed. Refresh it before trying again.'
+    );
+    expect(graphQlUserMessage({ code: 'FORBIDDEN', message: 'employee-secret is outside TEAM scope' }, 'attendance-management')).toBe(
+      'You do not have access to make this change. Contact your HR administrator if you need help.'
+    );
+  });
   it('distinguishes an incorrect current password from an expired session', () => {
     const err = Object.assign(new Error('The current password is incorrect.'), {
       code: 'CURRENT_PASSWORD_INCORRECT',
@@ -31,6 +39,14 @@ describe('graphQlUserMessage', () => {
     expect(graphQlUserMessage(err)).toBe(
       'Amount exceeds the permitted category limit. Review the limit shown above.'
     );
+  });
+
+  it('does not lose the category cap message after a submit modal receives a plain Error', () => {
+    expect(
+      graphQlUserMessage(
+        new Error('Amount exceeds the permitted category limit. Review the limit shown above.')
+      )
+    ).toBe('Amount exceeds the permitted category limit. Review the limit shown above.');
   });
 
   it('maps monthly category limit failures', () => {
@@ -85,6 +101,26 @@ describe('graphQlUserMessage', () => {
 
     expect(graphQlUserMessage(err)).toBe(
       'An active leave request already covers all or part of those dates.'
+    );
+  });
+
+  it('tells an approver to refresh when the leave workflow step is stale', () => {
+    const err = Object.assign(new Error('The expected workflow step is no longer current.'), {
+      code: 'LEAVE_WORKFLOW_NOT_CURRENT',
+    });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'This leave request moved to another approval step. Refresh leave requests before trying again.'
+    );
+  });
+
+  it('maps login email conflicts to a field-specific correction', () => {
+    const err = Object.assign(new Error('email is already in use in this tenant'), {
+      code: 'USER_EMAIL_CONFLICT',
+    });
+
+    expect(graphQlUserMessage(err)).toBe(
+      'A login account already uses this email address. Use a different email or leave it blank.'
     );
   });
 

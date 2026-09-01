@@ -12,6 +12,7 @@ import { useGraphClient } from '../../../hooks/useGraphClient';
 import { attendancePolicyMessage } from '../../../utils/attendancePolicyMessage';
 import {
   type AttendanceSegmentInterval,
+  type ExistingSegmentsCoverage,
   type ManualAttendanceField,
   validateManualAttendanceSegment,
 } from '../../../utils/attendanceValidation';
@@ -36,6 +37,10 @@ export interface ManualAttendanceModalProps {
   defaultCheckIn?: string | null;
   defaultCheckOut?: string | null;
   existingSegments: AttendanceSegmentInterval[];
+  /** Defaults to true for callers that supply a complete list. */
+  existingSegmentsComplete?: boolean;
+  /** Loaded date range when the supplied list is only complete within that range. */
+  existingSegmentsCoverage?: ExistingSegmentsCoverage;
   selfServiceDays: number;
   canRegularize: boolean;
   onSaved: () => void;
@@ -49,6 +54,8 @@ const ManualAttendanceModal = ({
   defaultCheckIn,
   defaultCheckOut,
   existingSegments,
+  existingSegmentsComplete = true,
+  existingSegmentsCoverage,
   selfServiceDays,
   canRegularize,
   onSaved,
@@ -97,6 +104,8 @@ const ManualAttendanceModal = ({
       checkIn,
       checkOut,
       existingSegments,
+      existingSegmentsComplete,
+      existingSegmentsCoverage,
       excludedSegmentId: editingSegmentId,
     });
     if (validationError) {

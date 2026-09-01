@@ -2,6 +2,8 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import Select from '../../components/common/Select';
+import Textarea from '../../components/common/Textarea';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
@@ -99,36 +101,31 @@ const GrievancePage = () => {
       <Card title="File A Case">
         <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
           {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Category
-            </label>
-            <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              required
-            >
-              <option value="">Select…</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.code})
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            id="grievance-category"
+            label="Category"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            options={[
+              { value: '', label: 'Select…' },
+              ...categories.map((category) => ({
+                value: category.id,
+                label: `${category.name} (${category.code})`,
+              })),
+            ]}
+            required
+            fullWidth
+          />
           <Input label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} fullWidth required />
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Description (optional)
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            />
-          </div>
+          <Textarea
+            id="grievance-description"
+            label="Description"
+            optionalLabel="optional"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            fullWidth
+          />
           <Button type="submit" disabled={submitting || loading}>
             {submitting ? 'Submitting...' : 'Submit Case'}
           </Button>

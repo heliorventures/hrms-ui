@@ -1,202 +1,147 @@
-import { ReactNode, useEffect, useId, useRef } from 'react';
-import { UI_A11Y_TEXT } from '../../constants/uiText';
+import { type ReactNode, type RefObject, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
-interface ModalProps {
+import { UI_A11Y_TEXT } from '../../constants/uiText';
+import { useDialogSurface } from './useDialogSurface';
+
+export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  description?: string;
   children: ReactNode;
+  footer?: ReactNode;
+  initialFocusRef?: RefObject<HTMLElement>;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isDismissible?: boolean;
+  mobilePresentation?: 'dialog' | 'full-height';
 }
 
-const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',');
-
-interface ModalStackEntry {
-  id: symbol;
-  focus: () => void;
-}
-
-const modalStack: ModalStackEntry[] = [];
-let bodyOverflowBeforeModalStack: string | null = null;
-
-const topmostModal = () => modalStack[modalStack.length - 1];
-
-const isTopmostModal = (id: symbol) => topmostModal()?.id === id;
-
-const focusTopmostModal = () => topmostModal()?.focus();
-
-const registerModal = (entry: ModalStackEntry) => {
-  if (modalStack.length === 0) {
-    bodyOverflowBeforeModalStack = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-  }
-  modalStack.push(entry);
-};
-
-const unregisterModal = (id: symbol) => {
-  const index = modalStack.findIndex((entry) => entry.id === id);
-  if (index === -1) return false;
-  const wasTopmost = index === modalStack.length - 1;
-  modalStack.splice(index, 1);
-  if (modalStack.length === 0 && bodyOverflowBeforeModalStack !== null) {
-    document.body.style.overflow = bodyOverflowBeforeModalStack;
-    bodyOverflowBeforeModalStack = null;
-  }
-  return wasTopmost;
-};
+const MODAL_SIZE_CLASSES = {
+  sm: 'max-w-md',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+} as const;
 
 const Modal = ({
   isOpen,
   onClose,
   title,
+  description,
   children,
+  footer,
+  initialFocusRef,
   size = 'md',
   isDismissible = true,
+  mobilePresentation = 'dialog',
 }: ModalProps) => {
   const titleId = useId();
+  const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
-  const openerRef = useRef<HTMLElement | null>(null);
-  const onCloseRef = useRef(onClose);
-  const dismissibleRef = useRef(isDismissible);
-  const modalIdRef = useRef<symbol>();
-  if (!modalIdRef.current) modalIdRef.current = Symbol('modal');
-  const modalId = modalIdRef.current;
 
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  useEffect(() => {
-    dismissibleRef.current = isDismissible;
-  }, [isDismissible]);
-
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isTopmostModal(modalId) && dismissibleRef.current) {
-        onCloseRef.current();
-      }
-    };
-
-    const trapFocus = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab' || !isTopmostModal(modalId)) return;
-      const dialog = dialogRef.current;
-      if (!dialog) return;
-      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-      if (focusable.length === 0) {
-        event.preventDefault();
-        dialog.focus();
-        return;
-      }
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const activeElement = document.activeElement;
-      if (event.shiftKey && (activeElement === first || !dialog.contains(activeElement))) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (activeElement === last || !dialog.contains(activeElement))) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    if (isOpen) {
-      openerRef.current =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      const focusDialog = () => {
-        const dialog = dialogRef.current;
-        const initialFocus = dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-        (initialFocus ?? dialog)?.focus();
-      };
-      registerModal({ id: modalId, focus: focusDialog });
-      document.addEventListener('keydown', handleEscape);
-      document.addEventListener('keydown', trapFocus);
-      const focusFrame = window.requestAnimationFrame(() => {
-        if (isTopmostModal(modalId)) focusDialog();
-      });
-      return () => {
-        window.cancelAnimationFrame(focusFrame);
-        document.removeEventListener('keydown', handleEscape);
-        document.removeEventListener('keydown', trapFocus);
-        const wasTopmost = unregisterModal(modalId);
-        if (!wasTopmost) return;
-        if (modalStack.length > 0) {
-          focusTopmostModal();
-        } else if (openerRef.current?.isConnected) {
-          openerRef.current.focus();
-        }
-      };
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.removeEventListener('keydown', trapFocus);
-    };
-  }, [isOpen, modalId]);
+  const { isTopmost } = useDialogSurface({
+    isOpen,
+    isDismissible,
+    onClose,
+    surfaceRef: dialogRef,
+    initialFocusRef,
+  });
 
   if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
-  const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
+  const rootClass =
+    mobilePresentation === 'full-height'
+      ? 'items-end sm:items-center'
+      : 'items-center';
+
+  const requestClose = () => {
+    if (isDismissible && isTopmost()) onClose();
   };
 
-  return (
+  const contentClass = [
+    'relative flex w-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-white',
+    'max-h-[100dvh] overscroll-contain sm:max-h-[calc(100dvh-2rem)]',
+    mobilePresentation === 'full-height'
+      ? 'h-[100dvh] w-full rounded-b-none rounded-t-2xl sm:h-auto sm:w-[min(90vw,42rem)]'
+      : `w-full ${MODAL_SIZE_CLASSES[size]} h-auto`,
+  ].join(' ');
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50 p-4"
-      onClick={() => dismissibleRef.current && onCloseRef.current()}
+      className={`fixed inset-0 z-50 flex ${rootClass} justify-center bg-slate-950/70 pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(1rem,env(safe-area-inset-top))]`}
+      role="presentation"
     >
+      <button
+        type="button"
+        className="absolute inset-0 w-full h-full cursor-default border-0 bg-transparent p-0 focus-visible:outline-none"
+        onMouseDown={requestClose}
+        aria-hidden="true"
+        tabIndex={-1}
+        data-testid="modal-backdrop"
+      />
+      <div className="relative flex min-h-0 w-full justify-center sm:w-auto">
       <div
-        className={`flex max-h-[calc(100vh-2rem)] w-full ${sizeClasses[size]} flex-col rounded-lg bg-white shadow-xl dark:bg-gray-800`}
-        onClick={(e) => e.stopPropagation()}
+        className={contentClass}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
         ref={dialogRef}
         tabIndex={-1}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
-          <h2
-            id={titleId}
-            className="text-lg font-semibold text-gray-900 dark:text-white"
-          >
-            {title}
-          </h2>
+        <header className="flex shrink-0 items-start justify-between border-b border-slate-200 py-4 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] dark:border-slate-700">
+          <div className="space-y-1.5">
+            <h2 id={titleId} className="text-xl font-semibold text-slate-900 dark:text-white">
+              {title}
+            </h2>
+            {description ? (
+              <p
+                id={descriptionId}
+                className="max-w-prose text-sm text-slate-600 dark:text-slate-300"
+              >
+                {description}
+              </p>
+            ) : null}
+          </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={!isDismissible}
-            className="rounded-lg p-1 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
             aria-label={UI_A11Y_TEXT.closeModal}
           >
             <svg
               aria-hidden="true"
               className="h-5 w-5"
+              viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
+                d="M6 18 18 6M6 6l12 12"
               />
             </svg>
           </button>
-        </div>
-        <div className="min-h-0 overflow-y-auto p-6">{children}</div>
+        </header>
+
+        <section className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-5 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))]">
+          {children}
+        </section>
+
+        {footer ? (
+          <footer className="sticky bottom-0 flex shrink-0 items-center justify-end gap-2 border-t border-slate-200 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] pt-4 dark:border-slate-700 dark:bg-slate-900">
+            {footer}
+          </footer>
+        ) : null}
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 };
 

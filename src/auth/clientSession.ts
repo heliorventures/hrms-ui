@@ -18,6 +18,7 @@ const HR_SHELL_ROLES = new Set(['HR_ADMIN', 'HR', 'HR_MANAGER', 'PEOPLE_OPS']);
 interface ClientJwtPayload {
   roles?: string[];
   permissions?: string[];
+  permission_scopes?: Record<string, string>;
   resource_scopes?: Record<string, string>;
   employee_id?: string;
   employeeId?: string;
@@ -48,6 +49,7 @@ export function derivePersonaFromJwtRoles(jwtRoles: string[]): ClientPersona {
 export interface ParsedClientSession {
   jwtRoles: string[];
   permissions: ReadonlySet<string>;
+  permissionScopes: Readonly<Record<string, string>>;
   resourceScopes: Readonly<Record<string, string>>;
   employeeId?: string;
   persona: ClientPersona;
@@ -71,6 +73,18 @@ export function parseClientAccessToken(accessToken: string): ParsedClientSession
     : [];
   const permissions = new Set(permList);
 
+  const permissionScopesRaw = claims.permission_scopes;
+  const permissionScopes =
+    permissionScopesRaw != null &&
+    typeof permissionScopesRaw === 'object' &&
+    !Array.isArray(permissionScopesRaw)
+      ? Object.fromEntries(
+          Object.entries(permissionScopesRaw)
+            .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+            .map(([key, value]) => [key.trim().toLowerCase(), value])
+        )
+      : {};
+
   const scopes = claims.resource_scopes;
   const resourceScopes =
     scopes != null && typeof scopes === 'object' && !Array.isArray(scopes)
@@ -80,6 +94,7 @@ export function parseClientAccessToken(accessToken: string): ParsedClientSession
   return {
     jwtRoles,
     permissions,
+    permissionScopes,
     resourceScopes,
     employeeId:
       typeof raw.employee_id === 'string'

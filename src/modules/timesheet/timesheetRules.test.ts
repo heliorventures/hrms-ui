@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  parseTimesheetHours,
   timesheetEntryCanEdit,
   validateTimesheetDayHours,
   validateTimesheetWeekHours,
@@ -23,5 +24,13 @@ describe('timesheetRules', () => {
     expect(timesheetEntryCanEdit('APPROVED', '2026-08-10', '2026-08-03', false)).toBe(true);
     expect(timesheetEntryCanEdit('APPROVED', '2026-08-10', '2026-08-03', true)).toBe(false);
     expect(timesheetEntryCanEdit('SUBMITTED', '2026-08-10', '2026-08-03', false)).toBe(false);
+  });
+
+  it('accepts at most two decimal places for hours', () => {
+    expect(parseTimesheetHours('1')).toBe(1);
+    expect(parseTimesheetHours('1.2')).toBe(1.2);
+    expect(parseTimesheetHours('1.23')).toBe(1.23);
+    expect(parseTimesheetHours('.5')).toBe(0.5);
+    expect(parseTimesheetHours('1.234')).toBeNaN();
   });
 });

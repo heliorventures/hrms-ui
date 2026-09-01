@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { History, Settings2, Wallet } from 'lucide-react';
+import type { CanonicalEmployeeStatus } from '../../../employeeStatus';
 
 import type { EmployeeProfileModel, EmploymentStatusUi } from '../types';
 import { InfoCard } from '../components/InfoCard';
@@ -27,19 +28,6 @@ interface EmploymentManagementTabProps {
 
 const NO_MANAGER_CHANGE = '__NOCHANGE__';
 const CLEAR_MANAGER = '__CLEAR__';
-
-function statusUiToApi(status: EmploymentStatusUi): string {
-  switch (status) {
-    case 'TERMINATED':
-      return 'TERMINATED';
-    case 'ON_LEAVE':
-      return 'ON_LEAVE';
-    case 'SUSPENDED':
-      return 'SUSPENDED';
-    default:
-      return 'ACTIVE';
-  }
-}
 
 export function EmploymentManagementTab({
   employeeId,
@@ -140,13 +128,13 @@ export function EmploymentManagementTab({
   );
 
   const patchEmployeeStatus = useCallback(
-    async (next: EmploymentStatusUi) => {
+    async (next: CanonicalEmployeeStatus) => {
       setStatusSaving(true);
       setBanner(null);
       setBannerErr(null);
       try {
         await client.request(UpdateEmployeeDocument, {
-          input: { id: employeeId, status: statusUiToApi(next) },
+          input: { id: employeeId, status: next },
         });
         setStatusUi(next);
         setBanner('Employment status updated.');
@@ -253,6 +241,12 @@ export function EmploymentManagementTab({
               Activate
             </Button>
           ) : null}
+          <Button type="button" size="sm" variant="outline" disabled={statusSaving} onClick={() => void patchEmployeeStatus('PROBATION')}>
+            Mark probation
+          </Button>
+          <Button type="button" size="sm" variant="outline" disabled={statusSaving} onClick={() => void patchEmployeeStatus('INACTIVE')}>
+            Deactivate
+          </Button>
           <Button type="button" size="sm" variant="outline" disabled={statusSaving} onClick={() => void patchEmployeeStatus('ON_LEAVE')}>
             Mark on leave
           </Button>

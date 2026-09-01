@@ -1,78 +1,29 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '../../../components/common/Modal';
 import Button from '../../../components/common/Button';
-import Input from '../../../components/common/Input';
+import PageNotice from '../../../components/common/PageNotice';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
-import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { ApplyLeaveContextPanel, UpcomingHolidaysList } from './ApplyLeaveSupportingInfo';
+import ApplyLeaveFormFields, {
+  type ApplyLeaveField,
+  type ApplyLeaveFieldErrors,
+} from './ApplyLeaveFormFields';
+import {
+  calendarDaysBeforeLeaveStart,
+  requestedLeaveDays,
+  type ApplyBalanceRow,
+  type ApplyHolidayRow,
+  type ApplyLeavePolicyRow,
+  type ApplyLeaveTypeOption,
+} from './applyLeavePolicy';
+import {
+  useApplyLeaveDialogOwnership,
+  type ApplyLeaveDialogContext,
+} from './useApplyLeaveDialogOwnership';
 
-/** Calendar days from local midnight today to start date (0 = today). */
-function calendarDaysBeforeLeaveStart(fromDateStr: string): number {
-  const [y, m, d] = fromDateStr.split('-').map(Number);
-  if (!y || !m || !d) return NaN;
-  const from = new Date(y, m - 1, d);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  from.setHours(0, 0, 0, 0);
-  return Math.round((from.getTime() - today.getTime()) / 86400000);
-}
-
-export interface ApplyLeaveTypeOption {
-  id: string;
-  name: string;
-  code: string;
-  isPaid?: boolean;
-  halfDayAllowed?: boolean;
-  requiresDocument?: boolean;
-  sandwichRule?: boolean;
-}
-
-export type ApplyLeavePolicyRow = LeaveBoardQuery['leavePolicies'][number];
-export type ApplyHolidayRow = LeaveBoardQuery['upcomingHolidays'][number];
-export type ApplyBalanceRow = LeaveBoardQuery['leaveBalances'][number];
-
-function holidayDateIso(h: ApplyHolidayRow): string {
-  const v = h.holidayDate as string;
-  return typeof v === 'string' ? v.slice(0, 10) : '';
-}
-
-/** Mirrors backend `compute_requested_days` for policy/balance hints (half-day = 0.5). */
-function requestedLeaveDays(
-  from: string,
-  to: string,
-  half: boolean,
-  sandwichRule: boolean,
-  holidays: ApplyHolidayRow[]
-): number {
-  if (half) return 0.5;
-  const [fy, fm, fd] = from.split('-').map(Number);
-  const [ty, tm, td] = to.split('-').map(Number);
-  const start = new Date(fy, fm - 1, fd);
-  const end = new Date(ty, tm - 1, td);
-  if (sandwichRule) {
-    return Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
-  }
-  const holidaySet = new Set(
-    holidays
-      .map(holidayDateIso)
-      .filter((d) => d && d >= from && d <= to)
-  );
-  let count = 0;
-  const cur = new Date(start);
-  while (cur <= end) {
-    const dow = cur.getDay();
-    const iso = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(
-      cur.getDate()
-    ).padStart(2, '0')}`;
-    if (dow !== 0 && dow !== 6 && !holidaySet.has(iso)) {
-      count += 1;
-    }
-    cur.setDate(cur.getDate() + 1);
-  }
-  return count;
-}
+export type { ApplyBalanceRow, ApplyHolidayRow, ApplyLeavePolicyRow, ApplyLeaveTypeOption } from './applyLeavePolicy';
 
 interface ApplyLeaveModalProps {
   isOpen: boolean;
@@ -82,6 +33,12 @@ interface ApplyLeaveModalProps {
   upcomingHolidays: ApplyHolidayRow[];
   leaveBalances: ApplyBalanceRow[];
   onSubmitted: () => void;
+}
+
+interface ApplyLeaveFormError {
+  title: string;
+  message: string;
+  context: ApplyLeaveDialogContext<ReturnType<typeof useGraphClient>>;
 }
 
 const ApplyLeaveModal = ({
@@ -94,6 +51,8 @@ const ApplyLeaveModal = ({
   onSubmitted,
 }: ApplyLeaveModalProps) => {
   const client = useGraphClient('client');
+  const { activeSubmissionRef, dialogContext, dialogContextRef } =
+    useApplyLeaveDialogOwnership(client, isOpen);
   const [leaveTypeId, setLeaveTypeId] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -101,8 +60,21 @@ const ApplyLeaveModal = ({
   const [halfDaySession, setHalfDaySession] = useState<'FIRST_HALF' | 'SECOND_HALF' | ''>('');
   const [reason, setReason] = useState('');
   const [supportingDocRef, setSupportingDocRef] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [submittingContext, setSubmittingContext] =
+    useState<ApplyLeaveDialogContext<typeof client> | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ApplyLeaveFieldErrors>({});
+  const [formError, setFormError] = useState<ApplyLeaveFormError | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const mountedRef = useRef(false);
+  const submitting = submittingContext === dialogContext;
+  const visibleFormError = formError?.context === dialogContext ? formError : null;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const selectedType = useMemo(
     () => leaveTypes.find((t) => t.id === leaveTypeId),
@@ -124,6 +96,16 @@ const ApplyLeaveModal = ({
   const consumesLeaveBalance = selectedType?.isPaid !== false;
   const isMultiDay = Boolean(fromDate && toDate && fromDate !== toDate);
   const halfDayEligible = halfDayAllowed && !isMultiDay;
+  const leaveTypeOptions = useMemo(
+    () => [
+      { value: '', label: 'Select...' },
+      ...leaveTypes.map((leaveType) => ({
+        value: leaveType.id,
+        label: `${leaveType.name} (${leaveType.code})`,
+      })),
+    ],
+    [leaveTypes]
+  );
 
   useEffect(() => {
     if (!halfDayAllowed || isMultiDay) {
@@ -140,37 +122,102 @@ const ApplyLeaveModal = ({
     setHalfDaySession('');
     setReason('');
     setSupportingDocRef('');
+    setFieldErrors({});
     setFormError(null);
   };
 
   const handleClose = () => {
+    if (activeSubmissionRef.current === dialogContext) return;
     resetForm();
     onClose();
   };
 
-  const clearFormError = () => setFormError(null);
+  const clearFieldError = (field: ApplyLeaveField) => {
+    setFieldErrors((current) => ({ ...current, [field]: undefined }));
+    setFormError(null);
+  };
+
+  const focusField = (field: ApplyLeaveField) => {
+    window.requestAnimationFrame(() => {
+      const control = formRef.current?.elements.namedItem(field);
+      if (control instanceof HTMLElement) control.focus();
+    });
+  };
+
+  const showFieldError = (field: ApplyLeaveField, message: string) => {
+    setFieldErrors({ [field]: message });
+    setFormError(null);
+    focusField(field);
+  };
+
+  const handleLeaveTypeChange = (nextLeaveTypeId: string) => {
+    const nextType = leaveTypes.find((type) => type.id === nextLeaveTypeId);
+    clearFieldError('leaveTypeId');
+    setLeaveTypeId(nextLeaveTypeId);
+    if (nextType?.requiresDocument !== true) setSupportingDocRef('');
+  };
+  const handleFromDateChange = (value: string) => {
+    clearFieldError('fromDate');
+    setFromDate(value);
+  };
+  const handleToDateChange = (value: string) => {
+    clearFieldError('toDate');
+    setToDate(value);
+  };
+  const handleHalfDayChange = (checked: boolean) => {
+    clearFieldError('halfDaySession');
+    setIsHalfDay(checked);
+    if (!checked) setHalfDaySession('');
+  };
+  const handleHalfDaySessionChange = (value: 'FIRST_HALF' | 'SECOND_HALF' | '') => {
+    clearFieldError('halfDaySession');
+    setHalfDaySession(value);
+  };
+  const handleReasonChange = (value: string) => {
+    clearFieldError('reason');
+    setReason(value);
+  };
+  const handleSupportingDocumentChange = (value: string) => {
+    clearFieldError('supportingDocumentReference');
+    setSupportingDocRef(value);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!leaveTypeId || !fromDate || !toDate) {
-      setFormError('Choose a leave type and date range.');
+    const submissionContext = dialogContextRef.current;
+    if (!submissionContext.isOpen || activeSubmissionRef.current === submissionContext) return;
+    setFieldErrors({});
+    setFormError(null);
+    if (!leaveTypeId) {
+      showFieldError('leaveTypeId', 'Choose a leave type.');
+      return;
+    }
+    if (!fromDate) {
+      showFieldError('fromDate', 'Choose the first day of leave.');
+      return;
+    }
+    if (!toDate) {
+      showFieldError('toDate', 'Choose the last day of leave.');
       return;
     }
     if (toDate < fromDate) {
-      setFormError('To date must be on or after from date.');
+      showFieldError('toDate', 'To date must be on or after from date.');
       return;
     }
     const reasonTrim = reason.trim();
     if (!reasonTrim) {
-      setFormError('Reason is required.');
+      showFieldError('reason', 'Enter a reason for your leave.');
       return;
     }
     if (requiresDocument && !supportingDocRef.trim()) {
-      setFormError('This leave type requires a document reference (link or ticket ID).');
+      showFieldError(
+        'supportingDocumentReference',
+        'Add a document reference, such as an upload link or ticket ID.'
+      );
       return;
     }
     if (isHalfDay && !halfDaySession) {
-      setFormError('Choose first half or second half for a half-day leave.');
+      showFieldError('halfDaySession', 'Choose first half or second half.');
       return;
     }
 
@@ -181,7 +228,8 @@ const ApplyLeaveModal = ({
       policyForType.minNoticeDays > 0 &&
       leadDays < policyForType.minNoticeDays
     ) {
-      setFormError(
+      showFieldError(
+        'fromDate',
         `Policy requires at least ${policyForType.minNoticeDays} calendar day(s) between today and the first leave day.`
       );
       return;
@@ -196,20 +244,23 @@ const ApplyLeaveModal = ({
       upcomingHolidays
     );
     if (!sandwichOn && reqDays <= 0 && !(halfDayEligible && isHalfDay)) {
-      setFormError(
+      showFieldError(
+        'fromDate',
         'No chargeable working days in this range (weekends and holidays only). Adjust dates or choose another leave type.'
       );
       return;
     }
     if (consumesLeaveBalance && !balanceForType) {
-      setFormError(
+      showFieldError(
+        'leaveTypeId',
         'This leave type is not provisioned for your employee record. Ask HR to provision balances first.'
       );
       return;
     }
     const availableDays = Number(balanceForType?.balanceDays ?? 0);
     if (consumesLeaveBalance && Number.isFinite(availableDays) && availableDays < reqDays) {
-      setFormError(
+      showFieldError(
+        'leaveTypeId',
         `Insufficient leave balance. Available: ${availableDays} day(s), requested: ${reqDays} day(s).`
       );
       return;
@@ -219,16 +270,17 @@ const ApplyLeaveModal = ({
       policyForType.maxConsecutiveDays > 0 &&
       reqDays > policyForType.maxConsecutiveDays
     ) {
-      setFormError(
+      showFieldError(
+        'toDate',
         `Policy allows at most ${policyForType.maxConsecutiveDays} consecutive day(s) for this leave type (this request is ${reqDays} day(s)).`
       );
       return;
     }
 
-    setFormError(null);
-    setSubmitting(true);
+    activeSubmissionRef.current = submissionContext;
+    setSubmittingContext(submissionContext);
     try {
-      await client.request(SubmitLeaveRequestDocument, {
+      await submissionContext.client.request(SubmitLeaveRequestDocument, {
         input: {
           leaveTypeId,
           fromDate,
@@ -239,163 +291,101 @@ const ApplyLeaveModal = ({
           supportingDocumentReference: supportingDocRef.trim() || null,
         },
       });
-      onSubmitted();
-      resetForm();
-      onClose();
+      if (
+        mountedRef.current &&
+        dialogContextRef.current === submissionContext &&
+        activeSubmissionRef.current === submissionContext
+      ) {
+        onSubmitted();
+        resetForm();
+        onClose();
+      }
     } catch (err) {
-      setFormError(graphQlUserMessage(err));
+      if (
+        mountedRef.current &&
+        dialogContextRef.current === submissionContext &&
+        activeSubmissionRef.current === submissionContext
+      ) {
+        setFormError({
+          context: submissionContext,
+          title: 'Leave application was not submitted',
+          message: graphQlUserMessage(err),
+        });
+      }
     } finally {
-      setSubmitting(false);
+      if (activeSubmissionRef.current === submissionContext) {
+        activeSubmissionRef.current = null;
+        if (mountedRef.current && dialogContextRef.current === submissionContext) {
+          setSubmittingContext(null);
+        }
+      }
     }
   };
 
+  const supportingInformation = (
+    <>
+      <ApplyLeaveContextPanel
+        balance={balanceForType}
+        leaveType={selectedType}
+        policy={policyForType}
+        requiresDocument={requiresDocument}
+      />
+      <UpcomingHolidaysList holidays={upcomingHolidays} />
+    </>
+  );
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Apply For Leave" size="lg">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Leave type
-          </label>
-          <select
-            value={leaveTypeId}
-            onChange={(e) => {
-              const nextLeaveTypeId = e.target.value;
-              const nextType = leaveTypes.find((type) => type.id === nextLeaveTypeId);
-              clearFormError();
-              setLeaveTypeId(nextLeaveTypeId);
-              if (nextType?.requiresDocument !== true) setSupportingDocRef('');
-            }}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            required
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Apply For Leave"
+      size="lg"
+      isDismissible={!submitting}
+    >
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4" noValidate>
+        {visibleFormError ? (
+          <PageNotice
+            key={`${visibleFormError.title}:${visibleFormError.message}`}
+            variant="error"
+            title={visibleFormError.title}
+            focusOnMount
           >
-            <option value="">Select...</option>
-            {leaveTypes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} ({t.code})
-              </option>
-            ))}
-          </select>
-        </div>
+            {visibleFormError.message}
+          </PageNotice>
+        ) : null}
 
-        <ApplyLeaveContextPanel
-          balance={balanceForType}
-          leaveType={selectedType}
-          policy={policyForType}
+        <ApplyLeaveFormFields
+          leaveTypeId={leaveTypeId}
+          leaveTypeOptions={leaveTypeOptions}
+          onLeaveTypeChange={handleLeaveTypeChange}
+          supportingInformation={supportingInformation}
+          fromDate={fromDate}
+          onFromDateChange={handleFromDateChange}
+          toDate={toDate}
+          onToDateChange={handleToDateChange}
+          halfDayAllowed={halfDayAllowed}
+          halfDayEligible={halfDayEligible}
+          isHalfDay={isHalfDay}
+          onHalfDayChange={handleHalfDayChange}
+          halfDaySession={halfDaySession}
+          onHalfDaySessionChange={handleHalfDaySessionChange}
+          reason={reason}
+          onReasonChange={handleReasonChange}
           requiresDocument={requiresDocument}
+          supportingDocumentReference={supportingDocRef}
+          onSupportingDocumentReferenceChange={handleSupportingDocumentChange}
+          fieldErrors={fieldErrors}
         />
 
-        <UpcomingHolidaysList holidays={upcomingHolidays} />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input
-            type="date"
-            label="From"
-            value={fromDate}
-            onChange={(e) => {
-              clearFormError();
-              setFromDate(e.target.value);
-            }}
-            fullWidth
-            required
-          />
-          <Input
-            type="date"
-            label="To"
-            value={toDate}
-            onChange={(e) => {
-              clearFormError();
-              setToDate(e.target.value);
-            }}
-            fullWidth
-            required
-          />
-        </div>
-
-        <label
-          className={`flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 ${
-            !halfDayEligible ? 'cursor-not-allowed opacity-60' : ''
-          }`}
-        >
-          <input
-            type="checkbox"
-            checked={halfDayEligible && isHalfDay}
-            disabled={!halfDayEligible}
-            onChange={(e) => {
-              clearFormError();
-              const on = e.target.checked;
-              setIsHalfDay(on);
-              if (!on) setHalfDaySession('');
-            }}
-            className="rounded border-gray-300"
-          />
-          Half day
-          {!halfDayAllowed && (
-            <span className="text-xs text-gray-500">(not allowed for this leave type)</span>
-          )}
-          {isMultiDay && halfDayAllowed && (
-            <span className="text-xs text-gray-500">(not available for multi-day range)</span>
-          )}
-        </label>
-
-        {halfDayEligible && isHalfDay && (
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Session <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={halfDaySession}
-              onChange={(e) => {
-                clearFormError();
-                setHalfDaySession(e.target.value as 'FIRST_HALF' | 'SECOND_HALF' | '');
-              }}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              required
-            >
-              <option value="">Select...</option>
-              <option value="FIRST_HALF">First Half</option>
-              <option value="SECOND_HALF">Second Half</option>
-            </select>
-          </div>
-        )}
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Reason <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={reason}
-            onChange={(e) => {
-              clearFormError();
-              setReason(e.target.value);
-            }}
-            rows={3}
-            required
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            placeholder="Brief reason for leave"
-          />
-        </div>
-
-        {(requiresDocument || supportingDocRef.trim()) && (
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Supporting document reference {requiresDocument && <span className="text-red-500">*</span>}
-            </label>
-            <Input
-              value={supportingDocRef}
-              onChange={(e) => {
-                clearFormError();
-                setSupportingDocRef(e.target.value);
-              }}
-              fullWidth
-              placeholder="Link to uploaded file or ticket / reference ID"
-            />
-          </div>
-        )}
-
         <div className="flex gap-3">
-          <Button type="submit" variant="primary" disabled={submitting || !leaveTypes.length}>
-            {submitting ? 'Submitting...' : 'Submit Application'}
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={!leaveTypes.length}
+            busy={submitting}
+            busyLabel="Submitting leave application…"
+          >
+            Submit Application
           </Button>
           <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
             Cancel

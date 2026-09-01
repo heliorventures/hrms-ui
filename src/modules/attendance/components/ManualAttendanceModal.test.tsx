@@ -87,4 +87,75 @@ describe('ManualAttendanceModal', () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalledOnce());
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('submits an overlapping range when the supplied segments are explicitly incomplete', async () => {
+    request.mockResolvedValueOnce({});
+    const { onClose, onSaved } = renderModal({
+      defaultCheckIn: '10:00:00',
+      defaultCheckOut: '12:00:00',
+      existingSegmentsComplete: false,
+      existingSegments: [
+        {
+          id: 'other-segment',
+          workDate: '2025-01-15',
+          checkInTime: '08:00:00',
+          checkOutTime: '11:00:00',
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Segment' }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledOnce());
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('defers overlap checks when Add defaults outside a historical loaded range', async () => {
+    request.mockResolvedValueOnce({});
+    const { onClose, onSaved } = renderModal({
+      defaultWorkDate: '2026-08-24',
+      defaultCheckIn: '10:00:00',
+      defaultCheckOut: '12:00:00',
+      existingSegmentsComplete: true,
+      existingSegmentsCoverage: { fromDate: '2025-01-01', toDate: '2025-01-31' },
+      existingSegments: [
+        {
+          id: 'outside-range',
+          workDate: '2026-08-24',
+          checkInTime: '08:00:00',
+          checkOutTime: '11:00:00',
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Segment' }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledOnce());
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('defers overlap checks after the user changes the date outside loaded coverage', async () => {
+    request.mockResolvedValueOnce({});
+    const { onClose, onSaved } = renderModal({
+      defaultWorkDate: '2025-01-15',
+      defaultCheckIn: '10:00:00',
+      defaultCheckOut: '12:00:00',
+      existingSegmentsComplete: true,
+      existingSegmentsCoverage: { fromDate: '2025-01-01', toDate: '2025-01-31' },
+      existingSegments: [
+        {
+          id: 'outside-range',
+          workDate: '2026-08-24',
+          checkInTime: '08:00:00',
+          checkOutTime: '11:00:00',
+        },
+      ],
+    });
+
+    fireEvent.change(screen.getByLabelText('Work Date'), { target: { value: '2026-08-24' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Segment' }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledOnce());
+    expect(onClose).toHaveBeenCalledOnce();
+  });
 });

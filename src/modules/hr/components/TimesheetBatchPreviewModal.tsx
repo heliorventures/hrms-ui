@@ -37,6 +37,7 @@ export interface TimesheetBatchPreview {
   employeeId: string;
   weekStartDate: string;
   status: string;
+  pendingApprovalStepId?: string | null;
 }
 
 interface PreviewEntry {
@@ -58,7 +59,7 @@ interface TimesheetBatchPreviewModalProps {
   employeeLabel: string;
   busy: boolean;
   onClose: () => void;
-  onApprove: (id: string) => void;
+  onApprove: (batch: TimesheetBatchPreview) => void;
   onReject: (batch: TimesheetBatchPreview) => void;
 }
 
@@ -151,7 +152,7 @@ const TimesheetBatchPreviewModal = ({
               type="button"
               variant="primary"
               disabled={busy || loading || rows.length === 0}
-              onClick={() => onApprove(batch.id)}
+              onClick={() => onApprove(batch)}
             >
               Approve
             </Button>

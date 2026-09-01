@@ -6,6 +6,7 @@ import PageHeader from '@/components/common/PageHeader';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { useGraphClient } from '@/hooks/useGraphClient';
+import { useDialogs } from '@/contexts/DialogContext';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   OPS_PROVISION_TENANT,
@@ -27,6 +28,7 @@ type TenantRow = {
 
 const OpsTenantsPage = () => {
   const client = useGraphClient('operator');
+  const { confirm } = useDialogs();
   const [rows, setRows] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,9 +108,13 @@ const OpsTenantsPage = () => {
   };
 
   const onRunMigrations = async (t: TenantRow) => {
-    if (!window.confirm(`Run Liquibase migrations for ${t.name}? (requires KABIPAY_DATABASE_DIR on server)`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Run tenant migrations',
+      message: `Run database migrations for ${t.name}? This is an operator task and may take time to finish before the tenant is fully usable.`,
+      confirmLabel: 'Run migrations',
+      variant: 'danger',
+    });
+    if (!ok) return;
     setBusyId(t.id);
     setToast(null);
     setError(null);

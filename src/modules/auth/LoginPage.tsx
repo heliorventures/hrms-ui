@@ -1,13 +1,26 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+
+import AppLogo from '../../components/brand/AppLogo';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
+import PageNotice from '../../components/common/PageNotice';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
-import AppLogo from '../../components/brand/AppLogo';
+
+import { focusFirstInvalidField } from './authFocus';
 
 const CAPTCHA_LENGTH = 5;
 const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const LOGIN_FIELD_ORDER = ['username', 'password', 'captcha'] as const;
+
+type LoginField = (typeof LOGIN_FIELD_ORDER)[number];
+type LoginErrors = Partial<Record<LoginField, string>>;
+
+interface ValidationFocusRequest {
+  commit: number;
+  errors: LoginErrors;
+}
 
 const generateCaptcha = () => {
   let result = '';
@@ -26,7 +39,14 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaCode, setCaptchaCode] = useState(() => generateCaptcha());
-  const [errors, setErrors] = useState<{ username?: string; password?: string; captcha?: string }>({});
+  const [errors, setErrors] = useState<LoginErrors>({});
+  const [validationFocus, setValidationFocus] = useState<ValidationFocusRequest>({
+    commit: 0,
+    errors: {},
+  });
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const captchaRef = useRef<HTMLInputElement>(null);
 
   const submitting = loading;
   const [passwordChangedNotice] = useState(
@@ -38,6 +58,15 @@ const LoginPage = () => {
     navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
   }, [location.pathname, location.search, navigate, passwordChangedNotice]);
 
+  useEffect(() => {
+    if (validationFocus.commit === 0) return;
+    focusFirstInvalidField(validationFocus.errors, LOGIN_FIELD_ORDER, {
+      username: usernameRef,
+      password: passwordRef,
+      captcha: captchaRef,
+    });
+  }, [validationFocus]);
+
   const refreshCaptcha = useCallback((clearCaptchaError = true) => {
     setCaptchaCode(generateCaptcha());
     setCaptchaInput('');
@@ -48,7 +77,7 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: { username?: string; password?: string; captcha?: string } = {};
+    const newErrors: LoginErrors = {};
 
     if (!username.trim()) {
       newErrors.username = 'Username is required';
@@ -63,6 +92,10 @@ const LoginPage = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setValidationFocus((previous) => ({
+        commit: previous.commit + 1,
+        errors: newErrors,
+      }));
       if (newErrors.captcha) {
         refreshCaptcha(false);
       }
@@ -82,11 +115,14 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
+    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 dark:bg-slate-950">
       <div className="w-full max-w-md">
         <div className="rounded-2xl border border-slate-200/90 bg-white p-8 shadow-card-md dark:border-slate-700/80 dark:bg-slate-900/80">
           <div className="mb-8 text-center">
             <AppLogo size="lg" className="justify-center" />
+            <h1 className="mt-5 text-balance text-2xl font-semibold text-content-primary">
+              Sign In
+            </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               Sign in to {currentTenant.id ? currentTenant.name : 'your organization'}
             </p>
@@ -102,7 +138,9 @@ const LoginPage = () => {
               </div>
             )}
             <Input
-              label="Username"
+              ref={usernameRef}
+              label="Email, mobile number, or unique name"
+              name="username"
               type="text"
               value={username}
               onChange={(e) => {
@@ -113,6 +151,7 @@ const LoginPage = () => {
               error={errors.username}
               fullWidth
               autoComplete="username"
+              spellCheck={false}
             />
 
             <div>
@@ -131,7 +170,10 @@ const LoginPage = () => {
                 </Link>
               </div>
               <Input
+                ref={passwordRef}
                 id="login-password"
+                aria-label="Password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => {
@@ -146,9 +188,9 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                 Captcha verification
-              </label>
+              </p>
               <div className="flex items-center gap-3">
                 <div
                   className="flex flex-1 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700"
@@ -169,8 +211,15 @@ const LoginPage = () => {
                   onClick={() => refreshCaptcha()}
                   className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                   title="Refresh Captcha"
+                  aria-label="Refresh verification code"
                 >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    aria-hidden="true"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -181,6 +230,9 @@ const LoginPage = () => {
                 </button>
               </div>
               <Input
+                ref={captchaRef}
+                label="Verification code"
+                name="verificationCode"
                 type="text"
                 value={captchaInput}
                 onChange={(e) => {
@@ -193,6 +245,7 @@ const LoginPage = () => {
                 className="mt-2"
                 maxLength={CAPTCHA_LENGTH}
                 autoComplete="off"
+                spellCheck={false}
               />
             </div>
 
@@ -206,12 +259,9 @@ const LoginPage = () => {
             )}
 
             {authError && (
-              <div
-                role="alert"
-                className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
-              >
+              <PageNotice key={authError} variant="error" title="Unable to sign in" focusOnMount>
                 {authError}
-              </div>
+              </PageNotice>
             )}
 
             <Button
@@ -220,12 +270,12 @@ const LoginPage = () => {
               size="lg"
               disabled={submitting || !currentTenant.id || resolutionStatus !== 'resolved'}
             >
-              {submitting ? 'Signing in...' : 'Sign in'}
+              {submitting ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

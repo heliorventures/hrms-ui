@@ -14,6 +14,7 @@ import {
 import { clampIsoDateToRange } from '../../../utils/timesheetWeek';
 import { encodeTimesheetDescription, decodeTimesheetDescription } from '../../../utils/timesheetDescription';
 import {
+  formatTimesheetHours,
   parseTimesheetHours,
   validateTimesheetDayHours,
   validateTimesheetEntryHours,
@@ -68,7 +69,9 @@ const TimesheetEntryForm = ({
     allowedMaxIso
   );
   const [workDate, setWorkDate] = useState(editing?.workDate ?? defaultWorkDate);
-  const [hoursWorked, setHoursWorked] = useState(editing?.hoursWorked ?? '8');
+  const [hoursWorked, setHoursWorked] = useState(
+    editing ? formatTimesheetHours(editing.hoursWorked) : '8'
+  );
   const [projectCode, setProjectCode] = useState(editing?.projectCode?.trim() ?? '');
   const decoded = decodeTimesheetDescription(editing?.description ?? null);
   const [taskCode, setTaskCode] = useState(decoded.task);

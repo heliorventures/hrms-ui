@@ -1,6 +1,12 @@
 import { ClientError } from 'graphql-request';
 
 const FALLBACK_MESSAGE = 'We could not complete this action. Try again.';
+export const LEAVE_WORKFLOW_REFRESH_MESSAGE =
+  'This leave request moved to another approval step. Refresh leave requests before trying again.';
+export type GraphQlUserMessageContext = 'default' | 'attendance-management';
+
+const ATTENDANCE_CONFLICT_MESSAGE =
+  'This attendance record changed. Refresh it before trying again.';
 
 function codeToMessage(code: string): string | null {
   switch (code.toUpperCase()) {
@@ -16,6 +22,14 @@ function codeToMessage(code: string): string | null {
       return 'An active leave request already covers all or part of those dates.';
     case 'LEAVE_POLICY_DUPLICATE':
       return 'Only one leave policy can be configured for each leave type.';
+    case 'LEAVE_WORKFLOW_NOT_CURRENT':
+      return LEAVE_WORKFLOW_REFRESH_MESSAGE;
+    case 'USER_EMAIL_CONFLICT':
+      return 'A login account already uses this email address. Use a different email or leave it blank.';
+    case 'USER_USERNAME_CONFLICT':
+      return 'A login account already uses this username. Choose a different username.';
+    case 'EMPLOYEE_CODE_CONFLICT':
+      return 'An employee already uses this employee code. Choose a different code.';
     case 'EXPENSE_CLAIM_LIMIT_EXCEEDED':
       return 'Amount exceeds the permitted category limit. Review the limit shown above.';
     case 'EXPENSE_MONTHLY_LIMIT_EXCEEDED':
@@ -98,8 +112,17 @@ function rawTextToMessage(raw: string): string {
   if (lower.includes('complete the open punch before adjusting manual attendance')) {
     return 'Complete the open punch before adjusting attendance for this day.';
   }
-  if (lower.includes('total attendance for a day cannot exceed 24 hours')) {
+  if (
+    lower.includes('total attendance for a day cannot exceed 24 hours') ||
+    lower.includes('total attendance for a day must be less than 24 hours')
+  ) {
     return 'Total attendance for a day cannot exceed 24 hours.';
+  }
+  if (lower.includes('amount exceeds the permitted category limit')) {
+    return 'Amount exceeds the permitted category limit. Review the limit shown above.';
+  }
+  if (lower.includes('monthly category limit')) {
+    return 'This claim would exceed the monthly category limit.';
   }
   if (lower.includes('manual attendance is limited to the last')) {
     return 'This date is outside the self-service attendance adjustment window. Contact HR to regularize it.';
@@ -194,7 +217,16 @@ function errorCode(err: unknown): string | null {
   return null;
 }
 
-export function graphQlUserMessage(err: unknown): string {
+export function graphQlUserMessage(
+  err: unknown,
+  context: GraphQlUserMessageContext = 'default'
+): string {
+  const contextualCode = errorCode(err)?.toUpperCase();
+  if (context === 'attendance-management') {
+    if (contextualCode === 'CONFLICT') return ATTENDANCE_CONFLICT_MESSAGE;
+    if (contextualCode === 'FORBIDDEN') return codeToMessage('FORBIDDEN') ?? FALLBACK_MESSAGE;
+  }
+
   if (err instanceof ClientError) {
     const code = errorCode(err);
     const normalizedCode = code?.toUpperCase();

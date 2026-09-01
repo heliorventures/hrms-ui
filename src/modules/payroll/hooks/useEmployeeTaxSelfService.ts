@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import {
   SubmitTaxProofLineDocument,
@@ -33,8 +33,16 @@ const validateOptionalMoney = (raw: string, label: string): string | null => {
 
 export function useEmployeeTaxSelfService(
   client: GraphQLClient,
-  enabled: boolean,
-  activeTaxConfig: TaxConfigurationRow | null
+  activeTaxConfig: TaxConfigurationRow | null,
+  {
+    enabled,
+    canSubmit,
+    ownerKey,
+  }: {
+    enabled: boolean;
+    canSubmit: boolean;
+    ownerKey: string;
+  }
 ) {
   const [taxComputationsSelf, setTaxComputationsSelf] =
     useState<TaxComputationsListQuery['taxComputations'] | null>(null);
@@ -55,6 +63,7 @@ export function useEmployeeTaxSelfService(
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofBusy, setProofBusy] = useState(false);
   const [proofMsg, setProofMsg] = useState<string | null>(null);
+  const requestGeneration = useRef(0);
 
   useEffect(() => {
     if (!activeTaxConfig) return;
@@ -68,6 +77,15 @@ export function useEmployeeTaxSelfService(
   }, [taxSectionCatalog, proofSectionCode]);
 
   const loadEmployeeTax = useCallback(async () => {
+    const generation = ++requestGeneration.current;
+    if (!enabled) {
+      setTaxComputationsSelf(null);
+      setTaxProofLinesSelf(null);
+      setTaxSectionCatalog(null);
+      setLoadingEmployeeTax(false);
+      setEmployeeTaxError(null);
+      return;
+    }
     const fiscalYear = activeTaxConfig?.fiscalYear ?? null;
     const [computations, proofs, catalog] = await Promise.all([
       client.request<TaxComputationsListQuery>(TaxComputationsListDocument, {
@@ -83,13 +101,27 @@ export function useEmployeeTaxSelfService(
         limit: TAX_SECTION_LIMIT,
       }),
     ]);
+    if (generation !== requestGeneration.current) return;
     setTaxComputationsSelf(computations.taxComputations);
     setTaxProofLinesSelf(proofs.taxProofLines);
     setTaxSectionCatalog(catalog.taxSectionDefinitions);
-  }, [activeTaxConfig?.fiscalYear, activeTaxConfig?.id, client]);
+  }, [activeTaxConfig?.fiscalYear, activeTaxConfig?.id, client, enabled, ownerKey]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      requestGeneration.current += 1;
+      setTaxComputationsSelf(null);
+      setTaxProofLinesSelf(null);
+      setTaxSectionCatalog(null);
+      setLoadingEmployeeTax(false);
+      setEmployeeTaxError(null);
+      setDeclSubmitting(false);
+      setDeclMsg(null);
+      setProofBusy(false);
+      setProofMsg(null);
+      setProofFile(null);
+      return;
+    }
     let cancelled = false;
     void (async () => {
       try {
@@ -109,13 +141,18 @@ export function useEmployeeTaxSelfService(
     })();
     return () => {
       cancelled = true;
+      requestGeneration.current += 1;
     };
-  }, [enabled, loadEmployeeTax]);
+  }, [enabled, loadEmployeeTax, ownerKey]);
 
   const handleDeclUpsert = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
       setDeclMsg(null);
+      if (!enabled || !canSubmit) {
+        setDeclMsg('You do not have permission to submit tax declarations.');
+        return;
+      }
       const configId = activeTaxConfig?.id;
       if (!configId) {
         setDeclMsg('No active tax configuration. Ask HR to set up tax slabs for your tenant.');
@@ -155,13 +192,17 @@ export function useEmployeeTaxSelfService(
         setDeclSubmitting(false);
       }
     },
-    [activeTaxConfig?.id, client, declDed, declFy, declGross, declRegime, loadEmployeeTax]
+    [activeTaxConfig?.id, canSubmit, client, declDed, declFy, declGross, declRegime, enabled, loadEmployeeTax]
   );
 
   const handleProofSubmit = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
       setProofMsg(null);
+      if (!enabled || !canSubmit) {
+        setProofMsg('You do not have permission to submit tax proofs.');
+        return;
+      }
       const configId = activeTaxConfig?.id;
       if (!configId) {
         setProofMsg('No active tax configuration. Ask HR to configure tax slabs.');
@@ -218,8 +259,10 @@ export function useEmployeeTaxSelfService(
     },
     [
       activeTaxConfig?.id,
+      canSubmit,
       client,
       declFy,
+      enabled,
       loadEmployeeTax,
       proofActual,
       proofDeclared,
@@ -229,6 +272,11 @@ export function useEmployeeTaxSelfService(
   );
 
   const handleProofFileChange = useCallback((file: File | null) => {
+    if (!canSubmit) {
+      setProofFile(null);
+      setProofMsg('You do not have permission to submit tax proofs.');
+      return;
+    }
     setProofFile(file);
     if (!file) {
       setProofMsg(null);
@@ -236,7 +284,7 @@ export function useEmployeeTaxSelfService(
     }
     const proofFileError = validateTenantUploadFile(file, 'Proof file');
     setProofMsg(proofFileError);
-  }, []);
+  }, [canSubmit]);
 
   return {
     taxComputationsSelf,

@@ -66,6 +66,7 @@ type EmployeeProfileAccess {
   directoryEntry: EmployeeDirectoryEntry!
   isSelf: Boolean!
   canViewPrivateProfile: Boolean!
+  canViewPayrollSensitive: Boolean!
   canEditPersonalProfile: Boolean!
   canManageOrganizationFields: Boolean!
   canReviewProfileChanges: Boolean!

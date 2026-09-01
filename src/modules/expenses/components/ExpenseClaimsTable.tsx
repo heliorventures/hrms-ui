@@ -17,11 +17,11 @@ interface ExpenseClaimsTableProps {
   travelRequestLabels: Record<string, string>;
   onApprove: (row: ExpenseRow) => void;
   onMarkPaid: (row: ExpenseRow) => void;
-  onReject: (expenseId: string) => void;
+  onReject: (row: ExpenseRow) => void;
 }
 
 function categoryName(categories: ExpenseCategoryRow[], categoryId: string): string {
-  return categories.find((category) => category.id === categoryId)?.name ?? categoryId;
+  return categories.find((category) => category.id === categoryId)?.name ?? 'Category unavailable';
 }
 
 function canShowPaidAction(row: ExpenseRow, canMarkPayment: boolean): boolean {
@@ -59,7 +59,7 @@ const ExpenseClaimsTable = ({
             key: 'employeeId',
             label: 'Employee',
             render: (expense) => (
-              <span>{employeeLabels[expense.employeeId] ?? expense.employeeId}</span>
+              <span>{employeeLabels[expense.employeeId] ?? 'Employee details unavailable'}</span>
             ),
           },
           {
@@ -150,7 +150,7 @@ const ExpenseClaimsTable = ({
                               variant="outline"
                               className="!px-2 !py-1 !text-xs"
                               disabled={busyKey === `${EXPENSE_BUSY_PREFIX.expense}:${expense.id}`}
-                              onClick={() => onReject(expense.id)}
+                              onClick={() => onReject(expense)}
                             >
                               Reject
                             </Button>

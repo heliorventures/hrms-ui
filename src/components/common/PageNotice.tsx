@@ -1,3 +1,4 @@
+import { AlertCircle, CheckCircle2, Info, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { UI_A11Y_TEXT } from '../../constants/uiText';
@@ -15,13 +16,24 @@ export interface PageNoticeProps {
 }
 
 const VARIANT_CLASSES: Record<PageNoticeVariant, string> = {
-  error:
-    'border-red-200 bg-red-50 text-red-800 dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-100',
-  info: 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800/60 dark:bg-blue-950/40 dark:text-blue-100',
-  success:
-    'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-100',
-  warning:
-    'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100',
+  error: 'border-status-danger/30 bg-status-danger/10 text-content-primary',
+  info: 'border-status-info/30 bg-status-info/10 text-content-primary',
+  success: 'border-status-success/30 bg-status-success/10 text-content-primary',
+  warning: 'border-status-warning/30 bg-status-warning/10 text-content-primary',
+};
+
+const VARIANT_ICONS: Record<PageNoticeVariant, LucideIcon> = {
+  error: AlertCircle,
+  info: Info,
+  success: CheckCircle2,
+  warning: TriangleAlert,
+};
+
+const VARIANT_ICON_CLASSES: Record<PageNoticeVariant, string> = {
+  error: 'text-status-danger',
+  info: 'text-status-info',
+  success: 'text-status-success',
+  warning: 'text-status-warning',
 };
 
 const PageNotice = ({
@@ -42,16 +54,22 @@ const PageNotice = ({
   }, [focusOnMount]);
 
   const isError = variant === 'error';
+  const NoticeIcon = VARIANT_ICONS[variant];
 
   return (
     <div
       ref={noticeRef}
       role={isError ? 'alert' : 'status'}
       aria-live={isError ? undefined : 'polite'}
+      aria-atomic="true"
       tabIndex={focusOnMount ? -1 : undefined}
       className={`rounded-lg border px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 ${VARIANT_CLASSES[variant]} ${className}`}
     >
       <div className="flex items-start justify-between gap-4">
+        <NoticeIcon
+          aria-hidden="true"
+          className={`mt-0.5 h-5 w-5 shrink-0 ${VARIANT_ICON_CLASSES[variant]}`}
+        />
         <div className="min-w-0 flex-1">
           {title ? <p className="font-semibold">{title}</p> : null}
           <div className={`${title ? 'mt-1' : ''} break-words leading-relaxed`}>{children}</div>

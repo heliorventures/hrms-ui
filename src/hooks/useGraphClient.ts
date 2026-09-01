@@ -12,13 +12,14 @@ import { useTenant } from '@/contexts/TenantContext';
  */
 export function useGraphClient(plane: HeliorGraphPlane = 'client') {
   const { currentTenant } = useTenant();
-  const { expireClientSession } = useAuth();
+  const { expireClientSession, expireOpsSession } = useAuth();
+  const onUnauthenticated = plane === 'operator' ? expireOpsSession : expireClientSession;
   return useMemo(
     () =>
       createGraphClient(plane, {
         tenantId: currentTenant.id,
-        onUnauthenticated: plane === 'client' ? expireClientSession : undefined,
+        onUnauthenticated,
       }),
-    [expireClientSession, plane, currentTenant.id]
+    [onUnauthenticated, plane, currentTenant.id]
   );
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { canAccessTenantPath } from '../../auth/navAccess';
@@ -13,8 +14,10 @@ import {
   accessibleDestinations,
   filterNavigationDestinations,
 } from '../../navigation/navigationSelectors';
+import { useDialogSurface } from '../common/useDialogSurface';
 
 import { useCommandPalette } from './CommandPaletteContext';
+import { createMainFocusHandoffState } from './routeFocus';
 
 interface CommandRow {
   destination: NavigationDestination;
@@ -30,7 +33,7 @@ function groupLabel(destination: NavigationDestination): string {
 }
 
 const CommandPalette = () => {
-  const { isOpen, close } = useCommandPalette();
+  const { isOpen, close, openerRef } = useCommandPalette();
   const navigate = useNavigate();
   const location = useLocation();
   const { can, clientSession } = useAuth();
@@ -40,6 +43,14 @@ const CommandPalette = () => {
   const panelRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const tenantNavOptions = useMemo(() => ({ can, clientSession }), [can, clientSession]);
+  const { isTopmost } = useDialogSurface({
+    isOpen,
+    isDismissible: true,
+    onClose: close,
+    surfaceRef: panelRef,
+    initialFocusRef: inputRef,
+    returnFocusRef: openerRef,
+  });
 
   const accessible = useMemo(
     () =>
@@ -58,15 +69,9 @@ const CommandPalette = () => {
   );
 
   useEffect(() => {
-    if (!isOpen) return undefined;
-    const previousOverflow = document.body.style.overflow;
+    if (!isOpen) return;
     setQuery('');
     setActiveIndex(0);
-    window.setTimeout(() => inputRef.current?.focus(), 10);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -78,47 +83,24 @@ const CommandPalette = () => {
     const activeRow = listRef.current.querySelector<HTMLElement>(
       `[data-palette-row="${activeIndex}"]`
     );
-    activeRow?.scrollIntoView({ block: 'nearest' });
+    activeRow?.scrollIntoView?.({ block: 'nearest' });
   }, [activeIndex, isOpen, rows.length]);
-
-  useEffect(() => {
-    if (!isOpen) return undefined;
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) close();
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [isOpen, close]);
 
   const openDestination = useCallback(
     (destination: NavigationDestination) => {
-      navigate(destination.path);
+      if (destination.path === location.pathname) {
+        close();
+        return;
+      }
+      navigate(destination.path, {
+        state: createMainFocusHandoffState(location.state),
+      });
       close();
     },
-    [navigate, close]
+    [close, location.pathname, location.state, navigate]
   );
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      close();
-      return;
-    }
-    if (event.key === 'Tab' && panelRef.current) {
-      const focusable = Array.from(
-        panelRef.current.querySelectorAll<HTMLElement>('input, button:not([disabled])')
-      );
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-      return;
-    }
     if (!rows.length) return;
     if (event.key === 'ArrowDown') {
       event.preventDefault();
@@ -137,20 +119,32 @@ const CommandPalette = () => {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   let lastGroup: string | null = null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center bg-slate-950/55 px-3 pt-[10vh] backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-label={UI_A11Y_TEXT.commandPalette}
+      className="fixed inset-0 z-[100] flex min-h-[100dvh] items-start justify-center bg-slate-950/55 pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(10vh,env(safe-area-inset-top))] backdrop-blur-sm"
+      role="presentation"
     >
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-hidden="true"
+        data-testid="command-palette-backdrop"
+        className="absolute inset-0 h-full w-full cursor-default border-0 bg-transparent p-0"
+        onMouseDown={() => {
+          if (isTopmost()) close();
+        }}
+      />
       <div
         ref={panelRef}
-        className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl ring-1 ring-indigo-500/10 dark:border-slate-600 dark:bg-slate-900"
+        role="dialog"
+        aria-modal="true"
+        aria-label={UI_A11Y_TEXT.commandPalette}
+        tabIndex={-1}
+        className="relative w-full max-w-xl overflow-hidden overscroll-contain rounded-2xl border border-line bg-surface shadow-2xl ring-1 ring-focus/10"
         onKeyDown={handleKeyDown}
       >
         <div className="border-b border-slate-200/80 bg-indigo-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/90">
@@ -177,7 +171,7 @@ const CommandPalette = () => {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search pages and tools…"
             aria-label="Search pages and tools"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 shadow-inner placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 shadow-inner placeholder:text-slate-400 focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
             autoComplete="off"
           />
         </div>
@@ -220,7 +214,8 @@ const CommandPalette = () => {
           })}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

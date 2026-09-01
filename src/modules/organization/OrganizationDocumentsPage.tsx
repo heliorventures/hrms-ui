@@ -7,6 +7,7 @@ import Select from '../../components/common/Select';
 import Table from '../../components/common/Table';
 import { PERMISSIONS } from '../../auth/permissions';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDialogs } from '../../contexts/DialogContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { deferObjectUrlRevocation, privateFileObjectUrl } from '../../utils/privateFileAttachment';
@@ -62,10 +63,13 @@ function fileSizeLabel(size?: number | null): string {
 
 const OrganizationDocumentsPage = () => {
   const client = useGraphClient('client');
-  const { canAny, hasAnyJwtRole } = useAuth();
-  const canManageCompanyDocuments =
-    canAny([PERMISSIONS.employeeWrite, PERMISSIONS.onboardingManage, PERMISSIONS.roleManage]) ||
-    hasAnyJwtRole(['HR_ADMIN', 'TENANT_ADMIN', 'ORG_ADMIN']);
+  const { canAny } = useAuth();
+  const { confirm } = useDialogs();
+  const canManageCompanyDocuments = canAny([
+    PERMISSIONS.employeeWrite,
+    PERMISSIONS.onboardingManage,
+    PERMISSIONS.roleManage,
+  ]);
 
   const [companyDocuments, setCompanyDocuments] = useState<CompanyDocumentRow[]>([]);
   const [types, setTypes] = useState<DocumentTypeRow[]>([]);
@@ -172,7 +176,12 @@ const OrganizationDocumentsPage = () => {
 
   const deleteCompanyDocument = async (document: CompanyDocumentRow) => {
     if (!canManageCompanyDocuments) return;
-    const confirmed = window.confirm(`Delete "${document.title}"? Employees will no longer see it.`);
+    const confirmed = await confirm({
+      title: 'Delete company document',
+      message: `Delete "${document.title}" from the company library? Employees will no longer be able to open this document.`,
+      confirmLabel: 'Delete document',
+      variant: 'danger',
+    });
     if (!confirmed) return;
     try {
       setBusy(true);
@@ -233,7 +242,7 @@ const OrganizationDocumentsPage = () => {
                 Description
               </label>
               <textarea
-                className="min-h-20 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                className="min-h-20 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 transition-colors focus-visible:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 placeholder="Optional description shown to employees"
                 value={form.description}
                 onChange={(event) =>

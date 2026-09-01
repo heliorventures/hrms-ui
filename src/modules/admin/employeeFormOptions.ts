@@ -1,4 +1,5 @@
 import { UI_FORM_TEXT } from '../../constants/uiText';
+import { CANONICAL_EMPLOYEE_STATUSES } from '../employeeStatus';
 
 export type SelectOption = {
   value: string;
@@ -22,11 +23,18 @@ export type EmployeeOptionSource = {
   fullName: string;
 };
 
-export const EMPLOYEE_STATUS_OPTIONS: SelectOption[] = [
-  { value: 'ACTIVE', label: 'Active' },
-  { value: 'INACTIVE', label: 'Inactive' },
-  { value: 'PROBATION', label: 'Probation' },
-];
+const EMPLOYEE_STATUS_LABELS: Record<(typeof CANONICAL_EMPLOYEE_STATUSES)[number], string> = {
+  ACTIVE: 'Active',
+  PROBATION: 'Probation',
+  INACTIVE: 'Inactive',
+  ON_LEAVE: 'On leave',
+  SUSPENDED: 'Suspended',
+  TERMINATED: 'Terminated',
+};
+
+export const EMPLOYEE_STATUS_OPTIONS: SelectOption[] = CANONICAL_EMPLOYEE_STATUSES.map(
+  (value) => ({ value, label: EMPLOYEE_STATUS_LABELS[value] })
+);
 
 export const EMPTY_EMPLOYEE_FORM_OPTION: SelectOption = {
   value: '',

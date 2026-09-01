@@ -2,19 +2,25 @@ import type { DocumentApprovalStatus, EmploymentStatusUi, VerificationStatus } f
 
 const employmentLabels: Record<EmploymentStatusUi, string> = {
   ACTIVE: 'Active',
+  PROBATION: 'Probation',
+  INACTIVE: 'Inactive',
   TERMINATED: 'Terminated',
   ON_LEAVE: 'On Leave',
   SUSPENDED: 'Suspended',
+  UNKNOWN: 'Unknown status',
 };
 
 const employmentStyles: Record<EmploymentStatusUi, string> = {
   ACTIVE:
     'bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/20 dark:text-emerald-300 dark:ring-emerald-500/30',
+  PROBATION: 'bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/20 dark:text-sky-300',
+  INACTIVE: 'bg-slate-500/10 text-slate-700 ring-1 ring-slate-500/20 dark:text-slate-300',
   TERMINATED: 'bg-rose-500/10 text-rose-700 ring-1 ring-rose-500/20 dark:text-rose-300',
   ON_LEAVE:
     'bg-amber-500/10 text-amber-800 ring-1 ring-amber-500/20 dark:text-amber-200',
   SUSPENDED:
     'bg-slate-500/10 text-slate-700 ring-1 ring-slate-500/20 dark:text-slate-300',
+  UNKNOWN: 'bg-rose-500/10 text-rose-700 ring-1 ring-rose-500/20 dark:text-rose-300',
 };
 
 export function EmploymentStatusBadge({ status }: { status: EmploymentStatusUi }) {

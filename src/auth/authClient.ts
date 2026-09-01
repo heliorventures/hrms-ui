@@ -27,6 +27,7 @@ export interface ResolvedTenant {
   subdomain: string;
   logoUrl?: string;
   primaryColor?: string;
+  timezone: string;
 }
 
 export interface AuthErrorPayload {
@@ -88,12 +89,13 @@ async function postJson<TOut>(
   return parsed as TOut;
 }
 
-async function getJson<TOut>(path: string): Promise<TOut> {
+async function getJson<TOut>(path: string, options?: { signal?: AbortSignal }): Promise<TOut> {
   const res = await fetch(`${authBaseUrl()}${path}`, {
     method: 'GET',
     headers: {
       Accept: 'application/json',
     },
+    signal: options?.signal,
   });
   const raw = await res.text();
   let parsed: unknown = undefined;
@@ -114,8 +116,11 @@ async function getJson<TOut>(path: string): Promise<TOut> {
   return parsed as TOut;
 }
 
-export async function resolveTenantBySlug(slug: string): Promise<ResolvedTenant> {
-  return getJson<ResolvedTenant>(`/auth/client/tenants/${encodeURIComponent(slug)}`);
+export async function resolveTenantBySlug(
+  slug: string,
+  options?: { signal?: AbortSignal }
+): Promise<ResolvedTenant> {
+  return getJson<ResolvedTenant>(`/auth/client/tenants/${encodeURIComponent(slug)}`, options);
 }
 
 export async function loginClient(

@@ -1,4 +1,4 @@
-import { naiveTimeToMinutes, segmentWorkedMinutes } from './attendanceDuration';
+import { naiveTimeToMinutes } from './attendanceDuration';
 import { toIsoDate } from './calendarRange';
 
 export const MAX_ATTENDANCE_MINUTES_PER_DAY = 24 * 60;
@@ -8,6 +8,12 @@ export interface AttendanceSegmentInterval {
   workDate: string;
   checkInTime?: string | null;
   checkOutTime?: string | null;
+  source?: string | null;
+}
+
+export interface ExistingSegmentsCoverage {
+  fromDate: string;
+  toDate: string;
 }
 
 export interface ManualAttendanceValidationInput {
@@ -15,6 +21,10 @@ export interface ManualAttendanceValidationInput {
   checkIn: string;
   checkOut: string;
   existingSegments: AttendanceSegmentInterval[];
+  /** False when cursor paging means this is not the complete day/month list. */
+  existingSegmentsComplete?: boolean;
+  /** Omit only when existingSegments is complete for every date the caller can submit. */
+  existingSegmentsCoverage?: ExistingSegmentsCoverage;
   excludedSegmentId?: string | null;
 }
 
@@ -38,11 +48,18 @@ function intervalsOverlap(
   return firstStart < secondEnd && firstEnd > secondStart;
 }
 
+function existingTimeToMinutes(value: string | null | undefined, source: string | null | undefined) {
+  const minutes = naiveTimeToMinutes(value);
+  return source?.trim().toUpperCase() === 'WEB+MANUAL' ? Math.floor(minutes) : minutes;
+}
+
 export function validateManualAttendanceSegment({
   workDate,
   checkIn,
   checkOut,
   existingSegments,
+  existingSegmentsComplete = true,
+  existingSegmentsCoverage,
   excludedSegmentId,
 }: ManualAttendanceValidationInput): ManualAttendanceValidationError | null {
   const requiredMessage = 'Enter work date, punch in, and punch out.';
@@ -65,19 +82,30 @@ export function validateManualAttendanceSegment({
   }
 
   const newMinutes = end - start;
+  const isWithinLoadedCoverage =
+    existingSegmentsCoverage === undefined ||
+    (workDate >= existingSegmentsCoverage.fromDate && workDate <= existingSegmentsCoverage.toDate);
+  if (!existingSegmentsComplete || !isWithinLoadedCoverage) return null;
+
   const sameDaySegments = existingSegments.filter(
     (segment) => segment.workDate === workDate && segment.id !== excludedSegmentId
   );
   let existingMinutes = 0;
 
   for (const segment of sameDaySegments) {
-    const existingStart = naiveTimeToMinutes(segment.checkInTime);
-    const existingEnd = naiveTimeToMinutes(segment.checkOutTime);
-    const worked = segmentWorkedMinutes(segment.checkInTime, segment.checkOutTime) ?? 0;
+    const existingStart = existingTimeToMinutes(segment.checkInTime, segment.source);
+    const existingEnd = existingTimeToMinutes(segment.checkOutTime, segment.source);
+    const hasValidInterval = !Number.isNaN(existingStart) && !Number.isNaN(existingEnd);
+    const worked =
+      hasValidInterval && existingStart !== existingEnd
+        ? existingEnd > existingStart
+          ? existingEnd - existingStart
+          : existingEnd + MAX_ATTENDANCE_MINUTES_PER_DAY - existingStart
+        : 0;
     existingMinutes += worked;
 
     const existingInterval =
-      !Number.isNaN(existingStart) && !Number.isNaN(existingEnd)
+      hasValidInterval
         ? { start: existingStart, end: existingEnd }
         : null;
 
@@ -92,8 +120,8 @@ export function validateManualAttendanceSegment({
     }
   }
 
-  if (existingMinutes + newMinutes > MAX_ATTENDANCE_MINUTES_PER_DAY) {
-    return { field: 'form', message: 'Total attendance for a day cannot exceed 24 hours.' };
+  if (existingMinutes + newMinutes >= MAX_ATTENDANCE_MINUTES_PER_DAY) {
+    return { field: 'form', message: 'Total attendance for a day must be less than 24 hours.' };
   }
 
   return null;

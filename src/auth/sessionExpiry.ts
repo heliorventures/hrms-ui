@@ -1,6 +1,7 @@
 import { ClientError } from 'graphql-request';
 
 export const CLIENT_SESSION_EXPIRED_MESSAGE = 'Your session expired. Sign in again.';
+export const OPERATOR_SESSION_EXPIRED_MESSAGE = 'Your operator session expired. Sign in again.';
 
 interface GraphResponseLike {
   status: number;
@@ -15,9 +16,7 @@ function graphResponse(response: GraphResponseLike | Error): GraphResponseLike |
   return response;
 }
 
-export function isUnauthenticatedGraphResponse(
-  response: GraphResponseLike | Error
-): boolean {
+export function isUnauthenticatedGraphResponse(response: GraphResponseLike | Error): boolean {
   const result = graphResponse(response);
   if (!result) return false;
   if (result.status === 401) return true;
@@ -34,8 +33,11 @@ export function handleGraphResponse(
   response: GraphResponseLike | Error,
   onUnauthenticated?: () => void
 ): void {
-  if (plane === 'client' && onUnauthenticated && isUnauthenticatedGraphResponse(response)) {
-    onUnauthenticated();
+  if (!onUnauthenticated || !isUnauthenticatedGraphResponse(response)) return;
+  switch (plane) {
+    case 'client':
+    case 'operator':
+      onUnauthenticated();
   }
 }
 
@@ -48,4 +50,12 @@ export function endExpiredClientSession(
   clearSession(tenantId);
   reportError(CLIENT_SESSION_EXPIRED_MESSAGE);
   return true;
+}
+
+export function endExpiredOperatorSession(
+  clearSession: () => void,
+  reportError: (message: string) => void
+): void {
+  clearSession();
+  reportError(OPERATOR_SESSION_EXPIRED_MESSAGE);
 }

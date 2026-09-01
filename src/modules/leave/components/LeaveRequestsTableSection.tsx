@@ -2,8 +2,15 @@ import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Table from '../../../components/common/Table';
 import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
+import { LEAVE_APPROVAL_REFRESH_MESSAGE } from '../leaveApproval';
 
-export type LeaveRequestRow = LeaveBoardQuery['leaveRequests'][number];
+export type LeaveRequestRow = LeaveBoardQuery['leaveRequests'][number] & {
+  employeeName?: string | null;
+  employeeCode?: string | null;
+  pendingApprovalStage?: string | null;
+  pendingApprovalStepId?: string | null;
+  viewerMayApprove?: boolean;
+};
 
 export function statusVariant(status: string): 'success' | 'danger' | 'warning' | 'neutral' {
   switch (status.toLowerCase()) {
@@ -27,20 +34,67 @@ interface LeaveRequestsTableSectionProps {
   employeeLabel?: (employeeId: string) => string;
   /** Hide Employee column when the viewer only sees their own requests. */
   hideEmployeeColumn?: boolean;
-  /** Show Approvals column when true (still gated per-row by `canApproveRow`). */
+  /** Show Approvals column when true; the server remains authoritative per row. */
   showApprovalColumn: boolean;
-  /** Optional per-row gate (e.g. direct manager vs plain employee). Defaults to true. */
-  canApproveRow?: (row: LeaveRequestRow) => boolean;
   viewerId?: string;
   approveBusyId: string | null;
   cancelBusyId: string | null;
-  onApprove: (leaveRequestId: string) => void;
-  onRejectClick: (leaveRequestId: string) => void;
+  onApprove: (leaveRequestId: string, pendingApprovalStepId?: string | null) => void;
+  onRejectClick: (leaveRequestId: string, pendingApprovalStepId?: string | null) => void;
   onCancelOwn: (leaveRequestId: string) => void;
   onOpenTrail: (row: LeaveRequestRow) => void;
   /** Shown when `rows` is empty (differs for HR queue vs employee board). */
   emptyLabel?: string;
 }
+
+interface ApprovalActionsProps {
+  row: LeaveRequestRow;
+  approveBusyId: string | null;
+  cancelBusyId: string | null;
+  onApprove: LeaveRequestsTableSectionProps['onApprove'];
+  onRejectClick: LeaveRequestsTableSectionProps['onRejectClick'];
+}
+
+const ApprovalActions = ({
+  row,
+  approveBusyId,
+  cancelBusyId,
+  onApprove,
+  onRejectClick,
+}: ApprovalActionsProps) => {
+  if (row.status.toLowerCase() !== 'pending' || row.viewerMayApprove !== true) return <>—</>;
+
+  if (!row.pendingApprovalStepId?.trim()) {
+    return (
+      <p role="status" className="max-w-56 text-xs text-amber-700 dark:text-amber-300">
+        {LEAVE_APPROVAL_REFRESH_MESSAGE}
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        variant="primary"
+        type="button"
+        className="!py-1 !text-xs"
+        disabled={approveBusyId === row.id || cancelBusyId === row.id}
+        onClick={() => void onApprove(row.id, row.pendingApprovalStepId)}
+      >
+        {approveBusyId === row.id ? 'Approving…' : 'Approve'}
+      </Button>
+      <Button
+        variant="outline"
+        type="button"
+        className="!py-1 !text-xs"
+        disabled={approveBusyId === row.id || cancelBusyId === row.id}
+        onClick={() => onRejectClick(row.id, row.pendingApprovalStepId)}
+      >
+        Reject
+      </Button>
+    </div>
+  );
+};
 
 const LeaveRequestsTableSection = ({
   rows,
@@ -48,7 +102,6 @@ const LeaveRequestsTableSection = ({
   employeeLabel,
   hideEmployeeColumn = false,
   showApprovalColumn,
-  canApproveRow = () => true,
   viewerId,
   approveBusyId,
   cancelBusyId,
@@ -117,7 +170,14 @@ const LeaveRequestsTableSection = ({
           key: 'status',
           label: 'Status',
           render: (row: LeaveRequestRow) => (
-            <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
+            <div className="space-y-1">
+              <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
+              {row.pendingApprovalStage && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Awaiting {row.pendingApprovalStage}
+                </p>
+              )}
+            </div>
           ),
         },
         {
@@ -154,31 +214,15 @@ const LeaveRequestsTableSection = ({
               {
                 key: 'actions',
                 label: 'Actions',
-                render: (row: LeaveRequestRow) =>
-                  row.status.toLowerCase() === 'pending' && canApproveRow(row) ? (
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="primary"
-                        type="button"
-                        className="!py-1 !text-xs"
-                        disabled={approveBusyId === row.id || cancelBusyId === row.id}
-                        onClick={() => void onApprove(row.id)}
-                      >
-                        {approveBusyId === row.id ? 'Approving…' : 'Approve'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        type="button"
-                        className="!py-1 !text-xs"
-                        disabled={approveBusyId === row.id || cancelBusyId === row.id}
-                        onClick={() => onRejectClick(row.id)}
-                      >
-                        Reject
-                      </Button>
-                    </div>
-                  ) : (
-                    '—'
-                  ),
+                render: (row: LeaveRequestRow) => (
+                  <ApprovalActions
+                    row={row}
+                    approveBusyId={approveBusyId}
+                    cancelBusyId={cancelBusyId}
+                    onApprove={onApprove}
+                    onRejectClick={onRejectClick}
+                  />
+                ),
               },
             ]
           : []),

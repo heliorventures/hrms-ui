@@ -22,8 +22,9 @@ export function segmentWorkedMinutes(
 }
 
 export function formatMinutesAsHhMm(totalMinutes: number): string {
-  const h = Math.floor(totalMinutes / 60);
-  const m = Math.round(totalMinutes % 60);
+  const roundedMinutes = Math.round(totalMinutes);
+  const h = Math.floor(roundedMinutes / 60);
+  const m = roundedMinutes % 60;
   return `${h}h ${String(m).padStart(2, '0')}m`;
 }
 

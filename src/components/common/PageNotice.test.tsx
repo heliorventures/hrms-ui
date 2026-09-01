@@ -45,6 +45,15 @@ describe('PageNotice', () => {
     expect(retried).toBe(true);
   });
 
+  it('announces routine information politely instead of raising an alert', () => {
+    render(<PageNotice variant="info">Your filters were updated.</PageNotice>);
+
+    const status = screen.getByRole('status');
+    expect(status.getAttribute('aria-live')).toBe('polite');
+    expect(status.getAttribute('aria-atomic')).toBe('true');
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('dismisses only when a dismiss handler is supplied', async () => {
     const user = userEventLibrary.setup();
     let dismissed = false;

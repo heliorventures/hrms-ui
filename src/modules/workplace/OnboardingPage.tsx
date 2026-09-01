@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDialogs } from '../../contexts/DialogContext';
+import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
-import TabBar from '../../components/common/TabBar';
+import Tabs from '../../components/common/Tabs';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { createPermissionService } from '../../auth/permissionService';
@@ -11,31 +13,38 @@ import OnboardingChecklistCard from './components/OnboardingChecklistCard';
 import SeparationRequestsCard from './components/SeparationRequestsCard';
 import {
   ApproveSeparationDocument,
-  ClientOpsClearanceBySeparationDocument,
-  ClientOpsClearanceBySeparationQuery,
   ClientOpsEnsureOffboardingDocument,
   ClientOpsFinalizeFnfDocument,
-  ClientOpsFnfBySeparationDocument,
-  ClientOpsSeparationsListDocument,
   ClientOpsSetClearanceClearedDocument,
   ClientOpsSubmitSeparationDocument,
   ClientOpsUpsertFnfDocument,
-  OnboardingChecklistDocument,
   RejectSeparationDocument,
   SetOnboardingChecklistItemDocument,
 } from '../../api/graphql/graphql';
-import type {
-  ChecklistItem,
-  ClearanceItemRow,
-  FnfFormState,
-  FnfSettlementRow,
-  SeparationRow,
-} from './onboardingTypes';
+import type { FnfFormState } from './onboardingTypes';
+import { useOnboardingResources } from './useOnboardingResources';
 
 type MainTab = 'join' | 'exit';
 
 const EMPTY_FNF_FORM: FnfFormState = { le: '', g: '', b: '', r: '' };
 const MONEY_PATTERN = /^(?:\d+|\d+\.\d{1,2}|\.\d{1,2})$/;
+
+interface RecoveryNoticeProps {
+  busy: boolean;
+  message: string;
+  onRetry: () => void;
+}
+
+const RecoveryNotice = ({ busy, message, onRetry }: RecoveryNoticeProps) => (
+  <Card>
+    <div className="flex flex-wrap items-center justify-between gap-3" role="alert">
+      <p className="text-sm text-red-700 dark:text-red-300">{message}</p>
+      <Button variant="secondary" busy={busy} busyLabel="Trying again" onClick={onRetry}>
+        Try again
+      </Button>
+    </div>
+  </Card>
+);
 
 const validateOptionalMoney = (value: string, label: string): string | null => {
   const trimmed = value.trim();
@@ -52,9 +61,6 @@ const OnboardingPage = () => {
   const canManageOnboarding = permissionService.canCapability('action.onboarding.manage');
   const client = useGraphClient('client');
   const [mainTab, setMainTab] = useState<MainTab>('join');
-  const [items, setItems] = useState<ChecklistItem[]>([]);
-  const [separations, setSeparations] = useState<SeparationRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [sepType, setSepType] = useState('RESIGNATION');
@@ -64,92 +70,56 @@ const OnboardingPage = () => {
   const [submitBusy, setSubmitBusy] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [openObId, setOpenObId] = useState<string | null>(null);
-  const [obFnf, setObFnf] = useState<FnfSettlementRow | null>(null);
-  const [obCl, setObCl] = useState<ClearanceItemRow[]>([]);
-  const [obLoading, setObLoading] = useState(false);
   const [obErr, setObErr] = useState<string | null>(null);
   const [fnfForm, setFnfForm] = useState<FnfFormState>(EMPTY_FNF_FORM);
   const [fnfBusy, setFnfBusy] = useState(false);
   const [clBusy, setClBusy] = useState<string | null>(null);
   const [ensureBusy, setEnsureBusy] = useState(false);
-
-  const loadChecklist = useCallback(async () => {
-    const response = await client.request(OnboardingChecklistDocument, { limit: 100 });
-    return response.onboardingChecklist;
-  }, [client]);
-
-  const loadSeparations = useCallback(async () => {
-    const response = await client.request(ClientOpsSeparationsListDocument, { limit: 50 });
-    return response.separations;
-  }, [client]);
-
-  const loadOffboardingDetail = useCallback(
-    async (separationId: string) => {
-      setObLoading(true);
-      setObErr(null);
-      try {
-        const [fnfResponse, clearanceResponse] = await Promise.all([
-          client.request(ClientOpsFnfBySeparationDocument, { separationId }),
-          client.request<ClientOpsClearanceBySeparationQuery>(
-            ClientOpsClearanceBySeparationDocument,
-            { separationId }
-          ),
-        ]);
-        const settlement = fnfResponse.fnfSettlement;
-        setObFnf(settlement ?? null);
-        setObCl(clearanceResponse.clearanceChecklist);
-        setFnfForm(
-          settlement
-            ? {
-                le: settlement.leaveEncashment ?? '',
-                g: settlement.gratuityAmount ?? '',
-                b: settlement.bonusPayable ?? '',
-                r: settlement.recoveryAmount ?? '',
-              }
-            : EMPTY_FNF_FORM
-        );
-      } catch (err) {
-        setObErr(graphQlUserMessage(err));
-        setObFnf(null);
-        setObCl([]);
-      } finally {
-        setObLoading(false);
-      }
-    },
-    [client]
-  );
+  const dialogs = useDialogs();
+  const {
+    checklist,
+    offboarding,
+    refreshChecklist,
+    refreshOffboarding,
+    refreshSeparations,
+    separations,
+  } = useOnboardingResources(client, mainTab, openObId);
 
   useEffect(() => {
-    if (openObId) void loadOffboardingDetail(openObId);
-  }, [openObId, loadOffboardingDetail]);
+    setObErr(null);
+    if (!offboarding.hasResolved) {
+      setFnfForm(EMPTY_FNF_FORM);
+      return;
+    }
+    const settlement = offboarding.data.fnf;
+    setFnfForm(
+      settlement
+        ? {
+            le: settlement.leaveEncashment ?? '',
+            g: settlement.gratuityAmount ?? '',
+            b: settlement.bonusPayable ?? '',
+            r: settlement.recoveryAmount ?? '',
+          }
+        : EMPTY_FNF_FORM
+    );
+  }, [offboarding.hasResolved, offboarding.version]);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const [checklist, separationRows] = await Promise.all([loadChecklist(), loadSeparations()]);
-        if (!cancelled) {
-          setItems(checklist);
-          setSeparations(separationRows);
-        }
-      } catch (err) {
-        if (!cancelled) setError(graphQlUserMessage(err));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadChecklist, loadSeparations]);
+    setActionId(null);
+    setBusyId(null);
+    setClBusy(null);
+    setEnsureBusy(false);
+    setError(null);
+    setFnfBusy(false);
+    setOpenObId(null);
+    setSubmitBusy(false);
+  }, [client]);
 
   const toggleChecklist = async (id: string, next: boolean) => {
     setBusyId(id);
     try {
       await client.request(SetOnboardingChecklistItemDocument, { checklistItemId: id, isCompleted: next });
-      setItems(await loadChecklist());
+      await refreshChecklist();
     } catch (err) {
       setError(graphQlUserMessage(err));
     } finally {
@@ -164,7 +134,7 @@ const OnboardingPage = () => {
       await client.request(approve ? ApproveSeparationDocument : RejectSeparationDocument, {
         separationId: id,
       });
-      setSeparations(await loadSeparations());
+      await refreshSeparations();
     } catch (err) {
       setError(graphQlUserMessage(err));
     } finally {
@@ -194,7 +164,7 @@ const OnboardingPage = () => {
           recoveryAmount: fnfForm.r.trim() || null,
         },
       });
-      await loadOffboardingDetail(separationId);
+      await refreshOffboarding(separationId);
     } catch (err) {
       setObErr(graphQlUserMessage(err));
     } finally {
@@ -203,12 +173,20 @@ const OnboardingPage = () => {
   };
 
   const finalizeFnf = async (separationId: string) => {
-    if (!window.confirm('Mark this FNF as processed? Amounts can no longer be edited.')) return;
+    const userConfirmed = await dialogs.confirm({
+      title: 'Finalize full & final settlement',
+      message:
+        'Once finalized, the FNF settlement becomes read-only and cannot be edited. Continue only if amounts are complete and approved.',
+      confirmLabel: 'Finalize settlement',
+      cancelLabel: 'Keep editing',
+      variant: 'danger',
+    });
+    if (!userConfirmed) return;
     setFnfBusy(true);
     setObErr(null);
     try {
       await client.request(ClientOpsFinalizeFnfDocument, { separationId });
-      await loadOffboardingDetail(separationId);
+      await refreshOffboarding(separationId);
     } catch (err) {
       setObErr(graphQlUserMessage(err));
     } finally {
@@ -221,7 +199,7 @@ const OnboardingPage = () => {
     setObErr(null);
     try {
       await client.request(ClientOpsEnsureOffboardingDocument, { separationId });
-      await loadOffboardingDetail(separationId);
+      await refreshOffboarding(separationId);
     } catch (err) {
       setObErr(graphQlUserMessage(err));
     } finally {
@@ -234,7 +212,7 @@ const OnboardingPage = () => {
     setObErr(null);
     try {
       await client.request(ClientOpsSetClearanceClearedDocument, { clearanceId, isCleared: next });
-      await loadOffboardingDetail(separationId);
+      await refreshOffboarding(separationId);
     } catch (err) {
       setObErr(graphQlUserMessage(err));
     } finally {
@@ -262,7 +240,7 @@ const OnboardingPage = () => {
           reason: reason.trim() || null,
         },
       });
-      setSeparations(await loadSeparations());
+      await refreshSeparations();
       setReason('');
       setResignDay('');
     } catch (err) {
@@ -279,12 +257,12 @@ const OnboardingPage = () => {
         description="Complete joining tasks; file exit requests, HR approval, department clearance, and FNF settlement."
       />
 
-      <TabBar
+      <Tabs
         value={mainTab}
-        onChange={(id) => setMainTab(id as MainTab)}
+        onValueChange={(id) => setMainTab(id as MainTab)}
         tabs={[
-          { id: 'join', label: 'Joining Checklist' },
-          { id: 'exit', label: 'Exit & Separation' },
+          { id: 'join', label: 'Joining Checklist', panelId: 'onboarding-tab-join' },
+          { id: 'exit', label: 'Exit & Separation', panelId: 'onboarding-tab-exit' },
         ]}
       />
 
@@ -294,53 +272,117 @@ const OnboardingPage = () => {
         </Card>
       )}
 
-      {mainTab === 'join' ? (
-        <OnboardingChecklistCard
-          busyId={busyId}
-          items={items}
-          loading={loading}
-          onToggle={(id, next) => void toggleChecklist(id, next)}
-        />
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <ExitRequestCard
-            lastDay={lastDay}
-            reason={reason}
-            resignDay={resignDay}
-            sepType={sepType}
-            submitBusy={submitBusy}
-            onLastDayChange={setLastDay}
-            onReasonChange={setReason}
-            onResignDayChange={setResignDay}
-            onSepTypeChange={setSepType}
-            onSubmit={() => void submitExit()}
-          />
-          <SeparationRequestsCard
-            actionId={actionId}
-            canManageOnboarding={canManageOnboarding}
-            clBusy={clBusy}
-            ensureBusy={ensureBusy}
-            fnfBusy={fnfBusy}
-            fnfForm={fnfForm}
-            loading={loading}
-            obCl={obCl}
-            obErr={obErr}
-            obFnf={obFnf}
-            obLoading={obLoading}
-            openObId={openObId}
-            separations={separations}
-            onEnsureRows={(id) => void ensureOffboardingRows(id)}
-            onFinalizeFnf={(id) => void finalizeFnf(id)}
-            onHrAction={(id, approve) => void hrAction(id, approve)}
-            onOpenObIdChange={setOpenObId}
-            onSaveFnf={(id) => void saveFnf(id)}
-            onToggleClearance={(separationId, clearanceId, next) =>
-              void toggleClearance(separationId, clearanceId, next)
-            }
-            onUpdateFnfForm={(patch) => setFnfForm((current) => ({ ...current, ...patch }))}
-          />
-        </div>
-      )}
+      <section
+        id="onboarding-tab-join"
+        role="tabpanel"
+        aria-labelledby="onboarding-tab-join-tab"
+        hidden={mainTab !== 'join'}
+        className={mainTab === 'join' ? undefined : 'hidden'}
+      >
+        {mainTab === 'join' ? (
+          <div className="space-y-4">
+            {checklist.error || checklist.refreshError ? (
+              <RecoveryNotice
+                busy={checklist.phase === 'loading' || checklist.phase === 'refreshing'}
+                message={checklist.error ?? checklist.refreshError ?? ''}
+                onRetry={() => void refreshChecklist()}
+              />
+            ) : null}
+            {!checklist.error ? (
+              <OnboardingChecklistCard
+                busyId={busyId}
+                items={checklist.data}
+                loading={checklist.phase === 'loading'}
+                onToggle={(id, next) => void toggleChecklist(id, next)}
+              />
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+
+      <div
+        id="onboarding-tab-exit"
+        role="tabpanel"
+        aria-labelledby="onboarding-tab-exit-tab"
+        hidden={mainTab !== 'exit'}
+        className={mainTab === 'exit' ? 'grid gap-6 lg:grid-cols-2' : 'hidden'}
+      >
+        {mainTab === 'exit' ? (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {separations.refreshError ? (
+              <div className="lg:col-span-2">
+                <RecoveryNotice
+                  busy={separations.phase === 'refreshing'}
+                  message={separations.refreshError}
+                  onRetry={() => void refreshSeparations()}
+                />
+              </div>
+            ) : null}
+            {openObId && (offboarding.error || offboarding.refreshError) ? (
+              <div className="lg:col-span-2">
+                <RecoveryNotice
+                  busy={
+                    offboarding.phase === 'loading' || offboarding.phase === 'refreshing'
+                  }
+                  message={offboarding.error ?? offboarding.refreshError ?? ''}
+                  onRetry={() => void refreshOffboarding(openObId)}
+                />
+              </div>
+            ) : null}
+            <ExitRequestCard
+              lastDay={lastDay}
+              reason={reason}
+              resignDay={resignDay}
+              sepType={sepType}
+              submitBusy={submitBusy}
+              onLastDayChange={setLastDay}
+              onReasonChange={setReason}
+              onResignDayChange={setResignDay}
+              onSepTypeChange={setSepType}
+              onSubmit={() => void submitExit()}
+            />
+            {separations.error ? (
+              <RecoveryNotice
+                busy={separations.phase === 'loading'}
+                message={separations.error}
+                onRetry={() => void refreshSeparations()}
+              />
+            ) : (
+              <SeparationRequestsCard
+                actionId={actionId}
+                canManageOnboarding={canManageOnboarding}
+                clBusy={clBusy}
+                ensureBusy={ensureBusy}
+                fnfBusy={fnfBusy}
+                fnfForm={fnfForm}
+                loading={separations.phase === 'loading'}
+                obCl={offboarding.data.clearance}
+                obErr={
+                  obErr ??
+                  (offboarding.error
+                    ? 'Clearance and final settlement details are unavailable.'
+                    : null)
+                }
+                obFnf={offboarding.data.fnf}
+                obLoading={offboarding.phase === 'loading'}
+                openObId={openObId}
+                separations={separations.data}
+                onEnsureRows={(id) => void ensureOffboardingRows(id)}
+                onFinalizeFnf={(id) => void finalizeFnf(id)}
+                onHrAction={(id, approve) => void hrAction(id, approve)}
+                onOpenObIdChange={setOpenObId}
+                onSaveFnf={(id) => void saveFnf(id)}
+                onToggleClearance={(separationId, clearanceId, next) =>
+                  void toggleClearance(separationId, clearanceId, next)
+                }
+                onUpdateFnfForm={(patch) =>
+                  setFnfForm((current) => ({ ...current, ...patch }))
+                }
+              />
+            )}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 };

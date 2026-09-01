@@ -1,4 +1,5 @@
 import type {
+  EmployeeSalaryBreakupPreviewQuery,
   PayrollComplianceSettingQuery,
   TaxComputationsListQuery,
   TaxProofLinesQuery,
@@ -7,6 +8,9 @@ import type {
 import type { PayslipDocModel } from './components/PayslipDocument';
 
 export type PayrollTabId = 'salary' | 'payslip' | 'incometax';
+
+export type EmployeeSalaryPreview =
+  EmployeeSalaryBreakupPreviewQuery['employeeSalaryBreakupPreview'];
 
 export interface SalaryComponentRow {
   id: string;
@@ -82,6 +86,8 @@ export interface TaxSlabRow {
 
 export interface PayslipRow extends PayslipDocModel {
   payrollCycleId: string;
+  periodMonth: number;
+  periodYear: number;
 }
 
 export type PayrollComplianceSettingRow =
@@ -94,10 +100,11 @@ export type TaxProofLineSelfRow = TaxProofLinesQuery['taxProofLines'][number];
 export type TaxSectionCatalogRow = TaxSectionDefinitionsQuery['taxSectionDefinitions'][number];
 
 export interface PayslipPeriodOption {
-  cycleId: string;
+  periodKey: string;
   label: string;
-  payslip: PayslipRow;
-  sort: number;
+  month: number;
+  year: number;
+  payslip: PayslipRow | null;
 }
 
 export interface PayslipIndiaFyTotals {

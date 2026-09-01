@@ -12,8 +12,8 @@ interface TravelRequestsTableProps {
   employeeLabels: Record<string, string>;
   loading: boolean;
   rows: TravelRequestRow[];
-  onApprove: (travelRequestId: string) => void;
-  onReject: (travelRequestId: string) => void;
+  onApprove: (row: TravelRequestRow) => void;
+  onReject: (row: TravelRequestRow) => void;
 }
 
 function tripLabel(row: TravelRequestRow): string {
@@ -40,7 +40,9 @@ const TravelRequestsTable = ({
           {
             key: 'employeeId',
             label: 'Employee',
-            render: (row) => <span>{employeeLabels[row.employeeId] ?? row.employeeId}</span>,
+            render: (row) => (
+              <span>{employeeLabels[row.employeeId] ?? 'Employee details unavailable'}</span>
+            ),
           },
           {
             key: 'purpose',
@@ -98,7 +100,7 @@ const TravelRequestsTable = ({
                           variant="secondary"
                           className="!px-2 !py-1 !text-xs"
                           disabled={busyKey === `${EXPENSE_BUSY_PREFIX.travel}:${row.id}`}
-                          onClick={() => onApprove(row.id)}
+                          onClick={() => onApprove(row)}
                         >
                           Approve
                         </Button>
@@ -106,7 +108,7 @@ const TravelRequestsTable = ({
                           variant="outline"
                           className="!px-2 !py-1 !text-xs"
                           disabled={busyKey === `${EXPENSE_BUSY_PREFIX.travel}:${row.id}`}
-                          onClick={() => onReject(row.id)}
+                          onClick={() => onReject(row)}
                         >
                           Reject
                         </Button>

@@ -19,6 +19,7 @@ import type {
 interface PayrollIncomeTaxTabProps {
   activeTaxConfig: TaxConfigurationRow | null;
   activeTaxSlabs: TaxSlabRow[];
+  canSubmitTax: boolean;
   declDed: string;
   declFy: string;
   declGross: string;
@@ -55,6 +56,7 @@ interface PayrollIncomeTaxTabProps {
 const PayrollIncomeTaxTab = ({
   activeTaxConfig,
   activeTaxSlabs,
+  canSubmitTax,
   declDed,
   declFy,
   declGross,
@@ -108,7 +110,7 @@ const PayrollIncomeTaxTab = ({
       loading={loadingEmployeeTax}
       hasError={Boolean(employeeTaxError)}
     />
-    <EmployeeTaxProofFormCard
+    {canSubmitTax ? <EmployeeTaxProofFormCard
       activeTaxConfig={activeTaxConfig}
       loading={loadingEmployeeTax}
       catalog={taxSectionCatalog}
@@ -123,8 +125,8 @@ const PayrollIncomeTaxTab = ({
       onActualChange={onProofActualChange}
       onProofFileChange={onProofFileChange}
       onSubmit={onProofSubmit}
-    />
-    <EmployeeTaxDeclarationFormCard
+    /> : null}
+    {canSubmitTax ? <EmployeeTaxDeclarationFormCard
       activeTaxConfig={activeTaxConfig}
       fiscalYear={declFy}
       regime={declRegime}
@@ -138,7 +140,7 @@ const PayrollIncomeTaxTab = ({
       onGrossChange={onDeclGrossChange}
       onDeductionsChange={onDeclDedChange}
       onSubmit={onDeclSubmit}
-    />
+    /> : null}
   </div>
 );
 

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPermissionService } from '../../auth/permissionService';
 import Modal from '../../components/common/Modal';
 import FlashToastBar from '../../components/common/FlashToastBar';
+import { useAuth } from '../../contexts/AuthContext';
 import { useDialogs } from '../../contexts/DialogContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useFlashToast } from '../../hooks/useFlashToast';
@@ -25,6 +27,7 @@ import TimesheetControlsCard from './components/TimesheetControlsCard';
 import {
   downloadTextFile,
   earliestEditableMondayIso,
+  formatTimesheetHours,
   parseTimesheetHours,
   timesheetEntryCanDelete,
   timesheetEntryCanEdit,
@@ -40,6 +43,10 @@ const DEFAULT_LOCK_WEEKS = 4;
 
 const TimesheetPage = () => {
   const client = useGraphClient('client');
+  const { clientSession } = useAuth();
+  const permissions = createPermissionService(clientSession);
+  const canRead = permissions.canCapability('route.timesheet');
+  const canWrite = permissions.canCapability('action.timesheet.write');
   const { confirm } = useDialogs();
   const { flash, show: showFlash, clear: clearFlash } = useFlashToast();
   const [entries, setEntries] = useState<EntryRow[]>([]);
@@ -81,6 +88,14 @@ const TimesheetPage = () => {
   const earliestMonday = useMemo(() => earliestEditableMondayIso(lockWeeks), [lockWeeks]);
 
   const loadPolicies = useCallback(async () => {
+    if (!canRead) {
+      setLockWeeks(DEFAULT_LOCK_WEEKS);
+      setLockApproved(true);
+      return {
+        editableWeekSpan: DEFAULT_LOCK_WEEKS,
+        lockApprovedEntries: true,
+      };
+    }
     try {
       const response = await client.request(TimesheetLockPolicyDocument);
       const policy = response.timesheetLockPolicy;
@@ -101,14 +116,24 @@ const TimesheetPage = () => {
         lockApprovedEntries: true,
       };
     }
-  }, [client]);
+  }, [canRead, client]);
 
   const loadEntries = useCallback(async () => {
+    if (!canRead) {
+      setEntries([]);
+      return;
+    }
     const response = await client.request(TimesheetRowsDocument, { limit: TIMESHEET_ROW_LIMIT });
     setEntries((response.timesheetEntries ?? []) as EntryRow[]);
-  }, [client]);
+  }, [canRead, client]);
 
   useEffect(() => {
+    if (!canRead) {
+      setEntries([]);
+      setError(null);
+      setLoading(false);
+      return undefined;
+    }
     let cancelled = false;
     void (async () => {
       try {
@@ -124,7 +149,7 @@ const TimesheetPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [loadPolicies, loadEntries]);
+  }, [canRead, loadPolicies, loadEntries]);
 
   useEffect(() => {
     if (periodMode !== 'custom' || (customStart && customEnd)) return;
@@ -232,6 +257,7 @@ const TimesheetPage = () => {
   );
 
   const openNewEntry = (datePreset: string | null = null) => {
+    if (!canWrite) return;
     const targetDate = datePreset ?? todayIso;
     if (lockedWeekStarts.has(weekMondayOfWorkDateIso(targetDate))) {
       setError('This week is already submitted. Ask the approver to reject it before adding entries.');
@@ -243,10 +269,11 @@ const TimesheetPage = () => {
   };
 
   const handleDelete = async (row: EntryRow) => {
+    if (!canWrite) return;
     if (!timesheetEntryCanDelete(row.status)) return;
     const ok = await confirm({
       title: 'Delete Timesheet Entry',
-      message: `Delete the ${row.hoursWorked}h entry for ${row.workDate}?`,
+      message: `Delete the ${formatTimesheetHours(row.hoursWorked)}h entry for ${row.workDate}?`,
       confirmLabel: 'Delete Entry',
       variant: 'danger',
     });
@@ -264,6 +291,7 @@ const TimesheetPage = () => {
   };
 
   const handleSubmitWeek = async () => {
+    if (!canWrite) return;
     if (customRangeError) return;
     const freshPolicy = await loadPolicies();
     const freshEarliestMonday = earliestEditableMondayIso(
@@ -355,6 +383,8 @@ const TimesheetPage = () => {
         ? `Month ${displayBounds.start} to ${displayBounds.end}`
         : `Custom ${displayBounds.start} to ${displayBounds.end}`;
 
+  if (!canRead) return null;
+
   return (
     <div className="space-y-6">
       <TimesheetControlsCard
@@ -366,6 +396,7 @@ const TimesheetPage = () => {
         periodSummary={periodSummary}
         sortedCount={sorted.length}
         actionsDisabled={Boolean(customRangeError)}
+        canWrite={canWrite}
         addEntryDisabledReason={addEntryDisabledReason}
         rangeError={customRangeError}
         submitBusy={submitBusy}
@@ -393,9 +424,10 @@ const TimesheetPage = () => {
         sortedCount={sorted.length}
         todayIso={todayIso}
         totalHours={totalHours}
-        canAddOnDate={dateAllowsNewEntry}
+        canWrite={canWrite}
+        canAddOnDate={(iso) => canWrite && dateAllowsNewEntry(iso)}
         canEditRow={(row) =>
-          timesheetEntryCanEdit(row.status, row.workDate, earliestMonday, lockApproved)
+          canWrite && timesheetEntryCanEdit(row.status, row.workDate, earliestMonday, lockApproved)
         }
         editDisabledReason={(row) =>
           timesheetEntryEditDisabledReason(
@@ -414,7 +446,7 @@ const TimesheetPage = () => {
         }}
       />
 
-      <Modal
+      {canWrite ? <Modal
         isOpen={formOpen}
         onClose={() => {
           setFormOpen(false);
@@ -447,7 +479,7 @@ const TimesheetPage = () => {
           onSaved={() => void refresh()}
           existingEntries={entries}
         />
-      </Modal>
+      </Modal> : null}
       <FlashToastBar toast={flash} onDismiss={clearFlash} />
     </div>
   );

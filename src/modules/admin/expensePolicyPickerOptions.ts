@@ -2,6 +2,7 @@ import type { UuidEntityOption } from '../../components/common/UuidEntitySearchS
 import type {
   ExpensePolicyDepartmentRow,
   ExpensePolicyDesignationRow,
+  ExpensePolicyForm,
   ExpensePolicyRoleRow,
 } from './expenseCategoryTypes';
 import { shortEntityId } from './expenseCategoryUtils';
@@ -63,4 +64,39 @@ export function buildRoleOptions(
   });
   addUnknownOption(options, selectedRoleId, 'Unknown role (from policy)');
   return options;
+}
+
+export function expensePolicyDirectorySelectionError(
+  applicableTo: string,
+  form: ExpensePolicyForm,
+  departments: ExpensePolicyDepartmentRow[],
+  designations: ExpensePolicyDesignationRow[],
+  roles: ExpensePolicyRoleRow[]
+): string | null {
+  let selectedId: string;
+  let selectionExists: boolean;
+  let entityLabel: string;
+
+  switch (applicableTo) {
+    case 'DEPARTMENT':
+      selectedId = form.departmentId.trim();
+      selectionExists = departments.some((department) => department.id === selectedId);
+      entityLabel = 'department';
+      break;
+    case 'DESIGNATION':
+      selectedId = form.designationId.trim();
+      selectionExists = designations.some((designation) => designation.id === selectedId);
+      entityLabel = 'designation';
+      break;
+    case 'ROLE':
+      selectedId = form.roleId.trim();
+      selectionExists = roles.some((role) => role.id === selectedId);
+      entityLabel = 'role';
+      break;
+    default:
+      return null;
+  }
+
+  if (selectionExists) return null;
+  return `Choose a ${entityLabel} from the current organization directory before saving this policy.`;
 }

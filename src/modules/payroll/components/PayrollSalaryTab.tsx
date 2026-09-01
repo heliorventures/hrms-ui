@@ -1,86 +1,71 @@
-import Badge from '../../../components/common/Badge';
 import Card from '../../../components/common/Card';
 import Table from '../../../components/common/Table';
-import { formatPayrollPaymentDate, formatPayrollPeriod } from '../payrollFormatters';
-import type { PayrollCycleRow, SalaryComponentRow } from '../payrollTypes';
+import { formatAmountString } from '../payrollFormatters';
+import type { EmployeeSalaryPreview } from '../payrollTypes';
 
 interface PayrollSalaryTabProps {
-  salaryComponents: SalaryComponentRow[] | null;
-  payrollCycles: PayrollCycleRow[] | null;
-  loadingSalary: boolean;
-  loadingShell: boolean;
-  errorSalary: string | null;
+  preview: EmployeeSalaryPreview;
+  loading: boolean;
+  error: string | null;
 }
 
-const PayrollSalaryTab = ({
-  salaryComponents,
-  payrollCycles,
-  loadingSalary,
-  loadingShell,
-  errorSalary,
-}: PayrollSalaryTabProps) => (
-  <div className="space-y-6">
-    <Card title="Salary Components">
-      <Table
-        data={salaryComponents ?? []}
-        loading={loadingSalary}
-        errorMessage={errorSalary ? 'Could not load this section.' : null}
-        loadingMessage="Loading Salary Components..."
-        emptyMessage="No Salary Components Found."
-        keyExtractor={(row) => row.id}
-        columns={[
-          { key: 'name', label: 'Component' },
-          { key: 'code', label: 'Code' },
-          { key: 'componentType', label: 'Type' },
-          {
-            key: 'flags',
-            label: 'Flags',
-            render: (row: SalaryComponentRow) => (
-              <div className="flex flex-wrap gap-2">
-                <Badge variant={row.isActive ? 'success' : 'neutral'}>
-                  {row.isActive ? 'Active' : 'Inactive'}
-                </Badge>
-                <Badge variant={row.isFixed ? 'info' : 'neutral'}>
-                  {row.isFixed ? 'Fixed' : 'Variable'}
-                </Badge>
-                <Badge variant={row.isTaxable ? 'warning' : 'neutral'}>
-                  {row.isTaxable ? 'Taxable' : 'Non-taxable'}
-                </Badge>
-              </div>
-            ),
-          },
-        ]}
-      />
-    </Card>
+const PayrollSalaryTab = ({ preview, loading, error }: PayrollSalaryTabProps) => (
+  <Card title="Your Salary">
+    {loading ? <p className="text-sm text-content-secondary">Loading your salary...</p> : null}
 
-    <Card title="Payroll Cycles">
-      <Table
-        data={payrollCycles ?? []}
-        loading={loadingShell}
-        loadingMessage="Loading Payroll Cycles..."
-        emptyMessage="No Payroll Cycles Found."
-        keyExtractor={(row) => row.id}
-        columns={[
-          { key: 'name', label: 'Cycle' },
-          {
-            key: 'period',
-            label: 'Period',
-            render: (row: PayrollCycleRow) => formatPayrollPeriod(row),
-          },
-          {
-            key: 'status',
-            label: 'Status',
-            render: (row: PayrollCycleRow) => <Badge variant="info">{row.status}</Badge>,
-          },
-          {
-            key: 'paymentDate',
-            label: 'Payment Date',
-            render: (row: PayrollCycleRow) => formatPayrollPaymentDate(row.paymentDate),
-          },
-        ]}
-      />
-    </Card>
-  </div>
+    {!loading && error ? <p className="text-sm text-danger">{error}</p> : null}
+
+    {!loading && !error && !preview ? (
+      <p className="text-sm text-content-secondary">
+        No salary structure is currently effective for your employee record. Contact HR if your
+        salary assignment should already be active.
+      </p>
+    ) : null}
+
+    {!loading && !error && preview ? (
+      <div className="space-y-6">
+        <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            ['Annual CTC', preview.annualCtc],
+            ['Monthly Gross', preview.monthlyGross],
+            ['Monthly Deductions', preview.monthlyDeductions],
+            ['Net Before Statutory', preview.monthlyNetBeforeStatutory],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-lg border border-line bg-surface-raised p-4">
+              <dt className="text-xs font-medium uppercase tracking-wide text-content-secondary">
+                {label}
+              </dt>
+              <dd className="mt-1 text-lg font-semibold text-content-primary">
+                {formatAmountString(value)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        <Table
+          ariaLabel="Your salary breakup"
+          data={preview.lines}
+          emptyMessage="No salary breakup lines are available."
+          keyExtractor={(line) => line.salaryComponentId}
+          columns={[
+            { key: 'componentName', label: 'Component' },
+            { key: 'componentCode', label: 'Code' },
+            { key: 'componentType', label: 'Type' },
+            {
+              key: 'monthlyAmount',
+              label: 'Monthly Amount',
+              render: (line) => formatAmountString(line.monthlyAmount),
+            },
+            {
+              key: 'annualAmount',
+              label: 'Annual Amount',
+              render: (line) => formatAmountString(line.annualAmount),
+            },
+          ]}
+        />
+      </div>
+    ) : null}
+  </Card>
 );
 
 export default PayrollSalaryTab;

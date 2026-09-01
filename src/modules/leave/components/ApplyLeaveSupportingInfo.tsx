@@ -3,7 +3,7 @@ import type {
   ApplyHolidayRow,
   ApplyLeavePolicyRow,
   ApplyLeaveTypeOption,
-} from './ApplyLeaveModal';
+} from './applyLeavePolicy';
 
 interface ApplyLeaveContextPanelProps {
   balance?: ApplyBalanceRow;

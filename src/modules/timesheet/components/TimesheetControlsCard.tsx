@@ -12,6 +12,7 @@ interface TimesheetControlsCardProps {
   periodSummary: string;
   sortedCount: number;
   actionsDisabled?: boolean;
+  canWrite: boolean;
   addEntryDisabledReason?: string | null;
   rangeError?: string | null;
   submitBusy: boolean;
@@ -39,6 +40,7 @@ const TimesheetControlsCard = ({
   periodSummary,
   sortedCount,
   actionsDisabled = false,
+  canWrite,
   addEntryDisabledReason = null,
   rangeError = null,
   submitBusy,
@@ -118,15 +120,17 @@ const TimesheetControlsCard = ({
         )}
 
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="primary"
-            type="button"
-            onClick={onAddEntry}
-            disabled={actionsDisabled || Boolean(addEntryDisabledReason)}
-            title={addEntryDisabledReason ?? undefined}
-          >
-            Add Entry
-          </Button>
+          {canWrite ? (
+            <Button
+              variant="primary"
+              type="button"
+              onClick={onAddEntry}
+              disabled={actionsDisabled || Boolean(addEntryDisabledReason)}
+              title={addEntryDisabledReason ?? undefined}
+            >
+              Add Entry
+            </Button>
+          ) : null}
           <Button variant="outline" type="button" onClick={onRefresh}>
             Refresh
           </Button>
@@ -145,7 +149,7 @@ const TimesheetControlsCard = ({
         {lockApproved ? 'Approved rows stay locked server-side.' : ''}
       </p>
 
-      {periodMode === 'week' && (
+      {canWrite && periodMode === 'week' && (
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
           <Button
             variant="primary"

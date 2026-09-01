@@ -41,7 +41,7 @@ const monthlyExportCards: {
       <>
         Stub export for statutory prep: one row per payslip in the selected payroll cycle, using
         stored <span className="font-medium">tdsAmount</span> and primary PAN when present. Requires{' '}
-        <span className="font-mono text-xs">payroll:statutory_export</span> or an HR / tenant admin
+        <span className="font-mono text-xs">payroll:statutory_export</span> permission
         role.
       </>
     ),

@@ -31,7 +31,7 @@ export function TabNavigation({ tabs, activeId, onChange }: TabNavigationProps) 
               role="tab"
               aria-selected={active}
               onClick={() => onChange(t.id)}
-              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-all sm:text-sm ${
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-[color,background-color,box-shadow] sm:text-sm ${
                 active
                   ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-800 dark:text-indigo-300 dark:ring-slate-600'
                   : 'text-slate-600 hover:bg-white/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200'

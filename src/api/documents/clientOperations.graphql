@@ -106,12 +106,13 @@ query TimesheetWeekBatches($status: String, $limit: Int! = 80) {
     submittedAt
     workflowInstanceId
     pendingApprovalStage
+    pendingApprovalStepId
     viewerMayApprove
   }
 }
 
-mutation ApproveTimesheetWeekBatch($id: ID!) {
-  approveTimesheetWeekBatch(id: $id) {
+mutation ApproveTimesheetWeekBatch($id: ID!, $expectedWorkflowStepId: ID!) {
+  approveTimesheetWeekBatch(id: $id, expectedWorkflowStepId: $expectedWorkflowStepId) {
     id
     status
     employeeId
@@ -120,8 +121,16 @@ mutation ApproveTimesheetWeekBatch($id: ID!) {
   }
 }
 
-mutation RejectTimesheetWeekBatch($id: ID!, $rejectionReason: String) {
-  rejectTimesheetWeekBatch(id: $id, rejectionReason: $rejectionReason)
+mutation RejectTimesheetWeekBatch(
+  $id: ID!
+  $expectedWorkflowStepId: ID!
+  $rejectionReason: String
+) {
+  rejectTimesheetWeekBatch(
+    id: $id
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    rejectionReason: $rejectionReason
+  )
 }
 
 mutation UpsertAttendanceAdjustmentPolicyHr($input: UpsertAttendanceAdjustmentPolicyInput!) {
@@ -225,7 +234,7 @@ query ClientOpsPayslipsList($limit: Int! = 10) {
 }
 
 # India statutory stub: CSV from payslip rows for the payroll cycle (month + calendar year).
-# Requires payroll:statutory_export or HR / tenant admin (see JWT RBAC).
+# Requires the effective payroll:statutory_export permission from the signed-in session.
 query IndiaTdsMonthlySummaryCsv($month: Int!, $year: Int!) {
   indiaTdsMonthlySummaryCsv(month: $month, year: $year)
 }
@@ -376,8 +385,11 @@ mutation SubmitLeaveRequest($input: SubmitLeaveRequestInput!) {
   }
 }
 
-mutation ApproveLeaveRequest($leaveRequestId: ID!) {
-  approveLeaveRequest(leaveRequestId: $leaveRequestId) {
+mutation ApproveLeaveRequest($leaveRequestId: ID!, $expectedWorkflowStepId: ID!) {
+  approveLeaveRequest(
+    leaveRequestId: $leaveRequestId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+  ) {
     id
     status
     employeeId
@@ -388,8 +400,16 @@ mutation ApproveLeaveRequest($leaveRequestId: ID!) {
   }
 }
 
-mutation RejectLeaveRequest($leaveRequestId: ID!, $reason: String) {
-  rejectLeaveRequest(leaveRequestId: $leaveRequestId, reason: $reason) {
+mutation RejectLeaveRequest(
+  $leaveRequestId: ID!
+  $expectedWorkflowStepId: ID!
+  $reason: String
+) {
+  rejectLeaveRequest(
+    leaveRequestId: $leaveRequestId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    reason: $reason
+  ) {
     id
     status
     reason
@@ -513,8 +533,12 @@ mutation CreatePayrollArrear($input: CreatePayrollArrearInput!) {
   }
 }
 
-mutation ApproveExpense($expenseId: ID!, $approvedAmount: String) {
-  approveExpense(expenseId: $expenseId, approvedAmount: $approvedAmount) {
+mutation ApproveExpense($expenseId: ID!, $expectedWorkflowStepId: ID!, $approvedAmount: String) {
+  approveExpense(
+    expenseId: $expenseId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    approvedAmount: $approvedAmount
+  ) {
     id
     status
     amount
@@ -545,8 +569,12 @@ mutation MarkExpensePaymentStatus(
   }
 }
 
-mutation RejectExpense($expenseId: ID!, $reason: String) {
-  rejectExpense(expenseId: $expenseId, reason: $reason) {
+mutation RejectExpense($expenseId: ID!, $expectedWorkflowStepId: ID!, $reason: String) {
+  rejectExpense(
+    expenseId: $expenseId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    reason: $reason
+  ) {
     id
     status
     title
@@ -566,8 +594,11 @@ mutation SubmitTravelRequest($input: SubmitTravelRequestInput!) {
   }
 }
 
-mutation ApproveTravelRequest($travelRequestId: ID!) {
-  approveTravelRequest(travelRequestId: $travelRequestId) {
+mutation ApproveTravelRequest($travelRequestId: ID!, $expectedWorkflowStepId: ID!) {
+  approveTravelRequest(
+    travelRequestId: $travelRequestId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+  ) {
     id
     status
     approvedBy
@@ -577,8 +608,16 @@ mutation ApproveTravelRequest($travelRequestId: ID!) {
   }
 }
 
-mutation RejectTravelRequest($travelRequestId: ID!, $reason: String) {
-  rejectTravelRequest(travelRequestId: $travelRequestId, reason: $reason) {
+mutation RejectTravelRequest(
+  $travelRequestId: ID!
+  $expectedWorkflowStepId: ID!
+  $reason: String
+) {
+  rejectTravelRequest(
+    travelRequestId: $travelRequestId
+    expectedWorkflowStepId: $expectedWorkflowStepId
+    reason: $reason
+  ) {
     id
     status
     approvedBy
@@ -1251,7 +1290,7 @@ query AdminWorkflowsStepsData($wl: Int! = 30) {
   }
 }
 
-# kabipay-workflow (HR / `workflow:manage` or admin roles)
+# kabipay-workflow (`workflow:manage` permission)
 mutation AdminCreateWorkflow($input: CreateWorkflowInput!) {
   createWorkflow(input: $input) {
     id
@@ -1536,14 +1575,18 @@ mutation EnrollInBenefitPlan($benefitPlanId: ID!) {
 }
 
 # Expenses, leave, attendance, notifications, dashboard widgets (codegen; §0.2)
-query ExpenseBoard($limit: Int! = 20) {
-  expenseCategories(limit: $limit) {
+query ExpenseBoard(
+  $limit: Int! = 20
+  $includeExpenses: Boolean!
+  $includeTravel: Boolean!
+) {
+  expenseCategories(limit: $limit) @include(if: $includeExpenses) {
     id
     name
     code
     maxAmountPerClaim
   }
-  expenses(limit: $limit) {
+  expenses(limit: $limit) @include(if: $includeExpenses) {
     id
     employeeId
     expenseCategoryId
@@ -1555,6 +1598,7 @@ query ExpenseBoard($limit: Int! = 20) {
     title
     status
     pendingApprovalStage
+    pendingApprovalStepId
     viewerMayApprove
     submittedAt
     approvedAmount
@@ -1563,7 +1607,7 @@ query ExpenseBoard($limit: Int! = 20) {
     paymentReference
     receiptFileStorageId
   }
-  travelRequests(limit: $limit) {
+  travelRequests(limit: $limit) @include(if: $includeTravel) {
     id
     employeeId
     originLocation
@@ -1575,6 +1619,7 @@ query ExpenseBoard($limit: Int! = 20) {
     currency
     status
     pendingApprovalStage
+    pendingApprovalStepId
     viewerMayApprove
     rejectionReason
     approvedBy
@@ -1617,6 +1662,8 @@ query LeaveBoard($limit: Int! = 20, $balanceYear: Int, $fromDate: NaiveDate, $to
   leaveRequests(limit: $limit, fromDate: $fromDate, toDate: $toDate) {
     id
     employeeId
+    employeeName
+    employeeCode
     leaveTypeId
     fromDate
     toDate
@@ -1628,6 +1675,9 @@ query LeaveBoard($limit: Int! = 20, $balanceYear: Int, $fromDate: NaiveDate, $to
     halfDaySession
     appliedAt
     workflowInstanceId
+    pendingApprovalStage
+    pendingApprovalStepId
+    viewerMayApprove
     supportingDocumentReference
   }
   leaveBalances(limit: $limit, year: $balanceYear) {
@@ -1778,6 +1828,217 @@ query AttendanceBoard($limit: Int! = 400, $fromDate: NaiveDate, $toDate: NaiveDa
   }
 }
 
+query MyAttendanceBoard($fromDate: NaiveDate, $toDate: NaiveDate, $first: Int = 50, $after: String) {
+  shifts(limit: 100) {
+    id
+    name
+    startTime
+    endTime
+    workHours
+    isNightShift
+  }
+  myAttendance(fromDate: $fromDate, toDate: $toDate, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        employeeId
+        workDate
+        checkInTime
+        checkOutTime
+        checkInLat
+        checkInLng
+        checkOutLat
+        checkOutLng
+        status
+        source
+        lateMinutes
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+query ManagedAttendancePage(
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeSearch: String
+  $employeeId: ID
+  $first: Int = 50
+  $after: String
+) {
+  managedAttendance(
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeSearch: $employeeSearch
+    employeeId: $employeeId
+    first: $first
+    after: $after
+  ) {
+    edges {
+      cursor
+      node {
+        id
+        employeeId
+        employeeName
+        employeeCode
+        workDate
+        checkInTime
+        checkOutTime
+        status
+        source
+        regularizationStatus
+        createdAt
+        updatedAt
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+query AdminAttendanceDailyReport(
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeId: ID
+  $employeeSearch: String
+  $first: Int = 50
+  $after: String
+) {
+  attendanceDailyReport(
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeId: $employeeId
+    employeeSearch: $employeeSearch
+    first: $first
+    after: $after
+  ) {
+    edges {
+      cursor
+      node {
+        employeeId
+        employeeName
+        employeeCode
+        workDate
+        timezone
+        firstCheckInAt
+        lastCheckOutAt
+        loggedMinutes
+        expectedMinutes
+        status
+        segmentCount
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+query AdminAttendanceReportSummary(
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeId: ID
+  $employeeSearch: String
+) {
+  attendanceReportSummary(
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeId: $employeeId
+    employeeSearch: $employeeSearch
+  ) {
+    totalDays
+    presentDays
+    halfDays
+    absentDays
+    onLeaveDays
+    holidayDays
+    weeklyOffDays
+    incompleteDays
+    unscheduledDays
+    totalLoggedMinutes
+  }
+}
+
+query AdminAttendanceExportPage(
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeId: ID
+  $employeeSearch: String
+  $first: Int = 100
+  $after: String
+) {
+  attendanceDailyReport(
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeId: $employeeId
+    employeeSearch: $employeeSearch
+    first: $first
+    after: $after
+  ) {
+    edges {
+      cursor
+      node {
+        employeeId
+        employeeName
+        employeeCode
+        workDate
+        timezone
+        firstCheckInAt
+        lastCheckOutAt
+        loggedMinutes
+        expectedMinutes
+        status
+        segmentCount
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+mutation AddManagedAttendanceSegment($input: AddManagedAttendanceSegmentInput!) {
+  addManagedAttendanceSegment(input: $input) {
+    id
+    employeeId
+    employeeName
+    employeeCode
+    workDate
+    checkInTime
+    checkOutTime
+    status
+    source
+    regularizationStatus
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateManagedAttendanceSegment($input: UpdateManagedAttendanceSegmentInput!) {
+  updateManagedAttendanceSegment(input: $input) {
+    id
+    employeeId
+    employeeName
+    employeeCode
+    workDate
+    checkInTime
+    checkOutTime
+    status
+    source
+    regularizationStatus
+    createdAt
+    updatedAt
+  }
+}
+
 query PunchDaySummary {
   punchDaySummary {
     workDate
@@ -1807,7 +2068,7 @@ query PunchDaySummary {
   }
 }
 
-query OnLeaveToday($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50, $today: NaiveDate) {
+query OnLeaveToday($limit: Int! = 50, $typeLim: Int! = 50, $today: NaiveDate) {
   leaveRequests(limit: $limit, fromDate: $today, toDate: $today) {
     id
     employeeId
@@ -1817,16 +2078,13 @@ query OnLeaveToday($limit: Int! = 50, $orgLim: Int! = 500, $typeLim: Int! = 50, 
     status
     isHalfDay
     halfDaySession
+    employeeName
+    employeeCode
   }
   leaveTypes(limit: $typeLim) {
     id
     name
     code
-  }
-  orgChart(limit: $orgLim) {
-    employeeId
-    fullName
-    employeeCode
   }
 }
 
@@ -2006,6 +2264,8 @@ query ClientOpsPayslipsForPayrollHub($limit: Int! = 24) {
   payslips(limit: $limit) {
     id
     payrollCycleId
+    periodMonth
+    periodYear
     grossSalary
     totalDeductions
     netSalary
@@ -2163,6 +2423,7 @@ query EmployeeProfileAccess($employeeId: ID!) {
   employeeProfileAccess(employeeId: $employeeId) {
     isSelf
     canViewPrivateProfile
+    canViewPayrollSensitive
     canEditPersonalProfile
     canManageOrganizationFields
     canReviewProfileChanges
@@ -2292,14 +2553,6 @@ query EmployeePrivateProfile($employeeId: ID!) {
     name
     category
     systemKey
-  }
-  employmentHistoryRecords(employeeId: $employeeId, limit: 48) {
-    id
-    monthlySalary
-    effectiveFrom
-    effectiveTo
-    changeReason
-    updatedAt
   }
   employeePrimaryBank(employeeId: $employeeId) {
     id
@@ -2442,14 +2695,6 @@ query EmployeeProfileBundle($employeeId: ID!) {
     id
     name
     category
-  }
-  employmentHistoryRecords(employeeId: $employeeId, limit: 48) {
-    id
-    monthlySalary
-    effectiveFrom
-    effectiveTo
-    changeReason
-    updatedAt
   }
   employeePrimaryBank(employeeId: $employeeId) {
     id

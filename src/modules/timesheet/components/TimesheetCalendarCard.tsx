@@ -24,6 +24,7 @@ interface TimesheetCalendarCardProps {
   sortedCount: number;
   todayIso: string;
   totalHours: number;
+  canWrite: boolean;
   canAddOnDate: (iso: string) => boolean;
   canEditRow: (row: EntryRow) => boolean;
   editDisabledReason: (row: EntryRow) => string;
@@ -41,6 +42,7 @@ const TimesheetCalendarCard = ({
   sortedCount,
   todayIso,
   totalHours,
+  canWrite,
   canAddOnDate,
   canEditRow,
   editDisabledReason,
@@ -141,7 +143,7 @@ const TimesheetCalendarCard = ({
                             >
                               <span className="line-clamp-3">{summary}</span>
                             </button>
-                            {timesheetEntryCanDelete(entry.status) && (
+                            {canWrite && timesheetEntryCanDelete(entry.status) && (
                               <button
                                 type="button"
                                 aria-label="Delete Entry"

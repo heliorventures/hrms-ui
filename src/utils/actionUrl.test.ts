@@ -1,5 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { directNotificationActionUrl, notificationActionDestination } from './actionUrl';
+
+import type { ParsedClientSession } from '../auth/clientSession';
+import type { NavAccessOptions } from '../auth/navAccess';
+
+import {
+  authorizedNotificationActionUrl,
+  directNotificationActionUrl,
+  notificationActionDestination,
+} from './actionUrl';
+
+function session(permissions: readonly string[] = []): ParsedClientSession {
+  return {
+    jwtRoles: [],
+    permissions: new Set(permissions),
+    permissionScopes: {},
+    resourceScopes: {},
+    persona: 'EMPLOYEE',
+    mustChangePassword: false,
+  };
+}
+
+const employeeAccess: NavAccessOptions = {
+  can: () => false,
+  clientSession: session(),
+};
+
+const notificationManagerAccess: NavAccessOptions = {
+  can: () => true,
+  clientSession: session(['notification:manage']),
+};
 
 describe('notificationActionDestination', () => {
   beforeEach(() => {
@@ -36,6 +65,11 @@ describe('directNotificationActionUrl', () => {
     expect(directNotificationActionUrl('')).toBe('/notifications');
   });
 
+  it('does not create direct notifications that navigate back to the dashboard root', () => {
+    expect(directNotificationActionUrl('/')).toBe('/notifications');
+    expect(directNotificationActionUrl('https://heliorsoft.com/')).toBe('/notifications');
+  });
+
   it('rejects external and protocol-relative routes', () => {
     expect(directNotificationActionUrl('https://evil.example/path')).toBe('/notifications');
     expect(directNotificationActionUrl('//evil.example/path')).toBe('/notifications');
@@ -49,6 +83,42 @@ describe('directNotificationActionUrl', () => {
     expect(directNotificationActionUrl('/expenses?tab=claims')).toBe('/expenses?tab=claims');
     expect(directNotificationActionUrl('https://heliorsoft.com/leave#requests')).toBe(
       '/leave#requests'
+    );
+  });
+});
+
+describe('authorizedNotificationActionUrl', () => {
+  beforeEach(() => {
+    vi.stubGlobal('window', { location: { origin: 'https://heliorsoft.com' } });
+  });
+
+  it('suppresses malformed and external destinations', () => {
+    expect(authorizedNotificationActionUrl('http://[::1', employeeAccess)).toBeNull();
+    expect(
+      authorizedNotificationActionUrl('https://outside.example/path', employeeAccess)
+    ).toBeNull();
+  });
+
+  it('suppresses unknown and dynamic destinations instead of guessing route access', () => {
+    expect(authorizedNotificationActionUrl('/not-a-registered-route', employeeAccess)).toBeNull();
+    expect(
+      authorizedNotificationActionUrl('/organization/employees/123', employeeAccess)
+    ).toBeNull();
+  });
+
+  it('suppresses static destinations the current session cannot access', () => {
+    expect(authorizedNotificationActionUrl('/admin/notifications', employeeAccess)).toBeNull();
+  });
+
+  it('keeps the normalized destination query and hash after authorizing its pathname', () => {
+    expect(
+      authorizedNotificationActionUrl('/notifications?filter=unread#latest', employeeAccess)
+    ).toBe('/notifications?filter=unread#latest');
+  });
+
+  it('allows a static route when the current session has the corresponding permission', () => {
+    expect(authorizedNotificationActionUrl('/admin/notifications', notificationManagerAccess)).toBe(
+      '/admin/notifications'
     );
   });
 });

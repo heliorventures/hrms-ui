@@ -114,7 +114,6 @@ export function createAdjustmentForm(year: number): LeaveBalanceAdjustmentForm {
     leaveTypeId: '',
     year: String(year),
     delta: '1',
-    alsoCredit: true,
   };
 }
 

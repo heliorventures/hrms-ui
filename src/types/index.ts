@@ -45,6 +45,7 @@ export interface Tenant {
   status?: string;
   slug?: string;
   primaryColor?: string;
+  timezone: string;
 }
 
 export interface AttendanceRecord {

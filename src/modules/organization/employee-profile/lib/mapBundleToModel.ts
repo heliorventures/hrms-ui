@@ -1,11 +1,14 @@
-import type { EmployeePrivateProfileQuery } from '../../../../api/graphql/graphql';
+import type {
+  EmployeePrivateProfileQuery,
+  PayrollEmploymentHistoryQuery,
+} from '../../../../api/graphql/graphql';
+import { employeeStatusForDisplay } from '../../../employeeStatus';
 import type {
   CompanyAssignment,
   CoreEmployeeRecord,
   DocumentRow,
   EducationEntry,
   EmployeeProfileModel,
-  EmploymentStatusUi,
   GrowthTimelineNode,
   IdentityRecord,
   PersonalInfoFields,
@@ -14,14 +17,6 @@ import type {
   SalaryHistoryEntry,
   VerificationStatus,
 } from '../types';
-
-function normalizeStatus(status: string): EmploymentStatusUi {
-  const u = status.toUpperCase();
-  if (u.includes('TERM')) return 'TERMINATED';
-  if (u.includes('LEAVE') || u === 'ON_LEAVE') return 'ON_LEAVE';
-  if (u.includes('SUSPEND')) return 'SUSPENDED';
-  return 'ACTIVE';
-}
 
 function mapCategory(cat?: string | null, name?: string | null): DocumentRow['category'] {
   const blob = `${cat ?? ''} ${name ?? ''}`.toUpperCase();
@@ -46,7 +41,8 @@ function verifyFromBool(v: boolean): VerificationStatus {
 
 /** Build full profile view model from `EmployeeProfileBundle`. */
 export function mapBundleToEmployeeProfileModel(
-  bundle: EmployeePrivateProfileQuery
+  bundle: EmployeePrivateProfileQuery,
+  employmentHistoryRecords: PayrollEmploymentHistoryQuery['employmentHistoryRecords'] = []
 ): EmployeeProfileModel | null {
   const emp = bundle.employee;
   if (!emp) return null;
@@ -142,7 +138,7 @@ export function mapBundleToEmployeeProfileModel(
     },
   ];
 
-  const hist = [...bundle.employmentHistoryRecords].sort((a, b) => {
+  const hist = [...employmentHistoryRecords].sort((a, b) => {
     const da = new Date(a.effectiveFrom).getTime();
     const db = new Date(b.effectiveFrom).getTime();
     return da - db;
@@ -228,8 +224,8 @@ export function mapBundleToEmployeeProfileModel(
   );
 
   const recentActivity: RecentActivityItem[] = [];
-  if (bundle.employmentHistoryRecords[0]) {
-    const r = bundle.employmentHistoryRecords[0];
+  if (employmentHistoryRecords[0]) {
+    const r = employmentHistoryRecords[0];
     recentActivity.push({
       id: 'act-salary',
       label: 'Compensation History Updated',
@@ -280,7 +276,7 @@ export function mapBundleToEmployeeProfileModel(
 
   return {
     core,
-    statusUi: normalizeStatus(emp.status),
+    statusUi: employeeStatusForDisplay(emp.status),
     personal,
     banking,
     identities,

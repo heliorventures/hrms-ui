@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import {
   ApproveExpenseDocument,
@@ -20,34 +20,66 @@ import type {
   ExpenseRow,
   RejectTarget,
   SubmitExpenseInput,
+  TravelRequestRow,
 } from '../types';
 import { parseStrictMoney, validatePositiveMoney } from '../utils/amountValidation';
 
 interface UseExpenseActionsArgs {
+  canApproveExpense: boolean;
+  canApproveTravel: boolean;
+  canMarkExpensePaid: boolean;
+  canSubmitExpense: boolean;
   client: GraphQLClient;
+  ownerKey: string;
   refresh: () => Promise<ExpenseBoardData>;
   setNotice: (notice: ExpenseNotice | null) => void;
 }
 
-export function useExpenseActions({ client, refresh, setNotice }: UseExpenseActionsArgs) {
+export function useExpenseActions({
+  canApproveExpense,
+  canApproveTravel,
+  canMarkExpensePaid,
+  canSubmitExpense,
+  client,
+  ownerKey,
+  refresh,
+  setNotice,
+}: UseExpenseActionsArgs) {
   const [approveTarget, setApproveTarget] = useState<ApproveExpenseTarget | null>(null);
   const [approveError, setApproveError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<RejectTarget | null>(null);
   const [submittingExpense, setSubmittingExpense] = useState(false);
 
+  useEffect(() => {
+    setApproveTarget(null);
+    setApproveError(null);
+    setRejectTarget(null);
+    setBusyKey(null);
+    setSubmittingExpense(false);
+  }, [ownerKey]);
+
   const openApproveExpense = useCallback((row: ExpenseRow) => {
+    if (!canApproveExpense) return;
+    if (!row.pendingApprovalStepId) {
+      setNotice({
+        variant: 'warning',
+        message: 'This approval step is no longer available. Refresh the expense board and try again.',
+      });
+      return;
+    }
     setApproveError(null);
     setApproveTarget({
       id: row.id,
+      expectedWorkflowStepId: row.pendingApprovalStepId,
       claimAmount: row.amount,
       currency: row.currency,
       draftApprove: row.amount,
     });
-  }, []);
+  }, [canApproveExpense, setNotice]);
 
   const approveExpense = useCallback(async () => {
-    if (!approveTarget) return;
+    if (!canApproveExpense || !approveTarget) return;
     setApproveError(null);
     const approvedAmount = approveTarget.draftApprove.trim();
     const approvedError = validatePositiveMoney(approvedAmount, 'Approved amount');
@@ -69,6 +101,7 @@ export function useExpenseActions({ client, refresh, setNotice }: UseExpenseActi
     try {
       const result = await client.request<ApproveExpenseMutation>(ApproveExpenseDocument, {
         expenseId: approveTarget.id,
+        expectedWorkflowStepId: approveTarget.expectedWorkflowStepId,
         ...(approvedAmountNumber === claimedAmountNumber ? {} : { approvedAmount }),
       });
       await refresh();
@@ -92,10 +125,11 @@ export function useExpenseActions({ client, refresh, setNotice }: UseExpenseActi
     } finally {
       setBusyKey(null);
     }
-  }, [approveTarget, client, refresh, setNotice]);
+  }, [approveTarget, canApproveExpense, client, refresh, setNotice]);
 
   const markExpensePaid = useCallback(
     async (expenseId: string, paymentReference: string) => {
+      if (!canMarkExpensePaid) return false;
       const reference = paymentReference.trim();
       if (!reference) {
         setNotice({
@@ -121,21 +155,36 @@ export function useExpenseActions({ client, refresh, setNotice }: UseExpenseActi
         setBusyKey(null);
       }
     },
-    [client, refresh, setNotice]
+    [canMarkExpensePaid, client, refresh, setNotice]
   );
 
   const rejectFromModal = useCallback(
     async (reason: string | null) => {
       const target = rejectTarget;
       if (!target) return;
+      if (
+        (target.kind === 'expense' && !canApproveExpense) ||
+        (target.kind === 'travel' && !canApproveTravel)
+      ) {
+        setRejectTarget(null);
+        return;
+      }
       const prefix =
         target.kind === 'expense' ? EXPENSE_BUSY_PREFIX.expense : EXPENSE_BUSY_PREFIX.travel;
       setBusyKey(`${prefix}:${target.id}`);
       try {
         if (target.kind === 'expense') {
-          await client.request(RejectExpenseDocument, { expenseId: target.id, reason });
+          await client.request(RejectExpenseDocument, {
+            expenseId: target.id,
+            expectedWorkflowStepId: target.expectedWorkflowStepId,
+            reason,
+          });
         } else {
-          await client.request(RejectTravelRequestDocument, { travelRequestId: target.id, reason });
+          await client.request(RejectTravelRequestDocument, {
+            travelRequestId: target.id,
+            expectedWorkflowStepId: target.expectedWorkflowStepId,
+            reason,
+          });
         }
         await refresh();
       } catch (err) {
@@ -144,16 +193,27 @@ export function useExpenseActions({ client, refresh, setNotice }: UseExpenseActi
         setBusyKey(null);
       }
     },
-    [client, refresh, rejectTarget]
+    [canApproveExpense, canApproveTravel, client, refresh, rejectTarget]
   );
 
   const approveTravel = useCallback(
-    async (travelRequestId: string) => {
-      setBusyKey(`${EXPENSE_BUSY_PREFIX.travel}:${travelRequestId}`);
+    async (row: TravelRequestRow) => {
+      if (!canApproveTravel) return;
+      if (!row.pendingApprovalStepId) {
+        setNotice({
+          variant: 'warning',
+          message: 'This approval step is no longer available. Refresh the travel requests and try again.',
+        });
+        return;
+      }
+      setBusyKey(`${EXPENSE_BUSY_PREFIX.travel}:${row.id}`);
       try {
         const result = await client.request<ApproveTravelRequestMutation>(
           ApproveTravelRequestDocument,
-          { travelRequestId }
+          {
+            travelRequestId: row.id,
+            expectedWorkflowStepId: row.pendingApprovalStepId,
+          }
         );
         await refresh();
         const status = result.approveTravelRequest.status.toUpperCase();
@@ -171,23 +231,24 @@ export function useExpenseActions({ client, refresh, setNotice }: UseExpenseActi
         setBusyKey(null);
       }
     },
-    [client, refresh, setNotice]
+    [canApproveTravel, client, refresh, setNotice]
   );
 
   const submitExpense = useCallback(
     async (input: SubmitExpenseInput) => {
+      if (!canSubmitExpense) return;
       setSubmittingExpense(true);
       try {
         await client.request(SubmitExpenseDocument, { input });
         await refresh();
         setNotice({ variant: 'success', message: 'Expense claim submitted.' });
       } catch (err) {
-        throw new Error(graphQlUserMessage(err));
+        throw err;
       } finally {
         setSubmittingExpense(false);
       }
     },
-    [client, refresh, setNotice]
+    [canSubmitExpense, client, refresh, setNotice]
   );
 
   return {

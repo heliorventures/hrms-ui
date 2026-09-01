@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { UI_EMPTY_TEXT, UI_STATUS_TEXT } from '../../constants/uiText';
+import DataTable, { type DataTableColumn } from './DataTable';
 
 interface TableColumn<T> {
   key: keyof T | string;
@@ -15,6 +16,7 @@ interface TableProps<T> {
   errorMessage?: string | null;
   loading?: boolean;
   loadingMessage?: string;
+  ariaLabel?: string;
 }
 
 const Table = <T,>({
@@ -25,76 +27,17 @@ const Table = <T,>({
   errorMessage = null,
   loading = false,
   loadingMessage = UI_STATUS_TEXT.loading,
+  ariaLabel = 'Records',
 }: TableProps<T>) => {
-  const colSpan = Math.max(columns.length, 1);
+  const dataTableColumns: DataTableColumn<T>[] = columns.map((column) => ({
+    id: String(column.key),
+    header: column.label,
+    cell: column.render ?? ((item) => String(item[column.key as keyof T])),
+  }));
+  const state = loading ? 'loading' : errorMessage ? 'error' : data.length === 0 ? 'empty' : 'ready';
+  const stateMessage = loading ? loadingMessage : errorMessage || emptyMessage;
 
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-700">
-          <tr>
-            {columns.map((column) => (
-              <th
-                key={column.key as string}
-                className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
-              >
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-          {loading && (
-            <tr>
-              <td
-                colSpan={colSpan}
-                className="px-6 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
-              >
-                {loadingMessage}
-              </td>
-            </tr>
-          )}
-          {!loading && errorMessage && (
-            <tr>
-              <td
-                colSpan={colSpan}
-                className="px-6 py-6 text-center text-sm text-red-600 dark:text-red-300"
-              >
-                {errorMessage}
-              </td>
-            </tr>
-          )}
-          {!loading && !errorMessage && data.length === 0 && (
-            <tr>
-              <td
-                colSpan={colSpan}
-                className="px-6 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
-              >
-                {emptyMessage}
-              </td>
-            </tr>
-          )}
-          {!loading &&
-            !errorMessage &&
-            data.map((item) => (
-              <tr
-                key={keyExtractor(item)}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                {columns.map((column) => (
-                  <td
-                    key={column.key as string}
-                    className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100"
-                  >
-                    {column.render ? column.render(item) : String(item[column.key as keyof T])}
-                  </td>
-                ))}
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  return <DataTable ariaLabel={ariaLabel} rows={data} columns={dataTableColumns} getRowId={keyExtractor} state={state} stateMessage={stateMessage} />;
 };
 
 export default Table;
