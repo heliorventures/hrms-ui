@@ -71,7 +71,7 @@ export const UI_FIELD_LABELS = {
 
 export const UI_PLACEHOLDER_TEXT = {
   employeeSearch: 'Search by employee code or name…',
-  globalSearch: 'Search pages, people, tools…',
+  globalSearch: 'Search pages and tools…',
   sidebarFilter: 'Filter menu and pages…',
   uuidEntitySearch: 'Search…',
 } as const;

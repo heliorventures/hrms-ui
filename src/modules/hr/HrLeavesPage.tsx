@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import FlashToastBar from '../../components/common/FlashToastBar';
@@ -223,18 +223,9 @@ const HrLeavesPage = () => {
   const activeFailure = workflowTrail.failure ?? failure;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave Approvals</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            HR queue over visible leave requests. Use{' '}
-            <Link className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400" to="/leave">
-              Leave
-            </Link>{' '}
-            for self-service apply and the standard employee board.
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave Approvals</h1>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" type="button" onClick={() => void reloadBoardAndLabels()} disabled={loading}>
             {loading ? 'Refreshing...' : 'Refresh'}

@@ -22,10 +22,14 @@ vi.mock('../../../contexts/AuthContext', () => ({
     clientSession: {
       employeeId: 'employee-1',
       permissions: graphState.permissions,
-      permissionScopes: {},
+      permissionScopes: { 'attendance:read': 'SELF', 'attendance:punch_self': 'SELF' },
       resourceScopes: {},
     },
   }),
+}));
+
+vi.mock('../../../contexts/TenantContext', () => ({
+  useTenant: () => ({ currentTenant: { timezone: 'Asia/Kolkata' } }),
 }));
 
 const deferred = <T,>() => {
@@ -71,6 +75,7 @@ function renderCard() {
 }
 
 beforeEach(() => {
+  vi.setSystemTime(new Date('2026-08-21T12:00:00Z'));
   graphState.permissions = new Set(['attendance:read', 'attendance:punch_self']);
   graphState.client.request = vi.fn((document) => {
     if (document === PunchDaySummaryDocument) return Promise.resolve(summary());

@@ -170,7 +170,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
   const unrestricted = employeeId.trim().length > 0 && selected.size === 0 && !loadingCodes;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card title="Timesheet Project Assignments">
         <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
           Restrict which projects an employee can log hours against. Leave none selected and save to allow{' '}

@@ -20,7 +20,11 @@ vi.mock('../../contexts/AuthContext', () => ({
     clientSession: {
       employeeId: 'manager-1',
       permissions: testState.permissions,
-      permissionScopes: {},
+      permissionScopes: {
+        'leave:read': 'ALL',
+        'leave:submit': 'SELF',
+        'leave:approve': 'TEAM',
+      },
       resourceScopes: {},
     },
   }),

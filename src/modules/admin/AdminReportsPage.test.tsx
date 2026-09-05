@@ -7,7 +7,7 @@ import {
   AdminAttendanceDailyReportDocument,
   AdminAttendanceReportSummaryDocument,
 } from '../../api/graphql/graphql';
-import AdminReportsPage from './AdminReportsPage';
+import AdminReportsPage, { attendanceCsvRows } from './AdminReportsPage';
 
 const graphState = vi.hoisted(() => ({ client: { request: vi.fn() } }));
 
@@ -81,6 +81,35 @@ afterEach(() => {
 });
 
 describe('AdminReportsPage attendance contract', () => {
+  it('exports punch instants in each row tenant timezone', () => {
+    expect(attendanceCsvRows([row])).toEqual([
+      [
+        'Employee',
+        'Employee Code',
+        'Work Date',
+        'Timezone',
+        'First Punch In',
+        'Last Punch Out',
+        'Status',
+        'Logged Minutes',
+        'Expected Minutes',
+        'Punch Segments',
+      ],
+      [
+        'Asha Rao',
+        'EMP-0042',
+        '2026-08-24',
+        'Asia/Kolkata',
+        '09:00:00',
+        '17:30:00',
+        'PRESENT',
+        510,
+        480,
+        2,
+      ],
+    ]);
+  });
+
   it('uses generated server page and summary data with complete row identity', async () => {
     render(<AdminReportsPage />);
     await settle();

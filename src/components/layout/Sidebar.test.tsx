@@ -25,7 +25,9 @@ function session(permissions: readonly string[], jwtRoles: string[] = []): Parse
   return {
     jwtRoles,
     permissions: new Set(permissions),
-    permissionScopes: {},
+    permissionScopes: Object.fromEntries(
+      permissions.map((permission) => [permission.trim().toLowerCase(), 'ALL'])
+    ),
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,

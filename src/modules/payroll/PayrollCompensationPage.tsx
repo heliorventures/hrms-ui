@@ -301,13 +301,9 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Compensation</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Define payroll components, build salary structures, and assign annual CTC to employees.
-          Payroll splits payslip lines from the effective employee structure.
-        </p>
       </div>
 
       {error ? (

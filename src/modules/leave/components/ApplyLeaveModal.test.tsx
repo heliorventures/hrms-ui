@@ -87,6 +87,48 @@ function fillValidRequest() {
 }
 
 describe('ApplyLeaveModal', () => {
+  it('omits the holiday list while still excluding holidays from the requested balance', async () => {
+    request.mockResolvedValue({});
+    const onSubmitted = vi.fn();
+    render(
+      <ApplyLeaveModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmitted={onSubmitted}
+        leaveTypes={[{ ...leaveTypes[0], isPaid: true, sandwichRule: false }]}
+        leavePolicies={[]}
+        upcomingHolidays={[
+          {
+            id: 'holiday',
+            calendarId: 'calendar',
+            calendarName: 'Company calendar',
+            name: 'Company holiday',
+            holidayDate: '2026-08-24',
+          },
+        ]}
+        leaveBalances={[
+          {
+            id: 'balance',
+            leaveTypeId: 'annual-leave',
+            year: 2026,
+            balanceDays: '1',
+            entitledDays: '1',
+            usedDays: '0',
+            pendingDays: '0',
+            carriedForwardDays: '0',
+          },
+        ]}
+      />
+    );
+    expect(screen.queryByText('Upcoming holidays')).toBeNull();
+    expect(screen.queryByText('Company holiday')).toBeNull();
+    fillValidRequest();
+    fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-08-25' } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
+    expect(screen.queryByText(/Insufficient leave balance/)).toBeNull();
+  });
+
   it('associates validation feedback with the first invalid field and moves focus there', async () => {
     renderModal();
 

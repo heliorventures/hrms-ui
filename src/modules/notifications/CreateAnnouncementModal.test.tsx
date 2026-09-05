@@ -39,7 +39,9 @@ const sessionFor = (
 ): ParsedClientSession => ({
   jwtRoles: [],
   permissions,
-  permissionScopes: {},
+  permissionScopes: permissions.has('notification:manage')
+    ? { 'notification:manage': 'ALL' }
+    : {},
   resourceScopes: {},
   persona,
   mustChangePassword: false,
@@ -141,7 +143,6 @@ describe('CreateAnnouncementModal audience loading', () => {
   });
 
   it('does not block employee team posts on HR-only audience lookup state', async () => {
-    const user = userEventLibrary.setup();
     authState.session = sessionFor('EMPLOYEE', new Set());
     graphState.client.request.mockResolvedValue({});
     const employeeClient = graphState.client;
@@ -149,8 +150,13 @@ describe('CreateAnnouncementModal audience loading', () => {
     renderModal();
 
     expect(graphState.client.request).not.toHaveBeenCalled();
-    await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Team update');
-    await user.click(screen.getByRole('button', { name: 'Publish Team Post' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Title' }), {
+      target: { value: 'Team update' },
+    });
+    const publishButton = screen.getByRole('button', { name: 'Publish Team Post' });
+    const form = publishButton.closest('form');
+    if (!form) throw new Error('Team post form was not rendered.');
+    fireEvent.submit(form);
 
     await waitFor(() => expect(createRequests(employeeClient)).toHaveLength(1));
     const [createRequest] = createRequests(employeeClient);

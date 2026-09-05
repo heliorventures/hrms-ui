@@ -4,7 +4,7 @@ const VIEWPORT_GUTTER = 16;
 const TRIGGER_GAP = 8;
 
 interface AnchoredPopoverPosition {
-  placement: 'top' | 'bottom';
+  placement: 'top' | 'bottom' | 'right' | 'left';
   style: CSSProperties;
 }
 
@@ -41,11 +41,13 @@ function readSafeAreaInsets(): SafeAreaInsets {
 
 export function useAnchoredPopoverPosition({
   align,
+  side = 'bottom',
   open,
   panelRef,
   triggerRef,
 }: {
   align: 'start' | 'end';
+  side?: 'bottom' | 'right';
   open: boolean;
   panelRef: RefObject<HTMLElement>;
   triggerRef: RefObject<HTMLElement>;
@@ -69,22 +71,35 @@ export function useAnchoredPopoverPosition({
     const viewportHeight = visualViewport?.height ?? window.innerHeight;
     const safeArea = readSafeAreaInsets();
     const minimumLeft = viewportLeft + safeArea.left + VIEWPORT_GUTTER;
-    const maximumRight =
-      viewportLeft + viewportWidth - safeArea.right - VIEWPORT_GUTTER;
+    const maximumRight = viewportLeft + viewportWidth - safeArea.right - VIEWPORT_GUTTER;
     const minimumTop = viewportTop + safeArea.top + VIEWPORT_GUTTER;
-    const maximumBottom =
-      viewportTop + viewportHeight - safeArea.bottom - VIEWPORT_GUTTER;
+    const maximumBottom = viewportTop + viewportHeight - safeArea.bottom - VIEWPORT_GUTTER;
     const maxWidth = Math.max(0, maximumRight - minimumLeft);
     const maxHeight = Math.max(0, maximumBottom - minimumTop);
     const panelWidth = Math.min(panelRect.width, maxWidth);
     const panelHeight = Math.min(panelRect.height, maxHeight);
-    const preferredLeft =
-      align === 'start' ? triggerRect.left : triggerRect.right - panelWidth;
+    if (side === 'right') {
+      const fitsRight = triggerRect.right + TRIGGER_GAP + panelWidth <= maximumRight;
+      const preferredLeft = fitsRight
+        ? triggerRect.right + TRIGGER_GAP
+        : triggerRect.left - panelWidth - TRIGGER_GAP;
+      setPosition({
+        placement: fitsRight ? 'right' : 'left',
+        style: {
+          left: Math.max(minimumLeft, Math.min(preferredLeft, maximumRight - panelWidth)),
+          top: Math.max(minimumTop, Math.min(triggerRect.top, maximumBottom - panelHeight)),
+          maxHeight,
+          maxWidth,
+          visibility: 'visible',
+        },
+      });
+      return;
+    }
+    const preferredLeft = align === 'start' ? triggerRect.left : triggerRect.right - panelWidth;
     const maximumLeft = Math.max(minimumLeft, maximumRight - panelWidth);
     const left = Math.min(Math.max(preferredLeft, minimumLeft), maximumLeft);
     const fitsAbove = triggerRect.top - panelHeight - TRIGGER_GAP >= minimumTop;
-    const overflowsBelow =
-      triggerRect.bottom + TRIGGER_GAP + panelHeight > maximumBottom;
+    const overflowsBelow = triggerRect.bottom + TRIGGER_GAP + panelHeight > maximumBottom;
     const placement = overflowsBelow && fitsAbove ? 'top' : 'bottom';
     const unclampedTop =
       placement === 'top'
@@ -97,7 +112,7 @@ export function useAnchoredPopoverPosition({
       placement,
       style: { left, top, maxHeight, maxWidth, visibility: 'visible' },
     });
-  }, [align, panelRef, triggerRef]);
+  }, [align, side, panelRef, triggerRef]);
 
   useLayoutEffect(() => {
     if (!open) return undefined;

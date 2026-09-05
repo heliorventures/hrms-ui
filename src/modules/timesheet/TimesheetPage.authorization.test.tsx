@@ -18,7 +18,7 @@ vi.mock('../../contexts/AuthContext', () => ({
     clientSession: {
       employeeId: 'employee-1',
       permissions: state.permissions,
-      permissionScopes: {},
+      permissionScopes: { 'timesheet:read': 'SELF' },
       resourceScopes: {},
     },
   }),

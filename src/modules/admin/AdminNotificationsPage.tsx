@@ -13,11 +13,8 @@ const AdminNotificationsPage = () => {
   const directState = directNotification.state;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notification Admin</h1>
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        Manage announcements and send private in-app notifications to selected users.
-      </p>
 
       {model.error ? (
         <Card>

@@ -15,6 +15,7 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import { formatMinutesAsHhMm } from '../../utils/attendanceDuration';
 import { monthBoundsIso } from '../../utils/calendarRange';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import { formatTenantTime } from '../../utils/tenantTime';
 import { titleCaseLabel } from '../../utils/uiLabel';
 import AttendanceReportDetails, {
   type AttendanceDailyRow,
@@ -102,6 +103,35 @@ const downloadCsv = (filename: string, rows: unknown[][]) => {
   anchor.click();
   URL.revokeObjectURL(url);
 };
+
+export function attendanceCsvRows(rows: AttendanceDailyRow[]): unknown[][] {
+  return [
+    [
+      'Employee',
+      'Employee Code',
+      'Work Date',
+      'Timezone',
+      'First Punch In',
+      'Last Punch Out',
+      'Status',
+      'Logged Minutes',
+      'Expected Minutes',
+      'Punch Segments',
+    ],
+    ...rows.map((row) => [
+      row.employeeName,
+      row.employeeCode,
+      row.workDate,
+      row.timezone,
+      formatTenantTime(row.firstCheckInAt, row.timezone),
+      formatTenantTime(row.lastCheckOutAt, row.timezone),
+      row.status,
+      row.loggedMinutes,
+      row.expectedMinutes ?? '',
+      row.segmentCount,
+    ]),
+  ];
+}
 
 function currentMonthRange() {
   const now = new Date();
@@ -210,7 +240,15 @@ const AdminReportsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [after, appliedEmployeeSearch, client, dateRangeError, filters.endDate, filters.startDate, reportType]);
+  }, [
+    after,
+    appliedEmployeeSearch,
+    client,
+    dateRangeError,
+    filters.endDate,
+    filters.startDate,
+    reportType,
+  ]);
 
   const employeeOptions = [
     { value: 'all', label: titleCaseLabel('ALL employees') },
@@ -230,7 +268,8 @@ const AdminReportsPage = () => {
   const filteredPayrollCycles = useMemo(
     () =>
       (referenceData?.payrollCycles ?? []).filter((row) => {
-        const comparable = row.paymentDate ?? `${row.year}-${String(row.month).padStart(2, '0')}-01`;
+        const comparable =
+          row.paymentDate ?? `${row.year}-${String(row.month).padStart(2, '0')}-01`;
         return comparable >= filters.startDate && comparable <= filters.endDate;
       }),
     [filters.endDate, filters.startDate, referenceData]
@@ -265,19 +304,10 @@ const AdminReportsPage = () => {
         exportAfter = next;
       } while (true);
 
-      downloadCsv(`attendance-report-${filters.startDate}-to-${filters.endDate}.csv`, [
-        ['Employee', 'Employee Code', 'Work Date', 'Timezone', 'Status', 'Logged Minutes', 'Expected Minutes', 'Punch Segments'],
-        ...rows.map((row) => [
-          row.employeeName,
-          row.employeeCode,
-          row.workDate,
-          row.timezone,
-          row.status,
-          row.loggedMinutes,
-          row.expectedMinutes ?? '',
-          row.segmentCount,
-        ]),
-      ]);
+      downloadCsv(
+        `attendance-report-${filters.startDate}-to-${filters.endDate}.csv`,
+        attendanceCsvRows(rows)
+      );
     } catch (requestError) {
       setError(graphQlUserMessage(requestError));
     } finally {
@@ -298,14 +328,26 @@ const AdminReportsPage = () => {
         ['Employee', 'Employee Code', 'From Date', 'To Date', 'Status'],
         ...filteredLeave.map((row) => {
           const employee = labels.get(row.employeeId);
-          return [employee?.fullName ?? 'Employee unavailable', employee?.employeeCode ?? '', row.fromDate, row.toDate, row.status];
+          return [
+            employee?.fullName ?? 'Employee unavailable',
+            employee?.employeeCode ?? '',
+            row.fromDate,
+            row.toDate,
+            row.status,
+          ];
         }),
       ]);
       return;
     }
     downloadCsv(`payroll-report-${filters.startDate}-to-${filters.endDate}.csv`, [
       ['Cycle', 'Month', 'Year', 'Status', 'Payment Date'],
-      ...filteredPayrollCycles.map((row) => [row.name, row.month, row.year, row.status, row.paymentDate ?? '']),
+      ...filteredPayrollCycles.map((row) => [
+        row.name,
+        row.month,
+        row.year,
+        row.status,
+        row.paymentDate ?? '',
+      ]),
     ]);
   };
 
@@ -324,7 +366,10 @@ const AdminReportsPage = () => {
       return (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-7">
           {cards.map(([label, value]) => (
-            <div key={String(label)} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+            <div
+              key={String(label)}
+              className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+            >
               <div className="text-sm text-gray-500 dark:text-gray-400">{label}</div>
               <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{value}</div>
             </div>
@@ -335,35 +380,103 @@ const AdminReportsPage = () => {
     if (reportType === 'leave') {
       const statusCount = (status: string) =>
         filteredLeave.filter((row) => row.status.toLowerCase() === status).length;
-      return <p className="text-sm text-gray-700 dark:text-gray-200">Total: {filteredLeave.length} · Approved: {statusCount('approved')} · Pending: {statusCount('pending')} · Rejected: {statusCount('rejected')}</p>;
+      return (
+        <p className="text-sm text-gray-700 dark:text-gray-200">
+          Total: {filteredLeave.length} · Approved: {statusCount('approved')} · Pending:{' '}
+          {statusCount('pending')} · Rejected: {statusCount('rejected')}
+        </p>
+      );
     }
-    const activeComponents = (referenceData?.salaryComponents ?? []).filter((row) => row.isActive).length;
-    const taxableComponents = (referenceData?.salaryComponents ?? []).filter((row) => row.isTaxable).length;
-    return <p className="text-sm text-gray-700 dark:text-gray-200">Cycles: {filteredPayrollCycles.length} · Active components: {activeComponents} · Taxable components: {taxableComponents}</p>;
+    const activeComponents = (referenceData?.salaryComponents ?? []).filter(
+      (row) => row.isActive
+    ).length;
+    const taxableComponents = (referenceData?.salaryComponents ?? []).filter(
+      (row) => row.isTaxable
+    ).length;
+    return (
+      <p className="text-sm text-gray-700 dark:text-gray-200">
+        Cycles: {filteredPayrollCycles.length} · Active components: {activeComponents} · Taxable
+        components: {taxableComponents}
+      </p>
+    );
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
-      {error && <Card><p className="text-sm text-red-600 dark:text-red-400">{error}</p></Card>}
+      {error && (
+        <Card>
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </Card>
+      )}
       <Card title="Report Filters">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <Select label="Report Type" name="reportType" value={reportType} onChange={(event) => setReportType(event.target.value as typeof reportType)} options={[
-            { value: 'attendance', label: 'Attendance Report' },
-            { value: 'leave', label: 'Leave Report' },
-            { value: 'payroll', label: 'Payroll Report' },
-          ]} fullWidth />
+          <Select
+            label="Report Type"
+            name="reportType"
+            value={reportType}
+            onChange={(event) => setReportType(event.target.value as typeof reportType)}
+            options={[
+              { value: 'attendance', label: 'Attendance Report' },
+              { value: 'leave', label: 'Leave Report' },
+              { value: 'payroll', label: 'Payroll Report' },
+            ]}
+            fullWidth
+          />
           {reportType === 'attendance' ? (
-            <Input label="Employee Search" name="employeeSearch" value={filters.employeeSearch} onChange={(event) => setFilters((current) => ({ ...current, employeeSearch: event.target.value }))} placeholder="Name or employee code" fullWidth />
+            <Input
+              label="Employee Search"
+              name="employeeSearch"
+              value={filters.employeeSearch}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, employeeSearch: event.target.value }))
+              }
+              placeholder="Name or employee code"
+              fullWidth
+            />
           ) : (
-            <Select label="Employee" name="employeeId" value={filters.employeeId} onChange={(event) => setFilters((current) => ({ ...current, employeeId: event.target.value }))} options={employeeOptions} fullWidth />
+            <Select
+              label="Employee"
+              name="employeeId"
+              value={filters.employeeId}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, employeeId: event.target.value }))
+              }
+              options={employeeOptions}
+              fullWidth
+            />
           )}
-          <Input label="Start Date" type="date" name="startDate" value={filters.startDate} onChange={(event) => setFilters((current) => ({ ...current, startDate: event.target.value }))} fullWidth required />
-          <Input label="End Date" type="date" name="endDate" value={filters.endDate} onChange={(event) => setFilters((current) => ({ ...current, endDate: event.target.value }))} fullWidth required />
+          <Input
+            label="Start Date"
+            type="date"
+            name="startDate"
+            value={filters.startDate}
+            onChange={(event) =>
+              setFilters((current) => ({ ...current, startDate: event.target.value }))
+            }
+            fullWidth
+            required
+          />
+          <Input
+            label="End Date"
+            type="date"
+            name="endDate"
+            value={filters.endDate}
+            onChange={(event) =>
+              setFilters((current) => ({ ...current, endDate: event.target.value }))
+            }
+            fullWidth
+            required
+          />
         </div>
-        {dateRangeError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{dateRangeError}</p>}
+        {dateRangeError && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{dateRangeError}</p>
+        )}
         <div className="mt-4">
-          <Button disabled={Boolean(dateRangeError) || metadataLoading || attendanceLoading || exporting} onClick={generateReport}>
+          <Button
+            disabled={Boolean(dateRangeError) || metadataLoading || attendanceLoading || exporting}
+            onClick={generateReport}
+          >
             {exporting ? 'Preparing Complete Export...' : 'Generate Report'}
           </Button>
         </div>

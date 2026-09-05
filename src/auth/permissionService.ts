@@ -206,10 +206,9 @@ const SCOPED_CAPABILITY_PERMISSIONS: Partial<
   'route.workplace.workflows': { permission: PERMISSIONS.workflowManage, scopes: ALL_SCOPE },
 };
 
-export function createPermissionService(
-  session: ParsedClientSession | null
-): PermissionService {
-  const canPermission = (permission: PermissionCode) => session?.permissions.has(permission) ?? false;
+export function createPermissionService(session: ParsedClientSession | null): PermissionService {
+  const canPermission = (permission: PermissionCode) =>
+    session?.permissions.has(permission) ?? false;
 
   const canScopedPermission = (
     permission: PermissionCode,
@@ -217,7 +216,9 @@ export function createPermissionService(
   ): boolean => {
     if (!canPermission(permission)) return false;
     const rawScope = session?.permissionScopes[permission.trim().toLowerCase()];
-    const scope = String(rawScope ?? '').trim().toUpperCase() as ExplicitPermissionScope;
+    const scope = String(rawScope ?? '')
+      .trim()
+      .toUpperCase() as ExplicitPermissionScope;
     return ANY_EXPLICIT_SCOPE.includes(scope) && allowedScopes.includes(scope);
   };
 
@@ -233,7 +234,14 @@ export function createPermissionService(
       case 'route.expenses':
         return (
           canScopedPermission(PERMISSIONS.expenseRead) ||
-          canScopedPermission(PERMISSIONS.travelRead)
+          canScopedPermission(PERMISSIONS.expenseSubmit, SELF_SCOPE) ||
+          canScopedPermission(PERMISSIONS.expenseApprove, APPROVAL_SCOPES) ||
+          canScopedPermission(PERMISSIONS.expenseManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.expensePay, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.travelRead) ||
+          canScopedPermission(PERMISSIONS.travelSubmit, SELF_SCOPE) ||
+          canScopedPermission(PERMISSIONS.travelApprove, APPROVAL_SCOPES) ||
+          canScopedPermission(PERMISSIONS.travelManage, ALL_SCOPE)
         );
       case 'action.onboarding.manage':
         return (

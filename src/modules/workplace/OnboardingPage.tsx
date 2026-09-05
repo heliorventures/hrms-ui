@@ -251,10 +251,9 @@ const OnboardingPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Onboarding & Exit"
-        description="Complete joining tasks; file exit requests, HR approval, department clearance, and FNF settlement."
       />
 
       <Tabs

@@ -9,6 +9,15 @@
     @apply bg-canvas text-content-primary antialiased;
   }
 
+  /* The authenticated shell owns scrolling. Keep document overflow from adding
+     a second scrollbar alongside the main content, including at browser zoom. */
+  html:has(#app-shell),
+  body:has(#app-shell),
+  #root:has(#app-shell) {
+    height: 100%;
+    overflow: hidden;
+  }
+
   button,
   a[href],
   [role='button'],
@@ -30,6 +39,10 @@
 
 /* Payslip: print / Save as PDF — hide app chrome, show only the slip */
 @media print {
+  html:has(#app-shell), body:has(#app-shell), #root:has(#app-shell) {
+    height: auto;
+    overflow: visible;
+  }
   html.print-payslip body * {
     visibility: hidden;
   }

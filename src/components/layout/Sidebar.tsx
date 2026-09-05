@@ -160,16 +160,16 @@ const Sidebar = ({
             />
             <IconButton
               onClick={onToggleDesktop}
-              className={`hidden lg:inline-flex ${
-                desktopCollapsed ? 'ml-auto' : ''
-              }`}
+              className={`hidden lg:inline-flex ${desktopCollapsed ? 'ml-auto' : ''}`}
               label={desktopCollapsed ? 'Expand navigation' : 'Collapse navigation'}
               title={desktopCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-              icon={desktopCollapsed ? (
-                <PanelLeftOpen className="h-5 w-5" aria-hidden />
-              ) : (
-                <PanelLeftClose className="h-5 w-5" aria-hidden />
-              )}
+              icon={
+                desktopCollapsed ? (
+                  <PanelLeftOpen className="h-5 w-5" aria-hidden />
+                ) : (
+                  <PanelLeftClose className="h-5 w-5" aria-hidden />
+                )
+              }
             />
           </div>
 
@@ -222,6 +222,7 @@ const Sidebar = ({
                 expanded={filterActive || expanded[section.key]}
                 compact={desktopCollapsed}
                 onToggle={() => toggleSection(section.key)}
+                flyout={desktopViewport}
                 onRequestExpand={onToggleDesktop}
                 onNavigate={onCloseMobile}
               />

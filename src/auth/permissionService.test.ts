@@ -26,11 +26,9 @@ function serviceWith(
 describe('HR attendance management route permission', () => {
   it('allows the route with attendance:regularize', () => {
     expect(
-      serviceWith(
-        ['attendance:regularize'],
-        [],
-        { 'attendance:regularize': 'TEAM' }
-      ).canRoute('/hr/attendance')
+      serviceWith(['attendance:regularize'], [], { 'attendance:regularize': 'TEAM' }).canRoute(
+        '/hr/attendance'
+      )
     ).toBe(true);
   });
 
@@ -63,46 +61,28 @@ describe('runtime authorization uses permissions instead of role names', () => {
   it('requires every ALL-scoped permission used by the combined reports page', () => {
     expect(serviceWith(['attendance:read']).canRoute('/admin/reports')).toBe(false);
     expect(
-      serviceWith(
-        ['attendance:read', 'employee:read', 'leave:read', 'payroll:manage'],
-        [],
-        {
-          'attendance:read': 'ALL',
-          'employee:read': 'ALL',
-          'leave:read': 'ALL',
-          'payroll:manage': 'ALL',
-        }
-      ).canRoute(
-        '/admin/reports'
-      )
+      serviceWith(['attendance:read', 'employee:read', 'leave:read', 'payroll:manage'], [], {
+        'attendance:read': 'ALL',
+        'employee:read': 'ALL',
+        'leave:read': 'ALL',
+        'payroll:manage': 'ALL',
+      }).canRoute('/admin/reports')
     ).toBe(true);
     expect(
-      serviceWith(
-        ['attendance:read', 'employee:read', 'leave:read', 'payroll:manage'],
-        [],
-        {
-          'attendance:read': 'ALL',
-          'employee:read': 'ALL',
-          'leave:read': 'SELF',
-          'payroll:manage': 'ALL',
-        }
-      ).canRoute('/admin/reports')
+      serviceWith(['attendance:read', 'employee:read', 'leave:read', 'payroll:manage'], [], {
+        'attendance:read': 'ALL',
+        'employee:read': 'ALL',
+        'leave:read': 'SELF',
+        'payroll:manage': 'ALL',
+      }).canRoute('/admin/reports')
     ).toBe(false);
     expect(serviceWith(['employee:write']).canRoute('/admin/reports')).toBe(false);
     expect(serviceWith(['payroll:statutory_export']).canRoute('/admin/reports')).toBe(false);
   });
 
   it('uses explicit approval scopes for HR workbench routes', () => {
-    const leaveTeam = serviceWith(
-      ['leave:approve'],
-      [],
-      { 'leave:approve': 'TEAM' }
-    );
-    const timesheetTeam = serviceWith(
-      ['timesheet:approve'],
-      [],
-      { 'timesheet:approve': 'TEAM' }
-    );
+    const leaveTeam = serviceWith(['leave:approve'], [], { 'leave:approve': 'TEAM' });
+    const timesheetTeam = serviceWith(['timesheet:approve'], [], { 'timesheet:approve': 'TEAM' });
 
     expect(leaveTeam.canCapability('action.leave.approve')).toBe(true);
     expect(leaveTeam.canRoute('/hr')).toBe(true);
@@ -136,13 +116,15 @@ describe('runtime authorization uses permissions instead of role names', () => {
 
   it('uses the company directory grant for people search', () => {
     expect(
-      serviceWith(
-        ['employee_directory:read'],
-        [],
-        { 'employee_directory:read': 'ALL' }
-      ).canCapability('action.people.search')
+      serviceWith(['employee_directory:read'], [], {
+        'employee_directory:read': 'ALL',
+      }).canCapability('action.people.search')
     ).toBe(true);
-    expect(serviceWith(['leave:manage'], [], { 'leave:manage': 'ALL' }).canCapability('action.people.search')).toBe(false);
+    expect(
+      serviceWith(['leave:manage'], [], { 'leave:manage': 'ALL' }).canCapability(
+        'action.people.search'
+      )
+    ).toBe(false);
   });
 
   it.each([
@@ -176,11 +158,51 @@ describe('runtime authorization uses permissions instead of role names', () => {
       )
     ).toBe(false);
     expect(
-      serviceWith(
-        ['timesheet:manage', 'attendance:punch_policy'],
-        [],
-        { 'timesheet:manage': 'ALL', 'attendance:punch_policy': 'ALL' }
-      ).canRoute('/admin/timesheet-settings')
+      serviceWith(['timesheet:manage', 'attendance:punch_policy'], [], {
+        'timesheet:manage': 'ALL',
+        'attendance:punch_policy': 'ALL',
+      }).canRoute('/admin/timesheet-settings')
+    ).toBe(true);
+  });
+
+  it.each([
+    ['/workplace/recruitment', 'recruitment:manage'],
+    ['/workplace/performance', 'performance:manage'],
+    ['/workplace/learning', 'learning:manage'],
+    ['/workplace/succession', 'succession:manage'],
+    ['/workplace/compensation', 'compensation:manage'],
+  ] as const)('guards workplace configuration route %s with ALL-scoped %s', (path, permission) => {
+    expect(serviceWith([]).canRoute(path)).toBe(false);
+    expect(serviceWith([permission], [], {}).canRoute(path)).toBe(false);
+    for (const scope of ['SELF', 'TEAM', 'DEPARTMENT'] as const) {
+      expect(serviceWith([permission], [], { [permission]: scope }).canRoute(path)).toBe(false);
+    }
+    expect(serviceWith([permission], [], { [permission]: 'ALL' }).canRoute(path)).toBe(true);
+    expect(
+      serviceWith(['employee:manage'], [], { 'employee:manage': 'ALL' }).canRoute(path)
+    ).toBe(false);
+  });
+
+  it('keeps Benefits self-service separate from Benefits configuration', () => {
+    expect(
+      serviceWith(['benefits:self'], [], { 'benefits:self': 'SELF' }).canRoute(
+        '/workplace/benefits'
+      )
+    ).toBe(true);
+    expect(
+      serviceWith(['benefits:self'], [], { 'benefits:self': 'ALL' }).canRoute(
+        '/workplace/benefits'
+      )
+    ).toBe(false);
+    expect(
+      serviceWith(['benefits:manage'], [], { 'benefits:manage': 'TEAM' }).canRoute(
+        '/workplace/benefits'
+      )
+    ).toBe(false);
+    expect(
+      serviceWith(['benefits:manage'], [], { 'benefits:manage': 'ALL' }).canRoute(
+        '/workplace/benefits'
+      )
     ).toBe(true);
   });
 });
@@ -212,15 +234,15 @@ describe('canonical self-service authorization', () => {
   });
 
   it('uses the directory permission only for company directory routes', () => {
-    const directoryAll = serviceWith(
-      ['employee_directory:read'],
-      [],
-      { 'employee_directory:read': 'ALL' }
-    );
+    const directoryAll = serviceWith(['employee_directory:read'], [], {
+      'employee_directory:read': 'ALL',
+    });
 
     expect(directoryAll.canRoute('/organization/employees')).toBe(true);
     expect(directoryAll.canRoute('/organization/org-chart')).toBe(true);
-    expect(serviceWith(['employee_directory:read']).canRoute('/organization/employees')).toBe(false);
+    expect(serviceWith(['employee_directory:read']).canRoute('/organization/employees')).toBe(
+      false
+    );
     expect(
       serviceWith(['employee:read'], [], { 'employee:read': 'ALL' }).canRoute(
         '/organization/employees'
@@ -230,17 +252,15 @@ describe('canonical self-service authorization', () => {
 
   it('uses an explicit employee:read scope for profile settings and retires employee:self', () => {
     expect(
-      serviceWith(['employee:read'], [], { 'employee:read': 'SELF' }).canRoute(
-        '/profile/settings'
-      )
+      serviceWith(['employee:read'], [], { 'employee:read': 'SELF' }).canRoute('/profile/settings')
     ).toBe(true);
     expect(
-      serviceWith(['employee:read'], [], { 'employee:read': 'TEAM' }).canRoute(
-        '/profile/settings'
-      )
+      serviceWith(['employee:read'], [], { 'employee:read': 'TEAM' }).canRoute('/profile/settings')
     ).toBe(true);
     expect(serviceWith(['employee:read'], [], {}).canRoute('/profile/settings')).toBe(false);
-    expect(serviceWith(['employee:self'], [], { 'employee:self': 'SELF' }).canRoute('/profile/settings')).toBe(false);
+    expect(
+      serviceWith(['employee:self'], [], { 'employee:self': 'SELF' }).canRoute('/profile/settings')
+    ).toBe(false);
   });
 
   it.each([
@@ -256,14 +276,10 @@ describe('canonical self-service authorization', () => {
   ])('requires %s to have exact permission %s', (path, permission) => {
     expect(serviceWith([]).canRoute(path)).toBe(false);
     expect(
-      serviceWith(
-        [permission],
-        [],
-        {
-          [permission]:
-            permission === 'payroll:manage' || permission === 'tax:manage' ? 'ALL' : 'SELF',
-        }
-      ).canRoute(path)
+      serviceWith([permission], [], {
+        [permission]:
+          permission === 'payroll:manage' || permission === 'tax:manage' ? 'ALL' : 'SELF',
+      }).canRoute(path)
     ).toBe(true);
   });
 
@@ -271,23 +287,36 @@ describe('canonical self-service authorization', () => {
     expect(serviceWith(['tax:read'], [], { 'tax:read': 'SELF' }).canRoute('/payroll/tax')).toBe(
       false
     );
-    expect(
-      serviceWith(['tax:manage'], [], { 'tax:manage': 'SELF' }).canRoute('/payroll/tax')
-    ).toBe(false);
-    expect(
-      serviceWith(['tax:manage'], [], { 'tax:manage': 'ALL' }).canRoute('/payroll/tax')
-    ).toBe(true);
+    expect(serviceWith(['tax:manage'], [], { 'tax:manage': 'SELF' }).canRoute('/payroll/tax')).toBe(
+      false
+    );
+    expect(serviceWith(['tax:manage'], [], { 'tax:manage': 'ALL' }).canRoute('/payroll/tax')).toBe(
+      true
+    );
   });
 
-  it('allows expenses only with expense:read or travel:read', () => {
+  it('opens expenses for exact scoped read or approval authority', () => {
     expect(serviceWith([]).canRoute('/expenses')).toBe(false);
     expect(serviceWith(['expense:read']).canRoute('/expenses')).toBe(true);
     expect(serviceWith(['travel:read']).canRoute('/expenses')).toBe(true);
-    expect(serviceWith(['expense:submit', 'travel:submit']).canRoute('/expenses')).toBe(false);
+    expect(
+      serviceWith(['expense:approve'], [], { 'expense:approve': 'TEAM' }).canRoute('/expenses')
+    ).toBe(true);
+    expect(
+      serviceWith(['travel:approve'], [], { 'travel:approve': 'TEAM' }).canRoute('/expenses')
+    ).toBe(true);
+    expect(
+      serviceWith(['expense:submit'], [], { 'expense:submit': 'SELF' }).canRoute('/expenses')
+    ).toBe(true);
+    expect(serviceWith(['expense:approve']).canRoute('/expenses')).toBe(false);
   });
 
   it('separates payroll-owned and workplace-owned compensation authority', () => {
-    expect(serviceWith(['payroll:manage'], [], { 'payroll:manage': 'ALL' }).canRoute('/payroll/compensation')).toBe(true);
+    expect(
+      serviceWith(['payroll:manage'], [], { 'payroll:manage': 'ALL' }).canRoute(
+        '/payroll/compensation'
+      )
+    ).toBe(true);
     expect(serviceWith(['compensation:manage']).canRoute('/payroll/compensation')).toBe(false);
     expect(serviceWith(['payroll:statutory_export']).canRoute('/payroll/compensation')).toBe(false);
 
@@ -308,16 +337,14 @@ describe('canonical self-service authorization', () => {
   });
 
   it('requires ALL scope for payroll management and statutory exports', () => {
-    const self = serviceWith(
-      ['payroll:manage', 'payroll:statutory_export'],
-      [],
-      { 'payroll:manage': 'SELF', 'payroll:statutory_export': 'SELF' }
-    );
-    const all = serviceWith(
-      ['payroll:manage', 'payroll:statutory_export'],
-      [],
-      { 'payroll:manage': 'ALL', 'payroll:statutory_export': 'ALL' }
-    );
+    const self = serviceWith(['payroll:manage', 'payroll:statutory_export'], [], {
+      'payroll:manage': 'SELF',
+      'payroll:statutory_export': 'SELF',
+    });
+    const all = serviceWith(['payroll:manage', 'payroll:statutory_export'], [], {
+      'payroll:manage': 'ALL',
+      'payroll:statutory_export': 'ALL',
+    });
 
     expect(self.canCapability('action.payroll.manage')).toBe(false);
     expect(self.canCapability('action.payroll.export')).toBe(false);
@@ -326,16 +353,16 @@ describe('canonical self-service authorization', () => {
   });
 
   it('separates SELF tax submission from broad approval and ALL management', () => {
-    const self = serviceWith(
-      ['tax:submit', 'tax:approve', 'tax:manage'],
-      [],
-      { 'tax:submit': 'SELF', 'tax:approve': 'SELF', 'tax:manage': 'SELF' }
-    );
-    const all = serviceWith(
-      ['tax:submit', 'tax:approve', 'tax:manage'],
-      [],
-      { 'tax:submit': 'ALL', 'tax:approve': 'ALL', 'tax:manage': 'ALL' }
-    );
+    const self = serviceWith(['tax:submit', 'tax:approve', 'tax:manage'], [], {
+      'tax:submit': 'SELF',
+      'tax:approve': 'SELF',
+      'tax:manage': 'SELF',
+    });
+    const all = serviceWith(['tax:submit', 'tax:approve', 'tax:manage'], [], {
+      'tax:submit': 'ALL',
+      'tax:approve': 'ALL',
+      'tax:manage': 'ALL',
+    });
 
     expect(self.canCapability('action.tax.submit')).toBe(true);
     expect(self.canCapability('action.tax.approve')).toBe(false);

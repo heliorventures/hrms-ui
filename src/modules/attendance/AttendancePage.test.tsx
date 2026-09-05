@@ -21,7 +21,7 @@ const authState = vi.hoisted(() => ({
   clientSession: {
     jwtRoles: [],
     permissions: new Set<string>(),
-    permissionScopes: {},
+    permissionScopes: { 'attendance:punch_self': 'SELF' },
     resourceScopes: {},
     employeeId: 'employee-self',
     persona: 'EMPLOYEE',
@@ -106,6 +106,8 @@ async function advanceToNextPage() {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.setSystemTime(new Date('2026-08-25T12:00:00Z'));
   graphClientState.current = graphClient;
   authState.clientSession.employeeId = 'employee-self';
   authState.clientSession.permissions = new Set();
@@ -116,7 +118,10 @@ beforeEach(() => {
   });
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 describe('AttendancePage', () => {
   it('requests the generated self-attendance document without an employee target', async () => {

@@ -32,8 +32,8 @@ const tenantB = '342205fc-98b1-5421-8a11-b30821c86aa0';
 function employeeSession(): ParsedClientSession {
   return {
     jwtRoles: [],
-    permissions: new Set(),
-    permissionScopes: {},
+    permissions: new Set(['notification:read']),
+    permissionScopes: { 'notification:read': 'SELF' },
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,

@@ -5,7 +5,7 @@ import PageNotice from '../../../components/common/PageNotice';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-import { ApplyLeaveContextPanel, UpcomingHolidaysList } from './ApplyLeaveSupportingInfo';
+import { ApplyLeaveContextPanel } from './ApplyLeaveSupportingInfo';
 import ApplyLeaveFormFields, {
   type ApplyLeaveField,
   type ApplyLeaveFieldErrors,
@@ -23,7 +23,12 @@ import {
   type ApplyLeaveDialogContext,
 } from './useApplyLeaveDialogOwnership';
 
-export type { ApplyBalanceRow, ApplyHolidayRow, ApplyLeavePolicyRow, ApplyLeaveTypeOption } from './applyLeavePolicy';
+export type {
+  ApplyBalanceRow,
+  ApplyHolidayRow,
+  ApplyLeavePolicyRow,
+  ApplyLeaveTypeOption,
+} from './applyLeavePolicy';
 
 interface ApplyLeaveModalProps {
   isOpen: boolean;
@@ -51,8 +56,10 @@ const ApplyLeaveModal = ({
   onSubmitted,
 }: ApplyLeaveModalProps) => {
   const client = useGraphClient('client');
-  const { activeSubmissionRef, dialogContext, dialogContextRef } =
-    useApplyLeaveDialogOwnership(client, isOpen);
+  const { activeSubmissionRef, dialogContext, dialogContextRef } = useApplyLeaveDialogOwnership(
+    client,
+    isOpen
+  );
   const [leaveTypeId, setLeaveTypeId] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -60,8 +67,9 @@ const ApplyLeaveModal = ({
   const [halfDaySession, setHalfDaySession] = useState<'FIRST_HALF' | 'SECOND_HALF' | ''>('');
   const [reason, setReason] = useState('');
   const [supportingDocRef, setSupportingDocRef] = useState('');
-  const [submittingContext, setSubmittingContext] =
-    useState<ApplyLeaveDialogContext<typeof client> | null>(null);
+  const [submittingContext, setSubmittingContext] = useState<ApplyLeaveDialogContext<
+    typeof client
+  > | null>(null);
   const [fieldErrors, setFieldErrors] = useState<ApplyLeaveFieldErrors>({});
   const [formError, setFormError] = useState<ApplyLeaveFormError | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -323,15 +331,12 @@ const ApplyLeaveModal = ({
   };
 
   const supportingInformation = (
-    <>
-      <ApplyLeaveContextPanel
-        balance={balanceForType}
-        leaveType={selectedType}
-        policy={policyForType}
-        requiresDocument={requiresDocument}
-      />
-      <UpcomingHolidaysList holidays={upcomingHolidays} />
-    </>
+    <ApplyLeaveContextPanel
+      balance={balanceForType}
+      leaveType={selectedType}
+      policy={policyForType}
+      requiresDocument={requiresDocument}
+    />
   );
 
   return (

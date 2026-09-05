@@ -68,8 +68,8 @@ const routerFuture = {
 function employeeSession(): ParsedClientSession {
   return {
     jwtRoles: [],
-    permissions: new Set(),
-    permissionScopes: {},
+    permissions: new Set(['leave:read']),
+    permissionScopes: { 'leave:read': 'SELF' },
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,

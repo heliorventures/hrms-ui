@@ -199,15 +199,9 @@ const HrTimesheetsPage = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timesheet Approvals</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Same inbox pattern as expenses/travel: <strong>Status</strong> stays workflow-pending until
-          all configured steps complete; approve/reject is only enabled when it is your turn (
-          <code className="font-mono text-xs">viewerMayApprove</code>). Open details before acting to
-          review the submitted rows.
-        </p>
       </div>
 
       <Card title="Queue">

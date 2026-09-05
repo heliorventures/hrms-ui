@@ -9,11 +9,14 @@ import {
   notificationActionDestination,
 } from './actionUrl';
 
-function session(permissions: readonly string[] = []): ParsedClientSession {
+function session(
+  permissions: readonly string[] = [],
+  permissionScopes: Readonly<Record<string, string>> = {}
+): ParsedClientSession {
   return {
     jwtRoles: [],
     permissions: new Set(permissions),
-    permissionScopes: {},
+    permissionScopes,
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,
@@ -22,12 +25,12 @@ function session(permissions: readonly string[] = []): ParsedClientSession {
 
 const employeeAccess: NavAccessOptions = {
   can: () => false,
-  clientSession: session(),
+  clientSession: session(['notification:read'], { 'notification:read': 'SELF' }),
 };
 
 const notificationManagerAccess: NavAccessOptions = {
   can: () => true,
-  clientSession: session(['notification:manage']),
+  clientSession: session(['notification:manage'], { 'notification:manage': 'ALL' }),
 };
 
 describe('notificationActionDestination', () => {

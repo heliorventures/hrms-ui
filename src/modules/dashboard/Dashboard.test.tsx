@@ -62,6 +62,7 @@ afterEach(cleanup);
 
 beforeEach(() => {
   authState.clientSession.permissions = new Set();
+  authState.clientSession.permissionScopes = {};
 });
 
 describe('Dashboard', () => {
@@ -77,6 +78,10 @@ describe('Dashboard', () => {
 
   it('renders only cards backed by exact read permissions', () => {
     authState.clientSession.permissions = new Set(['attendance:read', 'notification:read']);
+    authState.clientSession.permissionScopes = {
+      'attendance:read': 'SELF',
+      'notification:read': 'SELF',
+    };
     render(<Dashboard />);
 
     expect(screen.getByTestId('punch-in-out')).toBeTruthy();

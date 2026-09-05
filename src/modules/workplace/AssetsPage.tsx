@@ -82,15 +82,8 @@ const AssetsPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Asset Management</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {canReadInventory
-            ? 'Manage the complete asset inventory, employee assignments, returns, and lifecycle history.'
-            : 'View assets currently or previously assigned to you.'}
-        </p>
-      </div>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Asset Management</h1>
 
       {model.actionError ? (
         <Card>

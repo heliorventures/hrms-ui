@@ -1,4 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import Select from '../../components/common/Select';
+import { WORKFLOW_TYPES, APPROVER_CHOICES, workflowType } from './workflowSetup';
 import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
@@ -23,17 +25,15 @@ const AdminWorkflowsPage = () => {
   const [stepsData, setStepsData] = useState<AdminWorkflowsStepsDataQuery | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [wName, setWName] = useState('');
+  const [wName, setWName] = useState('Leave Approval');
   const [wEntity, setWEntity] = useState('LEAVE_REQUEST');
-  const [wActive, setWActive] = useState(true);
+  const [firstApprover, setFirstApprover] = useState('PERMISSION');
   const [wBusy, setWBusy] = useState(false);
   const [wMsg, setWMsg] = useState<string | null>(null);
   const [sWorkflowId, setSWorkflowId] = useState('');
-  const [sOrder, setSOrder] = useState(1);
   const [sName, setSName] = useState('Approve');
-  const [sApprover, setSApprover] = useState('MANAGER');
+  const [sApprover, setSApprover] = useState('PERMISSION');
   const [sSla, setSSla] = useState<number | null>(48);
-  const [sSkip, setSSkip] = useState(false);
   const [sBusy, setSBusy] = useState(false);
   const [sMsg, setSMsg] = useState<string | null>(null);
   const [delStepBusy, setDelStepBusy] = useState<string | null>(null);
@@ -82,6 +82,14 @@ const AdminWorkflowsPage = () => {
     };
   }, [load]);
 
+  const selectedWorkflow = data?.workflows.find((workflow) => workflow.id === sWorkflowId);
+  const selectedSteps =
+    stepsData?.workflowsWithSteps.find((row) => row.workflow.id === sWorkflowId)?.steps ?? [];
+  const nextOrder = Math.max(0, ...selectedSteps.map((step) => step.sequenceOrder)) + 1;
+  const hasWorkflow = data?.workflows.some(
+    (workflow) => workflow.entityType === wEntity && workflow.isActive
+  );
+
   const onCreateWorkflow = async (e: FormEvent) => {
     e.preventDefault();
     if (!wName.trim()) {
@@ -91,16 +99,17 @@ const AdminWorkflowsPage = () => {
     setWMsg(null);
     setWBusy(true);
     try {
-      await client.request(AdminCreateWorkflowDocument, {
+      const created = await client.request(AdminCreateWorkflowDocument, {
         input: {
           name: wName.trim(),
           entityType: wEntity.trim() || 'LEAVE_REQUEST',
-          isActive: wActive,
+          isActive: true,
+          initialApproverType: firstApprover,
         },
       });
-      setWName('');
+      setSWorkflowId(created.createWorkflow.id);
       await refresh();
-      setWMsg('Workflow created.');
+      setWMsg('Workflow ready. Its first approval step has been added.');
     } catch (err) {
       setWMsg(graphQlUserMessage(err));
     } finally {
@@ -144,8 +153,15 @@ const AdminWorkflowsPage = () => {
 
   const onCreateStep = async (e: FormEvent) => {
     e.preventDefault();
-    if (!sWorkflowId.trim() || !sName.trim()) {
-      setSMsg('Workflow id and step name are required');
+    if (
+      !selectedWorkflow ||
+      !workflowType(selectedWorkflow.entityType) ||
+      !sName.trim() ||
+      !stepsData
+    ) {
+      setSMsg(
+        'Select a workflow and enter a step name. Reload the page if steps could not be loaded.'
+      );
       return;
     }
     setSMsg(null);
@@ -154,11 +170,12 @@ const AdminWorkflowsPage = () => {
       await client.request(AdminCreateWorkflowStepDocument, {
         input: {
           workflowId: sWorkflowId.trim(),
-          sequenceOrder: sOrder,
+          sequenceOrder: nextOrder,
           stepName: sName.trim(),
-          approverType: sApprover.trim() || null,
+          approverType: sApprover,
+          approverPermission: workflowType(selectedWorkflow!.entityType)!.permission,
           approverRoleId: null,
-          canSkip: sSkip,
+          canSkip: false,
           slaHours: sSla != null && sSla > 0 ? sSla : null,
         },
       });
@@ -172,11 +189,8 @@ const AdminWorkflowsPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Workflows"
-        description="Definitions, steps, and in-flight instances. Runtime approval uses the effective permission and scope loaded for the signed-in user; roles only assign those permissions."
-      />
+    <div className="space-y-4">
+      <PageHeader title="Workflows" />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Create Workflow">
           <form onSubmit={onCreateWorkflow} className="space-y-3">
@@ -196,23 +210,41 @@ const AdminWorkflowsPage = () => {
               fullWidth
               required
             />
-            <Input
-              label="Entity Type"
-              value={wEntity}
-              onChange={(e) => setWEntity(e.target.value)}
+            <Select
+              label="Approval for"
               fullWidth
-              placeholder="e.g. LEAVE_REQUEST"
+              options={WORKFLOW_TYPES}
+              value={wEntity}
+              onChange={(event) => {
+                setWEntity(event.target.value);
+                setWName((workflowType(event.target.value)?.label ?? '') + ' Approval');
+                setWMsg(null);
+              }}
             />
-            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-              <input
-                type="checkbox"
-                checked={wActive}
-                onChange={(e) => setWActive(e.target.checked)}
-              />
-              Active
-            </label>
-            <Button type="submit" variant="primary" disabled={wBusy}>
-              {wBusy ? 'Creating...' : 'Create Workflow'}
+            <p className="text-sm text-content-secondary">{workflowType(wEntity)?.description}</p>
+            <Select
+              label="First approver"
+              fullWidth
+              options={APPROVER_CHOICES}
+              value={firstApprover}
+              onChange={(event) => setFirstApprover(event.target.value)}
+            />
+            <p className="text-sm text-content-secondary">
+              Eligible approvers have approval access for this request type. Assign that access in
+              Roles &amp; Permissions. Reporting-manager steps also require a manager to be assigned
+              to the employee.
+            </p>
+            {hasWorkflow && (
+              <p role="status" className="text-sm text-content-secondary">
+                Already configured. Select the existing workflow under Add Step to manage it.
+              </p>
+            )}
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={wBusy || loading || Boolean(hasWorkflow)}
+            >
+              {wBusy ? 'Creating...' : 'Create Approval Workflow'}
             </Button>
           </form>
         </Card>
@@ -227,38 +259,40 @@ const AdminWorkflowsPage = () => {
                 {sMsg}
               </p>
             )}
-            <Input
-              label="Workflow ID (UUID)"
+            <Select
+              label="Workflow"
               value={sWorkflowId}
-              onChange={(e) => setSWorkflowId(e.target.value)}
               fullWidth
               required
-              className="font-mono text-xs"
+              options={[
+                { value: '', label: 'Choose a workflow' },
+                ...(data?.workflows ?? []).map((workflow) => ({
+                  value: workflow.id,
+                  label:
+                    workflow.name +
+                    ' (' +
+                    (workflowType(workflow.entityType)?.label ?? 'Needs review') +
+                    ')',
+                })),
+              ]}
+              onChange={(event) => {
+                setSWorkflowId(event.target.value);
+                setSMsg(null);
+              }}
             />
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Sequence"
-                type="number"
-                value={String(sOrder)}
-                onChange={(e) => setSOrder(parseInt(e.target.value, 10) || 1)}
-                fullWidth
-                min={1}
-              />
-              <Input
-                label="SLA (Hours, Optional)"
-                type="number"
-                value={sSla == null ? '' : String(sSla)}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (v === '') setSSla(null);
-                  else {
-                    const n = parseInt(v, 10);
-                    setSSla(Number.isFinite(n) ? n : null);
-                  }
-                }}
-                fullWidth
-              />
-            </div>
+            <p className="text-sm text-content-secondary">
+              {selectedWorkflow
+                ? 'This will be approval step ' + nextOrder + '.'
+                : 'Create an approval workflow first, or choose an existing one.'}
+            </p>
+            <Input
+              label="Expected response time (hours)"
+              type="number"
+              min={1}
+              fullWidth
+              value={sSla ?? ''}
+              onChange={(event) => setSSla(event.target.value ? Number(event.target.value) : null)}
+            />
             <Input
               label="Step Name"
               value={sName}
@@ -266,18 +300,18 @@ const AdminWorkflowsPage = () => {
               fullWidth
               required
             />
-            <Input
-              label="Approver Type"
-              value={sApprover}
-              onChange={(e) => setSApprover(e.target.value)}
+            <Select
+              label="Who approves this step?"
               fullWidth
-              placeholder="REPORTING_MANAGER | PERMISSION | REPORTING_MANAGER_OR_PERMISSION"
+              options={APPROVER_CHOICES}
+              value={sApprover}
+              onChange={(event) => setSApprover(event.target.value)}
             />
-            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-              <input type="checkbox" checked={sSkip} onChange={(e) => setSSkip(e.target.checked)} />
-              Can skip
-            </label>
-            <Button type="submit" variant="primary" disabled={sBusy}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={sBusy || !selectedWorkflow || !stepsData}
+            >
               {sBusy ? 'Saving...' : 'Add Step'}
             </Button>
           </form>
@@ -297,7 +331,8 @@ const AdminWorkflowsPage = () => {
               <li key={row.workflow.id} className="py-3 first:pt-0">
                 <p className="font-medium text-slate-900 dark:text-white">{row.workflow.name}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {row.workflow.entityType ?? '—'} · {row.workflow.isActive ? 'active' : 'inactive'}
+                  {workflowType(row.workflow.entityType)?.label ?? 'Needs setup review'} ·{' '}
+                  {row.workflow.isActive ? 'active' : 'inactive'}
                 </p>
                 {row.steps?.length > 0 ? (
                   <WorkflowDesignerSteps
@@ -309,7 +344,9 @@ const AdminWorkflowsPage = () => {
                     onDeleteStep={onDeleteStep}
                   />
                 ) : (
-                  <p className="mt-1 text-xs text-slate-500">No Steps In Graph.</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Not ready: select this workflow above and add its first approval step.
+                  </p>
                 )}
               </li>
             ))}
@@ -320,21 +357,22 @@ const AdminWorkflowsPage = () => {
               <li key={w.id} className="py-3 first:pt-0">
                 <p className="font-medium text-slate-900 dark:text-white">{w.name}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {w.entityType ?? '—'} · {w.isActive ? 'active' : 'inactive'}
+                  {workflowType(w.entityType)?.label ?? 'Needs setup review'} ·{' '}
+                  {w.isActive ? 'active' : 'inactive'}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Step list requires a gateway with{' '}
-                  <span className="font-mono">workflowsWithSteps</span> from kabipay-workflow.
-                  Restart the gateway / subgraph after upgrade.
+                  Approval steps could not be loaded. Reload this page before making changes.
                 </p>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No Workflows.</p>
+          <p className="text-sm text-gray-500">
+            No approval workflows yet. Start by choosing Leave or Expenses above.
+          </p>
         )}
       </Card>
-      <Card title="Instances">
+      <Card title="Approval requests">
         {loading ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : data?.workflowInstances?.length ? (
@@ -342,9 +380,9 @@ const AdminWorkflowsPage = () => {
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-400">
-                  <th className="rounded-tl-md py-2.5 pl-2 pr-3">Entity</th>
+                  <th className="rounded-tl-md py-2.5 pl-2 pr-3">Request type</th>
                   <th className="py-2.5 pr-3">Status</th>
-                  <th className="rounded-tr-md py-2.5 pr-2">Entity ID</th>
+                  <th className="rounded-tr-md py-2.5 pr-2">Workflow</th>
                 </tr>
               </thead>
               <tbody>
@@ -354,11 +392,12 @@ const AdminWorkflowsPage = () => {
                     className="border-b border-slate-100 transition-colors hover:bg-slate-50/80 dark:border-slate-700/80 dark:hover:bg-slate-800/40"
                   >
                     <td className="py-2.5 pl-2 pr-3 text-slate-800 dark:text-slate-200">
-                      {i.entityType ?? '—'}
+                      {workflowType(i.entityType)?.label ?? 'Needs setup review'}
                     </td>
                     <td className="py-2.5 pr-3 text-slate-800 dark:text-slate-200">{i.status}</td>
                     <td className="py-2.5 pr-2 font-mono text-xs text-slate-600 dark:text-slate-400">
-                      {i.entityId}
+                      {data.workflows.find((workflow) => workflow.id === i.workflowId)?.name ??
+                        'Workflow unavailable'}
                     </td>
                   </tr>
                 ))}
@@ -366,7 +405,7 @@ const AdminWorkflowsPage = () => {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No Instances.</p>
+          <p className="text-sm text-gray-500">No approval requests yet.</p>
         )}
       </Card>
     </div>

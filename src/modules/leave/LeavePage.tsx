@@ -252,13 +252,10 @@ const LeavePage = () => {
   if (!canReadLeave) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave Management</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Live leave balances, policies, holidays, requests, and approval workflow actions.
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" type="button" onClick={() => void refreshBoard()} disabled={loading}>

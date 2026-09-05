@@ -13,7 +13,11 @@ interface ManagedAttendanceFiltersProps {
   onChange: (value: ManagedAttendanceFiltersValue) => void;
 }
 
-const ManagedAttendanceFilters = ({ value, disabled = false, onChange }: ManagedAttendanceFiltersProps) => {
+const ManagedAttendanceFilters = ({
+  value,
+  disabled = false,
+  onChange,
+}: ManagedAttendanceFiltersProps) => {
   const [draft, setDraft] = useState(value);
   const rangeError = managedAttendanceRangeError(draft.fromDate, draft.toDate);
   const rangeErrorId = rangeError ? 'managed-attendance-range-error' : undefined;
@@ -28,8 +32,9 @@ const ManagedAttendanceFilters = ({ value, disabled = false, onChange }: Managed
   return (
     <fieldset
       disabled={disabled}
+      aria-label="Attendance filters"
       aria-describedby={rangeErrorId}
-      className="grid gap-4 md:grid-cols-3"
+      className="grid gap-3 md:grid-cols-3"
     >
       <Input
         type="date"
@@ -60,7 +65,11 @@ const ManagedAttendanceFilters = ({ value, disabled = false, onChange }: Managed
         fullWidth
       />
       {rangeError ? (
-        <p id={rangeErrorId} role="alert" className="text-sm font-medium text-status-danger md:col-span-3">
+        <p
+          id={rangeErrorId}
+          role="alert"
+          className="text-sm font-medium text-status-danger md:col-span-3"
+        >
           {rangeError}
         </p>
       ) : null}

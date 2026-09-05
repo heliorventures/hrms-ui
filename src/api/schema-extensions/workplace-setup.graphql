@@ -1,0 +1,118 @@
+# Local contracts for Workplace setup before upgraded subgraphs are restarted.
+# Keep aligned with the domain mutation inputs and optional catalog offsets.
+scalar UUID
+scalar NaiveDate
+
+extend type BenefitEnrollment {
+  benefitPlanName: String
+}
+
+input BenefitTypeInput {
+  name: String!
+  code: String!
+  category: String
+}
+
+input BenefitPlanInput {
+  name: String!
+  benefitTypeId: ID!
+  employerContribution: String
+  employeeContribution: String
+  contributionType: String
+  isMandatory: Boolean!
+  isActive: Boolean!
+}
+
+input JobPostingInput {
+  title: String!
+  description: String
+  employmentType: String
+  vacancies: Int!
+  status: String!
+  openDate: NaiveDate
+  closeDate: NaiveDate
+}
+
+input SaveReviewCycleInput {
+  id: ID
+  name: String!
+  startDate: NaiveDate!
+  endDate: NaiveDate!
+  reviewType: String
+}
+
+input SaveSkillInput {
+  id: ID
+  name: String!
+  category: String
+  level: String
+}
+
+input SaveCourseInput {
+  id: ID
+  title: String!
+  category: String
+  deliveryMode: String
+  durationMinutes: Int
+  isMandatory: Boolean!
+}
+
+input SaveCompetencyInput {
+  id: UUID
+  name: String!
+  category: String
+  description: String
+}
+
+input SaveTalentPoolInput {
+  id: UUID
+  name: String!
+  description: String
+}
+
+input SaveCompensationReviewCycleInput {
+  id: UUID
+  name: String!
+  year: Int!
+  startDate: NaiveDate!
+  endDate: NaiveDate!
+  budgetPercentage: String
+}
+
+input SaveSalaryBandInput {
+  id: UUID
+  designationId: UUID!
+  grade: Int
+  minSalary: String
+  midSalary: String
+  maxSalary: String
+  currency: String
+  effectiveYear: Int
+}
+
+extend type Mutation {
+  saveBenefitType(id: ID, input: BenefitTypeInput!): BenefitType!
+  saveBenefitPlan(id: ID, input: BenefitPlanInput!): BenefitPlan!
+  saveJobPosting(id: ID, input: JobPostingInput!): JobPosting!
+  saveReviewCycle(input: SaveReviewCycleInput!): ReviewCycle!
+  saveSkill(input: SaveSkillInput!): Skill!
+  saveCourse(input: SaveCourseInput!): Course!
+  saveCompetency(input: SaveCompetencyInput!): Competency!
+  saveTalentPool(input: SaveTalentPoolInput!): TalentPool!
+  saveCompensationReviewCycle(input: SaveCompensationReviewCycleInput!): CompensationReviewCycle!
+  saveSalaryBand(input: SaveSalaryBandInput!): SalaryBand!
+}
+
+extend type Query {
+  benefitTypes(limit: Int! = 50, offset: Int! = 0): [BenefitType!]!
+  benefitPlans(activeOnly: Boolean! = true, limit: Int! = 50, offset: Int! = 0): [BenefitPlan!]!
+  jobPostings(limit: Int! = 50, offset: Int! = 0): [JobPosting!]!
+  reviewCycles(limit: Int! = 20, offset: Int! = 0): [ReviewCycle!]!
+  skills(limit: Int! = 100, offset: Int! = 0): [Skill!]!
+  courses(activeOnly: Boolean! = true, limit: Int! = 100, offset: Int! = 0): [Course!]!
+  competencies(limit: Int! = 100, offset: Int! = 0): [Competency!]!
+  talentPools(limit: Int! = 50, offset: Int! = 0): [TalentPool!]!
+  salaryBands(limit: Int! = 100, offset: Int! = 0): [SalaryBand!]!
+  compensationReviewCycles(limit: Int! = 20, offset: Int! = 0): [CompensationReviewCycle!]!
+  designations(limit: Int! = 100, offset: Int! = 0): [Designation!]!
+}

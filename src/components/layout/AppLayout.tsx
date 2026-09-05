@@ -26,9 +26,7 @@ interface PendingRouteCommit extends RouteContentCommit {
 }
 
 function shellOverlayIsOpen(): boolean {
-  return Boolean(
-    document.querySelector('[aria-modal="true"], [data-popover-panel="true"]')
-  );
+  return Boolean(document.querySelector('[aria-modal="true"], [data-popover-panel="true"]'));
 }
 
 const AppLayout = () => {
@@ -90,8 +88,7 @@ const AppLayout = () => {
     if (pending.resetScroll) main.scrollTop = 0;
 
     const hasUnconsumedHandoff =
-      pending.shellFocusHandoff &&
-      !consumedHandoffKeysRef.current.has(pending.locationKey);
+      pending.shellFocusHandoff && !consumedHandoffKeysRef.current.has(pending.locationKey);
     if (hasUnconsumedHandoff) {
       consumedHandoffKeysRef.current.add(pending.locationKey);
     }
@@ -101,10 +98,7 @@ const AppLayout = () => {
 
   const onRouteStateCommit = useCallback((commit: RouteContentCommit) => {
     const pending = pendingRouteCommitRef.current;
-    if (
-      pending?.locationKey === commit.locationKey &&
-      pending.pathname === commit.pathname
-    ) {
+    if (pending?.locationKey === commit.locationKey && pending.pathname === commit.pathname) {
       pendingRouteCommitRef.current = null;
     }
   }, []);
@@ -151,7 +145,7 @@ const AppLayout = () => {
         onToggleDesktop={toggleDesktopNavigation}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <Header
           mobileNavigationOpen={mobileNavigationOpen}
           mobileNavigationTriggerRef={mobileNavigationTriggerRef}
@@ -164,9 +158,9 @@ const AppLayout = () => {
           tabIndex={-1}
           aria-label="Main content"
           data-scroll-container="main-content"
-          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-[env(safe-area-inset-bottom)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-[env(safe-area-inset-bottom)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
         >
-          <div className="mx-auto max-w-7xl py-5 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:py-7 md:pl-[max(1.5rem,env(safe-area-inset-left))] md:pr-[max(1.5rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))]">
+          <div className="mx-auto max-w-screen-2xl py-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:pl-[max(1.5rem,env(safe-area-inset-left))] md:pr-[max(1.5rem,env(safe-area-inset-right))]">
             <Outlet context={routeOutletContext} />
           </div>
         </main>

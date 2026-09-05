@@ -346,11 +346,8 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Tax</h1>
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        Tax configuration, slab maintenance, employee declarations, and deduction section catalog.
-      </p>
 
       {error && (
         <Card>

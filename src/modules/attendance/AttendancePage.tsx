@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-
 import { AttendanceAdjustmentPolicyDocument, MyAttendanceBoardDocument } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
@@ -321,22 +319,9 @@ const AttendancePage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Punch history, locations, and corrections for your employee record.{' '}
-            <Link to="/dashboard" className="text-primary-600 underline dark:text-primary-400">
-              Punch In/out from the dashboard.
-            </Link>{' '}
-            Weekly hour logging lives under{' '}
-            <Link to="/timesheet" className="text-primary-600 underline dark:text-primary-400">
-              Timesheet
-            </Link>
-            .
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance</h1>
         {canPunchAttendance ? (
           <Button
             variant="primary"

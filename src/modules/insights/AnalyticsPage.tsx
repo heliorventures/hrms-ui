@@ -51,7 +51,6 @@ const AnalyticsPage = () => {
     <div>
       <PageHeader
         title="Insights"
-        description="Review workplace competencies and talent pools used for succession planning."
       />
 
       <Tabs

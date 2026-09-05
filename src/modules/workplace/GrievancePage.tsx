@@ -87,12 +87,8 @@ const GrievancePage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Grievance</h1>
-      <p className="text-sm text-gray-600 dark:text-gray-300">
-        File and track cases. HR users with directory access see all tenant cases; others see only
-        their own.
-      </p>
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

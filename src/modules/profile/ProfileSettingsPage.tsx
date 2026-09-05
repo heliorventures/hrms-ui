@@ -61,13 +61,10 @@ const ProfileSettingsPage = () => {
 
   if (activeView === 'security') {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Change your password and revoke existing sessions.
-            </p>
           </div>
           {!clientSession?.mustChangePassword && employeeId ? (
             <Button type="button" variant="outline" onClick={() => setActiveView('profile')}>
@@ -139,12 +136,7 @@ const ProfileSettingsPage = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Edit your personal profile, upload documents, and maintain your employment records.
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
         <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
           Security settings
         </Button>

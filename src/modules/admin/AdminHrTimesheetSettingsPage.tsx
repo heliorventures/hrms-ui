@@ -181,15 +181,11 @@ const AdminHrTimesheetSettingsPage = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Timesheet & attendance rules
         </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Tenant-wide catalogs and policies. Managers assign work using projects/tasks configured
-          here (per-employee project assignment is not modeled yet).
-        </p>
       </div>
 
       {(message || error) && (

@@ -3,6 +3,20 @@
 scalar NaiveDate
 scalar DateTime
 
+extend type Attendance {
+  checkInAt: DateTime
+  checkOutAt: DateTime
+}
+
+extend type ManagedAttendance {
+  checkInAt: DateTime
+  checkOutAt: DateTime
+}
+
+extend input CreateWorkflowInput {
+  initialApproverType: String
+}
+
 extend type TimesheetEntry {
   batchId: ID
 }

@@ -159,7 +159,7 @@ const ApplyLeaveFormFields = ({
         label="Reason"
         value={reason}
         onChange={handleReasonChange}
-        rows={3}
+        rows={2}
         required
         fullWidth
         placeholder="Brief reason for leave"

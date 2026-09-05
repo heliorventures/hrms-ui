@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PunchDaySummaryDocument, PunchTodayDocument } from '../../../api/graphql/graphql';
-import {
-  authorizationStateKey,
-  createPermissionService,
-} from '../../../auth/permissionService';
+import { authorizationStateKey, createPermissionService } from '../../../auth/permissionService';
 import AsyncState from '../../../components/common/AsyncState';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import PageNotice from '../../../components/common/PageNotice';
+import { useTenant } from '../../../contexts/TenantContext';
+import { formatTenantTime, tenantDateKey } from '../../../utils/tenantTime';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
@@ -20,6 +19,8 @@ import { DashboardCardInitialState, DashboardCardRefreshNotice } from './Dashboa
 
 type AttendanceRow = {
   id: string;
+  checkInAt?: string | null;
+  checkOutAt?: string | null;
   checkInTime?: string | null;
   checkOutTime?: string | null;
   checkInLat?: string | null;
@@ -36,6 +37,14 @@ type Summary = {
   openSegment: AttendanceRow | null;
   segments: AttendanceRow[];
 };
+
+function displayRow(row: AttendanceRow, timezone: string): AttendanceRow {
+  return {
+    ...row,
+    checkInTime: row.checkInAt ? formatTenantTime(row.checkInAt, timezone) : row.checkInTime,
+    checkOutTime: row.checkOutAt ? formatTenantTime(row.checkOutAt, timezone) : row.checkOutTime,
+  };
+}
 
 function getCurrentPosition(): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
@@ -58,15 +67,17 @@ function formatCoord(lat?: string | null, lng?: string | null) {
 
 type GraphClient = ReturnType<typeof useGraphClient>;
 
-const formatTime = (date: Date) =>
+const formatTime = (date: Date, timezone: string) =>
   date.toLocaleTimeString('en-IN', {
+    timeZone: timezone,
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
   });
 
-const formatDate = (date: Date) =>
+const formatDate = (date: Date, timezone: string) =>
   date.toLocaleDateString('en-IN', {
+    timeZone: timezone,
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -85,6 +96,7 @@ const useDashboardCardClock = () => {
 };
 
 interface UsePunchMutationOptions {
+  timezone: string;
   client: GraphClient;
   refreshSummary: () => Promise<void>;
   summary: Summary | null;
@@ -92,6 +104,7 @@ interface UsePunchMutationOptions {
 }
 
 const usePunchMutation = ({
+  timezone,
   client,
   refreshSummary,
   summary,
@@ -117,7 +130,7 @@ const usePunchMutation = ({
       const result = await client.request<{ punchToday: AttendanceRow }>(PunchTodayDocument, {
         input,
       });
-      setLastPunch(result.punchToday);
+      setLastPunch(displayRow(result.punchToday, timezone));
       await refreshSummary();
     } catch (error) {
       setMutationError(graphQlUserMessage(error));
@@ -331,10 +344,18 @@ interface AuthorizedPunchInOutProps {
 const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
   const client = useGraphClient('client');
   const currentTime = useDashboardCardClock();
+  const { currentTenant } = useTenant();
+  const timezone = currentTenant.timezone;
+  const today = tenantDateKey(currentTime, timezone);
   const loadSummary = useCallback(async () => {
     const result = await client.request<{ punchDaySummary: Summary }>(PunchDaySummaryDocument);
-    return result.punchDaySummary;
-  }, [client]);
+    const summary = result.punchDaySummary;
+    return {
+      ...summary,
+      segments: summary.segments.map((row) => displayRow(row, timezone)),
+      openSegment: summary.openSegment ? displayRow(summary.openSegment, timezone) : null,
+    };
+  }, [client, timezone, today]);
   const {
     data: summary,
     error: summaryError,
@@ -344,14 +365,15 @@ const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
   const onRefresh = () => void refreshSummary();
   const { handlePunch, lastPunch, mutationError, setTrackLocation, submitting, trackLocation } =
     usePunchMutation({
+      timezone,
       client,
       refreshSummary,
-      summary,
+      summary: summary?.workDate === today ? summary : null,
       summaryPhase,
     });
   const nextIsCheckIn = !summary?.openSegment;
   const buttonLabel = getButtonLabel(submitting, nextIsCheckIn);
-  const summaryIsReady = summaryPhase === 'ready' && summary !== null;
+  const summaryIsReady = summaryPhase === 'ready' && summary?.workDate === today;
   const lastEventCoords = getLastEventCoords(lastPunch);
 
   return (
@@ -359,10 +381,10 @@ const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
       <div className="space-y-4">
         <div className="text-center">
           <div className="text-3xl font-bold text-gray-900 dark:text-white">
-            {formatTime(currentTime)}
+            {formatTime(currentTime, timezone)}
           </div>
           <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {formatDate(currentTime)}
+            {formatDate(currentTime, timezone)}
           </div>
         </div>
         <PunchSummaryContent

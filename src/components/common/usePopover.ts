@@ -35,8 +35,7 @@ function initialFocusElement(panel: HTMLElement): HTMLElement | null {
   const focusables = focusableElements(panel);
   return (
     focusables.find(
-      (element) =>
-        element.matches('[role="menuitem"]') || element.hasAttribute('data-popover-item')
+      (element) => element.matches('[role="menuitem"]') || element.hasAttribute('data-popover-item')
     ) ??
     focusables[0] ??
     null
@@ -52,6 +51,7 @@ export function usePopover(options: { open: boolean; onClose: () => void }): {
     onKeyDown: KeyboardEventHandler;
   };
   panelProps: { id: string; onKeyDown: KeyboardEventHandler };
+  close: (restoreFocus?: boolean) => void;
 } {
   const panelId = useId();
   const popoverIdRef = useRef(Symbol('popover'));
@@ -160,6 +160,7 @@ export function usePopover(options: { open: boolean; onClose: () => void }): {
   }, [options.open, requestClose]);
 
   return {
+    close: requestClose,
     triggerRef,
     panelRef,
     triggerProps: {

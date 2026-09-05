@@ -91,7 +91,7 @@ const Modal = ({
         ref={dialogRef}
         tabIndex={-1}
       >
-        <header className="flex shrink-0 items-start justify-between border-b border-slate-200 py-4 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] dark:border-slate-700">
+        <header className="flex shrink-0 items-start justify-between border-b border-slate-200 py-3 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] dark:border-slate-700">
           <div className="space-y-1.5">
             <h2 id={titleId} className="text-xl font-semibold text-slate-900 dark:text-white">
               {title}
@@ -129,12 +129,12 @@ const Modal = ({
           </button>
         </header>
 
-        <section className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-5 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))]">
+        <section className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
           {children}
         </section>
 
         {footer ? (
-          <footer className="sticky bottom-0 flex shrink-0 items-center justify-end gap-2 border-t border-slate-200 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] pt-4 dark:border-slate-700 dark:bg-slate-900">
+          <footer className="sticky bottom-0 flex shrink-0 items-center justify-end gap-2 border-t border-slate-200 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-4 dark:border-slate-700 dark:bg-slate-900">
             {footer}
           </footer>
         ) : null}

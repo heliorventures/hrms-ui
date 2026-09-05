@@ -10,7 +10,7 @@ const AdminLeaveSettingsPage = () => {
   const model = useAdminLeaveSettings();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <LeaveSettingsHeaderFromModel model={model} />
 
       {model.error ? (

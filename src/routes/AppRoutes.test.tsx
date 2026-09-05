@@ -44,11 +44,14 @@ vi.mock('../modules/ops/OpsLoginPage', () => ({ default: () => <h1>Operator sign
 
 const originalLoads = new Map<RoutePage, RoutePage['load']>();
 
-function session(permissions: readonly string[] = []): ParsedClientSession {
+function session(
+  permissions: readonly string[] = [],
+  permissionScopes: Readonly<Record<string, string>> = {}
+): ParsedClientSession {
   return {
     jwtRoles: [],
     permissions: new Set(permissions),
-    permissionScopes: {},
+    permissionScopes,
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,
@@ -206,6 +209,10 @@ describe('AppRoutes operations selection', () => {
 
 describe('AppRoutes tenant selection and authorization', () => {
   it('canonicalizes a tenant-prefixed path only after tenant resolution', async () => {
+    state.auth = {
+      ...state.auth,
+      clientSession: session(['leave:read'], { 'leave:read': 'SELF' }),
+    };
     const load = vi.fn(async () => ({ default: () => <h1>Leave route</h1> }));
     replaceLoader(TENANT_APP_ROUTES, 'leave', load);
 

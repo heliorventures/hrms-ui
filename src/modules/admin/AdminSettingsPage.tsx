@@ -52,7 +52,7 @@ const AdminSettingsPage = () => {
   }, [client]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Settings</h1>
 
       {error && (

@@ -332,20 +332,17 @@ const HrAttendanceManagementPage = ({ onAdd, onAdjust }: HrAttendanceManagementP
   const tableLoading = loading || searchPending;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-content-primary">Attendance management</h1>
-          <p className="mt-1 text-sm text-content-secondary">
-            Review attendance records for employees within your approved attendance scope.
-          </p>
         </div>
         <Button type="button" variant="outline" aria-label="Refresh attendance" disabled={tableLoading} onClick={refresh}>
           Refresh
         </Button>
       </div>
 
-      <Card title="Filters">
+      <Card>
         <ManagedAttendanceFilters
           key={rawFiltersOwned ? 'active-client-filters' : 'replacement-client-filters'}
           value={rawFilters}

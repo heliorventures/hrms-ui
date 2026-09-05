@@ -169,7 +169,7 @@ const DataTable = <T,>({
         key={column.id}
         scope="col"
         aria-sort={activeSort}
-        className={`border-b border-line bg-surface-raised px-4 py-3 text-xs font-semibold uppercase tracking-wide text-content-secondary ${numericClassName(column.numeric)}`}
+        className={`border-b border-line bg-surface-raised px-3 py-2 text-xs font-semibold uppercase tracking-wide text-content-secondary ${numericClassName(column.numeric)}`}
       >
         {column.sortable && sort ? (
           <button
@@ -196,7 +196,7 @@ const DataTable = <T,>({
     const id = getRowId(row);
     const label = getRowLabel?.(row) || `row ${index + 1}`;
     return (
-      <td className="border-b border-line px-4 py-3">
+      <td className="border-b border-line px-3 py-2">
         <SelectionControl label={`Select ${label}`} checked={selectedIds.has(id)} onChange={() => requestRowSelection(row)} />
       </td>
     );
@@ -209,7 +209,7 @@ const DataTable = <T,>({
         <thead>
           <tr>
             {selectionEnabled ? (
-              <th scope="col" className="border-b border-line bg-surface-raised px-4 py-3 text-left">
+              <th scope="col" className="border-b border-line bg-surface-raised px-3 py-2 text-left">
                 <SelectionControl label="Select all visible rows" checked={allVisibleSelected} onChange={requestVisibleSelection} />
               </th>
             ) : null}
@@ -226,7 +226,7 @@ const DataTable = <T,>({
                   {columns.map((column) => (
                     <td
                       key={column.id}
-                      className={`border-b border-line px-4 py-3 text-sm text-content-primary ${numericClassName(column.numeric)}`}
+                      className={`border-b border-line px-3 py-2 text-sm text-content-primary ${numericClassName(column.numeric)}`}
                     >
                       {column.cell(row)}
                     </td>

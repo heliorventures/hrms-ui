@@ -716,6 +716,8 @@ mutation PunchToday($input: PunchTodayInput) {
   punchToday(input: $input) {
     id
     workDate
+    checkInAt
+    checkOutAt
     checkInTime
     checkOutTime
     checkInLat
@@ -731,6 +733,8 @@ mutation AddManualAttendanceSegment($input: AddManualAttendanceSegmentInput!) {
   addManualAttendanceSegment(input: $input) {
     id
     workDate
+    checkInAt
+    checkOutAt
     checkInTime
     checkOutTime
     source
@@ -742,6 +746,8 @@ mutation UpdateManualAttendanceSegment($input: UpdateManualAttendanceSegmentInpu
   updateManualAttendanceSegment(input: $input) {
     id
     workDate
+    checkInAt
+    checkOutAt
     checkInTime
     checkOutTime
     source
@@ -1263,6 +1269,7 @@ query AdminWorkflowsData($wl: Int! = 30, $il: Int! = 50) {
     isActive
   }
   workflowInstances(limit: $il) {
+    workflowId
     id
     status
     entityType
@@ -1816,6 +1823,8 @@ query AttendanceBoard($limit: Int! = 400, $fromDate: NaiveDate, $toDate: NaiveDa
     id
     employeeId
     workDate
+    checkInAt
+    checkOutAt
     checkInTime
     checkOutTime
     checkInLat
@@ -1844,6 +1853,8 @@ query MyAttendanceBoard($fromDate: NaiveDate, $toDate: NaiveDate, $first: Int = 
         id
         employeeId
         workDate
+        checkInAt
+        checkOutAt
         checkInTime
         checkOutTime
         checkInLat
@@ -1886,6 +1897,8 @@ query ManagedAttendancePage(
         employeeName
         employeeCode
         workDate
+        checkInAt
+        checkOutAt
         checkInTime
         checkOutTime
         status
@@ -2012,6 +2025,8 @@ mutation AddManagedAttendanceSegment($input: AddManagedAttendanceSegmentInput!) 
     employeeName
     employeeCode
     workDate
+    checkInAt
+    checkOutAt
     checkInTime
     checkOutTime
     status
@@ -2029,6 +2044,8 @@ mutation UpdateManagedAttendanceSegment($input: UpdateManagedAttendanceSegmentIn
     employeeName
     employeeCode
     workDate
+    checkInAt
+    checkOutAt
     checkInTime
     checkOutTime
     status
@@ -2045,6 +2062,8 @@ query PunchDaySummary {
     totalWorkedMinutes
     openSegment {
       id
+      checkInAt
+      checkOutAt
       checkInTime
       checkOutTime
       checkInLat
@@ -2056,6 +2075,8 @@ query PunchDaySummary {
     }
     segments {
       id
+      checkInAt
+      checkOutAt
       checkInTime
       checkOutTime
       checkInLat
@@ -2748,6 +2769,8 @@ query ClientOpsAdminReportsData($fromDate: NaiveDate, $toDate: NaiveDate) {
     employeeId
     workDate
     status
+    checkInAt
+    checkOutAt
     checkInTime
     checkOutTime
   }
