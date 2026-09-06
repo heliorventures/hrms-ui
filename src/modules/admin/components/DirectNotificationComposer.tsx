@@ -40,7 +40,7 @@ const DirectNotificationComposer = ({
   onTitleChange,
   onUrlChange,
 }: DirectNotificationComposerProps) => (
-  <form onSubmit={onSubmit} className="space-y-3">
+  <form onSubmit={onSubmit} className="space-y-3" autoComplete="off">
     <div>
       <label className="mb-1 block text-sm font-medium">Recipients</label>
       <select
@@ -61,15 +61,16 @@ const DirectNotificationComposer = ({
       </select>
       <p className="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple.</p>
     </div>
-    <Input label="Kind" value={kind} onChange={(event) => onKindChange(event.target.value)} fullWidth />
-    <Input label="Title" value={title} onChange={(event) => onTitleChange(event.target.value)} fullWidth />
-    <Input label="Message" value={message} onChange={(event) => onMessageChange(event.target.value)} fullWidth />
+    <Input label="Kind" value={kind} onChange={(event) => onKindChange(event.target.value)} autoComplete="off" fullWidth />
+    <Input label="Title" value={title} onChange={(event) => onTitleChange(event.target.value)} autoComplete="off" fullWidth />
+    <Input label="Message" value={message} onChange={(event) => onMessageChange(event.target.value)} autoComplete="off" fullWidth />
     <div>
       <Input
         label="Action URL"
         value={url}
         onChange={(event) => onUrlChange(event.target.value)}
         placeholder="/expenses?tab=claims"
+        autoComplete="off"
         fullWidth
       />
       <p className="mt-1 text-xs text-gray-500">

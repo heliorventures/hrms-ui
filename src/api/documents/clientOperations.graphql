@@ -1636,8 +1636,15 @@ query ExpenseBoard(
   }
 }
 
-query LeaveBoard($limit: Int! = 20, $balanceYear: Int, $fromDate: NaiveDate, $toDate: NaiveDate) {
+query LeaveBoard(
+  $limit: Int! = 20
+  $requestOffset: Int! = 0
+  $balanceYear: Int
+  $fromDate: NaiveDate
+  $toDate: NaiveDate
+) {
   viewerEmployeeId
+  leaveRequestCount(fromDate: $fromDate, toDate: $toDate)
   upcomingHolidays(limit: 100) {
     id
     calendarId
@@ -1666,7 +1673,12 @@ query LeaveBoard($limit: Int! = 20, $balanceYear: Int, $fromDate: NaiveDate, $to
     halfDayAllowed
     sandwichRule
   }
-  leaveRequests(limit: $limit, fromDate: $fromDate, toDate: $toDate) {
+  leaveRequests: pagedLeaveRequests(
+    limit: $limit
+    offset: $requestOffset
+    fromDate: $fromDate
+    toDate: $toDate
+  ) {
     id
     employeeId
     employeeName
@@ -1686,6 +1698,8 @@ query LeaveBoard($limit: Int! = 20, $balanceYear: Int, $fromDate: NaiveDate, $to
     pendingApprovalStepId
     viewerMayApprove
     supportingDocumentReference
+    supportingDocumentFileStorageId
+    supportingDocumentFileName
   }
   leaveBalances(limit: $limit, year: $balanceYear) {
     id

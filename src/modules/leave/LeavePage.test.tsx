@@ -57,6 +57,7 @@ vi.mock('./hooks/useLeaveWorkflowTrail', () => ({
 
 const board = {
   viewerEmployeeId: 'manager-1',
+  leaveRequestCount: 41,
   upcomingHolidays: [],
   leavePolicies: [],
   leaveTypes: [
@@ -116,6 +117,27 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('LeavePage approval', () => {
+  it('pages through all leave requests instead of truncating the board at twenty rows', async () => {
+    render(
+      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+        <LeavePage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Showing 1-20 of 41 leave requests')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Next leave requests' }));
+
+    await waitFor(() =>
+      expect(testState.client.request).toHaveBeenLastCalledWith(LeaveBoardDocument, {
+        limit: 20,
+        requestOffset: 20,
+        balanceYear: new Date().getFullYear(),
+        fromDate: `${new Date().getFullYear()}-01-01`,
+        toDate: `${new Date().getFullYear()}-12-31`,
+      })
+    );
+  });
+
   it('does not render or request the board without leave:read', async () => {
     testState.permissions = new Set();
     const view = render(
@@ -165,6 +187,7 @@ describe('LeavePage approval', () => {
       LeaveBoardDocument,
       {
         limit: 20,
+        requestOffset: 0,
         balanceYear: new Date().getFullYear(),
         fromDate: `${new Date().getFullYear()}-01-01`,
         toDate: `${new Date().getFullYear()}-12-31`,

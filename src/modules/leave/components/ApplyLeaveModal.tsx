@@ -5,6 +5,10 @@ import PageNotice from '../../../components/common/PageNotice';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import {
+  uploadTenantFile,
+  validateTenantUploadFile,
+} from '../../../utils/tenantFileUpload';
 import { ApplyLeaveContextPanel } from './ApplyLeaveSupportingInfo';
 import ApplyLeaveFormFields, {
   type ApplyLeaveField,
@@ -66,7 +70,7 @@ const ApplyLeaveModal = ({
   const [isHalfDay, setIsHalfDay] = useState(false);
   const [halfDaySession, setHalfDaySession] = useState<'FIRST_HALF' | 'SECOND_HALF' | ''>('');
   const [reason, setReason] = useState('');
-  const [supportingDocRef, setSupportingDocRef] = useState('');
+  const [supportingDocumentFile, setSupportingDocumentFile] = useState<File | null>(null);
   const [submittingContext, setSubmittingContext] = useState<ApplyLeaveDialogContext<
     typeof client
   > | null>(null);
@@ -129,7 +133,8 @@ const ApplyLeaveModal = ({
     setIsHalfDay(false);
     setHalfDaySession('');
     setReason('');
-    setSupportingDocRef('');
+    setSupportingDocumentFile(null);
+    formRef.current?.reset();
     setFieldErrors({});
     setFormError(null);
   };
@@ -162,7 +167,7 @@ const ApplyLeaveModal = ({
     const nextType = leaveTypes.find((type) => type.id === nextLeaveTypeId);
     clearFieldError('leaveTypeId');
     setLeaveTypeId(nextLeaveTypeId);
-    if (nextType?.requiresDocument !== true) setSupportingDocRef('');
+    if (nextType?.requiresDocument !== true) setSupportingDocumentFile(null);
   };
   const handleFromDateChange = (value: string) => {
     clearFieldError('fromDate');
@@ -185,9 +190,9 @@ const ApplyLeaveModal = ({
     clearFieldError('reason');
     setReason(value);
   };
-  const handleSupportingDocumentChange = (value: string) => {
-    clearFieldError('supportingDocumentReference');
-    setSupportingDocRef(value);
+  const handleSupportingDocumentChange = (value: File | null) => {
+    clearFieldError('supportingDocumentFile');
+    setSupportingDocumentFile(value);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -217,12 +222,16 @@ const ApplyLeaveModal = ({
       showFieldError('reason', 'Enter a reason for your leave.');
       return;
     }
-    if (requiresDocument && !supportingDocRef.trim()) {
-      showFieldError(
-        'supportingDocumentReference',
-        'Add a document reference, such as an upload link or ticket ID.'
-      );
+    if (requiresDocument && !supportingDocumentFile) {
+      showFieldError('supportingDocumentFile', 'Choose the required supporting document.');
       return;
+    }
+    if (supportingDocumentFile) {
+      const fileError = validateTenantUploadFile(supportingDocumentFile, 'Supporting document');
+      if (fileError) {
+        showFieldError('supportingDocumentFile', fileError);
+        return;
+      }
     }
     if (isHalfDay && !halfDaySession) {
       showFieldError('halfDaySession', 'Choose first half or second half.');
@@ -288,6 +297,9 @@ const ApplyLeaveModal = ({
     activeSubmissionRef.current = submissionContext;
     setSubmittingContext(submissionContext);
     try {
+      const supportingDocumentFileStorageId = supportingDocumentFile
+        ? await uploadTenantFile(submissionContext.client, supportingDocumentFile)
+        : null;
       await submissionContext.client.request(SubmitLeaveRequestDocument, {
         input: {
           leaveTypeId,
@@ -296,7 +308,8 @@ const ApplyLeaveModal = ({
           isHalfDay: halfDayEligible && isHalfDay,
           halfDaySession: halfDayEligible && isHalfDay && halfDaySession ? halfDaySession : null,
           reason: reasonTrim,
-          supportingDocumentReference: supportingDocRef.trim() || null,
+          supportingDocumentReference: null,
+          supportingDocumentFileStorageId,
         },
       });
       if (
@@ -347,7 +360,13 @@ const ApplyLeaveModal = ({
       size="lg"
       isDismissible={!submitting}
     >
-      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className="space-y-4"
+        autoComplete="off"
+        noValidate
+      >
         {visibleFormError ? (
           <PageNotice
             key={`${visibleFormError.title}:${visibleFormError.message}`}
@@ -377,8 +396,8 @@ const ApplyLeaveModal = ({
           reason={reason}
           onReasonChange={handleReasonChange}
           requiresDocument={requiresDocument}
-          supportingDocumentReference={supportingDocRef}
-          onSupportingDocumentReferenceChange={handleSupportingDocumentChange}
+          supportingDocumentFile={supportingDocumentFile}
+          onSupportingDocumentFileChange={handleSupportingDocumentChange}
           fieldErrors={fieldErrors}
         />
 

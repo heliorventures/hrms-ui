@@ -22,7 +22,11 @@ import type {
   SubmitExpenseInput,
   TravelRequestRow,
 } from '../types';
-import { parseStrictMoney, validatePositiveMoney } from '../utils/amountValidation';
+import {
+  normalizeMoneyForInput,
+  parseStrictMoney,
+  validatePositiveMoney,
+} from '../utils/amountValidation';
 
 interface UseExpenseActionsArgs {
   canApproveExpense: boolean;
@@ -69,12 +73,13 @@ export function useExpenseActions({
       return;
     }
     setApproveError(null);
+    const normalizedDraft = normalizeMoneyForInput(row.amount);
     setApproveTarget({
       id: row.id,
       expectedWorkflowStepId: row.pendingApprovalStepId,
       claimAmount: row.amount,
       currency: row.currency,
-      draftApprove: row.amount,
+      draftApprove: normalizedDraft ?? row.amount,
     });
   }, [canApproveExpense, setNotice]);
 

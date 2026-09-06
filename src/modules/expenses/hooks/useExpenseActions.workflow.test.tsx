@@ -27,6 +27,11 @@ const expenseRow = (pendingApprovalStepId?: string | null): ExpenseRow => ({
   submittedAt: '2026-08-27T00:00:00Z',
 });
 
+const paddedExpenseRow = (pendingApprovalStepId: string): ExpenseRow => ({
+  ...expenseRow(pendingApprovalStepId),
+  amount: '751.0000',
+});
+
 const travelRow = (pendingApprovalStepId?: string | null): TravelRequestRow => ({
   id: 'travel-1',
   employeeId: 'employee-1',
@@ -106,6 +111,20 @@ describe('expense and travel workflow-step actions', () => {
       expenseId: 'expense-1',
       expectedWorkflowStepId: 'expense-step',
       reason: 'Incorrect amount',
+    });
+  });
+
+  it('shows a two-decimal draft and fully approves a claim stored with padded decimals', async () => {
+    const { result, request } = setup();
+
+    act(() => result.current.openApproveExpense(paddedExpenseRow('expense-step')));
+
+    expect(result.current.approveTarget?.draftApprove).toBe('751.00');
+    await act(async () => result.current.approveExpense());
+    expect(result.current.approveError).toBeNull();
+    expect(request).toHaveBeenCalledWith(ApproveExpenseDocument, {
+      expenseId: 'expense-1',
+      expectedWorkflowStepId: 'expense-step',
     });
   });
 

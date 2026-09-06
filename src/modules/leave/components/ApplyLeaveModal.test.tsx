@@ -10,13 +10,19 @@ const graphClients = vi.hoisted(() => {
   return { current: { request }, initialRequest: request };
 });
 const request = graphClients.initialRequest;
+const uploadState = vi.hoisted(() => ({ upload: vi.fn() }));
 
 vi.mock('../../../hooks/useGraphClient', () => ({
   useGraphClient: () => graphClients.current,
 }));
+vi.mock('../../../utils/tenantFileUpload', () => ({
+  uploadTenantFile: uploadState.upload,
+  validateTenantUploadFile: () => null,
+}));
 
 beforeEach(() => {
   request.mockReset();
+  uploadState.upload.mockReset();
   graphClients.current = { request };
 });
 
@@ -87,6 +93,44 @@ function fillValidRequest() {
 }
 
 describe('ApplyLeaveModal', () => {
+  it('uploads mandatory leave evidence and submits the resulting private file id', async () => {
+    request.mockResolvedValue({});
+    uploadState.upload.mockResolvedValue('file-storage-1');
+    render(
+      <ApplyLeaveModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmitted={vi.fn()}
+        leaveTypes={[{ ...leaveTypes[0], requiresDocument: true }]}
+        leavePolicies={[]}
+        upcomingHolidays={[]}
+        leaveBalances={[]}
+      />
+    );
+    fillValidRequest();
+    const file = new File(['evidence'], 'medical-certificate.pdf', {
+      type: 'application/pdf',
+    });
+    fireEvent.change(screen.getByLabelText('Supporting document'), {
+      target: { files: [file] },
+    });
+
+    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+
+    await waitFor(() => expect(uploadState.upload).toHaveBeenCalledWith(graphClients.current, file));
+    await waitFor(() =>
+      expect(request).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          input: expect.objectContaining({
+            supportingDocumentFileStorageId: 'file-storage-1',
+            supportingDocumentReference: null,
+          }),
+        })
+      )
+    );
+  });
+
   it('omits the holiday list while still excluding holidays from the requested balance', async () => {
     request.mockResolvedValue({});
     const onSubmitted = vi.fn();

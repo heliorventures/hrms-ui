@@ -1,6 +1,7 @@
 import type { ChangeEvent, ReactNode } from 'react';
 
 import Checkbox from '../../../components/common/Checkbox';
+import FileInput from '../../../components/common/FileInput';
 import Input from '../../../components/common/Input';
 import Select, { type SelectOption } from '../../../components/common/Select';
 import Textarea from '../../../components/common/Textarea';
@@ -13,7 +14,7 @@ export type ApplyLeaveField =
   | 'toDate'
   | 'halfDaySession'
   | 'reason'
-  | 'supportingDocumentReference';
+  | 'supportingDocumentFile';
 
 export type ApplyLeaveFieldErrors = Partial<Record<ApplyLeaveField, string>>;
 
@@ -35,8 +36,8 @@ export interface ApplyLeaveFormFieldsProps {
   reason: string;
   onReasonChange: (value: string) => void;
   requiresDocument: boolean;
-  supportingDocumentReference: string;
-  onSupportingDocumentReferenceChange: (value: string) => void;
+  supportingDocumentFile: File | null;
+  onSupportingDocumentFileChange: (value: File | null) => void;
   fieldErrors?: ApplyLeaveFieldErrors;
 }
 
@@ -64,8 +65,8 @@ const ApplyLeaveFormFields = ({
   reason,
   onReasonChange,
   requiresDocument,
-  supportingDocumentReference,
-  onSupportingDocumentReferenceChange,
+  supportingDocumentFile,
+  onSupportingDocumentFileChange,
   fieldErrors = {},
 }: ApplyLeaveFormFieldsProps) => {
   const handleLeaveTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -87,7 +88,7 @@ const ApplyLeaveFormFields = ({
     onReasonChange(event.target.value);
   };
   const handleSupportingDocumentChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onSupportingDocumentReferenceChange(event.target.value);
+    onSupportingDocumentFileChange(event.target.files?.[0] ?? null);
   };
   const halfDayDescription = !halfDayAllowed
     ? 'Not allowed for this leave type.'
@@ -163,19 +164,20 @@ const ApplyLeaveFormFields = ({
         required
         fullWidth
         placeholder="Brief reason for leave"
+        autoComplete="off"
         error={fieldErrors.reason}
       />
 
-      {requiresDocument || supportingDocumentReference.trim() ? (
-        <Input
-          name="supportingDocumentReference"
-          label="Supporting document reference"
-          value={supportingDocumentReference}
+      {requiresDocument || supportingDocumentFile ? (
+        <FileInput
+          name="supportingDocumentFile"
+          label="Supporting document"
           onChange={handleSupportingDocumentChange}
           fullWidth
           required={requiresDocument}
-          placeholder="Link to uploaded file or ticket / reference ID"
-          error={fieldErrors.supportingDocumentReference}
+          accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+          description="Upload a PDF, JPG, or PNG file up to 6 MB."
+          error={fieldErrors.supportingDocumentFile}
         />
       ) : null}
     </>

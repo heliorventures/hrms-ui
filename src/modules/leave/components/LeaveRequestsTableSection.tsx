@@ -191,9 +191,10 @@ const LeaveRequestsTableSection = ({
           render: (row: LeaveRequestRow) => row.rejectionReason ?? '—',
         },
         {
-          key: 'supportingDocumentReference',
-          label: 'Doc Ref.',
-          render: (row: LeaveRequestRow) => row.supportingDocumentReference ?? '—',
+          key: 'supportingDocument',
+          label: 'Document',
+          render: (row: LeaveRequestRow) =>
+            row.supportingDocumentFileName ?? row.supportingDocumentReference ?? '—',
         },
         {
           key: 'trail',

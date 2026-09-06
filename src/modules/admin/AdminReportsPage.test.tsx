@@ -41,9 +41,32 @@ beforeEach(() => {
   graphState.client.request.mockImplementation((document: unknown) => {
     if (typeof document === 'string' && document.includes('ClientOpsAdminReportsReferenceData')) {
       return Promise.resolve({
-        employees: [],
-        leaveRequests: [],
-        payrollCycles: [],
+        employees: [
+          {
+            id: row.employeeId,
+            employeeCode: row.employeeCode,
+            fullName: row.employeeName,
+          },
+        ],
+        leaveRequests: [
+          {
+            id: 'leave-1',
+            employeeId: row.employeeId,
+            fromDate: '2026-08-20',
+            toDate: '2026-08-21',
+            status: 'APPROVED',
+          },
+        ],
+        payrollCycles: [
+          {
+            id: 'cycle-1',
+            name: 'August 2026 Payroll',
+            month: 8,
+            year: 2026,
+            status: 'COMPLETED',
+            paymentDate: '2026-08-31',
+          },
+        ],
         salaryComponents: [],
       });
     }
@@ -127,7 +150,7 @@ describe('AdminReportsPage attendance contract', () => {
       AdminAttendanceReportSummaryDocument,
       expect.objectContaining({ fromDate: '2026-08-01', toDate: '2026-08-31' })
     );
-    expect(screen.getByText('Asha Rao (EMP-0042)')).toBeTruthy();
+    expect(screen.getAllByText('Asha Rao (EMP-0042)').length).toBeGreaterThan(0);
     expect(screen.getAllByText('8h 30m')).toHaveLength(2);
     expect(screen.queryByText(row.employeeId)).toBeNull();
   });
@@ -143,5 +166,35 @@ describe('AdminReportsPage attendance contract', () => {
       AdminAttendanceDailyReportDocument,
       expect.objectContaining({ after: 'next-cursor' })
     );
+  });
+
+  it('uses the selected employee id for attendance instead of an ambiguous name search', async () => {
+    render(<AdminReportsPage />);
+    await settle();
+
+    fireEvent.change(screen.getByLabelText('Employee'), {
+      target: { value: row.employeeId },
+    });
+    await settle();
+
+    expect(graphState.client.request).toHaveBeenLastCalledWith(
+      AdminAttendanceReportSummaryDocument,
+      expect.objectContaining({ employeeId: row.employeeId, employeeSearch: null })
+    );
+  });
+
+  it('renders leave and payroll detail rows below their summaries', async () => {
+    render(<AdminReportsPage />);
+    await settle();
+
+    fireEvent.change(screen.getByLabelText('Report Type'), { target: { value: 'leave' } });
+    expect(screen.getByText('Leave Report Details')).toBeTruthy();
+    expect(screen.getByText('2026-08-20')).toBeTruthy();
+    expect(screen.getByText('APPROVED')).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText('Report Type'), { target: { value: 'payroll' } });
+    expect(screen.getByText('Payroll Cycle Details')).toBeTruthy();
+    expect(screen.getByText('August 2026 Payroll')).toBeTruthy();
+    expect(screen.getByText('COMPLETED')).toBeTruthy();
   });
 });

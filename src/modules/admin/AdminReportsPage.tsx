@@ -147,7 +147,6 @@ const AdminReportsPage = () => {
     startDate: month.startDate,
     endDate: month.endDate,
     employeeId: 'all',
-    employeeSearch: '',
   });
   const [referenceData, setReferenceData] = useState<ReferenceData | null>(null);
   const [metadataLoading, setMetadataLoading] = useState(true);
@@ -161,22 +160,13 @@ const AdminReportsPage = () => {
     AdminAttendanceReportSummaryQuery['attendanceReportSummary'] | null
   >(null);
   const [cursorStack, setCursorStack] = useState<Array<string | undefined>>([undefined]);
-  const [appliedEmployeeSearch, setAppliedEmployeeSearch] = useState('');
   const after = cursorStack[cursorStack.length - 1];
   const dateRangeError =
     filters.startDate > filters.endDate ? 'Start date must be on or before end date.' : null;
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setAppliedEmployeeSearch(filters.employeeSearch.trim());
-      setCursorStack([undefined]);
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [filters.employeeSearch]);
-
-  useEffect(() => {
     setCursorStack([undefined]);
-  }, [filters.startDate, filters.endDate]);
+  }, [filters.employeeId, filters.startDate, filters.endDate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -215,7 +205,8 @@ const AdminReportsPage = () => {
     const variables = {
       fromDate: filters.startDate,
       toDate: filters.endDate,
-      employeeSearch: appliedEmployeeSearch || null,
+      employeeId: filters.employeeId === 'all' ? null : filters.employeeId,
+      employeeSearch: null,
       first: ATTENDANCE_PAGE_SIZE,
       after: after ?? null,
     };
@@ -242,10 +233,10 @@ const AdminReportsPage = () => {
     };
   }, [
     after,
-    appliedEmployeeSearch,
     client,
     dateRangeError,
     filters.endDate,
+    filters.employeeId,
     filters.startDate,
     reportType,
   ]);
@@ -288,7 +279,8 @@ const AdminReportsPage = () => {
           {
             fromDate: filters.startDate,
             toDate: filters.endDate,
-            employeeSearch: appliedEmployeeSearch || null,
+            employeeId: filters.employeeId === 'all' ? null : filters.employeeId,
+            employeeSearch: null,
             first: ATTENDANCE_EXPORT_PAGE_SIZE,
             after: exportAfter,
           }
@@ -401,6 +393,83 @@ const AdminReportsPage = () => {
     );
   };
 
+  const employeeLabelById = new Map(
+    (referenceData?.employees ?? []).map((employee) => [
+      employee.id,
+      `${employee.fullName} (${employee.employeeCode})`,
+    ])
+  );
+
+  const renderLeaveDetails = () => {
+    let content = <p className="text-sm text-content-secondary">Loading leave details...</p>;
+    if (!metadataLoading && filteredLeave.length === 0) {
+      content = <p className="text-sm text-content-secondary">No leave requests found.</p>;
+    } else if (!metadataLoading) {
+      content = (
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-line text-content-secondary">
+                <th className="px-3 py-2 font-medium">Employee</th>
+                <th className="px-3 py-2 font-medium">From</th>
+                <th className="px-3 py-2 font-medium">To</th>
+                <th className="px-3 py-2 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredLeave.map((row) => (
+                <tr key={row.id} className="border-b border-line-subtle last:border-0">
+                  <td className="px-3 py-2">
+                    {employeeLabelById.get(row.employeeId) ?? 'Employee unavailable'}
+                  </td>
+                  <td className="px-3 py-2">{row.fromDate}</td>
+                  <td className="px-3 py-2">{row.toDate}</td>
+                  <td className="px-3 py-2">{row.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    return <Card title="Leave Report Details">{content}</Card>;
+  };
+
+  const renderPayrollDetails = () => {
+    let content = <p className="text-sm text-content-secondary">Loading payroll details...</p>;
+    if (!metadataLoading && filteredPayrollCycles.length === 0) {
+      content = <p className="text-sm text-content-secondary">No payroll cycles found.</p>;
+    } else if (!metadataLoading) {
+      content = (
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-line text-content-secondary">
+                <th className="px-3 py-2 font-medium">Cycle</th>
+                <th className="px-3 py-2 font-medium">Period</th>
+                <th className="px-3 py-2 font-medium">Payment Date</th>
+                <th className="px-3 py-2 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPayrollCycles.map((row) => (
+                <tr key={row.id} className="border-b border-line-subtle last:border-0">
+                  <td className="px-3 py-2">{row.name}</td>
+                  <td className="px-3 py-2">
+                    {String(row.month).padStart(2, '0')}/{row.year}
+                  </td>
+                  <td className="px-3 py-2">{row.paymentDate ?? '-'}</td>
+                  <td className="px-3 py-2">{row.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    return <Card title="Payroll Cycle Details">{content}</Card>;
+  };
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
@@ -423,18 +492,7 @@ const AdminReportsPage = () => {
             ]}
             fullWidth
           />
-          {reportType === 'attendance' ? (
-            <Input
-              label="Employee Search"
-              name="employeeSearch"
-              value={filters.employeeSearch}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, employeeSearch: event.target.value }))
-              }
-              placeholder="Name or employee code"
-              fullWidth
-            />
-          ) : (
+          {reportType !== 'payroll' ? (
             <Select
               label="Employee"
               name="employeeId"
@@ -445,7 +503,7 @@ const AdminReportsPage = () => {
               options={employeeOptions}
               fullWidth
             />
-          )}
+          ) : null}
           <Input
             label="Start Date"
             type="date"
@@ -495,6 +553,8 @@ const AdminReportsPage = () => {
           }}
         />
       )}
+      {reportType === 'leave' ? renderLeaveDetails() : null}
+      {reportType === 'payroll' ? renderPayrollDetails() : null}
     </div>
   );
 };

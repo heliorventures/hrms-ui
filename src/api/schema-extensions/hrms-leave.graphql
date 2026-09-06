@@ -1,0 +1,18 @@
+extend input SubmitLeaveRequestInput {
+  supportingDocumentFileStorageId: ID
+}
+
+extend type LeaveRequest {
+  supportingDocumentFileStorageId: ID
+  supportingDocumentFileName: String
+}
+
+extend type Query {
+  pagedLeaveRequests(
+    limit: Int! = 50
+    offset: Int! = 0
+    fromDate: NaiveDate
+    toDate: NaiveDate
+  ): [LeaveRequest!]!
+  leaveRequestCount(fromDate: NaiveDate, toDate: NaiveDate): Int!
+}

@@ -193,6 +193,7 @@ const SubmitExpenseModal = ({
       <form
         onSubmit={(event) => void handleSubmit(event)}
         className="space-y-4"
+        autoComplete="off"
       >
         {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
         <Select
@@ -201,6 +202,7 @@ const SubmitExpenseModal = ({
           onChange={(event) => setCategoryId(event.target.value)}
           options={categoryOptions}
           required
+          autoComplete="off"
           fullWidth
         />
         {activeSubmissionHints ? (
@@ -239,6 +241,7 @@ const SubmitExpenseModal = ({
             fullWidth
             required
             inputMode="decimal"
+            autoComplete="off"
           />
           <Input
             label="Currency"
@@ -246,6 +249,7 @@ const SubmitExpenseModal = ({
             onChange={(event) => setCurrency(event.target.value)}
             fullWidth
             maxLength={3}
+            autoComplete="off"
           />
         </div>
         <Input

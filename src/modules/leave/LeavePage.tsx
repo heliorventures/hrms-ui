@@ -60,6 +60,7 @@ const LeavePage = () => {
 
   const defaultYear = useMemo(() => new Date().getFullYear(), []);
   const [balanceYear, setBalanceYear] = useState(defaultYear);
+  const [requestPage, setRequestPage] = useState(0);
   const requestYearRange = useMemo(
     () => ({
       fromDate: `${balanceYear}-01-01`,
@@ -77,12 +78,13 @@ const LeavePage = () => {
   const loadBoard = useCallback(() => {
     const variables: LeaveBoardQueryVariables = {
       limit: BOARD_LIMIT,
+      requestOffset: requestPage * BOARD_LIMIT,
       balanceYear,
       fromDate: requestYearRange.fromDate,
       toDate: requestYearRange.toDate,
     };
     return client.request(LeaveBoardDocument, variables);
-  }, [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]);
+  }, [balanceYear, client, requestPage, requestYearRange.fromDate, requestYearRange.toDate]);
 
   useEffect(() => {
     if (canSubmitLeave && searchParams.get('apply') === '1') {
@@ -216,7 +218,9 @@ const LeavePage = () => {
     return requests.every((request) => request.employeeId === viewerId);
   }, [data?.leaveRequests, viewerId, showApprovalColumn]);
 
-  const leaveRequestLimitReached = (data?.leaveRequests?.length ?? 0) >= BOARD_LIMIT;
+  const leaveRequestCount = data?.leaveRequestCount ?? 0;
+  const firstVisibleRequest = leaveRequestCount === 0 ? 0 : requestPage * BOARD_LIMIT + 1;
+  const lastVisibleRequest = Math.min((requestPage + 1) * BOARD_LIMIT, leaveRequestCount);
 
   const employeeLabelById = useMemo(() => {
     const labels = new Map<string, string>();
@@ -311,15 +315,6 @@ const LeavePage = () => {
           <p className="text-sm text-sky-800 dark:text-sky-200">{approveWorkflowNotice}</p>
         </Card>
       )}
-      {leaveRequestLimitReached && (
-        <Card>
-          <p className="text-sm text-amber-700 dark:text-amber-300">
-            Leave requests reached the {BOARD_LIMIT}-row load limit. Use workflow trail or backend
-            reports before treating this screen as a complete approval history.
-          </p>
-        </Card>
-      )}
-
       <LeaveBalancesCard
         balanceYear={balanceYear}
         balances={data?.leaveBalances ?? []}
@@ -327,7 +322,10 @@ const LeavePage = () => {
         leaveTypeNameById={leaveTypeNameById}
         loading={loading}
         yearChoices={yearChoices}
-        onYearChange={setBalanceYear}
+        onYearChange={(year) => {
+          setRequestPage(0);
+          setBalanceYear(year);
+        }}
       />
       <HolidaySummaryCard
         canManageLeave={permissions.canCapability('action.leave.manage')}
@@ -365,6 +363,33 @@ const LeavePage = () => {
             }}
           />
         )}
+        {!loading && leaveRequestCount > 0 ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+            <p className="text-sm text-content-secondary">
+              Showing {firstVisibleRequest}-{lastVisibleRequest} of {leaveRequestCount} leave requests
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRequestPage((page) => Math.max(0, page - 1))}
+                disabled={requestPage === 0}
+                aria-label="Previous leave requests"
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRequestPage((page) => page + 1)}
+                disabled={lastVisibleRequest >= leaveRequestCount}
+                aria-label="Next leave requests"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </Card>
 
       <LeaveWorkflowTrailModal
