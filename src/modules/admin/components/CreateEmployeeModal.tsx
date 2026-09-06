@@ -223,7 +223,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Employee">
-      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4" autoComplete="off">
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
         {orgLoadError && (
           <p className="text-sm text-amber-800 dark:text-amber-200">{orgLoadError}</p>
@@ -231,6 +231,8 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
             label={UI_FIELD_LABELS.employeeCode}
+            name="new-employee-code"
+            autoComplete="off"
             value={employeeCode}
             onChange={(e) => {
               setEmployeeCode(e.target.value);
@@ -242,6 +244,8 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
           <Input
             type="date"
             label={UI_FIELD_LABELS.dateOfJoining}
+            name="new-employee-date-of-joining"
+            autoComplete="off"
             value={dateOfJoining}
             onChange={(e) => {
               setDateOfJoining(e.target.value);
@@ -253,6 +257,8 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
             label={UI_FIELD_LABELS.firstName}
+            name="new-employee-first-name"
+            autoComplete="off"
             value={firstName}
             onChange={(e) => {
               setFirstName(e.target.value);
@@ -262,6 +268,8 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
           />
           <Input
             label={UI_FIELD_LABELS.lastName}
+            name="new-employee-last-name"
+            autoComplete="off"
             value={lastName}
             onChange={(e) => {
               setLastName(e.target.value);

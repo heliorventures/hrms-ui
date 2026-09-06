@@ -313,7 +313,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Edit Employee - ${employee.employeeCode}`}>
-      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4" autoComplete="off">
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
         {orgLoadError && (
           <p className="text-sm text-amber-800 dark:text-amber-200">{orgLoadError}</p>
@@ -322,10 +322,19 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           Employee code and date of joining are not editable here (backend limitation).
         </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Input label={UI_FIELD_LABELS.employeeCode} value={employee.employeeCode} fullWidth disabled />
+          <Input
+            label={UI_FIELD_LABELS.employeeCode}
+            name="edit-employee-code"
+            autoComplete="off"
+            value={employee.employeeCode}
+            fullWidth
+            disabled
+          />
           <Input
             type="date"
             label={UI_FIELD_LABELS.dateOfJoining}
+            name="edit-employee-date-of-joining"
+            autoComplete="off"
             value={employee.dateOfJoining.slice(0, 10)}
             fullWidth
             disabled
@@ -334,6 +343,8 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
             label={`${UI_FIELD_LABELS.firstName} *`}
+            name="edit-employee-first-name"
+            autoComplete="off"
             value={firstName}
             onChange={(e) => {
               setFirstName(e.target.value);
@@ -343,6 +354,8 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           />
           <Input
             label={`${UI_FIELD_LABELS.lastName} *`}
+            name="edit-employee-last-name"
+            autoComplete="off"
             value={lastName}
             onChange={(e) => {
               setLastName(e.target.value);
@@ -362,6 +375,8 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         />
         <Input
           label="Employment Type"
+          name="edit-employee-employment-type"
+          autoComplete="off"
           value={employmentType}
           onChange={(e) => {
             setEmploymentType(e.target.value);
