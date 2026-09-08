@@ -14,7 +14,7 @@ module.exports = {
     'plugin:import/typescript',
     'prettier',
   ],
-  ignorePatterns: ['dist', '.eslintrc.cjs', 'src/api/graphql/**'],
+  ignorePatterns: ['dist', '.eslintrc.cjs', 'src/api/graphql/**', 'src/api/attendance/**'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',

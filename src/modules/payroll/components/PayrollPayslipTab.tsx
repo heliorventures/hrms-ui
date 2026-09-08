@@ -1,5 +1,7 @@
 import Card from '../../../components/common/Card';
 import PayslipDocument from './PayslipDocument';
+import Button from '../../../components/common/Button';
+import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
 import type {
   PayrollComplianceSettingRow,
   PayslipPeriodOption,
@@ -7,6 +9,10 @@ import type {
 } from '../payrollTypes';
 
 interface PayrollPayslipTabProps {
+  unpaidLeave?: UnpaidLeaveSnapshot | null;
+  unpaidLeaveLoading?: boolean;
+  unpaidLeaveError?: string | null;
+  onRetryUnpaidLeave?: () => void;
   activePayslip: PayslipRow | null;
   employeeCode: string;
   employeeName: string;
@@ -25,6 +31,10 @@ interface PayrollPayslipTabProps {
 }
 
 const PayrollPayslipTab = ({
+  unpaidLeave,
+  unpaidLeaveLoading,
+  unpaidLeaveError,
+  onRetryUnpaidLeave,
   activePayslip,
   employeeCode,
   employeeName,
@@ -87,6 +97,9 @@ const PayrollPayslipTab = ({
         </div>
 
         {activePayslip && (
+          <>
+          {unpaidLeaveError && <div role="alert" className="no-print flex items-center gap-3 text-sm text-red-600">Unpaid leave details could not be loaded. {unpaidLeaveError}<Button size="sm" variant="outline" onClick={onRetryUnpaidLeave}>Retry</Button></div>}
+          {unpaidLeaveLoading && <p role="status" className="no-print text-sm text-slate-500">Loading unpaid leave details…</p>}
           <PayslipDocument
             tenantName={tenantName}
             companyHeaderName={payslipBranding?.payslipHeaderTitle}
@@ -99,8 +112,10 @@ const PayrollPayslipTab = ({
               )?.label ?? 'Payslip'
             }
             labelForLine={labelForLine}
-            slip={activePayslip}
+            slip={{ ...activePayslip, unpaidLeave }}
+            detailsPending={unpaidLeaveLoading || !!unpaidLeaveError}
           />
+          </>
         )}
 
         {!activePayslip && selectedPeriodKey && (

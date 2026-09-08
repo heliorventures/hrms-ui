@@ -1,0 +1,6 @@
+query CompOffBoard { compOffPolicy { id leaveTypeId enabled validityDays claimDeadlineDays } compOffBalance { earnedUnits reservedUnits usedUnits expiredUnits availableUnits } compOffClaims(limit: 100, mine: true) { id employeeId employeeName employeeCode workedDate units status reason rejectionReason createdAt } }
+query CompOffAdminBoard { compOffPolicies { id designationId employeeId leaveTypeId enabled validityDays claimDeadlineDays monthlyEarningLimit yearlyEarningLimit maxUnusedBalance allowApprovedLeaveCancellation } compOffClaims(limit: 100, status: "PENDING") { id employeeId employeeName employeeCode workedDate units status reason rejectionReason createdAt } }
+mutation SubmitCompOffClaim($input: SubmitCompOffClaimInput!) { submitCompOffClaim(input: $input) { id status workedDate units } }
+mutation DecideCompOffClaim($claimId: ID!, $approve: Boolean!, $reason: String) { decideCompOffClaim(claimId: $claimId, approve: $approve, reason: $reason) { id status rejectionReason } }
+mutation CancelCompOffClaim($claimId: ID!) { cancelCompOffClaim(claimId: $claimId) { id status } }
+mutation UpsertCompOffPolicy($input: UpsertCompOffPolicyInput!) { upsertCompOffPolicy(input: $input) { id enabled validityDays claimDeadlineDays } }

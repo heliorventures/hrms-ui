@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApproveLeaveRequestDocument, LeaveBoardDocument } from '../../api/graphql/graphql';
 
 import LeavePage from './LeavePage';
+import { MyCompOffDocument } from './compOffDocuments';
 
 const testState = vi.hoisted(() => ({
   client: { request: vi.fn() },
@@ -30,6 +31,7 @@ vi.mock('../../contexts/AuthContext', () => ({
   }),
 }));
 vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => testState.client }));
+vi.mock('../../contexts/TenantContext', () => ({ useTenant: () => ({ currentTenant: { id: 'tenant-1', timezone: 'Asia/Kolkata' } }) }));
 vi.mock('../../hooks/useFlashToast', () => ({ useFlashToast: () => testState.flash }));
 vi.mock('./hooks/useAllCompanyHolidays', () => ({
   useAllCompanyHolidays: () => ({
@@ -103,6 +105,7 @@ beforeEach(() => {
   testState.client = {
     request: vi.fn((document: unknown) => {
       if (document === LeaveBoardDocument) return Promise.resolve(board);
+      if (document === MyCompOffDocument) return Promise.resolve({ compOffPolicy: null, compOffClaims: [], compOffBalance: { earnedUnits: '0', reservedUnits: '0', usedUnits: '0', expiredUnits: '0', availableUnits: '0' } });
       if (document === ApproveLeaveRequestDocument) {
         return Promise.resolve({ approveLeaveRequest: { status: 'APPROVED' } });
       }
@@ -117,6 +120,23 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('LeavePage approval', () => {
+  it('places recent requests before collapsed reference sections', async () => {
+    render(
+      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+        <LeavePage />
+      </MemoryRouter>
+    );
+
+    const requestHeading = await screen.findByText('Recent Leave Requests');
+    const holidays = screen.getByRole('group', { name: 'Holidays' });
+    const leaveTypes = screen.getByRole('group', { name: 'Leave types' });
+    expect(
+      requestHeading.compareDocumentPosition(holidays) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(holidays.hasAttribute('open')).toBe(false);
+    expect(leaveTypes.hasAttribute('open')).toBe(false);
+  });
+
   it('pages through all leave requests instead of truncating the board at twenty rows', async () => {
     render(
       <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
@@ -183,7 +203,7 @@ describe('LeavePage approval', () => {
         expectedWorkflowStepId: 'workflow-step-1',
       })
     );
-    expect(testState.client.request.mock.calls[0]).toEqual([
+    expect(testState.client.request).toHaveBeenCalledWith(
       LeaveBoardDocument,
       {
         limit: 20,
@@ -192,6 +212,6 @@ describe('LeavePage approval', () => {
         fromDate: `${new Date().getFullYear()}-01-01`,
         toDate: `${new Date().getFullYear()}-12-31`,
       },
-    ]);
+    );
   });
 });

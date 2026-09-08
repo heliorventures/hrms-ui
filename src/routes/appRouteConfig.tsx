@@ -152,6 +152,13 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   },
   {
     kind: 'page',
+    path: 'workplace/prejoining',
+    title: 'Pre-joining',
+    tenantPath: '/workplace/prejoining',
+    load: () => import('../modules/prejoining/admin/PrejoiningAdminPage'),
+  },
+  {
+    kind: 'page',
     path: 'workplace/onboarding',
     title: 'Onboarding and exit',
     tenantPath: '/workplace/onboarding',
@@ -163,6 +170,13 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
     title: 'Performance',
     tenantPath: '/workplace/performance',
     load: () => import('../modules/workplace/PerformancePage'),
+  },
+  {
+    kind: 'page',
+    path: 'workplace/surveys',
+    title: 'Surveys',
+    tenantPath: '/workplace/surveys',
+    load: () => import('../modules/workplace/SurveysPage'),
   },
   {
     kind: 'page',

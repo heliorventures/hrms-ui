@@ -1,0 +1,41 @@
+query MyAttendanceBoard($fromDate: NaiveDate!, $toDate: NaiveDate!, $first: Int = 50, $after: String) {
+  shifts(limit: 100) {
+    id
+    name
+    startTime
+    endTime
+    workHours
+    isNightShift
+  }
+  myAttendanceSummary(fromDate: $fromDate, toDate: $toDate) {
+    completedMinutes
+    workedDays
+    averageMinutes
+    incompleteSegments
+  }
+  myAttendance(fromDate: $fromDate, toDate: $toDate, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        employeeId
+        workDate
+        checkInAt
+        checkOutAt
+        checkInTime
+        checkOutTime
+        checkInLat
+        checkInLng
+        checkOutLat
+        checkOutLng
+        status
+        source
+        lateMinutes
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

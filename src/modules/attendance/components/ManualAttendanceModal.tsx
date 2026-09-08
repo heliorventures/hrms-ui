@@ -153,8 +153,24 @@ const ManualAttendanceModal = ({
       onClose={onClose}
       title={isEditing ? 'Update Attendance Segment' : 'Adjust Attendance (Missed Punches)'}
       isDismissible={!busy}
+      size="sm"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button type="submit" form="manual-attendance-form" variant="primary" disabled={busy}>
+            {busy ? 'Saving…' : isEditing ? 'Update Segment' : 'Save Segment'}
+          </Button>
+        </>
+      }
     >
-      <form className="space-y-4" onSubmit={(event) => void submit(event)} noValidate>
+      <form
+        id="manual-attendance-form"
+        className="space-y-3"
+        onSubmit={(event) => void submit(event)}
+        noValidate
+      >
         {formError ? (
           <PageNotice
             key={`${formError.title}:${formError.message}`}
@@ -211,15 +227,6 @@ const ManualAttendanceModal = ({
         <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-relaxed text-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
           <p>{policyMessage.employee}</p>
           {policyMessage.regularizer ? <p className="mt-1">{policyMessage.regularizer}</p> : null}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button type="submit" variant="primary" disabled={busy}>
-            {busy ? 'Saving…' : isEditing ? 'Update Segment' : 'Save Segment'}
-          </Button>
-          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
-          </Button>
         </div>
       </form>
     </Modal>

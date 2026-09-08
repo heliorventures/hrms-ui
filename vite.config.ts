@@ -4,6 +4,11 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/prejoining-api': 'http://127.0.0.1:4013',
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

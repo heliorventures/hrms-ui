@@ -1,0 +1,27 @@
+input SavePayrollUnpaidLeavePolicyInput {
+  enabled: Boolean!
+  basicComponentCode: String
+  dayDivisor: String
+  treatment: String
+}
+type PayrollUnpaidLeavePolicy {
+  enabled: Boolean!
+  basicComponentCode: String
+  dayDivisor: String
+  treatment: String
+}
+type PayslipUnpaidLeave {
+  basicComponentCode: String!
+  basicAmount: String!
+  dayDivisor: String!
+  unpaidDays: String!
+  amount: String!
+  treatment: String!
+}
+extend type Query {
+  payrollUnpaidLeavePolicy: PayrollUnpaidLeavePolicy
+  payslipUnpaidLeave(payslipId: ID!): PayslipUnpaidLeave
+}
+extend type Mutation {
+  savePayrollUnpaidLeavePolicy(input: SavePayrollUnpaidLeavePolicyInput!): PayrollUnpaidLeavePolicy!
+}

@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import Button from '../../../components/common/Button';
 import { downloadPayslipPdf, loadLogoDataUrlForPdf } from '../utils/payslipPdf';
+import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
 
 export type PayslipLine = {
   id: string;
@@ -10,6 +11,7 @@ export type PayslipLine = {
 };
 
 export type PayslipDocModel = {
+  unpaidLeave?: UnpaidLeaveSnapshot | null;
   id: string;
   grossSalary: string;
   totalDeductions: string;
@@ -28,6 +30,7 @@ export type PayslipDocModel = {
 };
 
 type PayslipDocumentProps = {
+  detailsPending?: boolean;
   tenantName: string;
   /** From `payroll_compliance_setting.payslipHeaderTitle` when configured. */
   companyHeaderName?: string | null;
@@ -54,6 +57,7 @@ const fmt = (n: string) => {
  * Print-friendly salary slip (browser “Print → Save as PDF”).
  */
 const PayslipDocument = ({
+  detailsPending = false,
   tenantName,
   companyHeaderName,
   payslipLogoReadUrl,
@@ -108,10 +112,10 @@ const PayslipDocument = ({
   return (
     <div>
       <div className="no-print mb-4 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
-        <Button type="button" variant="secondary" onClick={onDownloadPdf}>
+        <Button type="button" variant="secondary" onClick={onDownloadPdf} disabled={detailsPending}>
           Download PDF
         </Button>
-        <Button type="button" variant="primary" onClick={onPrint}>
+        <Button type="button" variant="primary" onClick={onPrint} disabled={detailsPending}>
           Print / Save as PDF
         </Button>
         <p className="text-right text-xs text-slate-500">
@@ -165,6 +169,12 @@ const PayslipDocument = ({
             {slip.esicNumber ? <span>ESIC: {slip.esicNumber}</span> : null}
           </div>
         )}
+
+        {slip.unpaidLeave && <div className="mt-4 rounded border border-slate-200 bg-slate-50 p-3 text-sm">
+          <p className="font-semibold">Unpaid leave: {slip.unpaidLeave.unpaidDays} days</p>
+          <p>{slip.unpaidLeave.basicComponentCode} {fmt(slip.unpaidLeave.basicAmount)} ÷ {slip.unpaidLeave.dayDivisor} × {slip.unpaidLeave.unpaidDays} = {fmt(slip.unpaidLeave.amount)}</p>
+          <p className="mt-1 text-xs text-slate-600">{slip.unpaidLeave.treatment === 'BEFORE_STATUTORY' ? 'Already included as a reduction in basic earnings before statutory calculation.' : 'Included below as a separate deduction after statutory calculation.'}</p>
+        </div>}
 
         <h3 className="mb-2 mt-6 text-xs font-bold uppercase tracking-wide text-slate-500">
           Pay components

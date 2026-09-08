@@ -52,9 +52,7 @@ const Modal = ({
   if (typeof document === 'undefined') return null;
 
   const rootClass =
-    mobilePresentation === 'full-height'
-      ? 'items-end sm:items-center'
-      : 'items-center';
+    mobilePresentation === 'full-height' ? 'items-end sm:items-center' : 'items-center';
 
   const requestClose = () => {
     if (isDismissible && isTopmost()) onClose();
@@ -62,7 +60,7 @@ const Modal = ({
 
   const contentClass = [
     'relative flex w-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-white',
-    'max-h-[100dvh] overscroll-contain sm:max-h-[calc(100dvh-2rem)]',
+    'overscroll-contain',
     mobilePresentation === 'full-height'
       ? 'h-[100dvh] w-full rounded-b-none rounded-t-2xl sm:h-auto sm:w-[min(90vw,42rem)]'
       : `w-full ${MODAL_SIZE_CLASSES[size]} h-auto`,
@@ -82,63 +80,67 @@ const Modal = ({
         data-testid="modal-backdrop"
       />
       <div className="relative flex min-h-0 w-full justify-center sm:w-auto">
-      <div
-        className={contentClass}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={description ? descriptionId : undefined}
-        ref={dialogRef}
-        tabIndex={-1}
-      >
-        <header className="flex shrink-0 items-start justify-between border-b border-slate-200 py-3 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] dark:border-slate-700">
-          <div className="space-y-1.5">
-            <h2 id={titleId} className="text-xl font-semibold text-slate-900 dark:text-white">
-              {title}
-            </h2>
-            {description ? (
-              <p
-                id={descriptionId}
-                className="max-w-prose text-sm text-slate-600 dark:text-slate-300"
-              >
-                {description}
-              </p>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            onClick={requestClose}
-            disabled={!isDismissible}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-            aria-label={UI_A11Y_TEXT.closeModal}
-          >
-            <svg
-              aria-hidden="true"
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
+        <div
+          className={contentClass}
+          style={{
+            maxHeight:
+              'calc(100dvh - max(1rem, env(safe-area-inset-top)) - max(1rem, env(safe-area-inset-bottom)))',
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={description ? descriptionId : undefined}
+          ref={dialogRef}
+          tabIndex={-1}
+        >
+          <header className="flex shrink-0 items-start justify-between border-b border-slate-200 py-2.5 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(.75rem,env(safe-area-inset-right))] dark:border-slate-700">
+            <div className="space-y-1">
+              <h2 id={titleId} className="text-lg font-semibold text-slate-900 dark:text-white">
+                {title}
+              </h2>
+              {description ? (
+                <p
+                  id={descriptionId}
+                  className="max-w-prose text-sm text-slate-600 dark:text-slate-300"
+                >
+                  {description}
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={requestClose}
+              disabled={!isDismissible}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+              aria-label={UI_A11Y_TEXT.closeModal}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18 18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </header>
+              <svg
+                aria-hidden="true"
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18 18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </header>
 
-        <section className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
-          {children}
-        </section>
+          <section className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-3 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
+            {children}
+          </section>
 
-        {footer ? (
-          <footer className="sticky bottom-0 flex shrink-0 items-center justify-end gap-2 border-t border-slate-200 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-4 dark:border-slate-700 dark:bg-slate-900">
-            {footer}
-          </footer>
-        ) : null}
-      </div>
+          {footer ? (
+            <footer className="sticky bottom-0 flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-slate-200 bg-white pb-[max(.75rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-3 dark:border-slate-700 dark:bg-slate-900">
+              {footer}
+            </footer>
+          ) : null}
+        </div>
       </div>
     </div>,
     document.body

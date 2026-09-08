@@ -8,10 +8,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
-import {
-  CreateEmployeeDocument,
-  type CreateEmployeeInput,
-} from '../../../api/graphql/graphql';
+import { CreateEmployeeDocument, type CreateEmployeeInput } from '../../../api/graphql/graphql';
 import {
   buildDepartmentOptions,
   buildDesignationOptions,
@@ -130,7 +127,9 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         employees: { id: string; employeeCode: string; fullName: string }[];
         tenantDirectoryRoles?: { id: string; name: string; isSystemRole: boolean }[];
       }>(
-        canManageLoginAccounts ? EmployeeModalAdminDirectoryDocument : EmployeeModalDirectoryDocument,
+        canManageLoginAccounts
+          ? EmployeeModalAdminDirectoryDocument
+          : EmployeeModalDirectoryDocument,
         { dlim: 100, glim: 100, elim: 100, rlim: 80 }
       );
       setDeptOptions(buildDepartmentOptions(res.departments ?? []));
@@ -138,10 +137,10 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
       setManagerOptions(buildManagerOptions(res.employees ?? []));
       setRoleOptions([
         { value: '', label: 'No role assigned' },
-        ...((res.tenantDirectoryRoles ?? []).map((role) => ({
+        ...(res.tenantDirectoryRoles ?? []).map((role) => ({
           value: role.id,
           label: role.isSystemRole ? `${role.name} (system)` : role.name,
-        }))),
+        })),
       ]);
     } catch (e) {
       setOrgLoadError(graphQlUserMessage(e));
@@ -222,8 +221,29 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Add Employee">
-      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4" autoComplete="off">
+    <Modal
+      isOpen={isOpen}
+      isDismissible={!submitting}
+      onClose={handleClose}
+      title="Add Employee"
+      size="lg"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            {UI_ACTION_TEXT.cancel}
+          </Button>
+          <Button type="submit" form="create-employee-form" variant="primary" disabled={submitting}>
+            {submitting ? UI_STATUS_TEXT.creating : UI_ACTION_TEXT.create}
+          </Button>
+        </>
+      }
+    >
+      <form
+        id="create-employee-form"
+        onSubmit={(e) => void handleSubmit(e)}
+        className="space-y-3"
+        autoComplete="off"
+      >
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
         {orgLoadError && (
           <p className="text-sm text-amber-800 dark:text-amber-200">{orgLoadError}</p>
@@ -313,92 +333,84 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
           onChange={(e) => {
             setReportingManagerId(e.target.value);
           }}
-          options={
-            managerOptions.length ? managerOptions : [LOADING_EMPLOYEE_FORM_OPTION]
-          }
+          options={managerOptions.length ? managerOptions : [LOADING_EMPLOYEE_FORM_OPTION]}
           fullWidth
         />
         {canManageLoginAccounts ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-900/40">
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-100">
-            <input
-              type="checkbox"
-              checked={createLogin}
-              onChange={(event) => setCreateLogin(event.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-            />
-            Create login account
-          </label>
-          {createLogin && (
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Input
-                  label="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  fullWidth
-                  required={createLogin}
-                  autoComplete="off"
-                  placeholder="mobile number or unique name"
-                />
-                <Input
-                  label="Email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  fullWidth
-                  autoComplete="off"
-                  placeholder="optional"
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Input
-                  label="Initial Password"
-                  type="password"
-                  value={initialPassword}
-                  onChange={(e) => setInitialPassword(e.target.value)}
-                  fullWidth
-                  required={createLogin}
-                  minLength={8}
-                  autoComplete="new-password"
-                />
-                <Input
-                  label="Confirm Password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  fullWidth
-                  required={createLogin}
-                  minLength={8}
-                  autoComplete="new-password"
-                />
-              </div>
-              <Select
-                label="Initial Role"
-                value={roleId}
-                onChange={(e) => setRoleId(e.target.value)}
-                options={roleOptions.length ? roleOptions : [{ value: '', label: 'No role assigned' }]}
-                fullWidth
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-900/40">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-100">
+              <input
+                type="checkbox"
+                checked={createLogin}
+                onChange={(event) => setCreateLogin(event.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                The employee must change this temporary password at next login.
-              </p>
-            </div>
-          )}
-        </div>
+              Create login account
+            </label>
+            {createLogin && (
+              <div className="mt-3 space-y-3">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <Input
+                    label="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    fullWidth
+                    required={createLogin}
+                    autoComplete="off"
+                    placeholder="mobile number or unique name"
+                  />
+                  <Input
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    fullWidth
+                    autoComplete="off"
+                    placeholder="optional"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <Input
+                    label="Initial Password"
+                    type="password"
+                    value={initialPassword}
+                    onChange={(e) => setInitialPassword(e.target.value)}
+                    fullWidth
+                    required={createLogin}
+                    minLength={8}
+                    autoComplete="new-password"
+                  />
+                  <Input
+                    label="Confirm Password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    fullWidth
+                    required={createLogin}
+                    minLength={8}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <Select
+                  label="Initial Role"
+                  value={roleId}
+                  onChange={(e) => setRoleId(e.target.value)}
+                  options={
+                    roleOptions.length ? roleOptions : [{ value: '', label: 'No role assigned' }]
+                  }
+                  fullWidth
+                />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  The employee must change this temporary password at next login.
+                </p>
+              </div>
+            )}
+          </div>
         ) : (
           <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
             Login account creation requires RBAC admin access.
           </p>
         )}
-        <div className="flex gap-2">
-          <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? UI_STATUS_TEXT.creating : UI_ACTION_TEXT.create}
-          </Button>
-          <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
-            {UI_ACTION_TEXT.cancel}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

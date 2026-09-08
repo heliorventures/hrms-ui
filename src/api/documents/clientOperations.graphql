@@ -1851,42 +1851,6 @@ query AttendanceBoard($limit: Int! = 400, $fromDate: NaiveDate, $toDate: NaiveDa
   }
 }
 
-query MyAttendanceBoard($fromDate: NaiveDate, $toDate: NaiveDate, $first: Int = 50, $after: String) {
-  shifts(limit: 100) {
-    id
-    name
-    startTime
-    endTime
-    workHours
-    isNightShift
-  }
-  myAttendance(fromDate: $fromDate, toDate: $toDate, first: $first, after: $after) {
-    edges {
-      cursor
-      node {
-        id
-        employeeId
-        workDate
-        checkInAt
-        checkOutAt
-        checkInTime
-        checkOutTime
-        checkInLat
-        checkInLng
-        checkOutLat
-        checkOutLng
-        status
-        source
-        lateMinutes
-      }
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-    }
-  }
-}
-
 query ManagedAttendancePage(
   $fromDate: NaiveDate!
   $toDate: NaiveDate!
@@ -2128,6 +2092,46 @@ query MyNotificationPreferences {
     inAppEnabled
     announcementsEnabled
     mutedTopics
+  }
+}
+
+query MyCelebrationPreferences {
+  myCelebrationPreferences {
+    shareBirthday
+    shareWorkAnniversary
+  }
+}
+
+mutation UpdateMyCelebrationPreferences($input: UpdateCelebrationPreferencesInput!) {
+  updateMyCelebrationPreferences(input: $input) {
+    shareBirthday
+    shareWorkAnniversary
+  }
+}
+
+query NotificationAutomationSettings {
+  notificationAutomationSettings {
+    birthdayEnabled
+    workAnniversaryEnabled
+    companySharingEnabled
+    deliveryLocalTime
+    birthdayTitleTemplate
+    birthdayMessageTemplate
+    anniversaryTitleTemplate
+    anniversaryMessageTemplate
+  }
+}
+
+mutation SaveNotificationAutomationSettings($input: SaveNotificationAutomationSettingsInput!) {
+  saveNotificationAutomationSettings(input: $input) {
+    birthdayEnabled
+    workAnniversaryEnabled
+    companySharingEnabled
+    deliveryLocalTime
+    birthdayTitleTemplate
+    birthdayMessageTemplate
+    anniversaryTitleTemplate
+    anniversaryMessageTemplate
   }
 }
 

@@ -25,6 +25,7 @@ vi.mock('../../contexts/AuthContext', () => ({
     clientSession: {
       jwtRoles: [],
       permissions: new Set(),
+      permissionScopes: {},
       resourceScopes: {},
       persona: 'EMPLOYEE',
       mustChangePassword: false,

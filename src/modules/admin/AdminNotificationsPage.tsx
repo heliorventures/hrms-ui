@@ -3,6 +3,7 @@ import Card from '../../components/common/Card';
 import { AnnouncementHistory, NotificationHistory } from './AdminNotificationsHistory';
 import AnnouncementEditorForm from './components/AnnouncementEditorForm';
 import DirectNotificationComposer from './components/DirectNotificationComposer';
+import NotificationAutomationSettingsCard from './components/NotificationAutomationSettingsCard';
 import { useAdminNotificationsPageModel } from './useAdminNotificationsPageModel';
 
 const AdminNotificationsPage = () => {
@@ -36,6 +37,12 @@ const AdminNotificationsPage = () => {
         </Card>
       ) : null}
 
+      {model.data?.notificationAutomationSettings ? (
+        <NotificationAutomationSettingsCard
+          initialSettings={model.data.notificationAutomationSettings}
+        />
+      ) : null}
+
       <Card title={announcementState.editId ? 'Edit announcement' : 'New announcement (HR)'}>
         {model.loading ? (
           <p className="text-sm text-gray-500">Loading...</p>
@@ -49,6 +56,7 @@ const AdminNotificationsPage = () => {
             documentFile={announcementState.documentFile}
             employeePost={announcementState.employeePost}
             existingRoleCode={announcement.existingRoleCode}
+            hasExistingVideo={announcement.hasExistingVideo}
             expiresAt={announcementState.expiresAt}
             imageFile={announcementState.imageFile}
             isEditing={Boolean(announcementState.editId)}
@@ -56,6 +64,10 @@ const AdminNotificationsPage = () => {
             publishAt={announcementState.publishAt}
             roleCode={announcementState.roleCode}
             title={announcementState.title}
+            videoMode={announcementState.videoMode}
+            videoLink={announcementState.videoLink}
+            videoFile={announcementState.videoFile}
+            videoProgress={announcement.videoProgress}
             onBodyChange={(value) => announcement.setField('body', value)}
             onCancelEdit={announcement.cancelEdit}
             onClearRoleAudienceChange={(value) => announcement.setField('clearRoleAudience', value)}
@@ -69,6 +81,15 @@ const AdminNotificationsPage = () => {
             onRoleCodeChange={(value) => announcement.setField('roleCode', value)}
             onSubmit={announcement.submit}
             onTitleChange={(value) => announcement.setField('title', value)}
+            onVideoChange={(values) => {
+              if (values.videoMode !== undefined)
+                announcement.setField('videoMode', values.videoMode);
+              if (values.videoLink !== undefined)
+                announcement.setField('videoLink', values.videoLink);
+              if (values.videoFile !== undefined)
+                announcement.setField('videoFile', values.videoFile);
+            }}
+            onCancelVideoUpload={announcement.cancelVideoUpload}
           />
         )}
       </Card>

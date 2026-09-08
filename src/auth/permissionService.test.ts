@@ -23,6 +23,52 @@ function serviceWith(
   return createPermissionService(session);
 }
 
+describe('performance and survey workspace route permissions', () => {
+  it('allows each exact scoped performance persona', () => {
+    expect(
+      serviceWith(['performance:self'], [], { 'performance:self': 'SELF' }).canRoute(
+        '/workplace/performance'
+      )
+    ).toBe(true);
+    expect(
+      serviceWith(['performance:evaluate'], [], { 'performance:evaluate': 'TEAM' }).canRoute(
+        '/workplace/performance'
+      )
+    ).toBe(true);
+    expect(
+      serviceWith(['performance:manage'], [], { 'performance:manage': 'ALL' }).canRoute(
+        '/workplace/performance'
+      )
+    ).toBe(true);
+    expect(
+      serviceWith(['performance:evaluate'], [], { 'performance:evaluate': 'SELF' }).canRoute(
+        '/workplace/performance'
+      )
+    ).toBe(false);
+  });
+
+  it('allows survey respondents and scoped aggregate viewers without broadening scope', () => {
+    expect(
+      serviceWith(['survey:respond'], [], { 'survey:respond': 'SELF' }).canRoute(
+        '/workplace/surveys'
+      )
+    ).toBe(true);
+    expect(
+      serviceWith(['survey:results'], [], { 'survey:results': 'DEPARTMENT' }).canRoute(
+        '/workplace/surveys'
+      )
+    ).toBe(true);
+    expect(
+      serviceWith(['survey:manage'], [], { 'survey:manage': 'ALL' }).canRoute('/workplace/surveys')
+    ).toBe(true);
+    expect(
+      serviceWith(['survey:results'], [], { 'survey:results': 'SELF' }).canRoute(
+        '/workplace/surveys'
+      )
+    ).toBe(false);
+  });
+});
+
 describe('HR attendance management route permission', () => {
   it('allows the route with attendance:regularize', () => {
     expect(
@@ -58,7 +104,7 @@ describe('runtime authorization uses permissions instead of role names', () => {
     ).toBe(true);
   });
 
-  it('requires every ALL-scoped permission used by the combined reports page', () => {
+  it('opens the report catalogue for an exact ALL-scoped report domain', () => {
     expect(serviceWith(['attendance:read']).canRoute('/admin/reports')).toBe(false);
     expect(
       serviceWith(['attendance:read', 'employee:read', 'leave:read', 'payroll:manage'], [], {
@@ -75,7 +121,9 @@ describe('runtime authorization uses permissions instead of role names', () => {
         'leave:read': 'SELF',
         'payroll:manage': 'ALL',
       }).canRoute('/admin/reports')
-    ).toBe(false);
+    ).toBe(true);
+    expect(serviceWith(['payroll:read'], [], { 'payroll:read': 'ALL' }).canRoute('/admin/reports')).toBe(true);
+    expect(serviceWith(['payroll:manage'], [], { 'payroll:manage': 'ALL' }).canRoute('/admin/reports')).toBe(false);
     expect(serviceWith(['employee:write']).canRoute('/admin/reports')).toBe(false);
     expect(serviceWith(['payroll:statutory_export']).canRoute('/admin/reports')).toBe(false);
   });
@@ -178,9 +226,9 @@ describe('runtime authorization uses permissions instead of role names', () => {
       expect(serviceWith([permission], [], { [permission]: scope }).canRoute(path)).toBe(false);
     }
     expect(serviceWith([permission], [], { [permission]: 'ALL' }).canRoute(path)).toBe(true);
-    expect(
-      serviceWith(['employee:manage'], [], { 'employee:manage': 'ALL' }).canRoute(path)
-    ).toBe(false);
+    expect(serviceWith(['employee:manage'], [], { 'employee:manage': 'ALL' }).canRoute(path)).toBe(
+      false
+    );
   });
 
   it('keeps Benefits self-service separate from Benefits configuration', () => {
@@ -190,9 +238,7 @@ describe('runtime authorization uses permissions instead of role names', () => {
       )
     ).toBe(true);
     expect(
-      serviceWith(['benefits:self'], [], { 'benefits:self': 'ALL' }).canRoute(
-        '/workplace/benefits'
-      )
+      serviceWith(['benefits:self'], [], { 'benefits:self': 'ALL' }).canRoute('/workplace/benefits')
     ).toBe(false);
     expect(
       serviceWith(['benefits:manage'], [], { 'benefits:manage': 'TEAM' }).canRoute(

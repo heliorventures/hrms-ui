@@ -4,6 +4,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import FlashToastBar from '../../components/common/FlashToastBar';
 import { canAccessTenantPath } from '../../auth/navAccess';
+import { authorizationStateKey } from '../../auth/permissionService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useFlashToast } from '../../hooks/useFlashToast';
@@ -17,6 +18,7 @@ import { useLeaveWorkflowTrail } from '../leave/hooks/useLeaveWorkflowTrail';
 import HrLeaveFilterTabs, { type HrLeaveFilter } from './components/HrLeaveFilterTabs';
 import HrLeaveSummaryCards from './components/HrLeaveSummaryCards';
 import LeaveTeamCalendar from './components/LeaveTeamCalendar';
+import CompOffApprovalPanel from '../leave/components/CompOffApprovalPanel';
 import {
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
@@ -294,6 +296,7 @@ const HrLeavesPage = () => {
       />
 
       <LeaveTeamCalendar />
+      <CompOffApprovalPanel key={authorizationStateKey(clientSession)} />
 
       <Card title="Requests">
         <HrLeaveFilterTabs activeFilter={filter} pendingCount={pendingCount} onChange={setFilter} />

@@ -1,6 +1,6 @@
 import type { AdminLeaveConsoleQuery, HolidaysInCalendarQuery } from '../../api/graphql/graphql';
 
-export type LeaveSettingsTabKey = 'types' | 'policies' | 'balances' | 'holidays';
+export type LeaveSettingsTabKey = 'types' | 'policies' | 'balances' | 'holidays' | 'comp-off';
 export type LeaveTypeRow = AdminLeaveConsoleQuery['leaveTypes'][number];
 export type LeavePolicyRow = AdminLeaveConsoleQuery['leavePolicies'][number];
 export type HolidayCalendarRow = AdminLeaveConsoleQuery['holidayCalendars'][number];

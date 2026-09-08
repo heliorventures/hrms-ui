@@ -4,14 +4,19 @@ import LeaveHolidaysSection from './components/LeaveHolidaysSection';
 import { LeaveSettingsHeaderFromModel } from './components/LeaveSettingsHeader';
 import LeavePoliciesSection from './components/LeavePoliciesSection';
 import LeaveTypesSection from './components/LeaveTypesSection';
+import CompOffPolicySection from './components/CompOffPolicySection';
 import { useAdminLeaveSettings } from './hooks/useAdminLeaveSettings';
+import { authorizationStateKey } from '../../auth/permissionService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminLeaveSettingsPage = () => {
   const model = useAdminLeaveSettings();
+  const { clientSession } = useAuth();
 
   return (
     <div className="space-y-4">
       <LeaveSettingsHeaderFromModel model={model} />
+      {model.tab === 'comp-off' ? <CompOffPolicySection key={authorizationStateKey(clientSession)} /> : null}
 
       {model.error ? (
         <Card>

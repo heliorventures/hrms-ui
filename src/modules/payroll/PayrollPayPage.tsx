@@ -11,6 +11,7 @@ import PayrollPayslipTab from './components/PayrollPayslipTab';
 import PayrollPayTabs from './components/PayrollPayTabs';
 import PayrollSalaryTab from './components/PayrollSalaryTab';
 import { usePayrollPayData } from './hooks/usePayrollPayData';
+import { usePayslipUnpaidLeave } from './hooks/usePayslipUnpaidLeave';
 import type { PayrollTabId } from './payrollTypes';
 
 const PayrollPayPage = () => {
@@ -30,6 +31,8 @@ const PayrollPayPage = () => {
     ownerKey,
     tenantTimezone: currentTenant.timezone,
   });
+
+  const unpaidLeave = usePayslipUnpaidLeave(client, ownerKey, canReadPayroll && activeTab === 'payslip' ? pay.activePayslip?.id ?? null : null);
 
   useEffect(() => {
     if (activeTab === 'incometax' && !canReadTax) setActiveTab('salary');
@@ -61,6 +64,10 @@ const PayrollPayPage = () => {
       {activeTab === 'payslip' && (
         <PayrollPayslipTab
           activePayslip={pay.activePayslip}
+          unpaidLeave={unpaidLeave.data}
+          unpaidLeaveLoading={unpaidLeave.loading}
+          unpaidLeaveError={unpaidLeave.error}
+          onRetryUnpaidLeave={unpaidLeave.retry}
           employeeCode={user?.employeeId ?? ''}
           employeeName={user?.name ?? 'Employee'}
           labelForLine={pay.labelForLine}

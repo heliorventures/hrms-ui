@@ -5,10 +5,7 @@ import PageNotice from '../../../components/common/PageNotice';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-import {
-  uploadTenantFile,
-  validateTenantUploadFile,
-} from '../../../utils/tenantFileUpload';
+import { uploadTenantFile, validateTenantUploadFile } from '../../../utils/tenantFileUpload';
 import { ApplyLeaveContextPanel } from './ApplyLeaveSupportingInfo';
 import ApplyLeaveFormFields, {
   type ApplyLeaveField,
@@ -105,7 +102,7 @@ const ApplyLeaveModal = ({
 
   const halfDayAllowed = selectedType?.halfDayAllowed !== false;
   const requiresDocument = selectedType?.requiresDocument === true;
-  const consumesLeaveBalance = selectedType?.isPaid !== false;
+  const consumesLeaveBalance = selectedType?.isPaid !== false && selectedType?.code !== 'COMP_OFF';
   const isMultiDay = Boolean(fromDate && toDate && fromDate !== toDate);
   const halfDayEligible = halfDayAllowed && !isMultiDay;
   const leaveTypeOptions = useMemo(
@@ -359,8 +356,26 @@ const ApplyLeaveModal = ({
       title="Apply For Leave"
       size="lg"
       isDismissible={!submitting}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="apply-leave-form"
+            variant="primary"
+            disabled={!leaveTypes.length}
+            busy={submitting}
+            busyLabel="Submitting leave application…"
+          >
+            Submit Application
+          </Button>
+        </>
+      }
     >
       <form
+        id="apply-leave-form"
         ref={formRef}
         onSubmit={handleSubmit}
         className="space-y-4"
@@ -400,21 +415,6 @@ const ApplyLeaveModal = ({
           onSupportingDocumentFileChange={handleSupportingDocumentChange}
           fieldErrors={fieldErrors}
         />
-
-        <div className="flex gap-3">
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={!leaveTypes.length}
-            busy={submitting}
-            busyLabel="Submitting leave application…"
-          >
-            Submit Application
-          </Button>
-          <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
-            Cancel
-          </Button>
-        </div>
       </form>
     </Modal>
   );

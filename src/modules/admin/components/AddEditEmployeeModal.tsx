@@ -112,9 +112,19 @@ const AddEditEmployeeModal = ({ isOpen, onClose, employee, onSave }: AddEditEmpl
       isOpen={isOpen}
       onClose={onClose}
       title={employee ? 'Edit Employee' : 'Add Employee'}
-      size="xl"
+      size="lg"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form="add-edit-employee-form" variant="primary">
+            {employee ? 'Update Employee' : 'Add Employee'}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form id="add-edit-employee-form" onSubmit={handleSubmit} className="space-y-3">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input
             label="Employee ID"
@@ -224,15 +234,6 @@ const AddEditEmployeeModal = ({ isOpen, onClose, employee, onSave }: AddEditEmpl
           required
           fullWidth
         />
-
-        <div className="flex gap-3">
-          <Button type="submit" variant="primary">
-            {employee ? 'Update Employee' : 'Add Employee'}
-          </Button>
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-        </div>
       </form>
     </Modal>
   );

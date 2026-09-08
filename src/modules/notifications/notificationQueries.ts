@@ -24,6 +24,16 @@ export const AdminNotificationsConsoleSafeDocument = `
     $empLim: Int! = 200
     $deptLim: Int! = 50
   ) {
+    notificationAutomationSettings {
+      birthdayEnabled
+      workAnniversaryEnabled
+      companySharingEnabled
+      deliveryLocalTime
+      birthdayTitleTemplate
+      birthdayMessageTemplate
+      anniversaryTitleTemplate
+      anniversaryMessageTemplate
+    }
     adminAnnouncements(limit: $annLim) {
       id
       title
@@ -32,6 +42,8 @@ export const AdminNotificationsConsoleSafeDocument = `
       targetDepartmentId
       targetLocationId
       postSource
+      hasVideoAttachment
+      videoLink
       publishAt
       expiresAt
       createdAt

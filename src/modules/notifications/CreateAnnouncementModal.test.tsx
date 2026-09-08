@@ -26,6 +26,10 @@ vi.mock('../../hooks/useGraphClient', () => ({
   useGraphClient: () => graphState.client,
 }));
 
+vi.mock('../../contexts/TenantContext', () => ({
+  useTenant: () => ({ currentTenant: { id: 'tenant-a' } }),
+}));
+
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     can: () => false,
@@ -39,9 +43,7 @@ const sessionFor = (
 ): ParsedClientSession => ({
   jwtRoles: [],
   permissions,
-  permissionScopes: permissions.has('notification:manage')
-    ? { 'notification:manage': 'ALL' }
-    : {},
+  permissionScopes: permissions.has('notification:manage') ? { 'notification:manage': 'ALL' } : {},
   resourceScopes: {},
   persona,
   mustChangePassword: false,
@@ -56,8 +58,10 @@ const createRequests = (client = graphState.client) =>
 const getPublishButton = () => screen.getByRole('button', { name: 'Publish Announcement' });
 
 const getComposerForm = () => {
-  const form = getPublishButton().closest('form');
-  if (!form) throw new Error('Announcement composer form was not rendered.');
+  const form = document.getElementById('create-announcement-form');
+  if (!(form instanceof HTMLFormElement)) {
+    throw new Error('Announcement composer form was not rendered.');
+  }
   return form;
 };
 
@@ -72,6 +76,40 @@ afterEach(() => {
 });
 
 describe('CreateAnnouncementModal audience loading', () => {
+  it('publishes a video link without creating an upload ticket', async () => {
+    authState.session = sessionFor('EMPLOYEE', new Set());
+    graphState.client.request.mockResolvedValue({});
+    renderModal();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Title' }), {
+      target: { value: 'Site safety' },
+    });
+    fireEvent.click(screen.getByRole('radio', { name: 'Video link' }));
+    fireEvent.change(screen.getByLabelText('Video URL'), {
+      target: { value: 'https://example.com/safety' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Team Post' }));
+    await waitFor(() => expect(createRequests()).toHaveLength(1));
+    expect(graphState.client.request).toHaveBeenCalledTimes(1);
+    expect(createRequests()[0][1]).toMatchObject({
+      input: { videoLink: 'https://example.com/safety', videoUploadStageId: null },
+    });
+  });
+
+  it('rejects an oversized video before any upload or publish request', async () => {
+    authState.session = sessionFor('EMPLOYEE', new Set());
+    renderModal();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Title' }), {
+      target: { value: 'Site safety' },
+    });
+    fireEvent.click(screen.getByRole('radio', { name: 'Upload video' }));
+    const file = new File(['video'], 'large.mp4', { type: 'video/mp4' });
+    Object.defineProperty(file, 'size', { value: 50 * 1024 * 1024 + 1 });
+    fireEvent.change(screen.getByLabelText('Video file'), { target: { files: [file] } });
+    fireEvent.submit(getComposerForm());
+    expect(await screen.findByText('Video must be 50 MB or smaller.')).toBeTruthy();
+    expect(graphState.client.request).not.toHaveBeenCalled();
+  });
+
   it('blocks HR publication when department options fail to load', async () => {
     graphState.client.request.mockImplementation((document) => {
       if (document === OrgDepartmentsDocument) {
@@ -153,10 +191,7 @@ describe('CreateAnnouncementModal audience loading', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Title' }), {
       target: { value: 'Team update' },
     });
-    const publishButton = screen.getByRole('button', { name: 'Publish Team Post' });
-    const form = publishButton.closest('form');
-    if (!form) throw new Error('Team post form was not rendered.');
-    fireEvent.submit(form);
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Team Post' }));
 
     await waitFor(() => expect(createRequests(employeeClient)).toHaveLength(1));
     const [createRequest] = createRequests(employeeClient);

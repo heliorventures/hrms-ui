@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { AttendanceAdjustmentPolicyDocument, MyAttendanceBoardDocument } from '../../api/graphql/graphql';
+
+import { MyAttendanceBoardDocument } from '../../api/attendance/graphql';
+import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import PageNotice from '../../components/common/PageNotice';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { formatMinutesAsHhMm, segmentWorkedMinutes } from '../../utils/attendanceDuration';
+import { segmentWorkedMinutes } from '../../utils/attendanceDuration';
 import { attendancePolicyMessage } from '../../utils/attendancePolicyMessage';
 import {
   isoDateRangeContains,
@@ -17,9 +19,10 @@ import {
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { formatBackendTime } from '../../utils/timeFormat';
 
+import AttendanceCursorPager from './components/AttendanceCursorPager';
+import AttendanceMonthlySummary from './components/AttendanceMonthlySummary';
 import AttendanceSegmentsTable from './components/AttendanceSegmentsTable';
 import ManualAttendanceModal from './components/ManualAttendanceModal';
-import AttendanceCursorPager from './components/AttendanceCursorPager';
 import type { AttendanceBoardData, FlatSegmentRow } from './types';
 import { mapMyAttendanceBoard } from './types';
 
@@ -204,7 +207,7 @@ const AttendancePage = () => {
         if (!requestIsCurrent()) return;
         if (
           isRefreshForThisRequest &&
-          refreshIntentRef.current?.revision === refreshIntent?.revision &&
+          refreshIntentRef.current?.revision === refreshIntent.revision &&
           boardRequestIdentityMatches(refreshIntentRef.current.identity, requestIdentity)
         ) {
           refreshIntentRef.current = null;
@@ -262,28 +265,6 @@ const AttendancePage = () => {
     return out;
   }, [currentBoard?.attendance, monthBounds.start, monthBounds.end]);
 
-  const pageStats = useMemo(() => {
-    let completedMinutes = 0;
-    const workedDays = new Set<string>();
-    for (const r of filteredSegments) {
-      if (r.segmentMinutes != null && r.segmentMinutes > 0) {
-        completedMinutes += r.segmentMinutes;
-        workedDays.add(r.workDate);
-      } else if (r.checkInTime && !r.checkOutTime) {
-        workedDays.add(r.workDate);
-      }
-    }
-    const denom = workedDays.size || 0;
-    const avgMinutes = denom > 0 ? completedMinutes / denom : 0;
-    return {
-      workedDays: denom,
-      completedMinutes,
-      avgMinutes,
-      totalDisplay: formatMinutesAsHhMm(completedMinutes),
-      avgDisplay: denom > 0 ? formatMinutesAsHhMm(avgMinutes) : '-',
-    };
-  }, [filteredSegments]);
-
   const shiftLimit = 12;
   const existingSegmentsComplete =
     boardIsCurrent &&
@@ -319,7 +300,7 @@ const AttendancePage = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance</h1>
         {canPunchAttendance ? (
@@ -335,109 +316,73 @@ const AttendancePage = () => {
         ) : null}
       </div>
 
-      <Card title="Month">
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => {
-              if (monthIndex === 0) {
-                setYear((y) => y - 1);
-                setMonthIndex(11);
-              } else setMonthIndex((m) => m - 1);
-              resetCursorStack();
-            }}
-          >
-            Previous
-          </Button>
-          <select
-            aria-label="Month"
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            value={monthIndex}
-            onChange={(e) => {
-              setMonthIndex(parseInt(e.target.value, 10));
-              resetCursorStack();
-            }}
-          >
-            {Array.from({ length: 12 }, (_, m) => (
-              <option key={m} value={m}>
-                {new Date(year, m, 1).toLocaleString('en-IN', { month: 'long' })}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Year"
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            value={year}
-            onChange={(e) => {
-              setYear(parseInt(e.target.value, 10));
-              resetCursorStack();
-            }}
-          >
-            {Array.from({ length: 7 }, (_, i) => now.getFullYear() - 3 + i).map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => {
-              if (monthIndex === 11) {
-                setYear((y) => y + 1);
-                setMonthIndex(0);
-              } else setMonthIndex((m) => m + 1);
-              resetCursorStack();
-            }}
-          >
-            Next
-          </Button>
-          <Button
-            variant="outline"
-            type="button"
-            disabled={refreshing}
-            onClick={() => void refreshBoard()}
-          >
-            {refreshing ? 'Refreshing…' : 'Refresh'}
-          </Button>
-        </div>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card title="Avg. Hours / Worked Day on This Page">
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {pageStats.avgDisplay}
-          </p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Current page data only. Completed segments; denominator = days with at least one punch
-            or open segment on this page.
-          </p>
-        </Card>
-        <Card title="Worked Days on This Page">
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {pageStats.workedDays}
-          </p>
-        </Card>
-        <Card title="Total Time on This Page">
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {pageStats.totalDisplay}
-          </p>
-        </Card>
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Attendance month">
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => {
+            if (monthIndex === 0) {
+              setYear((y) => y - 1);
+              setMonthIndex(11);
+            } else setMonthIndex((m) => m - 1);
+            resetCursorStack();
+          }}
+        >
+          Previous
+        </Button>
+        <select
+          aria-label="Month"
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          value={monthIndex}
+          onChange={(e) => {
+            setMonthIndex(parseInt(e.target.value, 10));
+            resetCursorStack();
+          }}
+        >
+          {Array.from({ length: 12 }, (_, m) => (
+            <option key={m} value={m}>
+              {new Date(year, m, 1).toLocaleString('en-IN', { month: 'long' })}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Year"
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          value={year}
+          onChange={(e) => {
+            setYear(parseInt(e.target.value, 10));
+            resetCursorStack();
+          }}
+        >
+          {Array.from({ length: 7 }, (_, i) => now.getFullYear() - 3 + i).map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => {
+            if (monthIndex === 11) {
+              setYear((y) => y + 1);
+              setMonthIndex(0);
+            } else setMonthIndex((m) => m + 1);
+            resetCursorStack();
+          }}
+        >
+          Next
+        </Button>
+        <Button
+          variant="outline"
+          type="button"
+          disabled={refreshing}
+          onClick={() => void refreshBoard()}
+        >
+          {refreshing ? 'Refreshing…' : 'Refresh'}
+        </Button>
       </div>
-
-      <Card title="Self-Service Adjustment Policy">
-        <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
-          {policyReady ? (
-            <>
-              <p>{policyMessage.employee}</p>
-              {policyMessage.regularizer ? <p>{policyMessage.regularizer}</p> : null}
-            </>
-          ) : (
-            <p role="status">Loading adjustment policy…</p>
-          )}
-        </div>
-      </Card>
+      <AttendanceMonthlySummary summary={currentBoard?.summary ?? null} loading={loading} />
 
       {error && (
         <PageNotice
@@ -464,39 +409,13 @@ const AttendancePage = () => {
           {success}
         </PageNotice>
       )}
-      <Card title="Shift Templates">
-        {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
-        ) : currentBoard?.shifts.length ? (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {currentBoard.shifts.slice(0, shiftLimit).map((shift) => (
-              <div
-                key={shift.id}
-                className="rounded-lg border border-gray-200 p-3 dark:border-gray-700"
-              >
-                <h3 className="font-semibold text-gray-900 dark:text-white">{shift.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatBackendTime(shift.startTime ?? null)} -{' '}
-                  {formatBackendTime(shift.endTime ?? null)}
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  Nominal Hours: {shift.workHours ?? '-'}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No Shifts Configured.</p>
-        )}
-      </Card>
-
       <AttendanceSegmentsTable
         adjustPolicyDays={adjustPolicyDays}
         canAdjust={canPunchAttendance && policyReady}
         canRegularize={canRegularize}
         loading={loading}
         rows={filteredSegments}
-        title={`Attendance - current page - ${monthBounds.start} to ${monthBounds.end}`}
+        title="Attendance records"
         selfAdjustAllowedForDate={selfAdjustAllowedForDate}
         onAdjust={(row) => openAdjust(row.workDate, row)}
       />
@@ -507,6 +426,55 @@ const AttendancePage = () => {
         loading={loading || refreshing}
         onCursorChange={changeCursor}
       />
+
+      <details className="rounded-xl border border-line bg-surface px-4 py-3">
+        <summary className="cursor-pointer rounded text-sm font-medium text-content-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+          Attendance guidance and shifts
+        </summary>
+        <div className="mt-3 space-y-3">
+          <p className="text-sm text-content-secondary">
+            Monthly totals include completed punches only. Each workday is counted once, including
+            days with a completed segment and an incomplete punch. Overnight work stays with its
+            starting date.
+          </p>
+          <div className="space-y-1 text-sm text-content-secondary">
+            <h2 className="font-semibold text-content-primary">Punch adjustments</h2>
+            {policyReady ? (
+              <>
+                <p>{policyMessage.employee}</p>
+                {policyMessage.regularizer ? <p>{policyMessage.regularizer}</p> : null}
+              </>
+            ) : (
+              <p role="status">Loading adjustment policy…</p>
+            )}
+          </div>
+          <Card title="Shift templates">
+            {loading ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+            ) : currentBoard?.shifts.length ? (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {currentBoard.shifts.slice(0, shiftLimit).map((shift) => (
+                  <div
+                    key={shift.id}
+                    className="rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+                  >
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{shift.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {formatBackendTime(shift.startTime ?? null)} -{' '}
+                      {formatBackendTime(shift.endTime ?? null)}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Nominal Hours: {shift.workHours ?? '-'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">No Shifts Configured.</p>
+            )}
+          </Card>
+        </div>
+      </details>
       {canPunchAttendance && policyReady ? (
         <ManualAttendanceModal
           isOpen={adjustOpen}

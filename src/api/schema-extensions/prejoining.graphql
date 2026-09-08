@@ -1,0 +1,67 @@
+input ConfirmPrejoiningInput {
+  candidateId: ID!
+  revision: Int!
+  employeeCode: String!
+  dateOfJoining: NaiveDate!
+  departmentId: ID
+  designationId: ID
+  reportingManagerId: ID
+  employmentType: String
+  username: String!
+  initialPassword: String!
+  roleIds: [ID!]!
+}
+
+extend type Mutation {
+  savePrejoiningConfig(config: JSON!): JSON!
+  invitePrejoining(email: String!, sendEmail: Boolean!): PrejoiningInvitation!
+  reissuePrejoining(id: ID!, revision: Int!, sendEmail: Boolean!): PrejoiningInvitation!
+  requestPrejoiningChanges(id: ID!, revision: Int!, feedback: String!): PrejoiningCandidate!
+  approvePrejoining(id: ID!, revision: Int!): PrejoiningCandidate!
+  cancelPrejoining(id: ID!, revision: Int!): PrejoiningCandidate!
+  confirmPrejoiningJoined(input: ConfirmPrejoiningInput!): PrejoiningCandidate!
+}
+
+type PrejoiningCandidate {
+  id: ID!
+  email: String!
+  status: String!
+  revision: Int!
+  config: JSON!
+  answers: JSON!
+  feedback: String
+  documents: JSON!
+  expiresAt: DateTime
+  employeeId: ID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type PrejoiningDocumentContent {
+  filename: String!
+  mimeType: String!
+  base64Content: String!
+}
+
+type PrejoiningInvitation {
+  candidate: PrejoiningCandidate!
+  privateUrl: String!
+  emailStatus: String!
+  emailError: String
+}
+
+type PrejoiningPage {
+  nodes: [PrejoiningCandidate!]!
+  total: Int!
+}
+
+extend type Query {
+  prejoiningConversionOptions(managerSearch: String, managerOffset: Int): JSON!
+  prejoiningConfig: JSON!
+  prejoiningFieldCatalog: JSON!
+  prejoiningDocumentTypes: JSON!
+  prejoiningCandidates(offset: Int, limit: Int, status: String): PrejoiningPage!
+  prejoiningCandidate(id: ID!): PrejoiningCandidate
+  prejoiningDocument(candidateId: ID!, documentId: ID!): PrejoiningDocumentContent!
+  prejoiningCandidatesCsv(status: String): String!
+}

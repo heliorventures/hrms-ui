@@ -1,0 +1,50 @@
+type HrInsights {
+	onTimeDays: Int
+	lateDays: Int
+	unknownPunctualityDays: Int
+	incompleteDays: Int
+	joiners: Int
+	exits: Int
+	activeHeadcount: Int
+	netSalaryGenerated: String
+	generatedPayslips: Int
+	pendingRequests: Int
+	monthlyPayroll: [HrMonthlyPayroll!]
+	includedPendingDomains: [String!]!
+}
+
+type HrMonthlyPayroll {
+	month: String!
+	netSalaryGenerated: String!
+	payslips: Int!
+}
+
+type HrReportCsv {
+	fileName: String!
+	csv: String!
+	rowCount: Int!
+}
+
+enum HrReportKind {
+	ATTENDANCE_PUNCTUALITY
+	LEAVE_REQUESTS
+	LEAVE_BALANCES
+	PAYROLL_REGISTER
+	UNPAID_LEAVE
+	EMPLOYEE_MOVEMENTS
+	TIMESHEET_HOURS
+	COMP_OFF_CREDITS
+	PENDING_REQUESTS
+}
+
+type HrReportRows {
+	columns: [String!]!
+	rows: [[String!]!]!
+	totalRows: Int!
+}
+
+extend type Query {
+  hrReportRows(kind: HrReportKind!, fromDate: NaiveDate!, toDate: NaiveDate!, employeeId: UUID, employeeSearch: String, offset: Int! = 0, limit: Int! = 50): HrReportRows!
+  hrReportCsv(kind: HrReportKind!, fromDate: NaiveDate!, toDate: NaiveDate!, employeeId: UUID, employeeSearch: String): HrReportCsv!
+  hrInsights(fromDate: NaiveDate!, toDate: NaiveDate!): HrInsights!
+}

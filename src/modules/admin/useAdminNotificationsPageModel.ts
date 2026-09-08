@@ -1,6 +1,8 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
+/* eslint-disable max-lines -- This existing page model owns four coordinated admin workflows. */
+
 import {
   CreateDirectNotificationsDocument,
   DeleteAnnouncementDocument,
@@ -11,6 +13,8 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import { directNotificationActionUrl } from '../../utils/actionUrl';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { AdminNotificationsConsoleSafeDocument } from '../notifications/notificationQueries';
+import { useAnnouncementVideoUpload } from '../notifications/useAnnouncementVideoUpload';
+import { useNotificationOwnerKey } from '../notifications/useNotificationOwnerKey';
 
 import {
   saveAnnouncement,
@@ -41,6 +45,9 @@ const EMPTY_ANNOUNCEMENT: AnnouncementEditorState = {
   employeePost: false,
   imageFile: null,
   documentFile: null,
+  videoMode: 'NONE',
+  videoLink: '',
+  videoFile: null,
   editId: null,
 };
 
@@ -120,6 +127,8 @@ const announcementStateFor = (announcement: AdminAnnouncementRow): AnnouncementE
   publishAt: announcement.publishAt ? String(announcement.publishAt).slice(0, 16) : '',
   expiresAt: announcement.expiresAt ? String(announcement.expiresAt).slice(0, 16) : '',
   employeePost: announcement.postSource === 'employee_post',
+  videoMode: announcement.hasVideoAttachment || announcement.videoLink ? 'KEEP' : 'NONE',
+  videoLink: announcement.videoLink ?? '',
 });
 
 const useAnnouncementEditor = ({
@@ -134,32 +143,83 @@ const useAnnouncementEditor = ({
   feedback: FeedbackModel;
 }): AdminAnnouncementEditorModel => {
   const [state, setState] = useState<AnnouncementEditorState>(EMPTY_ANNOUNCEMENT);
+  const { setBusy } = feedback;
+  const { prepareVideo, resetVideo, cancelUpload, progress } = useAnnouncementVideoUpload(client);
+  const ownerKey = useNotificationOwnerKey();
+  const ownerKeyRef = useRef(ownerKey);
+  const submittingRef = useRef(false);
+  useEffect(() => {
+    ownerKeyRef.current = ownerKey;
+    submittingRef.current = false;
+    resetVideo();
+    setBusy(false);
+    setState(EMPTY_ANNOUNCEMENT);
+  }, [ownerKey, resetVideo, setBusy]);
   const setField = useCallback(
-    <Key extends AnnouncementEditorField>(field: Key, value: AnnouncementEditorState[Key]) =>
-      setState((current) => ({ ...current, [field]: value })),
-    []
+    <Key extends AnnouncementEditorField>(field: Key, value: AnnouncementEditorState[Key]) => {
+      if (field === 'videoFile') resetVideo();
+      setState((current) => ({ ...current, [field]: value }));
+    },
+    [resetVideo]
   );
-  const cancelEdit = useCallback(() => setState(EMPTY_ANNOUNCEMENT), []);
+  const cancelEdit = useCallback(() => {
+    resetVideo();
+    setState(EMPTY_ANNOUNCEMENT);
+  }, [resetVideo]);
   const startEdit = useCallback(
     (id: string) => {
       const announcement = consoleModel.data?.adminAnnouncements.find((item) => item.id === id);
-      if (announcement) setState(announcementStateFor(announcement));
+      if (announcement) {
+        resetVideo();
+        setState(announcementStateFor(announcement));
+      }
     },
-    [consoleModel.data]
+    [consoleModel.data, resetVideo]
   );
   const submit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      void submitAnnouncement({ client, confirm, consoleModel, feedback, state, cancelEdit });
+      if (submittingRef.current) return;
+      submittingRef.current = true;
+      const submittedOwnerKey = ownerKey;
+      void submitAnnouncement({
+        client,
+        confirm,
+        consoleModel,
+        feedback,
+        state,
+        cancelEdit,
+        prepareVideo,
+        isCurrentOwner: () => ownerKeyRef.current === submittedOwnerKey,
+      }).finally(() => {
+        submittingRef.current = false;
+      });
     },
-    [cancelEdit, client, confirm, consoleModel, feedback, state]
+    [cancelEdit, client, confirm, consoleModel, feedback, ownerKey, prepareVideo, state]
   );
   const existingRoleCode = roleCodeFromTargetAudience(
     consoleModel.data?.adminAnnouncements.find((item) => item.id === state.editId)?.targetAudience
   );
-  return { state, existingRoleCode, setField, startEdit, cancelEdit, submit };
+  const editedAnnouncement = consoleModel.data?.adminAnnouncements.find(
+    (item) => item.id === state.editId
+  );
+  return {
+    state,
+    existingRoleCode,
+    hasExistingVideo: Boolean(
+      editedAnnouncement?.hasVideoAttachment || editedAnnouncement?.videoLink
+    ),
+    setField,
+    startEdit,
+    cancelEdit,
+    submit,
+    videoProgress: progress,
+    cancelVideoUpload: cancelUpload,
+  };
 };
 
+// The branches fail closed independently for validation, stale edits, owner changes, and errors.
+// eslint-disable-next-line complexity
 const submitAnnouncement = async ({
   client,
   confirm,
@@ -167,6 +227,8 @@ const submitAnnouncement = async ({
   feedback,
   state,
   cancelEdit,
+  prepareVideo,
+  isCurrentOwner,
 }: {
   client: GraphQLClient;
   confirm: (options: ConfirmOptions) => Promise<boolean>;
@@ -174,6 +236,8 @@ const submitAnnouncement = async ({
   feedback: FeedbackModel;
   state: AnnouncementEditorState;
   cancelEdit: () => void;
+  prepareVideo: (file: File | null) => Promise<string | null>;
+  isCurrentOwner: () => boolean;
 }): Promise<void> => {
   feedback.setError(null);
   feedback.setSuccess(null);
@@ -200,14 +264,22 @@ const submitAnnouncement = async ({
       state,
       values: validation.values,
       existingAnnouncement,
+      prepareVideo,
+      canProceed: isCurrentOwner,
     });
+    if (!isCurrentOwner()) return;
     if (!saved) return;
     cancelEdit();
     await consoleModel.refresh();
   } catch (error) {
-    feedback.setError(graphQlUserMessage(error));
+    if (isCurrentOwner())
+      feedback.setError(
+        error instanceof DOMException && error.name === 'AbortError'
+          ? 'Video upload cancelled. You can choose another file or retry.'
+          : graphQlUserMessage(error)
+      );
   } finally {
-    feedback.setBusy(false);
+    if (isCurrentOwner()) feedback.setBusy(false);
   }
 };
 

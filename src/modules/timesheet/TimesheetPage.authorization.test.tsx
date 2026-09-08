@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -45,9 +45,7 @@ afterEach(cleanup);
 describe('TimesheetPage authorization', () => {
   const renderPage = () =>
     render(
-      <MemoryRouter
-        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-      >
+      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
         <TimesheetPage />
       </MemoryRouter>
     );
@@ -67,5 +65,10 @@ describe('TimesheetPage authorization', () => {
     expect(screen.queryByRole('button', { name: 'Add Entry' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Submit Week/ })).toBeNull();
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeTruthy();
+    fireEvent.change(screen.getByRole('combobox', { name: 'View' }), {
+      target: { value: 'custom' },
+    });
+    expect(screen.getByLabelText('Start date')).toBeTruthy();
+    expect(screen.getByLabelText('End date')).toBeTruthy();
   });
 });

@@ -1,5 +1,8 @@
 import type { FormEvent } from 'react';
 
+import type { AnnouncementVideoValue } from '../notifications/components/AnnouncementVideoFields';
+import type { NotificationAutomationSettings } from '../notifications/notificationAutomationQueries';
+
 export interface AdminAnnouncementRow {
   id: string;
   title: string;
@@ -11,6 +14,8 @@ export interface AdminAnnouncementRow {
   publishAt?: string | null;
   expiresAt?: string | null;
   createdAt: string;
+  hasVideoAttachment?: boolean;
+  videoLink?: string | null;
 }
 
 export interface AdminNotificationRow {
@@ -38,13 +43,14 @@ export interface AdminNotificationDepartmentRow {
 }
 
 export interface AdminNotificationsConsoleData {
+  notificationAutomationSettings: NotificationAutomationSettings;
   adminAnnouncements: AdminAnnouncementRow[];
   adminNotifications: AdminNotificationRow[];
   employees: AdminNotificationEmployeeRow[];
   departments: AdminNotificationDepartmentRow[];
 }
 
-export interface AnnouncementEditorState {
+export interface AnnouncementEditorState extends AnnouncementVideoValue {
   title: string;
   body: string;
   departmentId: string;
@@ -73,6 +79,7 @@ export type DirectNotificationField = Exclude<keyof DirectNotificationState, 'se
 export interface AdminAnnouncementEditorModel {
   state: AnnouncementEditorState;
   existingRoleCode: string;
+  hasExistingVideo: boolean;
   setField: <Key extends AnnouncementEditorField>(
     field: Key,
     value: AnnouncementEditorState[Key]
@@ -80,6 +87,8 @@ export interface AdminAnnouncementEditorModel {
   startEdit: (id: string) => void;
   cancelEdit: () => void;
   submit: (event: FormEvent<HTMLFormElement>) => void;
+  videoProgress: number | null;
+  cancelVideoUpload: () => void;
 }
 
 export interface AdminDirectNotificationModel {

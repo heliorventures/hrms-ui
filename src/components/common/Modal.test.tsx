@@ -70,7 +70,9 @@ describe('Modal', () => {
     const scrollRegion = dialog.querySelector('section');
     const footer = dialog.querySelector('footer');
     const portalLayer = dialog.parentElement?.parentElement;
-    expect(dialog.className).toContain('100dvh');
+    expect(dialog.style.maxHeight).toContain('100dvh');
+    expect(dialog.style.maxHeight).toContain('safe-area-inset-top');
+    expect(dialog.style.maxHeight).toContain('safe-area-inset-bottom');
     expect(dialog.className).toContain('overscroll-contain');
     expect(scrollRegion?.className).toContain('overscroll-contain');
     expect(scrollRegion?.className).toContain('safe-area-inset-left');

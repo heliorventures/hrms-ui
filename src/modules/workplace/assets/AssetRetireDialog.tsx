@@ -18,7 +18,27 @@ export default function AssetRetireDialog({
 }: AssetRetireDialogProps) {
   const label = kind === 'asset' ? 'asset' : 'asset category';
   return (
-    <Modal isOpen isDismissible={!saving} onClose={onClose} title={`Retire ${label}`} size="sm">
+    <Modal
+      isOpen
+      isDismissible={!saving}
+      onClose={onClose}
+      title={`Retire ${label}`}
+      size="sm"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            disabled={saving}
+            onClick={() => void onConfirm().then((success) => success && onClose())}
+          >
+            {saving ? 'Retiring...' : 'Retire'}
+          </Button>
+        </>
+      }
+    >
       <div className="space-y-4">
         <p className="text-sm text-slate-700 dark:text-slate-200">
           Retire <strong>{name}</strong>? Retired records remain in history and cannot be edited or
@@ -29,18 +49,6 @@ export default function AssetRetireDialog({
             A category can be retired only after every asset in it has been retired or moved.
           </p>
         ) : null}
-        <div className="flex gap-3">
-          <Button
-            variant="danger"
-            disabled={saving}
-            onClick={() => void onConfirm().then((success) => success && onClose())}
-          >
-            {saving ? 'Retiring...' : 'Retire'}
-          </Button>
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-        </div>
       </div>
     </Modal>
   );

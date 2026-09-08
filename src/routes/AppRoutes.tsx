@@ -39,6 +39,11 @@ const OPS_LOGIN_PAGE: Pick<RoutePage, 'title' | 'load'> = {
   load: () => import('../modules/ops/OpsLoginPage'),
 };
 
+const PREJOINING_PAGE: Pick<RoutePage, 'title' | 'load'> = {
+  title: 'Pre-joining form',
+  load: () => import('../modules/prejoining/public/PrejoiningFormPage'),
+};
+
 function routeKey(route: AppChildRoute): string {
   return route.kind === 'redirect' && route.index ? 'index' : (route.path ?? 'missing-path');
 }
@@ -131,23 +136,9 @@ function tenantResolutionFailurePage(resolutionStatus: 'not-found' | 'error'): J
   return <TenantUnavailablePage />;
 }
 
-const AppRoutes = () => {
-  const { isAuthenticated, isOpsAuthenticated, tenantId } = useAuth();
-  const { currentTenant, resolutionStatus, tenantSlug } = useTenant();
-  const location = useLocation();
-
-  const isOperationsPath = location.pathname === '/ops' || location.pathname.startsWith('/ops/');
-  if (isOperationsPath) {
-    return operationsRoutes(isOpsAuthenticated);
-  }
-
-  const isTenantAuthenticated = isAuthenticated && sessionMatchesTenant(tenantId, currentTenant.id);
-  const tenantPathMatch = location.pathname.match(/^\/t\/(?<slug>[^/]+)(?<rest>\/.*)?$/);
-  const pathTenantSlug = tenantPathMatch?.groups?.slug?.toLowerCase();
-  if (tenantPathMatch && pathTenantSlug === tenantSlug && resolutionStatus === 'resolved') {
-    return <Navigate to={tenantPathMatch.groups?.rest ?? '/login'} replace />;
-  }
-
+function tenantResolutionRoutes(
+  resolutionStatus: ReturnType<typeof useTenant>['resolutionStatus']
+) {
   if (resolutionStatus === 'marketing') {
     return (
       <Routes>
@@ -171,7 +162,55 @@ const AppRoutes = () => {
       </Routes>
     );
   }
+  return null;
+}
 
+function tenantAliasTarget(pathname: string, tenantSlug: string | null, resolutionStatus: string) {
+  const match = pathname.match(/^\/t\/(?<slug>[^/]+)(?<rest>\/.*)?$/);
+  if (
+    match &&
+    match.groups?.slug?.toLowerCase() === tenantSlug &&
+    resolutionStatus === 'resolved'
+  ) {
+    return match.groups.rest || '/login';
+  }
+  return null;
+}
+
+const AppRoutes = () => {
+  const { isAuthenticated, isOpsAuthenticated, tenantId } = useAuth();
+  const { currentTenant, resolutionStatus, tenantSlug } = useTenant();
+  const location = useLocation();
+
+  // The invitation API resolves its own tenant and never issues a client session.
+  if (location.pathname === '/prejoining' || location.pathname === '/prejoining/') {
+    return (
+      <Routes>
+        <Route
+          path="/prejoining"
+          element={<RouteContent key={location.hash} {...PREJOINING_PAGE} />}
+        />
+      </Routes>
+    );
+  }
+
+  const isOperationsPath = location.pathname === '/ops' || location.pathname.startsWith('/ops/');
+  if (isOperationsPath) {
+    return operationsRoutes(isOpsAuthenticated);
+  }
+
+  const isTenantAuthenticated = isAuthenticated && sessionMatchesTenant(tenantId, currentTenant.id);
+  const aliasTarget = tenantAliasTarget(location.pathname, tenantSlug, resolutionStatus);
+  if (aliasTarget)
+    return <Navigate to={`${aliasTarget}${location.search}${location.hash}`} replace />;
+
+  const resolutionPage = tenantResolutionRoutes(resolutionStatus);
+  if (resolutionPage) return resolutionPage;
+
+  return <ResolvedTenantRoutes isTenantAuthenticated={isTenantAuthenticated} />;
+};
+
+const ResolvedTenantRoutes = ({ isTenantAuthenticated }: { isTenantAuthenticated: boolean }) => {
   return (
     <Routes>
       <Route

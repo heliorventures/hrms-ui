@@ -8,10 +8,7 @@ import {
   type RejectLeaveRequestMutationVariables,
 } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-import {
-  LEAVE_APPROVAL_REFRESH_MESSAGE,
-  leaveApprovalTarget,
-} from '../leaveApproval';
+import { LEAVE_APPROVAL_REFRESH_MESSAGE, leaveApprovalTarget } from '../leaveApproval';
 
 interface LeaveRejectModalProps {
   isOpen: boolean;
@@ -71,8 +68,24 @@ const LeaveRejectModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Reject Leave Request">
-      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+    <Modal
+      isOpen={isOpen}
+      isDismissible={!busy}
+      onClose={handleClose}
+      title="Reject Leave Request"
+      size="sm"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={handleClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button type="submit" form="reject-leave-form" variant="primary" disabled={busy}>
+            {busy ? 'Rejecting…' : 'Reject request'}
+          </Button>
+        </>
+      }
+    >
+      <form id="reject-leave-form" onSubmit={(e) => void handleSubmit(e)} className="space-y-3">
         {err && <p className="text-sm text-red-600 dark:text-red-400">{err}</p>}
         <Input
           label="Reason For Rejection"
@@ -82,14 +95,6 @@ const LeaveRejectModal = ({
           required
           placeholder="Explain why this request is rejected"
         />
-        <div className="flex gap-3">
-          <Button type="submit" variant="primary" disabled={busy}>
-            {busy ? 'Rejecting…' : 'Reject request'}
-          </Button>
-          <Button type="button" variant="outline" onClick={handleClose} disabled={busy}>
-            Cancel
-          </Button>
-        </div>
       </form>
     </Modal>
   );

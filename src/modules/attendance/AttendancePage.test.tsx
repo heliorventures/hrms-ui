@@ -4,10 +4,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  AttendanceAdjustmentPolicyDocument,
-  MyAttendanceBoardDocument,
-} from '../../api/graphql/graphql';
+import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
+import { MyAttendanceBoardDocument } from '../../api/attendance/graphql';
 import type { ParsedClientSession } from '../../auth/clientSession';
 
 import AttendancePage from './AttendancePage';
@@ -51,10 +49,17 @@ function boardResponse({
   endCursor = null,
   hasNextPage = false,
   rows,
+  summary = { completedMinutes: 720, workedDays: 2, averageMinutes: 360, incompleteSegments: 0 },
 }: {
   endCursor?: string | null;
   hasNextPage?: boolean;
   rows?: Array<Record<string, unknown>>;
+  summary?: {
+    completedMinutes: number;
+    workedDays: number;
+    averageMinutes: number | null;
+    incompleteSegments: number;
+  };
 } = {}) {
   const selfRow = {
     id: 'self-row',
@@ -82,6 +87,7 @@ function boardResponse({
 
   return {
     shifts: [],
+    myAttendanceSummary: summary,
     // Retained so the RED test proves the old generic caller renders the malformed row.
     attendance: pageRows,
     myAttendance: {
@@ -219,7 +225,7 @@ describe('AttendancePage', () => {
     });
   });
 
-  it('shows page-scoped totals that change with the loaded cursor page', async () => {
+  it('keeps complete monthly totals unchanged when navigating attendance pages', async () => {
     const firstPage = boardResponse({
       endCursor: 'page-two',
       hasNextPage: true,
@@ -265,20 +271,42 @@ describe('AttendancePage', () => {
 
     renderPage();
 
-    const totalTimeCard = screen.getByRole('heading', { name: 'Total Time on This Page' })
-      .parentElement;
-    if (!totalTimeCard) throw new Error('Total Time card container is missing.');
-    await waitFor(() => expect(within(totalTimeCard).getByText('8h 00m')).toBeTruthy());
-    expect(screen.getByText('Worked Days on This Page')).toBeTruthy();
-    expect(screen.getByText('Total Time on This Page')).toBeTruthy();
-    expect(screen.getByText(/Current page data only\./)).toBeTruthy();
-    expect(screen.queryByText('Worked Days This Month')).toBeNull();
+    const summary = screen.getByLabelText('Monthly attendance summary');
+    await waitFor(() => expect(within(summary).getByText('12h 00m')).toBeTruthy());
+    expect(within(summary).getByText('6h 00m')).toBeTruthy();
+    expect(screen.queryByText(/on This Page/)).toBeNull();
 
     await advanceToNextPage();
 
-    await waitFor(() => expect(within(totalTimeCard).getByText('4h 00m')).toBeTruthy());
-    expect(within(totalTimeCard).queryByText('8h 00m')).toBeNull();
-    expect(screen.getByText('Worked Days on This Page')).toBeTruthy();
+    await waitFor(() =>
+      expect(graphClient.request).toHaveBeenCalledWith(
+        MyAttendanceBoardDocument,
+        expect.objectContaining({ after: 'page-two' })
+      )
+    );
+    await waitFor(() => expect(within(summary).getByText('12h 00m')).toBeTruthy());
+    expect(within(summary).getByText('6h 00m')).toBeTruthy();
+  });
+
+  it('shows no average for an open-only month while identifying incomplete punches', async () => {
+    graphClient.request.mockImplementation((document: unknown) => {
+      if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+      return Promise.resolve(
+        boardResponse({
+          summary: {
+            completedMinutes: 0,
+            workedDays: 0,
+            averageMinutes: null,
+            incompleteSegments: 3,
+          },
+        })
+      );
+    });
+    renderPage();
+    const summary = screen.getByLabelText('Monthly attendance summary');
+    await waitFor(() => expect(within(summary).getByText('0h 00m')).toBeTruthy());
+    expect(within(summary).getByText('—')).toBeTruthy();
+    expect(within(summary).getByText('3')).toBeTruthy();
   });
 
   it('uses the local cursor stack when returning to a prior page', async () => {
@@ -312,31 +340,33 @@ describe('AttendancePage', () => {
   it('does not let a deferred refresh overwrite a newer month request', async () => {
     const refresh = deferred<ReturnType<typeof boardResponse>>();
     let boardCalls = 0;
-    graphClient.request.mockImplementation((document: unknown, variables?: { fromDate?: string }) => {
-      if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
-      boardCalls += 1;
-      if (boardCalls === 2) return refresh.promise;
-      return Promise.resolve(
-        boardResponse({
-          rows: [
-            {
-              id: `page-${boardCalls}`,
-              employeeId: 'employee-self',
-              workDate: variables?.fromDate ?? '2026-08-24',
-              checkInTime: '09:00:00',
-              checkOutTime: '17:00:00',
-              checkInLat: null,
-              checkInLng: null,
-              checkOutLat: null,
-              checkOutLng: null,
-              status: boardCalls === 1 ? 'Initial page' : 'Newer month',
-              source: 'SELF_REPORTED',
-              lateMinutes: null,
-            },
-          ],
-        })
-      );
-    });
+    graphClient.request.mockImplementation(
+      (document: unknown, variables?: { fromDate?: string }) => {
+        if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+        boardCalls += 1;
+        if (boardCalls === 2) return refresh.promise;
+        return Promise.resolve(
+          boardResponse({
+            rows: [
+              {
+                id: `page-${boardCalls}`,
+                employeeId: 'employee-self',
+                workDate: variables?.fromDate ?? '2026-08-24',
+                checkInTime: '09:00:00',
+                checkOutTime: '17:00:00',
+                checkInLat: null,
+                checkInLng: null,
+                checkOutLat: null,
+                checkOutLng: null,
+                status: boardCalls === 1 ? 'Initial page' : 'Newer month',
+                source: 'SELF_REPORTED',
+                lateMinutes: null,
+              },
+            ],
+          })
+        );
+      }
+    );
     renderPage();
 
     await screen.findByText('Initial page');
@@ -376,40 +406,44 @@ describe('AttendancePage', () => {
   it('hides stale paging controls and rows during a deferred month transition', async () => {
     const nextMonth = deferred<ReturnType<typeof boardResponse>>();
     let boardCalls = 0;
-    graphClient.request.mockImplementation((document: unknown, variables?: { fromDate?: string }) => {
-      if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
-      boardCalls += 1;
-      if (boardCalls === 2) return nextMonth.promise;
-      return Promise.resolve(
-        boardResponse({
-          endCursor: 'next-page',
-          hasNextPage: true,
-          rows: [
-            {
-              id: `page-${boardCalls}`,
-              employeeId: 'employee-self',
-              workDate: variables?.fromDate ?? '2026-08-24',
-              checkInTime: '09:00:00',
-              checkOutTime: '17:00:00',
-              checkInLat: null,
-              checkInLng: null,
-              checkOutLat: null,
-              checkOutLng: null,
-              status: boardCalls === 1 ? 'Old page' : 'New month page',
-              source: 'SELF_REPORTED',
-              lateMinutes: null,
-            },
-          ],
-        })
-      );
-    });
+    graphClient.request.mockImplementation(
+      (document: unknown, variables?: { fromDate?: string }) => {
+        if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+        boardCalls += 1;
+        if (boardCalls === 2) return nextMonth.promise;
+        return Promise.resolve(
+          boardResponse({
+            endCursor: 'next-page',
+            hasNextPage: true,
+            rows: [
+              {
+                id: `page-${boardCalls}`,
+                employeeId: 'employee-self',
+                workDate: variables?.fromDate ?? '2026-08-24',
+                checkInTime: '09:00:00',
+                checkOutTime: '17:00:00',
+                checkInLat: null,
+                checkInLng: null,
+                checkOutLat: null,
+                checkOutLng: null,
+                status: boardCalls === 1 ? 'Old page' : 'New month page',
+                source: 'SELF_REPORTED',
+                lateMinutes: null,
+              },
+            ],
+          })
+        );
+      }
+    );
     renderPage();
 
     await screen.findByText('Old page');
     const month = screen.getByLabelText<HTMLSelectElement>('Month');
     fireEvent.change(month, { target: { value: String((Number(month.value) + 1) % 12) } });
 
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(true);
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(
+      true
+    );
     expect(screen.queryByText('Old page')).toBeNull();
 
     await act(async () => {
@@ -482,7 +516,9 @@ describe('AttendancePage', () => {
 
     await screen.findByText('Client A');
     await waitFor(() =>
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(false)
+      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(
+        false
+      )
     );
 
     authState.clientSession.employeeId = 'employee-replacement';
@@ -494,7 +530,9 @@ describe('AttendancePage', () => {
     );
 
     expect(screen.queryByText('Client A')).toBeNull();
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(true);
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(
+      true
+    );
 
     await act(async () => {
       replacement.resolve(
@@ -523,7 +561,9 @@ describe('AttendancePage', () => {
 
     await screen.findByText('Client B');
     await waitFor(() =>
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(false)
+      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(
+        false
+      )
     );
   });
 
@@ -604,7 +644,9 @@ describe('AttendancePage', () => {
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Previous page' }).disabled).toBe(
       true
     );
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(true);
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(
+      true
+    );
 
     await waitFor(() =>
       expect(replacementClient.request).toHaveBeenCalledWith(
@@ -640,38 +682,42 @@ describe('AttendancePage', () => {
 
     await screen.findByText('Client B page 1');
     await waitFor(() =>
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(false)
+      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Next page' }).disabled).toBe(
+        false
+      )
     );
   });
 
   it('does not show refresh success after refresh A is superseded by B and return to A', async () => {
     const pendingRefresh = deferred<ReturnType<typeof boardResponse>>();
     let boardCalls = 0;
-    graphClient.request.mockImplementation((document: unknown, variables?: { fromDate?: string }) => {
-      if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
-      boardCalls += 1;
-      if (boardCalls === 2) return pendingRefresh.promise;
-      return Promise.resolve(
-        boardResponse({
-          rows: [
-            {
-              id: `page-${boardCalls}`,
-              employeeId: 'employee-self',
-              workDate: variables?.fromDate ?? '2026-08-24',
-              checkInTime: '09:00:00',
-              checkOutTime: '17:00:00',
-              checkInLat: null,
-              checkInLng: null,
-              checkOutLat: null,
-              checkOutLng: null,
-              status: boardCalls === 1 ? 'Initial A' : boardCalls === 3 ? 'Page B' : 'Return A',
-              source: 'SELF_REPORTED',
-              lateMinutes: null,
-            },
-          ],
-        })
-      );
-    });
+    graphClient.request.mockImplementation(
+      (document: unknown, variables?: { fromDate?: string }) => {
+        if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+        boardCalls += 1;
+        if (boardCalls === 2) return pendingRefresh.promise;
+        return Promise.resolve(
+          boardResponse({
+            rows: [
+              {
+                id: `page-${boardCalls}`,
+                employeeId: 'employee-self',
+                workDate: variables?.fromDate ?? '2026-08-24',
+                checkInTime: '09:00:00',
+                checkOutTime: '17:00:00',
+                checkInLat: null,
+                checkInLng: null,
+                checkOutLat: null,
+                checkOutLng: null,
+                status: boardCalls === 1 ? 'Initial A' : boardCalls === 3 ? 'Page B' : 'Return A',
+                source: 'SELF_REPORTED',
+                lateMinutes: null,
+              },
+            ],
+          })
+        );
+      }
+    );
     renderPage();
 
     await screen.findByText('Initial A');

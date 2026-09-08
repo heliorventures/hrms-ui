@@ -18,6 +18,11 @@ export const ApplyLeaveContextPanel = ({
   requiresDocument,
 }: ApplyLeaveContextPanelProps) => {
   if (!leaveType) return null;
+  if (leaveType.code === 'COMP_OFF') return (
+    <div className="rounded-lg border border-line bg-canvas p-3 text-xs text-content-secondary">
+      This request uses your separate comp-off balance. Every leave date must be before the allocated credit expires; available credits are checked when you submit.
+    </div>
+  );
 
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-300">

@@ -17,6 +17,7 @@ import LeaveRequestsTableSection from './components/LeaveRequestsTableSection';
 import LeaveRecoveryNotice from './components/LeaveRecoveryNotice';
 import LeaveTypesCard from './components/LeaveTypesCard';
 import LeaveWorkflowTrailModal from './components/LeaveWorkflowTrailModal';
+import CompOffPanel from './components/CompOffPanel';
 import { useAllCompanyHolidays } from './hooks/useAllCompanyHolidays';
 import { useLeaveWorkflowTrail } from './hooks/useLeaveWorkflowTrail';
 import {
@@ -36,7 +37,8 @@ type LeavePageFailure = {
   message: string;
   operation: 'board' | 'mutation';
 };
-const BOARD_LIMIT = 20, HOLIDAY_LIMIT = 450;
+const BOARD_LIMIT = 20,
+  HOLIDAY_LIMIT = 450;
 const LeavePage = () => {
   const { clientSession } = useAuth();
   const permissions = createPermissionService(clientSession);
@@ -149,10 +151,7 @@ const LeavePage = () => {
     }
   };
 
-  const handleApprove = async (
-    leaveRequestId: string,
-    pendingApprovalStepId?: string | null
-  ) => {
+  const handleApprove = async (leaveRequestId: string, pendingApprovalStepId?: string | null) => {
     if (!canApproveLeave) return;
     const target = leaveApprovalTarget(leaveRequestId, pendingApprovalStepId);
     if (!target) {
@@ -173,7 +172,10 @@ const LeavePage = () => {
       const pendingMessage =
         'Approval was recorded, but another workflow step may still be pending.';
       setApproveWorkflowNotice(status === 'pending' ? pendingMessage : null);
-      flash.show(status === 'pending' ? pendingMessage : 'Leave request approved.', status === 'pending' ? 'info' : 'success');
+      flash.show(
+        status === 'pending' ? pendingMessage : 'Leave request approved.',
+        status === 'pending' ? 'info' : 'success'
+      );
     } catch (err) {
       setFailure({ message: graphQlUserMessage(err), operation: 'mutation' });
     } finally {
@@ -207,8 +209,7 @@ const LeavePage = () => {
 
   const showApprovalColumn = useMemo(
     () =>
-      canApproveLeave &&
-      (data?.leaveRequests ?? []).some((row) => row.viewerMayApprove === true),
+      canApproveLeave && (data?.leaveRequests ?? []).some((row) => row.viewerMayApprove === true),
     [canApproveLeave, data?.leaveRequests]
   );
 
@@ -262,7 +263,12 @@ const LeavePage = () => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave Management</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" type="button" onClick={() => void refreshBoard()} disabled={loading}>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => void refreshBoard()}
+            disabled={loading}
+          >
             {loading ? 'Refreshing...' : 'Refresh'}
           </Button>
           {canSubmitLeave ? (
@@ -278,28 +284,32 @@ const LeavePage = () => {
         </div>
       </div>
 
-      {canSubmitLeave ? <ApplyLeaveModal
-        isOpen={applyOpen}
-        leaveBalances={data?.leaveBalances ?? []}
-        leavePolicies={data?.leavePolicies ?? []}
-        leaveTypes={data?.leaveTypes ?? []}
-        upcomingHolidays={data?.upcomingHolidays ?? []}
-        onClose={() => setApplyOpen(false)}
-        onSubmitted={refreshBoard}
-      /> : null}
+      {canSubmitLeave ? (
+        <ApplyLeaveModal
+          isOpen={applyOpen}
+          leaveBalances={data?.leaveBalances ?? []}
+          leavePolicies={data?.leavePolicies ?? []}
+          leaveTypes={data?.leaveTypes ?? []}
+          upcomingHolidays={data?.upcomingHolidays ?? []}
+          onClose={() => setApplyOpen(false)}
+          onSubmitted={refreshBoard}
+        />
+      ) : null}
 
-      {canApproveLeave ? <LeaveRejectModal
-        isOpen={rejectLeaveTarget != null}
-        leaveRequestId={rejectLeaveTarget?.leaveRequestId ?? null}
-        expectedWorkflowStepId={rejectLeaveTarget?.expectedWorkflowStepId ?? null}
-        onClose={() => setRejectLeaveTarget(null)}
-        onRejected={async () => {
-          setFailure(null);
-          workflowTrail.clearFailure();
-          flash.show('Leave request rejected.', 'success');
-          await silentRefreshBoard();
-        }}
-      /> : null}
+      {canApproveLeave ? (
+        <LeaveRejectModal
+          isOpen={rejectLeaveTarget != null}
+          leaveRequestId={rejectLeaveTarget?.leaveRequestId ?? null}
+          expectedWorkflowStepId={rejectLeaveTarget?.expectedWorkflowStepId ?? null}
+          onClose={() => setRejectLeaveTarget(null)}
+          onRejected={async () => {
+            setFailure(null);
+            workflowTrail.clearFailure();
+            flash.show('Leave request rejected.', 'success');
+            await silentRefreshBoard();
+          }}
+        />
+      ) : null}
 
       {activeFailure && (
         <LeaveRecoveryNotice
@@ -327,14 +337,7 @@ const LeavePage = () => {
           setBalanceYear(year);
         }}
       />
-      <HolidaySummaryCard
-        canManageLeave={permissions.canCapability('action.leave.manage')}
-        holidays={data?.upcomingHolidays ?? []}
-        loading={loading}
-        onViewAll={() => void allHolidays.open()}
-      />
-      <LeaveTypesCard leaveTypes={data?.leaveTypes ?? []} loading={loading} />
-
+      <CompOffPanel canSubmit={canSubmitLeave} />
       <Card id="leave-requests-section" title="Recent Leave Requests">
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading Leave Requests...</p>
@@ -366,7 +369,8 @@ const LeavePage = () => {
         {!loading && leaveRequestCount > 0 ? (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
             <p className="text-sm text-content-secondary">
-              Showing {firstVisibleRequest}-{lastVisibleRequest} of {leaveRequestCount} leave requests
+              Showing {firstVisibleRequest}-{lastVisibleRequest} of {leaveRequestCount} leave
+              requests
             </p>
             <div className="flex gap-2">
               <Button
@@ -391,6 +395,50 @@ const LeavePage = () => {
           </div>
         ) : null}
       </Card>
+
+      <details
+        aria-label="Holidays"
+        className="group rounded-xl border border-line bg-surface shadow-card"
+      >
+        <summary className="cursor-pointer list-none px-4 py-3 text-base font-semibold text-content-primary marker:hidden">
+          <span className="flex items-center justify-between gap-3">
+            Holidays
+            <span
+              aria-hidden="true"
+              className="text-content-secondary transition-transform group-open:rotate-180"
+            >
+              ⌄
+            </span>
+          </span>
+        </summary>
+        <div className="border-t border-line p-3">
+          <HolidaySummaryCard
+            canManageLeave={permissions.canCapability('action.leave.manage')}
+            holidays={data?.upcomingHolidays ?? []}
+            loading={loading}
+            onViewAll={() => void allHolidays.open()}
+          />
+        </div>
+      </details>
+      <details
+        aria-label="Leave types"
+        className="group rounded-xl border border-line bg-surface shadow-card"
+      >
+        <summary className="cursor-pointer list-none px-4 py-3 text-base font-semibold text-content-primary marker:hidden">
+          <span className="flex items-center justify-between gap-3">
+            Leave types
+            <span
+              aria-hidden="true"
+              className="text-content-secondary transition-transform group-open:rotate-180"
+            >
+              ⌄
+            </span>
+          </span>
+        </summary>
+        <div className="border-t border-line p-3">
+          <LeaveTypesCard leaveTypes={data?.leaveTypes ?? []} loading={loading} />
+        </div>
+      </details>
 
       <LeaveWorkflowTrailModal
         employeeLabel={employeeLabel}

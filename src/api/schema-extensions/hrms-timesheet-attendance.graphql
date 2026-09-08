@@ -3,6 +3,17 @@
 scalar NaiveDate
 scalar DateTime
 
+type AttendancePeriodSummary {
+  completedMinutes: Int!
+  workedDays: Int!
+  averageMinutes: Float
+  incompleteSegments: Int!
+}
+
+extend type Query {
+  myAttendanceSummary(fromDate: NaiveDate!, toDate: NaiveDate!): AttendancePeriodSummary!
+}
+
 extend type Attendance {
   checkInAt: DateTime
   checkOutAt: DateTime

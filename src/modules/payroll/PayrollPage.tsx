@@ -6,6 +6,7 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import PayrollAdminNotice from './components/PayrollAdminNotice';
 import PayrollArrearsCard from './components/PayrollArrearsCard';
 import PayrollComplianceCard from './components/PayrollComplianceCard';
+import UnpaidLeavePolicyCard from './components/UnpaidLeavePolicyCard';
 import PayrollCyclesCard from './components/PayrollCyclesCard';
 import PayrollExportsSection from './components/PayrollExportsSection';
 import PayrollSalaryComponentsCard from './components/PayrollSalaryComponentsCard';
@@ -52,6 +53,7 @@ const PayrollPage = () => {
       )}
 
       <>
+          <UnpaidLeavePolicyCard client={client} ownerKey={ownerKey} />
           <PayrollComplianceCard
             form={board.complianceForm}
             loading={board.loading}

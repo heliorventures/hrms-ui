@@ -31,6 +31,12 @@ afterEach(() => {
   document.body.style.overflow = '';
 });
 
+const getApplyLeaveForm = () => {
+  const form = document.getElementById('apply-leave-form');
+  if (!(form instanceof HTMLFormElement)) throw new Error('Apply leave form was not rendered.');
+  return form;
+};
+
 const leaveTypes = [
   {
     id: 'annual-leave',
@@ -93,6 +99,16 @@ function fillValidRequest() {
 }
 
 describe('ApplyLeaveModal', () => {
+  it('submits dedicated comp-off without requiring an ordinary annual leave balance', async () => {
+    request.mockResolvedValue({});
+    const onSubmitted = vi.fn();
+    render(<ApplyLeaveModal isOpen onClose={vi.fn()} onSubmitted={onSubmitted} leaveTypes={[{ ...leaveTypes[0], isPaid: true, code: 'COMP_OFF', name: 'Comp-off' }]} leavePolicies={[]} upcomingHolidays={[]} leaveBalances={[]} />);
+    fillValidRequest();
+    fireEvent.submit(getApplyLeaveForm());
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
+    expect(request).toHaveBeenCalledOnce();
+    expect(screen.queryByText(/not provisioned for your employee/)).toBeNull();
+  });
   it('uploads mandatory leave evidence and submits the resulting private file id', async () => {
     request.mockResolvedValue({});
     uploadState.upload.mockResolvedValue('file-storage-1');
@@ -115,9 +131,11 @@ describe('ApplyLeaveModal', () => {
       target: { files: [file] },
     });
 
-    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Application' }));
 
-    await waitFor(() => expect(uploadState.upload).toHaveBeenCalledWith(graphClients.current, file));
+    await waitFor(() =>
+      expect(uploadState.upload).toHaveBeenCalledWith(graphClients.current, file)
+    );
     await waitFor(() =>
       expect(request).toHaveBeenCalledWith(
         expect.anything(),
@@ -168,7 +186,7 @@ describe('ApplyLeaveModal', () => {
     expect(screen.queryByText('Company holiday')).toBeNull();
     fillValidRequest();
     fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-08-25' } });
-    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+    fireEvent.submit(getApplyLeaveForm());
     await waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
     expect(screen.queryByText(/Insufficient leave balance/)).toBeNull();
   });
@@ -176,7 +194,7 @@ describe('ApplyLeaveModal', () => {
   it('associates validation feedback with the first invalid field and moves focus there', async () => {
     renderModal();
 
-    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+    fireEvent.submit(getApplyLeaveForm());
 
     const leaveType = screen.getByLabelText('Leave type');
     await waitFor(() => expect(document.activeElement).toBe(leaveType));
@@ -190,7 +208,7 @@ describe('ApplyLeaveModal', () => {
     renderModal();
     fillValidRequest();
 
-    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+    fireEvent.submit(getApplyLeaveForm());
 
     const alert = await screen.findByRole('alert');
     await waitFor(() => expect(document.activeElement).toBe(alert));
@@ -208,7 +226,7 @@ describe('ApplyLeaveModal', () => {
     );
     const { onSubmitted } = renderModal();
     fillValidRequest();
-    const form = screen.getByRole('button', { name: 'Submit Application' }).closest('form')!;
+    const form = getApplyLeaveForm();
 
     fireEvent.submit(form);
     fireEvent.submit(form);
@@ -235,7 +253,7 @@ describe('ApplyLeaveModal', () => {
     const { onClose, onSubmitted, rerenderModal } = renderModal();
     fillValidRequest();
 
-    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+    fireEvent.submit(getApplyLeaveForm());
     graphClients.current = { request: currentRequest };
     rerenderModal();
     await act(async () => {
@@ -260,7 +278,7 @@ describe('ApplyLeaveModal', () => {
     const { rerenderModal } = renderModal();
     fillValidRequest();
 
-    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+    fireEvent.submit(getApplyLeaveForm());
     graphClients.current = { request: vi.fn() };
     rerenderModal();
     await act(async () => {
@@ -284,7 +302,7 @@ describe('ApplyLeaveModal', () => {
     const { onClose, onSubmitted, rerenderModal } = renderModal();
     fillValidRequest();
 
-    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+    fireEvent.submit(getApplyLeaveForm());
     rerenderModal({ isOpen: false });
     rerenderModal({
       isOpen: true,
@@ -313,7 +331,7 @@ describe('ApplyLeaveModal', () => {
     const { rerenderModal } = renderModal();
     fillValidRequest();
 
-    fireEvent.submit(screen.getByRole('button', { name: 'Submit Application' }).closest('form')!);
+    fireEvent.submit(getApplyLeaveForm());
     rerenderModal({ isOpen: false });
     rerenderModal({ isOpen: true });
     await act(async () => {

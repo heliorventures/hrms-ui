@@ -30,7 +30,7 @@ it('hides setup actions for narrow permission scope', async () => {
       <LearningPage />
     </>
   );
-  await screen.findByText('No Review Cycles.');
+  await screen.findByText('No Skills Catalog.');
   expect(screen.queryByRole('button', { name: 'Create review cycle' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Create skill' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Create course' })).toBeNull();
@@ -74,12 +74,10 @@ it('loads and edits catalog entries beyond the first page', async () => {
     category: null,
     level: null,
   }));
-  state.request
-    .mockResolvedValueOnce({ skills: firstPage, courses: [] })
-    .mockResolvedValue({
-      skills: [{ id: 'last', name: 'Zulu', category: null, level: null }],
-      courses: [],
-    });
+  state.request.mockResolvedValueOnce({ skills: firstPage, courses: [] }).mockResolvedValue({
+    skills: [{ id: 'last', name: 'Zulu', category: null, level: null }],
+    courses: [],
+  });
   render(<LearningPage />);
   await screen.findByText('Skill 0');
   fireEvent.click(screen.getByRole('button', { name: 'Next' }));

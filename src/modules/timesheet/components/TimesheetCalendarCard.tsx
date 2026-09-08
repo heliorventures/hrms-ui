@@ -50,7 +50,9 @@ const TimesheetCalendarCard = ({
   onDelete,
   onEdit,
 }: TimesheetCalendarCardProps) => (
-  <Card title={`Calendar - ${sortedCount} entr${sortedCount === 1 ? 'y' : 'ies'} - ${totalHours.toFixed(2)} h in view`}>
+  <Card
+    title={`Calendar - ${sortedCount} entr${sortedCount === 1 ? 'y' : 'ies'} - ${totalHours.toFixed(2)} h in view`}
+  >
     {loading ? (
       <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
     ) : (
@@ -60,127 +62,217 @@ const TimesheetCalendarCard = ({
             {error}
           </p>
         ) : null}
-        <div className="overflow-x-auto">
-        <div className="min-w-[720px] space-y-2">
-          <div className="grid grid-cols-7 gap-1.5">
-            {WEEKDAY_HEADERS.map((header) => (
-              <div
-                key={header}
-                className="px-1 pb-1 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-              >
-                {header}
-              </div>
-            ))}
-          </div>
-          {calendarWeeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="grid grid-cols-7 gap-1.5">
-              {week.map((cell) => {
-                const dayEntries = entriesByDate.get(cell.iso) ?? [];
-                const dayTotal = dayEntries.reduce(
-                  (total, row) => total + (parseTimesheetHours(row.hoursWorked) || 0),
-                  0
-                );
-                const ref = parseIsoDate(cell.iso);
-                const weekday = ref.toLocaleDateString('en-IN', { weekday: 'short' });
-                const dayOfMonth = ref.getDate();
-
-                return (
-                  <div
-                    key={cell.iso}
-                    className={[
-                      'flex min-h-[6.5rem] flex-col rounded-lg border p-1.5 text-left sm:min-h-[7.25rem]',
-                      cell.inPrimaryRange
-                        ? 'border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800/80'
-                        : 'border-transparent bg-gray-50 dark:bg-gray-900/50',
-                      cell.iso === todayIso
-                        ? 'ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900'
-                        : '',
-                    ].join(' ')}
-                  >
-                    <div className="mb-1 flex shrink-0 items-baseline justify-between gap-1 border-b border-gray-100 pb-1 dark:border-gray-700/80">
-                      <span
-                        className={`text-xs font-semibold ${
-                          cell.inPrimaryRange ? 'text-gray-900 dark:text-white' : 'text-gray-400'
-                        }`}
-                      >
-                        <span className="text-[10px] font-normal text-gray-500 dark:text-gray-400">
-                          {weekday}
-                        </span>{' '}
-                        {dayOfMonth}
-                      </span>
-                      <span className="text-[11px] font-medium tabular-nums text-gray-700 dark:text-gray-200">
-                        {dayTotal > 0 ? `${formatTimesheetHours(dayTotal)}h` : '-'}
-                      </span>
+        <ul aria-label="Timesheet agenda" className="space-y-2 md:hidden">
+          {calendarWeeks
+            .flat()
+            .filter((cell) => cell.inPrimaryRange)
+            .map((cell) => {
+              const ref = parseIsoDate(cell.iso);
+              const dateLabel = ref.toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              });
+              const dayEntries = entriesByDate.get(cell.iso) ?? [];
+              const dayTotal = dayEntries.reduce(
+                (total, row) => total + (parseTimesheetHours(row.hoursWorked) || 0),
+                0
+              );
+              return (
+                <li
+                  key={cell.iso}
+                  className={`rounded-lg border p-3 ${cell.iso === todayIso ? 'border-primary-400 bg-primary-50/50 dark:bg-primary-950/20' : 'border-line'}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-content-primary">
+                        {ref.toLocaleDateString('en-IN', { weekday: 'long' })}
+                      </p>
+                      <p className="text-xs text-content-secondary">{dateLabel}</p>
                     </div>
-                    <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold tabular-nums">
+                        {formatTimesheetHours(dayTotal)}h
+                      </span>
+                      {canAddOnDate(cell.iso) ? (
+                        <button
+                          type="button"
+                          aria-label={`Add entry for ${dateLabel}`}
+                          className="rounded-md px-2 py-1 text-sm font-medium text-primary-600 hover:bg-primary-50 dark:text-primary-400"
+                          onClick={() => onAddForDate(cell.iso)}
+                        >
+                          Add
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                  {dayEntries.length ? (
+                    <div className="mt-2 space-y-1.5 border-t border-line pt-2">
                       {dayEntries.map((entry) => {
                         const decoded = decodeTimesheetDescription(entry.description ?? null);
-                        const parsedHours = parseTimesheetHours(entry.hoursWorked);
-                        const hours = Number.isNaN(parsedHours)
-                          ? entry.hoursWorked
-                          : `${formatTimesheetHours(parsedHours)}h`;
-                        const summary =
-                          [hours, entry.projectCode?.trim() || null, decoded.task?.trim() || null]
-                            .filter(Boolean)
-                            .join(' - ') || hours;
+                        const summary = [
+                          `${formatTimesheetHours(parseTimesheetHours(entry.hoursWorked))}h`,
+                          entry.projectCode?.trim(),
+                          decoded.task.trim(),
+                        ]
+                          .filter(Boolean)
+                          .join(' - ');
                         const editable = canEditRow(entry);
-
                         return (
-                          <div key={entry.id} className="flex items-start gap-0.5">
+                          <div key={entry.id} className="flex items-center gap-2">
                             <button
                               type="button"
+                              aria-label={`Edit ${summary} for ${dateLabel}`}
                               disabled={!editable}
                               title={editable ? 'Edit Entry' : editDisabledReason(entry)}
-                              onClick={() => {
-                                if (editable) onEdit(entry);
-                              }}
-                              className={[
-                                'min-w-0 flex-1 rounded border px-1 py-0.5 text-left text-[10px] leading-tight transition-colors',
-                                editable
-                                  ? 'cursor-pointer border-slate-200 bg-slate-50 hover:border-primary-300 hover:bg-primary-50 dark:border-slate-600 dark:bg-slate-900/60 dark:hover:bg-primary-950/50'
-                                  : 'cursor-not-allowed border-transparent bg-gray-100/90 text-gray-600 dark:bg-gray-900 dark:text-gray-400',
-                              ].join(' ')}
+                              onClick={() => editable && onEdit(entry)}
+                              className="min-h-11 min-w-0 flex-1 break-words rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface-selected disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                              <span className="line-clamp-3">{summary}</span>
+                              {summary}
                             </button>
-                            {canWrite && timesheetEntryCanDelete(entry.status) && (
+                            {canWrite && timesheetEntryCanDelete(entry.status) ? (
                               <button
                                 type="button"
-                                aria-label="Delete Entry"
+                                aria-label={`Delete ${summary} for ${dateLabel}`}
                                 disabled={deleteBusyId === entry.id}
-                                className="shrink-0 rounded px-0.5 text-xs leading-none text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  onDelete(entry);
-                                }}
+                                onClick={() => onDelete(entry)}
+                                className="min-h-11 rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400"
                               >
-                                x
+                                Delete
                               </button>
-                            )}
+                            ) : null}
                           </div>
                         );
                       })}
                     </div>
-                    {canAddOnDate(cell.iso) && cell.inPrimaryRange && (
-                      <button
-                        type="button"
-                        className="mt-auto shrink-0 pt-1 text-center text-[10px] font-medium text-primary-600 hover:underline dark:text-primary-400"
-                        onClick={() => onAddForDate(cell.iso)}
-                      >
-                        + Add
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+                  ) : (
+                    <p className="mt-2 text-xs text-content-secondary">No entries</p>
+                  )}
+                </li>
+              );
+            })}
+        </ul>
+        <div className="hidden overflow-x-auto md:block">
+          <div className="min-w-[720px] space-y-2">
+            <div className="grid grid-cols-7 gap-1.5">
+              {WEEKDAY_HEADERS.map((header) => (
+                <div
+                  key={header}
+                  className="px-1 pb-1 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                >
+                  {header}
+                </div>
+              ))}
             </div>
-          ))}
-          {!sortedCount && (
-            <p className="pt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-              No Entries In This Period. Use Add Entry Or + Add On A Day.
-            </p>
-          )}
-        </div>
+            {calendarWeeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="grid grid-cols-7 gap-1.5">
+                {week.map((cell) => {
+                  const dayEntries = entriesByDate.get(cell.iso) ?? [];
+                  const dayTotal = dayEntries.reduce(
+                    (total, row) => total + (parseTimesheetHours(row.hoursWorked) || 0),
+                    0
+                  );
+                  const ref = parseIsoDate(cell.iso);
+                  const weekday = ref.toLocaleDateString('en-IN', { weekday: 'short' });
+                  const dayOfMonth = ref.getDate();
+
+                  return (
+                    <div
+                      key={cell.iso}
+                      className={[
+                        'flex min-h-[6.5rem] flex-col rounded-lg border p-1.5 text-left sm:min-h-[7.25rem]',
+                        cell.inPrimaryRange
+                          ? 'border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800/80'
+                          : 'border-transparent bg-gray-50 dark:bg-gray-900/50',
+                        cell.iso === todayIso
+                          ? 'ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900'
+                          : '',
+                      ].join(' ')}
+                    >
+                      <div className="mb-1 flex shrink-0 items-baseline justify-between gap-1 border-b border-gray-100 pb-1 dark:border-gray-700/80">
+                        <span
+                          className={`text-xs font-semibold ${
+                            cell.inPrimaryRange ? 'text-gray-900 dark:text-white' : 'text-gray-400'
+                          }`}
+                        >
+                          <span className="text-[10px] font-normal text-gray-500 dark:text-gray-400">
+                            {weekday}
+                          </span>{' '}
+                          {dayOfMonth}
+                        </span>
+                        <span className="text-[11px] font-medium tabular-nums text-gray-700 dark:text-gray-200">
+                          {dayTotal > 0 ? `${formatTimesheetHours(dayTotal)}h` : '-'}
+                        </span>
+                      </div>
+                      <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+                        {dayEntries.map((entry) => {
+                          const decoded = decodeTimesheetDescription(entry.description ?? null);
+                          const parsedHours = parseTimesheetHours(entry.hoursWorked);
+                          const hours = Number.isNaN(parsedHours)
+                            ? entry.hoursWorked
+                            : `${formatTimesheetHours(parsedHours)}h`;
+                          const summary =
+                            [hours, entry.projectCode?.trim() || null, decoded.task?.trim() || null]
+                              .filter(Boolean)
+                              .join(' - ') || hours;
+                          const editable = canEditRow(entry);
+
+                          return (
+                            <div key={entry.id} className="flex items-start gap-0.5">
+                              <button
+                                type="button"
+                                disabled={!editable}
+                                title={editable ? 'Edit Entry' : editDisabledReason(entry)}
+                                onClick={() => {
+                                  if (editable) onEdit(entry);
+                                }}
+                                className={[
+                                  'min-w-0 flex-1 rounded border px-1 py-0.5 text-left text-[10px] leading-tight transition-colors',
+                                  editable
+                                    ? 'cursor-pointer border-slate-200 bg-slate-50 hover:border-primary-300 hover:bg-primary-50 dark:border-slate-600 dark:bg-slate-900/60 dark:hover:bg-primary-950/50'
+                                    : 'cursor-not-allowed border-transparent bg-gray-100/90 text-gray-600 dark:bg-gray-900 dark:text-gray-400',
+                                ].join(' ')}
+                              >
+                                <span className="line-clamp-3">{summary}</span>
+                              </button>
+                              {canWrite && timesheetEntryCanDelete(entry.status) && (
+                                <button
+                                  type="button"
+                                  aria-label="Delete Entry"
+                                  disabled={deleteBusyId === entry.id}
+                                  className="shrink-0 rounded px-0.5 text-xs leading-none text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    onDelete(entry);
+                                  }}
+                                >
+                                  x
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {canAddOnDate(cell.iso) && cell.inPrimaryRange && (
+                        <button
+                          type="button"
+                          className="mt-auto shrink-0 pt-1 text-center text-[10px] font-medium text-primary-600 hover:underline dark:text-primary-400"
+                          onClick={() => onAddForDate(cell.iso)}
+                        >
+                          + Add
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+            {!sortedCount && (
+              <p className="pt-2 text-center text-sm text-gray-500 dark:text-gray-400">
+                No Entries In This Period. Use Add Entry Or + Add On A Day.
+              </p>
+            )}
+          </div>
         </div>
       </>
     )}

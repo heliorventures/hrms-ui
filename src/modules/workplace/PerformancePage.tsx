@@ -11,6 +11,7 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import { cycleFields, SaveReviewCycleDocument } from './performanceSetup';
 import { SetupEditor } from './performanceSetupEditor';
+import PerformanceLifecyclePanel from './PerformanceLifecyclePanel';
 
 const PerformanceCatalogDocument = gql`
   query PerformanceCatalog($offset: Int!) {
@@ -39,6 +40,13 @@ const PerformancePage = () => {
     'performance:manage',
     ['ALL']
   );
+  const canEvaluate = createPermissionService(clientSession).canScopedPermission(
+    'performance:evaluate',
+    ['TEAM']
+  );
+  const canSelf = createPermissionService(clientSession).canScopedPermission('performance:self', [
+    'SELF',
+  ]);
   const [editor, setEditor] = useState<{
     id?: string;
     name: string;
@@ -54,8 +62,9 @@ const PerformancePage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!canManage) return null;
     return client.request<WorkplacePerformanceQuery>(PerformanceCatalogDocument, { offset });
-  }, [client, offset]);
+  }, [canManage, client, offset]);
 
   useEffect(() => {
     let c = false;
@@ -65,7 +74,7 @@ const PerformancePage = () => {
         setData(null);
         setError(null);
         const r = await load();
-        if (!c) setData(r as typeof data);
+        if (!c) setData(r);
       } catch (e) {
         if (!c) setError(graphQlUserMessage(e));
       } finally {
@@ -80,6 +89,12 @@ const PerformancePage = () => {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Performance</h1>
+      <PerformanceLifecyclePanel
+        canManage={canManage}
+        canEvaluate={canEvaluate}
+        canSelf={canSelf}
+        actorEmployeeId={clientSession?.employeeId}
+      />
       {notice && (
         <p role="status" className="text-sm text-content-secondary">
           {notice}
@@ -90,81 +105,90 @@ const PerformancePage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="Review Cycles">
-        {canManage && (
+      {canManage && (
+        <Card title="Legacy review cycles">
+          {canManage && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mb-3 text-sm font-medium text-primary-600"
+              onClick={() => setEditor({ name: '', startDate: '', endDate: '', reviewType: '' })}
+            >
+              Create review cycle
+            </Button>
+          )}
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : data?.reviewCycles.length ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {data.reviewCycles.map((c) => (
+                <li key={c.id} className="py-3">
+                  <p className="font-medium text-gray-900 dark:text-white">{c.name}</p>
+                  {canManage && c.status.toUpperCase() === 'DRAFT' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-sm text-primary-600"
+                      onClick={() => setEditor({ ...c, reviewType: c.reviewType ?? '' })}
+                    >
+                      Edit review cycle
+                    </Button>
+                  )}
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {c.startDate} → {c.endDate} · {c.status}
+                    {c.reviewType ? ` · ${c.reviewType}` : ''}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No Review Cycles.</p>
+          )}
+        </Card>
+      )}
+      {canManage && (
+        <Card title="Legacy goals">
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : data?.goals.length ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {data.goals.map((g) => (
+                <li key={g.id} className="py-3">
+                  <p className="font-medium text-gray-900 dark:text-white">{g.title}</p>
+                  <p className="text-xs text-gray-500">
+                    {g.status}
+                    {g.weightage ? ` · weight ${g.weightage}` : ''}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No Goals.</p>
+          )}
+        </Card>
+      )}
+      {canManage && (
+        <nav
+          aria-label="Performance pagination"
+          className="flex items-center justify-between gap-3"
+        >
           <Button
             variant="outline"
-            size="sm"
-            className="mb-3 text-sm font-medium text-primary-600"
-            onClick={() => setEditor({ name: '', startDate: '', endDate: '', reviewType: '' })}
+            disabled={loading || offset === 0}
+            onClick={() => setOffset((value) => Math.max(0, value - 20))}
           >
-            Create review cycle
+            Previous
           </Button>
-        )}
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : data?.reviewCycles.length ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {data.reviewCycles.map((c) => (
-              <li key={c.id} className="py-3">
-                <p className="font-medium text-gray-900 dark:text-white">{c.name}</p>
-                {canManage && c.status.toUpperCase() === 'DRAFT' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-sm text-primary-600"
-                    onClick={() => setEditor({ ...c, reviewType: c.reviewType ?? '' })}
-                  >
-                    Edit review cycle
-                  </Button>
-                )}
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {c.startDate} → {c.endDate} · {c.status}
-                  {c.reviewType ? ` · ${c.reviewType}` : ''}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500">No Review Cycles.</p>
-        )}
-      </Card>
-      <Card title="Goals">
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : data?.goals.length ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {data.goals.map((g) => (
-              <li key={g.id} className="py-3">
-                <p className="font-medium text-gray-900 dark:text-white">{g.title}</p>
-                <p className="text-xs text-gray-500">
-                  {g.status}
-                  {g.weightage ? ` · weight ${g.weightage}` : ''}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500">No Goals.</p>
-        )}
-      </Card>
-      <nav aria-label="Performance pagination" className="flex items-center justify-between gap-3">
-        <Button
-          variant="outline"
-          disabled={loading || offset === 0}
-          onClick={() => setOffset((value) => Math.max(0, value - 20))}
-        >
-          Previous
-        </Button>
-        <span className="text-sm text-content-secondary">Page {offset / 20 + 1}</span>
-        <Button
-          variant="outline"
-          disabled={loading || !(data && data.reviewCycles.length === 20)}
-          onClick={() => setOffset((value) => value + 20)}
-        >
-          Next
-        </Button>
-      </nav>
+          <span className="text-sm text-content-secondary">Page {offset / 20 + 1}</span>
+          <Button
+            variant="outline"
+            disabled={loading || !(data && data.reviewCycles.length === 20)}
+            onClick={() => setOffset((value) => value + 20)}
+          >
+            Next
+          </Button>
+        </nav>
+      )}
       {editor && canManage && (
         <SetupEditor
           title={editor.id ? 'Edit review cycle' : 'Create review cycle'}

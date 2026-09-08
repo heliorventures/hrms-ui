@@ -26,13 +26,9 @@ const schemaUrl =
   schemaUrlOverride && schemaUrlOverride.length > 0
     ? schemaUrlOverride
     : gatewayUrlFromPublicConfig();
-if (
-  schemaUrlOverride &&
-  schemaUrlOverride.length > 0 &&
-  !/^https?:\/\//i.test(schemaUrlOverride)
-) {
+if (schemaUrlOverride && schemaUrlOverride.length > 0 && !/^https?:\/\//i.test(schemaUrlOverride)) {
   throw new Error(
-    `CODEGEN_SCHEMA_URL must start with http:// or https:// (got "${schemaUrlOverride}"). Remove it to use gatewayUrl from public/config.json.`,
+    `CODEGEN_SCHEMA_URL must start with http:// or https:// (got "${schemaUrlOverride}"). Remove it to use gatewayUrl from public/config.json.`
   );
 }
 
@@ -40,6 +36,7 @@ if (
 const schema: CodegenConfig['schema'] = [
   schemaUrl,
   join(__dirname, 'src', 'api', 'schema-extensions', 'payroll-run.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'payroll-unpaid-leave.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'tax-admin.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'backlog-catchup.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-rbac.graphql'),
@@ -48,18 +45,18 @@ const schema: CodegenConfig['schema'] = [
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-notification.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-employee-profile.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-leave.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'comp-off.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'workplace-setup.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'performance-survey.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'hr-reports.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'prejoining.graphql'),
 ];
 
 const config: CodegenConfig = {
   schema,
   // Ops console uses hand-written `opsGraph.ts` (operator JWT) so tenant-only codegen runs stay simple.
   // The stitched gateway schema includes ops types; ops pages validate at runtime against the gateway.
-  documents: [
-    'src/**/*.graphql',
-    'src/**/*.{ts,tsx}',
-    '!src/modules/ops/opsGraph.ts',
-  ],
+  documents: ['src/**/*.graphql', 'src/**/*.{ts,tsx}', '!src/modules/ops/opsGraph.ts'],
   ignoreNoDocuments: true,
   generates: {
     'src/api/graphql/': {

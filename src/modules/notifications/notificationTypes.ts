@@ -21,6 +21,8 @@ export interface AnnouncementRow {
   postSource?: string | null;
   hasImageAttachment: boolean;
   hasDocumentAttachment: boolean;
+  hasVideoAttachment?: boolean;
+  videoLink?: string | null;
 }
 
 export interface NotificationRow {

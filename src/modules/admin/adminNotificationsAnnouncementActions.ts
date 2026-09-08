@@ -3,6 +3,7 @@ import type { GraphQLClient } from 'graphql-request';
 import { UpdateAnnouncementDocument } from '../../api/graphql/graphql';
 import type { ConfirmOptions } from '../../contexts/DialogContext';
 import { fileToBase64 } from '../../utils/fileEncoding';
+import { announcementVideoError, safeVideoLink } from '../notifications/announcementVideoUpload';
 import { CreateAnnouncementSafeDocument } from '../notifications/notificationQueries';
 
 import type { AdminAnnouncementRow, AnnouncementEditorState } from './adminNotificationsPageTypes';
@@ -68,6 +69,14 @@ const validateFile = (
   return null;
 };
 
+const validateVideo = (state: AnnouncementEditorState): string | null => {
+  if (state.videoMode === 'LINK' && !safeVideoLink(state.videoLink))
+    return 'Enter a valid http or https video link.';
+  if (state.videoMode !== 'UPLOAD') return null;
+  if (!state.videoFile) return 'Choose a video file.';
+  return announcementVideoError(state.videoFile);
+};
+
 export const validateAnnouncementEditor = (
   state: AnnouncementEditorState
 ): AnnouncementValidationResult => {
@@ -101,8 +110,28 @@ export const validateAnnouncementEditor = (
     'Announcement document'
   );
   if (documentError) return { valid: false, message: documentError };
+  const videoError = validateVideo(state);
+  if (videoError) return { valid: false, message: videoError };
   return { valid: true, values: { title, publishAt, expiresAt } };
 };
+
+const updateVideoInputFor = (state: AnnouncementEditorState, stageId: string | null) => {
+  if (state.videoMode === 'KEEP') return {};
+  if (state.videoMode === 'NONE')
+    return { videoUploadStageId: null, videoLink: null, removeVideo: true };
+  if (state.videoMode === 'LINK')
+    return {
+      videoUploadStageId: null,
+      videoLink: safeVideoLink(state.videoLink),
+      removeVideo: false,
+    };
+  return { videoUploadStageId: stageId, videoLink: null, removeVideo: false };
+};
+
+const createVideoInputFor = (state: AnnouncementEditorState, stageId: string | null) => ({
+  videoUploadStageId: state.videoMode === 'UPLOAD' ? stageId : null,
+  videoLink: state.videoMode === 'LINK' ? safeVideoLink(state.videoLink) : null,
+});
 
 const audienceScopeSummary = ({
   roleCode,
@@ -171,7 +200,9 @@ const updateAnnouncement = async (
   state: AnnouncementEditorState,
   values: ValidAnnouncementValues,
   announcement: AdminAnnouncementRow,
-  attachments: AnnouncementAttachments
+  attachments: AnnouncementAttachments,
+  prepareVideo: (file: File | null) => Promise<string | null>,
+  canProceed: () => boolean
 ): Promise<boolean> => {
   const audience = buildAnnouncementAudienceUpdate({
     existingTargetAudience: announcement.targetAudience,
@@ -181,6 +212,9 @@ const updateAnnouncement = async (
     locationId: state.locationId,
   });
   if (!(await confirmAudienceUpdate(confirm, announcement, audience))) return false;
+  const videoUploadStageId =
+    state.videoMode === 'UPLOAD' ? await prepareVideo(state.videoFile) : null;
+  if (!canProceed()) return false;
   await client.request(UpdateAnnouncementDocument, {
     input: {
       id: announcement.id,
@@ -197,6 +231,7 @@ const updateAnnouncement = async (
       clearImage: false,
       clearDocument: false,
       ...attachments,
+      ...updateVideoInputFor(state, videoUploadStageId),
     },
   });
   return true;
@@ -206,8 +241,13 @@ const createAnnouncement = async (
   client: GraphQLClient,
   state: AnnouncementEditorState,
   values: ValidAnnouncementValues,
-  attachments: AnnouncementAttachments
-): Promise<void> => {
+  attachments: AnnouncementAttachments,
+  prepareVideo: (file: File | null) => Promise<string | null>,
+  canProceed: () => boolean
+): Promise<boolean> => {
+  const videoUploadStageId =
+    state.videoMode === 'UPLOAD' ? await prepareVideo(state.videoFile) : null;
+  if (!canProceed()) return false;
   await client.request(CreateAnnouncementSafeDocument, {
     input: {
       title: values.title,
@@ -219,8 +259,10 @@ const createAnnouncement = async (
       expiresAt: values.expiresAt,
       employeePost: state.employeePost,
       ...attachments,
+      ...createVideoInputFor(state, videoUploadStageId),
     },
   });
+  return true;
 };
 
 export const saveAnnouncement = async ({
@@ -229,17 +271,41 @@ export const saveAnnouncement = async ({
   state,
   values,
   existingAnnouncement,
+  prepareVideo,
+  canProceed = () => true,
 }: {
   client: GraphQLClient;
   confirm: ConfirmAudienceChange;
   state: AnnouncementEditorState;
   values: ValidAnnouncementValues;
   existingAnnouncement?: AdminAnnouncementRow;
+  prepareVideo: (file: File | null) => Promise<string | null>;
+  canProceed?: () => boolean;
 }): Promise<boolean> => {
-  const attachments = await readAnnouncementAttachments(state);
   if (existingAnnouncement) {
-    return updateAnnouncement(client, confirm, state, values, existingAnnouncement, attachments);
+    const audience = buildAnnouncementAudienceUpdate({
+      existingTargetAudience: existingAnnouncement.targetAudience,
+      roleCode: state.roleCode,
+      clearRoleAudience: state.clearRoleAudience,
+      departmentId: state.departmentId,
+      locationId: state.locationId,
+    });
+    if (!(await confirmAudienceUpdate(confirm, existingAnnouncement, audience))) return false;
+    if (!canProceed()) return false;
+    const attachments = await readAnnouncementAttachments(state);
+    if (!canProceed()) return false;
+    return updateAnnouncement(
+      client,
+      () => Promise.resolve(true),
+      state,
+      values,
+      existingAnnouncement,
+      attachments,
+      prepareVideo,
+      canProceed
+    );
   }
-  await createAnnouncement(client, state, values, attachments);
-  return true;
+  const attachments = await readAnnouncementAttachments(state);
+  if (!canProceed()) return false;
+  return createAnnouncement(client, state, values, attachments, prepareVideo, canProceed);
 };

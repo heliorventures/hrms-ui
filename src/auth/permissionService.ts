@@ -78,7 +78,9 @@ export type Capability =
   | 'route.workplace.grievance'
   | 'route.workplace.learning'
   | 'route.workplace.onboarding'
+  | 'route.workplace.prejoining'
   | 'route.workplace.performance'
+  | 'route.workplace.surveys'
   | 'route.workplace.recruitment'
   | 'route.workplace.succession'
   | 'route.workplace.workflows';
@@ -191,10 +193,6 @@ const SCOPED_CAPABILITY_PERMISSIONS: Partial<
     scopes: ALL_SCOPE,
   },
   'route.workplace.learning': { permission: PERMISSIONS.learningManage, scopes: ALL_SCOPE },
-  'route.workplace.performance': {
-    permission: PERMISSIONS.performanceManage,
-    scopes: ALL_SCOPE,
-  },
   'route.workplace.recruitment': {
     permission: PERMISSIONS.recruitmentManage,
     scopes: ALL_SCOPE,
@@ -273,10 +271,13 @@ export function createPermissionService(session: ParsedClientSession | null): Pe
         return canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE);
       case 'route.admin.reports':
         return (
-          canScopedPermission(PERMISSIONS.attendanceRead, ALL_SCOPE) &&
-          canScopedPermission(PERMISSIONS.employeeRead, ALL_SCOPE) &&
-          canScopedPermission(PERMISSIONS.leaveRead, ALL_SCOPE) &&
-          canScopedPermission(PERMISSIONS.payrollManage, ALL_SCOPE)
+          canScopedPermission(PERMISSIONS.attendanceRead, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.employeeRead, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.leaveRead, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.payrollRead, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.timesheetRead, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.expenseRead, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.travelRead, ALL_SCOPE)
         );
       case 'route.admin.timesheetSettings':
         return (
@@ -301,10 +302,27 @@ export function createPermissionService(session: ParsedClientSession | null): Pe
           canScopedPermission(PERMISSIONS.onboardingManage, ALL_SCOPE) ||
           canScopedPermission(PERMISSIONS.onboardingSelf, SELF_SCOPE)
         );
+      case 'route.workplace.prejoining':
+        return (
+          canScopedPermission(PERMISSIONS.prejoiningManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.prejoiningReview, ALL_SCOPE)
+        );
       case 'route.workplace.grievance':
         return (
           canScopedPermission(PERMISSIONS.grievanceManage, ALL_SCOPE) ||
           canScopedPermission(PERMISSIONS.grievanceSelf, SELF_SCOPE)
+        );
+      case 'route.workplace.performance':
+        return (
+          canScopedPermission(PERMISSIONS.performanceManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.performanceEvaluate, ['TEAM']) ||
+          canScopedPermission(PERMISSIONS.performanceSelf, SELF_SCOPE)
+        );
+      case 'route.workplace.surveys':
+        return (
+          canScopedPermission(PERMISSIONS.surveyManage, ALL_SCOPE) ||
+          canScopedPermission(PERMISSIONS.surveyRespond, SELF_SCOPE) ||
+          canScopedPermission(PERMISSIONS.surveyResults, ['TEAM', 'DEPARTMENT', 'ALL'])
         );
       default:
         return false;
@@ -367,7 +385,9 @@ export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
   '/workplace/grievance': 'route.workplace.grievance',
   '/workplace/learning': 'route.workplace.learning',
   '/workplace/onboarding': 'route.workplace.onboarding',
+  '/workplace/prejoining': 'route.workplace.prejoining',
   '/workplace/performance': 'route.workplace.performance',
+  '/workplace/surveys': 'route.workplace.surveys',
   '/workplace/recruitment': 'route.workplace.recruitment',
   '/workplace/succession': 'route.workplace.succession',
   '/workplace/workflows': 'route.workplace.workflows',

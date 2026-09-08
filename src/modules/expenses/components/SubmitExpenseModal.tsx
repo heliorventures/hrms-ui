@@ -187,12 +187,35 @@ const SubmitExpenseModal = ({
   return (
     <Modal
       isOpen={isOpen}
+      isDismissible={!submitting && !uploadingReceipt}
       onClose={close}
       title="Submit Expense Claim"
+      size="lg"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={close}
+            disabled={submitting || uploadingReceipt}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="submit-expense-form"
+            variant="primary"
+            disabled={submitting || uploadingReceipt || loading || categories.length === 0}
+          >
+            {uploadingReceipt ? 'Uploading...' : submitting ? 'Submitting...' : 'Submit'}
+          </Button>
+        </>
+      }
     >
       <form
+        id="submit-expense-form"
         onSubmit={(event) => void handleSubmit(event)}
-        className="space-y-4"
+        className="space-y-3"
         autoComplete="off"
       >
         {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
@@ -210,13 +233,17 @@ const SubmitExpenseModal = ({
             {activeSubmissionHints.maxAmountPerClaim ? (
               <p>
                 Max per claim:{' '}
-                <strong>{formatCurrency(activeSubmissionHints.maxAmountPerClaim, displayCurrency)}</strong>
+                <strong>
+                  {formatCurrency(activeSubmissionHints.maxAmountPerClaim, displayCurrency)}
+                </strong>
               </p>
             ) : null}
             {activeSubmissionHints.limitPerMonth ? (
               <p className="mt-1">
                 Monthly limit:{' '}
-                <strong>{formatCurrency(activeSubmissionHints.limitPerMonth, displayCurrency)}</strong>
+                <strong>
+                  {formatCurrency(activeSubmissionHints.limitPerMonth, displayCurrency)}
+                </strong>
               </p>
             ) : null}
             {activeSubmissionHints.receiptRequired ? (
@@ -280,22 +307,6 @@ const SubmitExpenseModal = ({
           options={travelOptions}
           fullWidth
         />
-        <div className="flex gap-3">
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={submitting || uploadingReceipt || loading || categories.length === 0}
-          >
-            {uploadingReceipt ? 'Uploading...' : submitting ? 'Submitting...' : 'Submit'}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={close}
-          >
-            Cancel
-          </Button>
-        </div>
       </form>
     </Modal>
   );

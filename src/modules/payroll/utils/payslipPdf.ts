@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
 
 /** Minimal line slip shape for PDF generation (compatible with UI `PayslipLine`; `id` optional). */
 export type PdfPayslipLine = {
@@ -9,6 +10,7 @@ export type PdfPayslipLine = {
 };
 
 export type PdfPayslipPayload = {
+  unpaidLeave?: UnpaidLeaveSnapshot | null;
   grossSalary: string;
   totalDeductions: string;
   netSalary: string;
@@ -157,6 +159,15 @@ export async function downloadPayslipPdf(
   y += lineH * 2;
 
   doc.setFont('helvetica', 'bold');
+  if (slip.unpaidLeave) {
+    const unpaid = slip.unpaidLeave;
+    const explanation = `Unpaid leave: ${unpaid.unpaidDays} days. ${unpaid.basicComponentCode} ${fmtPdf(unpaid.basicAmount)} / ${unpaid.dayDivisor} x ${unpaid.unpaidDays} = ${fmtPdf(unpaid.amount)}. ${unpaid.treatment === 'BEFORE_STATUTORY' ? 'Included in reduced basic earnings before statutory calculation.' : 'Included as a separate deduction after statutory calculation.'}`;
+    doc.setFont('helvetica', 'normal');
+    const rows = doc.splitTextToSize(explanation, pageW - 2 * margin);
+    doc.text(rows, margin, y);
+    y += lineH * (rows.length + 1);
+    doc.setFont('helvetica', 'bold');
+  }
   doc.text('Components', margin, y);
   y += lineH;
   doc.setFont('helvetica', 'normal');

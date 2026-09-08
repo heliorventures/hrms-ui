@@ -53,8 +53,7 @@ const LeaveBalancesCard = ({
               <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Available</th>
               <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Pending</th>
               <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Used</th>
-              <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Entitled</th>
-              <th className="py-2 font-medium text-gray-700 dark:text-gray-300">Provisioning</th>
+              <th className="py-2 font-medium text-gray-700 dark:text-gray-300">Entitled</th>
             </tr>
           </thead>
           <tbody>
@@ -71,10 +70,7 @@ const LeaveBalancesCard = ({
                   <td className="py-2 pr-4 font-mono text-xs">{balance?.balanceDays ?? '0'}</td>
                   <td className="py-2 pr-4 font-mono text-xs">{balance?.pendingDays ?? '0'}</td>
                   <td className="py-2 pr-4 font-mono text-xs">{balance?.usedDays ?? '0'}</td>
-                  <td className="py-2 pr-4 font-mono text-xs">{balance?.entitledDays ?? '0'}</td>
-                  <td className="py-2 text-xs text-gray-600 dark:text-gray-400">
-                    {balance ? 'Provisioned' : 'Not Provisioned'}
-                  </td>
+                  <td className="py-2 font-mono text-xs">{balance?.entitledDays ?? '0'}</td>
                 </tr>
               );
             })}

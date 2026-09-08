@@ -33,11 +33,27 @@ export default function AssetReturnModal({
     if (await onSave(values)) onClose();
   };
   return (
-    <Modal isOpen isDismissible={!saving} onClose={onClose} title={`Return ${assignment.assetName}`}>
-      <form className="space-y-4" onSubmit={(event) => void submit(event)}>
+    <Modal
+      isOpen
+      isDismissible={!saving}
+      onClose={onClose}
+      title={`Return ${assignment.assetName}`}
+      size="sm"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button type="submit" form="asset-return-form" disabled={saving}>
+            {saving ? 'Recording...' : 'Record Return'}
+          </Button>
+        </>
+      }
+    >
+      <form id="asset-return-form" className="space-y-3" onSubmit={(event) => void submit(event)}>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Assigned to {assignment.employeeName || assignment.employeeCode || 'Unknown employee'}{' '}
-          on {assignment.allocatedOn}.
+          Assigned to {assignment.employeeName || assignment.employeeCode || 'Unknown employee'} on{' '}
+          {assignment.allocatedOn}.
         </p>
         <Input
           label="Returned On"
@@ -67,14 +83,6 @@ export default function AssetReturnModal({
             setValues((current) => ({ ...current, remarks: event.target.value }))
           }
         />
-        <div className="flex gap-3">
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Recording...' : 'Record Return'}
-          </Button>
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-        </div>
       </form>
     </Modal>
   );
