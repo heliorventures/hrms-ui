@@ -7,7 +7,7 @@ import { formatBackendTime } from '../../../utils/timeFormat';
 
 import {
   managedAttendanceEmployee,
-  type ManagedAttendanceEmployee,
+  type ManagedAttendanceAddContext,
   type ManagedAttendanceRow,
 } from './managedAttendanceTypes';
 
@@ -15,7 +15,7 @@ interface ManagedAttendanceTableProps {
   rows: readonly ManagedAttendanceRow[];
   loading: boolean;
   errorMessage: string | null;
-  onAdd?: (employee: ManagedAttendanceEmployee) => void;
+  onAdd?: (context: ManagedAttendanceAddContext) => void;
   onAdjust?: (row: ManagedAttendanceRow) => void;
 }
 
@@ -88,14 +88,16 @@ const ManagedAttendanceTable = ({
             id: 'actions',
             header: 'Actions',
             cell: (row: ManagedAttendanceRow) => (
-              <div className="flex flex-nowrap gap-1 whitespace-nowrap">
+              <div className="flex flex-wrap gap-1 whitespace-nowrap">
                 {onAdd ? (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     aria-label={`Add segment for ${row.employeeName}`}
-                    onClick={() => onAdd(managedAttendanceEmployee(row))}
+                    onClick={() =>
+                      onAdd({ ...managedAttendanceEmployee(row), workDate: row.workDate })
+                    }
                   >
                     Add segment
                   </Button>
@@ -136,6 +138,25 @@ const ManagedAttendanceTable = ({
         columns={columns}
         getRowId={(row) => row.id}
         getRowLabel={(row) => `${row.employeeName} on ${row.workDate}`}
+        renderMobileRow={(row) => (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              {columns[0].cell(row)}
+              {columns[1].cell(row)}
+            </div>
+            {columns.find((column) => column.id === 'actions')?.cell(row)}
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+              {columns
+                .filter((column) => !['employee', 'date', 'actions'].includes(column.id))
+                .map((column) => (
+                  <div key={column.id} className="min-w-0 break-words">
+                    <dt className="text-xs text-content-secondary">{column.header}</dt>
+                    <dd className="mt-1 tabular-nums">{column.cell(row)}</dd>
+                  </div>
+                ))}
+            </dl>
+          </div>
+        )}
         state={state}
         stateMessage={stateMessage}
       />

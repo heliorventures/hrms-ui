@@ -32,6 +32,7 @@ export interface AttendanceRegularizationModalProps {
   isOpen: boolean;
   onClose: () => void;
   employee: ManagedAttendanceEmployee;
+  initialWorkDate?: string;
   editingRow?: ManagedAttendanceRow | null;
   existingSegments: AttendanceSegmentInterval[];
   existingSegmentsComplete: boolean;
@@ -48,7 +49,7 @@ function todayIso(): string {
 }
 
 function reasonError(value: string): string | null {
-  const length = [...value.trim()].length;
+  const { length } = [...value.trim()];
   if (length < MIN_REASON_CHARACTERS) return 'Reason must be at least 5 characters.';
   if (length > MAX_REASON_CHARACTERS) return 'Reason must be 500 characters or fewer.';
   return null;
@@ -58,6 +59,7 @@ const AttendanceRegularizationModal = ({
   isOpen,
   onClose,
   employee,
+  initialWorkDate,
   editingRow,
   existingSegments,
   existingSegmentsComplete,
@@ -96,14 +98,14 @@ const AttendanceRegularizationModal = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    setWorkDate(editingRow?.workDate ?? todayIso());
+    setWorkDate(editingRow?.workDate ?? initialWorkDate ?? todayIso());
     setCheckIn(formatBackendTime(editingRow?.checkInTime ?? DEFAULT_CHECK_IN).slice(0, 5));
     setCheckOut(formatBackendTime(editingRow?.checkOutTime ?? DEFAULT_CHECK_OUT).slice(0, 5));
     setReason('');
     setBusy(false);
     setFieldErrors({});
     setFormError(null);
-  }, [client, editingRow, isOpen]);
+  }, [client, editingRow, initialWorkDate, isOpen]);
 
   const focusAttendanceField = (field: Exclude<ManualAttendanceField, 'form'>) => {
     const refs = { workDate: workDateRef, checkIn: checkInRef, checkOut: checkOutRef };

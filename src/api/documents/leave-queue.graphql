@@ -1,0 +1,76 @@
+query HrLeaveApprovalBoard(
+  $limit: Int! = 20
+  $offset: Int! = 0
+  $balanceYear: Int
+  $fromDate: NaiveDate
+  $toDate: NaiveDate
+  $status: String
+  $needsMyAction: Boolean! = false
+) {
+  viewerEmployeeId
+  leavePolicies(limit: 200) {
+    id
+    leaveTypeId
+    applicableTo
+    annualEntitlement
+    accrualFrequency
+    accrualDays
+    maxConsecutiveDays
+    minNoticeDays
+  }
+  leaveTypes(limit: 200) {
+    id
+    name
+    code
+    isPaid
+    carryForward
+    requiresDocument
+    halfDayAllowed
+    sandwichRule
+  }
+  leaveBalances(limit: 200, year: $balanceYear) {
+    id
+    leaveTypeId
+    year
+    entitledDays
+    usedDays
+    pendingDays
+    balanceDays
+    carriedForwardDays
+  }
+  leaveApprovalQueue(
+    limit: $limit
+    offset: $offset
+    fromDate: $fromDate
+    toDate: $toDate
+    status: $status
+    needsMyAction: $needsMyAction
+  ) {
+    totalCount
+    pendingCount
+    actionableCount
+    rows {
+      id
+      employeeId
+      employeeName
+      employeeCode
+      leaveTypeId
+      fromDate
+      toDate
+      daysRequested
+      status
+      reason
+      rejectionReason
+      isHalfDay
+      halfDaySession
+      appliedAt
+      workflowInstanceId
+      pendingApprovalStage
+      pendingApprovalStepId
+      viewerMayApprove
+      supportingDocumentReference
+      supportingDocumentFileStorageId
+      supportingDocumentFileName
+    }
+  }
+}

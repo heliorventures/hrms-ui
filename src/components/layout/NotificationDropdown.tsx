@@ -13,7 +13,13 @@ import IconButton from '../common/IconButton';
 import NotificationDropdownPanel from './NotificationDropdownPanel';
 import { type BoardNotification, useNotificationDropdownData } from './useNotificationDropdownData';
 
-const NotificationDropdown = () => {
+const NotificationDropdown = ({
+  showLabel = false,
+  className = '',
+}: {
+  showLabel?: boolean;
+  className?: string;
+}) => {
   const { can, clientSession, isAuthenticated, tenantId } = useAuth();
   const { currentTenant } = useTenant();
   const navigate = useNavigate();
@@ -39,13 +45,30 @@ const NotificationDropdown = () => {
   return (
     <div className="relative inline-flex">
       <span className="relative inline-flex">
-        <IconButton
-          label={triggerLabel}
-          icon={<Bell className="h-5 w-5" />}
-          aria-expanded={isOpen}
-          aria-haspopup="dialog"
-          onClick={() => setIsOpen((current) => !current)}
-        />
+        {showLabel ? (
+          <button
+            type="button"
+            aria-label={triggerLabel}
+            title="Open notifications"
+            aria-expanded={isOpen}
+            aria-haspopup="dialog"
+            onClick={() => setIsOpen((current) => !current)}
+            className="flex min-h-11 w-11 flex-col items-center justify-center gap-1 rounded-lg py-2 text-content-secondary hover:bg-surface-selected hover:text-content-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:w-16"
+          >
+            <Bell className="h-5 w-5" aria-hidden="true" />
+            <span className="hidden text-[10px] font-medium sm:block">Notifications</span>
+          </button>
+        ) : (
+          <IconButton
+            className={className}
+            title="Notifications"
+            label={triggerLabel}
+            icon={<Bell className="h-5 w-5" />}
+            aria-expanded={isOpen}
+            aria-haspopup="dialog"
+            onClick={() => setIsOpen((current) => !current)}
+          />
+        )}
         {dropdown.unreadCount > 0 ? (
           <span
             aria-hidden="true"

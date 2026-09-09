@@ -30,7 +30,7 @@ const PerformancePage = () => {
   const selectTab = (id: string) => setParams({ tab: id });
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-content-primary">Performance</h1>
+      <h1 className="sr-only">Performance</h1>
       <div
         role="tablist"
         aria-label="Performance workflow"

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -71,7 +71,9 @@ describe('ExpensesPage exact authorization', () => {
     renderPage();
 
     expect(await screen.findByText('Expense Claims')).toBeTruthy();
-    expect(screen.getByText('Expense Categories')).toBeTruthy();
+    expect(screen.queryByText('Expense Categories')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Page information' }));
+    expect(await screen.findByText('Expense Categories')).toBeTruthy();
     expect(screen.queryByText('Travel Requests')).toBeNull();
     expect(testState.client.request).toHaveBeenCalledWith(ExpenseBoardDocument, {
       includeExpenses: true,
@@ -112,6 +114,6 @@ describe('ExpensesPage exact authorization', () => {
 
     expect(await screen.findByRole('button', { name: 'Submit Expense' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Request travel' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Configure categories' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Configure categories' })).toBeTruthy();
   });
 });

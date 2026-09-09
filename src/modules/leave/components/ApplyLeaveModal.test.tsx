@@ -99,10 +99,79 @@ function fillValidRequest() {
 }
 
 describe('ApplyLeaveModal', () => {
+  it('defaults the untouched end date to the start and submits same-day leave', async () => {
+    request.mockResolvedValue({});
+    const { onSubmitted } = renderModal();
+    fireEvent.change(screen.getByLabelText('Leave type'), { target: { value: 'annual-leave' } });
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-08-24' } });
+    expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe('2026-08-24');
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-08-25' } });
+    expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe('2026-08-25');
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Appointment' } });
+    fireEvent.submit(getApplyLeaveForm());
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
+    expect(request.mock.calls).toHaveProperty('0.1.input.fromDate', '2026-08-25');
+    expect(request.mock.calls).toHaveProperty('0.1.input.toDate', '2026-08-25');
+  });
+
+  it('preserves an explicitly edited end date including clearing it', () => {
+    renderModal();
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-08-24' } });
+    fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-08-28' } });
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-08-25' } });
+    expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe('2026-08-28');
+    expect(screen.getByLabelText<HTMLInputElement>('Half day').disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('To'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-08-26' } });
+    expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe('');
+  });
+
+  it.each(['cancel', 'escape', 'backdrop'])(
+    'requires explicit discard after dirty %s dismissal',
+    async (dismissal) => {
+      const { onClose } = renderModal();
+      fillValidRequest();
+      if (dismissal === 'cancel') fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      if (dismissal === 'escape') fireEvent.keyDown(document, { key: 'Escape' });
+      if (dismissal === 'backdrop') fireEvent.mouseDown(screen.getByTestId('modal-backdrop'));
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByText('Discard this leave request?')).toBeTruthy();
+      await waitFor(() =>
+        expect(document.activeElement?.textContent).toContain('Discard this leave request?')
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+      await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText('Reason')));
+      expect(screen.getByLabelText<HTMLInputElement>('Reason').value).toBe('Family appointment');
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Discard request' }));
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(screen.getByLabelText<HTMLInputElement>('Reason').value).toBe('');
+      fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-08-25' } });
+      expect(screen.getByLabelText<HTMLInputElement>('To').value).toBe('2026-08-25');
+    }
+  );
+
+  it('dismisses an untouched form without a discard prompt', () => {
+    const { onClose } = renderModal();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(screen.queryByText('Discard this leave request?')).toBeNull();
+  });
+
   it('submits dedicated comp-off without requiring an ordinary annual leave balance', async () => {
     request.mockResolvedValue({});
     const onSubmitted = vi.fn();
-    render(<ApplyLeaveModal isOpen onClose={vi.fn()} onSubmitted={onSubmitted} leaveTypes={[{ ...leaveTypes[0], isPaid: true, code: 'COMP_OFF', name: 'Comp-off' }]} leavePolicies={[]} upcomingHolidays={[]} leaveBalances={[]} />);
+    render(
+      <ApplyLeaveModal
+        isOpen
+        onClose={vi.fn()}
+        onSubmitted={onSubmitted}
+        leaveTypes={[{ ...leaveTypes[0], isPaid: true, code: 'COMP_OFF', name: 'Comp-off' }]}
+        leavePolicies={[]}
+        upcomingHolidays={[]}
+        leaveBalances={[]}
+      />
+    );
     fillValidRequest();
     fireEvent.submit(getApplyLeaveForm());
     await waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());

@@ -58,6 +58,23 @@ afterEach(() => {
 });
 
 describe('UpcomingHolidays truthful states', () => {
+  it('shows compact dates and reveals holiday details by hover or keyboard without type badges', async () => {
+    const user = userEvent.setup();
+    renderCard();
+    const date = await screen.findByRole('button', { name: /Holiday 0,/ });
+    expect(date.textContent).not.toContain('Holiday 0');
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(screen.queryByText('PUBLIC')).toBeNull();
+    await user.hover(date);
+    expect(screen.getByRole('tooltip').textContent).toContain('Holiday 0');
+    await user.unhover(date);
+    act(() => date.focus());
+    expect(screen.getByRole('tooltip').textContent).toContain('Company Calendar');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    await user.click(date);
+    expect(screen.getByRole('tooltip')).toBeTruthy();
+  });
   it('renders an actionable initial failure without valid empty copy', async () => {
     graphState.client.request.mockRejectedValue(new Error('Failed to fetch'));
     renderCard();

@@ -10,6 +10,27 @@ import { PERMISSIONS } from '../../auth/permissions';
 
 import Sidebar from './Sidebar';
 
+const openSearch = vi.hoisted(() => vi.fn());
+vi.mock('./CommandPaletteContext', () => ({ useCommandPalette: () => ({ open: openSearch }) }));
+vi.mock('../../contexts/TenantContext', () => ({
+  useTenant: () => ({ currentTenant: { name: 'Acme' } }),
+}));
+
+it('keeps authorized destinations, search and profile available in the collapsed rail', () => {
+  renderSidebar({ desktopCollapsed: true });
+  expect(screen.getByRole('complementary', { name: 'Main navigation' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Search pages and tools' }));
+  expect(openSearch).toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('link', { name: 'People' }));
+  expect(screen.getByRole('link', { name: 'Org Chart' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'User menu' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Expand navigation' })).toBeTruthy();
+});
+
+vi.mock('../../contexts/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+}));
+
 const sidebarAuth = vi.hoisted(() => ({
   clientSession: null as ParsedClientSession | null,
 }));
@@ -89,6 +110,16 @@ interface RenderSidebarOptions {
   onToggleDesktop?: () => void;
 }
 
+it('reveals inline destinations when a touchscreen is used on a hover-capable desktop', () => {
+  renderSidebar();
+  const people = screen.getByRole('link', { name: 'People' });
+  expect(screen.queryByRole('link', { name: 'Org Chart' })).toBeNull();
+  const touch = new Event('pointerdown', { bubbles: true });
+  Object.defineProperty(touch, 'pointerType', { value: 'touch' });
+  fireEvent(people, touch);
+  expect(screen.getByRole('link', { name: 'Org Chart' })).toBeTruthy();
+});
+
 function renderSidebar({
   mobileOpen = false,
   desktopCollapsed = false,
@@ -165,7 +196,9 @@ describe('Sidebar', () => {
     sidebarAuth.clientSession = session(['timesheet:read'], ['EMPLOYEE']);
     renderSidebar();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Timesheets' }));
+    fireEvent.pointerEnter(screen.getByRole('link', { name: 'Timesheets' }), {
+      pointerType: 'mouse',
+    });
     expect(screen.getByRole('link', { name: 'My Timesheets' })).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Attendance' })).toBeNull();
   });
@@ -175,7 +208,7 @@ describe('Sidebar', () => {
 
     const navigation = screen.getByRole('complementary', { name: 'Main navigation' });
     expect(navigation.className).toContain('-translate-x-full');
-    expect(navigation.className).toContain('lg:translate-x-0');
+    expect(navigation.className).toContain('lg:transform-none');
     expect(screen.queryByRole('button', { name: 'Close navigation' })).toBeNull();
   });
 
@@ -216,11 +249,12 @@ describe('Sidebar mobile focus and interaction', () => {
       )
     );
     const last = focusable[focusable.length - 1];
+    const first = focusable[0];
     last.focus();
     fireEvent.keyDown(document, { key: 'Tab' });
-    expect(document.activeElement).toBe(closeButton);
+    expect(document.activeElement).toBe(first);
 
-    closeButton.focus();
+    first.focus();
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
     expect(document.activeElement).toBe(last);
   });
@@ -298,22 +332,21 @@ describe('Sidebar mobile focus and interaction', () => {
   it('exposes expandable HRMS sections with their current state', () => {
     renderSidebar();
 
-    const organization = screen.getByRole('button', { name: 'People' });
+    const organization = screen.getByRole('link', { name: 'People' });
     expect(organization.getAttribute('aria-expanded')).toBe('false');
 
-    fireEvent.click(organization);
+    fireEvent.pointerEnter(organization, { pointerType: 'mouse' });
 
     expect(organization.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByRole('link', { name: 'Employee Directory' })).toBeTruthy();
   });
 
-  it('keeps destinations discoverable by accessible name in the desktop icon rail', () => {
+  it('keeps the desktop icon rail interactive when collapsed', () => {
     renderSidebar({ desktopCollapsed: true });
-
-    const navigation = screen.getByRole('complementary', { name: 'Main navigation' });
-    expect(navigation.className).toContain('lg:w-20');
-    const dashboard = screen.getByRole('link', { name: 'Home' });
-    expect(dashboard.getAttribute('title')).toBe('Home');
-    expect(dashboard.querySelector('span')?.className).toContain('sr-only');
+    const navigation = document.getElementById('app-navigation');
+    expect(screen.getByRole('complementary', { name: 'Main navigation' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Home' })).toBeTruthy();
+    expect(navigation?.hasAttribute('inert')).toBe(false);
+    expect(navigation?.className).toContain('lg:w-[72px]');
   });
 });

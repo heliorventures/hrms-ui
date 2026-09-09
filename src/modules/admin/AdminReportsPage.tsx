@@ -46,7 +46,7 @@ const ReportWorkspace = ({
   );
   return (
     <div className="space-y-4">
-      <PageHeader title={title} />
+      <PageHeader title={title} retainTitle />
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-surface p-3">
         <label className="min-w-60 space-y-1 text-sm font-medium">
           Report

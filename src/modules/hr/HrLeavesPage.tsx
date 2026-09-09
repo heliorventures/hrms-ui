@@ -1,131 +1,122 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import FlashToastBar from '../../components/common/FlashToastBar';
-import { canAccessTenantPath } from '../../auth/navAccess';
-import { authorizationStateKey } from '../../auth/permissionService';
-import { useAuth } from '../../contexts/AuthContext';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { useFlashToast } from '../../hooks/useFlashToast';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
-import ApplyLeaveModal from '../leave/components/ApplyLeaveModal';
-import LeaveRejectModal from '../leave/components/LeaveRejectModal';
-import LeaveRequestsTableSection from '../leave/components/LeaveRequestsTableSection';
-import LeaveRecoveryNotice from '../leave/components/LeaveRecoveryNotice';
-import LeaveWorkflowTrailModal from '../leave/components/LeaveWorkflowTrailModal';
-import { useLeaveWorkflowTrail } from '../leave/hooks/useLeaveWorkflowTrail';
-import HrLeaveFilterTabs, { type HrLeaveFilter } from './components/HrLeaveFilterTabs';
-import HrLeaveSummaryCards from './components/HrLeaveSummaryCards';
-import LeaveTeamCalendar from './components/LeaveTeamCalendar';
-import CompOffApprovalPanel from '../leave/components/CompOffApprovalPanel';
+
 import {
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
-  LeaveBoardDocument,
   type ApproveLeaveRequestMutationVariables,
   type LeaveBoardQuery,
-  type LeaveBoardQueryVariables,
 } from '../../api/graphql/graphql';
+import { canAccessTenantPath } from '../../auth/navAccess';
+import { authorizationStateKey } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import FlashToastBar from '../../components/common/FlashToastBar';
+import PageActions from '../../components/common/PageActions';
+import { useAuth } from '../../contexts/AuthContext';
+import { useFlashToast } from '../../hooks/useFlashToast';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { boundedInteger, useRememberedRouteView } from '../../hooks/useRememberedRouteView';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import ApplyLeaveModal from '../leave/components/ApplyLeaveModal';
+import CompOffApprovalPanel from '../leave/components/CompOffApprovalPanel';
+import LeaveRecoveryNotice from '../leave/components/LeaveRecoveryNotice';
+import LeaveRejectModal from '../leave/components/LeaveRejectModal';
+import LeaveRequestsTableSection from '../leave/components/LeaveRequestsTableSection';
+import LeaveWorkflowTrailModal from '../leave/components/LeaveWorkflowTrailModal';
+import { useLeaveWorkflowTrail } from '../leave/hooks/useLeaveWorkflowTrail';
 import {
   LEAVE_APPROVAL_REFRESH_MESSAGE,
   leaveApprovalTarget,
   type LeaveApprovalTarget,
 } from '../leave/leaveApproval';
 
-type HrLeaveFailure = {
-  message: string;
-  operation: 'board' | 'mutation';
-};
-
-const HR_LEAVE_LIMIT = 120;
+import { type HrLeaveFilter } from './components/HrLeaveFilterTabs';
+import { HrLeaveQueueFilters, HrLeaveQueuePager } from './components/HrLeaveQueueControls';
+import LeaveTeamCalendar from './components/LeaveTeamCalendar';
+import {
+  HR_LEAVE_LIMIT,
+  recoverQueueFocus,
+  useHrLeaveApprovalBoard,
+} from './hooks/useHrLeaveApprovalBoard';
 
 const HrLeavesPage = () => {
   const navigate = useNavigate();
-  const { can, clientSession } = useAuth();
+  const { can, clientSession, user, tenantId } = useAuth();
   const client = useGraphClient('client');
   const flash = useFlashToast();
-  const [data, setData] = useState<LeaveBoardQuery | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [failure, setFailure] = useState<HrLeaveFailure | null>(null);
   const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
-  const [filter, setFilter] = useState<HrLeaveFilter>('pending');
   const [applyOpen, setApplyOpen] = useState(false);
   const [rejectLeaveTarget, setRejectLeaveTarget] = useState<LeaveApprovalTarget | null>(null);
   const [approveBusyId, setApproveBusyId] = useState<string | null>(null);
   const [cancelBusyId, setCancelBusyId] = useState<string | null>(null);
   const workflowTrail = useLeaveWorkflowTrail(client);
+  const { open: openTrail, retry: retryTrail } = workflowTrail;
 
   const canConfigureLeaveSettings = useMemo(
     () => canAccessTenantPath('/admin/leave-settings', { can, clientSession }),
     [can, clientSession]
   );
   const defaultYear = useMemo(() => new Date().getFullYear(), []);
-  const [balanceYear, setBalanceYear] = useState(defaultYear);
-  const requestYearRange = useMemo(
-    () => ({
-      fromDate: `${balanceYear}-01-01`,
-      toDate: `${balanceYear}-12-31`,
-    }),
-    [balanceYear]
+  const identity = `${tenantId ?? ''}:${user?.id ?? ''}:${authorizationStateKey(clientSession)}`;
+  const [view, updateView] = useRememberedRouteView(
+    client,
+    identity,
+    'hr-leaves',
+    { year: String(defaultYear), page: '0', status: 'actionable' },
+    (params) => ({
+      year: String(
+        boundedInteger(params.get('year'), defaultYear, defaultYear - 2, defaultYear + 1)
+      ),
+      page: String(boundedInteger(params.get('page'), 0, 0, 100000)),
+      status: ['actionable', 'pending', 'all', 'approved', 'rejected', 'cancelled'].includes(
+        params.get('status') ?? ''
+      )
+        ? (params.get('status') ?? 'actionable')
+        : 'actionable',
+    })
   );
+  const balanceYear = Number(view.year);
+  const requestPage = Number(view.page);
+  const filter = view.status as HrLeaveFilter;
+  const {
+    data,
+    loading,
+    failure,
+    setFailure,
+    reload: reloadBoardAndLabels,
+    isCurrent,
+    queueRef,
+  } = useHrLeaveApprovalBoard({
+    client,
+    identity,
+    balanceYear,
+    requestPage,
+    filter,
+    clearWorkflowFailure: workflowTrail.clearFailure,
+  });
+  useEffect(() => {
+    setApproveBusyId(null);
+    setCancelBusyId(null);
+    setApproveWorkflowNotice(null);
+    setRejectLeaveTarget(null);
+    setApplyOpen(false);
+  }, [isCurrent]);
   const yearChoices = useMemo(() => {
     const years: number[] = [];
     for (let year = defaultYear - 2; year <= defaultYear + 1; year += 1) years.push(year);
     return years;
   }, [defaultYear]);
 
-  const loadBoard = useCallback(() => {
-    const variables: LeaveBoardQueryVariables = {
-      limit: HR_LEAVE_LIMIT,
-      balanceYear,
-      fromDate: requestYearRange.fromDate,
-      toDate: requestYearRange.toDate,
-    };
-    return client.request(LeaveBoardDocument, variables);
-  }, [balanceYear, client, requestYearRange.fromDate, requestYearRange.toDate]);
-
-  const reloadBoardAndLabels = useCallback(async () => {
-    try {
-      setLoading(true);
-      setFailure(null);
-      workflowTrail.clearFailure();
-      setData(await loadBoard());
-    } catch (err) {
-      setFailure({ message: graphQlUserMessage(err), operation: 'board' });
-    } finally {
-      setLoading(false);
-    }
-  }, [loadBoard, workflowTrail.clearFailure]);
-
   const retryBoard = useCallback(() => {
     void reloadBoardAndLabels();
   }, [reloadBoardAndLabels]);
 
-  useEffect(() => {
-    void reloadBoardAndLabels();
-  }, [reloadBoardAndLabels]);
+  const silentRefreshBoard = reloadBoardAndLabels;
+  const refreshAfterMutation = (removedRequestId?: string) =>
+    reloadBoardAndLabels(true, removedRequestId);
 
-  const silentRefreshBoard = useCallback(async () => {
-    try {
-      setData(await loadBoard());
-    } catch (err) {
-      setFailure({ message: graphQlUserMessage(err), operation: 'board' });
-    }
-  }, [loadBoard]);
-
-  const refreshAfterMutation = async () => {
-    try {
-      setData(await loadBoard());
-    } catch (err) {
-      setFailure({ message: graphQlUserMessage(err), operation: 'board' });
-    }
-  };
-
-  const handleApprove = async (
-    leaveRequestId: string,
-    pendingApprovalStepId?: string | null
-  ) => {
+  const handleApprove = async (leaveRequestId: string, pendingApprovalStepId?: string | null) => {
     const target = leaveApprovalTarget(leaveRequestId, pendingApprovalStepId);
     if (!target) {
       setFailure({ message: LEAVE_APPROVAL_REFRESH_MESSAGE, operation: 'mutation' });
@@ -139,34 +130,43 @@ const HrLeavesPage = () => {
     setApproveWorkflowNotice(null);
     setFailure(null);
     workflowTrail.clearFailure();
+    let approved = false;
     try {
       const result = await client.request(ApproveLeaveRequestDocument, variables);
-      const status = result.approveLeaveRequest?.status?.toLowerCase() ?? '';
+      if (!isCurrent()) return;
+      approved = true;
+      const status = result.approveLeaveRequest.status.toLowerCase();
       const pendingMessage =
         'Approval was recorded, but another workflow step may still be pending.';
       setApproveWorkflowNotice(status === 'pending' ? pendingMessage : null);
-      flash.show(status === 'pending' ? pendingMessage : 'Leave request approved.', status === 'pending' ? 'info' : 'success');
+      flash.show(
+        status === 'pending' ? pendingMessage : 'Leave request approved.',
+        status === 'pending' ? 'info' : 'success'
+      );
     } catch (err) {
       setFailure({ message: graphQlUserMessage(err), operation: 'mutation' });
     } finally {
-      setApproveBusyId(null);
+      if (isCurrent()) setApproveBusyId(null);
     }
-    await refreshAfterMutation();
+    await refreshAfterMutation(approved ? leaveRequestId : undefined);
   };
 
   const handleCancelOwn = async (leaveRequestId: string) => {
     setCancelBusyId(leaveRequestId);
     setFailure(null);
     workflowTrail.clearFailure();
+    let cancelled = false;
     try {
       await client.request(CancelLeaveRequestDocument, { leaveRequestId });
+      if (!isCurrent()) return;
+      cancelled = true;
       flash.show('Leave request cancelled.', 'success');
     } catch (err) {
       setFailure({ message: graphQlUserMessage(err), operation: 'mutation' });
     } finally {
-      setCancelBusyId(null);
+      if (isCurrent()) setCancelBusyId(null);
     }
-    await refreshAfterMutation();
+    await refreshAfterMutation(cancelled ? leaveRequestId : undefined);
   };
 
   const leaveTypeNameById = useMemo(
@@ -180,25 +180,29 @@ const HrLeavesPage = () => {
     [data?.leaveRequests]
   );
 
-  const pendingCount = useMemo(
-    () => (data?.leaveRequests ?? []).filter((row) => row.status.toLowerCase() === 'pending').length,
-    [data?.leaveRequests]
-  );
-
-  const filteredRows = useMemo(() => {
-    const rows = data?.leaveRequests ?? [];
-    const visibleRows = filter === 'all' ? rows : rows.filter((row) => row.status.toLowerCase() === filter);
-    return [...visibleRows].sort(
-      (first, second) => new Date(second.appliedAt).getTime() - new Date(first.appliedAt).getTime()
-    );
-  }, [data?.leaveRequests, filter]);
+  const pendingCount = data?.leaveApprovalQueue.pendingCount ?? 0;
+  const actionableCount = data?.leaveApprovalQueue.actionableCount ?? 0;
+  const filteredRows = data?.leaveRequests ?? [];
+  const totalCount = data?.leaveRequestCount ?? 0;
+  useEffect(() => {
+    if (data && requestPage > 0 && requestPage * HR_LEAVE_LIMIT >= totalCount) {
+      // Page correction changes query ownership and cancels its pending animation frame.
+      recoverQueueFocus(queueRef.current);
+      updateView({ page: String(Math.max(0, Math.ceil(totalCount / HR_LEAVE_LIMIT) - 1)) });
+    }
+  }, [data, queueRef, requestPage, totalCount, updateView]);
 
   const employeeLabelById = useMemo(
     () =>
       new Map(
         (data?.leaveRequests ?? []).flatMap((row) =>
           row.employeeName
-            ? [[row.employeeId, `${row.employeeName}${row.employeeCode ? ` (${row.employeeCode})` : ''}`] as const]
+            ? [
+                [
+                  row.employeeId,
+                  `${row.employeeName}${row.employeeCode ? ` (${row.employeeCode})` : ''}`,
+                ] as const,
+              ]
             : []
         )
       ),
@@ -213,35 +217,49 @@ const HrLeavesPage = () => {
   const openWorkflowTrail = useCallback(
     (row: LeaveBoardQuery['leaveRequests'][number]) => {
       setFailure(null);
-      void workflowTrail.open(row);
+      void openTrail(row);
     },
-    [workflowTrail.open]
+    [setFailure, openTrail]
   );
 
   const retryWorkflowTrail = useCallback(() => {
-    void workflowTrail.retry();
-  }, [workflowTrail.retry]);
+    void retryTrail();
+  }, [retryTrail]);
 
   const activeFailure = workflowTrail.failure ?? failure;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave Approvals</h1>
+      <PageActions>
+        <h1 className="sr-only">Leave Approvals</h1>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" type="button" onClick={() => void reloadBoardAndLabels()} disabled={loading}>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => void reloadBoardAndLabels()}
+            disabled={loading}
+          >
             {loading ? 'Refreshing...' : 'Refresh'}
           </Button>
           {canConfigureLeaveSettings ? (
-            <Button variant="outline" type="button" onClick={() => void navigate('/admin/leave-settings')}>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => void navigate('/admin/leave-settings')}
+            >
               Leave & holidays setup
             </Button>
           ) : null}
-          <Button variant="primary" type="button" onClick={() => setApplyOpen(true)} disabled={loading}>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={() => setApplyOpen(true)}
+            disabled={loading}
+          >
             Apply for leave
           </Button>
         </div>
-      </div>
+      </PageActions>
 
       <ApplyLeaveModal
         isOpen={applyOpen}
@@ -249,23 +267,29 @@ const HrLeavesPage = () => {
         leavePolicies={data?.leavePolicies ?? []}
         leaveTypes={data?.leaveTypes ?? []}
         upcomingHolidays={data?.upcomingHolidays ?? []}
-        onClose={() => setApplyOpen(false)}
-        onSubmitted={async () => {
+        onClose={() => {
+          if (isCurrent()) setApplyOpen(false);
+        }}
+        onSubmitted={() => {
+          if (!isCurrent()) return;
           setFailure(null);
           workflowTrail.clearFailure();
-          await silentRefreshBoard();
+          void silentRefreshBoard();
         }}
       />
       <LeaveRejectModal
-        isOpen={rejectLeaveTarget != null}
+        isOpen={rejectLeaveTarget !== null}
         leaveRequestId={rejectLeaveTarget?.leaveRequestId ?? null}
         expectedWorkflowStepId={rejectLeaveTarget?.expectedWorkflowStepId ?? null}
-        onClose={() => setRejectLeaveTarget(null)}
-        onRejected={async () => {
+        onClose={() => {
+          if (isCurrent()) setRejectLeaveTarget(null);
+        }}
+        onRejected={() => {
+          if (!isCurrent()) return;
           setFailure(null);
           workflowTrail.clearFailure();
           flash.show('Leave request rejected.', 'success');
-          await silentRefreshBoard();
+          void reloadBoardAndLabels(false, rejectLeaveTarget?.leaveRequestId);
         }}
       />
 
@@ -284,52 +308,59 @@ const HrLeavesPage = () => {
         </Card>
       )}
 
-      <HrLeaveSummaryCards
-        balanceYear={balanceYear}
-        balances={data?.leaveBalances ?? []}
-        leaveTypeNameById={leaveTypeNameById}
-        limit={HR_LEAVE_LIMIT}
-        loading={loading}
-        pendingCount={pendingCount}
-        yearChoices={yearChoices}
-        onYearChange={setBalanceYear}
-      />
-
-      <LeaveTeamCalendar />
-      <CompOffApprovalPanel key={authorizationStateKey(clientSession)} />
-
-      <Card title="Requests">
-        <HrLeaveFilterTabs activeFilter={filter} pendingCount={pendingCount} onChange={setFilter} />
-        {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Requests...</p>
-        ) : (
-          <LeaveRequestsTableSection
-            approveBusyId={approveBusyId}
-            cancelBusyId={cancelBusyId}
-            employeeLabel={employeeLabel}
-            emptyLabel="No Requests In This Tab."
-            leaveTypeNameById={leaveTypeNameById}
-            rows={filteredRows}
-            showApprovalColumn={showApprovalColumn}
-            viewerId={viewerId}
-            onApprove={handleApprove}
-            onCancelOwn={handleCancelOwn}
-            onOpenTrail={openWorkflowTrail}
-            onRejectClick={(leaveRequestId, pendingApprovalStepId) => {
-              const target = leaveApprovalTarget(leaveRequestId, pendingApprovalStepId);
-              if (!target) {
-                setFailure({ message: LEAVE_APPROVAL_REFRESH_MESSAGE, operation: 'mutation' });
-                return;
-              }
-              setRejectLeaveTarget(target);
-            }}
+      <section ref={queueRef} tabIndex={-1} aria-label="Leave approval queue">
+        <Card title="Requests">
+          <HrLeaveQueueFilters
+            year={balanceYear}
+            years={yearChoices}
+            filter={filter}
+            total={totalCount}
+            pending={pendingCount}
+            actionable={actionableCount}
+            loading={loading}
+            onChange={updateView}
           />
-        )}
-      </Card>
+          {loading && !data ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">Loading Requests...</p>
+          ) : (
+            <LeaveRequestsTableSection
+              approveBusyId={approveBusyId}
+              cancelBusyId={cancelBusyId}
+              employeeLabel={employeeLabel}
+              emptyLabel="No Requests In This Tab."
+              leaveTypeNameById={leaveTypeNameById}
+              rows={filteredRows}
+              showApprovalColumn={showApprovalColumn}
+              viewerId={viewerId}
+              onApprove={(id, step) => void handleApprove(id, step)}
+              onCancelOwn={(id) => void handleCancelOwn(id)}
+              onOpenTrail={openWorkflowTrail}
+              onRejectClick={(leaveRequestId, pendingApprovalStepId) => {
+                const target = leaveApprovalTarget(leaveRequestId, pendingApprovalStepId);
+                if (!target) {
+                  setFailure({ message: LEAVE_APPROVAL_REFRESH_MESSAGE, operation: 'mutation' });
+                  return;
+                }
+                setRejectLeaveTarget(target);
+              }}
+            />
+          )}
+          <HrLeaveQueuePager
+            page={requestPage}
+            size={HR_LEAVE_LIMIT}
+            total={totalCount}
+            loading={loading}
+            onChange={updateView}
+          />
+        </Card>
+      </section>
+
+      <CompOffApprovalPanel key={authorizationStateKey(clientSession)} />
+      <LeaveTeamCalendar />
 
       <LeaveWorkflowTrailModal
         employeeLabel={employeeLabel}
-        isOpen={workflowTrail.summaryRow != null}
+        isOpen={workflowTrail.summaryRow !== null}
         leaveTypeNameById={leaveTypeNameById}
         loading={workflowTrail.loading}
         rows={workflowTrail.rows}

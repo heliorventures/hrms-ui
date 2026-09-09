@@ -29,7 +29,7 @@ const PrejoiningAdminWorkspace = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-content-primary">Pre-joining</h1>
+        <h1 className="sr-only">Pre-joining</h1>
         <PageInformation title="Pre-joining">
           <p className="text-sm text-content-secondary">
             Configure private candidate forms, review submissions, and confirm joined employees.

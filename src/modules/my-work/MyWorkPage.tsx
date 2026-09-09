@@ -4,6 +4,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageActions from '../../components/common/PageActions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -77,14 +78,14 @@ const MyWorkPage = () => {
   const visible = tasks.filter((task) => task.completed === completed);
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-content-primary">
+      <PageActions>
+        <h1 className="sr-only">
           {completed ? 'Completed / Archive' : 'My Tasks'}
         </h1>
         <Button variant="outline" busy={loading} onClick={() => setRevision((value) => value + 1)}>
           Refresh
         </Button>
-      </div>
+      </PageActions>
       {errors.length > 0 && (
         <p role="alert" className="text-status-danger">
           Some tasks could not load. {errors.join(' ')}

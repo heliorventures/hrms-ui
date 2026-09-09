@@ -42,7 +42,7 @@ const PayrollPayPage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Pay</h1>
+      <h1 className="sr-only">Pay</h1>
 
       {pay.showMigrationHint && <PayrollMigrationHint tenantId={currentTenant?.id} />}
 

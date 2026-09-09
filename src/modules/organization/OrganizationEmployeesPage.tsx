@@ -90,7 +90,7 @@ const OrganizationEmployeesPage = () => {
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Employees</h1>
+          <h1 className="sr-only">Employees</h1>
         </div>
         <div className="w-full sm:w-80">
           <Input

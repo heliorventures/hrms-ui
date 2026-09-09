@@ -1,4 +1,3 @@
-import AsyncState from '../../../components/common/AsyncState';
 import { formatBackendTime } from '../../../utils/timeFormat';
 
 import type { AttendanceRow, Summary } from './attendanceSummaryTypes';
@@ -76,11 +75,12 @@ const AttendanceSummaryDetails = ({ summary }: AttendanceSummaryDetailsProps) =>
       </details>
     ) : null}
     {summary.segments.length === 0 && !summary.openSegment ? (
-      <AsyncState
-        kind="empty"
-        title="No Attendance Recorded Today."
-        description="Use Punch In when you are ready to start tracking time."
-      />
+      <p
+        role="status"
+        className="rounded-lg bg-surface-selected px-3 py-3 text-sm text-content-secondary"
+      >
+        No Attendance Recorded Today.
+      </p>
     ) : null}
     {summary.openSegment ? (
       <p className="text-xs text-amber-800 dark:text-amber-200">

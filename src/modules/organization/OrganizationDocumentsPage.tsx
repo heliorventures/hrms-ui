@@ -200,7 +200,7 @@ const OrganizationDocumentsPage = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Organization Documents</h1>
+        <h1 className="sr-only">Organization Documents</h1>
       </div>
 
       {error && (

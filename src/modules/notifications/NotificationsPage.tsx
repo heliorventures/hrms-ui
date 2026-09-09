@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { canManageNotifications } from '../../auth/navAccess';
 import Button from '../../components/common/Button';
+import PageActions from '../../components/common/PageActions';
 import { useAuth } from '../../contexts/AuthContext';
 
 import CreateAnnouncementModal from './CreateAnnouncementModal';
@@ -19,9 +20,9 @@ const NotificationsPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <PageActions>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+          <h1 className="sr-only">Notifications</h1>
           <p className="mt-1 text-sm">
             <Link
               to="/profile/settings"
@@ -48,7 +49,7 @@ const NotificationsPage = () => {
             {composeLabel}
           </Button>
         </div>
-      </div>
+      </PageActions>
 
       <CreateAnnouncementModal
         isOpen={composeOpen}

@@ -4,6 +4,7 @@ import { PERMISSIONS } from '../../auth/permissions';
 import { useAuth } from '../../contexts/AuthContext';
 import ApproveExpenseModal from './components/ApproveExpenseModal';
 import ExpenseCategoryGrid from './components/ExpenseCategoryGrid';
+import PageInformation from '../../components/common/PageInformation';
 import ExpenseClaimsTable from './components/ExpenseClaimsTable';
 import ExpenseNotice from './components/ExpenseNotice';
 import ExpensesHeader from './components/ExpensesHeader';
@@ -167,7 +168,11 @@ const ExpensesPage = () => {
         />
       ) : null}
 
-      {canAccessExpenses ? <ExpenseCategoryGrid categories={categories} loading={loading} /> : null}
+      {canAccessExpenses ? (
+        <PageInformation title="Expense Categories">
+          <ExpenseCategoryGrid categories={categories} loading={loading} />
+        </PageInformation>
+      ) : null}
 
       {canAccessExpenses ? (
         <ExpenseClaimsTable

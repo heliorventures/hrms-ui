@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageActions from '../../components/common/PageActions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -62,16 +63,16 @@ const ProfileSettingsPage = () => {
   if (activeView === 'security') {
     return (
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <PageActions>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
+            <h1 className="sr-only">Security Settings</h1>
           </div>
           {!clientSession?.mustChangePassword && employeeId ? (
             <Button type="button" variant="outline" onClick={() => setActiveView('profile')}>
               Back to profile
             </Button>
           ) : null}
-        </div>
+        </PageActions>
         <Card>
           <SecurityTab
             forced={clientSession?.mustChangePassword === true}
@@ -96,12 +97,12 @@ const ProfileSettingsPage = () => {
   if (profileError) {
     return (
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+        <PageActions>
+          <h1 className="sr-only">My Profile</h1>
           <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
             Security settings
           </Button>
-        </div>
+        </PageActions>
         <Card>
           <p className="font-medium text-red-700 dark:text-red-300">
             We could not load your employee profile.
@@ -115,12 +116,12 @@ const ProfileSettingsPage = () => {
   if (!employeeId) {
     return (
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+        <PageActions>
+          <h1 className="sr-only">My Profile</h1>
           <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
             Security settings
           </Button>
-        </div>
+        </PageActions>
         <Card>
           <p className="font-medium text-gray-900 dark:text-white">
             No employee profile is linked to this login.
@@ -135,12 +136,12 @@ const ProfileSettingsPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+      <PageActions>
+        <h1 className="sr-only">My Profile</h1>
         <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
           Security settings
         </Button>
-      </div>
+      </PageActions>
       <EmployeeProfileShell employeeId={employeeId} />
     </div>
   );

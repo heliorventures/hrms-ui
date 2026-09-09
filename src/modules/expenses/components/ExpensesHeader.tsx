@@ -1,5 +1,9 @@
-import { Link } from 'react-router-dom';
+import { Settings } from 'lucide-react';
+
 import Button from '../../../components/common/Button';
+import PageActionLink from '../../../components/common/PageActionLink';
+import PageActions from '../../../components/common/PageActions';
+
 
 interface ExpensesHeaderProps {
   canManageExpense: boolean;
@@ -17,18 +21,15 @@ const ExpensesHeader = ({
   onOpenTravel,
 }: ExpensesHeaderProps) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expenses & Travel</h1>
+    <PageActions>
+      <h1 className="sr-only">Expenses & Travel</h1>
       <div className="flex flex-wrap items-center gap-3">
         {canManageExpense ? (
-          <Link to="/admin/expense-categories">
-            <Button
-              type="button"
-              variant="outline"
-            >
-              Configure categories
-            </Button>
-          </Link>
+          <PageActionLink
+            to="/admin/expense-categories"
+            label="Configure categories"
+            icon={<Settings className="h-5 w-5" />}
+          />
         ) : null}
         {canSubmitExpense ? <Button onClick={onOpenExpense}>Submit Expense</Button> : null}
         {canSubmitTravel ? (
@@ -37,7 +38,7 @@ const ExpensesHeader = ({
           </Button>
         ) : null}
       </div>
-    </div>
+    </PageActions>
   );
 };
 

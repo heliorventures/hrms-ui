@@ -1,27 +1,37 @@
 import { Menu, Search } from 'lucide-react';
-import type { RefObject } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 
 import { UI_PLACEHOLDER_TEXT } from '../../constants/uiText';
 import { useTenant } from '../../contexts/TenantContext';
 import IconButton from '../common/IconButton';
-import PageInformationButton from '../common/PageInformationButton';
 
 import { useCommandPalette } from './CommandPaletteContext';
-import NotificationDropdown from './NotificationDropdown';
-import ProfileDropdown from './ProfileDropdown';
+import NavigationLogoToggle from './NavigationLogoToggle';
 
 interface HeaderProps {
+  desktopNavigationCollapsed: boolean;
+  onExpandDesktopNavigation: () => void;
   mobileNavigationOpen: boolean;
   mobileNavigationTriggerRef: RefObject<HTMLButtonElement>;
   onOpenMobileNavigation: () => void;
 }
 
 const Header = ({
+  desktopNavigationCollapsed,
+  onExpandDesktopNavigation,
   mobileNavigationOpen,
   mobileNavigationTriggerRef,
   onOpenMobileNavigation,
 }: HeaderProps) => {
   const { currentTenant } = useTenant();
+  const expandRef = useRef<HTMLButtonElement>(null);
+  const wasCollapsed = useRef(desktopNavigationCollapsed);
+  useLayoutEffect(() => {
+    if (desktopNavigationCollapsed && !wasCollapsed.current) expandRef.current?.focus();
+    if (!desktopNavigationCollapsed && wasCollapsed.current)
+      document.getElementById('navigation-collapse-control')?.focus();
+    wasCollapsed.current = desktopNavigationCollapsed;
+  }, [desktopNavigationCollapsed]);
   const { open } = useCommandPalette();
   const shortcutLabel =
     typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent)
@@ -31,6 +41,13 @@ const Header = ({
   return (
     <header className="flex min-h-16 shrink-0 items-center justify-between border-b border-line bg-surface pb-0 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[env(safe-area-inset-top)] shadow-card md:pl-[max(1.5rem,env(safe-area-inset-left))] md:pr-[max(1.5rem,env(safe-area-inset-right))]">
       <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-4">
+        {desktopNavigationCollapsed ? (
+          <NavigationLogoToggle
+            collapsed
+            onToggle={onExpandDesktopNavigation}
+            buttonRef={expandRef}
+          />
+        ) : null}
         <IconButton
           ref={mobileNavigationTriggerRef}
           onClick={onOpenMobileNavigation}
@@ -66,12 +83,6 @@ const Header = ({
           label="Search pages and tools"
           icon={<Search className="h-5 w-5" />}
         />
-      </div>
-
-      <div className="flex shrink-0 items-center gap-1 md:gap-2">
-        <PageInformationButton />
-        <NotificationDropdown />
-        <ProfileDropdown />
       </div>
     </header>
   );

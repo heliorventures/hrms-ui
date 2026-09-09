@@ -2,22 +2,32 @@ import { LogOut, Moon, RefreshCw, Sun, UserRound } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import ActionMenu, { type ActionMenuItem } from '../common/ActionMenu';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEmployeeDisplayName } from '../../contexts/employeeDisplayNameContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import ActionMenu, { type ActionMenuItem } from '../common/ActionMenu';
 
 function devRoleSwitchEnabled(): boolean {
   return import.meta.env.DEV === true && import.meta.env.VITE_ENABLE_DEV_ROLE_SWITCH === 'true';
 }
 
-const ProfileDropdown = () => {
+const ProfileDropdown = ({
+  onNavigate,
+  compact = false,
+  companyName,
+}: {
+  onNavigate?: () => void;
+  compact?: boolean;
+  companyName?: string;
+}) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { clientSession, user, role, switchRole, logout } = useAuth();
+  const { clientSession, role, switchRole, logout } = useAuth();
+  const displayName = useEmployeeDisplayName();
 
   const initials =
-    user?.name
-      ?.split(' ')
+    displayName
+      .split(' ')
       .map((name) => name[0])
       .join('')
       .toUpperCase()
@@ -46,12 +56,7 @@ const ProfileDropdown = () => {
         id: 'theme',
         label: `Theme: ${theme === 'light' ? 'Dark' : 'Light'} mode`,
         onSelect: toggleTheme,
-        icon:
-          theme === 'light' ? (
-            <Moon className="h-5 w-5" />
-          ) : (
-            <Sun className="h-5 w-5" />
-          ),
+        icon: theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />,
       },
     ];
 
@@ -74,18 +79,42 @@ const ProfileDropdown = () => {
     return profileItems;
   }, [handleLogout, handleRoleSwitch, profilePath, role, theme, toggleTheme]);
 
+  const avatar = (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface-selected text-sm font-semibold text-content-primary">
+      {initials}
+    </span>
+  );
+  const menu = (
+    <ActionMenu
+      label="User menu"
+      items={items}
+      align="end"
+      onNavigate={onNavigate}
+      triggerIcon={compact ? avatar : undefined}
+      header={
+        companyName ? (
+          <>
+            <p className="truncate font-medium">{displayName}</p>
+            <p className="truncate text-xs text-content-muted">{companyName}</p>
+          </>
+        ) : undefined
+      }
+    />
+  );
+  if (compact) return <div className="flex justify-center">{menu}</div>;
+
   return (
-    <div className="flex min-h-11 items-center rounded-lg text-content-secondary">
+    <div className="flex min-h-11 w-full min-w-0 items-center rounded-lg text-content-secondary">
       <div
         aria-hidden="true"
-        className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-surface-selected text-sm font-semibold text-content-primary"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface-selected text-sm font-semibold text-content-primary"
       >
         {initials}
       </div>
-      <span className="ml-2 hidden max-w-[120px] truncate text-sm font-medium sm:block">
-        {user?.name}
+      <span className="ml-2 min-w-0 flex-1 truncate text-sm font-medium" title={displayName}>
+        {displayName}
       </span>
-      <ActionMenu label="User menu" items={items} align="end" />
+      {menu}
     </div>
   );
 };

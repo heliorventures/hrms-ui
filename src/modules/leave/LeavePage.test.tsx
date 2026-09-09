@@ -183,7 +183,8 @@ describe('LeavePage approval', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Asha Rao (EMP-001)')).toBeTruthy();
+    const desktop = within(await screen.findByRole('table', { name: 'Leave requests' }));
+    expect(desktop.getByText('Asha Rao (EMP-001)')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Apply for leave' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull();
@@ -200,7 +201,8 @@ describe('LeavePage approval', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Approve' }));
+    const desktop = within(await screen.findByRole('table', { name: 'Leave requests' }));
+    fireEvent.click(desktop.getByRole('button', { name: 'Approve' }));
 
     await waitFor(() =>
       expect(testState.client.request).toHaveBeenCalledWith(ApproveLeaveRequestDocument, {

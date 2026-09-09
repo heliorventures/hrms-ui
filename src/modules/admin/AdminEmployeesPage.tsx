@@ -4,6 +4,7 @@ import { ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageActions from '../../components/common/PageActions';
 import PageInformation from '../../components/common/PageInformation';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -203,10 +204,10 @@ const AdminEmployeesPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Employee Management</h1>
+      <PageActions>
+        <h1 className="sr-only">Employee Management</h1>
         <Button onClick={() => setCreateOpen(true)}>Add Employee</Button>
-      </div>
+      </PageActions>
 
       {error && (
         <Card>

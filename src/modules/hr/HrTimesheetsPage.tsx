@@ -201,7 +201,7 @@ const HrTimesheetsPage = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timesheet Approvals</h1>
+        <h1 className="sr-only">Timesheet Approvals</h1>
       </div>
 
       <Card title="Queue">

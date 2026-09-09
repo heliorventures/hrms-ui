@@ -1,10 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
-import { useLocation } from 'react-router-dom';
 
-import { NAVIGATION_SECTIONS, type NavigationSectionKey } from '../../navigation/navigationModel';
-import { activeNavigationSection } from '../../navigation/navigationSelectors';
+import { useTenant } from '../../contexts/TenantContext';
 import { useDialogSurface } from '../common/useDialogSurface';
 
+import ProfileDropdown from './ProfileDropdown';
 import SidebarHeader from './SidebarHeader';
 import SidebarNavigation from './SidebarNavigation';
 
@@ -15,8 +14,15 @@ interface SidebarProps {
   onCloseMobile: () => void;
   onToggleDesktop: () => void;
 }
-type ExpandedState = Record<NavigationSectionKey, boolean>;
 const DESKTOP_NAVIGATION_QUERY = '(min-width: 1024px)';
+
+function navigationVisibility(desktop: boolean, mobileOpen: boolean) {
+  const mobileDialogOpen = mobileOpen && !desktop;
+  return {
+    mobileDialogOpen,
+    sidebarInteractive: mobileDialogOpen || desktop,
+  };
+}
 
 function useDesktopNavigationViewport() {
   const [matches, setMatches] = useState(() =>
@@ -37,12 +43,6 @@ function useDesktopNavigationViewport() {
   return matches;
 }
 
-function createExpandedState(activeSection: NavigationSectionKey | null): ExpandedState {
-  return Object.fromEntries(
-    NAVIGATION_SECTIONS.map((section) => [section.key, section.key === activeSection])
-  ) as ExpandedState;
-}
-
 const Sidebar = ({
   mobileOpen,
   desktopCollapsed,
@@ -50,15 +50,15 @@ const Sidebar = ({
   onCloseMobile,
   onToggleDesktop,
 }: SidebarProps) => {
-  const location = useLocation();
   const asideRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const desktopViewport = useDesktopNavigationViewport();
-  const mobileDialogOpen = mobileOpen && !desktopViewport;
-  const sidebarInteractive = mobileDialogOpen || desktopViewport;
-  const activeSection = activeNavigationSection(location.pathname + location.search);
-  const [expanded, setExpanded] = useState<ExpandedState>(() => createExpandedState(activeSection));
-
+  const compact = desktopViewport && desktopCollapsed;
+  const { currentTenant } = useTenant();
+  const { mobileDialogOpen, sidebarInteractive } = navigationVisibility(
+    desktopViewport,
+    mobileOpen
+  );
   useDialogSurface({
     isOpen: mobileDialogOpen,
     isDismissible: true,
@@ -77,15 +77,6 @@ const Sidebar = ({
     onCloseMobile();
   }, [desktopViewport, mobileOpen, onCloseMobile]);
 
-  useEffect(() => {
-    if (!activeSection) return;
-    setExpanded((current) => ({ ...current, [activeSection]: true }));
-  }, [activeSection]);
-
-  const toggleSection = (key: NavigationSectionKey) => {
-    setExpanded((current) => ({ ...current, [key]: !current[key] }));
-  };
-
   return (
     <>
       {mobileDialogOpen ? (
@@ -102,34 +93,42 @@ const Sidebar = ({
         id="app-navigation"
         ref={asideRef}
         role={mobileDialogOpen ? 'dialog' : undefined}
-        aria-modal={mobileDialogOpen ? true : undefined}
-        aria-hidden={sidebarInteractive ? undefined : true}
+        aria-modal={mobileDialogOpen || undefined}
+        aria-hidden={!sidebarInteractive || undefined}
         aria-label="Main navigation"
         className={[
-          'fixed inset-y-0 left-0 z-30 h-[100dvh] min-h-0 w-72 transform overscroll-contain border-r border-line bg-surface pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pt-[env(safe-area-inset-top)] transition-[transform,width] duration-200 ease-out motion-reduce:transition-none',
-          'lg:static lg:h-auto lg:translate-x-0 lg:pb-0 lg:pl-0 lg:pt-0',
-          desktopCollapsed ? 'lg:w-20' : 'lg:w-72',
+          'fixed inset-y-0 left-0 z-30 h-[100dvh] min-h-0 w-72 transform overscroll-contain border-r border-line-subtle/60 bg-surface pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pt-[env(safe-area-inset-top)] transition-[transform,width] duration-200 ease-out motion-reduce:transition-none',
+          'shrink-0 lg:static lg:h-auto lg:transform-none lg:pb-0 lg:pl-0 lg:pt-0',
+          desktopCollapsed ? 'lg:w-[72px]' : 'lg:w-64',
           mobileDialogOpen
-            ? 'visible translate-x-0 pointer-events-auto'
+            ? 'visible transform-none pointer-events-auto'
             : 'invisible -translate-x-full pointer-events-none lg:visible lg:pointer-events-auto',
         ].join(' ')}
       >
-        <div className="flex h-full flex-col">
-          <SidebarHeader
-            desktopCollapsed={desktopCollapsed}
-            closeButtonRef={closeButtonRef}
-            onCloseMobile={onCloseMobile}
-            onToggleDesktop={onToggleDesktop}
-          />
-          <SidebarNavigation
-            desktopCollapsed={desktopCollapsed}
-            desktopViewport={desktopViewport}
-            expanded={expanded}
-            onToggleSection={toggleSection}
-            onCloseMobile={onCloseMobile}
-            onToggleDesktop={onToggleDesktop}
-          />
-        </div>
+        {sidebarInteractive ? (
+          <div className="flex h-full min-h-0 flex-col">
+            <SidebarHeader
+              compact={compact}
+              companyName={currentTenant.name}
+              desktopViewport={desktopViewport}
+              closeButtonRef={closeButtonRef}
+              onCloseMobile={onCloseMobile}
+              onToggleDesktop={onToggleDesktop}
+            />
+            <SidebarNavigation
+              compact={compact}
+              desktopViewport={desktopViewport}
+              onCloseMobile={onCloseMobile}
+            />
+            <div className="shrink-0 border-t border-line-subtle/60 bg-surface p-2">
+              <ProfileDropdown
+                compact={compact}
+                companyName={currentTenant.name}
+                onNavigate={onCloseMobile}
+              />
+            </div>
+          </div>
+        ) : null}
       </aside>
     </>
   );

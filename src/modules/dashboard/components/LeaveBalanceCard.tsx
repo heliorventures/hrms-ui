@@ -14,6 +14,7 @@ import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
+import { formatLeaveDays } from './leaveBalanceFormat';
 import LeaveBalanceMeter from './LeaveBalanceMeter';
 
 interface TypeRow {
@@ -86,28 +87,24 @@ const LeaveBalanceList = ({ rows, typeMap }: LeaveBalanceListProps) => {
   }
 
   return (
-    <ul className="max-h-80 space-y-5 overflow-y-auto overscroll-contain pr-1">
+    <ul className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-x-3 gap-y-5">
       {rows.map((row) => {
         const name = typeMap[row.leaveTypeId] ?? 'Leave';
         return (
-          <li key={row.id}>
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="min-w-0 break-words text-sm font-medium text-content-primary">
-                {name}
-              </span>
-              <span
-                className={`shrink-0 text-lg font-semibold tabular-nums ${Number(row.balanceDays) < 0 ? 'text-status-danger' : 'text-accent'}`}
-              >
-                {row.balanceDays} left
-              </span>
-            </div>
+          <li key={row.id} className="min-w-0 text-center">
             <LeaveBalanceMeter
               name={name}
               balanceDays={row.balanceDays}
               entitledDays={row.entitledDays}
             />
-            <p className="mt-2 text-xs tabular-nums text-content-secondary">
-              used {row.usedDays} · pending {row.pendingDays}
+            <p className="mt-2 min-w-0 break-words text-sm font-medium text-content-primary">
+              {name}
+            </p>
+            <p className="mt-1 text-xs tabular-nums text-content-secondary">
+              Used {formatLeaveDays(row.usedDays)}
+            </p>
+            <p className="mt-0.5 text-xs tabular-nums text-content-secondary">
+              Pending {formatLeaveDays(row.pendingDays)}
             </p>
           </li>
         );

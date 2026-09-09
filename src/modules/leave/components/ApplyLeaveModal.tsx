@@ -1,12 +1,15 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import Modal from '../../../components/common/Modal';
-import Button from '../../../components/common/Button';
-import PageNotice from '../../../components/common/PageNotice';
-import { useGraphClient } from '../../../hooks/useGraphClient';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+
 import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
+import Modal from '../../../components/common/Modal';
+import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { uploadTenantFile, validateTenantUploadFile } from '../../../utils/tenantFileUpload';
-import { ApplyLeaveContextPanel } from './ApplyLeaveSupportingInfo';
+
+import ApplyLeaveDiscardNotice, {
+  ApplyLeaveFooter,
+  ApplyLeaveFormFailure,
+} from './ApplyLeaveDialogContent';
 import ApplyLeaveFormFields, {
   type ApplyLeaveField,
   type ApplyLeaveFieldErrors,
@@ -19,10 +22,12 @@ import {
   type ApplyLeavePolicyRow,
   type ApplyLeaveTypeOption,
 } from './applyLeavePolicy';
+import { ApplyLeaveContextPanel } from './ApplyLeaveSupportingInfo';
 import {
   useApplyLeaveDialogOwnership,
   type ApplyLeaveDialogContext,
 } from './useApplyLeaveDialogOwnership';
+import { useLeaveEntry } from './useLeaveEntry';
 
 export type {
   ApplyBalanceRow,
@@ -62,8 +67,6 @@ const ApplyLeaveModal = ({
     isOpen
   );
   const [leaveTypeId, setLeaveTypeId] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
   const [isHalfDay, setIsHalfDay] = useState(false);
   const [halfDaySession, setHalfDaySession] = useState<'FIRST_HALF' | 'SECOND_HALF' | ''>('');
   const [reason, setReason] = useState('');
@@ -77,6 +80,27 @@ const ApplyLeaveModal = ({
   const mountedRef = useRef(false);
   const submitting = submittingContext === dialogContext;
   const visibleFormError = formError?.context === dialogContext ? formError : null;
+  const {
+    fromDate,
+    toDate,
+    confirmDiscard,
+    resetEntry,
+    handleFromDateChange,
+    handleToDateChange,
+    handleClose,
+    handleDiscard,
+    clearDiscard,
+  } = useLeaveEntry({
+    hasOtherInput: [leaveTypeId, isHalfDay, halfDaySession, reason, supportingDocumentFile].some(
+      Boolean
+    ),
+    canDismiss: () => activeSubmissionRef.current !== dialogContext,
+    onDiscard: () => {
+      resetForm();
+      onClose();
+    },
+    onDateChange: (field) => clearFieldError(field),
+  });
 
   useEffect(() => {
     mountedRef.current = true;
@@ -125,8 +149,7 @@ const ApplyLeaveModal = ({
 
   const resetForm = () => {
     setLeaveTypeId('');
-    setFromDate('');
-    setToDate('');
+    resetEntry();
     setIsHalfDay(false);
     setHalfDaySession('');
     setReason('');
@@ -134,12 +157,6 @@ const ApplyLeaveModal = ({
     formRef.current?.reset();
     setFieldErrors({});
     setFormError(null);
-  };
-
-  const handleClose = () => {
-    if (activeSubmissionRef.current === dialogContext) return;
-    resetForm();
-    onClose();
   };
 
   const clearFieldError = (field: ApplyLeaveField) => {
@@ -166,14 +183,6 @@ const ApplyLeaveModal = ({
     setLeaveTypeId(nextLeaveTypeId);
     if (nextType?.requiresDocument !== true) setSupportingDocumentFile(null);
   };
-  const handleFromDateChange = (value: string) => {
-    clearFieldError('fromDate');
-    setFromDate(value);
-  };
-  const handleToDateChange = (value: string) => {
-    clearFieldError('toDate');
-    setToDate(value);
-  };
   const handleHalfDayChange = (checked: boolean) => {
     clearFieldError('halfDaySession');
     setIsHalfDay(checked);
@@ -196,6 +205,7 @@ const ApplyLeaveModal = ({
     e.preventDefault();
     const submissionContext = dialogContextRef.current;
     if (!submissionContext.isOpen || activeSubmissionRef.current === submissionContext) return;
+    clearDiscard();
     setFieldErrors({});
     setFormError(null);
     if (!leaveTypeId) {
@@ -357,21 +367,11 @@ const ApplyLeaveModal = ({
       size="lg"
       isDismissible={!submitting}
       footer={
-        <>
-          <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="apply-leave-form"
-            variant="primary"
-            disabled={!leaveTypes.length}
-            busy={submitting}
-            busyLabel="Submitting leave application…"
-          >
-            Submit Application
-          </Button>
-        </>
+        <ApplyLeaveFooter
+          onClose={handleClose}
+          submitting={submitting}
+          canSubmit={leaveTypes.length > 0}
+        />
       }
     >
       <form
@@ -382,16 +382,17 @@ const ApplyLeaveModal = ({
         autoComplete="off"
         noValidate
       >
-        {visibleFormError ? (
-          <PageNotice
-            key={`${visibleFormError.title}:${visibleFormError.message}`}
-            variant="error"
-            title={visibleFormError.title}
-            focusOnMount
-          >
-            {visibleFormError.message}
-          </PageNotice>
+        {confirmDiscard ? (
+          <ApplyLeaveDiscardNotice
+            onKeepEditing={() => {
+              clearDiscard();
+              focusField('reason');
+            }}
+            onDiscard={handleDiscard}
+            submitting={submitting}
+          />
         ) : null}
+        <ApplyLeaveFormFailure error={visibleFormError} />
 
         <ApplyLeaveFormFields
           leaveTypeId={leaveTypeId}

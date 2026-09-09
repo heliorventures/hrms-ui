@@ -63,7 +63,7 @@ const TimesheetControlsCard = ({
   <>
     <div className="flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timesheet</h1>
+        <h1 className="sr-only">Timesheet</h1>
         <PageInformation title="Timesheet">
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Record work here. Attendance punches stay on the{' '}

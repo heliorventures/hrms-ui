@@ -1,4 +1,3 @@
-import { Bell } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -8,6 +7,7 @@ import Button from '../common/Button';
 import PageNotice from '../common/PageNotice';
 
 import AnnouncementDrawerContent from './AnnouncementDrawerContent';
+import NotificationPreviewItem from './NotificationPreviewItem';
 import type { BoardNotification } from './useNotificationDropdownData';
 
 interface NotificationDropdownPanelProps {
@@ -32,16 +32,6 @@ interface NotificationPreviewProps {
   previewLoading: boolean;
   previewMayBeCapped: boolean;
   refreshPreview: () => Promise<void>;
-}
-
-const relativeTime = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
-
-function formatRelativeDate(dateString: string): string {
-  const elapsedMinutes = Math.round((new Date(dateString).getTime() - Date.now()) / 60_000);
-  if (Math.abs(elapsedMinutes) < 60) return relativeTime.format(elapsedMinutes, 'minute');
-  const elapsedHours = Math.round(elapsedMinutes / 60);
-  if (Math.abs(elapsedHours) < 24) return relativeTime.format(elapsedHours, 'hour');
-  return relativeTime.format(Math.round(elapsedHours / 24), 'day');
 }
 
 const InitialNotificationPreview = ({
@@ -82,56 +72,6 @@ const InitialNotificationPreview = ({
         }
       />
     </div>
-  );
-};
-
-const NotificationPreviewItem = ({
-  notification,
-  onOpen,
-}: {
-  notification: BoardNotification;
-  onOpen: (notification: BoardNotification) => void;
-}) => {
-  const iconClassName = notification.isRead
-    ? 'bg-surface-selected text-content-muted'
-    : 'bg-accent/10 text-accent';
-
-  return (
-    <li>
-      <button
-        type="button"
-        data-popover-item
-        onClick={() => onOpen(notification)}
-        className="min-h-11 w-full px-4 py-3 text-left transition-colors hover:bg-surface-selected focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus motion-reduce:transition-none"
-      >
-        <div className="flex gap-3">
-          <span
-            aria-hidden="true"
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconClassName}`}
-          >
-            <Bell className="h-5 w-5" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span data-notification-title className="block break-words text-sm font-medium">
-              {notification.title ?? 'Notification'}
-            </span>
-            <span
-              data-notification-message
-              className="mt-1 block break-words text-xs text-content-muted"
-            >
-              {notification.message ?? 'No additional details.'}
-            </span>
-            <span className="mt-1 block text-xs text-content-muted">
-              {formatRelativeDate(String(notification.createdAt))}
-            </span>
-            {!notification.isRead ? <span className="sr-only">Unread notification</span> : null}
-          </span>
-          {!notification.isRead ? (
-            <span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-accent" />
-          ) : null}
-        </div>
-      </button>
-    </li>
   );
 };
 

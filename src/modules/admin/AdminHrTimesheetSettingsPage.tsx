@@ -183,7 +183,7 @@ const AdminHrTimesheetSettingsPage = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="sr-only">
           Timesheet & attendance rules
         </h1>
       </div>

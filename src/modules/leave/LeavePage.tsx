@@ -9,14 +9,16 @@ import {
   type LeaveBoardQuery,
   type LeaveBoardQueryVariables,
 } from '../../api/graphql/graphql';
-import { createPermissionService } from '../../auth/permissionService';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import FlashToastBar from '../../components/common/FlashToastBar';
+import PageActions from '../../components/common/PageActions';
 import PageInformation from '../../components/common/PageInformation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFlashToast } from '../../hooks/useFlashToast';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { boundedInteger, useRememberedRouteView } from '../../hooks/useRememberedRouteView';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import AllHolidaysModal from './components/AllHolidaysModal';
@@ -44,7 +46,7 @@ type LeavePageFailure = {
 const BOARD_LIMIT = 20,
   HOLIDAY_LIMIT = 450;
 const LeavePage = () => {
-  const { clientSession } = useAuth();
+  const { clientSession, user, tenantId } = useAuth();
   const permissions = createPermissionService(clientSession);
   const canReadLeave = permissions.canCapability('route.leave');
   const canSubmitLeave = permissions.canCapability('action.leave.submit');
@@ -65,8 +67,20 @@ const LeavePage = () => {
   const allHolidays = useAllCompanyHolidays(client, HOLIDAY_LIMIT);
 
   const defaultYear = useMemo(() => new Date().getFullYear(), []);
-  const [balanceYear, setBalanceYear] = useState(defaultYear);
-  const [requestPage, setRequestPage] = useState(0);
+  const [view, updateView] = useRememberedRouteView(
+    client,
+    `${tenantId ?? ''}:${user?.id ?? ''}:${authorizationStateKey(clientSession)}`,
+    'leave',
+    { year: String(defaultYear), page: '0' },
+    (params) => ({
+      year: String(
+        boundedInteger(params.get('year'), defaultYear, defaultYear - 2, defaultYear + 1)
+      ),
+      page: String(boundedInteger(params.get('page'), 0, 0, 100000)),
+    })
+  );
+  const balanceYear = Number(view.year);
+  const requestPage = Number(view.page);
   const requestYearRange = useMemo(
     () => ({
       fromDate: `${balanceYear}-01-01`,
@@ -262,9 +276,9 @@ const LeavePage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <PageActions>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave Management</h1>
+          <h1 className="sr-only">Leave Management</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -286,7 +300,7 @@ const LeavePage = () => {
             </Button>
           ) : null}
         </div>
-      </div>
+      </PageActions>
 
       {canSubmitLeave ? (
         <ApplyLeaveModal
@@ -337,8 +351,7 @@ const LeavePage = () => {
         loading={loading}
         yearChoices={yearChoices}
         onYearChange={(year) => {
-          setRequestPage(0);
-          setBalanceYear(year);
+          updateView({ page: '0', year: String(year) });
         }}
       />
       <CompOffPanel canSubmit={canSubmitLeave} />
@@ -380,7 +393,7 @@ const LeavePage = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setRequestPage((page) => Math.max(0, page - 1))}
+                onClick={() => updateView({ page: String(Math.max(0, requestPage - 1)) })}
                 disabled={requestPage === 0}
                 aria-label="Previous leave requests"
               >
@@ -389,7 +402,7 @@ const LeavePage = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setRequestPage((page) => page + 1)}
+                onClick={() => updateView({ page: String(requestPage + 1) })}
                 disabled={lastVisibleRequest >= leaveRequestCount}
                 aria-label="Next leave requests"
               >

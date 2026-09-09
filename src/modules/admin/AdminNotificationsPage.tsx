@@ -15,7 +15,7 @@ const AdminNotificationsPage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notification Admin</h1>
+      <h1 className="sr-only">Notification Admin</h1>
 
       {model.error ? (
         <Card>

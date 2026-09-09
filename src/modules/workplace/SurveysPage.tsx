@@ -161,7 +161,7 @@ const SurveysPage = ({
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-content-primary">
+      <h1 className="sr-only">
         {respondentOnly ? 'Survey / Feedback' : 'Surveys'}
       </h1>
       <PageInformation title="Survey privacy">

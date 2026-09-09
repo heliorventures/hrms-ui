@@ -167,7 +167,7 @@ const OrgChartPage = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Org Chart</h1>
+        <h1 className="sr-only">Org Chart</h1>
       </div>
 
       <Card>

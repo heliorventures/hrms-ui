@@ -1,18 +1,22 @@
+import { Menu } from 'lucide-react';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 
 import { authorizationStateKey } from '../../auth/permissionService';
 import { useAuth } from '../../contexts/AuthContext';
+import EmployeeDisplayNameProvider from '../../contexts/EmployeeDisplayNameProvider';
 import { useTenant } from '../../contexts/TenantContext';
 import { useIdleLogout } from '../../hooks/useIdleLogout';
 import {
   readDesktopNavigationCollapsed,
   writeDesktopNavigationCollapsed,
 } from '../../navigation/navigationPreference';
+import { CompactPageContext } from '../common/compactPageContext';
+import IconButton from '../common/IconButton';
 import PageInformationProvider from '../common/PageInformationProvider';
 
 import CommandPalette from './CommandPalette';
-import Header from './Header';
+import PageTools from './PageTools';
 import {
   hasMainFocusHandoff,
   type RouteContentCommit,
@@ -149,24 +153,34 @@ const AppLayout = () => {
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <Header
-          mobileNavigationOpen={mobileNavigationOpen}
-          mobileNavigationTriggerRef={mobileNavigationTriggerRef}
-          onOpenMobileNavigation={() => setMobileNavigationOpen(true)}
+        <IconButton
+          ref={mobileNavigationTriggerRef}
+          label="Open navigation"
+          variant="outline"
+          icon={<Menu className="h-5 w-5" />}
+          onClick={() => setMobileNavigationOpen(true)}
+          aria-controls="app-navigation"
+          aria-expanded={mobileNavigationOpen}
+          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] z-20 rounded-xl border border-line bg-surface shadow-card-md lg:hidden"
         />
 
-        <main
-          id="main-content"
-          ref={mainRef}
-          tabIndex={-1}
-          aria-label="Main content"
-          data-scroll-container="main-content"
-          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-[env(safe-area-inset-bottom)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
-        >
-          <div className="mx-auto max-w-screen-2xl py-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:pl-[max(1.5rem,env(safe-area-inset-left))] md:pr-[max(1.5rem,env(safe-area-inset-right))]">
-            <Outlet context={routeOutletContext} />
-          </div>
-        </main>
+        <div className="relative flex min-h-0 flex-1">
+          <main
+            id="main-content"
+            ref={mainRef}
+            tabIndex={-1}
+            aria-label="Main content"
+            data-scroll-container="main-content"
+            className="scrollbar-subtle min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-[env(safe-area-inset-bottom)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+          >
+            <div className="mx-auto max-w-screen-2xl py-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:pl-[max(1.5rem,env(safe-area-inset-left))] md:pr-[max(1.5rem,env(safe-area-inset-right))]">
+              <CompactPageContext.Provider value>
+                <Outlet context={routeOutletContext} />
+              </CompactPageContext.Provider>
+            </div>
+          </main>
+          <PageTools />
+        </div>
       </div>
       <CommandPalette />
     </div>
@@ -181,7 +195,9 @@ const AppLayoutWithInformation = () => {
     <PageInformationProvider
       scopeKey={`${location.key}:${currentTenant.id}:${authorizationStateKey(clientSession)}`}
     >
-      <AppLayout />
+      <EmployeeDisplayNameProvider>
+        <AppLayout />
+      </EmployeeDisplayNameProvider>
     </PageInformationProvider>
   );
 };

@@ -1,6 +1,8 @@
 import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
+import { usePageActionPresentation } from './usePageActionPresentation';
+
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'quiet' | 'danger';
@@ -50,6 +52,12 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
+    const presentation = usePageActionPresentation({
+      children,
+      startIcon,
+      title: props.title,
+      accessibleName: props['aria-label'],
+    });
     const baseClasses =
       'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50';
     const variantClasses = {
@@ -72,16 +80,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${
+        className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${presentation.className} ${
           fullWidth ? 'w-full' : ''
         } ${className}`}
         disabled={disabled || busy}
         type={type}
         aria-busy={busy ? true : ariaBusy}
         {...props}
+        title={presentation.title}
       >
-        <ButtonLeadingContent busy={busy} startIcon={startIcon} />
-        {children}
+        <ButtonLeadingContent busy={busy} startIcon={presentation.startIcon} />
+        {presentation.children}
         {endIcon ? (
           <span aria-hidden="true" className="inline-flex shrink-0">
             {endIcon}

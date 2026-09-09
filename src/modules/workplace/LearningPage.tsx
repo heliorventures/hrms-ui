@@ -80,7 +80,7 @@ const LearningPage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Learning</h1>
+      <h1 className="sr-only">Learning</h1>
       {notice && (
         <p role="status" className="text-sm text-content-secondary">
           {notice}

@@ -2,13 +2,15 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import { MyAttendanceBoardDocument } from '../../api/attendance/graphql';
 import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
-import { createPermissionService } from '../../auth/permissionService';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageActions from '../../components/common/PageActions';
 import PageInformation from '../../components/common/PageInformation';
 import PageNotice from '../../components/common/PageNotice';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { boundedInteger, useRememberedRouteView } from '../../hooks/useRememberedRouteView';
 import { segmentWorkedMinutes } from '../../utils/attendanceDuration';
 import { attendancePolicyMessage } from '../../utils/attendancePolicyMessage';
 import {
@@ -77,14 +79,31 @@ function calendarDaysBetweenWorkAndToday(workIso: string): number {
 
 const AttendancePage = () => {
   const client = useGraphClient('client');
-  const { clientSession } = useAuth();
+  const { clientSession, user, tenantId } = useAuth();
   const permissions = createPermissionService(clientSession);
   const canPunchAttendance = permissions.canCapability('action.attendance.punch');
   const canRegularize = permissions.canCapability('action.attendance.regularize');
 
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [monthIndex, setMonthIndex] = useState(now.getMonth());
+  const [view, updateView] = useRememberedRouteView(
+    client,
+    `${tenantId ?? ''}:${user?.id ?? ''}:${authorizationStateKey(clientSession)}`,
+    'attendance',
+    { year: String(now.getFullYear()), month: String(now.getMonth() + 1) },
+    (params) => ({
+      year: String(
+        boundedInteger(
+          params.get('year'),
+          now.getFullYear(),
+          now.getFullYear() - 3,
+          now.getFullYear() + 3
+        )
+      ),
+      month: String(boundedInteger(params.get('month'), now.getMonth() + 1, 1, 12)),
+    })
+  );
+  const year = Number(view.year);
+  const monthIndex = Number(view.month) - 1;
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [cursorStackOwner, setCursorStackOwner] = useState<CursorOwnerIdentity | null>(null);
 
@@ -302,8 +321,8 @@ const AttendancePage = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance</h1>
+      <PageActions>
+        <h1 className="sr-only">Attendance</h1>
         {canPunchAttendance ? (
           <Button
             variant="primary"
@@ -315,17 +334,17 @@ const AttendancePage = () => {
             {policyReady ? 'Add Missed Punches' : 'Loading adjustment policy…'}
           </Button>
         ) : null}
-      </div>
+      </PageActions>
 
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Attendance month">
         <Button
           variant="outline"
           type="button"
           onClick={() => {
-            if (monthIndex === 0) {
-              setYear((y) => y - 1);
-              setMonthIndex(11);
-            } else setMonthIndex((m) => m - 1);
+            updateView({
+              year: String(monthIndex === 0 ? year - 1 : year),
+              month: String(monthIndex === 0 ? 12 : monthIndex),
+            });
             resetCursorStack();
           }}
         >
@@ -336,7 +355,7 @@ const AttendancePage = () => {
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           value={monthIndex}
           onChange={(e) => {
-            setMonthIndex(parseInt(e.target.value, 10));
+            updateView({ month: String(Number(e.target.value) + 1) });
             resetCursorStack();
           }}
         >
@@ -351,7 +370,7 @@ const AttendancePage = () => {
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           value={year}
           onChange={(e) => {
-            setYear(parseInt(e.target.value, 10));
+            updateView({ year: e.target.value });
             resetCursorStack();
           }}
         >
@@ -365,10 +384,10 @@ const AttendancePage = () => {
           variant="outline"
           type="button"
           onClick={() => {
-            if (monthIndex === 11) {
-              setYear((y) => y + 1);
-              setMonthIndex(0);
-            } else setMonthIndex((m) => m + 1);
+            updateView({
+              year: String(monthIndex === 11 ? year + 1 : year),
+              month: String(monthIndex === 11 ? 1 : monthIndex + 2),
+            });
             resetCursorStack();
           }}
         >

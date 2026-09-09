@@ -11,7 +11,7 @@ const HrHomePage = () => {
   );
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quick Links</h1>
+      <h1 className="sr-only">Quick Links</h1>
       <div className="grid gap-4 md:grid-cols-2">
         {groups.map(({ section, destinations }) => (
           <Card key={section.key} title={section.label}>

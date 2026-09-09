@@ -75,7 +75,7 @@ const ModuleHealth = () => {
     <div className="space-y-4 p-6">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Module Health</h1>
+          <h1 className="sr-only">Module Health</h1>
           <PageInformation title="Module health">
             <p className="text-sm text-gray-500">
               Live introspection of every Helior HRMS subgraph through the stitching gateway.

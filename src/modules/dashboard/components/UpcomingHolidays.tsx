@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 
 import { ClientOpsUpcomingHolidaysDocument } from '../../../api/graphql/graphql';
 import AsyncState from '../../../components/common/AsyncState';
-import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
+import HolidayDateChip from './HolidayDateChip';
 
 interface HolidayRow {
   id: string;
@@ -65,51 +65,9 @@ const UpcomingHolidaysList = ({ rows }: UpcomingHolidaysListProps) => {
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="flex flex-wrap gap-2">
       {rows.slice(0, 3).map((holiday) => (
-        <li
-          key={holiday.id}
-          className="flex items-center gap-3 rounded-lg bg-surface-selected/60 p-3 text-sm"
-        >
-          <time
-            dateTime={holiday.holidayDate.slice(0, 10)}
-            className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-accent/10 text-accent"
-          >
-            <span className="text-[10px] font-semibold uppercase">
-              {new Date(holiday.holidayDate).toLocaleDateString(undefined, {
-                month: 'short',
-                timeZone: 'UTC',
-              })}
-            </span>
-            <span className="text-xl font-semibold tabular-nums">
-              {new Date(holiday.holidayDate).toLocaleDateString(undefined, {
-                day: 'numeric',
-                timeZone: 'UTC',
-              })}
-            </span>
-          </time>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <span className="min-w-0 flex-1 break-words font-medium text-gray-900 dark:text-white">
-                {holiday.name}
-              </span>
-              {holiday.holidayType ? (
-                <Badge variant="neutral" size="sm">
-                  {holiday.holidayType}
-                </Badge>
-              ) : null}
-            </div>
-            <p className="break-words text-xs text-gray-500 dark:text-gray-400">
-              {new Date(holiday.holidayDate).toLocaleDateString('en-IN', {
-                timeZone: 'UTC',
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}{' '}
-              · {holiday.calendarName}
-            </p>
-          </div>
-        </li>
+        <HolidayDateChip key={holiday.id} holiday={holiday} />
       ))}
     </ul>
   );

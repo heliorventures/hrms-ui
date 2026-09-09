@@ -130,7 +130,7 @@ const RecruitmentPage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Recruitment</h1>
+      <h1 className="sr-only">Recruitment</h1>
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

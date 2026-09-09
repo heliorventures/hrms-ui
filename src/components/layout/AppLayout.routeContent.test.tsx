@@ -6,7 +6,12 @@ import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import RouteContent from '../../routes/RouteContent';
+
 import AppLayout from './AppLayout';
+
+vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => ({ request: vi.fn() }) }));
+
+vi.mock('./PageTools', () => ({ default: () => <aside aria-label="Page tools" /> }));
 
 type PageModule = { default: ComponentType };
 
@@ -62,16 +67,10 @@ describe('AppLayout route-state ownership', () => {
             <Route
               path="dashboard"
               element={
-                <RouteContent
-                  title="Dashboard"
-                  load={async () => ({ default: DashboardPage })}
-                />
+                <RouteContent title="Dashboard" load={async () => ({ default: DashboardPage })} />
               }
             />
-            <Route
-              path="reports"
-              element={<RouteContent title="Reports" load={reportsLoad} />}
-            />
+            <Route path="reports" element={<RouteContent title="Reports" load={reportsLoad} />} />
           </Route>
         </Routes>
       </MemoryRouter>,

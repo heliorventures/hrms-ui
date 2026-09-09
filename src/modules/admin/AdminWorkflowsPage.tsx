@@ -18,7 +18,7 @@ const WorkflowWorkspace = ({ domain }: { domain: WorkflowDomain }) => {
   const creation = useWorkflowCreation(domain, workspace, editor.setSWorkflowId);
   return (
     <div className="space-y-4">
-      <PageHeader title={`${WORKFLOW_DOMAINS[domain].label} Approval Rules`} />
+      <PageHeader title={`${WORKFLOW_DOMAINS[domain].label} Approval Rules`} retainTitle />
       <div className="grid gap-6 lg:grid-cols-2">
         <CreateWorkflowForm creation={creation} loading={workspace.loading} domain={domain} />
         <AddWorkflowStepForm editor={editor} workspace={workspace} />

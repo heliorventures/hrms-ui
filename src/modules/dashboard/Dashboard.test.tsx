@@ -67,6 +67,30 @@ beforeEach(() => {
 });
 
 describe('Dashboard', () => {
+  it('links Request leave directly to the authorized shared form entry point', () => {
+    authState.clientSession.permissions = new Set(['leave:read', 'leave:submit']);
+    authState.clientSession.permissionScopes = { 'leave:read': 'SELF', 'leave:submit': 'SELF' };
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('link', { name: 'Request leave' }).getAttribute('href')).toBe(
+      '/leave?apply=1'
+    );
+  });
+
+  it('hides Request leave without submission permission', () => {
+    authState.clientSession.permissions = new Set(['leave:read']);
+    authState.clientSession.permissionScopes = { 'leave:read': 'SELF' };
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    );
+    expect(screen.queryByRole('link', { name: 'Request leave' })).toBeNull();
+  });
+
   it('omits every protected card when its read permission is missing', () => {
     render(
       <MemoryRouter>

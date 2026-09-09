@@ -155,7 +155,7 @@ const AssetsPage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Asset Management</h1>
+      <h1 className="sr-only">Asset Management</h1>
 
       <AssetFeedback model={model} />
 

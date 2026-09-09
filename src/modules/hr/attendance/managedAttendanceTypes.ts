@@ -1,10 +1,17 @@
-import type { ManagedAttendancePageQuery } from '../../../api/graphql/graphql';
+import type {
+  ManagedAttendancePageQuery,
+  ManagedAttendancePageQueryVariables,
+} from '../../../api/graphql/graphql';
+import { monthBoundsIso } from '../../../utils/calendarRange';
 
 export const MANAGED_ATTENDANCE_PAGE_SIZE = 50;
 export const MAX_MANAGED_ATTENDANCE_RANGE_DAYS = 92;
 
-export type ManagedAttendanceRow =
-  ManagedAttendancePageQuery['managedAttendance']['edges'][number]['node'];
+// NaiveDate is serialized as an ISO date string by the attendance service.
+export type ManagedAttendanceRow = Omit<
+  ManagedAttendancePageQuery['managedAttendance']['edges'][number]['node'],
+  'workDate'
+> & { workDate: string };
 export type ManagedAttendancePageInfo = ManagedAttendancePageQuery['managedAttendance']['pageInfo'];
 
 export interface ManagedAttendanceFiltersValue {
@@ -21,9 +28,13 @@ export interface ManagedAttendanceEmployee {
 }
 
 export type ManagedAttendanceActions = {
-  onAdd: (employee: ManagedAttendanceEmployee) => void;
+  onAdd: (context: ManagedAttendanceAddContext) => void;
   onAdjust: (row: ManagedAttendanceRow) => void;
 };
+
+export interface ManagedAttendanceAddContext extends ManagedAttendanceEmployee {
+  workDate: string;
+}
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -34,7 +45,9 @@ function asUtcDate(isoDate: string): Date | null {
   const monthIndex = Number(match[2]) - 1;
   const day = Number(match[3]);
   const value = new Date(Date.UTC(year, monthIndex, day));
-  return value.getUTCFullYear() === year && value.getUTCMonth() === monthIndex && value.getUTCDate() === day
+  return value.getUTCFullYear() === year &&
+    value.getUTCMonth() === monthIndex &&
+    value.getUTCDate() === day
     ? value
     : null;
 }
@@ -61,4 +74,31 @@ export function managedAttendanceEmployee(row: ManagedAttendanceRow): ManagedAtt
     employeeName: row.employeeName,
     employeeCode: row.employeeCode,
   };
+}
+
+export function currentMonthFilters(): ManagedAttendanceFiltersValue {
+  const now = new Date();
+  const month = monthBoundsIso(now.getFullYear(), now.getMonth());
+  return { fromDate: month.start, toDate: month.end, employeeSearch: '' };
+}
+
+export function requestVariables(
+  filters: ManagedAttendanceFiltersValue,
+  after: string | undefined
+): ManagedAttendancePageQueryVariables {
+  const variables: ManagedAttendancePageQueryVariables = {
+    fromDate: filters.fromDate,
+    toDate: filters.toDate,
+    first: MANAGED_ATTENDANCE_PAGE_SIZE,
+  };
+  if (filters.employeeSearch) variables.employeeSearch = filters.employeeSearch;
+  if (filters.employeeId) variables.employeeId = filters.employeeId;
+  if (after) variables.after = after;
+  return variables;
+}
+
+export interface ManagedAttendanceRegularizationSelection {
+  employee: ManagedAttendanceEmployee;
+  initialWorkDate?: string;
+  editingRow?: ManagedAttendanceRow;
 }

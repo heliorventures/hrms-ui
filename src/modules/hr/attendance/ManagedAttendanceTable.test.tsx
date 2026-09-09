@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import ManagedAttendanceTable from './ManagedAttendanceTable';
@@ -24,16 +24,67 @@ const row: ManagedAttendanceRow = {
 };
 
 describe('ManagedAttendanceTable', () => {
+  it('keeps historical context, punch evidence, statuses and working actions in the mobile row', () => {
+    const onAdd = vi.fn();
+    const onAdjust = vi.fn();
+    render(
+      <ManagedAttendanceTable
+        rows={[row]}
+        loading={false}
+        errorMessage={null}
+        onAdd={onAdd}
+        onAdjust={onAdjust}
+      />
+    );
+    const mobile = within(
+      screen.getByRole('list', { name: 'Managed attendance records mobile view' })
+    );
+    for (const value of [
+      'Asha Rao',
+      'EMP-0042',
+      '2026-08-24',
+      '09:00:00',
+      '17:30:00',
+      'BIOMETRIC',
+      'PRESENT',
+      'REGULARIZED',
+    ]) {
+      expect(mobile.getByText(value)).toBeTruthy();
+    }
+    fireEvent.click(mobile.getByRole('button', { name: 'Add segment for Asha Rao' }));
+    expect(onAdd).toHaveBeenCalledWith({
+      employeeId: 'employee-42',
+      employeeName: 'Asha Rao',
+      employeeCode: 'EMP-0042',
+      workDate: '2026-08-24',
+    });
+    fireEvent.click(mobile.getByRole('button', { name: 'Adjust Asha Rao on 2026-08-24' }));
+    expect(onAdjust).toHaveBeenCalledWith(row);
+  });
+
   it('renders the employee identity and adjusts the exact selected row', () => {
     const onAdd = vi.fn();
     const onAdjust = vi.fn();
-    render(<ManagedAttendanceTable rows={[row]} loading={false} errorMessage={null} onAdd={onAdd} onAdjust={onAdjust} />);
+    render(
+      <ManagedAttendanceTable
+        rows={[row]}
+        loading={false}
+        errorMessage={null}
+        onAdd={onAdd}
+        onAdjust={onAdjust}
+      />
+    );
 
-    expect(screen.getByText('Asha Rao')).toBeTruthy();
-    expect(screen.getByText('EMP-0042')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Add segment for Asha Rao' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Adjust Asha Rao on 2026-08-24' }));
-    expect(onAdd).toHaveBeenCalledWith({ employeeId: 'employee-42', employeeName: 'Asha Rao', employeeCode: 'EMP-0042' });
+    expect(screen.getAllByText('Asha Rao')[0]).toBeTruthy();
+    expect(screen.getAllByText('EMP-0042')[0]).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add segment for Asha Rao' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Adjust Asha Rao on 2026-08-24' })[0]);
+    expect(onAdd).toHaveBeenCalledWith({
+      employeeId: 'employee-42',
+      employeeName: 'Asha Rao',
+      employeeCode: 'EMP-0042',
+      workDate: '2026-08-24',
+    });
     expect(onAdjust).toHaveBeenCalledWith(row);
   });
 
@@ -53,6 +104,6 @@ describe('ManagedAttendanceTable', () => {
       />
     );
 
-    expect(screen.getByText('Unavailable')).toBeTruthy();
+    expect(screen.getAllByText('Unavailable')[0]).toBeTruthy();
   });
 });
