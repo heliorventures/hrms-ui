@@ -34,16 +34,28 @@ const request = {
 describe('LeaveRequestsTableSection', () => {
   it('keeps authorized decisions and request evidence together in mobile rows', () => {
     const approve = vi.fn();
-    render(<LeaveRequestsTableSection rows={[{ ...request, viewerMayApprove: true }]}
-      leaveTypeNameById={new Map([['leave-type-1', 'Annual Leave']])}
-      employeeLabel={() => 'Asha Rao'} showApprovalColumn approveBusyId={null} cancelBusyId={null}
-      onApprove={approve} onRejectClick={vi.fn()} onCancelOwn={vi.fn()} onOpenTrail={vi.fn()} />);
+    render(
+      <LeaveRequestsTableSection
+        rows={[{ ...request, viewerMayApprove: true }]}
+        leaveTypeNameById={new Map([['leave-type-1', 'Annual Leave']])}
+        employeeLabel={() => 'Asha Rao'}
+        showApprovalColumn
+        approveBusyId={null}
+        cancelBusyId={null}
+        onApprove={approve}
+        onRejectClick={vi.fn()}
+        onCancelOwn={vi.fn()}
+        onOpenTrail={vi.fn()}
+      />
+    );
     const mobile = within(screen.getByRole('list', { name: 'Leave requests mobile view' }));
     expect(mobile.getByText('Asha Rao')).toBeTruthy();
     expect(mobile.getByText('Family appointment')).toBeTruthy();
     expect(mobile.getByText('Awaiting Reporting Manager')).toBeTruthy();
     expect(mobile.getByText(/Applied:/)).toBeTruthy();
-    const headers = within(screen.getByRole('table')).getAllByRole('columnheader').map((header) => header.textContent);
+    const headers = within(screen.getByRole('table'))
+      .getAllByRole('columnheader')
+      .map((header) => header.textContent);
     expect(headers.indexOf('Actions')).toBeLessThan(headers.indexOf('Details'));
     fireEvent.click(mobile.getByRole('button', { name: 'Approve' }));
     expect(approve).toHaveBeenCalledWith('leave-1', 'workflow-step-1');

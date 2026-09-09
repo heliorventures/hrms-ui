@@ -80,7 +80,12 @@ function boardResponse(offset = 0) {
 beforeEach(() => {
   state.api = {
     request: vi.fn((document: unknown, variables?: { offset?: number }) => {
-      if (typeof document === 'string' && document.includes('HrLeaveApplicationHolidays'))
+      if (
+        document &&
+        typeof document === 'object' &&
+        'document' in document &&
+        String(document.document).includes('HrLeaveApplicationHolidays')
+      )
         return Promise.resolve({ upcomingHolidays: [] });
       return state.client.request(document, variables) as Promise<unknown>;
     }),
@@ -249,4 +254,42 @@ it('does not move focus away from a control the user chose during approval', asy
   });
   await waitFor(() => expect(screen.queryByText('first-request')).toBeNull());
   expect(document.activeElement).toBe(filter);
+});
+
+it('publishes the approval queue while the optional holidays request is still pending', async () => {
+  state.api.request.mockImplementation((document: unknown, variables?: { offset?: number }) => {
+    if (
+      document &&
+      typeof document === 'object' &&
+      'document' in document &&
+      String(document.document).includes('HrLeaveApplicationHolidays')
+    ) {
+      return new Promise(() => undefined);
+    }
+    return state.client.request(document, variables) as Promise<unknown>;
+  });
+
+  render(
+    <MemoryRouter>
+      <HrLeavesPage />
+    </MemoryRouter>
+  );
+
+  expect(await screen.findByText('first-request')).toBeTruthy();
+  expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Apply for leave' }).disabled).toBe(
+    false
+  );
+});
+
+it('distinguishes a failed initial queue load from an empty queue', async () => {
+  state.client.request.mockRejectedValueOnce(new Error('Queue unavailable'));
+
+  render(
+    <MemoryRouter>
+      <HrLeavesPage />
+    </MemoryRouter>
+  );
+
+  expect(await screen.findByText('Requests are unavailable. Refresh to try again.')).toBeTruthy();
+  expect(screen.queryByText('No Requests In This Tab.')).toBeNull();
 });

@@ -1,33 +1,15 @@
-import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-
-import { SubmitLeaveRequestDocument } from '../../../api/graphql/graphql';
 import Modal from '../../../components/common/Modal';
-import { useGraphClient } from '../../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-import { uploadTenantFile, validateTenantUploadFile } from '../../../utils/tenantFileUpload';
+import type { useGraphClient } from '../../../hooks/useGraphClient';
 
 import ApplyLeaveDiscardNotice, {
   ApplyLeaveFooter,
   ApplyLeaveFormFailure,
+  ApplyLeaveHolidayStatus,
 } from './ApplyLeaveDialogContent';
-import ApplyLeaveFormFields, {
-  type ApplyLeaveField,
-  type ApplyLeaveFieldErrors,
-} from './ApplyLeaveFormFields';
-import {
-  calendarDaysBeforeLeaveStart,
-  requestedLeaveDays,
-  type ApplyBalanceRow,
-  type ApplyHolidayRow,
-  type ApplyLeavePolicyRow,
-  type ApplyLeaveTypeOption,
-} from './applyLeavePolicy';
+import ApplyLeaveFormFields from './ApplyLeaveFormFields';
 import { ApplyLeaveContextPanel } from './ApplyLeaveSupportingInfo';
-import {
-  useApplyLeaveDialogOwnership,
-  type ApplyLeaveDialogContext,
-} from './useApplyLeaveDialogOwnership';
-import { useLeaveEntry } from './useLeaveEntry';
+import { useApplyLeaveOwner } from './useApplyLeaveDialogOwnership';
+import { useApplyLeaveForm, type ApplyLeaveModalProps } from './useApplyLeaveForm';
 
 export type {
   ApplyBalanceRow,
@@ -35,390 +17,96 @@ export type {
   ApplyLeavePolicyRow,
   ApplyLeaveTypeOption,
 } from './applyLeavePolicy';
-
-interface ApplyLeaveModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  leaveTypes: ApplyLeaveTypeOption[];
-  leavePolicies: ApplyLeavePolicyRow[];
-  upcomingHolidays: ApplyHolidayRow[];
-  leaveBalances: ApplyBalanceRow[];
-  onSubmitted: () => void;
-}
-
-interface ApplyLeaveFormError {
-  title: string;
-  message: string;
-  context: ApplyLeaveDialogContext<ReturnType<typeof useGraphClient>>;
-}
-
-const ApplyLeaveModal = ({
-  isOpen,
-  onClose,
-  leaveTypes,
-  leavePolicies,
-  upcomingHolidays,
-  leaveBalances,
-  onSubmitted,
-}: ApplyLeaveModalProps) => {
-  const client = useGraphClient('client');
-  const { activeSubmissionRef, dialogContext, dialogContextRef } = useApplyLeaveDialogOwnership(
-    client,
-    isOpen
-  );
-  const [leaveTypeId, setLeaveTypeId] = useState('');
-  const [isHalfDay, setIsHalfDay] = useState(false);
-  const [halfDaySession, setHalfDaySession] = useState<'FIRST_HALF' | 'SECOND_HALF' | ''>('');
-  const [reason, setReason] = useState('');
-  const [supportingDocumentFile, setSupportingDocumentFile] = useState<File | null>(null);
-  const [submittingContext, setSubmittingContext] = useState<ApplyLeaveDialogContext<
-    typeof client
-  > | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<ApplyLeaveFieldErrors>({});
-  const [formError, setFormError] = useState<ApplyLeaveFormError | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const mountedRef = useRef(false);
-  const submitting = submittingContext === dialogContext;
-  const visibleFormError = formError?.context === dialogContext ? formError : null;
+const ApplyLeaveModalForm = ({
+  client,
+  ...props
+}: ApplyLeaveModalProps & { client: ReturnType<typeof useGraphClient> }) => {
   const {
-    fromDate,
-    toDate,
-    confirmDiscard,
-    resetEntry,
-    handleFromDateChange,
-    handleToDateChange,
-    handleClose,
-    handleDiscard,
-    clearDiscard,
-  } = useLeaveEntry({
-    hasOtherInput: [leaveTypeId, isHalfDay, halfDaySession, reason, supportingDocumentFile].some(
-      Boolean
-    ),
-    canDismiss: () => activeSubmissionRef.current !== dialogContext,
-    onDiscard: () => {
-      resetForm();
-      onClose();
-    },
-    onDateChange: (field) => clearFieldError(field),
-  });
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  const selectedType = useMemo(
-    () => leaveTypes.find((t) => t.id === leaveTypeId),
-    [leaveTypes, leaveTypeId]
-  );
-
-  const policyForType = useMemo(
-    () => leavePolicies.find((p) => p.leaveTypeId === leaveTypeId),
-    [leavePolicies, leaveTypeId]
-  );
-
-  const balanceForType = useMemo(
-    () => leaveBalances.find((b) => b.leaveTypeId === leaveTypeId),
-    [leaveBalances, leaveTypeId]
-  );
-
-  const halfDayAllowed = selectedType?.halfDayAllowed !== false;
-  const requiresDocument = selectedType?.requiresDocument === true;
-  const consumesLeaveBalance = selectedType?.isPaid !== false && selectedType?.code !== 'COMP_OFF';
-  const isMultiDay = Boolean(fromDate && toDate && fromDate !== toDate);
-  const halfDayEligible = halfDayAllowed && !isMultiDay;
-  const leaveTypeOptions = useMemo(
-    () => [
-      { value: '', label: 'Select...' },
-      ...leaveTypes.map((leaveType) => ({
-        value: leaveType.id,
-        label: `${leaveType.name} (${leaveType.code})`,
-      })),
-    ],
-    [leaveTypes]
-  );
-
-  useEffect(() => {
-    if (!halfDayAllowed || isMultiDay) {
-      setIsHalfDay(false);
-      setHalfDaySession('');
-    }
-  }, [halfDayAllowed, isMultiDay, leaveTypeId]);
-
-  const resetForm = () => {
-    setLeaveTypeId('');
-    resetEntry();
-    setIsHalfDay(false);
-    setHalfDaySession('');
-    setReason('');
-    setSupportingDocumentFile(null);
-    formRef.current?.reset();
-    setFieldErrors({});
-    setFormError(null);
-  };
-
-  const clearFieldError = (field: ApplyLeaveField) => {
-    setFieldErrors((current) => ({ ...current, [field]: undefined }));
-    setFormError(null);
-  };
-
-  const focusField = (field: ApplyLeaveField) => {
-    window.requestAnimationFrame(() => {
-      const control = formRef.current?.elements.namedItem(field);
-      if (control instanceof HTMLElement) control.focus();
-    });
-  };
-
-  const showFieldError = (field: ApplyLeaveField, message: string) => {
-    setFieldErrors({ [field]: message });
-    setFormError(null);
-    focusField(field);
-  };
-
-  const handleLeaveTypeChange = (nextLeaveTypeId: string) => {
-    const nextType = leaveTypes.find((type) => type.id === nextLeaveTypeId);
-    clearFieldError('leaveTypeId');
-    setLeaveTypeId(nextLeaveTypeId);
-    if (nextType?.requiresDocument !== true) setSupportingDocumentFile(null);
-  };
-  const handleHalfDayChange = (checked: boolean) => {
-    clearFieldError('halfDaySession');
-    setIsHalfDay(checked);
-    if (!checked) setHalfDaySession('');
-  };
-  const handleHalfDaySessionChange = (value: 'FIRST_HALF' | 'SECOND_HALF' | '') => {
-    clearFieldError('halfDaySession');
-    setHalfDaySession(value);
-  };
-  const handleReasonChange = (value: string) => {
-    clearFieldError('reason');
-    setReason(value);
-  };
-  const handleSupportingDocumentChange = (value: File | null) => {
-    clearFieldError('supportingDocumentFile');
-    setSupportingDocumentFile(value);
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    const submissionContext = dialogContextRef.current;
-    if (!submissionContext.isOpen || activeSubmissionRef.current === submissionContext) return;
-    clearDiscard();
-    setFieldErrors({});
-    setFormError(null);
-    if (!leaveTypeId) {
-      showFieldError('leaveTypeId', 'Choose a leave type.');
-      return;
-    }
-    if (!fromDate) {
-      showFieldError('fromDate', 'Choose the first day of leave.');
-      return;
-    }
-    if (!toDate) {
-      showFieldError('toDate', 'Choose the last day of leave.');
-      return;
-    }
-    if (toDate < fromDate) {
-      showFieldError('toDate', 'To date must be on or after from date.');
-      return;
-    }
-    const reasonTrim = reason.trim();
-    if (!reasonTrim) {
-      showFieldError('reason', 'Enter a reason for your leave.');
-      return;
-    }
-    if (requiresDocument && !supportingDocumentFile) {
-      showFieldError('supportingDocumentFile', 'Choose the required supporting document.');
-      return;
-    }
-    if (supportingDocumentFile) {
-      const fileError = validateTenantUploadFile(supportingDocumentFile, 'Supporting document');
-      if (fileError) {
-        showFieldError('supportingDocumentFile', fileError);
-        return;
-      }
-    }
-    if (isHalfDay && !halfDaySession) {
-      showFieldError('halfDaySession', 'Choose first half or second half.');
-      return;
-    }
-
-    const leadDays = calendarDaysBeforeLeaveStart(fromDate);
-    if (
-      !Number.isNaN(leadDays) &&
-      policyForType?.minNoticeDays != null &&
-      policyForType.minNoticeDays > 0 &&
-      leadDays < policyForType.minNoticeDays
-    ) {
-      showFieldError(
-        'fromDate',
-        `Policy requires at least ${policyForType.minNoticeDays} calendar day(s) between today and the first leave day.`
-      );
-      return;
-    }
-
-    const sandwichOn = selectedType?.sandwichRule === true;
-    const reqDays = requestedLeaveDays(
-      fromDate,
-      toDate,
-      halfDayEligible && isHalfDay,
-      sandwichOn,
-      upcomingHolidays
-    );
-    if (!sandwichOn && reqDays <= 0 && !(halfDayEligible && isHalfDay)) {
-      showFieldError(
-        'fromDate',
-        'No chargeable working days in this range (weekends and holidays only). Adjust dates or choose another leave type.'
-      );
-      return;
-    }
-    if (consumesLeaveBalance && !balanceForType) {
-      showFieldError(
-        'leaveTypeId',
-        'This leave type is not provisioned for your employee record. Ask HR to provision balances first.'
-      );
-      return;
-    }
-    const availableDays = Number(balanceForType?.balanceDays ?? 0);
-    if (consumesLeaveBalance && Number.isFinite(availableDays) && availableDays < reqDays) {
-      showFieldError(
-        'leaveTypeId',
-        `Insufficient leave balance. Available: ${availableDays} day(s), requested: ${reqDays} day(s).`
-      );
-      return;
-    }
-    if (
-      policyForType?.maxConsecutiveDays != null &&
-      policyForType.maxConsecutiveDays > 0 &&
-      reqDays > policyForType.maxConsecutiveDays
-    ) {
-      showFieldError(
-        'toDate',
-        `Policy allows at most ${policyForType.maxConsecutiveDays} consecutive day(s) for this leave type (this request is ${reqDays} day(s)).`
-      );
-      return;
-    }
-
-    activeSubmissionRef.current = submissionContext;
-    setSubmittingContext(submissionContext);
-    try {
-      const supportingDocumentFileStorageId = supportingDocumentFile
-        ? await uploadTenantFile(submissionContext.client, supportingDocumentFile)
-        : null;
-      await submissionContext.client.request(SubmitLeaveRequestDocument, {
-        input: {
-          leaveTypeId,
-          fromDate,
-          toDate,
-          isHalfDay: halfDayEligible && isHalfDay,
-          halfDaySession: halfDayEligible && isHalfDay && halfDaySession ? halfDaySession : null,
-          reason: reasonTrim,
-          supportingDocumentReference: null,
-          supportingDocumentFileStorageId,
-        },
-      });
-      if (
-        mountedRef.current &&
-        dialogContextRef.current === submissionContext &&
-        activeSubmissionRef.current === submissionContext
-      ) {
-        onSubmitted();
-        resetForm();
-        onClose();
-      }
-    } catch (err) {
-      if (
-        mountedRef.current &&
-        dialogContextRef.current === submissionContext &&
-        activeSubmissionRef.current === submissionContext
-      ) {
-        setFormError({
-          context: submissionContext,
-          title: 'Leave application was not submitted',
-          message: graphQlUserMessage(err),
-        });
-      }
-    } finally {
-      if (activeSubmissionRef.current === submissionContext) {
-        activeSubmissionRef.current = null;
-        if (mountedRef.current && dialogContextRef.current === submissionContext) {
-          setSubmittingContext(null);
-        }
-      }
-    }
-  };
-
+    isOpen,
+    leaveTypes,
+    upcomingHolidaysLoading = false,
+    upcomingHolidaysFailure = null,
+    onRetryUpcomingHolidays,
+  } = props;
+  const form = useApplyLeaveForm(props, client);
   const supportingInformation = (
     <ApplyLeaveContextPanel
-      balance={balanceForType}
-      leaveType={selectedType}
-      policy={policyForType}
-      requiresDocument={requiresDocument}
+      balance={form.balanceForType}
+      leaveType={form.selectedType}
+      policy={form.policyForType}
+      requiresDocument={form.requiresDocument}
     />
   );
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleClose}
+      onClose={form.handleClose}
       title="Apply For Leave"
       size="lg"
-      isDismissible={!submitting}
+      isDismissible={!form.submitting}
       footer={
         <ApplyLeaveFooter
-          onClose={handleClose}
-          submitting={submitting}
-          canSubmit={leaveTypes.length > 0}
+          onClose={form.handleClose}
+          submitting={form.submitting}
+          canSubmit={leaveTypes.length > 0 && !upcomingHolidaysLoading && !upcomingHolidaysFailure}
         />
       }
     >
       <form
         id="apply-leave-form"
-        ref={formRef}
-        onSubmit={handleSubmit}
+        ref={form.formRef}
+        onSubmit={(event) => void form.handleSubmit(event)}
         className="space-y-4"
         autoComplete="off"
         noValidate
       >
-        {confirmDiscard ? (
+        {form.confirmDiscard ? (
           <ApplyLeaveDiscardNotice
             onKeepEditing={() => {
-              clearDiscard();
-              focusField('reason');
+              form.clearDiscard();
+              form.focusField('reason');
             }}
-            onDiscard={handleDiscard}
-            submitting={submitting}
+            onDiscard={form.handleDiscard}
+            submitting={form.submitting}
           />
         ) : null}
-        <ApplyLeaveFormFailure error={visibleFormError} />
+        <ApplyLeaveFormFailure error={form.visibleFormError} />
+        <ApplyLeaveHolidayStatus
+          loading={upcomingHolidaysLoading}
+          failure={upcomingHolidaysFailure}
+          onRetry={onRetryUpcomingHolidays}
+        />
 
         <ApplyLeaveFormFields
-          leaveTypeId={leaveTypeId}
-          leaveTypeOptions={leaveTypeOptions}
-          onLeaveTypeChange={handleLeaveTypeChange}
+          leaveTypeId={form.leaveTypeId}
+          leaveTypeOptions={form.leaveTypeOptions}
+          onLeaveTypeChange={form.handleLeaveTypeChange}
           supportingInformation={supportingInformation}
-          fromDate={fromDate}
-          onFromDateChange={handleFromDateChange}
-          toDate={toDate}
-          onToDateChange={handleToDateChange}
-          halfDayAllowed={halfDayAllowed}
-          halfDayEligible={halfDayEligible}
-          isHalfDay={isHalfDay}
-          onHalfDayChange={handleHalfDayChange}
-          halfDaySession={halfDaySession}
-          onHalfDaySessionChange={handleHalfDaySessionChange}
-          reason={reason}
-          onReasonChange={handleReasonChange}
-          requiresDocument={requiresDocument}
-          supportingDocumentFile={supportingDocumentFile}
-          onSupportingDocumentFileChange={handleSupportingDocumentChange}
-          fieldErrors={fieldErrors}
+          fromDate={form.fromDate}
+          onFromDateChange={form.handleFromDateChange}
+          toDate={form.toDate}
+          onToDateChange={form.handleToDateChange}
+          halfDayAllowed={form.halfDayAllowed}
+          halfDayEligible={form.halfDayEligible}
+          isHalfDay={form.isHalfDay}
+          onHalfDayChange={form.handleHalfDayChange}
+          halfDaySession={form.halfDaySession}
+          onHalfDaySessionChange={form.handleHalfDaySessionChange}
+          reason={form.reason}
+          onReasonChange={form.handleReasonChange}
+          requiresDocument={form.requiresDocument}
+          supportingDocumentFile={form.supportingDocumentFile}
+          onSupportingDocumentFileChange={form.handleSupportingDocumentChange}
+          fieldErrors={form.fieldErrors}
         />
       </form>
     </Modal>
   );
 };
 
+const ApplyLeaveModal = (props: ApplyLeaveModalProps) => {
+  const owner = useApplyLeaveOwner();
+  return <ApplyLeaveModalForm key={owner.revision} client={owner.client} {...props} />;
+};
 export default ApplyLeaveModal;

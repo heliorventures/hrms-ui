@@ -36,12 +36,103 @@ function statusVariant(status: string | null | undefined) {
 }
 
 function completedSameDayDuration(row: ManagedAttendanceRow): string {
-  const checkIn = naiveTimeToMinutes(row.checkInTime);
-  const checkOut = naiveTimeToMinutes(row.checkOutTime);
+  const checkIn = naiveTimeToMinutes(String(row.checkInTime ?? ''));
+  const checkOut = naiveTimeToMinutes(String(row.checkOutTime ?? ''));
   if (!Number.isFinite(checkIn) || !Number.isFinite(checkOut) || checkOut <= checkIn)
     return 'Unavailable';
   return formatMinutesAsHhMm(checkOut - checkIn);
 }
+
+function tableState(loading: boolean, errorMessage: string | null, rowCount: number) {
+  if (loading) return 'loading' as const;
+  if (errorMessage) return 'error' as const;
+  if (rowCount === 0) return 'empty' as const;
+  return 'ready' as const;
+}
+
+function attendanceColumns(
+  onAdd?: (context: ManagedAttendanceAddContext) => void,
+  onAdjust?: (row: ManagedAttendanceRow) => void
+): DataTableColumn<ManagedAttendanceRow>[] {
+  const columns: DataTableColumn<ManagedAttendanceRow>[] = [
+    { id: 'employee', header: 'Employee', cell: EmployeeCell },
+    { id: 'date', header: 'Date', cell: DateCell },
+    {
+      id: 'punch-in',
+      header: 'Punch In',
+      cell: (row) => formatBackendTime(String(row.checkInTime ?? '')),
+    },
+    {
+      id: 'punch-out',
+      header: 'Punch Out',
+      cell: (row) => formatBackendTime(String(row.checkOutTime ?? '')),
+    },
+    { id: 'duration', header: 'Duration', cell: completedSameDayDuration, numeric: true },
+    { id: 'source', header: 'Source', cell: (row) => String(row.source ?? '—') },
+    { id: 'attendance-status', header: 'Attendance Status', cell: StatusCell },
+    {
+      id: 'regularization-status',
+      header: 'Regularization Status',
+      cell: (row) => String(row.regularizationStatus ?? '—'),
+    },
+  ];
+  if (onAdd || onAdjust)
+    columns.push({
+      id: 'actions',
+      header: 'Actions',
+      cell: (row) => <ActionsCell row={row} onAdd={onAdd} onAdjust={onAdjust} />,
+    });
+  return columns;
+}
+
+const EmployeeCell = (row: ManagedAttendanceRow) => (
+  <span className="block min-w-32">
+    <span className="block font-medium">{row.employeeName}</span>
+    <span className="block whitespace-nowrap text-xs text-content-secondary">
+      {row.employeeCode}
+    </span>
+  </span>
+);
+const DateCell = (row: ManagedAttendanceRow) => (
+  <span className="whitespace-nowrap tabular-nums">{row.workDate}</span>
+);
+const StatusCell = (row: ManagedAttendanceRow) => (
+  <Badge variant={statusVariant(String(row.status ?? ''))}>{String(row.status ?? '—')}</Badge>
+);
+const ActionsCell = ({
+  row,
+  onAdd,
+  onAdjust,
+}: {
+  row: ManagedAttendanceRow;
+  onAdd?: (context: ManagedAttendanceAddContext) => void;
+  onAdjust?: (row: ManagedAttendanceRow) => void;
+}) => (
+  <div className="flex flex-wrap gap-1 whitespace-nowrap">
+    {onAdd ? (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        aria-label={`Add segment for ${row.employeeName}`}
+        onClick={() => onAdd({ ...managedAttendanceEmployee(row), workDate: row.workDate })}
+      >
+        Add segment
+      </Button>
+    ) : null}
+    {onAdjust ? (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        aria-label={`Adjust ${row.employeeName} on ${row.workDate}`}
+        onClick={() => onAdjust(row)}
+      >
+        Adjust
+      </Button>
+    ) : null}
+  </div>
+);
 
 const ManagedAttendanceTable = ({
   rows,
@@ -50,82 +141,9 @@ const ManagedAttendanceTable = ({
   onAdd,
   onAdjust,
 }: ManagedAttendanceTableProps) => {
-  const columns: DataTableColumn<ManagedAttendanceRow>[] = [
-    {
-      id: 'employee',
-      header: 'Employee',
-      cell: (row) => (
-        <span className="block min-w-32">
-          <span className="block font-medium">{row.employeeName}</span>
-          <span className="block whitespace-nowrap text-xs text-content-secondary">
-            {row.employeeCode}
-          </span>
-        </span>
-      ),
-    },
-    {
-      id: 'date',
-      header: 'Date',
-      cell: (row) => <span className="whitespace-nowrap tabular-nums">{row.workDate}</span>,
-    },
-    { id: 'punch-in', header: 'Punch In', cell: (row) => formatBackendTime(row.checkInTime) },
-    { id: 'punch-out', header: 'Punch Out', cell: (row) => formatBackendTime(row.checkOutTime) },
-    { id: 'duration', header: 'Duration', cell: completedSameDayDuration, numeric: true },
-    { id: 'source', header: 'Source', cell: (row) => row.source ?? '—' },
-    {
-      id: 'attendance-status',
-      header: 'Attendance Status',
-      cell: (row) => <Badge variant={statusVariant(row.status)}>{row.status ?? '—'}</Badge>,
-    },
-    {
-      id: 'regularization-status',
-      header: 'Regularization Status',
-      cell: (row) => row.regularizationStatus ?? '—',
-    },
-    ...(onAdd || onAdjust
-      ? [
-          {
-            id: 'actions',
-            header: 'Actions',
-            cell: (row: ManagedAttendanceRow) => (
-              <div className="flex flex-wrap gap-1 whitespace-nowrap">
-                {onAdd ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    aria-label={`Add segment for ${row.employeeName}`}
-                    onClick={() =>
-                      onAdd({ ...managedAttendanceEmployee(row), workDate: row.workDate })
-                    }
-                  >
-                    Add segment
-                  </Button>
-                ) : null}
-                {onAdjust ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    aria-label={`Adjust ${row.employeeName} on ${row.workDate}`}
-                    onClick={() => onAdjust(row)}
-                  >
-                    Adjust
-                  </Button>
-                ) : null}
-              </div>
-            ),
-          },
-        ]
-      : []),
-  ];
-  const state = loading
-    ? 'loading'
-    : errorMessage
-      ? 'error'
-      : rows.length === 0
-        ? 'empty'
-        : 'ready';
+  const columns = attendanceColumns(onAdd, onAdjust);
+
+  const state = tableState(loading, errorMessage, rows.length);
   const stateMessage = loading
     ? 'Loading attendance records…'
     : (errorMessage ?? 'No attendance records match these filters.');

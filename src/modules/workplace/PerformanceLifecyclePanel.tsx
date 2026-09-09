@@ -110,7 +110,7 @@ const PerformanceLifecyclePanel = ({
   const [finalRating, setFinalRating] = useState('');
   const [performanceBand, setPerformanceBand] = useState('');
   const [responses, setResponses] = useState<
-    Record<string, { text?: string; rating?: string; options?: string[] }>
+    Partial<Record<string, { text?: string; rating?: string; options?: string[] }>>
   >({});
 
   const loadReviews = useCallback(async () => {
@@ -232,9 +232,9 @@ const PerformanceLifecyclePanel = ({
       .filter((question) => question.answerer === role || question.answerer === 'BOTH')
       .map((question) => ({
         questionId: question.id,
-        textAnswer: responses[question.id].text?.trim() || null,
-        rating: responses[question.id].rating?.trim() || null,
-        selectedOptionIds: responses[question.id].options ?? [],
+        textAnswer: responses[question.id]?.text?.trim() || null,
+        rating: responses[question.id]?.rating?.trim() || null,
+        selectedOptionIds: responses[question.id]?.options ?? [],
       }));
   };
 

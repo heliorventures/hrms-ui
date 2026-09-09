@@ -16,20 +16,8 @@ export function recoverQueueFocus(queue: HTMLElement | null) {
     queue.focus();
   }
 }
-const HR_LEAVE_APPLICATION_HOLIDAYS = `
-  query HrLeaveApplicationHolidays {
-    upcomingHolidays(limit: 100) {
-      id
-      calendarId
-      calendarName
-      holidayDate
-      name
-      holidayType
-    }
-  }
-`;
 type Client = ReturnType<typeof useGraphClient>;
-type ApprovalBoard = Omit<LeaveBoardQuery, '__typename'> & {
+export type HrLeaveApprovalBoard = Omit<LeaveBoardQuery, '__typename' | 'upcomingHolidays'> & {
   leaveApprovalQueue: HrLeaveApprovalBoardQuery['leaveApprovalQueue'];
 };
 type Failure = { message: string; operation: 'board' | 'mutation' };
@@ -39,7 +27,7 @@ interface BoardOwner {
 }
 interface BoardState {
   owner: BoardOwner;
-  data: ApprovalBoard | null;
+  data: HrLeaveApprovalBoard | null;
   loading: boolean;
   failure: Failure | null;
 }
@@ -102,22 +90,18 @@ export const useHrLeaveApprovalBoard = ({
       }));
       clearWorkflowFailure();
       try {
-        const [result, holidays] = await Promise.all([
-          client.request(HrLeaveApprovalBoardDocument, {
-            limit: HR_LEAVE_LIMIT,
-            offset: requestPage * HR_LEAVE_LIMIT,
-            balanceYear,
-            fromDate: `${balanceYear}-01-01`,
-            toDate: `${balanceYear}-12-31`,
-            status: filter === 'all' || filter === 'actionable' ? null : filter.toUpperCase(),
-            needsMyAction: filter === 'actionable',
-          }),
-          client.request<Pick<LeaveBoardQuery, 'upcomingHolidays'>>(HR_LEAVE_APPLICATION_HOLIDAYS),
-        ]);
+        const result = await client.request(HrLeaveApprovalBoardDocument, {
+          limit: HR_LEAVE_LIMIT,
+          offset: requestPage * HR_LEAVE_LIMIT,
+          balanceYear,
+          fromDate: `${balanceYear}-01-01`,
+          toDate: `${balanceYear}-12-31`,
+          status: filter === 'all' || filter === 'actionable' ? null : filter.toUpperCase(),
+          needsMyAction: filter === 'actionable',
+        });
         if (!ownsResult()) return;
         const data = {
           ...result,
-          ...holidays,
           leaveRequests: result.leaveApprovalQueue.rows,
           leaveRequestCount: result.leaveApprovalQueue.totalCount,
         };

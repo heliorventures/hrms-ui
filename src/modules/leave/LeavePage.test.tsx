@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,12 +14,15 @@ import LeavePage from './LeavePage';
 const testState = vi.hoisted(() => ({
   client: { request: vi.fn() },
   permissions: new Set<string>(),
+  userId: 'user-a',
   flash: { show: vi.fn(), clear: vi.fn(), flash: null },
   clearWorkflowFailure: vi.fn(),
 }));
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
+    user: { id: testState.userId },
+    tenantId: 'tenant-1',
     clientSession: {
       employeeId: 'manager-1',
       permissions: testState.permissions,
@@ -33,7 +36,9 @@ vi.mock('../../contexts/AuthContext', () => ({
   }),
 }));
 vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => testState.client }));
-vi.mock('../../contexts/TenantContext', () => ({ useTenant: () => ({ currentTenant: { id: 'tenant-1', timezone: 'Asia/Kolkata' } }) }));
+vi.mock('../../contexts/TenantContext', () => ({
+  useTenant: () => ({ currentTenant: { id: 'tenant-1', timezone: 'Asia/Kolkata' } }),
+}));
 vi.mock('../../hooks/useFlashToast', () => ({ useFlashToast: () => testState.flash }));
 vi.mock('./hooks/useAllCompanyHolidays', () => ({
   useAllCompanyHolidays: () => ({
@@ -103,11 +108,23 @@ const board = {
 };
 
 beforeEach(() => {
+  testState.userId = 'user-a';
   testState.permissions = new Set(['leave:read', 'leave:submit', 'leave:approve']);
   testState.client = {
     request: vi.fn((document: unknown) => {
       if (document === LeaveBoardDocument) return Promise.resolve(board);
-      if (document === MyCompOffDocument) return Promise.resolve({ compOffPolicy: null, compOffClaims: [], compOffBalance: { earnedUnits: '0', reservedUnits: '0', usedUnits: '0', expiredUnits: '0', availableUnits: '0' } });
+      if (document === MyCompOffDocument)
+        return Promise.resolve({
+          compOffPolicy: null,
+          compOffClaims: [],
+          compOffBalance: {
+            earnedUnits: '0',
+            reservedUnits: '0',
+            usedUnits: '0',
+            expiredUnits: '0',
+            availableUnits: '0',
+          },
+        });
       if (document === ApproveLeaveRequestDocument) {
         return Promise.resolve({ approveLeaveRequest: { status: 'APPROVED' } });
       }
@@ -210,15 +227,133 @@ describe('LeavePage approval', () => {
         expectedWorkflowStepId: 'workflow-step-1',
       })
     );
+    expect(testState.client.request).toHaveBeenCalledWith(LeaveBoardDocument, {
+      limit: 20,
+      requestOffset: 0,
+      balanceYear: new Date().getFullYear(),
+      fromDate: `${new Date().getFullYear()}-01-01`,
+      toDate: `${new Date().getFullYear()}-12-31`,
+    });
+  });
+});
+
+describe('LeavePage ownership', () => {
+  it('ignores an old identity response after A to B to A navigation', async () => {
+    const pending: ((value: typeof board) => void)[] = [];
+    const normal = testState.client.request.getMockImplementation() as
+      | ((document: unknown) => Promise<unknown>)
+      | undefined;
+    if (!normal) throw new Error('Missing baseline GraphQL fixture.');
+    testState.client.request.mockImplementation((document: unknown) => {
+      if (document === LeaveBoardDocument)
+        return new Promise<typeof board>((resolve) => pending.push(resolve));
+      return normal(document);
+    });
+    const page = () => (
+      <MemoryRouter>
+        <LeavePage />
+      </MemoryRouter>
+    );
+    const view = render(page());
+    await waitFor(() => expect(pending).toHaveLength(1));
+    testState.userId = 'user-b';
+    view.rerender(page());
+    await waitFor(() => expect(pending).toHaveLength(2));
+    testState.userId = 'user-a';
+    view.rerender(page());
+    await waitFor(() => expect(pending).toHaveLength(3));
+    await act(async () => {
+      pending[2]({ ...board, leaveRequestCount: 7 });
+      await Promise.resolve();
+    });
+    expect(await screen.findByText('Showing 1-7 of 7 leave requests')).toBeTruthy();
+    await act(async () => {
+      pending[0]({ ...board, leaveRequestCount: 99 });
+      await Promise.resolve();
+    });
+    expect(screen.queryByText(/of 99 leave requests/)).toBeNull();
+  });
+
+  it('does not toast or refresh a new owner when an old approval completes', async () => {
+    let resolveApproval!: (value: unknown) => void;
+    const normal = testState.client.request.getMockImplementation() as
+      | ((document: unknown) => Promise<unknown>)
+      | undefined;
+    if (!normal) throw new Error('Missing baseline GraphQL fixture.');
+    testState.client.request.mockImplementation((document: unknown) =>
+      document === ApproveLeaveRequestDocument
+        ? new Promise((resolve) => {
+            resolveApproval = resolve;
+          })
+        : normal(document)
+    );
+    const page = () => (
+      <MemoryRouter>
+        <LeavePage />
+      </MemoryRouter>
+    );
+    const view = render(page());
+    const desktop = within(await screen.findByRole('table', { name: 'Leave requests' }));
+    fireEvent.click(desktop.getByRole('button', { name: 'Approve' }));
+    testState.userId = 'user-b';
+    view.rerender(page());
+    await screen.findByRole('table', { name: 'Leave requests' });
+    const count = testState.client.request.mock.calls.filter(
+      ([document]) => document === LeaveBoardDocument
+    ).length;
+    await act(async () => {
+      resolveApproval({ approveLeaveRequest: { status: 'APPROVED' } });
+      await Promise.resolve();
+    });
+    expect(testState.flash.show).not.toHaveBeenCalled();
+    expect(
+      testState.client.request.mock.calls.filter(([document]) => document === LeaveBoardDocument)
+    ).toHaveLength(count);
+  });
+});
+
+describe('LeavePage dialog and query boundaries', () => {
+  it('closes a rejection target when the query year changes', async () => {
+    render(
+      <MemoryRouter>
+        <LeavePage />
+      </MemoryRouter>
+    );
+    const desktop = within(await screen.findByRole('table', { name: 'Leave requests' }));
+    fireEvent.click(desktop.getByRole('button', { name: 'Reject' }));
+    expect(screen.getByRole('dialog', { name: 'Reject Leave Request' })).toBeTruthy();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Year' }), {
+      target: { value: String(new Date().getFullYear() - 1) },
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Reject Leave Request' })).toBeNull()
+    );
     expect(testState.client.request).toHaveBeenCalledWith(
       LeaveBoardDocument,
-      {
-        limit: 20,
-        requestOffset: 0,
-        balanceYear: new Date().getFullYear(),
-        fromDate: `${new Date().getFullYear()}-01-01`,
-        toDate: `${new Date().getFullYear()}-12-31`,
-      },
+      expect.objectContaining({ balanceYear: new Date().getFullYear() - 1, requestOffset: 0 })
     );
+  });
+  it('opens the direct apply link with restored year and page', async () => {
+    const year = new Date().getFullYear() - 1;
+    render(
+      <MemoryRouter initialEntries={[`/leave?year=${year}&page=1&apply=1`]}>
+        <LeavePage />
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole('dialog', { name: 'Apply For Leave' })).toBeTruthy();
+    expect(testState.client.request).toHaveBeenCalledWith(
+      LeaveBoardDocument,
+      expect.objectContaining({ balanceYear: year, requestOffset: 20 })
+    );
+  });
+  it('does not open a direct apply link for read-only access', async () => {
+    testState.permissions = new Set(['leave:read']);
+    render(
+      <MemoryRouter initialEntries={['/leave?apply=1']}>
+        <LeavePage />
+      </MemoryRouter>
+    );
+    await screen.findByRole('table', { name: 'Leave requests' });
+    expect(screen.queryByRole('dialog', { name: 'Apply For Leave' })).toBeNull();
   });
 });

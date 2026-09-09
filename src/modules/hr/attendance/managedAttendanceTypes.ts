@@ -10,8 +10,14 @@ export const MAX_MANAGED_ATTENDANCE_RANGE_DAYS = 92;
 // NaiveDate is serialized as an ISO date string by the attendance service.
 export type ManagedAttendanceRow = Omit<
   ManagedAttendancePageQuery['managedAttendance']['edges'][number]['node'],
-  'workDate'
-> & { workDate: string };
+  'workDate' | 'checkInTime' | 'checkOutTime' | 'updatedAt' | 'createdAt'
+> & {
+  workDate: string;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+  updatedAt: string;
+  createdAt: string;
+};
 export type ManagedAttendancePageInfo = ManagedAttendancePageQuery['managedAttendance']['pageInfo'];
 
 export interface ManagedAttendanceFiltersValue {

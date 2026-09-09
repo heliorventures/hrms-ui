@@ -1,0 +1,237 @@
+// @vitest-environment jsdom
+
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+
+import ApplyLeaveModal from './ApplyLeaveModal';
+
+const graphClients = vi.hoisted(() => {
+  const request = vi.fn();
+  return { current: { request }, initialRequest: request };
+});
+const request = graphClients.initialRequest;
+const uploadState = vi.hoisted(() => ({ upload: vi.fn() }));
+
+vi.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({ tenantId: 'tenant-a', user: { id: 'user-a' }, clientSession: null }),
+}));
+vi.mock('../../../hooks/useGraphClient', () => ({
+  useGraphClient: () => graphClients.current,
+}));
+vi.mock('../../../utils/tenantFileUpload', () => ({
+  uploadTenantFile: uploadState.upload,
+  validateTenantUploadFile: () => null,
+}));
+
+beforeEach(() => {
+  request.mockReset();
+  uploadState.upload.mockReset();
+  graphClients.current = { request };
+});
+
+afterEach(() => {
+  cleanup();
+  document.body.style.overflow = '';
+});
+
+const getApplyLeaveForm = () => {
+  const form = document.getElementById('apply-leave-form');
+  if (!(form instanceof HTMLFormElement)) throw new Error('Apply leave form was not rendered.');
+  return form;
+};
+
+const leaveTypes = [
+  {
+    id: 'annual-leave',
+    name: 'Annual Leave',
+    code: 'AL',
+    isPaid: false,
+    halfDayAllowed: true,
+  },
+];
+
+function renderModal(
+  initial: Partial<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmitted: () => void;
+    upcomingHolidaysLoading: boolean;
+    upcomingHolidaysFailure: string | null;
+    onRetryUpcomingHolidays: () => void;
+  }> = {}
+) {
+  let props = {
+    isOpen: true,
+    onClose: vi.fn(),
+    onSubmitted: vi.fn(),
+    upcomingHolidaysLoading: false,
+    upcomingHolidaysFailure: null,
+    onRetryUpcomingHolidays: vi.fn(),
+    ...initial,
+  };
+  const modal = () => (
+    <ApplyLeaveModal
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      leaveTypes={leaveTypes}
+      leavePolicies={[]}
+      upcomingHolidays={[]}
+      upcomingHolidaysLoading={props.upcomingHolidaysLoading}
+      upcomingHolidaysFailure={props.upcomingHolidaysFailure}
+      onRetryUpcomingHolidays={props.onRetryUpcomingHolidays}
+      leaveBalances={[]}
+      onSubmitted={props.onSubmitted}
+    />
+  );
+  const view = render(modal());
+  return {
+    ...view,
+    onClose: props.onClose,
+    onSubmitted: props.onSubmitted,
+    rerenderModal: (next: Partial<typeof props> = {}) => {
+      props = { ...props, ...next };
+      view.rerender(modal());
+    },
+  };
+}
+
+function fillValidRequest() {
+  fireEvent.change(screen.getByLabelText('Leave type'), {
+    target: { value: 'annual-leave' },
+  });
+  fireEvent.change(screen.getByLabelText('From'), {
+    target: { value: '2026-08-24' },
+  });
+  fireEvent.change(screen.getByLabelText('To'), {
+    target: { value: '2026-08-24' },
+  });
+  fireEvent.change(screen.getByLabelText('Reason'), {
+    target: { value: 'Family appointment' },
+  });
+}
+
+it('blocks duplicate synchronous submissions while the first request is pending', async () => {
+  let resolveRequest!: (value: unknown) => void;
+  request.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveRequest = resolve;
+      })
+  );
+  const { onSubmitted } = renderModal();
+  fillValidRequest();
+  const form = getApplyLeaveForm();
+
+  fireEvent.submit(form);
+  fireEvent.submit(form);
+
+  expect(request).toHaveBeenCalledOnce();
+  expect(screen.getByRole('button', { name: /Submit Application/ }).getAttribute('aria-busy')).toBe(
+    'true'
+  );
+
+  resolveRequest({});
+  await waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
+});
+
+it('does not run success callbacks when the submission belongs to a previous client', async () => {
+  let resolveOldRequest!: (value: unknown) => void;
+  const oldRequest = vi.fn(
+    () =>
+      new Promise((resolve) => {
+        resolveOldRequest = resolve;
+      })
+  );
+  graphClients.current = { request: oldRequest };
+  const currentRequest = vi.fn();
+  const { onClose, onSubmitted, rerenderModal } = renderModal();
+  fillValidRequest();
+
+  fireEvent.submit(getApplyLeaveForm());
+  graphClients.current = { request: currentRequest };
+  rerenderModal();
+  await act(async () => {
+    resolveOldRequest({});
+    await Promise.resolve();
+  });
+
+  expect(onSubmitted).not.toHaveBeenCalled();
+  expect(onClose).not.toHaveBeenCalled();
+  expect(currentRequest).not.toHaveBeenCalled();
+});
+
+it('does not publish an error when the failed submission belongs to a previous client', async () => {
+  let rejectOldRequest!: (reason: unknown) => void;
+  const oldRequest = vi.fn(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectOldRequest = reject;
+      })
+  );
+  graphClients.current = { request: oldRequest };
+  const { rerenderModal } = renderModal();
+  fillValidRequest();
+
+  fireEvent.submit(getApplyLeaveForm());
+  graphClients.current = { request: vi.fn() };
+  rerenderModal();
+  await act(async () => {
+    rejectOldRequest(new Error('previous tenant failure'));
+    await Promise.resolve();
+  });
+
+  expect(screen.queryByText('Leave application was not submitted')).toBeNull();
+});
+
+it('does not run success callbacks when the dialog has been reopened since submission', async () => {
+  let resolveOldRequest!: (value: unknown) => void;
+  request.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveOldRequest = resolve;
+      })
+  );
+  const currentOnClose = vi.fn();
+  const currentOnSubmitted = vi.fn();
+  const { onClose, onSubmitted, rerenderModal } = renderModal();
+  fillValidRequest();
+
+  fireEvent.submit(getApplyLeaveForm());
+  rerenderModal({ isOpen: false });
+  rerenderModal({
+    isOpen: true,
+    onClose: currentOnClose,
+    onSubmitted: currentOnSubmitted,
+  });
+  await act(async () => {
+    resolveOldRequest({});
+    await Promise.resolve();
+  });
+
+  expect(onSubmitted).not.toHaveBeenCalled();
+  expect(onClose).not.toHaveBeenCalled();
+  expect(currentOnSubmitted).not.toHaveBeenCalled();
+  expect(currentOnClose).not.toHaveBeenCalled();
+});
+
+it('does not publish an error when the dialog has been reopened since submission', async () => {
+  let rejectOldRequest!: (reason: unknown) => void;
+  request.mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectOldRequest = reject;
+      })
+  );
+  const { rerenderModal } = renderModal();
+  fillValidRequest();
+
+  fireEvent.submit(getApplyLeaveForm());
+  rerenderModal({ isOpen: false });
+  rerenderModal({ isOpen: true });
+  await act(async () => {
+    rejectOldRequest(new Error('previous dialog failure'));
+    await Promise.resolve();
+  });
+
+  expect(screen.queryByText('Leave application was not submitted')).toBeNull();
+});

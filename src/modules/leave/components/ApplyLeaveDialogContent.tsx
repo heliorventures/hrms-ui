@@ -55,6 +55,42 @@ interface ApplyLeaveFooterProps {
   canSubmit: boolean;
 }
 
+interface ApplyLeaveHolidayStatusProps {
+  loading: boolean;
+  failure: string | null;
+  onRetry?: () => void;
+}
+
+export const ApplyLeaveHolidayStatus = ({
+  loading,
+  failure,
+  onRetry,
+}: ApplyLeaveHolidayStatusProps) => {
+  if (loading) {
+    return (
+      <PageNotice variant="info" title="Checking holidays">
+        Holiday dates are loading. You can complete the form while this finishes.
+      </PageNotice>
+    );
+  }
+  if (!failure) return null;
+  return (
+    <PageNotice
+      variant="error"
+      title="Holiday dates could not be loaded"
+      action={
+        onRetry ? (
+          <Button type="button" variant="outline" onClick={onRetry}>
+            Try again
+          </Button>
+        ) : undefined
+      }
+    >
+      {failure} Leave cannot be submitted until holiday dates are available.
+    </PageNotice>
+  );
+};
+
 export const ApplyLeaveFooter = ({ onClose, submitting, canSubmit }: ApplyLeaveFooterProps) => (
   <>
     <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>

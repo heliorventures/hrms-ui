@@ -166,3 +166,67 @@ it('opens the linked submitted appraisal with saved answers and no resubmission 
     { participantId: 'r1' }
   );
 });
+
+it('submits an untouched optional appraisal question as an empty answer', async () => {
+  state.permissions = new Set(['performance:self']);
+  state.permissionScopes = { 'performance:self': 'SELF' };
+  const review = {
+    id: 'r1',
+    employeeId: 'me',
+    employeeName: 'Employee',
+    cycleName: 'Annual',
+    cycleStage: 'SELF_REVIEW',
+    status: 'PENDING',
+  };
+  const detail = {
+    review,
+    goals: [],
+    feedback: [],
+    answers: [],
+    template: {
+      sections: [
+        {
+          questions: [
+            {
+              id: 'optional',
+              prompt: 'Anything else?',
+              answerer: 'BOTH',
+              questionType: 'LONG_TEXT',
+              isRequired: false,
+              options: [],
+            },
+          ],
+        },
+      ],
+    },
+  };
+  state.request.mockImplementation((document: unknown) => {
+    if (String(document).includes('PerformanceReviewDetailWorkspace'))
+      return Promise.resolve({ performanceReviewDetail: detail });
+    if (String(document).includes('SubmitSelfAppraisalWorkspace'))
+      return Promise.resolve({ submitSelfAppraisal: detail });
+    return Promise.resolve({ myPerformanceReviews: [review] });
+  });
+  render(
+    <MemoryRouter initialEntries={['/performance?tab=my&review=r1']}>
+      <PerformancePage />
+    </MemoryRouter>
+  );
+  fireEvent.click(await screen.findByRole('button', { name: 'Submit self-appraisal' }));
+  await waitFor(() =>
+    expect(state.request).toHaveBeenCalledWith(
+      expect.stringContaining('SubmitSelfAppraisalWorkspace'),
+      {
+        id: 'r1',
+        answers: [
+          {
+            questionId: 'optional',
+            textAnswer: null,
+            rating: null,
+            selectedOptionIds: [],
+          },
+        ],
+      }
+    )
+  );
+});

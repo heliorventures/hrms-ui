@@ -1,5 +1,7 @@
 # UI click reduction implementation plan
 
+> Historical implementation snapshot. The subsequent approved fixes and current acceptance evidence are recorded in [UI click reduction hardening](UI-CLICK-REDUCTION-HARDENING-2026-09-10.md). Its migration and readiness requirements supersede the remaining-gap statements below.
+
 Goal: implement the approved UI-CLICK-REDUCTION-AUDIT-2026-09-10.md findings, preserving existing working-tree changes and server authority.
 
 Execution: use subagent-driven-development for independent owned tasks, with parent integration/review. Work in the existing feature branches because the approved design depends on their uncommitted UI. No commits, deployment, database writes, or Dart/Flutter commands.
