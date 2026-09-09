@@ -7,8 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResolvedTenant } from '../auth/authClient';
 import type { ParsedClientSession } from '../auth/clientSession';
 import { TenantProvider, type useTenant } from '../contexts/TenantContext';
-import AppRoutes from './AppRoutes';
+
 import { TENANT_APP_ROUTES } from './appRouteConfig';
+import AppRoutes from './AppRoutes';
 import { OPS_CHILD_ROUTES } from './opsRouteConfig';
 import type { RoutePage } from './routeTypes';
 
@@ -68,10 +69,10 @@ function replaceLoader(routes: readonly unknown[], path: string, load: RoutePage
   return load;
 }
 
-function LocationProbe() {
+const LocationProbe = () => {
   const location = useLocation();
   return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
-}
+};
 
 const TenantNavigationProbe = () => {
   const navigate = useNavigate();
@@ -237,7 +238,7 @@ describe('AppRoutes tenant selection and authorization', () => {
 
     expect(await screen.findByRole('heading', { name: 'Access denied' })).toBeTruthy();
     expect(deniedLoad).not.toHaveBeenCalled();
-    expect(screen.getByRole('link', { name: 'Return to dashboard' }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: 'Return to home' }).getAttribute('href')).toBe(
       '/dashboard'
     );
     expect(screen.getByTestId('location').textContent).toBe('/insights');
@@ -261,7 +262,7 @@ describe('AppRoutes tenant selection and authorization', () => {
     document.title = 'Dashboard | Helior HRMS';
     renderApp('/does-not-exist');
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Return to dashboard' }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: 'Return to home' }).getAttribute('href')).toBe(
       '/dashboard'
     );
     await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/does-not-exist'));

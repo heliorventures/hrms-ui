@@ -74,11 +74,7 @@ interface OnLeaveTodayListProps {
   people: LeavePerson[];
 }
 
-const OnLeaveTodayList = ({
-  capped,
-  leaveTypeById,
-  people,
-}: OnLeaveTodayListProps) => {
+const OnLeaveTodayList = ({ capped, leaveTypeById, people }: OnLeaveTodayListProps) => {
   if (people.length === 0 && capped) {
     return (
       <AsyncState
@@ -101,15 +97,26 @@ const OnLeaveTodayList = ({
 
   return (
     <div className="space-y-2">
-      {people.map((person) => {
-        const displayName = `${person.employeeName!.trim()} (${person.employeeCode!.trim()})`;
+      {people.slice(0, 3).map((person) => {
+        const displayName = `${(person.employeeName ?? 'Employee').trim()} (${(person.employeeCode ?? '').trim()})`;
         const from = String(person.fromDate).slice(0, 10);
         const to = String(person.toDate).slice(0, 10);
         return (
           <div
             key={person.id}
-            className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+            className="flex items-center gap-3 rounded-lg bg-surface-selected/60 p-3"
           >
+            <span
+              aria-hidden="true"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent"
+            >
+              {(person.employeeName ?? 'Employee')
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((part) => part[0])
+                .join('')}
+            </span>
             <div className="min-w-0 flex-1">
               <p className="break-words text-sm font-medium text-gray-900 dark:text-white">
                 {displayName}
@@ -122,16 +129,16 @@ const OnLeaveTodayList = ({
                   : ''}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {new Date(from).toLocaleDateString('en-IN')} to{' '}
-                {new Date(to).toLocaleDateString('en-IN')}
+                {new Date(from).toLocaleDateString('en-IN', { timeZone: 'UTC' })} to{' '}
+                {new Date(to).toLocaleDateString('en-IN', { timeZone: 'UTC' })}
               </p>
             </div>
-            <span className="shrink-0 text-xs capitalize text-gray-500 dark:text-gray-400">
-              {person.status}
-            </span>
           </div>
         );
       })}
+      {people.length > 3 ? (
+        <p className="text-xs text-content-muted">Showing 3 people. Open the calendar for more.</p>
+      ) : null}
     </div>
   );
 };

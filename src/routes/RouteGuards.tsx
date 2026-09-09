@@ -1,11 +1,13 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+
 import { canAccessTenantPath } from '../auth/navAccess';
 import { createPermissionService, type Capability } from '../auth/permissionService';
 import { sessionMatchesTenant } from '../auth/tenantSession';
 import AppLayout from '../components/layout/AppLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { useTenant } from '../contexts/TenantContext';
+
 import RouteErrorBoundary from './RouteErrorBoundary';
 import RouteStatePage from './RouteStatePage';
 
@@ -87,11 +89,7 @@ export const TenantPermissionRoute = ({
   const { can, clientSession } = useAuth();
   if (!canAccessTenantPath(tenantPath, { can, clientSession })) {
     return (
-      <RouteStatePage
-        state="access-denied"
-        returnTo="/dashboard"
-        returnLabel="Return to dashboard"
-      />
+      <RouteStatePage state="access-denied" returnTo="/dashboard" returnLabel="Return to home" />
     );
   }
   return children;

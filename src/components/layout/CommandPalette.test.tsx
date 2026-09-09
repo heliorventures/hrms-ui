@@ -127,7 +127,7 @@ describe('CommandPalette', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Search pages and tools' }));
 
     const search = await screen.findByRole('searchbox', { name: 'Search pages and tools' });
-    const dashboard = screen.getByRole('button', { name: /Dashboard/ });
+    const dashboard = screen.getByRole('button', { name: /Home/ });
     expect(screen.queryByRole('button', { name: /Employees/ })).toBeNull();
 
     dashboard.focus();

@@ -57,7 +57,7 @@ const balance = (index: number) => ({
 });
 
 function responseForVariables(variables: { limit: number }) {
-  if (variables.limit === 50) return { leaveTypes: [leaveType(0)] };
+  if ((variables as { limit: number }).limit === 50) return { leaveTypes: [leaveType(0)] };
   return { leaveBalances: [balance(0)] };
 }
 
@@ -82,6 +82,34 @@ afterEach(() => {
 });
 
 describe('LeaveBalanceCard truthful states', () => {
+  it('visualizes remaining entitlement without hiding the exact balance', async () => {
+    renderCard();
+    const meter = await screen.findByRole('meter', { name: 'Leave Type 0 remaining' });
+    expect(meter.getAttribute('aria-valuenow')).toBe('10');
+    expect(meter.getAttribute('aria-valuemax')).toBe('12');
+    expect(screen.getByText('10 left')).toBeTruthy();
+  });
+
+  it.each(['0', '-2', 'invalid'])(
+    'does not draw a misleading bar for entitlement %s',
+    async (entitledDays) => {
+      graphState.client.request = vi.fn((_document, variables) =>
+        Promise.resolve(
+          (variables as { limit: number }).limit === 50
+            ? { leaveTypes: [leaveType(0)] }
+            : {
+                leaveBalances: [{ ...balance(0), entitledDays, balanceDays: '-3' }],
+              }
+        )
+      );
+      renderCard();
+      expect(await screen.findByText('-3 left')).toBeTruthy();
+      expect(screen.queryByRole('meter')).toBeNull();
+    }
+  );
+});
+
+describe('LeaveBalanceCard access and query states', () => {
   it('does not render or request balances without leave:read', async () => {
     graphState.permissions = new Set();
     const view = renderCard();

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ParsedClientSession } from '../../auth/clientSession';
@@ -67,7 +68,11 @@ beforeEach(() => {
 
 describe('Dashboard', () => {
   it('omits every protected card when its read permission is missing', () => {
-    render(<Dashboard />);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    );
 
     expect(screen.queryByTestId('punch-in-out')).toBeNull();
     expect(screen.queryByTestId('leave-balance')).toBeNull();
@@ -82,19 +87,27 @@ describe('Dashboard', () => {
       'attendance:read': 'SELF',
       'notification:read': 'SELF',
     };
-    render(<Dashboard />);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    );
 
     expect(screen.getByTestId('punch-in-out')).toBeTruthy();
-    expect(screen.getByTestId('notifications-preview')).toBeTruthy();
+    expect(screen.queryByTestId('notifications-preview')).toBeNull();
     expect(screen.queryByTestId('leave-balance')).toBeNull();
     expect(screen.queryByTestId('on-leave-today')).toBeNull();
     expect(screen.queryByTestId('upcoming-holidays')).toBeNull();
   });
 
   it('does not expose the opaque employee UUID in the welcome header', () => {
-    render(<Dashboard />);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    );
 
-    expect(screen.getByRole('heading', { name: 'Welcome back, Demo' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Home' })).toBeTruthy();
     expect(screen.queryByText(/f32759cb-7e53-4f10-83d5-90c85181a66f/i)).toBeNull();
   });
 });

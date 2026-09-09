@@ -103,7 +103,7 @@ describe('PunchInOut truthful states', () => {
     graphState.permissions = new Set(['attendance:read']);
     renderCard();
 
-    expect(await screen.findByText('Segment 1')).toBeTruthy();
+    expect(await screen.findByText('Session 1')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Punch In' })).toBeNull();
     expect(graphState.client.request).toHaveBeenCalledWith(PunchDaySummaryDocument);
   });
@@ -142,20 +142,20 @@ describe('PunchInOut truthful states', () => {
     expect(screen.getByText('Loading Attendance Summary…')).toBeTruthy();
 
     act(() => retry.resolve(summary()));
-    expect(await screen.findByText('Segment 1')).toBeTruthy();
+    expect(await screen.findByText('Session 1')).toBeTruthy();
   });
 
   it('retains the attendance summary after its refresh fails', async () => {
     const retry = deferred<ReturnType<typeof summary>>();
     const user = userEvent.setup();
     renderCard();
-    await screen.findByText('Segment 1');
+    await screen.findByText('Session 1');
     graphState.client.request.mockRejectedValue(new Error('Failed to fetch'));
 
     await user.click(screen.getByRole('button', { name: 'Refresh Attendance Summary' }));
 
     expect(await screen.findByText('Attendance Summary May Be Out of Date')).toBeTruthy();
-    expect(screen.getByText('Segment 1')).toBeTruthy();
+    expect(screen.getByText('Session 1')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Punch In' }).disabled).toBe(true);
 
@@ -163,7 +163,7 @@ describe('PunchInOut truthful states', () => {
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Punch In' }).disabled).toBe(true);
     act(() => retry.resolve(summary()));
-    await screen.findByText('Segment 1');
+    await screen.findByText('Session 1');
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Punch In' }).disabled).toBe(
       false
     );
@@ -184,7 +184,7 @@ describe('PunchInOut truthful states', () => {
     });
     const user = userEvent.setup();
     renderCard();
-    await screen.findByText('Segment 1');
+    await screen.findByText('Session 1');
     await user.click(screen.getByRole('checkbox', { name: /Record GPS location/i }));
 
     await user.click(screen.getByRole('button', { name: 'Punch In' }));
@@ -210,13 +210,13 @@ describe('PunchInOut truthful states', () => {
     });
     const user = userEvent.setup();
     renderCard();
-    await screen.findByText('Segment 1');
+    await screen.findByText('Session 1');
     await user.click(screen.getByRole('checkbox', { name: /Record GPS location/i }));
 
     await user.click(screen.getByRole('button', { name: 'Punch In' }));
 
     expect(await screen.findByText('Punch Could Not Be Recorded')).toBeTruthy();
-    expect(screen.getByText('Segment 1')).toBeTruthy();
+    expect(screen.getByText('Session 1')).toBeTruthy();
     expect(screen.queryByText('Attendance Summary May Be Out of Date')).toBeNull();
   });
 });
@@ -231,7 +231,7 @@ describe('PunchInOut submission and display safeguards', () => {
     });
     const user = userEvent.setup();
     renderCard();
-    await screen.findByText('Segment 1');
+    await screen.findByText('Session 1');
     await user.click(screen.getByRole('checkbox', { name: /Record GPS location/i }));
 
     const punchButton = screen.getByRole('button', { name: 'Punch In' });
@@ -249,7 +249,7 @@ describe('PunchInOut submission and display safeguards', () => {
     graphState.client.request.mockResolvedValue(summary(20));
     renderCard();
 
-    await screen.findByText('Segment 20');
+    await screen.findByText('Session 20');
     expect(screen.queryByText(/More may be available\./)).toBeNull();
   });
 

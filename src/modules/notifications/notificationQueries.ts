@@ -1,3 +1,11 @@
+export const AnnouncementPreviewDocument = `
+  query AnnouncementDrawerPreview($limit: Int!) {
+    announcements(limit: $limit) {
+      id title body hasImageAttachment hasDocumentAttachment
+    }
+  }
+`;
+
 export const UnreadNotificationCountDocument = `
   query NotificationUnreadCount {
     unreadNotificationCount

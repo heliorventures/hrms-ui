@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PunchDaySummaryDocument, PunchTodayDocument } from '../../../api/graphql/graphql';
 import { authorizationStateKey, createPermissionService } from '../../../auth/permissionService';
-import AsyncState from '../../../components/common/AsyncState';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
@@ -16,28 +15,9 @@ import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { formatTenantTime, tenantDateKey } from '../../../utils/tenantTime';
 import { formatBackendTime } from '../../../utils/timeFormat';
 
+import AttendanceSummaryDetails from './AttendanceSummaryDetails';
+import type { AttendanceRow, Summary } from './attendanceSummaryTypes';
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
-
-type AttendanceRow = {
-  id: string;
-  checkInAt?: string | null;
-  checkOutAt?: string | null;
-  checkInTime?: string | null;
-  checkOutTime?: string | null;
-  checkInLat?: string | null;
-  checkInLng?: string | null;
-  checkOutLat?: string | null;
-  checkOutLng?: string | null;
-  source?: string | null;
-  status?: string | null;
-};
-
-type Summary = {
-  workDate: string;
-  totalWorkedMinutes: number;
-  openSegment: AttendanceRow | null;
-  segments: AttendanceRow[];
-};
 
 function displayRow(row: AttendanceRow, timezone: string): AttendanceRow {
   return {
@@ -163,64 +143,6 @@ const getLastEventCoords = (lastPunch: AttendanceRow | null) => {
   const checkIn = formatCoord(lastPunch.checkInLat, lastPunch.checkInLng);
   return checkIn ? `Punch In: ${checkIn}` : null;
 };
-
-interface AttendanceSegmentsProps {
-  segments: AttendanceRow[];
-}
-
-const AttendanceSegments = ({ segments }: AttendanceSegmentsProps) => (
-  <ul className="space-y-1 border-t border-gray-100 pt-2 text-gray-600 dark:border-gray-600 dark:text-gray-300">
-    {segments.map((segment, index) => {
-      const checkInCoords = formatCoord(segment.checkInLat, segment.checkInLng);
-      const checkOutCoords = formatCoord(segment.checkOutLat, segment.checkOutLng);
-      const checkOutTime = segment.checkOutTime ? formatBackendTime(segment.checkOutTime) : 'open';
-      return (
-        <li key={segment.id} className="text-xs">
-          <div className="flex justify-between">
-            <span>Segment {index + 1}</span>
-            <span>
-              {formatBackendTime(segment.checkInTime ?? null)} → {checkOutTime}
-            </span>
-          </div>
-          {checkInCoords || checkOutCoords ? (
-            <p className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
-              In: {checkInCoords ?? '—'} · Out: {checkOutCoords ?? '—'}
-            </p>
-          ) : null}
-        </li>
-      );
-    })}
-  </ul>
-);
-
-interface AttendanceSummaryDetailsProps {
-  summary: Summary;
-}
-
-const AttendanceSummaryDetails = ({ summary }: AttendanceSummaryDetailsProps) => (
-  <div className="space-y-2 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
-    <div className="flex items-center justify-between">
-      <span className="font-medium text-gray-900 dark:text-white">Worked today (completed)</span>
-      <span className="text-primary-600 dark:text-primary-400">
-        {summary.totalWorkedMinutes} min
-      </span>
-    </div>
-    {summary.segments.length > 0 ? <AttendanceSegments segments={summary.segments} /> : null}
-    {summary.segments.length === 0 && !summary.openSegment ? (
-      <AsyncState
-        kind="empty"
-        title="No Attendance Recorded Today."
-        description="Use Punch In when you are ready to start tracking time."
-      />
-    ) : null}
-    {summary.openSegment ? (
-      <p className="text-xs text-amber-800 dark:text-amber-200">
-        Open: checked in at {formatBackendTime(summary.openSegment.checkInTime)} — Select “Punch
-        Out” to close this block.
-      </p>
-    ) : null}
-  </div>
-);
 
 interface PunchSummaryContentProps {
   error: string | null;
@@ -349,11 +271,13 @@ const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
   const client = useGraphClient('client');
   const currentTime = useDashboardCardClock();
   const { currentTenant } = useTenant();
-  const timezone = currentTenant.timezone;
+  const { timezone } = currentTenant;
   const today = tenantDateKey(currentTime, timezone);
   const loadSummary = useCallback(async () => {
     const result = await client.request<{ punchDaySummary: Summary }>(PunchDaySummaryDocument);
     const summary = result.punchDaySummary;
+    if (summary.workDate !== today)
+      throw new Error('Attendance summary is for another day. Refresh to load today’s attendance.');
     return {
       ...summary,
       segments: summary.segments.map((row) => displayRow(row, timezone)),
@@ -381,15 +305,13 @@ const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
   const lastEventCoords = getLastEventCoords(lastPunch);
 
   return (
-    <Card title="Attendance">
+    <Card title="Today’s attendance">
       <div className="space-y-4">
-        <div className="text-center">
-          <div className="text-3xl font-bold text-gray-900 dark:text-white">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3">
+          <div className="text-xl font-semibold tabular-nums text-content-primary">
             {formatTime(currentTime, timezone)}
           </div>
-          <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {formatDate(currentTime, timezone)}
-          </div>
+          <div className="text-xs text-content-secondary">{formatDate(currentTime, timezone)}</div>
         </div>
         <PunchSummaryContent
           error={summaryError}
@@ -401,7 +323,6 @@ const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
           <Button
             variant="quiet"
             size="sm"
-            fullWidth
             busy={summaryPhase === 'refreshing'}
             busyLabel="Refreshing Attendance Summary…"
             onClick={onRefresh}
@@ -410,7 +331,12 @@ const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
           </Button>
         ) : null}
         {lastPunch ? (
-          <LastPunchDetails lastPunch={lastPunch} lastEventCoords={lastEventCoords} />
+          <details className="rounded-lg bg-surface-selected p-3">
+            <summary className="cursor-pointer text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+              Last punch details
+            </summary>
+            <LastPunchDetails lastPunch={lastPunch} lastEventCoords={lastEventCoords} />
+          </details>
         ) : null}
         {canPunch ? (
           <PunchActionArea

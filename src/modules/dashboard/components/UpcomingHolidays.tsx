@@ -66,29 +66,49 @@ const UpcomingHolidaysList = ({ rows }: UpcomingHolidaysListProps) => {
 
   return (
     <ul className="space-y-2">
-      {rows.map((holiday) => (
+      {rows.slice(0, 3).map((holiday) => (
         <li
           key={holiday.id}
-          className="flex flex-col gap-1 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700"
+          className="flex items-center gap-3 rounded-lg bg-surface-selected/60 p-3 text-sm"
         >
-          <div className="flex items-start justify-between gap-2">
-            <span className="min-w-0 flex-1 break-words font-medium text-gray-900 dark:text-white">
-              {holiday.name}
+          <time
+            dateTime={holiday.holidayDate.slice(0, 10)}
+            className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-accent/10 text-accent"
+          >
+            <span className="text-[10px] font-semibold uppercase">
+              {new Date(holiday.holidayDate).toLocaleDateString(undefined, {
+                month: 'short',
+                timeZone: 'UTC',
+              })}
             </span>
-            {holiday.holidayType ? (
-              <Badge variant="neutral" size="sm">
-                {holiday.holidayType}
-              </Badge>
-            ) : null}
+            <span className="text-xl font-semibold tabular-nums">
+              {new Date(holiday.holidayDate).toLocaleDateString(undefined, {
+                day: 'numeric',
+                timeZone: 'UTC',
+              })}
+            </span>
+          </time>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <span className="min-w-0 flex-1 break-words font-medium text-gray-900 dark:text-white">
+                {holiday.name}
+              </span>
+              {holiday.holidayType ? (
+                <Badge variant="neutral" size="sm">
+                  {holiday.holidayType}
+                </Badge>
+              ) : null}
+            </div>
+            <p className="break-words text-xs text-gray-500 dark:text-gray-400">
+              {new Date(holiday.holidayDate).toLocaleDateString('en-IN', {
+                timeZone: 'UTC',
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              })}{' '}
+              · {holiday.calendarName}
+            </p>
           </div>
-          <p className="break-words text-xs text-gray-500 dark:text-gray-400">
-            {new Date(holiday.holidayDate).toLocaleDateString('en-IN', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-            })}{' '}
-            · {holiday.calendarName}
-          </p>
         </li>
       ))}
     </ul>
@@ -136,9 +156,9 @@ const UpcomingHolidays = () => {
         onRetry={onRefresh}
       />
       <UpcomingHolidaysList rows={holidayRows} />
-      {holidayRows.length === HOLIDAY_LIMIT ? (
+      {holidayRows.length > 3 ? (
         <p role="status" className="mt-3 text-xs text-content-secondary">
-          Showing up to {HOLIDAY_LIMIT} upcoming holidays. More may be available.
+          Showing 3 upcoming holidays. More may be available.
         </p>
       ) : null}
       <UpcomingHolidaysFooter hasRows phase={phase} onRefresh={onRefresh} />

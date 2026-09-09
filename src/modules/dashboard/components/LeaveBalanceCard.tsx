@@ -5,12 +5,8 @@ import {
   ClientOpsLeaveTypeNamesDocument,
   LeaveBalancesDocument,
 } from '../../../api/graphql/graphql';
-import {
-  authorizationStateKey,
-  createPermissionService,
-} from '../../../auth/permissionService';
+import { authorizationStateKey, createPermissionService } from '../../../auth/permissionService';
 import AsyncState from '../../../components/common/AsyncState';
-import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -18,6 +14,7 @@ import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
+import LeaveBalanceMeter from './LeaveBalanceMeter';
 
 interface TypeRow {
   id: string;
@@ -89,23 +86,32 @@ const LeaveBalanceList = ({ rows, typeMap }: LeaveBalanceListProps) => {
   }
 
   return (
-    <ul className="space-y-2">
-      {rows.map((row) => (
-        <li
-          key={row.id}
-          className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2 text-sm dark:border-gray-700"
-        >
-          <span className="min-w-0 flex-1 break-words text-gray-600 dark:text-gray-300">
-            {typeMap[row.leaveTypeId] ?? row.leaveTypeId}
-          </span>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="info">{row.balanceDays} left</Badge>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+    <ul className="max-h-80 space-y-5 overflow-y-auto overscroll-contain pr-1">
+      {rows.map((row) => {
+        const name = typeMap[row.leaveTypeId] ?? 'Leave';
+        return (
+          <li key={row.id}>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="min-w-0 break-words text-sm font-medium text-content-primary">
+                {name}
+              </span>
+              <span
+                className={`shrink-0 text-lg font-semibold tabular-nums ${Number(row.balanceDays) < 0 ? 'text-status-danger' : 'text-accent'}`}
+              >
+                {row.balanceDays} left
+              </span>
+            </div>
+            <LeaveBalanceMeter
+              name={name}
+              balanceDays={row.balanceDays}
+              entitledDays={row.entitledDays}
+            />
+            <p className="mt-2 text-xs tabular-nums text-content-secondary">
               used {row.usedDays} · pending {row.pendingDays}
-            </span>
-          </div>
-        </li>
-      ))}
+            </p>
+          </li>
+        );
+      })}
     </ul>
   );
 };

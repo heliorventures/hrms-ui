@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Card from '../../components/common/Card';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   AllCompanyHolidaysDocument,
   type AllCompanyHolidaysQuery,
 } from '../../api/graphql/graphql';
+import Card from '../../components/common/Card';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 const outlineLink =
   'inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/80';
@@ -68,7 +69,7 @@ const LeaveHolidaysPage = () => {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link to="/dashboard" className={outlineLink}>
-            Dashboard
+            Home
           </Link>
           <Link to="/leave" className={outlineLink}>
             Leave home
@@ -98,16 +99,14 @@ const LeaveHolidaysPage = () => {
           </span>
         }
       >
-        {error && (
-          <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
+        {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading Holidays...</p>
         ) : inYear.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No holidays on record from <span className="font-mono">January 1, {year}</span> onward in this list.
-            Earlier dates in the same query window may appear if the API returns multi-year data — filter above limits to{' '}
-            <span className="font-mono">{year}</span>.
+            No holidays on record from <span className="font-mono">January 1, {year}</span> onward
+            in this list. Earlier dates in the same query window may appear if the API returns
+            multi-year data — filter above limits to <span className="font-mono">{year}</span>.
           </p>
         ) : (
           <ul className="divide-y divide-gray-100 text-sm dark:divide-gray-800">

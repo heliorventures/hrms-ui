@@ -265,7 +265,7 @@ describe('Sidebar mobile focus and interaction', () => {
     ['Escape', () => fireEvent.keyDown(document, { key: 'Escape' })],
     ['close button', () => fireEvent.click(screen.getByRole('button', { name: 'Close sidebar' }))],
     ['backdrop', () => fireEvent.click(screen.getByRole('button', { name: 'Close navigation' }))],
-    ['navigation link', () => fireEvent.click(screen.getByRole('link', { name: 'Dashboard' }))],
+    ['navigation link', () => fireEvent.click(screen.getByRole('link', { name: 'Home' }))],
   ])('restores focus after %s dismissal', async (_dismissal, dismiss) => {
     renderStatefulSidebar();
     const trigger = screen.getByTestId('mobile-navigation-trigger');
@@ -312,8 +312,8 @@ describe('Sidebar mobile focus and interaction', () => {
 
     const navigation = screen.getByRole('complementary', { name: 'Main navigation' });
     expect(navigation.className).toContain('lg:w-20');
-    const dashboard = screen.getByRole('link', { name: 'Dashboard' });
-    expect(dashboard.getAttribute('title')).toBe('Dashboard');
+    const dashboard = screen.getByRole('link', { name: 'Home' });
+    expect(dashboard.getAttribute('title')).toBe('Home');
     expect(dashboard.querySelector('span')?.className).toContain('sr-only');
   });
 });

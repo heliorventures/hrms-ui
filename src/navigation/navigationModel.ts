@@ -6,7 +6,7 @@ import {
   ClipboardList,
   Clock3,
   GraduationCap,
-  LayoutDashboard,
+  House,
   Megaphone,
   ReceiptText,
   Settings,
@@ -108,9 +108,9 @@ function approvalRules(
 export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
   {
     path: '/dashboard',
-    label: 'Dashboard',
-    keywords: ['home', 'start', 'overview'],
-    icon: LayoutDashboard,
+    label: 'Home',
+    keywords: ['home', 'dashboard', 'start', 'overview'],
+    icon: House,
     sidebar: 'primary',
     order: 1,
   },

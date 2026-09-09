@@ -238,17 +238,11 @@ const ResolvedTenantRoutes = ({ isTenantAuthenticated }: { isTenantAuthenticated
         }
       />
       <Route path="/" element={<ProtectedLayout />}>
-        {TENANT_APP_ROUTES.map((route) =>
-          renderChildRoute(route, '/dashboard', 'Return to dashboard')
-        )}
+        {TENANT_APP_ROUTES.map((route) => renderChildRoute(route, '/dashboard', 'Return to home'))}
         <Route
           path="*"
           element={
-            <RouteStatePage
-              state="not-found"
-              returnTo="/dashboard"
-              returnLabel="Return to dashboard"
-            />
+            <RouteStatePage state="not-found" returnTo="/dashboard" returnLabel="Return to home" />
           }
         />
       </Route>

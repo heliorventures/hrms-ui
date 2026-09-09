@@ -109,9 +109,7 @@ describe('UpcomingHolidays truthful states', () => {
     renderCard();
 
     await screen.findByText('Holiday 0');
-    expect(
-      screen.getByText('Showing up to 12 upcoming holidays. More may be available.')
-    ).toBeTruthy();
+    expect(screen.getByText('Showing 3 upcoming holidays. More may be available.')).toBeTruthy();
     expect(graphState.client.request).toHaveBeenCalledWith(expect.anything(), { limit: 12 });
   });
 

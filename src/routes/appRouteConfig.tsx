@@ -27,7 +27,7 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   {
     kind: 'page',
     path: 'dashboard',
-    title: 'Dashboard',
+    title: 'Home',
     tenantPath: '/dashboard',
     load: () => import('../modules/dashboard/Dashboard'),
   },

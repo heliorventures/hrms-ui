@@ -36,7 +36,7 @@ const EXPECTED_TENANT_ROUTES = [
   },
   { kind: 'page', path: 'performance', title: 'Performance', tenantPath: '/performance' },
   { kind: 'redirect', index: true, to: '/dashboard' },
-  { kind: 'page', path: 'dashboard', title: 'Dashboard', tenantPath: '/dashboard' },
+  { kind: 'page', path: 'dashboard', title: 'Home', tenantPath: '/dashboard' },
   { kind: 'page', path: 'insights', title: 'Insights', tenantPath: '/insights' },
   { kind: 'page', path: 'attendance', title: 'Attendance', tenantPath: '/attendance' },
   { kind: 'page', path: 'timesheet', title: 'Timesheet', tenantPath: '/timesheet' },

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+
 import LeaveTeamCalendar from '../hr/components/LeaveTeamCalendar';
 
 const outlineLink =
@@ -11,7 +12,7 @@ const LeaveTeamCalendarPage = () => {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Team Leave Calendar</h1>
         <div className="flex flex-wrap gap-2">
           <Link to="/dashboard" className={outlineLink}>
-            Dashboard
+            Home
           </Link>
           <Link to="/leave" className={outlineLink}>
             Leave home

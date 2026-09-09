@@ -255,7 +255,7 @@ describe('child authorization guards', () => {
     );
 
     expect(await screen.findByRole('heading', { name: 'Access denied' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Return to dashboard' }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: 'Return to home' }).getAttribute('href')).toBe(
       '/dashboard'
     );
     expect(screen.queryByText('Denied tenant content')).toBeNull();

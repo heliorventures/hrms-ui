@@ -94,7 +94,7 @@ export const NAV_LABELS = {
   benefits: 'Benefits',
   compensation: 'Compensation',
   compensationSetup: 'Compensation Setup',
-  dashboard: 'Dashboard',
+  dashboard: 'Home',
   documents: 'Documents',
   employees: 'Employees',
   expenseCategories: 'Expense Categories',
