@@ -62,6 +62,7 @@ export type Capability =
   | 'route.insights'
   | 'route.leave'
   | 'route.notifications'
+  | 'route.myWork'
   | 'route.organization.documents'
   | 'route.organization.employees'
   | 'route.organization.orgChart'
@@ -312,6 +313,8 @@ export function createPermissionService(session: ParsedClientSession | null): Pe
           canScopedPermission(PERMISSIONS.grievanceManage, ALL_SCOPE) ||
           canScopedPermission(PERMISSIONS.grievanceSelf, SELF_SCOPE)
         );
+      case 'route.myWork':
+        return Boolean(session?.employeeId);
       case 'route.workplace.performance':
         return (
           canScopedPermission(PERMISSIONS.performanceManage, ALL_SCOPE) ||
@@ -343,6 +346,9 @@ export function createPermissionService(session: ParsedClientSession | null): Pe
 }
 
 export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
+  '/my-work/tasks': 'route.myWork',
+  '/my-work/completed': 'route.myWork',
+  '/performance': 'route.workplace.performance',
   '/attendance': 'route.attendance',
   '/dashboard': 'route.dashboard',
   '/expenses': 'route.expenses',

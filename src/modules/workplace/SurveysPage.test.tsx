@@ -85,6 +85,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('SurveysPage', () => {
+  it('opens a task directly in respondent mode without loading HR administration', async () => {
+    state.permissions = new Set(['survey:respond', 'survey:manage']);
+    state.scopes = { 'survey:respond': 'SELF', 'survey:manage': 'ALL' };
+    render(<SurveysPage respondentOnly initialSurveyId="survey-1" />);
+    await screen.findByLabelText('I receive useful direction rating');
+    expect(screen.queryByText('Create survey')).toBeNull();
+    expect(
+      state.request.mock.calls.some(([document]) =>
+        /SurveysAdminWorkspace|SurveyDepartmentsWorkspace/.test(String(document))
+      )
+    ).toBe(false);
+  });
   it('submits an assigned survey without a respondent identity in the payload', async () => {
     const user = userEvent.setup();
     render(<SurveysPage />);

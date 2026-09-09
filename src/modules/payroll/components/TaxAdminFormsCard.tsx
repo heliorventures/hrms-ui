@@ -1,7 +1,9 @@
 import type { FormEvent } from 'react';
-import Card from '../../../components/common/Card';
+
 import Button from '../../../components/common/Button';
+import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
+import PageInformation from '../../../components/common/PageInformation';
 
 interface TaxAdminFormsCardProps {
   configActive: boolean;
@@ -57,9 +59,12 @@ const TaxAdminFormsCard = ({
   onSlabToChange,
 }: TaxAdminFormsCardProps) => (
   <Card title="HR Admin - Tax Versions & Slabs">
-    <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-      Create tax configuration versions per fiscal year/regime, then add slabs for the selected version.
-    </p>
+    <PageInformation title="Tax configuration">
+      <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+        Create tax configuration versions per fiscal year/regime, then add slabs for the selected
+        version.
+      </p>
+    </PageInformation>
     <form
       className="mb-6 flex flex-wrap items-end gap-3 border-b border-gray-200 pb-6 dark:border-gray-600"
       onSubmit={onConfigSubmit}

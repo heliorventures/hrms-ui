@@ -26,6 +26,15 @@ function routeInventory(routes: readonly Record<string, unknown>[]) {
 }
 
 const EXPECTED_TENANT_ROUTES = [
+  { kind: 'redirect', path: 'my-work', to: '/my-work/tasks' },
+  { kind: 'page', path: 'my-work/tasks', title: 'My Tasks', tenantPath: '/my-work/tasks' },
+  {
+    kind: 'page',
+    path: 'my-work/completed',
+    title: 'Completed / Archive',
+    tenantPath: '/my-work/completed',
+  },
+  { kind: 'page', path: 'performance', title: 'Performance', tenantPath: '/performance' },
   { kind: 'redirect', index: true, to: '/dashboard' },
   { kind: 'page', path: 'dashboard', title: 'Dashboard', tenantPath: '/dashboard' },
   { kind: 'page', path: 'insights', title: 'Insights', tenantPath: '/insights' },

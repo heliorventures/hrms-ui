@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import Card from '@/components/common/Card';
-import Table from '@/components/common/Table';
-import PageHeader from '@/components/common/PageHeader';
-import Input from '@/components/common/Input';
-import Button from '@/components/common/Button';
-import Modal from '@/components/common/Modal';
-import { useGraphClient } from '@/hooks/useGraphClient';
+
+import PageInformation from '../../components/common/PageInformation';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   OPS_CREATE_OPERATOR_USER,
   OPS_OPERATOR_ROLES,
@@ -14,6 +10,16 @@ import {
   OPS_OPERATOR_USERS,
   OPS_SET_OPERATOR_USER_ROLES,
 } from './opsGraph';
+
+import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
+import Input from '@/components/common/Input';
+import Modal from '@/components/common/Modal';
+import PageHeader from '@/components/common/PageHeader';
+import Table from '@/components/common/Table';
+import { useGraphClient } from '@/hooks/useGraphClient';
+
+
 
 type OpUserRow = {
   id: string;
@@ -200,10 +206,12 @@ const OpsOperatorsPage = () => {
       )}
 
       <Card title="Note">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Demo sign-in: <code className="text-xs">ops-admin@kabipay.local</code> from seed data. JWT permissions follow
-          roles assigned below (e.g. ADMIN, SUPPORT).
-        </p>
+        <PageInformation title="Operator accounts">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Demo sign-in: <code className="text-xs">ops-admin@kabipay.local</code> from seed data.
+            JWT permissions follow roles assigned below (e.g. ADMIN, SUPPORT).
+          </p>
+        </PageInformation>
       </Card>
 
       {loading && <p className="text-sm text-slate-500">Loading...</p>}

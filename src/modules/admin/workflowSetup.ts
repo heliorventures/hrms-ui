@@ -25,6 +25,34 @@ export const WORKFLOW_TYPES = [
   },
 ] as const;
 
+export const WORKFLOW_DOMAINS = {
+  leave: { label: 'Leave', entityTypes: ['LEAVE_REQUEST'] },
+  timesheets: { label: 'Timesheets', entityTypes: ['TIMESHEET_WEEK_BATCH'] },
+  expenses: { label: 'Expenses & Travel', entityTypes: ['EXPENSE', 'TRAVEL_REQUEST'] },
+} as const;
+
+export type WorkflowDomain = keyof typeof WORKFLOW_DOMAINS;
+
+export function parseWorkflowDomain(params: URLSearchParams): WorkflowDomain | null {
+  const values = params.getAll('domain');
+  if (values.length === 0) return 'leave';
+  if (values.length !== 1) return null;
+  const [value] = values;
+  return Object.prototype.hasOwnProperty.call(WORKFLOW_DOMAINS, value)
+    ? (value as WorkflowDomain)
+    : null;
+}
+
+export function workflowTypesForDomain(domain: WorkflowDomain) {
+  const { entityTypes }: { entityTypes: readonly string[] } = WORKFLOW_DOMAINS[domain];
+  return WORKFLOW_TYPES.filter((type) => entityTypes.includes(type.value));
+}
+
+export function workflowBelongsToDomain(entityType: string, domain: WorkflowDomain): boolean {
+  const { entityTypes }: { entityTypes: readonly string[] } = WORKFLOW_DOMAINS[domain];
+  return entityTypes.includes(entityType);
+}
+
 export const APPROVER_CHOICES = [
   { value: 'PERMISSION', label: 'Any eligible approver' },
   { value: 'REPORTING_MANAGER', label: 'Reporting manager' },

@@ -2,18 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { canAccessTenantPath } from '../../auth/navAccess';
 import { UI_A11Y_TEXT, UI_EMPTY_TEXT } from '../../constants/uiText';
-import { useAuth } from '../../contexts/AuthContext';
+import { NAVIGATION_SECTIONS, type NavigationDestination } from '../../navigation/navigationModel';
 import {
-  NAVIGATION_DESTINATIONS,
-  NAVIGATION_SECTIONS,
-  type NavigationDestination,
-} from '../../navigation/navigationModel';
-import {
-  accessibleDestinations,
+  activeNavigationDestination,
   filterNavigationDestinations,
 } from '../../navigation/navigationSelectors';
+import { useAccessibleNavigation } from '../../navigation/useAccessibleNavigation';
 import { useDialogSurface } from '../common/useDialogSurface';
 
 import { useCommandPalette } from './CommandPaletteContext';
@@ -36,13 +31,12 @@ const CommandPalette = () => {
   const { isOpen, close, openerRef } = useCommandPalette();
   const navigate = useNavigate();
   const location = useLocation();
-  const { can, clientSession } = useAuth();
+  const activeDestination = activeNavigationDestination(location.pathname + location.search);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const tenantNavOptions = useMemo(() => ({ can, clientSession }), [can, clientSession]);
   const { isTopmost } = useDialogSurface({
     isOpen,
     isDismissible: true,
@@ -52,13 +46,7 @@ const CommandPalette = () => {
     returnFocusRef: openerRef,
   });
 
-  const accessible = useMemo(
-    () =>
-      accessibleDestinations(NAVIGATION_DESTINATIONS, (path) =>
-        canAccessTenantPath(path, tenantNavOptions)
-      ),
-    [tenantNavOptions]
-  );
+  const accessible = useAccessibleNavigation();
   const rows = useMemo<CommandRow[]>(
     () =>
       filterNavigationDestinations(accessible, query).map((destination) => ({
@@ -67,6 +55,7 @@ const CommandPalette = () => {
       })),
     [accessible, query]
   );
+  const selectedIndex = Math.min(activeIndex, rows.length - 1);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -81,14 +70,16 @@ const CommandPalette = () => {
   useEffect(() => {
     if (!isOpen || !listRef.current) return;
     const activeRow = listRef.current.querySelector<HTMLElement>(
-      `[data-palette-row="${activeIndex}"]`
+      `[data-palette-row="${selectedIndex}"]`
     );
-    activeRow?.scrollIntoView?.({ block: 'nearest' });
-  }, [activeIndex, isOpen, rows.length]);
+    if (typeof activeRow?.scrollIntoView === 'function') {
+      activeRow.scrollIntoView({ block: 'nearest' });
+    }
+  }, [selectedIndex, isOpen, rows.length]);
 
   const openDestination = useCallback(
     (destination: NavigationDestination) => {
-      if (destination.path === location.pathname) {
+      if (destination.path === location.pathname + location.search) {
         close();
         return;
       }
@@ -97,33 +88,85 @@ const CommandPalette = () => {
       });
       close();
     },
-    [close, location.pathname, location.state, navigate]
+    [close, location.pathname, location.search, location.state, navigate]
   );
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (!rows.length) return;
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      setActiveIndex((current) => (current < rows.length - 1 ? current + 1 : 0));
+      setActiveIndex(selectedIndex < rows.length - 1 ? selectedIndex + 1 : 0);
       return;
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      setActiveIndex((current) => (current > 0 ? current - 1 : rows.length - 1));
+      setActiveIndex(selectedIndex > 0 ? selectedIndex - 1 : rows.length - 1);
       return;
     }
     if (event.key === 'Enter') {
       event.preventDefault();
-      const row = rows[activeIndex];
+      const row = rows.find((_row, index) => index === selectedIndex);
       if (row) openDestination(row.destination);
     }
   };
 
   if (!isOpen || typeof document === 'undefined') return null;
-
-  let lastGroup: string | null = null;
-
   return createPortal(
+    <CommandPalettePanel
+      panelRef={panelRef}
+      inputRef={inputRef}
+      listRef={listRef}
+      query={query}
+      setQuery={setQuery}
+      rows={rows}
+      activeIndex={selectedIndex}
+      activePath={activeDestination?.path}
+      onOpen={openDestination}
+      onKeyDown={handleKeyDown}
+      onDismiss={() => {
+        if (isTopmost()) close();
+      }}
+    />,
+    document.body
+  );
+};
+
+interface CommandPalettePanelProps {
+  panelRef: React.RefObject<HTMLDivElement>;
+  inputRef: React.RefObject<HTMLInputElement>;
+  listRef: React.RefObject<HTMLDivElement>;
+  query: string;
+  setQuery: (value: string) => void;
+  rows: CommandRow[];
+  activeIndex: number;
+  activePath?: string;
+  onOpen: (destination: NavigationDestination) => void;
+  onKeyDown: (event: React.KeyboardEvent) => void;
+  onDismiss: () => void;
+}
+
+function commandRowClasses(highlighted: boolean, selected: boolean) {
+  if (highlighted)
+    return 'bg-indigo-100 text-indigo-950 ring-1 ring-indigo-300/60 dark:bg-indigo-900/50 dark:text-white dark:ring-indigo-600/50';
+  if (selected) return 'bg-slate-100 text-slate-950 dark:bg-slate-800 dark:text-white';
+  return 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800';
+}
+
+const CommandPalettePanel = ({
+  panelRef,
+  inputRef,
+  listRef,
+  query,
+  setQuery,
+  rows,
+  activeIndex,
+  activePath,
+  onOpen,
+  onKeyDown,
+  onDismiss,
+}: CommandPalettePanelProps) => {
+  let lastGroup: string | null = null;
+  return (
     <div
       className="fixed inset-0 z-[100] flex min-h-[100dvh] items-start justify-center bg-slate-950/55 pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(10vh,env(safe-area-inset-top))] backdrop-blur-sm"
       role="presentation"
@@ -134,9 +177,7 @@ const CommandPalette = () => {
         aria-hidden="true"
         data-testid="command-palette-backdrop"
         className="absolute inset-0 h-full w-full cursor-default border-0 bg-transparent p-0"
-        onMouseDown={() => {
-          if (isTopmost()) close();
-        }}
+        onMouseDown={onDismiss}
       />
       <div
         ref={panelRef}
@@ -145,7 +186,6 @@ const CommandPalette = () => {
         aria-label={UI_A11Y_TEXT.commandPalette}
         tabIndex={-1}
         className="relative w-full max-w-xl overflow-hidden overscroll-contain rounded-2xl border border-line bg-surface shadow-2xl ring-1 ring-focus/10"
-        onKeyDown={handleKeyDown}
       >
         <div className="border-b border-slate-200/80 bg-indigo-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/90">
           <div className="flex items-center justify-between gap-3">
@@ -173,6 +213,7 @@ const CommandPalette = () => {
             aria-label="Search pages and tools"
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 shadow-inner placeholder:text-slate-400 focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
             autoComplete="off"
+            onKeyDown={onKeyDown}
           />
         </div>
 
@@ -195,27 +236,22 @@ const CommandPalette = () => {
                 <button
                   type="button"
                   data-palette-row={index}
-                  onClick={() => openDestination(destination)}
-                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
-                    activeIndex === index
-                      ? 'bg-indigo-100 text-indigo-950 ring-1 ring-indigo-300/60 dark:bg-indigo-900/50 dark:text-white dark:ring-indigo-600/50'
-                      : location.pathname === destination.path
-                        ? 'bg-slate-100 text-slate-950 dark:bg-slate-800 dark:text-white'
-                        : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
-                  }`}
+                  onClick={() => onOpen(destination)}
+                  onKeyDown={onKeyDown}
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${commandRowClasses(
+                    activeIndex === index,
+                    activePath === destination.path
+                  )}`}
                 >
                   <span className="font-medium">{destination.label}</span>
-                  <span className="shrink-0 font-mono text-[10px] text-slate-400">
-                    {destination.path}
-                  </span>
+                  <span className="shrink-0 font-mono text-[10px] text-slate-400">{group}</span>
                 </button>
               </div>
             );
           })}
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 };
 

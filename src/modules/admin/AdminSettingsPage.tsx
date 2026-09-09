@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import Card from '../../components/common/Card';
+
+import { ClientOpsAdminSettingsEmployeesDocument } from '../../api/graphql/graphql';
 import Badge from '../../components/common/Badge';
+import Card from '../../components/common/Card';
+import PageInformation from '../../components/common/PageInformation';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { ClientOpsAdminSettingsEmployeesDocument } from '../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 interface EmployeeRow {
@@ -97,26 +99,30 @@ const AdminSettingsPage = () => {
         )}
       </Card>
 
-      <Card title="Pending Admin Controls">
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          These controls previously mutated local mock state only. They now remain intentionally
-          disabled until real backend mutations are available.
-        </p>
-        <div className="space-y-3">
-          <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <h3 className="font-semibold text-gray-900 dark:text-white">Leave Types & Balances</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Needs backend leave-balance queries plus write mutations.
-            </p>
+      <PageInformation title="Administration notes">
+        <Card title="Pending Admin Controls">
+          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+            These controls previously mutated local mock state only. They now remain intentionally
+            disabled until real backend mutations are available.
+          </p>
+          <div className="space-y-3">
+            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                Leave Types & Balances
+              </h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Needs backend leave-balance queries plus write mutations.
+              </p>
+            </div>
+            <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Attendance Override</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Needs attendance override mutation support in the attendance service.
+              </p>
+            </div>
           </div>
-          <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <h3 className="font-semibold text-gray-900 dark:text-white">Attendance Override</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Needs attendance override mutation support in the attendance service.
-            </p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </PageInformation>
     </div>
   );
 };

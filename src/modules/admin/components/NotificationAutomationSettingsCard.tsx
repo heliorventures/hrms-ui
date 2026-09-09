@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
+import PageInformation from '../../../components/common/PageInformation';
 import Textarea from '../../../components/common/Textarea';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -211,10 +212,12 @@ const NotificationAutomationSettingsCard = ({ initialSettings }: Props) => {
 
   return (
     <Card title="Automated Employee Events">
-      <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
-        The system sends birthday and work-anniversary alerts after the tenant-local delivery time.
-        Company-wide delivery still requires each employee to opt in.
-      </p>
+      <PageInformation title="Celebration delivery">
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+          The system sends birthday and work-anniversary alerts after the tenant-local delivery
+          time. Company-wide delivery still requires each employee to opt in.
+        </p>
+      </PageInformation>
       {requestError ? (
         <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">
           {requestError}

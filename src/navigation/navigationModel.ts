@@ -1,27 +1,38 @@
 import {
   BarChart3,
-  Bell,
   BriefcaseBusiness,
   Building2,
   CalendarDays,
   ClipboardList,
   Clock3,
+  GraduationCap,
   LayoutDashboard,
+  Megaphone,
   ReceiptText,
   Settings,
-  UsersRound,
   WalletCards,
   type LucideIcon,
 } from 'lucide-react';
 
-import { NAV_LABELS } from '../constants/uiText';
-
 import { WORKPLACE_DESTINATIONS } from './workplaceDestinations';
 
-export type NavigationSectionKey = 'organization' | 'workplace' | 'payroll' | 'hr' | 'admin';
+export type NavigationSectionKey =
+  | 'myWork'
+  | 'people'
+  | 'attendance'
+  | 'timesheets'
+  | 'leave'
+  | 'expenses'
+  | 'payroll'
+  | 'hiring'
+  | 'talent'
+  | 'engagement'
+  | 'reports'
+  | 'settings';
 export type SidebarPlacement = 'primary' | 'section';
 
 export interface NavigationDestination {
+  /** Unique navigable URL, including contextual query parameters. */
   path: string;
   label: string;
   keywords: readonly string[];
@@ -29,331 +40,287 @@ export interface NavigationDestination {
   section?: NavigationSectionKey;
   sidebar?: SidebarPlacement;
   order: number;
+  /** Exact registered route whose permission protects a contextual URL. */
+  accessPath?: string;
+  /** Contextual reports also require a permitted report in this domain. */
+  reportDomain?: string;
 }
 
 export interface NavigationSection {
   key: NavigationSectionKey;
   label: string;
-  basePath: string;
   icon: LucideIcon;
   order: number;
 }
 
 export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
-  {
-    key: 'organization',
-    label: NAV_LABELS.organization,
-    basePath: '/organization',
-    icon: Building2,
-    order: 1,
-  },
-  {
-    key: 'workplace',
-    label: NAV_LABELS.workplace,
-    basePath: '/workplace',
-    icon: BriefcaseBusiness,
-    order: 2,
-  },
-  { key: 'payroll', label: NAV_LABELS.payroll, basePath: '/payroll', icon: WalletCards, order: 3 },
-  { key: 'hr', label: NAV_LABELS.hr, basePath: '/hr', icon: UsersRound, order: 4 },
-  { key: 'admin', label: NAV_LABELS.admin, basePath: '/admin', icon: Settings, order: 5 },
+  { key: 'myWork', label: 'My Work', icon: ClipboardList, order: 10 },
+  { key: 'people', label: 'People', icon: Building2, order: 20 },
+  { key: 'attendance', label: 'Attendance', icon: Clock3, order: 30 },
+  { key: 'timesheets', label: 'Timesheets', icon: ClipboardList, order: 40 },
+  { key: 'leave', label: 'Leave', icon: CalendarDays, order: 50 },
+  { key: 'expenses', label: 'Expenses & Travel', icon: ReceiptText, order: 60 },
+  { key: 'payroll', label: 'Pay & Benefits', icon: WalletCards, order: 70 },
+  { key: 'hiring', label: 'Hiring & Exit', icon: BriefcaseBusiness, order: 80 },
+  { key: 'talent', label: 'Talent & Development', icon: GraduationCap, order: 90 },
+  { key: 'engagement', label: 'Engagement', icon: Megaphone, order: 100 },
+  { key: 'reports', label: 'Reports & Insights', icon: BarChart3, order: 130 },
+  { key: 'settings', label: 'Settings', icon: Settings, order: 140 },
 ];
+
+function page(
+  section: NavigationSectionKey,
+  path: string,
+  label: string,
+  order: number,
+  keywords: readonly string[] = []
+): NavigationDestination {
+  return { section, path, label, order, keywords, sidebar: 'section' };
+}
+
+function reports(
+  section: NavigationSectionKey,
+  domain: string,
+  order: number
+): NavigationDestination {
+  return {
+    ...page(section, `/admin/reports?domain=${domain}`, 'Reports', order, ['export', 'csv']),
+    accessPath: '/admin/reports',
+    reportDomain: domain,
+  };
+}
+
+function approvalRules(
+  section: 'leave' | 'timesheets' | 'expenses',
+  order: number
+): NavigationDestination {
+  return {
+    ...page(section, `/workplace/workflows?domain=${section}`, 'Approval Rules', order, [
+      'workflow',
+      'routing',
+      'approvers',
+      'settings',
+    ]),
+    accessPath: '/workplace/workflows',
+  };
+}
 
 export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
   {
-    path: '/insights',
-    label: NAV_LABELS.insights,
-    keywords: [
-      'analytics',
-      'reports',
-      'workforce',
-      'charts',
-      'data',
-      'metrics',
-      'hr insights',
-      'ai',
-    ],
-    icon: BarChart3,
-    sidebar: 'primary',
-    order: 10,
-  },
-  {
     path: '/dashboard',
-    label: NAV_LABELS.dashboard,
+    label: 'Dashboard',
     keywords: ['home', 'start', 'overview'],
     icon: LayoutDashboard,
     sidebar: 'primary',
-    order: 20,
+    order: 1,
   },
+  page('myWork', '/my-work/tasks', 'My Tasks', 11, ['pending', 'survey', 'feedback', 'appraisal']),
+  page('myWork', '/notifications', 'Notifications', 12, [
+    'alerts',
+    'inbox',
+    'messages',
+    'reminders',
+  ]),
+  page('myWork', '/my-work/completed', 'Completed / Archive', 13, [
+    'submitted',
+    'history',
+    'forms',
+  ]),
+  page('people', '/organization/employees', 'Employee Directory', 21, [
+    'employees',
+    'staff',
+    'colleagues',
+    'roster',
+  ]),
+  page('people', '/admin/employees', 'Manage Employees', 22, [
+    'employees',
+    'create',
+    'update',
+    'bulk import',
+    'people admin',
+  ]),
+  page('people', '/organization/org-chart', 'Org Chart', 23, [
+    'hierarchy',
+    'reporting',
+    'manager',
+    'structure',
+  ]),
+  page('people', '/organization/profile-reviews', 'Profile Reviews', 24, [
+    'approval',
+    'profile change',
+    'identity',
+    'bank',
+  ]),
+  page('people', '/organization/documents', 'Documents', 25, ['policies', 'handbook', 'files']),
+  page('attendance', '/attendance', 'My Attendance', 31, [
+    'punch',
+    'clock',
+    'swipe',
+    'present',
+    'location',
+  ]),
+  page('attendance', '/hr/attendance', 'Attendance Management', 32, [
+    'regularize',
+    'punch adjustments',
+    'team',
+  ]),
+  page('attendance', '/admin/attendance-policy', 'Attendance Policy', 34, [
+    'shifts',
+    'rules',
+    'geo',
+    'settings',
+  ]),
+  page('timesheets', '/timesheet', 'My Timesheets', 41, [
+    'hours',
+    'project',
+    'weekly',
+    'submit',
+    'billing',
+  ]),
+  page('timesheets', '/hr/timesheets', 'Approvals', 42, [
+    'approve timesheet',
+    'reject timesheet',
+    'pending',
+  ]),
+  page('timesheets', '/hr/timesheet-assignments', 'Project Access', 43, [
+    'project whitelist',
+    'assign projects',
+  ]),
+  page('timesheets', '/admin/timesheet-settings', 'Settings', 45, [
+    'projects',
+    'tasks',
+    'lock policy',
+    'editable weeks',
+    'adjustment window',
+  ]),
+  page('leave', '/leave', 'My Leave', 51, [
+    'pto',
+    'vacation',
+    'time off',
+    'absence',
+    'balances',
+    'apply',
+  ]),
+  page('leave', '/hr/leaves', 'Approvals', 52, [
+    'pending leave',
+    'approve leave',
+    'reject',
+    'queue',
+  ]),
+  page('leave', '/leave/team-calendar', 'Team Calendar', 53, [
+    'who is off',
+    'leave grid',
+    'team absence',
+    'month view',
+  ]),
+  page('leave', '/leave/holidays', 'Company Holidays', 54, [
+    'public holiday',
+    'bank holiday',
+    'calendar year',
+  ]),
+  page('leave', '/admin/leave-settings', 'Settings', 56, [
+    'leave types',
+    'policies',
+    'balances',
+    'holidays',
+    'provision',
+    'comp off',
+  ]),
+  page('expenses', '/expenses', 'Claims & Travel', 61, [
+    'reimbursement',
+    'claim',
+    'travel',
+    'bills',
+    'tickets',
+    'approve',
+    'payment',
+  ]),
+  page('expenses', '/admin/expense-categories', 'Categories & Policies', 62, [
+    'meal allowance',
+    'claim types',
+    'caps',
+    'receipt rule',
+    'settings',
+  ]),
+  page('payroll', '/payroll/payslips', 'Payslips & Tax', 71, [
+    'my salary',
+    'declaration',
+    'proof upload',
+    'deductions',
+    'regime',
+  ]),
+  page('payroll', '/payroll/pay', 'Payroll Processing', 72, [
+    'pay run',
+    'payroll cycle',
+    'statutory export',
+    'paysheet',
+  ]),
+  page('payroll', '/payroll/compensation', 'Salary Setup', 73, [
+    'components',
+    'structures',
+    'employee ctc',
+    'salary assignment',
+    'compensation setup',
+  ]),
+  page('payroll', '/payroll/tax', 'Tax Settings', 76, [
+    'tax slabs',
+    'tax configuration',
+    'tds approval',
+  ]),
+  page('engagement', '/admin/notifications', 'Announcements', 102, [
+    'direct notifications',
+    'employee messages',
+    'publish',
+  ]),
+  page('reports', '/insights', 'Insights', 131, [
+    'analytics',
+    'workforce',
+    'charts',
+    'data',
+    'metrics',
+    'ai',
+  ]),
+  page('reports', '/admin/reports', 'All Reports', 132, [
+    'export',
+    'compliance',
+    'pending requests',
+  ]),
+  page('settings', '/admin/access', 'Roles & Permissions', 141, [
+    'rbac',
+    'roles',
+    'permissions',
+    'access matrix',
+    'security',
+    'scopes',
+  ]),
+  page('settings', '/admin/module-health', 'Service Health', 142, [
+    'status',
+    'services',
+    'graphql',
+    'api',
+    'availability',
+  ]),
+  reports('people', 'people', 26),
+  reports('attendance', 'attendance', 33),
+  reports('timesheets', 'timesheets', 44),
+  approvalRules('timesheets', 46),
+  reports('leave', 'leave', 55),
+  approvalRules('leave', 57),
+  approvalRules('expenses', 63),
+  reports('payroll', 'payroll', 77),
+  ...WORKPLACE_DESTINATIONS,
   {
-    path: '/attendance',
-    label: NAV_LABELS.attendance,
-    keywords: ['time', 'punch', 'clock', 'swipe', 'present', 'location', 'regularize'],
-    icon: Clock3,
+    path: '/performance',
+    label: 'Performance',
+    keywords: ['goals', 'appraisal', 'setup', 'process', 'review'],
+    icon: BarChart3,
     sidebar: 'primary',
-    order: 30,
-  },
-  {
-    path: '/timesheet',
-    label: NAV_LABELS.timesheet,
-    keywords: ['hours', 'project', 'weekly', 'submit', 'approve', 'csv', 'billing'],
-    icon: ClipboardList,
-    sidebar: 'primary',
-    order: 40,
-  },
-  {
-    path: '/leave',
-    label: NAV_LABELS.leave,
-    keywords: ['holiday', 'pto', 'vacation', 'time off', 'absence', 'calendar'],
-    icon: CalendarDays,
-    sidebar: 'primary',
-    order: 50,
-  },
-  {
-    path: '/expenses',
-    label: NAV_LABELS.expensesTravel,
-    keywords: ['reimbursement', 'claim', 'travel', 'bills', 'tickets'],
-    icon: ReceiptText,
-    sidebar: 'primary',
-    order: 60,
-  },
-  {
-    path: '/notifications',
-    label: NAV_LABELS.notifications,
-    keywords: ['alerts', 'inbox', 'messages', 'reminders'],
-    icon: Bell,
-    sidebar: 'primary',
-    order: 70,
-  },
-  {
-    path: '/leave/holidays',
-    label: NAV_LABELS.leaveCompanyHolidays,
-    keywords: ['public holiday', 'bank holiday', 'calendar year', 'all holidays'],
-    order: 80,
-  },
-  {
-    path: '/leave/team-calendar',
-    label: NAV_LABELS.leaveTeamCalendar,
-    keywords: ['who is off', 'leave grid', 'team absence', 'month view'],
-    order: 90,
+    order: 85,
   },
   {
     path: '/profile/settings',
-    label: NAV_LABELS.profileSettings,
+    label: 'Profile & Settings',
     keywords: ['account', 'preferences', 'me', 'password', 'my profile'],
-    order: 100,
-  },
-  {
-    path: '/organization/employees',
-    label: NAV_LABELS.employees,
-    keywords: ['directory', 'roster', 'staff', 'colleagues', 'team', 'org'],
-    section: 'organization',
-    sidebar: 'section',
-    order: 110,
-  },
-  {
-    path: '/organization/org-chart',
-    label: NAV_LABELS.orgChart,
-    keywords: ['hierarchy', 'reporting', 'manager', 'tree', 'structure'],
-    section: 'organization',
-    sidebar: 'section',
-    order: 120,
-  },
-  {
-    path: '/organization/documents',
-    label: NAV_LABELS.documents,
-    keywords: ['policies', 'handbook', 'files', 'hr documents'],
-    section: 'organization',
-    sidebar: 'section',
-    order: 130,
-  },
-  {
-    path: '/organization/profile-reviews',
-    label: 'Profile Reviews',
-    keywords: ['hr', 'approval', 'profile change', 'identity', 'bank'],
-    section: 'organization',
-    sidebar: 'section',
-    order: 140,
-  },
-  ...WORKPLACE_DESTINATIONS,
-  {
-    path: '/payroll/payslips',
-    label: NAV_LABELS.payslipsAndTax,
-    keywords: ['salary', 'pay run', 'payroll cycle', 'statutory export', 'paysheet'],
-    section: 'payroll',
-    sidebar: 'section',
-    order: 250,
-  },
-  {
-    path: '/payroll/compensation',
-    label: NAV_LABELS.compensationSetup,
-    keywords: ['monthly salary', 'employment history', 'gross base', 'ctc', 'hr payroll', 'annual'],
-    section: 'payroll',
-    sidebar: 'section',
-    order: 260,
-  },
-  {
-    path: '/payroll/pay',
-    label: NAV_LABELS.payrollProcessing,
-    keywords: ['declaration', 'proof upload', 'deductions', 'regime', 'old regime', 'new regime'],
-    section: 'payroll',
-    sidebar: 'section',
-    order: 270,
-  },
-  {
-    path: '/payroll/tax',
-    label: NAV_LABELS.taxAdmin,
-    keywords: ['tax slabs', 'tax configuration', 'tds approval', 'hr tax tools'],
-    section: 'payroll',
-    sidebar: 'section',
-    order: 280,
-  },
-  {
-    path: '/hr',
-    label: NAV_LABELS.overview,
-    keywords: ['human resources', 'hr home', 'people ops'],
-    section: 'hr',
-    sidebar: 'section',
-    order: 290,
-  },
-  {
-    path: '/hr/people',
-    label: NAV_LABELS.peopleAdmin,
-    keywords: ['employees', 'roster', 'directory', 'bulk import', 'hr employees'],
-    section: 'hr',
-    sidebar: 'section',
-    order: 300,
-  },
-  {
-    path: '/hr/leaves',
-    label: NAV_LABELS.leaveApprovals,
-    keywords: ['pending leave', 'approve leave', 'reject', 'queue', 'inbox'],
-    section: 'hr',
-    sidebar: 'section',
-    order: 310,
-  },
-  {
-    path: '/hr/attendance',
-    label: NAV_LABELS.attendanceManagement,
-    keywords: ['attendance management', 'regularize attendance', 'punch adjustments'],
-    section: 'hr',
-    sidebar: 'section',
-    order: 315,
-  },
-  {
-    path: '/hr/timesheets',
-    label: NAV_LABELS.timesheetApprovals,
-    keywords: ['weekly hours', 'approve timesheet', 'reject timesheet', 'pending timesheet'],
-    section: 'hr',
-    sidebar: 'section',
-    order: 320,
-  },
-  {
-    path: '/hr/timesheet-assignments',
-    label: NAV_LABELS.timesheetProjectAccess,
-    keywords: ['project whitelist', 'timesheet projects', 'assign projects', 'hours'],
-    section: 'hr',
-    sidebar: 'section',
-    order: 330,
-  },
-  {
-    path: '/admin/employees',
-    label: NAV_LABELS.employees,
-    keywords: ['manage users', 'bulk', 'import', 'org admin', 'data'],
-    section: 'admin',
-    sidebar: 'section',
-    order: 340,
-  },
-  {
-    path: '/admin/attendance-policy',
-    label: NAV_LABELS.attendancePolicy,
-    keywords: ['policy', 'shifts', 'rules', 'geo'],
-    section: 'admin',
-    sidebar: 'section',
-    order: 350,
-  },
-  {
-    path: '/admin/timesheet-settings',
-    label: NAV_LABELS.timesheetSettings,
-    keywords: ['projects', 'tasks', 'lock policy', 'editable weeks', 'adjustment window'],
-    section: 'admin',
-    sidebar: 'section',
-    order: 360,
-  },
-  {
-    path: '/admin/leave-settings',
-    label: NAV_LABELS.leaveSettings,
-    keywords: [
-      'leave types',
-      'policies',
-      'balances',
-      'holidays',
-      'calendar',
-      'pto config',
-      'hr leave',
-      'leave policy',
-      'provision',
-    ],
-    section: 'admin',
-    sidebar: 'section',
-    order: 370,
-  },
-  {
-    path: '/admin/expense-categories',
-    label: NAV_LABELS.expenseCategories,
-    keywords: [
-      'travel expense',
-      'meal allowance',
-      'claim types',
-      'expense category',
-      'expense policy',
-      'caps',
-      'receipt rule',
-      'expense type',
-      'reimbursement',
-    ],
-    section: 'admin',
-    sidebar: 'section',
-    order: 380,
-  },
-  {
-    path: '/admin/notifications',
-    label: NAV_LABELS.notifications,
-    keywords: ['announcements', 'direct notifications', 'employee messages', 'publish'],
-    section: 'admin',
-    sidebar: 'section',
-    order: 390,
-  },
-  {
-    path: '/admin/reports',
-    label: NAV_LABELS.reports,
-    keywords: ['export', 'compliance', 'hr reports'],
-    section: 'admin',
-    sidebar: 'section',
-    order: 400,
-  },
-  {
-    path: '/admin/access',
-    label: NAV_LABELS.rolesPermissions,
-    keywords: ['rbac', 'roles', 'permissions', 'access matrix', 'security', 'scopes'],
-    section: 'admin',
-    sidebar: 'section',
-    order: 410,
-  },
-  {
-    path: '/admin/module-health',
-    label: NAV_LABELS.serviceHealth,
-    keywords: ['status', 'services', 'graphql', 'api', 'availability'],
-    section: 'admin',
-    sidebar: 'section',
-    order: 420,
-  },
-  {
-    path: '/admin/settings',
-    label: NAV_LABELS.settings,
-    keywords: ['tenant', 'configuration', 'roles'],
-    section: 'admin',
-    sidebar: 'section',
-    order: 430,
+    order: 150,
   },
 ];

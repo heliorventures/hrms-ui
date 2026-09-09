@@ -1,11 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import Select from '../../components/common/Select';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { useAuth } from '../../contexts/AuthContext';
-import { createPermissionService } from '../../auth/permissionService';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   EmployeeTimesheetProjectCodesDocument,
   OrgChartDocument,
@@ -15,6 +9,14 @@ import {
   type OrgChartQuery,
   type ViewerEmployeeIdQuery,
 } from '../../api/graphql/graphql';
+import { createPermissionService } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import PageInformation from '../../components/common/PageInformation';
+import Select from '../../components/common/Select';
+import { useAuth } from '../../contexts/AuthContext';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 const HrTimesheetProjectAssignmentsPage = () => {
   const { clientSession } = useAuth();
@@ -177,16 +179,22 @@ const HrTimesheetProjectAssignmentsPage = () => {
           <strong>all</strong> active catalog projects.
         </p>
         {!seesCompanyWideEmployeeDirectory && (
-          <p className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
-            Your employee list follows <strong>org chart visibility</strong>: everyone who reports to you (directly or
-            indirectly) appears here—excluding yourself. Users with <span className="font-mono">timesheet:manage</span>{' '}
-            or <span className="font-mono">employee:write</span> see the whole company directory.
-          </p>
+          <PageInformation title="Employee visibility">
+            <p className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
+              Your employee list follows <strong>org chart visibility</strong>: everyone who reports
+              to you (directly or indirectly) appears here—excluding yourself. Users with{' '}
+              <span className="font-mono">timesheet:manage</span> or{' '}
+              <span className="font-mono">employee:write</span> see the whole company directory.
+            </p>
+          </PageInformation>
         )}
         {seesCompanyWideEmployeeDirectory && (
-          <p className="mb-4 rounded-lg border border-emerald-200/80 bg-emerald-50/90 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
-            HR / admin directory access: <strong>all employees</strong> in scope are listed—same source as the org chart.
-          </p>
+          <PageInformation title="Employee visibility">
+            <p className="mb-4 rounded-lg border border-emerald-200/80 bg-emerald-50/90 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
+              HR / admin directory access: <strong>all employees</strong> in scope are listed—same
+              source as the org chart.
+            </p>
+          </PageInformation>
         )}
         {loading ? (
           <p className="text-sm text-gray-500">Loading...</p>

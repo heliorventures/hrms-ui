@@ -1,4 +1,5 @@
 import Button from '../../../components/common/Button';
+import PageInformation from '../../../components/common/PageInformation';
 import type { AdminLeaveSettingsModel } from '../hooks/useAdminLeaveSettings';
 import type { LeaveSettingsTabKey } from '../leaveSettingsTypes';
 import { LEAVE_SETTINGS_TABS } from '../leaveSettingsUtils';
@@ -15,10 +16,12 @@ const LeaveSettingsHeader = ({ loading, tab, onTabChange, onRefresh }: LeaveSett
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leave configuration</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage master leave types, per-type policies, employee balances, and public holiday
-          calendars. Requires <span className="font-mono text-xs">leave:manage</span>.
-        </p>
+        <PageInformation title="Leave configuration">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Manage master leave types, per-type policies, employee balances, and public holiday
+            calendars. Requires <span className="font-mono text-xs">leave:manage</span>.
+          </p>
+        </PageInformation>
       </div>
       <Button variant="outline" type="button" onClick={onRefresh} disabled={loading}>
         Refresh

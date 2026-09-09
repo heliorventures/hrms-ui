@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Card from '../../components/common/Card';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { useDialogs } from '../../contexts/DialogContext';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   PermissionIdsForRoleDocument,
   PermissionScopesForRoleDocument,
@@ -15,6 +12,12 @@ import {
   type RbacAdminBoardQuery,
   type RoleIdsForUserQuery,
 } from '../../api/graphql/graphql';
+import Card from '../../components/common/Card';
+import PageInformation from '../../components/common/PageInformation';
+import { useDialogs } from '../../contexts/DialogContext';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import RbacAccessTabs from './components/RbacAccessTabs';
 import RolePermissionsPanel from './components/RolePermissionsPanel';
 import RoleScopesPanel from './components/RoleScopesPanel';
@@ -321,9 +324,12 @@ const HrAccessManagementPage = () => {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Roles & Permissions</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage tenant RBAC. Changes to roles or permissions require users to obtain a fresh token.
-        </p>
+        <PageInformation title="Roles and permissions">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Manage tenant RBAC. Changes to roles or permissions require users to obtain a fresh
+            token.
+          </p>
+        </PageInformation>
       </div>
 
       {error && (

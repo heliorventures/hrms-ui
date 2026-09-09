@@ -303,7 +303,7 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Compensation</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Salary Setup</h1>
       </div>
 
       {error ? (

@@ -5,6 +5,7 @@ import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageInformation from '../../components/common/PageInformation';
 import PageNotice from '../../components/common/PageNotice';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -427,10 +428,7 @@ const AttendancePage = () => {
         onCursorChange={changeCursor}
       />
 
-      <details className="rounded-xl border border-line bg-surface px-4 py-3">
-        <summary className="cursor-pointer rounded text-sm font-medium text-content-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
-          Attendance guidance and shifts
-        </summary>
+      <PageInformation title="Attendance guidance and shifts">
         <div className="mt-3 space-y-3">
           <p className="text-sm text-content-secondary">
             Monthly totals include completed punches only. Each workday is counted once, including
@@ -452,7 +450,7 @@ const AttendancePage = () => {
             {loading ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
             ) : currentBoard?.shifts.length ? (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3">
                 {currentBoard.shifts.slice(0, shiftLimit).map((shift) => (
                   <div
                     key={shift.id}
@@ -474,7 +472,7 @@ const AttendancePage = () => {
             )}
           </Card>
         </div>
-      </details>
+      </PageInformation>
       {canPunchAttendance && policyReady ? (
         <ManualAttendanceModal
           isOpen={adjustOpen}

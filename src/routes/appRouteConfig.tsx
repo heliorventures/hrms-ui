@@ -1,6 +1,28 @@
 import type { AppChildRoute } from './routeTypes';
 
 export const TENANT_APP_ROUTES: AppChildRoute[] = [
+  { kind: 'redirect', path: 'my-work', to: '/my-work/tasks' },
+  {
+    kind: 'page',
+    path: 'my-work/tasks',
+    title: 'My Tasks',
+    tenantPath: '/my-work/tasks',
+    load: () => import('../modules/my-work/MyWorkPage'),
+  },
+  {
+    kind: 'page',
+    path: 'my-work/completed',
+    title: 'Completed / Archive',
+    tenantPath: '/my-work/completed',
+    load: () => import('../modules/my-work/MyWorkPage'),
+  },
+  {
+    kind: 'page',
+    path: 'performance',
+    title: 'Performance',
+    tenantPath: '/performance',
+    load: () => import('../modules/workplace/PerformancePage'),
+  },
   { kind: 'redirect', index: true, to: '/dashboard' },
   {
     kind: 'page',

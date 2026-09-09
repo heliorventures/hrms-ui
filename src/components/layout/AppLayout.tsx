@@ -1,12 +1,15 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 
+import { authorizationStateKey } from '../../auth/permissionService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTenant } from '../../contexts/TenantContext';
 import { useIdleLogout } from '../../hooks/useIdleLogout';
 import {
   readDesktopNavigationCollapsed,
   writeDesktopNavigationCollapsed,
 } from '../../navigation/navigationPreference';
+import PageInformationProvider from '../common/PageInformationProvider';
 
 import CommandPalette from './CommandPalette';
 import Header from './Header';
@@ -170,4 +173,17 @@ const AppLayout = () => {
   );
 };
 
-export default AppLayout;
+const AppLayoutWithInformation = () => {
+  const location = useLocation();
+  const { clientSession } = useAuth();
+  const { currentTenant } = useTenant();
+  return (
+    <PageInformationProvider
+      scopeKey={`${location.key}:${currentTenant.id}:${authorizationStateKey(clientSession)}`}
+    >
+      <AppLayout />
+    </PageInformationProvider>
+  );
+};
+
+export default AppLayoutWithInformation;

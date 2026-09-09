@@ -50,21 +50,22 @@ beforeEach(() => {
   document.body.innerHTML = '<div id="root"></div>';
   vi.stubGlobal(
     'matchMedia',
-    vi.fn((query: string) =>
-      ({
-        matches: desktopViewport,
-        media: query,
-        onchange: null,
-        addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) =>
-          mediaListeners.add(listener),
-        removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) =>
-          mediaListeners.delete(listener),
-        addListener: (listener: (event: MediaQueryListEvent) => void) =>
-          mediaListeners.add(listener),
-        removeListener: (listener: (event: MediaQueryListEvent) => void) =>
-          mediaListeners.delete(listener),
-        dispatchEvent: () => true,
-      }) as MediaQueryList
+    vi.fn(
+      (query: string) =>
+        ({
+          matches: desktopViewport,
+          media: query,
+          onchange: null,
+          addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) =>
+            mediaListeners.add(listener),
+          removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) =>
+            mediaListeners.delete(listener),
+          addListener: (listener: (event: MediaQueryListEvent) => void) =>
+            mediaListeners.add(listener),
+          removeListener: (listener: (event: MediaQueryListEvent) => void) =>
+            mediaListeners.delete(listener),
+          dispatchEvent: () => true,
+        }) as MediaQueryList
     )
   );
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
@@ -116,7 +117,7 @@ function renderSidebar({
   return { ...result, mobileTriggerRef };
 }
 
-function StatefulSidebar({ initiallyOpen = true }: { initiallyOpen?: boolean }) {
+const StatefulSidebar = ({ initiallyOpen = true }: { initiallyOpen?: boolean }) => {
   const [open, setOpen] = useState(initiallyOpen);
   const mobileTriggerRef = createRef<HTMLButtonElement>();
   return (
@@ -140,7 +141,7 @@ function StatefulSidebar({ initiallyOpen = true }: { initiallyOpen?: boolean }) 
       />
     </MemoryRouter>
   );
-}
+};
 
 function renderStatefulSidebar() {
   setDesktopViewport(false);
@@ -164,7 +165,8 @@ describe('Sidebar', () => {
     sidebarAuth.clientSession = session(['timesheet:read'], ['EMPLOYEE']);
     renderSidebar();
 
-    expect(screen.getByRole('link', { name: 'Timesheet' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Timesheets' }));
+    expect(screen.getByRole('link', { name: 'My Timesheets' })).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Attendance' })).toBeNull();
   });
 
@@ -199,7 +201,9 @@ describe('Sidebar', () => {
     expect(navigation?.hasAttribute('inert')).toBe(false);
     expect(navigation?.getAttribute('aria-hidden')).toBeNull();
   });
+});
 
+describe('Sidebar mobile focus and interaction', () => {
   it('traps Tab and Shift+Tab inside the open mobile navigation', async () => {
     renderStatefulSidebar();
     const navigation = screen.getByRole('dialog', { name: 'Main navigation' });
@@ -207,7 +211,9 @@ describe('Sidebar', () => {
     await waitFor(() => expect(document.activeElement).toBe(closeButton));
 
     const focusable = Array.from(
-      navigation.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled])')
+      navigation.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled])'
+      )
     );
     const last = focusable[focusable.length - 1];
     last.focus();
@@ -263,11 +269,15 @@ describe('Sidebar', () => {
   ])('restores focus after %s dismissal', async (_dismissal, dismiss) => {
     renderStatefulSidebar();
     const trigger = screen.getByTestId('mobile-navigation-trigger');
-    await waitFor(() => expect(screen.getByRole('dialog', { name: 'Main navigation' })).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByRole('dialog', { name: 'Main navigation' })).toBeTruthy()
+    );
 
     dismiss();
 
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Main navigation' })).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Main navigation' })).toBeNull()
+    );
     expect(document.activeElement).toBe(trigger);
   });
 
@@ -288,13 +298,13 @@ describe('Sidebar', () => {
   it('exposes expandable HRMS sections with their current state', () => {
     renderSidebar();
 
-    const organization = screen.getByRole('button', { name: 'Organization' });
+    const organization = screen.getByRole('button', { name: 'People' });
     expect(organization.getAttribute('aria-expanded')).toBe('false');
 
     fireEvent.click(organization);
 
     expect(organization.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByRole('link', { name: 'Employees' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Employee Directory' })).toBeTruthy();
   });
 
   it('keeps destinations discoverable by accessible name in the desktop icon rail', () => {

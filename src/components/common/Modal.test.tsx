@@ -33,7 +33,12 @@ const renderInApplicationRoot = (node: React.ReactNode) => {
 describe('Modal', () => {
   it('portals an accessible dialog, inerts the application, and restores document state', () => {
     const view = renderInApplicationRoot(
-      <Modal isOpen onClose={() => undefined} title="Employee details" description="Review the record.">
+      <Modal
+        isOpen
+        onClose={() => undefined}
+        title="Employee details"
+        description="Review the record."
+      >
         <button type="button">Save</button>
       </Modal>
     );
@@ -45,9 +50,9 @@ describe('Modal', () => {
     expect(root?.hasAttribute('inert')).toBe(true);
     expect(document.body.style.overflow).toBe('hidden');
     expect(dialog.getAttribute('aria-describedby')).toBeTruthy();
-    expect(document.getElementById(dialog.getAttribute('aria-describedby') ?? '')?.textContent).toBe(
-      'Review the record.'
-    );
+    expect(
+      document.getElementById(dialog.getAttribute('aria-describedby') ?? '')?.textContent
+    ).toBe('Review the record.');
 
     view.unmount();
     expect(root?.hasAttribute('inert')).toBe(false);
@@ -75,6 +80,7 @@ describe('Modal', () => {
     expect(dialog.style.maxHeight).toContain('safe-area-inset-bottom');
     expect(dialog.className).toContain('overscroll-contain');
     expect(scrollRegion?.className).toContain('overscroll-contain');
+    expect(scrollRegion?.className).toContain('overflow-x-hidden');
     expect(scrollRegion?.className).toContain('safe-area-inset-left');
     expect(scrollRegion?.className).toContain('safe-area-inset-right');
     expect(footer?.className).toContain('sticky');
@@ -129,8 +135,12 @@ describe('Modal', () => {
         >
           No rendered box
         </button>
-        <button type="button" tabIndex={1}>First positive target</button>
-        <button type="button" tabIndex={2}>Second positive target</button>
+        <button type="button" tabIndex={1}>
+          First positive target
+        </button>
+        <button type="button" tabIndex={2}>
+          Second positive target
+        </button>
         <label>
           <input type="radio" name="choice" defaultChecked /> Checked choice
         </label>
@@ -209,12 +219,7 @@ describe('Modal', () => {
     const Harness = ({ dismissParent }: { dismissParent: boolean }) => {
       const [innerOpen, setInnerOpen] = useState(false);
       return (
-        <Modal
-          isOpen
-          isDismissible={dismissParent}
-          onClose={() => undefined}
-          title="Parent dialog"
-        >
+        <Modal isOpen isDismissible={dismissParent} onClose={() => undefined} title="Parent dialog">
           <button type="button">Parent first action</button>
           <button type="button" onClick={() => setInnerOpen(true)}>
             Open nested dialog
@@ -266,20 +271,13 @@ describe('Modal', () => {
           <button type="button" onClick={() => setChildOpen(true)}>
             Open locked child
           </button>
-          <Modal
-            isOpen={childOpen}
-            isDismissible={false}
-            onClose={childClose}
-            title="Locked child"
-          >
+          <Modal isOpen={childOpen} isDismissible={false} onClose={childClose} title="Locked child">
             Locked
           </Modal>
         </Modal>
       );
     };
-    renderInApplicationRoot(
-      <Harness />
-    );
+    renderInApplicationRoot(<Harness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Open locked child' }));
     fireEvent.keyDown(document, { key: 'Escape' });

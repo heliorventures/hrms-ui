@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
+
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
-import { PAYROLL_MONTHS } from '../payrollFormatters';
+import PageInformation from '../../../components/common/PageInformation';
 import type { FyPayrollExportKey, MonthlyPayrollExportKey } from '../hooks/usePayrollExports';
+import { PAYROLL_MONTHS } from '../payrollFormatters';
 
 interface ExportStatus {
   exporting: boolean;
@@ -181,12 +183,14 @@ const PayrollExportsSection = ({
     })}
 
     <Card title="India FY — Employee Payroll Totals (CSV)">
-      <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
-        Aggregates payslips in payroll cycles whose India financial year matches the selected start
-        year (April through the following March). Sums gross, deductions, net, TDS, PF/ESI
-        employee, and PT. Optional <strong>FY quarter</strong> narrows to Q1 Apr-Jun through Q4
-        Jan-Mar. Form&nbsp;16 Part&nbsp;B variant uses spreadsheet-friendly column labels.
-      </p>
+      <PageInformation title="Export period">
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+          Aggregates payslips in payroll cycles whose India financial year matches the selected
+          start year (April through the following March). Sums gross, deductions, net, TDS, PF/ESI
+          employee, and PT. Optional <strong>FY quarter</strong> narrows to Q1 Apr-Jun through Q4
+          Jan-Mar. Form&nbsp;16 Part&nbsp;B variant uses spreadsheet-friendly column labels.
+        </p>
+      </PageInformation>
       <div className="flex flex-wrap items-end gap-4">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-gray-600 dark:text-gray-400">India FY start year</span>

@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
+
+import { ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
 import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import PageInformation from '../../components/common/PageInformation';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import CreateEmployeeModal from './components/CreateEmployeeModal';
 import EditEmployeeModal, { type EditEmployeeRow } from './components/EditEmployeeModal';
-import { ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 
 interface EmployeeRow {
   id: string;
@@ -220,14 +224,14 @@ const AdminEmployeesPage = () => {
         )}
       </Card>
 
-      <Card title="Admin Notes">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          <strong>Add / Edit</strong> use <code className="text-xs">createEmployee</code> /{' '}
-          <code className="text-xs">updateEmployee</code> with org picks and optional{' '}
-          <strong>reporting manager</strong> (cycle-safe on the server). Employee code and date of
-          joining are not editable after create.
-        </p>
-      </Card>
+      <PageInformation title="Employee management">
+        <Card title="Admin Notes">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Add and edit employees with their organization assignments and reporting manager.
+            Employee code and date of joining are fixed after creation.
+          </p>
+        </Card>
+      </PageInformation>
 
       <CreateEmployeeModal
         isOpen={createOpen}

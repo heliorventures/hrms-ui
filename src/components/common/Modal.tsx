@@ -2,6 +2,7 @@ import { type ReactNode, type RefObject, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import { UI_A11Y_TEXT } from '../../constants/uiText';
+
 import { useDialogSurface } from './useDialogSurface';
 
 export interface ModalProps {
@@ -131,7 +132,7 @@ const Modal = ({
             </button>
           </header>
 
-          <section className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-3 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
+          <section className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain py-3 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
             {children}
           </section>
 

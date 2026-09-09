@@ -13,6 +13,7 @@ import { authorizationStateKey, createPermissionService } from '../../auth/permi
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
+import PageInformation from '../../components/common/PageInformation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { formatMinutesAsHhMm } from '../../utils/attendanceDuration';
@@ -315,10 +316,12 @@ const AttendanceDailyReportPanel = ({ fromDate, toDate }: AttendanceDailyReportP
         {dateRangeError ? (
           <p className="mt-3 text-sm text-status-danger">{dateRangeError}</p>
         ) : null}
-        <p className="mt-3 text-xs text-content-muted">
-          Inclusive work dates. Expected and absent days follow tenant attendance policy; punch
-          times use each row&apos;s tenant timezone.
-        </p>
+        <PageInformation title="Attendance report guide">
+          <p className="mt-3 text-xs text-content-muted">
+            Inclusive work dates. Expected and absent days follow tenant attendance policy; punch
+            times use each row&apos;s tenant timezone.
+          </p>
+        </PageInformation>
       </Card>
 
       {error ? (

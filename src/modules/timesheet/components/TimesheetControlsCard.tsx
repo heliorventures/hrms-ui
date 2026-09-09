@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import PageInformation from '../../../components/common/PageInformation';
 import type { PeriodMode } from '../timesheetTypes';
 
 interface TimesheetControlsCardProps {
@@ -63,13 +64,15 @@ const TimesheetControlsCard = ({
     <div className="flex flex-wrap items-end justify-between gap-2">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timesheet</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Record work here. Attendance punches stay on the{' '}
-          <Link to="/attendance" className="text-primary-600 underline dark:text-primary-400">
-            Attendance
-          </Link>{' '}
-          screen.
-        </p>
+        <PageInformation title="Timesheet">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Record work here. Attendance punches stay on the{' '}
+            <Link to="/attendance" className="text-primary-600 underline dark:text-primary-400">
+              Attendance
+            </Link>{' '}
+            screen.
+          </p>
+        </PageInformation>
       </div>
       <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{periodSummary}</p>
     </div>
@@ -162,15 +165,12 @@ const TimesheetControlsCard = ({
       {rangeError ? (
         <p className="mt-2 text-sm text-red-600 dark:text-red-400">{rangeError}</p>
       ) : null}
-      <details className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        <summary className="cursor-pointer font-medium text-gray-600 dark:text-gray-300">
-          Entry policy
-        </summary>
+      <PageInformation title="Entry policy">
         <p className="mt-1">
           Draft edits are allowed for weeks starting on or after {earliestMonday}.{' '}
           {lockApproved ? 'Approved entries cannot be edited.' : ''}
         </p>
-      </details>
+      </PageInformation>
 
       {canWrite && periodMode === 'week' && (
         <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-gray-200 pt-3 dark:border-gray-700">

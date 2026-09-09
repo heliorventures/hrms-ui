@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 
@@ -12,7 +13,7 @@ interface AssetSectionToolbarProps {
   children?: React.ReactNode;
 }
 
-export default function AssetSectionToolbar({
+const AssetSectionToolbar = ({
   search,
   placeholder,
   loading,
@@ -20,23 +21,27 @@ export default function AssetSectionToolbar({
   onSearch,
   onAction,
   children,
-}: AssetSectionToolbarProps) {
+}: AssetSectionToolbarProps) => {
   const [draft, setDraft] = useState(search);
   const submit = (event: FormEvent) => {
     event.preventDefault();
     onSearch(draft.trim());
   };
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-      <form onSubmit={submit} className="flex min-w-64 flex-1 items-end gap-2">
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <form
+        onSubmit={submit}
+        className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:min-w-72 sm:flex-1"
+      >
         <Input
-          label="Search"
+          aria-label="Search"
+          fullWidth
           value={draft}
           placeholder={placeholder}
           onChange={(event) => setDraft(event.target.value)}
           className="w-full"
         />
-        <Button type="submit" variant="outline" disabled={loading}>
+        <Button type="submit" variant="outline" size="sm" disabled={loading}>
           Search
         </Button>
         {search ? (
@@ -57,4 +62,6 @@ export default function AssetSectionToolbar({
       {actionLabel && onAction ? <Button onClick={onAction}>{actionLabel}</Button> : null}
     </div>
   );
-}
+};
+
+export default AssetSectionToolbar;

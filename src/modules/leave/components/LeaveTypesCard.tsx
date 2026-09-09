@@ -12,7 +12,7 @@ const LeaveTypesCard = ({ leaveTypes, loading }: LeaveTypesCardProps) => (
     {loading ? (
       <p className="text-sm text-gray-500 dark:text-gray-400">Loading Leave Types...</p>
     ) : leaveTypes.length ? (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3">
         {leaveTypes.map((item) => (
           <div key={item.id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
             <div className="flex items-start justify-between gap-3">

@@ -320,6 +320,11 @@ describe('PrejoiningAdminPage ownership and conversion', () => {
     await user.click(screen.getByRole('button', { name: 'Approve information' }));
     await user.click(await screen.findByRole('button', { name: 'Confirm joined' }));
     const dialog = await screen.findByRole('dialog', { name: 'Confirm joined' });
+    expect(dialog.className).toContain('max-w-2xl');
+    const fieldsGrid = within(dialog).getByLabelText('Employee code').closest('.grid');
+    expect(fieldsGrid?.className).toContain('min-w-0');
+    expect(within(dialog).getByLabelText('Designation').className).toContain('w-full');
+    expect(within(dialog).getByLabelText('Username').className).toContain('w-full');
     await user.click(within(dialog).getByRole('button', { name: 'Create employee and login' }));
     expect(await within(dialog).findByText(/employee code is required/i)).toBeTruthy();
     expect(

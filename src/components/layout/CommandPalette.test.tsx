@@ -7,15 +7,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CommandPalette from './CommandPalette';
 import { CommandPaletteProvider, useCommandPalette } from './CommandPaletteContext';
 
+const paletteAccess = vi.hoisted(() => ({ paths: ['/dashboard'] }));
+
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ can: () => true, clientSession: null }),
 }));
 
 vi.mock('../../auth/navAccess', () => ({
-  canAccessTenantPath: (path: string) => path === '/dashboard',
+  canAccessTenantPath: (path: string) => paletteAccess.paths.includes(path),
 }));
 
-function PaletteHarness() {
+const PaletteHarness = () => {
   const { open } = useCommandPalette();
   const location = useLocation();
   const focusHandoff = Boolean(
@@ -35,7 +37,7 @@ function PaletteHarness() {
       <CommandPalette />
     </>
   );
-}
+};
 
 function renderPalette(initialPath = '/leave') {
   document.body.innerHTML = '<div id="root"></div>';
@@ -50,6 +52,7 @@ function renderPalette(initialPath = '/leave') {
 }
 
 beforeEach(() => {
+  paletteAccess.paths = ['/dashboard'];
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
     callback(0);
     return 1;
@@ -65,6 +68,24 @@ afterEach(() => {
 });
 
 describe('CommandPalette', () => {
+  it('keeps keyboard selection valid when permissions shrink the open result list', async () => {
+    paletteAccess.paths = ['/dashboard', '/attendance'];
+    const view = renderPalette('/leave');
+    fireEvent.click(screen.getByRole('button', { name: 'Search pages and tools' }));
+    const search = await screen.findByRole('searchbox', { name: 'Search pages and tools' });
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    paletteAccess.paths = ['/dashboard'];
+    view.rerender(
+      <MemoryRouter initialEntries={['/leave']}>
+        <CommandPaletteProvider>
+          <PaletteHarness />
+        </CommandPaletteProvider>
+      </MemoryRouter>
+    );
+    fireEvent.keyDown(search, { key: 'Enter' });
+    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/dashboard'));
+  });
+
   it('uses the shared modal lifecycle and restores the Header opener after Escape', async () => {
     renderPalette();
     const opener = screen.getByRole('button', { name: 'Search pages and tools' });
@@ -72,7 +93,9 @@ describe('CommandPalette', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Command palette' });
     await waitFor(() =>
-      expect(document.activeElement).toBe(screen.getByRole('searchbox', { name: 'Search pages and tools' }))
+      expect(document.activeElement).toBe(
+        screen.getByRole('searchbox', { name: 'Search pages and tools' })
+      )
     );
     expect(dialog.getAttribute('aria-modal')).toBe('true');
     expect(document.getElementById('root')?.hasAttribute('inert')).toBe(true);

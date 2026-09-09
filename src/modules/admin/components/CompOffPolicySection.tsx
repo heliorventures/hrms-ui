@@ -4,6 +4,7 @@ import { createPermissionService } from '../../../auth/permissionService';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import PageInformation from '../../../components/common/PageInformation';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
   CompOffSettingsDocument,
@@ -82,10 +83,12 @@ const PolicySettings = () => {
   return (
     <Card title="Comp-off policies">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-2xl text-sm text-content-secondary">
-          Employee settings take priority over designation settings, followed by the company
-          default. Credits use a separate comp-off balance.
-        </p>
+        <PageInformation title="Comp-off policy">
+          <p className="max-w-2xl text-sm text-content-secondary">
+            Employee settings take priority over designation settings, followed by the company
+            default. Credits use a separate comp-off balance.
+          </p>
+        </PageInformation>
         <Button
           size="sm"
           disabled={board.loading || board.busy || !board.data}

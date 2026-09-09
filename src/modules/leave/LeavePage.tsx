@@ -1,25 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import FlashToastBar from '../../components/common/FlashToastBar';
-import { createPermissionService } from '../../auth/permissionService';
-import { useAuth } from '../../contexts/AuthContext';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { useFlashToast } from '../../hooks/useFlashToast';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
-import AllHolidaysModal from './components/AllHolidaysModal';
-import ApplyLeaveModal from './components/ApplyLeaveModal';
-import HolidaySummaryCard from './components/HolidaySummaryCard';
-import LeaveBalancesCard from './components/LeaveBalancesCard';
-import LeaveRejectModal from './components/LeaveRejectModal';
-import LeaveRequestsTableSection from './components/LeaveRequestsTableSection';
-import LeaveRecoveryNotice from './components/LeaveRecoveryNotice';
-import LeaveTypesCard from './components/LeaveTypesCard';
-import LeaveWorkflowTrailModal from './components/LeaveWorkflowTrailModal';
-import CompOffPanel from './components/CompOffPanel';
-import { useAllCompanyHolidays } from './hooks/useAllCompanyHolidays';
-import { useLeaveWorkflowTrail } from './hooks/useLeaveWorkflowTrail';
+
 import {
   ApproveLeaveRequestDocument,
   CancelLeaveRequestDocument,
@@ -28,11 +9,34 @@ import {
   type LeaveBoardQuery,
   type LeaveBoardQueryVariables,
 } from '../../api/graphql/graphql';
+import { createPermissionService } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import FlashToastBar from '../../components/common/FlashToastBar';
+import PageInformation from '../../components/common/PageInformation';
+import { useAuth } from '../../contexts/AuthContext';
+import { useFlashToast } from '../../hooks/useFlashToast';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
+import AllHolidaysModal from './components/AllHolidaysModal';
+import ApplyLeaveModal from './components/ApplyLeaveModal';
+import CompOffPanel from './components/CompOffPanel';
+import HolidaySummaryCard from './components/HolidaySummaryCard';
+import LeaveBalancesCard from './components/LeaveBalancesCard';
+import LeaveRecoveryNotice from './components/LeaveRecoveryNotice';
+import LeaveRejectModal from './components/LeaveRejectModal';
+import LeaveRequestsTableSection from './components/LeaveRequestsTableSection';
+import LeaveTypesCard from './components/LeaveTypesCard';
+import LeaveWorkflowTrailModal from './components/LeaveWorkflowTrailModal';
+import { useAllCompanyHolidays } from './hooks/useAllCompanyHolidays';
+import { useLeaveWorkflowTrail } from './hooks/useLeaveWorkflowTrail';
 import {
   LEAVE_APPROVAL_REFRESH_MESSAGE,
   leaveApprovalTarget,
   type LeaveApprovalTarget,
 } from './leaveApproval';
+
 type LeavePageFailure = {
   message: string;
   operation: 'board' | 'mutation';
@@ -396,49 +400,17 @@ const LeavePage = () => {
         ) : null}
       </Card>
 
-      <details
-        aria-label="Holidays"
-        className="group rounded-xl border border-line bg-surface shadow-card"
-      >
-        <summary className="cursor-pointer list-none px-4 py-3 text-base font-semibold text-content-primary marker:hidden">
-          <span className="flex items-center justify-between gap-3">
-            Holidays
-            <span
-              aria-hidden="true"
-              className="text-content-secondary transition-transform group-open:rotate-180"
-            >
-              ⌄
-            </span>
-          </span>
-        </summary>
-        <div className="border-t border-line p-3">
-          <HolidaySummaryCard
-            canManageLeave={permissions.canCapability('action.leave.manage')}
-            holidays={data?.upcomingHolidays ?? []}
-            loading={loading}
-            onViewAll={() => void allHolidays.open()}
-          />
-        </div>
-      </details>
-      <details
-        aria-label="Leave types"
-        className="group rounded-xl border border-line bg-surface shadow-card"
-      >
-        <summary className="cursor-pointer list-none px-4 py-3 text-base font-semibold text-content-primary marker:hidden">
-          <span className="flex items-center justify-between gap-3">
-            Leave types
-            <span
-              aria-hidden="true"
-              className="text-content-secondary transition-transform group-open:rotate-180"
-            >
-              ⌄
-            </span>
-          </span>
-        </summary>
-        <div className="border-t border-line p-3">
-          <LeaveTypesCard leaveTypes={data?.leaveTypes ?? []} loading={loading} />
-        </div>
-      </details>
+      <PageInformation title="Holidays">
+        <HolidaySummaryCard
+          canManageLeave={permissions.canCapability('action.leave.manage')}
+          holidays={data?.upcomingHolidays ?? []}
+          loading={loading}
+          onViewAll={() => void allHolidays.open()}
+        />
+      </PageInformation>
+      <PageInformation title="Leave types">
+        <LeaveTypesCard leaveTypes={data?.leaveTypes ?? []} loading={loading} />
+      </PageInformation>
 
       <LeaveWorkflowTrailModal
         employeeLabel={employeeLabel}

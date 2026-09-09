@@ -37,6 +37,7 @@ export const ConfirmJoinedModal = (props: ConfirmModalProps) => {
       isDismissible={!props.busy}
       title="Confirm joined"
       description="This creates the employee and login together. The new user must change the initial password."
+      size="lg"
       footer={
         <>
           <Button variant="quiet" disabled={props.busy} onClick={props.onClose}>
@@ -55,7 +56,7 @@ export const ConfirmJoinedModal = (props: ConfirmModalProps) => {
             {props.error}
           </p>
         ) : null}
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
           <EmploymentFields {...props} />
           <ReportingManagerFields {...props} />
           <AccountFields {...props} />
@@ -77,6 +78,7 @@ const EmploymentFields = (props: ConfirmModalProps) => {
       <Input
         label="Employee code"
         required
+        fullWidth
         value={props.draft.employeeCode}
         onChange={(event) => props.onChange({ ...props.draft, employeeCode: event.target.value })}
       />
@@ -84,17 +86,20 @@ const EmploymentFields = (props: ConfirmModalProps) => {
         label="Date of joining"
         required
         type="date"
+        fullWidth
         value={props.draft.dateOfJoining}
         onChange={(event) => props.onChange({ ...props.draft, dateOfJoining: event.target.value })}
       />
       <Select
         label="Department"
+        fullWidth
         options={options(props.departments)}
         value={props.draft.departmentId}
         onChange={(event) => props.onChange({ ...props.draft, departmentId: event.target.value })}
       />
       <Select
         label="Designation"
+        fullWidth
         options={options(props.designations)}
         value={props.draft.designationId}
         onChange={(event) => props.onChange({ ...props.draft, designationId: event.target.value })}
@@ -111,9 +116,10 @@ const ReportingManagerFields = (props: ConfirmModalProps) => {
   return (
     <>
       {' '}
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-2">
         <Input
           label="Find reporting manager"
+          fullWidth
           value={props.managerSearch}
           onChange={(event) => props.onManagerSearch(event.target.value)}
         />
@@ -140,6 +146,7 @@ const ReportingManagerFields = (props: ConfirmModalProps) => {
       </div>
       <Select
         label="Reporting manager"
+        fullWidth
         options={options(props.managers)}
         value={props.draft.reportingManagerId}
         onChange={(event) =>
@@ -156,12 +163,14 @@ const AccountFields = (props: ConfirmModalProps) => {
       {' '}
       <Input
         label="Employment type"
+        fullWidth
         value={props.draft.employmentType}
         onChange={(event) => props.onChange({ ...props.draft, employmentType: event.target.value })}
       />
       <Input
         label="Username"
         required
+        fullWidth
         value={props.draft.username}
         onChange={(event) => props.onChange({ ...props.draft, username: event.target.value })}
       />
@@ -169,6 +178,7 @@ const AccountFields = (props: ConfirmModalProps) => {
         label="Initial password"
         required
         type="password"
+        fullWidth
         value={props.draft.initialPassword}
         onChange={(event) =>
           props.onChange({ ...props.draft, initialPassword: event.target.value })
@@ -178,6 +188,7 @@ const AccountFields = (props: ConfirmModalProps) => {
         label="Confirm password"
         required
         type="password"
+        fullWidth
         value={props.draft.confirmPassword}
         onChange={(event) =>
           props.onChange({ ...props.draft, confirmPassword: event.target.value })
@@ -193,11 +204,11 @@ const RoleFields = (props: ConfirmModalProps) => {
       {' '}
       <fieldset>
         <legend className="text-sm font-semibold">Application roles</legend>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <div className="mt-2 grid min-w-0 gap-2 sm:grid-cols-2">
           {props.roles.map((role) => (
             <label
               key={role.id}
-              className="flex min-h-10 items-center gap-2 rounded-md border border-line px-3 text-sm"
+              className="flex min-h-10 min-w-0 items-center gap-2 rounded-md border border-line px-3 text-sm"
             >
               <input
                 type="checkbox"
@@ -211,7 +222,7 @@ const RoleFields = (props: ConfirmModalProps) => {
                   })
                 }
               />
-              {role.label}
+              <span className="min-w-0 break-words">{role.label}</span>
             </label>
           ))}
         </div>

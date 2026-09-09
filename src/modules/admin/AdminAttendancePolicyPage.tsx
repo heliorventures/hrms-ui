@@ -1,13 +1,15 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   ClientOpsAdminAttendancePolicyDocument,
   ClientOpsUpsertAttendancePunchPolicyDocument,
 } from '../../api/graphql/graphql';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import Input from '../../components/common/Input';
+import PageInformation from '../../components/common/PageInformation';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 const DECIMAL_PATTERN = /^-?(?:\d+|\d+\.\d+|\.\d+)$/;
 
@@ -230,25 +232,27 @@ const AdminAttendancePolicyPage = () => {
           </form>
         )}
       </Card>
-      <Card title="Shifts">
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : shifts.length ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {shifts.map((s) => (
-              <li key={s.id} className="py-3">
-                <p className="font-medium text-gray-900 dark:text-white">{s.name}</p>
-                <p className="text-xs text-gray-500">
-                  {s.startTime ?? '—'} – {s.endTime ?? '—'}
-                  {s.workHours != null ? ` · ${s.workHours}h` : ''}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500">No Shift Templates.</p>
-        )}
-      </Card>
+      <PageInformation title="Shift reference">
+        <Card title="Shifts">
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : shifts.length ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {shifts.map((s) => (
+                <li key={s.id} className="py-3">
+                  <p className="font-medium text-gray-900 dark:text-white">{s.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {s.startTime ?? '—'} – {s.endTime ?? '—'}
+                    {s.workHours != null ? ` · ${s.workHours}h` : ''}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No Shift Templates.</p>
+          )}
+        </Card>
+      </PageInformation>
     </div>
   );
 };

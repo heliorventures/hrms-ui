@@ -6,13 +6,14 @@ import AsyncState from '../../../components/common/AsyncState';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import PageInformation from '../../../components/common/PageInformation';
 import PageNotice from '../../../components/common/PageNotice';
-import { useTenant } from '../../../contexts/TenantContext';
-import { formatTenantTime, tenantDateKey } from '../../../utils/tenantTime';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useTenant } from '../../../contexts/TenantContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import { formatTenantTime, tenantDateKey } from '../../../utils/tenantTime';
 import { formatBackendTime } from '../../../utils/timeFormat';
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
@@ -321,9 +322,12 @@ const PunchActionArea = ({
       />
       Record GPS location (saved with punch in / punch out)
     </label>
-    <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-      You can punch in and out several times a day. Total time adds up each completed in→out block.
-    </p>
+    <PageInformation title="Attendance totals">
+      <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+        You can punch in and out several times a day. Total time adds up each completed in→out
+        block.
+      </p>
+    </PageInformation>
     <Button
       variant="primary"
       fullWidth

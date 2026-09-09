@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
   Briefcase,
   FileText,
@@ -10,24 +9,27 @@ import {
   TrendingUp,
   User,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
+import Button from '../../../components/common/Button';
+import PageInformation from '../../../components/common/PageInformation';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { useEmployeeProfileData } from './hooks/useEmployeeProfileData';
+
 import { EmployeeHeader } from './components/EmployeeHeader';
+import { ProfileSectionSkeleton, ErrorSection } from './components/SectionStates';
 import { SidebarProfile } from './components/SidebarProfile';
 import { TabNavigation, type ProfileTabDef } from './components/TabNavigation';
-import { ProfileSectionSkeleton, ErrorSection } from './components/SectionStates';
+import { useEmployeeProfileData } from './hooks/useEmployeeProfileData';
+import { canShowPayrollSensitive } from './lib/profileAccess';
+import { BankingTab } from './tabs/BankingTab';
+import { DocumentsTab } from './tabs/DocumentsTab';
+import { EducationTab } from './tabs/EducationTab';
+import { EmploymentManagementTab } from './tabs/EmploymentManagementTab';
+import { GrowthTimelineTab } from './tabs/GrowthTimelineTab';
+import { IdentityTab } from './tabs/IdentityTab';
 import { OverviewTab } from './tabs/OverviewTab';
 import { PersonalInfoTab } from './tabs/PersonalInfoTab';
-import { BankingTab } from './tabs/BankingTab';
-import { IdentityTab } from './tabs/IdentityTab';
-import { EducationTab } from './tabs/EducationTab';
 import { WorkExperienceTab } from './tabs/WorkExperienceTab';
-import { GrowthTimelineTab } from './tabs/GrowthTimelineTab';
-import { DocumentsTab } from './tabs/DocumentsTab';
-import { EmploymentManagementTab } from './tabs/EmploymentManagementTab';
-import Button from '../../../components/common/Button';
-import { canShowPayrollSensitive } from './lib/profileAccess';
 
 const TAB_DEFS: ProfileTabDef[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -105,10 +107,12 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             Employee details
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            The organization directory shows work information only. Personal, identity, banking, and
-            document details remain private.
-          </p>
+          <PageInformation title="Directory privacy">
+            <p className="mt-1 text-sm text-slate-500">
+              The organization directory shows work information only. Personal, identity, banking,
+              and document details remain private.
+            </p>
+          </PageInformation>
           <dl className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[
               ['Designation', employee.designationTitle ?? '—'],

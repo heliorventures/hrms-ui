@@ -1,4 +1,5 @@
 import Button from '../../../components/common/Button';
+import PageInformation from '../../../components/common/PageInformation';
 import Table from '../../../components/common/Table';
 import type { ExpenseCategoryRow, ExpensePolicyRow } from '../expenseCategoryTypes';
 import { formatMaybeAmount, selectFieldClass } from '../expenseCategoryUtils';
@@ -65,9 +66,12 @@ const ExpensePoliciesPanel = ({
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Policies apply the most specific match: department, designation, role, then all employees.
-          </p>
+          <PageInformation title="Expense policy matching">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Policies apply the most specific match: department, designation, role, then all
+              employees.
+            </p>
+          </PageInformation>
         </div>
         {directoryLoading ? (
           <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">

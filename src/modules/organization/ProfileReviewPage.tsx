@@ -1,11 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Button from '../../components/common/Button';
-import Card from '../../components/common/Card';
-import Modal from '../../components/common/Modal';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   EmployeeEvidenceReviewQueueDocument,
   EmployeeProfileChangeReviewDetailDocument,
@@ -16,6 +11,13 @@ import {
   type EmployeeEvidenceReviewQueueQuery,
   type EmployeeProfileReviewQueueQuery,
 } from '../../api/graphql/graphql';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import Modal from '../../components/common/Modal';
+import PageInformation from '../../components/common/PageInformation';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   EmployeeDocumentAttachmentDocument,
   employeeDocumentObjectUrl,
@@ -223,7 +225,12 @@ const ProfileReviewPage = () => {
           <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
             <ShieldCheck className="h-6 w-6 text-indigo-600" aria-hidden /> Profile Review Queue
           </h1>
-          <p className="mt-1 text-sm text-slate-500">Review sensitive employee changes and supporting evidence. Values are decrypted only after opening a request.</p>
+          <PageInformation title="Profile review">
+            <p className="mt-1 text-sm text-slate-500">
+              Review sensitive employee changes and supporting evidence. Values are decrypted only
+              after opening a request.
+            </p>
+          </PageInformation>
         </div>
         <Button type="button" variant="outline" className="gap-2" disabled={loading} onClick={() => void loadQueue()}>
           <RefreshCw className="h-4 w-4" aria-hidden /> Refresh

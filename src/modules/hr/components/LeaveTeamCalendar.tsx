@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+
+import { type HrLeaveCalendarQuery } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import PageInformation from '../../../components/common/PageInformation';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { type HrLeaveCalendarQuery } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 const MAX_EMPLOYEES = 45;
@@ -285,9 +287,12 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
         </span>
       }
     >
-      <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-        Approved leave only. Each column is a day; holidays are slate-tinted; leave types use distinct colors (legend below).
-      </p>
+      <PageInformation title="Calendar guide">
+        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+          Approved leave only. Each column is a day; holidays are slate-tinted; leave types use
+          distinct colors (legend below).
+        </p>
+      </PageInformation>
       {error && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {loading && !data ? (
         <p className="text-sm text-gray-500">Loading...</p>

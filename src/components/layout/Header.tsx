@@ -4,6 +4,7 @@ import type { RefObject } from 'react';
 import { UI_PLACEHOLDER_TEXT } from '../../constants/uiText';
 import { useTenant } from '../../contexts/TenantContext';
 import IconButton from '../common/IconButton';
+import PageInformationButton from '../common/PageInformationButton';
 
 import { useCommandPalette } from './CommandPaletteContext';
 import NotificationDropdown from './NotificationDropdown';
@@ -68,6 +69,7 @@ const Header = ({
       </div>
 
       <div className="flex shrink-0 items-center gap-1 md:gap-2">
+        <PageInformationButton />
         <NotificationDropdown />
         <ProfileDropdown />
       </div>

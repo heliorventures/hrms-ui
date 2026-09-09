@@ -1,219 +1,95 @@
-import { gql } from 'graphql-request';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
-import type { WorkplacePerformanceQuery } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
-import Button from '../../components/common/Button';
-import Card from '../../components/common/Card';
 import { useAuth } from '../../contexts/AuthContext';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
-import { cycleFields, SaveReviewCycleDocument } from './performanceSetup';
-import { SetupEditor } from './performanceSetupEditor';
+import LegacyPerformanceCatalog from './LegacyPerformanceCatalog';
 import PerformanceLifecyclePanel from './PerformanceLifecyclePanel';
-
-const PerformanceCatalogDocument = gql`
-  query PerformanceCatalog($offset: Int!) {
-    reviewCycles(limit: 20, offset: $offset) {
-      id
-      name
-      startDate
-      endDate
-      status
-      reviewType
-    }
-    goals(limit: 80) {
-      id
-      employeeId
-      reviewCycleId
-      title
-      status
-      weightage
-    }
-  }
-`;
 
 const PerformancePage = () => {
   const { clientSession } = useAuth();
-  const canManage = createPermissionService(clientSession).canScopedPermission(
-    'performance:manage',
-    ['ALL']
-  );
-  const canEvaluate = createPermissionService(clientSession).canScopedPermission(
-    'performance:evaluate',
-    ['TEAM']
-  );
-  const canSelf = createPermissionService(clientSession).canScopedPermission('performance:self', [
-    'SELF',
-  ]);
-  const [editor, setEditor] = useState<{
-    id?: string;
-    name: string;
-    startDate: string;
-    endDate: string;
-    reviewType: string;
-  } | null>(null);
-  const client = useGraphClient('client');
-  const [data, setData] = useState<WorkplacePerformanceQuery | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [offset, setOffset] = useState(0);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (!canManage) return null;
-    return client.request<WorkplacePerformanceQuery>(PerformanceCatalogDocument, { offset });
-  }, [canManage, client, offset]);
-
-  useEffect(() => {
-    let c = false;
-    void (async () => {
-      try {
-        setLoading(true);
-        setData(null);
-        setError(null);
-        const r = await load();
-        if (!c) setData(r);
-      } catch (e) {
-        if (!c) setError(graphQlUserMessage(e));
-      } finally {
-        if (!c) setLoading(false);
-      }
-    })();
-    return () => {
-      c = true;
-    };
-  }, [load]);
-
+  const permissions = createPermissionService(clientSession);
+  const canManage = permissions.canScopedPermission('performance:manage', ['ALL']);
+  const canEvaluate = permissions.canScopedPermission('performance:evaluate', ['TEAM']);
+  const canSelf = permissions.canScopedPermission('performance:self', ['SELF']);
+  const [params, setParams] = useSearchParams();
+  const [showLegacy, setShowLegacy] = useState(false);
+  const tabs = [
+    ...(canSelf ? [{ id: 'my', label: 'My Performance' }] : []),
+    ...(canEvaluate ? [{ id: 'team', label: 'Team Reviews' }] : []),
+    ...(canManage
+      ? [
+          { id: 'setup', label: 'Setup' },
+          { id: 'process', label: 'Process' },
+          { id: 'review', label: 'Review' },
+        ]
+      : []),
+  ];
+  const tab = tabs.find((item) => item.id === params.get('tab'))?.id ?? tabs[0]?.id;
+  const selectTab = (id: string) => setParams({ tab: id });
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Performance</h1>
-      <PerformanceLifecyclePanel
-        canManage={canManage}
-        canEvaluate={canEvaluate}
-        canSelf={canSelf}
-        actorEmployeeId={clientSession?.employeeId}
-      />
-      {notice && (
-        <p role="status" className="text-sm text-content-secondary">
-          {notice}
-        </p>
-      )}
-      {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
-      )}
-      {canManage && (
-        <Card title="Legacy review cycles">
-          {canManage && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mb-3 text-sm font-medium text-primary-600"
-              onClick={() => setEditor({ name: '', startDate: '', endDate: '', reviewType: '' })}
+      <h1 className="text-2xl font-bold text-content-primary">Performance</h1>
+      <div
+        role="tablist"
+        aria-label="Performance workflow"
+        className="flex flex-wrap gap-2 border-b border-line pb-3"
+      >
+        {tabs.map((item, index) => (
+          <button
+            key={item.id}
+            id={`performance-tab-${item.id}`}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.id}
+            aria-controls="performance-panel"
+            tabIndex={tab === item.id ? 0 : -1}
+            className={`rounded-md px-4 py-2 text-sm font-medium ${tab === item.id ? 'bg-accent text-content-inverse' : 'text-content-secondary hover:bg-surface-selected'}`}
+            onClick={() => selectTab(item.id)}
+            onKeyDown={(event) => {
+              let next: number | undefined;
+              if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+              if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+              if (event.key === 'Home') next = 0;
+              if (event.key === 'End') next = tabs.length - 1;
+              if (next !== undefined) {
+                event.preventDefault();
+                selectTab(tabs[next].id);
+                document.getElementById(`performance-tab-${tabs[next].id}`)?.focus();
+              }
+            }}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+      {tab ? (
+        <div id="performance-panel" role="tabpanel" aria-labelledby={`performance-tab-${tab}`}>
+          <PerformanceLifecyclePanel
+            key={clientSession?.employeeId ?? 'admin'}
+            canManage={canManage}
+            canEvaluate={canEvaluate}
+            canSelf={canSelf}
+            actorEmployeeId={clientSession?.employeeId}
+            tab={tab}
+            initialReviewId={params.get('review')}
+          />
+          {tab === 'setup' && canManage && (
+            <details
+              className="mt-4"
+              open={showLegacy}
+              onToggle={(event) => setShowLegacy(event.currentTarget.open)}
             >
-              Create review cycle
-            </Button>
+              <summary className="cursor-pointer py-2 text-sm text-content-secondary">
+                Legacy cycles and goals
+              </summary>
+              {showLegacy && <LegacyPerformanceCatalog />}
+            </details>
           )}
-          {loading ? (
-            <p className="text-sm text-gray-500">Loading...</p>
-          ) : data?.reviewCycles.length ? (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {data.reviewCycles.map((c) => (
-                <li key={c.id} className="py-3">
-                  <p className="font-medium text-gray-900 dark:text-white">{c.name}</p>
-                  {canManage && c.status.toUpperCase() === 'DRAFT' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-sm text-primary-600"
-                      onClick={() => setEditor({ ...c, reviewType: c.reviewType ?? '' })}
-                    >
-                      Edit review cycle
-                    </Button>
-                  )}
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {c.startDate} → {c.endDate} · {c.status}
-                    {c.reviewType ? ` · ${c.reviewType}` : ''}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500">No Review Cycles.</p>
-          )}
-        </Card>
-      )}
-      {canManage && (
-        <Card title="Legacy goals">
-          {loading ? (
-            <p className="text-sm text-gray-500">Loading...</p>
-          ) : data?.goals.length ? (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {data.goals.map((g) => (
-                <li key={g.id} className="py-3">
-                  <p className="font-medium text-gray-900 dark:text-white">{g.title}</p>
-                  <p className="text-xs text-gray-500">
-                    {g.status}
-                    {g.weightage ? ` · weight ${g.weightage}` : ''}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500">No Goals.</p>
-          )}
-        </Card>
-      )}
-      {canManage && (
-        <nav
-          aria-label="Performance pagination"
-          className="flex items-center justify-between gap-3"
-        >
-          <Button
-            variant="outline"
-            disabled={loading || offset === 0}
-            onClick={() => setOffset((value) => Math.max(0, value - 20))}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-content-secondary">Page {offset / 20 + 1}</span>
-          <Button
-            variant="outline"
-            disabled={loading || !(data && data.reviewCycles.length === 20)}
-            onClick={() => setOffset((value) => value + 20)}
-          >
-            Next
-          </Button>
-        </nav>
-      )}
-      {editor && canManage && (
-        <SetupEditor
-          title={editor.id ? 'Edit review cycle' : 'Create review cycle'}
-          fields={cycleFields}
-          initial={editor}
-          onClose={() => setEditor(null)}
-          onSave={async (values) => {
-            await client.request(SaveReviewCycleDocument, {
-              input: {
-                id: editor.id ?? null,
-                name: String(values.name).trim(),
-                startDate: values.startDate,
-                endDate: values.endDate,
-                reviewType: String(values.reviewType).trim() || null,
-              },
-            });
-            setNotice('Saved. Use Previous and Next to browse the catalog.');
-            try {
-              setData(await load());
-              setError(null);
-            } catch (e) {
-              setError('Saved, but the list could not refresh. ' + graphQlUserMessage(e));
-            }
-          }}
-        />
+        </div>
+      ) : (
+        <p>No performance access is assigned to your account.</p>
       )}
     </div>
   );

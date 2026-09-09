@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
+import PageInformation from '../../components/common/PageInformation';
 import { useTenant } from '../../contexts/TenantContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useRetainedQuery } from '../../hooks/useRetainedQuery';
@@ -54,10 +55,12 @@ const InsightsData = ({ period }: { period: { fromDate: string; toDate: string }
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-content-secondary">
-          Punctuality counts employee-days. Salary totals are generated payslips in payroll
-          currency.
-        </p>
+        <PageInformation title="Metrics guide">
+          <p className="text-xs text-content-secondary">
+            Punctuality counts employee-days. Salary totals are generated payslips in payroll
+            currency.
+          </p>
+        </PageInformation>
         <Button
           size="sm"
           variant="outline"

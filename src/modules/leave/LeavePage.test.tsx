@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApproveLeaveRequestDocument, LeaveBoardDocument } from '../../api/graphql/graphql';
+import PageInformationButton from '../../components/common/PageInformationButton';
+import PageInformationProvider from '../../components/common/PageInformationProvider';
 
-import LeavePage from './LeavePage';
 import { MyCompOffDocument } from './compOffDocuments';
+import LeavePage from './LeavePage';
 
 const testState = vi.hoisted(() => ({
   client: { request: vi.fn() },
@@ -120,21 +122,24 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('LeavePage approval', () => {
-  it('places recent requests before collapsed reference sections', async () => {
+  it('keeps requests on the page and opens holiday and leave-type references from one control', async () => {
     render(
       <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-        <LeavePage />
+        <PageInformationProvider scopeKey="leave">
+          <PageInformationButton />
+          <LeavePage />
+        </PageInformationProvider>
       </MemoryRouter>
     );
 
-    const requestHeading = await screen.findByText('Recent Leave Requests');
-    const holidays = screen.getByRole('group', { name: 'Holidays' });
-    const leaveTypes = screen.getByRole('group', { name: 'Leave types' });
-    expect(
-      requestHeading.compareDocumentPosition(holidays) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
-    expect(holidays.hasAttribute('open')).toBe(false);
-    expect(leaveTypes.hasAttribute('open')).toBe(false);
+    expect(await screen.findByText('Recent Leave Requests')).toBeTruthy();
+    expect(screen.queryByText('Upcoming public holidays')).toBeNull();
+    expect(screen.queryByText('Carry Forward')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Page information' }));
+    const information = screen.getByRole('dialog', { name: 'Page information' });
+    expect(within(information).getByText('Upcoming public holidays')).toBeTruthy();
+    expect(within(information).getByText('Carry Forward')).toBeTruthy();
+    expect(within(information).getByRole('button', { name: 'View all' })).toBeTruthy();
   });
 
   it('pages through all leave requests instead of truncating the board at twenty rows', async () => {

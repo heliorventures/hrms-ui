@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import PageInformation from './PageInformation';
+
 export type PageHeaderProps = {
   title: string;
   description?: string;
@@ -8,10 +10,7 @@ export type PageHeaderProps = {
   className?: string;
 };
 
-/**
- * Consistent page title + subtitle used across module pages (aligns with common HRIS patterns:
- * clear hierarchy, supporting line, optional toolbar).
- */
+/** Page title and actions; supporting descriptions join the shared information drawer. */
 const PageHeader = ({ title, description, actions, className = '' }: PageHeaderProps) => {
   return (
     <div
@@ -19,11 +18,13 @@ const PageHeader = ({ title, description, actions, className = '' }: PageHeaderP
     >
       <div className="min-w-0 flex-1">
         <h1 className="text-2xl font-semibold tracking-tight text-content-primary">{title}</h1>
-        {description ? (
-          <p className="mt-1 max-w-2xl text-sm text-content-secondary">{description}</p>
-        ) : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+      {description ? (
+        <PageInformation title={title}>
+          <p>{description}</p>
+        </PageInformation>
+      ) : null}
     </div>
   );
 };

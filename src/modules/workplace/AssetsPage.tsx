@@ -1,17 +1,15 @@
 import { useState } from 'react';
+
 import { PERMISSIONS } from '../../auth/permissions';
 import Card from '../../components/common/Card';
 import { useAuth } from '../../contexts/AuthContext';
-import AssetAllocationsSection from './assets/AssetAllocationsSection';
+
 import AssetAssignmentModal from './assets/AssetAssignmentModal';
 import AssetCategoryModal from './assets/AssetCategoryModal';
-import AssetCategorySection from './assets/AssetCategorySection';
-import AssetHistorySection from './assets/AssetHistorySection';
-import AssetInventorySection from './assets/AssetInventorySection';
 import AssetModal from './assets/AssetModal';
 import AssetRetireDialog from './assets/AssetRetireDialog';
 import AssetReturnModal from './assets/AssetReturnModal';
-import { optionalString } from './assets/assetValidation';
+import AssetsWorkspaceSections from './assets/AssetsWorkspaceSections';
 import type {
   AssetAssignmentFormValues,
   AssetAssignmentRow,
@@ -21,25 +19,53 @@ import type {
   AssetReturnFormValues,
   AssetRow,
 } from './assets/assetTypes';
+import { optionalString } from './assets/assetValidation';
+import type { AssetsWorkspaceModel } from './assets/useAssetsWorkspace';
 import { useAssetsWorkspace } from './assets/useAssetsWorkspace';
 
 type RetireTarget = { kind: 'asset'; row: AssetRow } | { kind: 'category'; row: AssetCategoryRow };
 
-const AssetsPage = () => {
-  const { can } = useAuth();
-  const canManageAssets = can(PERMISSIONS.assetsManage);
-  const canReadInventory = canManageAssets || can(PERMISSIONS.assetsRead);
-  const model = useAssetsWorkspace({ canManageAssets, canReadInventory });
-  const [categoryEditor, setCategoryEditor] = useState<AssetCategoryRow | null>();
-  const [assetEditor, setAssetEditor] = useState<AssetRow | null>();
-  const [assignmentOpen, setAssignmentOpen] = useState(false);
-  const [returnAssignment, setReturnAssignment] = useState<AssetAssignmentRow>();
-  const [retireTarget, setRetireTarget] = useState<RetireTarget>();
+const AssetFeedback = ({ model }: { model: AssetsWorkspaceModel }) => (
+  <>
+    {model.actionError ? (
+      <Card>
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {model.actionError}
+        </p>
+      </Card>
+    ) : null}
+    {model.actionOk ? (
+      <Card>
+        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-300">
+          {model.actionOk}
+        </p>
+      </Card>
+    ) : null}
+    {model.errors.locations ? (
+      <Card>
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          Location options could not be loaded: {model.errors.locations}
+        </p>
+      </Card>
+    ) : null}
+  </>
+);
 
-  const openAction = (action: () => void) => {
-    model.clearActionMessages();
-    action();
-  };
+interface AssetEditorsProps {
+  model: AssetsWorkspaceModel;
+  categoryEditor?: AssetCategoryRow | null;
+  assetEditor?: AssetRow | null;
+  onCloseCategory: () => void;
+  onCloseAsset: () => void;
+}
+
+const AssetEditors = ({
+  model,
+  categoryEditor,
+  assetEditor,
+  onCloseCategory,
+  onCloseAsset,
+}: AssetEditorsProps) => {
   const saveCategory = (values: AssetCategoryFormValues) =>
     model.saveCategory({
       id: categoryEditor?.id ?? null,
@@ -57,6 +83,52 @@ const AssetsPage = () => {
       purchaseDate: optionalString(values.purchaseDate),
       locationId: optionalString(values.locationId),
     });
+  return (
+    <>
+      {categoryEditor !== undefined ? (
+        <AssetCategoryModal
+          key={categoryEditor?.id ?? 'new-category'}
+          editing={categoryEditor ?? undefined}
+          saving={model.busyAction === 'category'}
+          onClose={onCloseCategory}
+          onSave={saveCategory}
+        />
+      ) : null}
+      {assetEditor !== undefined ? (
+        <AssetModal
+          key={assetEditor?.id ?? 'new-asset'}
+          editing={assetEditor ?? undefined}
+          categories={model.categoryOptions}
+          categoryFilter={model.categoryOptionFilter}
+          categoryPageInfo={model.categoryOptionPageInfo}
+          categoryLoading={model.loading.categoryOptions}
+          categoryError={model.errors.categoryOptions}
+          locations={model.locations}
+          saving={model.busyAction === 'asset'}
+          onClose={onCloseAsset}
+          onCategoryFilterChange={model.setCategoryOptionFilter}
+          onSave={saveAsset}
+        />
+      ) : null}
+    </>
+  );
+};
+
+const AssetsPage = () => {
+  const { can } = useAuth();
+  const canManageAssets = can(PERMISSIONS.assetsManage);
+  const canReadInventory = canManageAssets || can(PERMISSIONS.assetsRead);
+  const model = useAssetsWorkspace({ canManageAssets, canReadInventory });
+  const [categoryEditor, setCategoryEditor] = useState<AssetCategoryRow | null>();
+  const [assetEditor, setAssetEditor] = useState<AssetRow | null>();
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [returnAssignment, setReturnAssignment] = useState<AssetAssignmentRow>();
+  const [retireTarget, setRetireTarget] = useState<RetireTarget>();
+
+  const openAction = (action: () => void) => {
+    model.clearActionMessages();
+    action();
+  };
   const assignAsset = (values: AssetAssignmentFormValues) =>
     model.assignAsset({
       assetId: values.assetId,
@@ -85,110 +157,29 @@ const AssetsPage = () => {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Asset Management</h1>
 
-      {model.actionError ? (
-        <Card>
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            {model.actionError}
-          </p>
-        </Card>
-      ) : null}
-      {model.actionOk ? (
-        <Card>
-          <p role="status" className="text-sm text-emerald-700 dark:text-emerald-300">
-            {model.actionOk}
-          </p>
-        </Card>
-      ) : null}
-      {model.errors.locations ? (
-        <Card>
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-            Location options could not be loaded: {model.errors.locations}
-          </p>
-        </Card>
-      ) : null}
+      <AssetFeedback model={model} />
 
-      {canReadInventory ? (
-        <>
-          <AssetInventorySection
-            rows={model.inventory}
-            categories={model.categoryOptions}
-            categoryFilter={model.categoryOptionFilter}
-            categoryPageInfo={model.categoryOptionPageInfo}
-            categoryLoading={model.loading.categoryOptions}
-            categoryError={model.errors.categoryOptions}
-            filter={model.inventoryFilter}
-            pageInfo={model.inventoryPageInfo}
-            loading={model.loading.inventory}
-            error={model.errors.inventory}
-            canManage={canManageAssets}
-            onFilterChange={model.setInventoryFilter}
-            onCategoryFilterChange={model.setCategoryOptionFilter}
-            onCreate={() => openAction(() => setAssetEditor(null))}
-            onEdit={(row) => openAction(() => setAssetEditor(row))}
-            onRetire={(row) => openAction(() => setRetireTarget({ kind: 'asset', row }))}
-          />
-          <AssetCategorySection
-            rows={model.categories}
-            filter={model.categoryFilter}
-            pageInfo={model.categoryPageInfo}
-            loading={model.loading.categories}
-            error={model.errors.categories}
-            canManage={canManageAssets}
-            onFilterChange={model.setCategoryFilter}
-            onCreate={() => openAction(() => setCategoryEditor(null))}
-            onEdit={(row) => openAction(() => setCategoryEditor(row))}
-            onRetire={(row) => openAction(() => setRetireTarget({ kind: 'category', row }))}
-          />
-        </>
-      ) : null}
-
-      <AssetAllocationsSection
-        rows={model.activeAssignments}
-        filter={model.allocationFilter}
-        pageInfo={model.allocationPageInfo}
-        loading={model.loading.allocations}
-        error={model.errors.allocations}
-        canManage={canManageAssets}
+      <AssetsWorkspaceSections
+        model={model}
+        canManageAssets={canManageAssets}
         canReadInventory={canReadInventory}
-        onFilterChange={model.setAllocationFilter}
+        onCreateAsset={() => openAction(() => setAssetEditor(null))}
+        onEditAsset={(row) => openAction(() => setAssetEditor(row))}
+        onRetireAsset={(row) => openAction(() => setRetireTarget({ kind: 'asset', row }))}
+        onCreateCategory={() => openAction(() => setCategoryEditor(null))}
+        onEditCategory={(row) => openAction(() => setCategoryEditor(row))}
+        onRetireCategory={(row) => openAction(() => setRetireTarget({ kind: 'category', row }))}
         onAssign={() => openAction(() => setAssignmentOpen(true))}
         onReturn={(row) => openAction(() => setReturnAssignment(row))}
       />
-      <AssetHistorySection
-        rows={model.history}
-        filter={model.historyFilter}
-        pageInfo={model.historyPageInfo}
-        loading={model.loading.history}
-        error={model.errors.history}
-        canReadInventory={canReadInventory}
-        onFilterChange={model.setHistoryFilter}
-      />
 
-      {categoryEditor !== undefined ? (
-        <AssetCategoryModal
-          key={categoryEditor?.id ?? 'new-category'}
-          editing={categoryEditor ?? undefined}
-          saving={model.busyAction === 'category'}
-          onClose={() => setCategoryEditor(undefined)}
-          onSave={saveCategory}
-        />
-      ) : null}
-      {assetEditor !== undefined ? (
-        <AssetModal
-          key={assetEditor?.id ?? 'new-asset'}
-          editing={assetEditor ?? undefined}
-          categories={model.categoryOptions}
-          categoryFilter={model.categoryOptionFilter}
-          categoryPageInfo={model.categoryOptionPageInfo}
-          categoryLoading={model.loading.categoryOptions}
-          categoryError={model.errors.categoryOptions}
-          locations={model.locations}
-          saving={model.busyAction === 'asset'}
-          onClose={() => setAssetEditor(undefined)}
-          onCategoryFilterChange={model.setCategoryOptionFilter}
-          onSave={saveAsset}
-        />
-      ) : null}
+      <AssetEditors
+        model={model}
+        categoryEditor={categoryEditor}
+        assetEditor={assetEditor}
+        onCloseCategory={() => setCategoryEditor(undefined)}
+        onCloseAsset={() => setAssetEditor(undefined)}
+      />
       {assignmentOpen ? (
         <AssetAssignmentModal
           assets={model.availableAssets}

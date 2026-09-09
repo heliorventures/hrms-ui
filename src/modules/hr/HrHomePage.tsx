@@ -1,87 +1,35 @@
-import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { canAccessTenantPath } from '../../auth/navAccess';
+
 import Card from '../../components/common/Card';
-import { useAuth } from '../../contexts/AuthContext';
+import { groupNavigationDestinations } from '../../navigation/navigationSelectors';
+import { useAccessibleNavigation } from '../../navigation/useAccessibleNavigation';
 
 const HrHomePage = () => {
-  const { can, clientSession } = useAuth();
-  const navOpts = useMemo(() => ({ can, clientSession }), [can, clientSession]);
-  const canConfigureLeaveSettings = canAccessTenantPath('/admin/leave-settings', navOpts);
-
+  const accessible = useAccessibleNavigation();
+  const groups = groupNavigationDestinations(accessible).filter(({ section }) =>
+    ['people', 'leave', 'attendance', 'timesheets'].includes(section.key)
+  );
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">HR workbench</h1>
-      </div>
-
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quick Links</h1>
       <div className="grid gap-4 md:grid-cols-2">
-        <Card title="People Admin">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Create and update employee records, assignments, and HR workflows.
-          </p>
-          <Link
-            className="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-            to="/hr/people"
-          >
-            Open people admin →
-          </Link>
-        </Card>
-        <Card title="Leave">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Self-service apply and balances on <span className="font-mono text-xs">/leave</span>; HR-focused
-            approval queue with employee names.
-            {canConfigureLeaveSettings ? (
-              <>
-                {' '}
-                Leave types, policies, and holidays are configured under{' '}
-                <span className="font-mono text-xs">Admin → Leave Settings</span>.
-              </>
-            ) : (
-              <>
-                {' '}
-                Configuration of leave types and holidays requires{' '}
-                <span className="font-mono text-xs">leave:manage</span> permission.
-              </>
-            )}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3 text-sm font-medium">
-            <Link
-              className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-              to="/leave"
-            >
-              Employee leave →
-            </Link>
-            <Link
-              className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-              to="/hr/leaves"
-            >
-              Approval queue →
-            </Link>
-            {canConfigureLeaveSettings ? (
-              <Link
-                className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-                to="/admin/leave-settings"
-              >
-                Leave types, policies, balances & holidays →
-              </Link>
-            ) : null}
-          </div>
-        </Card>
-        <Card title="Workflows">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Configure approval graphs used by leave and expenses.
-          </p>
-          <Link
-            className="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-            to="/workplace/workflows"
-          >
-            Open workflow designer →
-          </Link>
-        </Card>
+        {groups.map(({ section, destinations }) => (
+          <Card key={section.key} title={section.label}>
+            <div className="flex flex-wrap gap-3">
+              {destinations.map((destination) => (
+                <Link
+                  key={destination.path}
+                  to={destination.path}
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                >
+                  {destination.label}
+                </Link>
+              ))}
+            </div>
+          </Card>
+        ))}
       </div>
     </div>
   );
 };
-
 export default HrHomePage;

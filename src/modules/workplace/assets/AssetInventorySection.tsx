@@ -1,9 +1,9 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
-import Select from '../../../components/common/Select';
 import Table from '../../../components/common/Table';
-import AssetPager from './AssetPager';
+
 import AssetOptionPicker from './AssetOptionPicker';
+import AssetPager from './AssetPager';
 import AssetSectionToolbar from './AssetSectionToolbar';
 import AssetStatusBadge from './AssetStatusBadge';
 import type {
@@ -33,7 +33,38 @@ interface AssetInventorySectionProps {
   onRetire: (row: AssetRow) => void;
 }
 
-export default function AssetInventorySection(props: AssetInventorySectionProps) {
+const inventoryStatuses = [
+  { value: '', label: 'All' },
+  { value: 'AVAILABLE', label: 'Available' },
+  { value: 'ASSIGNED', label: 'Assigned' },
+  { value: 'RETIRED', label: 'Retired' },
+];
+
+const InventoryStatusFilter = ({
+  filter,
+  onFilterChange,
+}: Pick<AssetInventorySectionProps, 'filter' | 'onFilterChange'>) => (
+  <div
+    role="group"
+    aria-label="Filter inventory by status"
+    className="flex flex-wrap items-center gap-1"
+  >
+    {inventoryStatuses.map((status) => (
+      <Button
+        key={status.value}
+        type="button"
+        size="sm"
+        variant={filter.status === status.value ? 'primary' : 'outline'}
+        aria-pressed={filter.status === status.value}
+        onClick={() => onFilterChange({ ...filter, page: 1, status: status.value })}
+      >
+        {status.label}
+      </Button>
+    ))}
+  </div>
+);
+
+const AssetInventorySection = (props: AssetInventorySectionProps) => {
   const columns = [
     {
       key: 'name',
@@ -100,7 +131,7 @@ export default function AssetInventorySection(props: AssetInventorySectionProps)
         onAction={props.onCreate}
         onSearch={(search) => props.onFilterChange({ ...props.filter, page: 1, search })}
       >
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <AssetOptionPicker
             label="Category"
             value={props.filter.categoryId}
@@ -115,19 +146,7 @@ export default function AssetInventorySection(props: AssetInventorySectionProps)
             }
             onFilterChange={props.onCategoryFilterChange}
           />
-          <Select
-            aria-label="Filter inventory by status"
-            value={props.filter.status}
-            options={[
-              { value: '', label: 'All statuses' },
-              { value: 'AVAILABLE', label: 'Available' },
-              { value: 'ASSIGNED', label: 'Assigned' },
-              { value: 'RETIRED', label: 'Retired' },
-            ]}
-            onChange={(event) =>
-              props.onFilterChange({ ...props.filter, page: 1, status: event.target.value })
-            }
-          />
+          <InventoryStatusFilter filter={props.filter} onFilterChange={props.onFilterChange} />
         </div>
       </AssetSectionToolbar>
       {props.error ? (
@@ -147,4 +166,6 @@ export default function AssetInventorySection(props: AssetInventorySectionProps)
       />
     </Card>
   );
-}
+};
+
+export default AssetInventorySection;

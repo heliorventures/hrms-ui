@@ -76,9 +76,33 @@ export const REPORTS: ReportDefinition[] = [
   },
 ];
 
-export function availableReports(session: ParsedClientSession | null) {
+export const REPORT_DOMAINS = {
+  people: { title: 'People Reports', kinds: ['EMPLOYEE_MOVEMENTS'] },
+  attendance: {
+    title: 'Attendance Reports',
+    kinds: ['ATTENDANCE_DAILY', 'ATTENDANCE_PUNCTUALITY'],
+  },
+  leave: {
+    title: 'Leave Reports',
+    kinds: ['LEAVE_REQUESTS', 'LEAVE_BALANCES', 'COMP_OFF_CREDITS'],
+  },
+  timesheets: { title: 'Timesheet Reports', kinds: ['TIMESHEET_HOURS'] },
+  payroll: { title: 'Payroll Reports', kinds: ['PAYROLL_REGISTER', 'UNPAID_LEAVE'] },
+} satisfies Record<string, { title: string; kinds: ReportKind[] }>;
+
+export type ReportDomain = keyof typeof REPORT_DOMAINS;
+
+export function isReportDomain(domain: string): domain is ReportDomain {
+  return Object.prototype.hasOwnProperty.call(REPORT_DOMAINS, domain);
+}
+
+export function availableReports(session: ParsedClientSession | null, domain?: string | null) {
+  if (domain !== null && domain !== undefined && !isReportDomain(domain)) return [];
   const service = createPermissionService(session);
-  return REPORTS.filter((report) =>
+  const permitted = REPORTS.filter((report) =>
     report.permissions.some((permission) => service.canScopedPermission(permission, ['ALL']))
   );
+  if (domain === null || domain === undefined) return permitted;
+  const { kinds }: { kinds: readonly ReportKind[] } = REPORT_DOMAINS[domain];
+  return permitted.filter((report) => kinds.includes(report.kind));
 }

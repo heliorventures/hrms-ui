@@ -2,6 +2,7 @@ import { useRef } from 'react';
 
 import { authorizationStateKey } from '../../../auth/permissionService';
 import Card from '../../../components/common/Card';
+import PageInformation from '../../../components/common/PageInformation';
 import Tabs from '../../../components/common/Tabs';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -29,9 +30,11 @@ const PrejoiningAdminWorkspace = () => {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-content-primary">Pre-joining</h1>
-        <p className="text-sm text-content-secondary">
-          Configure private candidate forms, review submissions, and confirm joined employees.
-        </p>
+        <PageInformation title="Pre-joining">
+          <p className="text-sm text-content-secondary">
+            Configure private candidate forms, review submissions, and confirm joined employees.
+          </p>
+        </PageInformation>
       </div>
       {notice ? (
         <p role="status" className="text-sm text-status-success">

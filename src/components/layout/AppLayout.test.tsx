@@ -18,6 +18,10 @@ vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ isAuthenticated: true, logout: vi.fn() }),
 }));
 
+vi.mock('../../contexts/TenantContext', () => ({
+  useTenant: () => ({ currentTenant: { id: 'tenant-1' } }),
+}));
+
 vi.mock('../../contexts/DialogContext', () => ({
   DialogProvider: ({ children }: { children: React.ReactNode }) => children,
 }));

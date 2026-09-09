@@ -4,11 +4,16 @@
  * Probes federated Helior HRMS subgraphs through the stitching gateway.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { useGraphClient } from '@/hooks/useGraphClient';
-import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
+
+import PageInformation from '../../components/common/PageInformation';
+
 import ModuleHealthStatusBadge from './components/ModuleHealthStatusBadge';
 import { MODULE_HEALTH_PROBES } from './moduleHealthProbes';
 import type { ProbeState } from './moduleHealthTypes';
+
+import { useGraphClient } from '@/hooks/useGraphClient';
+import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
+
 
 const initialProbeState = () =>
   Object.fromEntries(
@@ -71,10 +76,13 @@ const ModuleHealth = () => {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Module Health</h1>
-          <p className="text-sm text-gray-500">
-            Live introspection of every Helior HRMS subgraph through the stitching gateway.
-            Tenant-plane queries use the current tenant id; ops-plane queries use operator headers.
-          </p>
+          <PageInformation title="Module health">
+            <p className="text-sm text-gray-500">
+              Live introspection of every Helior HRMS subgraph through the stitching gateway.
+              Tenant-plane queries use the current tenant id; ops-plane queries use operator
+              headers.
+            </p>
+          </PageInformation>
         </div>
         <button
           type="button"

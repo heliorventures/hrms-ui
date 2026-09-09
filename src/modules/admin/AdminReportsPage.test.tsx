@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -8,9 +9,10 @@ import {
   AdminAttendanceReportSummaryDocument,
 } from '../../api/graphql/graphql';
 import type { ParsedClientSession } from '../../auth/clientSession';
+import { attendanceCsvRows } from '../reports/AttendanceDailyReportPanel';
 import { HrReportRowsDocument } from '../reports/reportDocuments';
 
-import AdminReportsPage, { attendanceCsvRows } from './AdminReportsPage';
+import AdminReportsPage from './AdminReportsPage';
 
 const state = vi.hoisted(() => ({
   tenant: { id: 'tenant-a', timezone: 'Asia/Kolkata' },
@@ -124,7 +126,11 @@ describe('AdminReportsPage report catalogue', () => {
       'payroll:manage': 'ALL',
       'analytics:read': 'ALL',
     });
-    render(<AdminReportsPage />);
+    render(
+      <MemoryRouter>
+        <AdminReportsPage />
+      </MemoryRouter>
+    );
     expect(screen.getByRole('status')).toHaveProperty(
       'textContent',
       'No company reports are available with your permissions.'
@@ -140,7 +146,11 @@ describe('AdminReportsPage report catalogue', () => {
       'employee:read': 'TEAM',
       'timesheet:read': 'ALL',
     });
-    render(<AdminReportsPage />);
+    render(
+      <MemoryRouter>
+        <AdminReportsPage />
+      </MemoryRouter>
+    );
     await settle();
     const options = screen.getAllByRole('option').map((option) => option.textContent);
     expect(options).toEqual([
@@ -156,7 +166,11 @@ describe('AdminReportsPage report catalogue', () => {
   });
 
   it('integrates cursor-backed daily attendance with the selected period', async () => {
-    render(<AdminReportsPage />);
+    render(
+      <MemoryRouter>
+        <AdminReportsPage />
+      </MemoryRouter>
+    );
     await settle();
     expect(state.client.request).toHaveBeenCalledWith(
       AdminAttendanceDailyReportDocument,
@@ -184,7 +198,11 @@ describe('AdminReportsPage report catalogue', () => {
       'leave:read': 'ALL',
       'employee:read': 'ALL',
     });
-    render(<AdminReportsPage />);
+    render(
+      <MemoryRouter>
+        <AdminReportsPage />
+      </MemoryRouter>
+    );
     await settle();
     fireEvent.change(screen.getByLabelText('Report'), { target: { value: 'EMPLOYEE_MOVEMENTS' } });
     await settle();
@@ -202,7 +220,11 @@ describe('AdminReportsPage report catalogue', () => {
 
   it('never issues an attendance request for a leave-only viewer', async () => {
     state.clientSession = session({ 'leave:read': 'ALL' });
-    render(<AdminReportsPage />);
+    render(
+      <MemoryRouter>
+        <AdminReportsPage />
+      </MemoryRouter>
+    );
     await settle();
     expect(state.client.request).toHaveBeenCalledWith(
       HrReportRowsDocument,
@@ -219,7 +241,11 @@ describe('AdminReportsPage report catalogue', () => {
   });
 
   it('shows an inverted-range error and does not request data for that range', async () => {
-    render(<AdminReportsPage />);
+    render(
+      <MemoryRouter>
+        <AdminReportsPage />
+      </MemoryRouter>
+    );
     await settle();
     state.client.request.mockClear();
     fireEvent.change(screen.getByLabelText('From date'), { target: { value: '2026-09-10' } });

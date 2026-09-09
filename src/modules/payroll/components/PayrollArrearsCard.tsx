@@ -1,6 +1,7 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
+import PageInformation from '../../../components/common/PageInformation';
 import type { PayrollArrearFormState, PayrollArrearRow } from '../payrollTypes';
 
 interface PayrollArrearsCardProps {
@@ -25,12 +26,14 @@ const PayrollArrearsCard = ({
   onCreate,
 }: PayrollArrearsCardProps) => (
   <Card title="PENDING Payroll Arrears (Back-Pay)">
-    <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-      One-off accruals (salary catch-up) are paid in the next <strong>Run pay</strong> as a
-      separate <span className="font-mono">ARREAR</span> line. The tenant must have an active
-      EARNING component with code <span className="font-mono">ARREAR</span>. India statutory
-      (EPF/ESI/PT/TDS) is computed on <strong>base + arrear</strong> in the run.
-    </p>
+    <PageInformation title="Arrear calculation">
+      <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
+        One-off accruals (salary catch-up) are paid in the next <strong>Run pay</strong> as a
+        separate <span className="font-mono">ARREAR</span> line. The tenant must have an active
+        EARNING component with code <span className="font-mono">ARREAR</span>. India statutory
+        (EPF/ESI/PT/TDS) is computed on <strong>base + arrear</strong> in the run.
+      </p>
+    </PageInformation>
     {loading ? (
       <p className="text-sm text-gray-500 dark:text-gray-400">Loading Arrears...</p>
     ) : arrears.length > 0 ? (

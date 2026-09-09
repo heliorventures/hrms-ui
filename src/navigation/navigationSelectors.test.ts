@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ParsedClientSession } from '../auth/clientSession';
 import { createPermissionService } from '../auth/permissionService';
+
 import {
   NAVIGATION_DESTINATIONS,
   type NavigationDestination,
@@ -15,11 +16,10 @@ import {
 } from './navigationSelectors';
 
 const sections: NavigationSection[] = [
-  { key: 'hr', label: 'HR', basePath: '/hr', icon: (() => null) as never, order: 1 },
+  { key: 'leave', label: 'Leave', icon: (() => null) as never, order: 1 },
   {
-    key: 'admin',
-    label: 'Admin',
-    basePath: '/admin',
+    key: 'settings',
+    label: 'Settings',
     icon: (() => null) as never,
     order: 2,
   },
@@ -31,7 +31,7 @@ const destinations: NavigationDestination[] = [
     path: '/hr/leaves',
     label: 'Leave Approvals',
     keywords: ['pending', 'time off'],
-    section: 'hr',
+    section: 'leave',
     sidebar: 'section',
     order: 2,
   },
@@ -39,7 +39,7 @@ const destinations: NavigationDestination[] = [
     path: '/hr/attendance',
     label: 'Attendance Management',
     keywords: ['attendance', 'regularize', 'punches'],
-    section: 'hr',
+    section: 'leave',
     sidebar: 'section',
     order: 3,
   },
@@ -47,7 +47,7 @@ const destinations: NavigationDestination[] = [
     path: '/admin/access',
     label: 'Roles & Permissions',
     keywords: ['rbac', 'security'],
-    section: 'admin',
+    section: 'settings',
     sidebar: 'section',
     order: 4,
   },
@@ -71,10 +71,12 @@ describe('navigation selectors', () => {
       persona: 'EMPLOYEE',
       mustChangePassword: false,
     };
-    const canRoute = createPermissionService(session).canRoute;
+    const { canRoute } = createPermissionService(session);
 
     expect(
-      accessibleDestinations(NAVIGATION_DESTINATIONS, canRoute).map((destination) => destination.path)
+      accessibleDestinations(NAVIGATION_DESTINATIONS, canRoute).map(
+        (destination) => destination.path
+      )
     ).toContain('/hr/attendance');
     expect(
       accessibleDestinations(
@@ -84,20 +86,6 @@ describe('navigation selectors', () => {
     ).not.toContain('/hr/attendance');
   });
 
-  it('places Attendance Management immediately after Leave Approvals in HR navigation', () => {
-    const hrDestinations = NAVIGATION_DESTINATIONS.filter(
-      (destination) => destination.section === 'hr'
-    ).sort((left, right) => left.order - right.order);
-    const leaveApprovalsIndex = hrDestinations.findIndex(
-      (destination) => destination.path === '/hr/leaves'
-    );
-
-    expect(hrDestinations[leaveApprovalsIndex + 1]).toMatchObject({
-      path: '/hr/attendance',
-      label: 'Attendance Management',
-    });
-  });
-
   it('labels employee pay and company payroll routes by their actual authority', () => {
     const labelsByPath = new Map(
       NAVIGATION_DESTINATIONS.map((destination) => [destination.path, destination.label])
@@ -105,7 +93,7 @@ describe('navigation selectors', () => {
 
     expect(labelsByPath.get('/payroll/payslips')).toBe('Payslips & Tax');
     expect(labelsByPath.get('/payroll/pay')).toBe('Payroll Processing');
-    expect(labelsByPath.get('/payroll/tax')).toBe('Tax Admin');
+    expect(labelsByPath.get('/payroll/tax')).toBe('Tax Settings');
   });
 
   it('matches HR terminology without returning unrelated destinations', () => {
@@ -116,12 +104,12 @@ describe('navigation selectors', () => {
 
   it('matches a section label when filtering destinations', () => {
     expect(
-      filterNavigationDestinations(destinations, 'admin', sections).map((item) => item.path)
+      filterNavigationDestinations(destinations, 'settings', sections).map((item) => item.path)
     ).toEqual(['/admin/access']);
   });
 
   it('selects the section for a nested active path', () => {
-    expect(activeNavigationSection('/hr/leaves/request/123', sections)).toBe('hr');
+    expect(activeNavigationSection('/hr/leaves/request/123', destinations)).toBe('leave');
   });
 
   it('groups accessible destinations in configured section order', () => {
