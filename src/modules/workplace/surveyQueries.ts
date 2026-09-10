@@ -23,6 +23,49 @@ export const SurveyDepartmentsDocument = gql`
     }
   }
 `;
+export const SurveyAudienceDocument = gql`
+  query SurveyAudienceWorkspace($id: ID!) {
+    surveyAudience(surveyId: $id) {
+      audienceKind
+      departmentIds
+      locationIds
+      employeeIds
+      sourceSurveyId
+    }
+  }
+`;
+export const SurveyAudienceOptionsDocument = gql`
+  query SurveyAudienceOptionsWorkspace($kind: String!, $search: String, $after: ID, $limit: Int) {
+    surveyAudienceOptions(kind: $kind, search: $search, after: $after, limit: $limit) {
+      nodes {
+        id
+        label
+      }
+      nextCursor
+    }
+  }
+`;
+export const SurveyManagementEventsDocument = gql`
+  query SurveyManagementEventsWorkspace($id: ID!) {
+    surveyManagementEvents(surveyId: $id) {
+      action
+      occurredAt
+      message
+    }
+  }
+`;
+export interface SurveyAudienceRow {
+  audienceKind: string;
+  departmentIds: string[];
+  locationIds: string[];
+  employeeIds: string[];
+  sourceSurveyId?: string | null;
+}
+export interface SurveyManagementEventRow {
+  action: string;
+  occurredAt: string;
+  message: string;
+}
 export const AvailableSurveysDocument = gql`
   query AvailableSurveysWorkspace {
     availableSurveys {
@@ -144,6 +187,17 @@ export const CloseSurveyDocument = gql`
       summary {
         id
         status
+      }
+    }
+  }
+`;
+export const OpenSurveyDocument = gql`
+  mutation OpenSurveyWorkspace($id: ID!) {
+    openSurvey(surveyId: $id) {
+      summary {
+        id
+        status
+        opensAt
       }
     }
   }
