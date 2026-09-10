@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { createPermissionService } from '../../auth/permissionService';
+import { TAB_LIST_CLASS, tabClassName } from '../../components/common/tabStyles';
 import { useAuth } from '../../contexts/AuthContext';
 
 import LegacyPerformanceCatalog from './LegacyPerformanceCatalog';
@@ -31,11 +32,7 @@ const PerformancePage = () => {
   return (
     <div className="space-y-4">
       <h1 className="sr-only">Performance</h1>
-      <div
-        role="tablist"
-        aria-label="Performance workflow"
-        className="flex flex-wrap gap-2 border-b border-line pb-3"
-      >
+      <div role="tablist" aria-label="Performance workflow" className={TAB_LIST_CLASS}>
         {tabs.map((item, index) => (
           <button
             key={item.id}
@@ -45,7 +42,7 @@ const PerformancePage = () => {
             aria-selected={tab === item.id}
             aria-controls="performance-panel"
             tabIndex={tab === item.id ? 0 : -1}
-            className={`rounded-md px-4 py-2 text-sm font-medium ${tab === item.id ? 'bg-accent text-content-inverse' : 'text-content-secondary hover:bg-surface-selected'}`}
+            className={tabClassName(tab === item.id)}
             onClick={() => selectTab(item.id)}
             onKeyDown={(event) => {
               let next: number | undefined;

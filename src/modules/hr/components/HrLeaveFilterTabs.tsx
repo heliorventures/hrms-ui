@@ -1,4 +1,4 @@
-import Button from '../../../components/common/Button';
+import { TAB_LIST_CLASS, tabClassName } from '../../../components/common/tabStyles';
 
 export type HrLeaveFilter =
   | 'actionable'
@@ -30,20 +30,19 @@ const HrLeaveFilterTabs = ({
   actionableCount,
   onChange,
 }: HrLeaveFilterTabsProps) => (
-  <div className="mb-4 flex flex-wrap gap-2">
+  <div className={TAB_LIST_CLASS}>
     {HR_LEAVE_FILTERS.map((filter) => (
-      <Button
+      <button
         key={filter.id}
         type="button"
-        variant={activeFilter === filter.id ? 'primary' : 'outline'}
         aria-pressed={activeFilter === filter.id}
-        className="!py-1.5 !text-xs"
+        className={tabClassName(activeFilter === filter.id)}
         onClick={() => onChange(filter.id)}
       >
         {filter.label}
         {filter.id === 'pending' && pendingCount > 0 ? ` (${pendingCount})` : ''}
         {filter.id === 'actionable' && actionableCount > 0 ? ` (${actionableCount})` : ''}
-      </Button>
+      </button>
     ))}
   </div>
 );

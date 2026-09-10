@@ -1,6 +1,7 @@
 import Button from '../../../components/common/Button';
 import PageActions from '../../../components/common/PageActions';
 import PageInformation from '../../../components/common/PageInformation';
+import { TAB_LIST_CLASS, tabClassName } from '../../../components/common/tabStyles';
 import type { AdminLeaveSettingsModel } from '../hooks/useAdminLeaveSettings';
 import type { LeaveSettingsTabKey } from '../leaveSettingsTypes';
 import { LEAVE_SETTINGS_TABS } from '../leaveSettingsUtils';
@@ -12,7 +13,12 @@ interface LeaveSettingsHeaderProps {
   onRefresh: () => void;
 }
 
-const LeaveSettingsHeader = ({ loading, tab, onTabChange, onRefresh }: LeaveSettingsHeaderProps) => (
+const LeaveSettingsHeader = ({
+  loading,
+  tab,
+  onTabChange,
+  onRefresh,
+}: LeaveSettingsHeaderProps) => (
   <>
     <PageActions>
       <div>
@@ -29,17 +35,17 @@ const LeaveSettingsHeader = ({ loading, tab, onTabChange, onRefresh }: LeaveSett
       </Button>
     </PageActions>
 
-    <div className="flex flex-wrap gap-2">
+    <div className={TAB_LIST_CLASS}>
       {LEAVE_SETTINGS_TABS.map((item) => (
-        <Button
+        <button
           key={item.key}
           type="button"
-          variant={tab === item.key ? 'primary' : 'outline'}
-          className="!py-1.5 !text-sm"
+          aria-pressed={tab === item.key}
+          className={tabClassName(tab === item.key)}
           onClick={() => onTabChange(item.key)}
         >
           {item.label}
-        </Button>
+        </button>
       ))}
     </div>
   </>

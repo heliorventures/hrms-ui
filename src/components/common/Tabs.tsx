@@ -1,5 +1,7 @@
 import { type KeyboardEvent, type ReactNode, useRef } from 'react';
 
+import { TAB_LIST_CLASS, tabClassName } from './tabStyles';
+
 export type TabId = string;
 
 export interface TabItem {
@@ -16,24 +18,22 @@ export interface TabsProps {
   orientation?: 'horizontal' | 'vertical';
 }
 
-const Tabs = ({
-  tabs,
-  value,
-  onValueChange,
-  orientation = 'horizontal',
-}: TabsProps) => {
+const Tabs = ({ tabs, value, onValueChange, orientation = 'horizontal' }: TabsProps) => {
   const tabRefs = useRef(new Map<TabId, HTMLButtonElement>());
 
   const selectAndFocus = (nextIndex: number) => {
+    if (nextIndex < 0 || nextIndex >= tabs.length) return;
     const nextTab = tabs[nextIndex];
-    if (!nextTab) return;
     onValueChange(nextTab.id);
     tabRefs.current.get(nextTab.id)?.focus();
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentId: TabId) => {
     if (tabs.length === 0) return;
-    const currentIndex = Math.max(0, tabs.findIndex((tab) => tab.id === currentId));
+    const currentIndex = Math.max(
+      0,
+      tabs.findIndex((tab) => tab.id === currentId)
+    );
     const isHorizontal = orientation === 'horizontal';
     const previousKey = isHorizontal ? 'ArrowLeft' : 'ArrowUp';
     const nextKey = isHorizontal ? 'ArrowRight' : 'ArrowDown';
@@ -53,17 +53,16 @@ const Tabs = ({
     }
   };
 
-  const tabClass =
-    'flex min-h-[2.75rem] items-center gap-2 rounded-md px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:transition-none';
-
   return (
     <div className="relative">
       <div
         role="tablist"
         aria-orientation={orientation}
-        className={`relative mb-6 flex gap-0.5 rounded-lg border border-slate-200/90 bg-slate-100/90 p-1 dark:border-slate-600/80 dark:bg-slate-800/60 ${
-          orientation === 'vertical' ? 'flex-col items-stretch' : 'flex-wrap'
-        }`}
+        className={
+          orientation === 'vertical'
+            ? 'flex flex-col items-stretch border-l border-slate-200 dark:border-slate-700'
+            : TAB_LIST_CLASS
+        }
       >
         {tabs.map((tab) => {
           const active = value === tab.id;
@@ -83,11 +82,7 @@ const Tabs = ({
                 else tabRefs.current.delete(tab.id);
               }}
               tabIndex={active ? 0 : -1}
-              className={
-                active
-                  ? `${tabClass} bg-white font-semibold text-slate-900 shadow-card dark:bg-slate-700 dark:text-white`
-                  : `${tabClass} font-medium text-slate-600 hover:bg-white/80 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-slate-100`
-              }
+              className={tabClassName(active, orientation)}
             >
               {tab.icon ? <span className="shrink-0 opacity-80">{tab.icon}</span> : null}
               {tab.label}

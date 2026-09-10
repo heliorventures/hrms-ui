@@ -5,6 +5,7 @@ import { useNotificationOwnerKey } from '../../modules/notifications/useNotifica
 import AsyncState from '../common/AsyncState';
 import Button from '../common/Button';
 import PageNotice from '../common/PageNotice';
+import { TAB_LIST_CLASS, tabClassName } from '../common/tabStyles';
 
 import AnnouncementDrawerContent from './AnnouncementDrawerContent';
 import NotificationPreviewItem from './NotificationPreviewItem';
@@ -149,17 +150,14 @@ const NotificationDropdownPanel = (props: NotificationDropdownPanelProps) => {
   const [section, setSection] = useState<'personal' | 'announcements'>('personal');
   return (
     <div className="space-y-4">
-      <div
-        aria-label="Notification sections"
-        className="grid grid-cols-2 gap-1 rounded-lg bg-surface-selected p-1"
-      >
+      <div aria-label="Notification sections" className={TAB_LIST_CLASS}>
         {(['personal', 'announcements'] as const).map((value) => (
           <button
             key={value}
             type="button"
             aria-pressed={section === value}
             onClick={() => setSection(value)}
-            className={`min-h-11 rounded-md px-2 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${section === value ? 'bg-surface text-accent shadow-sm' : 'text-content-secondary hover:text-content-primary'}`}
+            className={tabClassName(section === value)}
           >
             {value === 'personal' ? 'For you' : 'Announcements'}
           </button>
