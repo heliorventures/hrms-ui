@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
@@ -44,6 +44,90 @@ beforeEach(() => {
   });
   state.request.mockClear();
 });
+
+it.each([
+  {
+    role: 'employee',
+    stage: 'SELF_REVIEW',
+    tab: 'my',
+    employeeId: 'me',
+    self: true,
+    manager: false,
+  },
+  {
+    role: 'manager',
+    stage: 'MANAGER_REVIEW',
+    tab: 'team',
+    employeeId: 'report',
+    self: false,
+    manager: true,
+  },
+])(
+  'shows only the $role supplemental ratings while retaining primary ratings',
+  async (reviewer) => {
+    state.permissions = new Set(['performance:self', 'performance:evaluate']);
+    state.permissionScopes = { 'performance:self': 'SELF', 'performance:evaluate': 'TEAM' };
+    const review = {
+      id: 'rating-review',
+      employeeId: reviewer.employeeId,
+      employeeName: 'Employee',
+      cycleName: 'Annual',
+      cycleStage: reviewer.stage,
+      status: 'PENDING',
+    };
+    const questions = [
+      {
+        id: 'self-only',
+        prompt: 'Self-rated text',
+        questionType: 'LONG_TEXT',
+        selfRatingEnabled: true,
+        managerRatingEnabled: false,
+      },
+      {
+        id: 'manager-only',
+        prompt: 'Manager-rated text',
+        questionType: 'LONG_TEXT',
+        selfRatingEnabled: false,
+        managerRatingEnabled: true,
+      },
+      {
+        id: 'primary-rating',
+        prompt: 'Primary rating',
+        questionType: 'RATING',
+        selfRatingEnabled: false,
+        managerRatingEnabled: false,
+      },
+    ].map((question) => ({ ...question, answerer: 'BOTH', isRequired: false, options: [] }));
+    state.request.mockImplementation((document: unknown) => {
+      if (String(document).includes('PerformanceReviewDetailWorkspace'))
+        return Promise.resolve({
+          performanceReviewDetail: {
+            review,
+            goals: [],
+            feedback: [],
+            answers: [],
+            template: { sections: [{ questions }] },
+          },
+        });
+      return Promise.resolve({
+        myPerformanceReviews: [review],
+        myTeamPerformanceReviews: [review],
+      });
+    });
+    render(
+      <MemoryRouter initialEntries={[`/performance?tab=${reviewer.tab}&review=rating-review`]}>
+        <PerformancePage />
+      </MemoryRouter>
+    );
+    const selfQuestion = await screen.findByRole('group', { name: 'Self-rated text' });
+    const managerQuestion = screen.getByRole('group', { name: 'Manager-rated text' });
+    expect(Boolean(within(selfQuestion).queryByLabelText('Rating'))).toBe(reviewer.self);
+    expect(Boolean(within(managerQuestion).queryByLabelText('Rating'))).toBe(reviewer.manager);
+    expect(
+      within(screen.getByRole('group', { name: 'Primary rating' })).getByLabelText('Rating')
+    ).toBeTruthy();
+  }
+);
 
 it('separates personal work from setup and keeps loading on the clicked action', async () => {
   render(

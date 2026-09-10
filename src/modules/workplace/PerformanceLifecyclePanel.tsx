@@ -917,6 +917,13 @@ const PerformanceLifecyclePanel = ({
                     <QuestionAnswer
                       key={question.id}
                       question={question}
+                      reviewerRole={
+                        detail.review.cycleStage === 'SELF_REVIEW'
+                          ? 'EMPLOYEE'
+                          : detail.review.cycleStage === 'MANAGER_REVIEW'
+                            ? 'MANAGER'
+                            : null
+                      }
                       value={responses[question.id] ?? {}}
                       employeeAnswer={detail.answers.find(
                         (answer) => answer.questionId === question.id
@@ -1036,12 +1043,14 @@ const PerformanceLifecyclePanel = ({
 
 const QuestionAnswer = ({
   question,
+  reviewerRole,
   value,
   employeeAnswer,
   readOnly,
   onChange,
 }: {
   question: AppraisalQuestionRow;
+  reviewerRole: 'EMPLOYEE' | 'MANAGER' | null;
   value: { text?: string; rating?: string; options?: string[] };
   employeeAnswer?: PerformanceReviewDetailRow['answers'][number];
   readOnly: boolean;
@@ -1123,8 +1132,8 @@ const QuestionAnswer = ({
             />
           )}
           {(question.questionType === 'RATING' ||
-            question.selfRatingEnabled ||
-            question.managerRatingEnabled) && (
+            (reviewerRole === 'EMPLOYEE' && question.selfRatingEnabled) ||
+            (reviewerRole === 'MANAGER' && question.managerRatingEnabled)) && (
             <label className="mt-2 block text-sm">
               Rating
               <input
