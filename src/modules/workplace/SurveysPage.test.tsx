@@ -90,6 +90,24 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('SurveysPage', () => {
+  it('starts with the survey list and opens a separate editor with a guarded Back action', async () => {
+    state.permissions = new Set(['survey:manage']);
+    state.scopes = { 'survey:manage': 'ALL' };
+    state.request.mockResolvedValue({ surveys: [] });
+    const user = userEvent.setup();
+    render(<SurveysPage />);
+    expect(screen.queryByLabelText('Title')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Add survey' }));
+    await user.type(screen.getByLabelText('Title'), 'Unsaved pulse');
+    await user.click(screen.getByRole('button', { name: 'Back to surveys' }));
+    expect(screen.getByRole('dialog', { name: 'Discard changes?' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Keep editing' }));
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Unsaved pulse');
+    await user.click(screen.getByRole('button', { name: 'Back to surveys' }));
+    await user.click(screen.getByRole('button', { name: 'Discard changes' }));
+    expect(screen.queryByLabelText('Title')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Add survey' })).toBeTruthy();
+  });
   it('discards a pending detail request when the tenant context changes', async () => {
     let resolveDetail!: (result: unknown) => void;
     const fallback = state.request.getMockImplementation()!;
@@ -187,7 +205,8 @@ describe('SurveysPage', () => {
     });
     const user = userEvent.setup();
     render(<SurveysPage />);
-    await user.click(await screen.findByRole('button', { name: 'Aggregate results' }));
+    await user.click(await screen.findByRole('button', { name: 'Responses' }));
+    await user.click(screen.getByRole('button', { name: 'Back to surveys' }));
     await user.click(screen.getByRole('button', { name: 'View' }));
     await screen.findByLabelText('I receive useful direction rating');
     const { act } = await import('@testing-library/react');
@@ -224,6 +243,7 @@ describe('SurveysPage', () => {
     });
     const user = userEvent.setup();
     render(<SurveysPage />);
+    await user.click(screen.getByRole('button', { name: 'Add survey' }));
     await user.type(screen.getByLabelText('Title'), 'Targeted');
     await user.type(screen.getByLabelText('Question'), 'Rate');
     await user.selectOptions(screen.getByLabelText('Audience type'), 'EMPLOYEE');
@@ -310,13 +330,15 @@ describe('SurveysPage', () => {
     });
     const user = userEvent.setup();
     render(<SurveysPage />);
-    await user.click(await screen.findByRole('button', { name: 'Edit draft' }));
+    await user.click(await screen.findByRole('button', { name: 'Edit' }));
     expect(((await screen.findByLabelText('Title')) as HTMLInputElement).value).toBe('Existing');
     expect(
       screen.getAllByLabelText('Section title').map((e) => (e as HTMLInputElement).value)
     ).toEqual(['First', 'Second']);
     expect(((await screen.findByLabelText('Engineering')) as HTMLInputElement).checked).toBe(true);
-    expect((screen.getAllByLabelText('Rating minimum')[0] as HTMLInputElement).value).toBe('0');
+    expect((screen.getAllByLabelText('Rating scale')[0] as HTMLSelectElement).value).toBe(
+      'existing'
+    );
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await screen.findByRole('alert');
     expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Existing');
@@ -336,11 +358,11 @@ describe('SurveysPage', () => {
       },
     });
     await user.click(screen.getByRole('button', { name: 'Cancel editing' }));
-    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('');
+    expect(screen.queryByLabelText('Title')).toBeNull();
     summary.status = 'CLOSED';
     cleanup();
     render(<SurveysPage />);
-    await user.click(await screen.findByRole('button', { name: 'Copy as new draft' }));
+    await user.click(await screen.findByRole('button', { name: 'Copy as new' }));
     await waitFor(() =>
       expect((screen.getByLabelText('Title') as HTMLInputElement).value).toContain('Existing')
     );
@@ -371,6 +393,7 @@ describe('SurveysPage', () => {
     });
     const user = userEvent.setup();
     render(<SurveysPage />);
+    await user.click(screen.getByRole('button', { name: 'Add survey' }));
     await user.type(screen.getByLabelText('Title'), 'Scheduled');
     await user.type(screen.getByLabelText('Question'), 'First');
     await user.click(screen.getByRole('button', { name: 'Add section' }));
@@ -418,6 +441,7 @@ describe('SurveysPage', () => {
     });
     const user = userEvent.setup();
     render(<SurveysPage />);
+    await user.click(screen.getByRole('button', { name: 'Add survey' }));
     await user.type(screen.getByLabelText('Title'), 'Pulse');
     await user.type(screen.getByLabelText('Question'), 'Choose');
     await user.selectOptions(screen.getByLabelText('Answer type'), 'SINGLE_CHOICE');
@@ -446,6 +470,7 @@ describe('SurveysPage', () => {
         },
       })
     );
+    await user.click(await screen.findByRole('button', { name: 'Add survey' }));
     await user.type(screen.getByLabelText('Title'), 'Comments');
     await user.type(screen.getByLabelText('Question'), 'Explain');
     await user.selectOptions(screen.getByLabelText('Answer type'), 'SINGLE_CHOICE');
@@ -470,7 +495,9 @@ describe('SurveysPage', () => {
     expect(screen.queryByText('Create survey')).toBeNull();
     expect(
       state.request.mock.calls.some(([document]) =>
-        /SurveysAdminWorkspace|SurveyDepartmentsWorkspace|SurveyAudienceWorkspace|SurveyAudienceOptionsWorkspace|SurveyManagementEventsWorkspace/.test(String(document))
+        /SurveysAdminWorkspace|SurveyDepartmentsWorkspace|SurveyAudienceWorkspace|SurveyAudienceOptionsWorkspace|SurveyManagementEventsWorkspace/.test(
+          String(document)
+        )
       )
     ).toBe(false);
   });
@@ -478,7 +505,7 @@ describe('SurveysPage', () => {
     const user = userEvent.setup();
     render(<SurveysPage />);
     await user.click(await screen.findByRole('button', { name: 'Fill survey' }));
-    await user.type(await screen.findByLabelText('I receive useful direction rating'), '4');
+    await user.click(await screen.findByRole('radio', { name: '4 out of 5 stars' }));
     await user.click(screen.getByRole('button', { name: 'Submit survey' }));
     await waitFor(() => {
       const call = state.request.mock.calls.find(([document]) =>
@@ -487,7 +514,13 @@ describe('SurveysPage', () => {
       expect(call?.[1]).toEqual({
         id: 'survey-1',
         answers: [
-          { questionId: 'question-1', selectedOptionIds: [], numericAnswer: '4', textAnswer: null },
+          {
+            questionId: 'question-1',
+            selectedOptionIds: [],
+            numericAnswer: '4',
+            textAnswer: null,
+            comment: null,
+          },
         ],
       });
       expect(JSON.stringify(call?.[1])).not.toContain('employee-1');

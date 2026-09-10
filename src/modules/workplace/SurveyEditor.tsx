@@ -43,6 +43,24 @@ const SurveyHeaderEditor = ({ draft, setDraft, timezone }: DraftProps & { timezo
           onChange={(e) => setDraft({ ...draft, threshold: Number(e.target.value) })}
         />
       </label>
+      <label className="text-sm md:col-span-2">
+        Response review
+        <select
+          className={fieldClass}
+          value={draft.responseReviewMode}
+          onChange={(e) =>
+            setDraft({
+              ...draft,
+              responseReviewMode: e.target.value as SurveyDraft['responseReviewMode'],
+            })
+          }
+        >
+          <option value="ANONYMOUS_SUBMISSIONS">
+            Grouped results and unnamed individual submissions
+          </option>
+          <option value="AGGREGATE_ONLY">Grouped results only</option>
+        </select>
+      </label>
       <label className="text-sm">
         Opens at ({timezone})
         <input
@@ -62,6 +80,12 @@ const SurveyHeaderEditor = ({ draft, setDraft, timezone }: DraftProps & { timezo
         />
       </label>
     </div>
+    <p className="rounded-md border border-line p-3 text-sm text-content-secondary">
+      {draft.responseReviewMode === 'ANONYMOUS_SUBMISSIONS'
+        ? 'Respondents will be told that authorized HR/Admin reviewers can review their answers together as an unnamed submission after the survey closes, even below the reporting threshold. Names are not shown; comments can still reveal identity.'
+        : 'Respondents will be told that results are reported in groups. Written comments may be shown without names when the reporting threshold is met.'}{' '}
+      Choose this before publishing; the review mode cannot change on a published survey.
+    </p>
     <p className="text-xs text-content-secondary">
       Times use your tenant timezone. Blank opening means available when published; blank closing
       means manually closed. Copying a survey resets its schedule.

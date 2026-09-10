@@ -4,7 +4,9 @@ import { Link } from 'react-router-dom';
 import { canManageNotifications } from '../../auth/navAccess';
 import Button from '../../components/common/Button';
 import PageActions from '../../components/common/PageActions';
+import PageTabs from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePageTabs } from '../../hooks/usePageTabs';
 
 import CreateAnnouncementModal from './CreateAnnouncementModal';
 import NotificationBoardContent from './NotificationBoardContent';
@@ -17,9 +19,15 @@ const NotificationsPage = () => {
   const composeLabel = showAdminNotifLink ? 'New announcement' : 'New team post';
   const [composeOpen, setComposeOpen] = useState(false);
   const board = useNotificationBoard();
+  const tabs = [
+    { id: 'private', label: 'My Notifications' },
+    { id: 'announcements', label: 'Announcements & Team Posts' },
+  ];
+  const { tab, setTab } = usePageTabs(tabs);
 
   return (
     <div className="space-y-4">
+      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       <PageActions>
         <div>
           <h1 className="sr-only">Notifications</h1>
@@ -45,9 +53,11 @@ const NotificationsPage = () => {
               Admin console
             </Link>
           ) : null}
-          <Button variant="primary" size="sm" onClick={() => setComposeOpen(true)}>
-            {composeLabel}
-          </Button>
+          {tab === 'announcements' ? (
+            <Button variant="primary" size="sm" onClick={() => setComposeOpen(true)}>
+              {composeLabel}
+            </Button>
+          ) : null}
         </div>
       </PageActions>
 
@@ -57,7 +67,7 @@ const NotificationsPage = () => {
         onCreated={() => void board.refreshBoard()}
       />
 
-      <NotificationBoardContent board={board} />
+      <NotificationBoardContent board={board} activeTab={tab} />
     </div>
   );
 };

@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
-import Card from '../../components/common/Card';
-import { useAuth } from '../../contexts/AuthContext';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   ClientOpsPayrollTaxBoardDocument,
   TaxComputationsListDocument,
@@ -13,18 +9,23 @@ import {
   UpsertTaxSectionDefinitionDocument,
   UpsertTaxSlabDocument,
 } from '../../api/graphql/graphql';
-import TaxAdminFormsCard from './components/TaxAdminFormsCard';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
+import { useAuth } from '../../contexts/AuthContext';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { usePageTabs } from '../../hooks/usePageTabs';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
+import { TaxVersionFormCard, TaxSlabFormCard } from './components/TaxAdminFormsCard';
 import TaxComputationsCard from './components/TaxComputationsCard';
-import TaxConfigurationSelector from './components/TaxConfigurationSelector';
 import TaxConfigurationsCard from './components/TaxConfigurationsCard';
+import TaxConfigurationSelector from './components/TaxConfigurationSelector';
 import TaxDeclarationFormCard from './components/TaxDeclarationFormCard';
 import TaxSectionsCard from './components/TaxSectionsCard';
 import TaxSlabsCard from './components/TaxSlabsCard';
-import type {
-  TaxBoardData,
-  TaxComputationRow,
-  TaxSectionDefRow,
-} from './payrollTaxTypes';
+import type { TaxBoardData, TaxComputationRow, TaxSectionDefRow } from './payrollTaxTypes';
 
 const TAX_BOARD_LIMIT = 20;
 const TAX_SECTIONS_LIMIT = 200;
@@ -43,7 +44,8 @@ const parseYear = (raw: string) => {
 const validateOptionalMoney = (raw: string, label: string): string | null => {
   const trimmed = raw.trim();
   if (!trimmed) return null;
-  if (!MONEY_PATTERN.test(trimmed)) return `${label} must be a non-negative amount with up to 2 decimal places.`;
+  if (!MONEY_PATTERN.test(trimmed))
+    return `${label} must be a non-negative amount with up to 2 decimal places.`;
   return Number(trimmed) >= 0 ? null : `${label} must be non-negative.`;
 };
 
@@ -345,8 +347,18 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
     }
   };
 
+  const tabs = [
+    { id: 'configuration', label: 'Tax Versions' },
+    { id: 'slabs', label: 'Income Tax Slabs' },
+    ...(canManageTax ? [{ id: 'deductions', label: 'Deduction Sections' }] : []),
+    { id: 'computations', label: 'Tax Computations' },
+    ...(canSubmitTax ? [{ id: 'declaration', label: 'Submit Declaration' }] : []),
+  ];
+  const { tab, setTab } = usePageTabs(tabs);
+
   return (
     <div className="space-y-4">
+      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       <h1 className="sr-only">Tax Settings</h1>
 
       {error && (
@@ -355,71 +367,100 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
         </Card>
       )}
 
-      <TaxConfigurationSelector
-        configs={data?.taxConfigurations ?? []}
-        loading={loading}
-        selectedConfig={selectedConfig}
-        selectedConfigId={selectedConfigId}
-        onChange={setSelectedConfigId}
-      />
-      <TaxConfigurationsCard configs={data?.taxConfigurations ?? []} loading={loading} />
-      {canManageTax ? <TaxSectionsCard
-        error={taxSectionsError}
-        message={secMsg}
-        sectionCode={secCode}
-        sectionLabel={secLabel}
-        sectionMax={secMax}
-        sectionRegime={secRegime}
-        sections={taxSections}
-        submitting={secBusy}
-        onCodeChange={setSecCode}
-        onLabelChange={setSecLabel}
-        onMaxChange={setSecMax}
-        onRegimeChange={setSecRegime}
-        onSubmit={handleUpsertTaxSection}
-      /> : null}
-      <TaxSlabsCard loading={loading} slabs={slabs} />
-      {canManageTax ? <TaxAdminFormsCard
-        configActive={cfgActive}
-        configBusy={cfgUpsertBusy}
-        configCountry={cfgCountry}
-        configFiscalYear={cfgFy}
-        configMessage={cfgUpsertMsg}
-        configRegime={cfgRegime}
-        slabBusy={slabBusy}
-        slabCess={slabCess}
-        slabFrom={slabFrom}
-        slabMessage={slabMsg}
-        slabRate={slabRate}
-        slabSurcharge={slabSurcharge}
-        slabTo={slabTo}
-        onConfigActiveChange={setCfgActive}
-        onConfigCountryChange={setCfgCountry}
-        onConfigFiscalYearChange={setCfgFy}
-        onConfigRegimeChange={setCfgRegime}
-        onConfigSubmit={handleUpsertTaxConfiguration}
-        onSlabCessChange={setSlabCess}
-        onSlabFromChange={setSlabFrom}
-        onSlabRateChange={setSlabRate}
-        onSlabSubmit={handleUpsertSlab}
-        onSlabSurchargeChange={setSlabSurcharge}
-        onSlabToChange={setSlabTo}
-      /> : null}
-      <TaxComputationsCard computations={computations} error={compError} loading={compLoading} />
-      {canSubmitTax ? <TaxDeclarationFormCard
-        deductions={formDed}
-        fiscalYear={formYear}
-        grossIncome={formGross}
-        message={formMsg}
-        regime={formRegime}
-        selectedConfigId={selectedConfigId}
-        submitting={formSubmitting}
-        onDeductionsChange={setFormDed}
-        onFiscalYearChange={setFormYear}
-        onGrossIncomeChange={setFormGross}
-        onRegimeChange={setFormRegime}
-        onSubmit={handleUpsert}
-      /> : null}
+      {tab === 'slabs' || tab === 'declaration' ? (
+        <TaxConfigurationSelector
+          configs={data?.taxConfigurations ?? []}
+          loading={loading}
+          selectedConfig={selectedConfig}
+          selectedConfigId={selectedConfigId}
+          onChange={setSelectedConfigId}
+        />
+      ) : null}
+      <PageTabPanel id="configuration" activeTab={tab}>
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={() => setTab('slabs')}>
+            Manage Income Tax Slabs
+          </Button>
+        </div>
+
+        <TaxConfigurationsCard configs={data?.taxConfigurations ?? []} loading={loading} />
+
+        {canManageTax ? (
+          <TaxVersionFormCard
+            configActive={cfgActive}
+            configBusy={cfgUpsertBusy}
+            configCountry={cfgCountry}
+            configFiscalYear={cfgFy}
+            configMessage={cfgUpsertMsg}
+            configRegime={cfgRegime}
+            onConfigActiveChange={setCfgActive}
+            onConfigCountryChange={setCfgCountry}
+            onConfigFiscalYearChange={setCfgFy}
+            onConfigRegimeChange={setCfgRegime}
+            onConfigSubmit={handleUpsertTaxConfiguration}
+          />
+        ) : null}
+      </PageTabPanel>
+      <PageTabPanel id="slabs" activeTab={tab}>
+        <TaxSlabsCard loading={loading} slabs={slabs} />
+        {canManageTax ? (
+          <TaxSlabFormCard
+            slabBusy={slabBusy}
+            slabCess={slabCess}
+            slabFrom={slabFrom}
+            slabMessage={slabMsg}
+            slabRate={slabRate}
+            slabSurcharge={slabSurcharge}
+            slabTo={slabTo}
+            onSlabCessChange={setSlabCess}
+            onSlabFromChange={setSlabFrom}
+            onSlabRateChange={setSlabRate}
+            onSlabSubmit={handleUpsertSlab}
+            onSlabSurchargeChange={setSlabSurcharge}
+            onSlabToChange={setSlabTo}
+          />
+        ) : null}
+      </PageTabPanel>
+      {canManageTax ? (
+        <PageTabPanel id="deductions" activeTab={tab}>
+          <TaxSectionsCard
+            error={taxSectionsError}
+            message={secMsg}
+            sectionCode={secCode}
+            sectionLabel={secLabel}
+            sectionMax={secMax}
+            sectionRegime={secRegime}
+            sections={taxSections}
+            submitting={secBusy}
+            onCodeChange={setSecCode}
+            onLabelChange={setSecLabel}
+            onMaxChange={setSecMax}
+            onRegimeChange={setSecRegime}
+            onSubmit={handleUpsertTaxSection}
+          />
+        </PageTabPanel>
+      ) : null}
+      <PageTabPanel id="computations" activeTab={tab}>
+        <TaxComputationsCard computations={computations} error={compError} loading={compLoading} />
+      </PageTabPanel>
+      {canSubmitTax ? (
+        <PageTabPanel id="declaration" activeTab={tab}>
+          <TaxDeclarationFormCard
+            deductions={formDed}
+            fiscalYear={formYear}
+            grossIncome={formGross}
+            message={formMsg}
+            regime={formRegime}
+            selectedConfigId={selectedConfigId}
+            submitting={formSubmitting}
+            onDeductionsChange={setFormDed}
+            onFiscalYearChange={setFormYear}
+            onGrossIncomeChange={setFormGross}
+            onRegimeChange={setFormRegime}
+            onSubmit={handleUpsert}
+          />
+        </PageTabPanel>
+      ) : null}
     </div>
   );
 };

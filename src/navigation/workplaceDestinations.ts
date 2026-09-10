@@ -22,11 +22,11 @@ export const WORKPLACE_DESTINATIONS: readonly NavigationDestination[] = [
   },
   {
     path: '/workplace/recruitment',
-    label: 'Recruitment',
+    label: 'Hiring & Applicants',
     section: 'hiring',
     sidebar: 'section',
     order: 81,
-    keywords: ['hiring', 'jobs', 'candidates', 'applications', 'careers'],
+    keywords: ['recruitment', 'hiring', 'jobs', 'candidates', 'applications', 'careers'],
   },
   {
     path: '/workplace/prejoining',

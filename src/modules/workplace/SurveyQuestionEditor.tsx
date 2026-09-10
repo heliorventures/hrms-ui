@@ -106,26 +106,56 @@ const SurveyQuestionEditor = ({
           </select>
         </label>
         {q.type === 'RATING' && (
-          <>
-            {(['ratingMin', 'ratingMax'] as const).map((field) => (
-              <label key={field} className="text-sm">
-                {field === 'ratingMin' ? 'Rating minimum' : 'Rating maximum'}
-                <input
-                  className={fieldClass}
-                  type="number"
-                  step="any"
-                  value={q[field]}
-                  onChange={(e) => onChange({ ...q, [field]: e.target.value })}
-                />
-              </label>
-            ))}
-          </>
+          <label className="text-sm">
+            Rating scale
+            <select
+              className={fieldClass}
+              value={
+                Number(q.ratingMin) === 1 && [5, 10].includes(Number(q.ratingMax))
+                  ? String(Number(q.ratingMax))
+                  : 'existing'
+              }
+              onChange={(e) => {
+                if (e.target.value !== 'existing')
+                  onChange({ ...q, ratingMin: '1', ratingMax: e.target.value });
+              }}
+            >
+              <option value="5">1–5 stars</option>
+              <option value="10">1–10 stars</option>
+              {!(Number(q.ratingMin) === 1 && [5, 10].includes(Number(q.ratingMax))) && (
+                <option value="existing">
+                  Existing scale ({q.ratingMin}–{q.ratingMax})
+                </option>
+              )}
+            </select>
+          </label>
         )}
+        <label className="text-sm md:col-span-4">
+          Question guidance (optional)
+          <textarea
+            className={fieldClass}
+            rows={2}
+            maxLength={2000}
+            placeholder="Explain what to consider or what the rating scale means."
+            value={q.description}
+            onChange={(e) => onChange({ ...q, description: e.target.value })}
+          />
+        </label>
       </div>
       {isChoice(q.type) && (
         <OptionEditor options={q.options} onChange={(options) => onChange({ ...q, options })} />
       )}
       <div className="flex flex-wrap items-center gap-3">
+        {(q.type === 'RATING' || isChoice(q.type)) && (
+          <label className="text-sm">
+            <input
+              type="checkbox"
+              checked={q.commentEnabled}
+              onChange={(e) => onChange({ ...q, commentEnabled: e.target.checked })}
+            />{' '}
+            Allow an optional comment with this answer
+          </label>
+        )}
         <label className="text-sm">
           <input
             type="checkbox"

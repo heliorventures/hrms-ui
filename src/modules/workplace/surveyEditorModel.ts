@@ -9,6 +9,8 @@ export interface EditorQuestion {
   key: string;
   dimension: string;
   prompt: string;
+  description: string;
+  commentEnabled: boolean;
   type: string;
   isRequired: boolean;
   ratingMin: string;
@@ -24,6 +26,7 @@ export interface SurveyDraft {
   id?: string;
   title: string;
   description: string;
+  responseReviewMode: 'AGGREGATE_ONLY' | 'ANONYMOUS_SUBMISSIONS';
   threshold: number;
   audience: string[];
   audienceKind: 'ALL' | 'DEPARTMENT' | 'LOCATION' | 'EMPLOYEE';
@@ -41,6 +44,8 @@ export const blankQuestion = (): EditorQuestion => ({
   key: crypto.randomUUID(),
   dimension: 'Engagement',
   prompt: '',
+  description: '',
+  commentEnabled: true,
   type: 'RATING',
   isRequired: true,
   ratingMin: '1',
@@ -55,6 +60,7 @@ export const blankSection = (): EditorSection => ({
 export const blankSurvey = (): SurveyDraft => ({
   title: '',
   description: '',
+  responseReviewMode: 'ANONYMOUS_SUBMISSIONS',
   threshold: 5,
   audience: [],
   audienceKind: 'ALL',
@@ -122,6 +128,8 @@ const hydrateQuestion = (q: SurveyQuestionRow): EditorQuestion => ({
   key: crypto.randomUUID(),
   dimension: q.dimension,
   prompt: q.prompt,
+  description: q.description ?? '',
+  commentEnabled: q.commentEnabled ?? false,
   type: q.questionType,
   isRequired: q.isRequired,
   ratingMin: q.ratingMin ?? '1',
@@ -153,6 +161,10 @@ export function hydrateSurvey(
     ...(copy ? {} : { id: detail.summary.id }),
     title: copy ? `${detail.summary.title} (copy)` : detail.summary.title,
     description: detail.summary.description ?? '',
+    responseReviewMode:
+      detail.summary.responseReviewMode === 'ANONYMOUS_SUBMISSIONS'
+        ? 'ANONYMOUS_SUBMISSIONS'
+        : 'AGGREGATE_ONLY',
     threshold: detail.summary.minimumReportGroupSize,
     audience: [...audience.departmentIds],
     locations: [...audience.locationIds],
@@ -193,6 +205,8 @@ const buildQuestion = (q: EditorQuestion) => {
   return {
     dimension: q.dimension.trim(),
     prompt: q.prompt.trim(),
+    description: q.description.trim() || null,
+    commentEnabled: (q.type === 'RATING' || isChoice(q.type)) && q.commentEnabled,
     questionType: q.type,
     isRequired: q.isRequired,
     ...buildRatingRange(q),
@@ -224,6 +238,7 @@ export function buildSurveyInput(draft: SurveyDraft, timezone: string) {
     ...(draft.id ? { id: draft.id } : {}),
     title: draft.title.trim(),
     description: draft.description.trim() || null,
+    responseReviewMode: draft.responseReviewMode,
     minimumReportGroupSize: draft.threshold,
     audienceDepartmentIds: draft.audience,
     audienceLocationIds: draft.locations,

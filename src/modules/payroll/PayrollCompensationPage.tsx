@@ -1,9 +1,14 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   AssignAnnualCtcSection,
   SalaryBreakupPreviewSection,
@@ -162,7 +167,9 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
     setLoading(true);
     setError(null);
     try {
-      const result = await client.request<BoardResult>(COMPENSATION_BOARD_QUERY, { employeeLimit: 300 });
+      const result = await client.request<BoardResult>(COMPENSATION_BOARD_QUERY, {
+        employeeLimit: 300,
+      });
       setBoard(result);
     } catch (e) {
       setError(graphQlUserMessage(e));
@@ -288,10 +295,12 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
         },
       });
       setOk('Employee salary structure assigned.');
-      const result = await client.request<{ employeeSalaryBreakupPreview: SalaryBreakupPreview | null }>(
-        SALARY_BREAKUP_PREVIEW,
-        { employeeId: assignmentForm.employeeId, asOf: assignmentForm.effectiveFrom }
-      );
+      const result = await client.request<{
+        employeeSalaryBreakupPreview: SalaryBreakupPreview | null;
+      }>(SALARY_BREAKUP_PREVIEW, {
+        employeeId: assignmentForm.employeeId,
+        asOf: assignmentForm.effectiveFrom,
+      });
       setPreview(result.employeeSalaryBreakupPreview);
     } catch (e) {
       setActionError(graphQlUserMessage(e));
@@ -300,8 +309,16 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
     }
   };
 
+  const tabs = [
+    { id: 'components', label: 'Salary Components' },
+    { id: 'structures', label: 'Salary Structures' },
+    { id: 'assignments', label: 'Assign Employee Salary' },
+  ];
+  const { tab, setTab } = usePageTabs(tabs);
+
   return (
     <div className="space-y-4">
+      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       <div>
         <h1 className="sr-only">Salary Setup</h1>
       </div>
@@ -322,37 +339,53 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
         </Card>
       ) : null}
 
-      <SalaryComponentsSection
-        board={board}
-        busy={busy}
-        loading={loading}
-        componentForm={componentForm}
-        onComponentFormChange={setComponentForm}
-        onSubmit={addComponent}
-      />
-      <SalaryStructureSection
-        board={board}
-        busy={busy}
-        structureName={structureName}
-        structureDescription={structureDescription}
-        structureLines={structureLines}
-        lineDraft={lineDraft}
-        onStructureNameChange={setStructureName}
-        onStructureDescriptionChange={setStructureDescription}
-        onLineDraftChange={setLineDraft}
-        onAddLine={addStructureLine}
-        onSubmit={saveStructure}
-      />
-      <AssignAnnualCtcSection
-        board={board}
-        busy={busy}
-        assignmentForm={assignmentForm}
-        selectedJoiningDate={selectedEmployee?.dateOfJoining?.slice(0, 10)}
-        onAssignmentFormChange={setAssignmentForm}
-        onPreviewReset={() => setPreview(null)}
-        onSubmit={assignStructure}
-      />
-      {preview ? <SalaryBreakupPreviewSection preview={preview} /> : null}
+      <PageTabPanel id="components" activeTab={tab}>
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={() => setTab('structures')}>
+            Next: Build Salary Structure
+          </Button>
+        </div>
+        <SalaryComponentsSection
+          board={board}
+          busy={busy}
+          loading={loading}
+          componentForm={componentForm}
+          onComponentFormChange={setComponentForm}
+          onSubmit={addComponent}
+        />
+      </PageTabPanel>
+      <PageTabPanel id="structures" activeTab={tab}>
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={() => setTab('assignments')}>
+            Next: Assign Employee Salary
+          </Button>
+        </div>
+        <SalaryStructureSection
+          board={board}
+          busy={busy}
+          structureName={structureName}
+          structureDescription={structureDescription}
+          structureLines={structureLines}
+          lineDraft={lineDraft}
+          onStructureNameChange={setStructureName}
+          onStructureDescriptionChange={setStructureDescription}
+          onLineDraftChange={setLineDraft}
+          onAddLine={addStructureLine}
+          onSubmit={saveStructure}
+        />
+      </PageTabPanel>
+      <PageTabPanel id="assignments" activeTab={tab}>
+        <AssignAnnualCtcSection
+          board={board}
+          busy={busy}
+          assignmentForm={assignmentForm}
+          selectedJoiningDate={selectedEmployee?.dateOfJoining.slice(0, 10)}
+          onAssignmentFormChange={setAssignmentForm}
+          onPreviewReset={() => setPreview(null)}
+          onSubmit={assignStructure}
+        />
+        {preview ? <SalaryBreakupPreviewSection preview={preview} /> : null}
+      </PageTabPanel>
     </div>
   );
 };

@@ -1,15 +1,13 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
-import Card from '../../components/common/Card';
+import { type FormEvent, useCallback, useEffect, useState } from 'react';
+
+import { WorkplaceGrievanceDocument, SubmitGrievanceCaseDocument } from '../../api/graphql/graphql';
 import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import Textarea from '../../components/common/Textarea';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
-import {
-  WorkplaceGrievanceDocument,
-  SubmitGrievanceCaseDocument,
-} from '../../api/graphql/graphql';
 
 const GrievancePage = () => {
   const client = useGraphClient('client');
@@ -79,12 +77,15 @@ const GrievancePage = () => {
       setCases(r.grievanceCases);
       setSubject('');
       setDescription('');
+      setFiling(false);
     } catch (err) {
       setFormError(graphQlUserMessage(err));
     } finally {
       setSubmitting(false);
     }
   };
+
+  const [filing, setFiling] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -94,60 +95,75 @@ const GrievancePage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="File A Case">
-        <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
-          {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
-          <Select
-            id="grievance-category"
-            label="Category"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            options={[
-              { value: '', label: 'Select…' },
-              ...categories.map((category) => ({
-                value: category.id,
-                label: `${category.name} (${category.code})`,
-              })),
-            ]}
-            required
-            fullWidth
-          />
-          <Input label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} fullWidth required />
-          <Textarea
-            id="grievance-description"
-            label="Description"
-            optionalLabel="optional"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            fullWidth
-          />
-          <Button type="submit" disabled={submitting || loading}>
-            {submitting ? 'Submitting...' : 'Submit Case'}
-          </Button>
-        </form>
-      </Card>
-      <Card title="Cases">
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : cases.length ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {cases.map((x) => (
-              <li key={x.id} className="py-3">
-                <p className="font-medium text-gray-900 dark:text-white">{x.subject}</p>
-                <p className="text-xs text-gray-500">
-                  {x.status} · {new Date(x.filedAt).toLocaleString()}
-                </p>
-                {x.description && (
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{x.description}</p>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500">No Cases.</p>
-        )}
-      </Card>
+      <div className="flex justify-end">
+        <Button disabled={submitting} onClick={() => setFiling((open) => !open)}>
+          {filing ? 'Back to cases' : 'File a Case'}
+        </Button>
+      </div>
+      <div hidden={!filing}>
+        <Card title="File A Case">
+          <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
+            {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+            <Select
+              id="grievance-category"
+              label="Category"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              options={[
+                { value: '', label: 'Select…' },
+                ...categories.map((category) => ({
+                  value: category.id,
+                  label: `${category.name} (${category.code})`,
+                })),
+              ]}
+              required
+              fullWidth
+            />
+            <Input
+              label="Subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              fullWidth
+              required
+            />
+            <Textarea
+              id="grievance-description"
+              label="Description"
+              optionalLabel="optional"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              fullWidth
+            />
+            <Button type="submit" disabled={submitting || loading}>
+              {submitting ? 'Submitting...' : 'Submit Case'}
+            </Button>
+          </form>
+        </Card>
+      </div>
+      <div hidden={filing}>
+        <Card title="Cases">
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : cases.length ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {cases.map((x) => (
+                <li key={x.id} className="py-3">
+                  <p className="font-medium text-gray-900 dark:text-white">{x.subject}</p>
+                  <p className="text-xs text-gray-500">
+                    {x.status} · {new Date(x.filedAt).toLocaleString()}
+                  </p>
+                  {x.description && (
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{x.description}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No Cases.</p>
+          )}
+        </Card>
+      </div>
     </div>
   );
 };

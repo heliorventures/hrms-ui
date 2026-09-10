@@ -1,12 +1,5 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
-import Select from '../../components/common/Select';
-import { useAuth } from '../../contexts/AuthContext';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { createPermissionService } from '../../auth/permissionService';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import { type FormEvent, useCallback, useEffect, useState } from 'react';
+
 import {
   AttendanceAdjustmentPolicyDocument,
   TimesheetLockPolicyDocument,
@@ -17,6 +10,16 @@ import {
   UpsertTimesheetProjectHrDocument,
   UpsertTimesheetTaskTypesHrDocument,
 } from '../../api/graphql/graphql';
+import { createPermissionService } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import Input from '../../components/common/Input';
+import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
+import Select from '../../components/common/Select';
+import { useAuth } from '../../contexts/AuthContext';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { usePageTabs } from '../../hooks/usePageTabs';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 const AdminHrTimesheetSettingsPage = () => {
   const { clientSession } = useAuth();
@@ -45,11 +48,11 @@ const AdminHrTimesheetSettingsPage = () => {
         client.request(AttendanceAdjustmentPolicyDocument),
         client.request(TimesheetLockPolicyDocument),
       ]);
-      const d = adj.attendanceAdjustmentPolicy?.maxSelfAdjustDays;
+      const d = adj.attendanceAdjustmentPolicy.maxSelfAdjustDays;
       setMaxSelfDays(String(d ?? '14'));
-      const span = lock.timesheetLockPolicy?.editableWeekSpan;
+      const span = lock.timesheetLockPolicy.editableWeekSpan;
       setEditableWeekSpan(String(span ?? '4'));
-      setLockApproved(Boolean(lock.timesheetLockPolicy?.lockApprovedEntries));
+      setLockApproved(Boolean(lock.timesheetLockPolicy.lockApprovedEntries));
     } catch {
       /* defaults */
     }
@@ -60,7 +63,7 @@ const AdminHrTimesheetSettingsPage = () => {
       const r = await client.request(TimesheetProjectsDocument, { limit: 100 });
       const rows = r.timesheetProjects ?? [];
       setProjects(rows);
-      setTaskProjectCode((prev) => (prev.trim() ? prev : rows[0]?.code ?? ''));
+      setTaskProjectCode((prev) => (prev.trim() ? prev : (rows[0]?.code ?? '')));
     } catch {
       setProjects([]);
     }
@@ -180,12 +183,19 @@ const AdminHrTimesheetSettingsPage = () => {
     ...projects.map((p) => ({ value: p.code, label: `${p.code} — ${p.name}` })),
   ];
 
+  const tabs = [
+    { id: 'adjustments', label: 'Missed Punch Rules' },
+    { id: 'locking', label: 'Timesheet Lock Rules' },
+    { id: 'projects', label: 'Projects' },
+    { id: 'tasks', label: 'Project Task Types' },
+  ];
+  const { tab, setTab } = usePageTabs(tabs);
+
   return (
     <div className="space-y-4">
+      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       <div>
-        <h1 className="sr-only">
-          Timesheet & attendance rules
-        </h1>
+        <h1 className="sr-only">Timesheet & attendance rules</h1>
       </div>
 
       {(message || error) && (
@@ -195,106 +205,117 @@ const AdminHrTimesheetSettingsPage = () => {
         </Card>
       )}
 
-      <Card title="Attendance Self-Adjust Window">
-        <form className="space-y-3 max-w-md" onSubmit={(ev) => void saveAdjustment(ev)}>
-          <Input
-            label="Max Calendar Days Employees May Self-Add Missed Punches"
-            value={maxSelfDays}
-            onChange={(e) => setMaxSelfDays(e.target.value)}
-            inputMode="numeric"
-            fullWidth
-            disabled={!canPolicyWide}
-          />
-          <Button type="submit" variant="primary" disabled={!canPolicyWide || busy}>
-            Save Adjustment Policy
-          </Button>
-          {!canPolicyWide && (
-            <p className="text-xs text-gray-500">Needs HR attendance policy or timesheet manage.</p>
-          )}
-        </form>
-      </Card>
-
-      <Card title="Timesheet Lock Policy">
-        <form className="space-y-3 max-w-md" onSubmit={(ev) => void saveLock(ev)}>
-          <Input
-            label="Editable Week Span (Rolling Mondays HR Allows Drafts For)"
-            value={editableWeekSpan}
-            onChange={(e) => setEditableWeekSpan(e.target.value)}
-            inputMode="numeric"
-            fullWidth
-            disabled={!canManageCatalog}
-          />
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <input
-              type="checkbox"
-              checked={lockApproved}
-              disabled={!canManageCatalog}
-              onChange={(e) => setLockApproved(e.target.checked)}
+      <PageTabPanel id="adjustments" activeTab={tab}>
+        <Card title="Attendance Self-Adjust Window">
+          <form className="space-y-3 max-w-md" onSubmit={(ev) => void saveAdjustment(ev)}>
+            <Input
+              label="Max Calendar Days Employees May Self-Add Missed Punches"
+              value={maxSelfDays}
+              onChange={(e) => setMaxSelfDays(e.target.value)}
+              inputMode="numeric"
+              fullWidth
+              disabled={!canPolicyWide}
             />
-            Lock approved timesheet rows from edits
-          </label>
-          <Button type="submit" variant="primary" disabled={!canManageCatalog || busy}>
-            Save Lock Policy
-          </Button>
-          {!canManageCatalog && (
-            <p className="text-xs text-gray-500">Needs timesheet:manage.</p>
-          )}
-        </form>
-      </Card>
-
-      <Card title="Company Projects">
-        <form className="grid max-w-xl gap-3 md:grid-cols-2" onSubmit={(ev) => void addProject(ev)}>
-          <Input
-            label="Code"
-            value={projectCode}
-            onChange={(e) => setProjectCode(e.target.value)}
-            placeholder="INTERNAL"
-            fullWidth
-            disabled={!canManageCatalog}
-          />
-          <Input
-            label="Display Name"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            placeholder="Internal / overhead"
-            fullWidth
-            disabled={!canManageCatalog}
-          />
-          <div className="md:col-span-2">
-            <Button type="submit" variant="primary" disabled={!canManageCatalog || busy}>
-              Upsert project
+            <Button type="submit" variant="primary" disabled={!canPolicyWide || busy}>
+              Save Adjustment Policy
             </Button>
-          </div>
-        </form>
-      </Card>
+            {!canPolicyWide && (
+              <p className="text-xs text-gray-500">
+                Needs HR attendance policy or timesheet manage.
+              </p>
+            )}
+          </form>
+        </Card>
+      </PageTabPanel>
 
-      <Card title="Task Types Per Project">
-        <form className="space-y-3 max-w-xl" onSubmit={(ev) => void saveTasks(ev)}>
-          <Select
-            label="Project"
-            value={taskProjectCode}
-            onChange={(e) => setTaskProjectCode(e.target.value)}
-            options={projectPickOpts}
-            fullWidth
-            disabled={!canManageCatalog}
-          />
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Task codes (one per line)
-            </label>
-            <textarea
-              value={taskLines}
-              onChange={(e) => setTaskLines(e.target.value)}
-              rows={6}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+      <PageTabPanel id="locking" activeTab={tab}>
+        <Card title="Timesheet Lock Policy">
+          <form className="space-y-3 max-w-md" onSubmit={(ev) => void saveLock(ev)}>
+            <Input
+              label="Editable Week Span (Rolling Mondays HR Allows Drafts For)"
+              value={editableWeekSpan}
+              onChange={(e) => setEditableWeekSpan(e.target.value)}
+              inputMode="numeric"
+              fullWidth
               disabled={!canManageCatalog}
             />
-          </div>
-          <Button type="submit" variant="primary" disabled={!canManageCatalog || busy}>
-            Save Task List
-          </Button>
-        </form>
-      </Card>
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={lockApproved}
+                disabled={!canManageCatalog}
+                onChange={(e) => setLockApproved(e.target.checked)}
+              />
+              Lock approved timesheet rows from edits
+            </label>
+            <Button type="submit" variant="primary" disabled={!canManageCatalog || busy}>
+              Save Lock Policy
+            </Button>
+            {!canManageCatalog && <p className="text-xs text-gray-500">Needs timesheet:manage.</p>}
+          </form>
+        </Card>
+      </PageTabPanel>
+
+      <PageTabPanel id="projects" activeTab={tab}>
+        <Card title="Company Projects">
+          <form
+            className="grid max-w-xl gap-3 md:grid-cols-2"
+            onSubmit={(ev) => void addProject(ev)}
+          >
+            <Input
+              label="Code"
+              value={projectCode}
+              onChange={(e) => setProjectCode(e.target.value)}
+              placeholder="INTERNAL"
+              fullWidth
+              disabled={!canManageCatalog}
+            />
+            <Input
+              label="Display Name"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              placeholder="Internal / overhead"
+              fullWidth
+              disabled={!canManageCatalog}
+            />
+            <div className="md:col-span-2">
+              <Button type="submit" variant="primary" disabled={!canManageCatalog || busy}>
+                Save Project
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </PageTabPanel>
+
+      <PageTabPanel id="tasks" activeTab={tab}>
+        <Card title="Task Types Per Project">
+          <form className="space-y-3 max-w-xl" onSubmit={(ev) => void saveTasks(ev)}>
+            <Select
+              label="Project"
+              value={taskProjectCode}
+              onChange={(e) => setTaskProjectCode(e.target.value)}
+              options={projectPickOpts}
+              fullWidth
+              disabled={!canManageCatalog}
+            />
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Task codes (one per line)
+              </label>
+              <textarea
+                value={taskLines}
+                onChange={(e) => setTaskLines(e.target.value)}
+                rows={6}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                disabled={!canManageCatalog}
+              />
+            </div>
+            <Button type="submit" variant="primary" disabled={!canManageCatalog || busy}>
+              Save Task List
+            </Button>
+          </form>
+        </Card>
+      </PageTabPanel>
     </div>
   );
 };

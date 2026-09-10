@@ -70,7 +70,7 @@ describe('ExpensesPage exact authorization', () => {
     testState.permissionScopes = { 'expense:read': 'SELF' };
     renderPage();
 
-    expect(await screen.findByText('Expense Claims')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Expense Claims' })).toBeTruthy();
     expect(screen.queryByText('Expense Categories')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Page information' }));
     expect(await screen.findByText('Expense Categories')).toBeTruthy();
@@ -87,7 +87,7 @@ describe('ExpensesPage exact authorization', () => {
     testState.permissionScopes = { 'travel:read': 'SELF' };
     renderPage();
 
-    expect(await screen.findByText('Travel Requests')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Travel Requests' })).toBeTruthy();
     expect(screen.queryByText('Expense Claims')).toBeNull();
     expect(screen.queryByText('Expense Categories')).toBeNull();
     expect(testState.client.request).toHaveBeenCalledWith(ExpenseBoardDocument, {
@@ -113,7 +113,11 @@ describe('ExpensesPage exact authorization', () => {
     renderPage();
 
     expect(await screen.findByRole('button', { name: 'Submit Expense' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Request travel' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Request travel' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Configure categories' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Travel Requests' }));
+    expect(screen.getByRole('button', { name: 'Request travel' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Submit Expense' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Configure categories' })).toBeNull();
   });
 });

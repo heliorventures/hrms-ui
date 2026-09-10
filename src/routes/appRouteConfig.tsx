@@ -105,7 +105,7 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   {
     kind: 'page',
     path: 'expenses',
-    title: 'Expenses',
+    title: 'Expenses & Travel',
     tenantPath: '/expenses',
     load: () => import('../modules/expenses/ExpensesPage'),
   },
@@ -168,7 +168,7 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   {
     kind: 'page',
     path: 'workplace/recruitment',
-    title: 'Recruitment',
+    title: 'Hiring & Applicants',
     tenantPath: '/workplace/recruitment',
     load: () => import('../modules/workplace/RecruitmentPage'),
   },
@@ -306,14 +306,14 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   {
     kind: 'page',
     path: 'admin/expense-categories',
-    title: 'Expense categories',
+    title: 'Expense Categories & Policies',
     tenantPath: '/admin/expense-categories',
     load: () => import('../modules/admin/AdminExpenseCategoriesPage'),
   },
   {
     kind: 'page',
     path: 'admin/notifications',
-    title: 'Notification administration',
+    title: 'Announcements & Messages',
     tenantPath: '/admin/notifications',
     load: () => import('../modules/admin/AdminNotificationsPage'),
   },

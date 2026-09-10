@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import EmptyState from '../../components/common/EmptyState';
 
 import { surveyAvailabilityLabel } from './surveyAvailability';
 import type { SurveySummaryRow } from './surveyQueries';
@@ -82,8 +83,25 @@ const SurveyAdminRow = ({
     <div>
       <p className="font-medium">{item.title}</p>
       <p className="text-xs text-content-secondary">
-        {surveyAvailabilityLabel(item)} · reporting threshold {item.minimumReportGroupSize}
+        {surveyAvailabilityLabel(item)} ·{' '}
+        {item.responseReviewMode === 'ANONYMOUS_SUBMISSIONS'
+          ? 'Unnamed submission review'
+          : 'Aggregate reporting'}
       </p>
+      <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+        {(
+          [
+            ['Assigned', item.assignedCount],
+            ['Completed', item.completedCount],
+            ['Pending', item.pendingCount],
+          ] as const
+        ).map(([label, count]) => (
+          <div key={label} className="flex gap-1.5">
+            <dt className="text-content-secondary">{label}</dt>
+            <dd className="font-semibold tabular-nums">{count ?? '—'}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
     <div className="flex flex-wrap gap-2">
       <Button
@@ -92,34 +110,74 @@ const SurveyAdminRow = ({
         disabled={model.isBusy('save-survey') || model.isBusy('load-draft')}
         onClick={() => void model.editSurvey(item.id, item.status !== 'DRAFT')}
       >
-        {item.status === 'DRAFT' ? 'Edit draft' : 'Copy as new draft'}
+        {item.status === 'DRAFT' ? 'Edit' : 'Copy as new'}
       </Button>
       <Button size="sm" variant="outline" onClick={() => void model.openSurvey(item.id, 'admin')}>
         View
       </Button>
       <Button size="sm" variant="quiet" onClick={() => void model.openHistory(item.id)}>
-        Management history
+        History
       </Button>
       <SurveyLifecycleActions item={item} model={model} />
       {model.canResults && item.status !== 'DRAFT' && (
         <Button size="sm" variant="quiet" onClick={() => void model.openResults(item.id)}>
-          Aggregate results
+          Responses
         </Button>
       )}
     </div>
   </li>
 );
-const SurveyAdminCatalog = ({ model }: { model: SurveyWorkspaceModel }) => (
-  <Card title="Survey administration">
-    {model.adminSurveys.length === 0 ? (
-      <p className="text-sm text-content-secondary">No surveys created.</p>
-    ) : (
-      <ul className="divide-y divide-line">
-        {model.adminSurveys.map((item) => (
-          <SurveyAdminRow key={item.id} item={item} model={model} />
-        ))}
-      </ul>
-    )}
-  </Card>
-);
+const SurveyAdminCatalog = ({ model }: { model: SurveyWorkspaceModel }) => {
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('ALL');
+  const visible = model.adminSurveys.filter(
+    (item) =>
+      item.title.toLowerCase().includes(search.trim().toLowerCase()) &&
+      (status === 'ALL' || item.status === status)
+  );
+  return (
+    <Card title="Created surveys">
+      <div className="mb-4 flex flex-wrap gap-3">
+        <label className="flex-1 text-sm">
+          Search surveys
+          <input
+            className="mt-1 min-h-11 w-full rounded-md border border-line bg-surface px-3"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by title"
+          />
+        </label>
+        <label className="text-sm">
+          Status
+          <select
+            className="mt-1 block min-h-11 rounded-md border border-line bg-surface px-3"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
+            <option value="ALL">All statuses</option>
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+        </label>
+      </div>
+      {visible.length === 0 ? (
+        <EmptyState
+          title={model.adminSurveys.length ? 'No matching surveys' : 'No surveys created yet'}
+          description={
+            model.adminSurveys.length
+              ? 'Try another title or status.'
+              : 'Choose Add survey to start with a blank questionnaire or copy a previous one.'
+          }
+        />
+      ) : (
+        <ul className="divide-y divide-line">
+          {visible.map((item) => (
+            <SurveyAdminRow key={item.id} item={item} model={model} />
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+};
 export default SurveyAdminCatalog;

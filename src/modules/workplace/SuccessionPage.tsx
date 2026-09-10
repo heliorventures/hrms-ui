@@ -5,12 +5,13 @@ import { scopeForPermission } from '../../auth/approvalScope';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
+import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import { successionSetupPageDocument } from './successionSetup';
-
 import type { SuccessionSetupValues } from './successionSetup';
 import SuccessionSetupModal from './SuccessionSetupModal';
 
@@ -23,8 +24,17 @@ const SuccessionPage = () => {
     initial?: SuccessionSetupValues;
   } | null>(null);
   const [refresh, setRefresh] = useState(0);
-  const [offset, setOffset] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
+  const tabs = [
+    { id: 'pools', label: 'Talent Pools' },
+    { id: 'competencies', label: 'Competencies' },
+  ];
+  const { tab, setTab } = usePageTabs(tabs);
+  const [offsets, setOffsets] = useState<Record<string, number>>({});
+  const offset = offsets[tab] ?? 0;
+  const setOffset = (update: (value: number) => number) =>
+    setOffsets((current) => ({ ...current, [tab]: update(current[tab] ?? 0) }));
+  const [pageAvailability, setPageAvailability] = useState({ competencies: false, pools: false });
+  const hasNext = tab === 'pools' ? pageAvailability.pools : pageAvailability.competencies;
   const client = useGraphClient('client');
   const [data, setData] = useState<WorkplaceSuccessionDataQuery | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +52,10 @@ const SuccessionPage = () => {
         setError(null);
         const r = await load();
         if (!c) {
-          setHasNext(r.competencies.length > 20 || r.talentPools.length > 20);
+          setPageAvailability({
+            competencies: r.competencies.length > 20,
+            pools: r.talentPools.length > 20,
+          });
           setData({
             ...r,
             competencies: r.competencies.slice(0, 20),
@@ -63,92 +76,97 @@ const SuccessionPage = () => {
   return (
     <div className="space-y-4">
       <PageHeader title="Succession" />
+      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card
-        title={
-          <span className="flex items-center justify-between gap-3">
-            <span>Competencies</span>
-            {canManage && (
-              <Button size="sm" onClick={() => setEditor({ kind: 'competency' })}>
-                Create Competency
-              </Button>
-            )}
-          </span>
-        }
-      >
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : data?.competencies.length ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {data.competencies.map((row) => (
-              <li key={row.id} className="py-3 first:pt-0">
-                {canManage && (
-                  <Button
-                    className="float-right"
-                    variant="outline"
-                    size="sm"
-                    aria-label={`Edit competency ${row.name}`}
-                    onClick={() => setEditor({ kind: 'competency', initial: row })}
-                  >
-                    Edit
-                  </Button>
-                )}
-                <p className="font-medium text-gray-900 dark:text-white">{row.name}</p>
-                <p className="text-xs text-gray-500">
-                  {row.category ?? '—'}
-                  {row.description ? ` · ${row.description}` : ''}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500">No Competencies In Catalog.</p>
-        )}
-      </Card>
-      <Card
-        title={
-          <span className="flex items-center justify-between gap-3">
-            <span>Talent Pools</span>
-            {canManage && (
-              <Button size="sm" onClick={() => setEditor({ kind: 'pool' })}>
-                Create Talent Pool
-              </Button>
-            )}
-          </span>
-        }
-      >
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : data?.talentPools.length ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {data.talentPools.map((p) => (
-              <li key={p.id} className="py-3 first:pt-0">
-                {canManage && (
-                  <Button
-                    className="float-right"
-                    variant="outline"
-                    size="sm"
-                    aria-label={`Edit talent pool ${p.name}`}
-                    onClick={() => setEditor({ kind: 'pool', initial: p })}
-                  >
-                    Edit
-                  </Button>
-                )}
-                <p className="font-medium text-gray-900 dark:text-white">{p.name}</p>
-                {p.description ? (
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{p.description}</p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500">No Talent Pools Defined.</p>
-        )}
-      </Card>
+      <PageTabPanel id="competencies" activeTab={tab}>
+        <Card
+          title={
+            <span className="flex items-center justify-between gap-3">
+              <span>Competencies</span>
+              {canManage && (
+                <Button size="sm" onClick={() => setEditor({ kind: 'competency' })}>
+                  Create Competency
+                </Button>
+              )}
+            </span>
+          }
+        >
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : data?.competencies.length ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {data.competencies.map((row) => (
+                <li key={row.id} className="py-3 first:pt-0">
+                  {canManage && (
+                    <Button
+                      className="float-right"
+                      variant="outline"
+                      size="sm"
+                      aria-label={`Edit competency ${row.name}`}
+                      onClick={() => setEditor({ kind: 'competency', initial: row })}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  <p className="font-medium text-gray-900 dark:text-white">{row.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {row.category ?? '—'}
+                    {row.description ? ` · ${row.description}` : ''}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No Competencies In Catalog.</p>
+          )}
+        </Card>
+      </PageTabPanel>
+      <PageTabPanel id="pools" activeTab={tab}>
+        <Card
+          title={
+            <span className="flex items-center justify-between gap-3">
+              <span>Talent Pools</span>
+              {canManage && (
+                <Button size="sm" onClick={() => setEditor({ kind: 'pool' })}>
+                  Create Talent Pool
+                </Button>
+              )}
+            </span>
+          }
+        >
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : data?.talentPools.length ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {data.talentPools.map((p) => (
+                <li key={p.id} className="py-3 first:pt-0">
+                  {canManage && (
+                    <Button
+                      className="float-right"
+                      variant="outline"
+                      size="sm"
+                      aria-label={`Edit talent pool ${p.name}`}
+                      onClick={() => setEditor({ kind: 'pool', initial: p })}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  <p className="font-medium text-gray-900 dark:text-white">{p.name}</p>
+                  {p.description ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{p.description}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No Talent Pools Defined.</p>
+          )}
+        </Card>
+      </PageTabPanel>
       <nav aria-label="Succession pages" className="flex items-center justify-end gap-3">
         <Button
           size="sm"

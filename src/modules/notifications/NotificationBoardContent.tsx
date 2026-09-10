@@ -3,6 +3,7 @@ import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import PageInformation from '../../components/common/PageInformation';
 import PageNotice from '../../components/common/PageNotice';
+import { PageTabPanel } from '../../components/common/PageTabs';
 
 import AnnouncementList from './components/AnnouncementList';
 import PrivateNotificationList from './components/PrivateNotificationList';
@@ -12,6 +13,7 @@ type NotificationBoardModel = ReturnType<typeof useNotificationBoard>;
 
 interface NotificationBoardContentProps {
   board: NotificationBoardModel;
+  activeTab?: string;
 }
 
 const CAP_MESSAGE = 'Showing up to 20 recent items. More may be available.';
@@ -134,14 +136,21 @@ const PrivateNotificationBoardCard = ({ board }: NotificationBoardContentProps) 
   );
 };
 
-const NotificationBoardContent = ({ board }: NotificationBoardContentProps) => {
+const NotificationBoardContent = ({
+  board,
+  activeTab = 'private',
+}: NotificationBoardContentProps) => {
   if (!board.hasLoadedData) return <InitialNotificationBoard board={board} />;
 
   return (
     <>
       <NotificationBoardNotices board={board} />
-      <AnnouncementBoardCard board={board} />
-      <PrivateNotificationBoardCard board={board} />
+      <PageTabPanel id="announcements" activeTab={activeTab}>
+        <AnnouncementBoardCard board={board} />
+      </PageTabPanel>
+      <PageTabPanel id="private" activeTab={activeTab}>
+        <PrivateNotificationBoardCard board={board} />
+      </PageTabPanel>
     </>
   );
 };

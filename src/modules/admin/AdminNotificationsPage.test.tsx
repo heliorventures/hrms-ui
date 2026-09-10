@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { MemoryRouter } from 'react-router-dom';
+
 import { DialogProvider } from '../../contexts/DialogContext';
 
 import AdminNotificationsPage from './AdminNotificationsPage';
@@ -73,9 +75,11 @@ const consoleData = {
 
 const renderPage = () =>
   render(
-    <DialogProvider>
-      <AdminNotificationsPage />
-    </DialogProvider>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <DialogProvider>
+        <AdminNotificationsPage />
+      </DialogProvider>
+    </MemoryRouter>
   );
 
 const openStoredRoleAnnouncement = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -262,9 +266,11 @@ describe('AdminNotificationsPage audience-change safeguards', () => {
     };
     graphState.client = refreshedClient;
     view.rerender(
-      <DialogProvider>
-        <AdminNotificationsPage />
-      </DialogProvider>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <DialogProvider>
+          <AdminNotificationsPage />
+        </DialogProvider>
+      </MemoryRouter>
     );
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull());
 
@@ -285,6 +291,7 @@ describe('AdminNotificationsPage audience-change safeguards', () => {
 
     await user.click(screen.getByRole('checkbox', { name: 'Clear role targeting' }));
     await user.click(screen.getByRole('button', { name: 'Cancel edit' }));
+    await user.click(screen.getByRole('button', { name: 'Create Announcement' }));
 
     expect(screen.queryByRole('checkbox', { name: 'Clear role targeting' })).toBeNull();
     expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Target Role Code' }).value).toBe(
@@ -304,6 +311,7 @@ describe('AdminNotificationsPage announcement video editing', () => {
     async (mode, expectedLink, expectedStageId) => {
       const user = userEvent.setup();
       renderPage();
+      await user.click(await screen.findByRole('button', { name: 'Create Announcement' }));
       await screen.findByText('New announcement (HR)');
       await user.type(announcementTitleInput(), 'New policy');
       if (mode !== 'No video') await user.click(screen.getByRole('radio', { name: mode }));
@@ -402,6 +410,7 @@ describe('AdminNotificationsPage automated employee events', () => {
     const user = userEvent.setup();
     renderPage();
 
+    await user.click(await screen.findByRole('tab', { name: 'Automated Greetings' }));
     expect(await screen.findByText('Automated Employee Events')).toBeTruthy();
     const birthdayEnabled = screen.getByRole<HTMLInputElement>('checkbox', {
       name: 'Enable birthday notifications',
@@ -428,6 +437,7 @@ describe('AdminNotificationsPage automated employee events', () => {
     const user = userEvent.setup();
     renderPage();
 
+    await user.click(await screen.findByRole('tab', { name: 'Automated Greetings' }));
     const birthdayMessage = await screen.findByRole('textbox', {
       name: 'Birthday message template',
     });
@@ -444,4 +454,31 @@ describe('AdminNotificationsPage automated employee events', () => {
       )
     ).toBe(false);
   });
+});
+
+describe('communications task navigation', () => {
+  it('opens history first and preserves a draft while changing features', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    expect(await screen.findByRole('button', { name: 'Edit' })).toBeTruthy();
+    expect(screen.queryByRole('textbox', { name: 'Title' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Create Announcement' }));
+    await user.type(announcementTitleInput(), 'Draft policy');
+    await user.click(screen.getByRole('tab', { name: 'Direct Notifications' }));
+    expect(screen.queryByRole('button', { name: 'Create Announcement' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Send Notification' })).toBeTruthy();
+    await user.click(screen.getByRole('tab', { name: 'Announcements' }));
+    expect(announcementTitleInput().value).toBe('Draft policy');
+  });
+});
+
+it('retains an announcement attachment when returning to history and reopening the draft', async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(await screen.findByRole('button', { name: 'Create Announcement' }));
+  const file = new File(['policy'], 'policy.pdf', { type: 'application/pdf' });
+  await user.upload(screen.getByLabelText('Document'), file);
+  await user.click(screen.getByRole('button', { name: 'Back to announcements' }));
+  await user.click(screen.getByRole('button', { name: 'Create Announcement' }));
+  expect((screen.getByLabelText('Document') as HTMLInputElement).files?.[0]).toBe(file);
 });

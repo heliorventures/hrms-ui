@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import PageInformationButton from './PageInformationButton';
 import { PageInformationContext } from './pageInformationContext';
 import PageInformationProvider from './PageInformationProvider';
+import { PageTabVisibilityContext } from './pageTabVisibilityContext';
 
 interface PageInformationProps {
   title: string;
@@ -13,10 +14,13 @@ interface PageInformationProps {
 /** Secondary reference content only. Keep errors and action-critical guidance on the page. */
 const PageInformation = ({ title, children }: PageInformationProps) => {
   const information = useContext(PageInformationContext);
+  const isActive = useContext(PageTabVisibilityContext);
   const id = useId();
   const register = information?.register;
 
-  useEffect(() => register?.(id), [register, id]);
+  useEffect(() => (isActive ? register?.(id) : undefined), [register, id, isActive]);
+
+  if (!isActive) return null;
 
   // Standalone pages and embedded views remain usable outside an application shell.
   if (!information) {

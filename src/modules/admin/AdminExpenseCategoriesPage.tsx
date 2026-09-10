@@ -1,6 +1,9 @@
-import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
 import PageActions from '../../components/common/PageActions';
+import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
+import { usePageTabs } from '../../hooks/usePageTabs';
+
 import ExpenseCategoriesTable from './components/ExpenseCategoriesTable';
 import ExpenseCategoryModal from './components/ExpenseCategoryModal';
 import ExpensePoliciesPanel from './components/ExpensePoliciesPanel';
@@ -10,13 +13,22 @@ import { useAdminExpenseCategories } from './hooks/useAdminExpenseCategories';
 const AdminExpenseCategoriesPage = () => {
   const model = useAdminExpenseCategories();
 
+  const tabs = [
+    { id: 'categories', label: 'Expense Categories' },
+    { id: 'policies', label: 'Expense Policies' },
+  ];
+  const { tab, setTab } = usePageTabs(tabs);
+
   return (
     <div className="space-y-4">
+      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       <PageActions>
         <div>
           <h1 className="sr-only">Expense Categories</h1>
         </div>
-        <Button onClick={model.openNewCategory}>Add Category</Button>
+        {tab === 'categories' ? (
+          <Button onClick={model.openNewCategory}>Add Category</Button>
+        ) : null}
       </PageActions>
 
       {model.error ? (
@@ -25,30 +37,34 @@ const AdminExpenseCategoriesPage = () => {
         </Card>
       ) : null}
 
-      <Card title="Configured Categories">
-        <ExpenseCategoriesTable
-          rows={model.rows}
-          loading={model.loading}
-          onEdit={model.openEditCategory}
-          onDelete={(row) => void model.deleteCategory(row)}
-        />
-      </Card>
+      <PageTabPanel id="categories" activeTab={tab}>
+        <Card title="Configured Categories">
+          <ExpenseCategoriesTable
+            rows={model.rows}
+            loading={model.loading}
+            onEdit={model.openEditCategory}
+            onDelete={(row) => void model.deleteCategory(row)}
+          />
+        </Card>
+      </PageTabPanel>
 
-      <Card>
-        <ExpensePoliciesPanel
-          categories={model.rows}
-          selectedCategoryId={model.policyCategoryId}
-          rows={model.policyRows}
-          loading={model.policyLoading}
-          policyError={model.policyError}
-          directoryLoading={model.policyPickerBusy}
-          onCategoryChange={model.setPolicyCategoryId}
-          onAddPolicy={model.openNewPolicy}
-          onEditPolicy={model.openEditPolicy}
-          onDeletePolicy={(policy) => void model.deletePolicy(policy)}
-          summarizeScope={model.summarizePolicyScope}
-        />
-      </Card>
+      <PageTabPanel id="policies" activeTab={tab}>
+        <Card>
+          <ExpensePoliciesPanel
+            categories={model.rows}
+            selectedCategoryId={model.policyCategoryId}
+            rows={model.policyRows}
+            loading={model.policyLoading}
+            policyError={model.policyError}
+            directoryLoading={model.policyPickerBusy}
+            onCategoryChange={model.setPolicyCategoryId}
+            onAddPolicy={model.openNewPolicy}
+            onEditPolicy={model.openEditPolicy}
+            onDeletePolicy={(policy) => void model.deletePolicy(policy)}
+            summarizeScope={model.summarizePolicyScope}
+          />
+        </Card>
+      </PageTabPanel>
 
       <ExpenseCategoryModal
         open={model.modalOpen}

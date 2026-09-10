@@ -19,35 +19,60 @@ export const useSurveyDraft = (
 ) => {
   const client = useGraphClient('client');
   const [draft, setDraft] = useState(blankSurvey);
+  const [savedDraft, setSavedDraft] = useState(() => JSON.stringify(draft));
+  const [loadingDraft, setLoadingDraft] = useState(false);
   const request = useRef(0);
   const editSurvey = async (id: string, copy = false) => {
     const token = ++request.current;
+    setLoadingDraft(true);
     await run(
-      'load-draft',
+      `load-draft:${token}`,
       async () => {
         const [value, audience] = await Promise.all([
           client.request<{ survey: SurveyDetailRow }>(SurveyDetailDocument, { id }),
           client.request<{ surveyAudience: SurveyAudienceRow }>(SurveyAudienceDocument, { id }),
         ]);
         if (token !== request.current) return;
-        setDraft(hydrateSurvey(value.survey, timezone, copy, audience.surveyAudience));
+        const next = hydrateSurvey(value.survey, timezone, copy, audience.surveyAudience);
+        setDraft(next);
+        setSavedDraft(JSON.stringify(next));
       },
       ''
     );
+    if (token === request.current) setLoadingDraft(false);
   };
   const cancelDraft = () => {
     ++request.current;
-    setDraft(blankSurvey());
+    setLoadingDraft(false);
+    const next = blankSurvey();
+    setDraft(next);
+    setSavedDraft(JSON.stringify(next));
   };
-  const saveDraft = () =>
-    run(
+  const saveDraft = async () => {
+    let saved = false;
+    const token = ++request.current;
+    await run(
       'save-survey',
       async () => {
         await client.request(SaveSurveyDocument, { input: buildSurveyInput(draft, timezone) });
-        setDraft(blankSurvey());
+        if (token !== request.current) return;
+        saved = true;
+        const next = blankSurvey();
+        setDraft(next);
+        setSavedDraft(JSON.stringify(next));
         await load();
       },
       'Survey saved as a draft.'
     );
-  return { draft, setDraft, editSurvey, cancelDraft, saveDraft };
+    return saved;
+  };
+  return {
+    draft,
+    setDraft,
+    editSurvey,
+    cancelDraft,
+    saveDraft,
+    loadingDraft,
+    draftDirty: JSON.stringify(draft) !== savedDraft,
+  };
 };

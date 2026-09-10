@@ -3,6 +3,7 @@ import Card from '../../components/common/Card';
 
 import { canFillSurvey } from './surveyAvailability';
 import type { SurveyDetailRow, SurveyQuestionRow } from './surveyQueries';
+import SurveyRatingControl from './SurveyRatingControl';
 import type { SurveyAnswerValue } from './useSurveyView';
 import type { SurveyWorkspaceModel } from './useSurveyWorkspace';
 
@@ -17,11 +18,14 @@ const ChoiceAnswer = ({ question, value, onChange }: QuestionProps) => {
   const multiple = question.questionType === 'MULTIPLE_CHOICE';
   const select = (id: string, checked: boolean) => {
     if (!multiple) {
-      onChange({ options: checked ? [id] : [] });
+      onChange({ ...value, options: checked ? [id] : [] });
       return;
     }
     const current = value.options ?? [];
-    onChange({ options: checked ? [...current, id] : current.filter((option) => option !== id) });
+    onChange({
+      ...value,
+      options: checked ? [...current, id] : current.filter((option) => option !== id),
+    });
   };
   return (
     <div className="space-y-2">
@@ -51,7 +55,7 @@ const TextAnswer = ({ question, value, onChange }: QuestionProps) => (
       className={fieldClass}
       rows={question.questionType === 'LONG_TEXT' ? 4 : 2}
       value={value.text ?? ''}
-      onChange={(event) => onChange({ text: event.target.value })}
+      onChange={(event) => onChange({ ...value, text: event.target.value })}
     />
   </div>
 );
@@ -59,15 +63,13 @@ const QuestionAnswer = (props: QuestionProps) => {
   const { question, value, onChange } = props;
   if (question.questionType === 'RATING')
     return (
-      <input
-        aria-label={`${question.prompt} rating`}
-        type="number"
-        min={question.ratingMin ?? 1}
-        max={question.ratingMax ?? 5}
-        step="0.1"
-        className={fieldClass}
+      <SurveyRatingControl
+        name={question.id}
+        label={`${question.prompt} rating`}
+        min={question.ratingMin ?? '1'}
+        max={question.ratingMax ?? '5'}
         value={value.numeric ?? ''}
-        onChange={(event) => onChange({ numeric: event.target.value })}
+        onChange={(numeric) => onChange({ ...value, numeric })}
       />
     );
   if (question.questionType === 'SHORT_TEXT' || question.questionType === 'LONG_TEXT')
@@ -83,7 +85,30 @@ const SurveyQuestionControl = (props: QuestionProps & { readOnly: boolean }) => 
       {props.question.isRequired ? ' *' : ''}
     </legend>
     <p className="mb-2 text-xs text-content-secondary">Area: {props.question.dimension}</p>
+    {props.question.description && (
+      <p className="mb-2 text-sm text-content-secondary">{props.question.description}</p>
+    )}
     <QuestionAnswer {...props} />
+    {props.question.commentEnabled &&
+      ['RATING', 'SINGLE_CHOICE', 'MULTIPLE_CHOICE'].includes(props.question.questionType) && (
+        <label className="mt-3 block text-sm">
+          Comment / explanation (optional)
+          <textarea
+            className={fieldClass}
+            rows={2}
+            maxLength={4000}
+            value={props.value.comment ?? ''}
+            aria-describedby={`${props.question.id}-comment-privacy`}
+            onChange={(event) => props.onChange({ ...props.value, comment: event.target.value })}
+          />
+          <span
+            id={`${props.question.id}-comment-privacy`}
+            className="text-xs text-content-secondary"
+          >
+            Do not include names or identifying details. Comments are not automatically anonymized.
+          </span>
+        </label>
+      )}
   </fieldset>
 );
 const SurveyResponsePanel = ({
@@ -97,6 +122,11 @@ const SurveyResponsePanel = ({
   const readOnly = !responding || survey.summary.completed;
   return (
     <Card title={survey.summary.title}>
+      <p className="mb-3 rounded-md border border-line p-3 text-sm">
+        {survey.summary.responseReviewMode === 'ANONYMOUS_SUBMISSIONS'
+          ? 'After this survey closes, authorized HR/Admin reviewers can review your answers together as one unnamed submission, even when the minimum reporting group has not been reached. Your name is not shown. Do not include identifying details in comments.'
+          : 'Results are reported in groups after the minimum reporting group is reached. Written comments may be shown without names; do not include identifying details.'}
+      </p>
       {survey.summary.description && (
         <p className="mb-3 text-sm text-content-secondary">{survey.summary.description}</p>
       )}

@@ -78,7 +78,7 @@ const EXPECTED_TENANT_ROUTES = [
     title: 'Compensation setup',
     payrollCapability: 'route.payroll.compensation',
   },
-  { kind: 'page', path: 'expenses', title: 'Expenses', tenantPath: '/expenses' },
+  { kind: 'page', path: 'expenses', title: 'Expenses & Travel', tenantPath: '/expenses' },
   {
     kind: 'page',
     path: 'notifications',
@@ -130,7 +130,7 @@ const EXPECTED_TENANT_ROUTES = [
   {
     kind: 'page',
     path: 'workplace/recruitment',
-    title: 'Recruitment',
+    title: 'Hiring & Applicants',
     tenantPath: '/workplace/recruitment',
   },
   {
@@ -240,13 +240,13 @@ const EXPECTED_TENANT_ROUTES = [
   {
     kind: 'page',
     path: 'admin/expense-categories',
-    title: 'Expense categories',
+    title: 'Expense Categories & Policies',
     tenantPath: '/admin/expense-categories',
   },
   {
     kind: 'page',
     path: 'admin/notifications',
-    title: 'Notification administration',
+    title: 'Announcements & Messages',
     tenantPath: '/admin/notifications',
   },
   {

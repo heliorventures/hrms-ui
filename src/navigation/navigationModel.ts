@@ -267,7 +267,7 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
     'tax configuration',
     'tds approval',
   ]),
-  page('engagement', '/admin/notifications', 'Announcements', 102, [
+  page('engagement', '/admin/notifications', 'Announcements & Messages', 102, [
     'direct notifications',
     'employee messages',
     'publish',

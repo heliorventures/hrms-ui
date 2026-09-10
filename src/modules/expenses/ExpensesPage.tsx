@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react';
-import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
+
 import { PERMISSIONS } from '../../auth/permissions';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
+import PageInformation from '../../components/common/PageInformation';
+import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePageTabs } from '../../hooks/usePageTabs';
+
 import ApproveExpenseModal from './components/ApproveExpenseModal';
 import ExpenseCategoryGrid from './components/ExpenseCategoryGrid';
-import PageInformation from '../../components/common/PageInformation';
 import ExpenseClaimsTable from './components/ExpenseClaimsTable';
 import ExpenseNotice from './components/ExpenseNotice';
 import ExpensesHeader from './components/ExpensesHeader';
@@ -87,14 +91,21 @@ const ExpensesPage = () => {
     return labels;
   }, [travelRequests]);
 
+  const tabs = [
+    ...(canAccessExpenses ? [{ id: 'expenses', label: 'Expense Claims' }] : []),
+    ...(canAccessTravel ? [{ id: 'travel', label: 'Travel Requests' }] : []),
+  ];
+  const { tab, setTab } = usePageTabs(tabs);
+
   if (!canAccessExpenses && !canAccessTravel) return null;
 
   return (
     <div className="space-y-4">
+      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       <ExpensesHeader
-        canManageExpense={canManageExpense}
-        canSubmitExpense={canSubmitExpense}
-        canSubmitTravel={canSubmitTravel}
+        canManageExpense={canManageExpense && tab === 'expenses'}
+        canSubmitExpense={canSubmitExpense && tab === 'expenses'}
+        canSubmitTravel={canSubmitTravel && tab === 'travel'}
         onOpenExpense={() => setSubmitOpen(true)}
         onOpenTravel={() => setTravelOpen(true)}
       />
@@ -168,64 +179,68 @@ const ExpensesPage = () => {
         />
       ) : null}
 
-      {canAccessExpenses ? (
+      {canAccessExpenses && tab === 'expenses' ? (
         <PageInformation title="Expense Categories">
           <ExpenseCategoryGrid categories={categories} loading={loading} />
         </PageInformation>
       ) : null}
 
       {canAccessExpenses ? (
-        <ExpenseClaimsTable
-          busyKey={actions.busyKey}
-          canApprove={canApproveExpense}
-          canMarkPayment={canMarkPayment}
-          categories={categories}
-          employeeLabels={employeeLabels}
-          expenses={expenses}
-          loading={loading}
-          travelRequestLabels={travelRequestLabels}
-          onApprove={actions.openApproveExpense}
-          onMarkPaid={setPaymentTarget}
-          onReject={(row) => {
-            if (!row.pendingApprovalStepId) {
-              setNotice({
-                variant: 'warning',
-                message: 'Refresh the expense board before rejecting this claim.',
+        <PageTabPanel id="expenses" activeTab={tab}>
+          <ExpenseClaimsTable
+            busyKey={actions.busyKey}
+            canApprove={canApproveExpense}
+            canMarkPayment={canMarkPayment}
+            categories={categories}
+            employeeLabels={employeeLabels}
+            expenses={expenses}
+            loading={loading}
+            travelRequestLabels={travelRequestLabels}
+            onApprove={actions.openApproveExpense}
+            onMarkPaid={setPaymentTarget}
+            onReject={(row) => {
+              if (!row.pendingApprovalStepId) {
+                setNotice({
+                  variant: 'warning',
+                  message: 'Refresh the expense board before rejecting this claim.',
+                });
+                return;
+              }
+              actions.setRejectTarget({
+                kind: 'expense',
+                id: row.id,
+                expectedWorkflowStepId: row.pendingApprovalStepId,
               });
-              return;
-            }
-            actions.setRejectTarget({
-              kind: 'expense',
-              id: row.id,
-              expectedWorkflowStepId: row.pendingApprovalStepId,
-            });
-          }}
-        />
+            }}
+          />
+        </PageTabPanel>
       ) : null}
 
       {canAccessTravel ? (
-        <TravelRequestsTable
-          busyKey={actions.busyKey}
-          canApprove={canApproveTravel}
-          employeeLabels={employeeLabels}
-          loading={loading}
-          rows={travelRequests}
-          onApprove={(row) => void actions.approveTravel(row)}
-          onReject={(row) => {
-            if (!row.pendingApprovalStepId) {
-              setNotice({
-                variant: 'warning',
-                message: 'Refresh the travel requests before rejecting this request.',
+        <PageTabPanel id="travel" activeTab={tab}>
+          <TravelRequestsTable
+            busyKey={actions.busyKey}
+            canApprove={canApproveTravel}
+            employeeLabels={employeeLabels}
+            loading={loading}
+            rows={travelRequests}
+            onApprove={(row) => void actions.approveTravel(row)}
+            onReject={(row) => {
+              if (!row.pendingApprovalStepId) {
+                setNotice({
+                  variant: 'warning',
+                  message: 'Refresh the travel requests before rejecting this request.',
+                });
+                return;
+              }
+              actions.setRejectTarget({
+                kind: 'travel',
+                id: row.id,
+                expectedWorkflowStepId: row.pendingApprovalStepId,
               });
-              return;
-            }
-            actions.setRejectTarget({
-              kind: 'travel',
-              id: row.id,
-              expectedWorkflowStepId: row.pendingApprovalStepId,
-            });
-          }}
-        />
+            }}
+          />
+        </PageTabPanel>
       ) : null}
     </div>
   );

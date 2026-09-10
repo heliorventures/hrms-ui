@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import { useEffect, useRef, type FormEvent } from 'react';
 
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
@@ -177,29 +177,39 @@ const EditorScheduleFields = ({ model }: { model: AnnouncementEditorFormProps })
   </div>
 );
 
-const EditorAttachmentFields = ({ model }: { model: AnnouncementEditorFormProps }) => (
-  <>
-    <label className="block">
-      <span className="text-sm font-medium">Image</span>
-      <input
-        name="announcementImage"
-        type="file"
-        accept="image/*"
-        onChange={(event) => model.onImageChange(event.target.files?.[0] ?? null)}
-        className="mt-1 block w-full text-sm"
-      />
-    </label>
-    <label className="block">
-      <span className="text-sm font-medium">Document</span>
-      <input
-        name="announcementDocument"
-        type="file"
-        onChange={(event) => model.onDocumentChange(event.target.files?.[0] ?? null)}
-        className="mt-1 block w-full text-sm"
-      />
-    </label>
-  </>
-);
+const EditorAttachmentFields = ({ model }: { model: AnnouncementEditorFormProps }) => {
+  const imageInput = useRef<HTMLInputElement>(null);
+  const documentInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!model.imageFile && imageInput.current) imageInput.current.value = '';
+    if (!model.documentFile && documentInput.current) documentInput.current.value = '';
+  }, [model.imageFile, model.documentFile]);
+  return (
+    <>
+      <label className="block">
+        <span className="text-sm font-medium">Image</span>
+        <input
+          name="announcementImage"
+          ref={imageInput}
+          type="file"
+          accept="image/*"
+          onChange={(event) => model.onImageChange(event.target.files?.[0] ?? null)}
+          className="mt-1 block w-full text-sm"
+        />
+      </label>
+      <label className="block">
+        <span className="text-sm font-medium">Document</span>
+        <input
+          name="announcementDocument"
+          ref={documentInput}
+          type="file"
+          onChange={(event) => model.onDocumentChange(event.target.files?.[0] ?? null)}
+          className="mt-1 block w-full text-sm"
+        />
+      </label>
+    </>
+  );
+};
 
 const submitLabel = (busy: boolean, isEditing: boolean): string => {
   if (busy) return 'Saving...';

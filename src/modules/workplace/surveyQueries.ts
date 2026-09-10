@@ -11,6 +11,10 @@ export const SurveysAdminDocument = gql`
       closesAt
       minimumReportGroupSize
       completed
+      responseReviewMode
+      assignedCount
+      completedCount
+      pendingCount
     }
   }
 `;
@@ -77,6 +81,7 @@ export const AvailableSurveysDocument = gql`
       closesAt
       minimumReportGroupSize
       completed
+      responseReviewMode
     }
   }
 `;
@@ -91,6 +96,7 @@ export const SurveyResultsCatalogDocument = gql`
       closesAt
       minimumReportGroupSize
       completed
+      responseReviewMode
     }
   }
 `;
@@ -106,6 +112,7 @@ export const SurveyDetailDocument = gql`
         closesAt
         minimumReportGroupSize
         completed
+        responseReviewMode
       }
       audienceDepartmentIds
       sections {
@@ -117,6 +124,8 @@ export const SurveyDetailDocument = gql`
           dimension
           questionType
           prompt
+          description
+          commentEnabled
           isRequired
           ratingMin
           ratingMax
@@ -137,6 +146,7 @@ export const SurveyResultsDocument = gql`
     surveyResults(surveyId: $id) {
       surveyId
       suppressed
+      suppressionReason
       respondentCount
       minimumReportGroupSize
       dimensions {
@@ -156,6 +166,36 @@ export const SurveyResultsDocument = gql`
           responseCount
         }
         comments
+        questionType
+        ratingMin
+        ratingMax
+        skippedCount
+        suppressed
+        ratingDistribution {
+          score
+          responseCount
+        }
+      }
+    }
+  }
+`;
+export const SurveySubmissionsDocument = gql`
+  query SurveySubmissionsWorkspace($id: ID!, $offset: Int!, $limit: Int!) {
+    surveySubmissions(surveyId: $id, offset: $offset, limit: $limit) {
+      available
+      reason
+      totalCount
+      hasMore
+      nodes {
+        number
+        answers {
+          questionId
+          prompt
+          numericAnswer
+          textAnswer
+          comment
+          selectedOptions
+        }
       }
     }
   }
@@ -217,12 +257,18 @@ export interface SurveySummaryRow {
   closesAt?: string | null;
   minimumReportGroupSize: number;
   completed: boolean;
+  responseReviewMode?: string;
+  assignedCount?: number | null;
+  completedCount?: number | null;
+  pendingCount?: number | null;
 }
 export interface SurveyQuestionRow {
   id: string;
   dimension: string;
   questionType: string;
   prompt: string;
+  description?: string | null;
+  commentEnabled?: boolean;
   isRequired: boolean;
   ratingMin?: string | null;
   ratingMax?: string | null;
@@ -242,6 +288,7 @@ export interface SurveyDetailRow {
 export interface SurveyResultsRow {
   surveyId: string;
   suppressed: boolean;
+  suppressionReason?: string | null;
   respondentCount?: number | null;
   minimumReportGroupSize: number;
   dimensions: Array<{ dimension: string; scoredAnswerCount: number; averageScore?: string | null }>;
@@ -253,5 +300,29 @@ export interface SurveyResultsRow {
     averageScore?: string | null;
     options: Array<{ optionId: string; label: string; responseCount: number }>;
     comments: string[];
+    questionType?: string;
+    ratingMin?: string | null;
+    ratingMax?: string | null;
+    skippedCount?: number | null;
+    suppressed?: boolean;
+    ratingDistribution?: Array<{ score: string; responseCount: number }>;
+  }>;
+}
+
+export interface SurveySubmissionsRow {
+  available: boolean;
+  reason?: string | null;
+  totalCount?: number | null;
+  hasMore: boolean;
+  nodes: Array<{
+    number: number;
+    answers: Array<{
+      questionId: string;
+      prompt: string;
+      numericAnswer?: string | null;
+      textAnswer?: string | null;
+      comment?: string | null;
+      selectedOptions: string[];
+    }>;
   }>;
 }

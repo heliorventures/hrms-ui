@@ -2,11 +2,99 @@ import { describe, expect, it } from 'vitest';
 
 import { blankSurvey, buildSurveyInput, hydrateSurvey, tenantTimeToIso } from './surveyEditorModel';
 
+describe('survey review and question configuration', () => {
+  it('saves review disclosure and optional question guidance and comments', () => {
+    const draft = blankSurvey();
+    draft.title = 'Pulse';
+    const [question] = draft.sections[0].questions;
+    question.prompt = 'Support';
+    question.description = '  Rate the support you receive.  ';
+    question.commentEnabled = true;
+    const input = buildSurveyInput(draft, 'UTC');
+    expect(input.responseReviewMode).toBe('ANONYMOUS_SUBMISSIONS');
+    expect(input.sections[0].questions[0]).toMatchObject({
+      description: 'Rate the support you receive.',
+      commentEnabled: true,
+      ratingMin: '1',
+      ratingMax: '5',
+    });
+    question.type = 'LONG_TEXT';
+    expect(buildSurveyInput(draft, 'UTC').sections[0].questions[0].commentEnabled).toBe(false);
+  });
+  it('preserves the aggregate-only disclosure for legacy surveys', () => {
+    const draft = hydrateSurvey(
+      {
+        summary: {
+          id: 's',
+          title: 'Legacy',
+          status: 'DRAFT',
+          minimumReportGroupSize: 5,
+          completed: false,
+        },
+        audienceDepartmentIds: [],
+        sections: [],
+      },
+      'UTC',
+      false,
+      { audienceKind: 'ALL', departmentIds: [], locationIds: [], employeeIds: [] }
+    );
+    expect(draft.responseReviewMode).toBe('AGGREGATE_ONLY');
+  });
+  it('retains custom decimal scales and review settings when copying a survey', () => {
+    const draft = hydrateSurvey(
+      {
+        summary: {
+          id: 's',
+          title: 'Custom',
+          status: 'CLOSED',
+          minimumReportGroupSize: 5,
+          completed: false,
+          responseReviewMode: 'ANONYMOUS_SUBMISSIONS',
+        },
+        audienceDepartmentIds: [],
+        sections: [
+          {
+            id: 'section',
+            title: 'Section',
+            displayOrder: 0,
+            questions: [
+              {
+                id: 'q',
+                dimension: 'Support',
+                prompt: 'Rate support',
+                description: 'Use the existing scale',
+                commentEnabled: true,
+                questionType: 'RATING',
+                isRequired: true,
+                ratingMin: '0.25',
+                ratingMax: '2.75',
+                displayOrder: 0,
+                options: [],
+              },
+            ],
+          },
+        ],
+      },
+      'UTC',
+      true,
+      { audienceKind: 'ALL', departmentIds: [], locationIds: [], employeeIds: [] }
+    );
+    const input = buildSurveyInput(draft, 'UTC');
+    expect(input.responseReviewMode).toBe('ANONYMOUS_SUBMISSIONS');
+    expect(input.sections[0].questions[0]).toMatchObject({
+      ratingMin: '0.25',
+      ratingMax: '2.75',
+      description: 'Use the existing scale',
+      commentEnabled: true,
+    });
+  });
+});
+
 describe('survey editor schedule and payload boundaries', () => {
   it('requires at least two options for a choice question', () => {
     const draft = blankSurvey();
     draft.title = 'Choose';
-    const q = draft.sections[0].questions[0];
+    const [q] = draft.sections[0].questions;
     q.prompt = 'Pick';
     q.type = 'SINGLE_CHOICE';
     q.options = [{ key: 'one', label: 'Only one', score: '' }];
@@ -56,7 +144,7 @@ describe('survey editor schedule and payload boundaries', () => {
   it('rejects empty labels and invalid ranges and retains zero option scores', () => {
     const draft = blankSurvey();
     draft.title = 'Pulse';
-    const q = draft.sections[0].questions[0];
+    const [q] = draft.sections[0].questions;
     q.prompt = 'Choose';
     q.type = 'SINGLE_CHOICE';
     q.options = [

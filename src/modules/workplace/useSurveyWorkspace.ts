@@ -15,18 +15,34 @@ import {
 } from './surveyQueries';
 import { useSurveyCatalog } from './useSurveyCatalog';
 import { useSurveyDraft } from './useSurveyDraft';
+import { useSurveyNavigation } from './useSurveyNavigation';
 import { useSurveyView, type SurveyAnswerValue } from './useSurveyView';
+
+const responseComment = (
+  question: SurveyDetailRow['sections'][number]['questions'][number],
+  answer: SurveyAnswerValue
+) => {
+  if (!question.commentEnabled) return null;
+  if (!['RATING', 'SINGLE_CHOICE', 'MULTIPLE_CHOICE'].includes(question.questionType)) return null;
+  const comment = answer.comment?.trim() || null;
+  if (comment && !answer.numeric?.trim() && !answer.options?.length) {
+    throw new Error(`Choose a rating or option before adding a comment to "${question.prompt}".`);
+  }
+  return comment;
+};
 
 const responsePayload = (survey: SurveyDetailRow, answers: Record<string, SurveyAnswerValue>) =>
   survey.sections
     .flatMap((section) => section.questions)
     .map((question) => {
       const answer = answers[question.id] ?? {};
+      const comment = responseComment(question, answer);
       return {
         questionId: question.id,
         selectedOptionIds: answer.options ?? [],
         numericAnswer: answer.numeric?.trim() || null,
         textAnswer: answer.text?.trim() || null,
+        comment,
       };
     })
     .filter(
@@ -53,12 +69,15 @@ export const useSurveyWorkspace = (respondentOnly: boolean, initialSurveyId?: st
   const canResults =
     !respondentOnly &&
     permissions.canScopedPermission('survey:results', ['TEAM', 'DEPARTMENT', 'ALL']);
+  const canReviewSubmissions =
+    canManage && permissions.canScopedPermission('survey:results', ['ALL']);
   const client = useGraphClient('client');
   const action = useKeyedAction();
   const { run } = action;
   const catalog = useSurveyCatalog(canManage, canRespond, canResults, run);
   const view = useSurveyView(run);
   const draft = useSurveyDraft(timezone, run, catalog.load);
+  const navigation = useSurveyNavigation(view, draft, initialSurveyId);
   const { openSurvey } = view;
   useEffect(() => {
     if (initialSurveyId && canRespond) void openSurvey(initialSurveyId, 'respond');
@@ -72,15 +91,22 @@ export const useSurveyWorkspace = (respondentOnly: boolean, initialSurveyId?: st
       },
       transitions[kind].message
     );
-  const submit = () =>
-    run(
+  const submit = () => {
+    const { survey } = view;
+    if (!survey) return Promise.resolve();
+    let answers: ReturnType<typeof responsePayload>;
+    try {
+      answers = responsePayload(survey, view.answers);
+    } catch (cause) {
+      action.setError(cause instanceof Error ? cause.message : 'Check your survey answers.');
+      return Promise.resolve();
+    }
+    return run(
       'submit-survey',
       async () => {
-        const { survey } = view;
-        if (!survey) return;
         await client.request(SubmitSurveyDocument, {
           id: survey.summary.id,
-          answers: responsePayload(survey, view.answers),
+          answers,
         });
         view.setSurvey((current) =>
           current && current.summary.id === survey.summary.id
@@ -95,17 +121,21 @@ export const useSurveyWorkspace = (respondentOnly: boolean, initialSurveyId?: st
       },
       'Survey submitted anonymously.'
     );
+  };
   return {
     ...action,
     ...catalog,
     ...view,
     ...draft,
+    isBusy: (key: string) => (key === 'load-draft' ? draft.loadingDraft : action.isBusy(key)),
     timezone,
     canManage,
     canRespond,
     canResults,
+    canReviewSubmissions,
     transition,
     submit,
+    ...navigation,
   };
 };
 export type SurveyWorkspaceModel = ReturnType<typeof useSurveyWorkspace>;
