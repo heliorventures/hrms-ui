@@ -88,7 +88,6 @@ export const WORKPLACE_DESTINATIONS: readonly NavigationDestination[] = [
   {
     path: '/workplace/grievance',
     label: 'Grievance & Speak Up',
-    sidebar: 'primary',
     icon: MessageSquareWarning,
     order: 120,
     keywords: [
