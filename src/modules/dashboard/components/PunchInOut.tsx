@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from 'react';
 
-import { PunchDaySummaryDocument, PunchTodayDocument } from '../../../api/graphql/graphql';
+import { AttendancePunchTodayDocument } from '../../../api/attendance/graphql';
 import { authorizationStateKey, createPermissionService } from '../../../auth/permissionService';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
@@ -10,22 +10,19 @@ import PageNotice from '../../../components/common/PageNotice';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
+import type { RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
+import { formatAttendanceWindow } from '../../../utils/attendanceDay';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-import { formatTenantTime, tenantDateKey } from '../../../utils/tenantTime';
 import { formatBackendTime } from '../../../utils/timeFormat';
 
 import AttendanceSummaryDetails from './AttendanceSummaryDetails';
 import type { AttendanceRow, Summary } from './attendanceSummaryTypes';
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
-
-function displayRow(row: AttendanceRow, timezone: string): AttendanceRow {
-  return {
-    ...row,
-    checkInTime: row.checkInAt ? formatTenantTime(row.checkInAt, timezone) : row.checkInTime,
-    checkOutTime: row.checkOutAt ? formatTenantTime(row.checkOutAt, timezone) : row.checkOutTime,
-  };
-}
+import {
+  displayAttendanceRow,
+  usePunchDaySummary,
+  type PunchGraphClient,
+} from './usePunchDaySummary';
 
 function getCurrentPosition(): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
@@ -41,12 +38,16 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
   });
 }
 
+async function punchInput(trackLocation: boolean) {
+  if (!trackLocation) return null;
+  const position = await getCurrentPosition();
+  return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+}
+
 function formatCoord(lat?: string | null, lng?: string | null) {
   if (lat === null || lat === undefined || lng === null || lng === undefined) return null;
   return `${lat}, ${lng}`;
 }
-
-type GraphClient = ReturnType<typeof useGraphClient>;
 
 const formatTime = (date: Date, timezone: string) =>
   date.toLocaleTimeString('en-IN', {
@@ -78,10 +79,27 @@ const useDashboardCardClock = () => {
 
 interface UsePunchMutationOptions {
   timezone: string;
-  client: GraphClient;
+  client: PunchGraphClient;
   refreshSummary: () => Promise<void>;
   summary: Summary | null;
   summaryPhase: RetainedQueryPhase;
+  summaryOwner: string;
+}
+
+function summaryReady(summary: Summary | null, phase: RetainedQueryPhase): summary is Summary {
+  return summary !== null && phase === 'ready';
+}
+
+function summaryExpired(summary: Summary): boolean {
+  return Date.now() >= Date.parse(summary.endsAt);
+}
+
+function submissionIsOwned(
+  mounted: MutableRefObject<boolean>,
+  generationRef: MutableRefObject<number>,
+  generation: number
+): boolean {
+  return mounted.current && generationRef.current === generation;
 }
 
 const usePunchMutation = ({
@@ -90,34 +108,65 @@ const usePunchMutation = ({
   refreshSummary,
   summary,
   summaryPhase,
+  summaryOwner,
 }: UsePunchMutationOptions) => {
   const [lastPunch, setLastPunch] = useState<AttendanceRow | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [trackLocation, setTrackLocation] = useState(true);
   const submittingRef = useRef(false);
+  const generationRef = useRef(0);
+  const mountedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    mountedRef.current = true;
+    generationRef.current += 1;
+    submittingRef.current = false;
+    setSubmitting(false);
+    setMutationError(null);
+    setLastPunch(null);
+    return () => {
+      mountedRef.current = false;
+      generationRef.current += 1;
+      submittingRef.current = false;
+    };
+  }, [client, summaryOwner]);
 
   const handlePunch = async () => {
-    if (submittingRef.current || !summary || summaryPhase !== 'ready') return;
+    if (submittingRef.current) return;
+    if (!summaryReady(summary, summaryPhase)) return;
+    if (summaryExpired(summary)) {
+      await refreshSummary();
+      return;
+    }
+    const generation = generationRef.current;
+    const ownsSubmission = () => submissionIsOwned(mountedRef, generationRef, generation);
     submittingRef.current = true;
     setMutationError(null);
     setSubmitting(true);
     try {
-      let input: { latitude: number; longitude: number } | null = null;
-      if (trackLocation) {
-        const position = await getCurrentPosition();
-        input = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+      const input = await punchInput(trackLocation);
+      if (!ownsSubmission()) return;
+      if (summaryExpired(summary)) {
+        await refreshSummary();
+        return;
       }
-      const result = await client.request<{ punchToday: AttendanceRow }>(PunchTodayDocument, {
-        input,
-      });
-      setLastPunch(displayRow(result.punchToday, timezone));
+      const result = await client.request<{ punchToday: AttendanceRow }>(
+        AttendancePunchTodayDocument,
+        {
+          input,
+        }
+      );
+      if (!ownsSubmission()) return;
+      setLastPunch(displayAttendanceRow(result.punchToday, timezone));
       await refreshSummary();
     } catch (error) {
-      setMutationError(graphQlUserMessage(error));
+      if (ownsSubmission()) setMutationError(graphQlUserMessage(error));
     } finally {
-      submittingRef.current = false;
-      setSubmitting(false);
+      if (ownsSubmission()) {
+        submittingRef.current = false;
+        setSubmitting(false);
+      }
     }
   };
 
@@ -265,43 +314,40 @@ const PunchActionArea = ({
 
 interface AuthorizedPunchInOutProps {
   canPunch: boolean;
+  identity: string;
 }
 
-const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
+const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps) => {
   const client = useGraphClient('client');
   const currentTime = useDashboardCardClock();
   const { currentTenant } = useTenant();
   const { timezone } = currentTenant;
-  const today = tenantDateKey(currentTime, timezone);
-  const loadSummary = useCallback(async () => {
-    const result = await client.request<{ punchDaySummary: Summary }>(PunchDaySummaryDocument);
-    const summary = result.punchDaySummary;
-    if (summary.workDate !== today)
-      throw new Error('Attendance summary is for another day. Refresh to load today’s attendance.');
-    return {
-      ...summary,
-      segments: summary.segments.map((row) => displayRow(row, timezone)),
-      openSegment: summary.openSegment ? displayRow(summary.openSegment, timezone) : null,
-    };
-  }, [client, timezone, today]);
   const {
     data: summary,
     error: summaryError,
     phase: summaryPhase,
     refresh: refreshSummary,
-  } = useRetainedQuery(loadSummary);
+  } = usePunchDaySummary(client, identity);
   const onRefresh = () => void refreshSummary();
+
+  const summaryIsWithinWindow = Boolean(
+    summary &&
+    currentTime.getTime() >= Date.parse(summary.startsAt) &&
+    currentTime.getTime() < Date.parse(summary.endsAt)
+  );
+  const summaryTimezone = summary?.timezone ?? timezone;
   const { handlePunch, lastPunch, mutationError, setTrackLocation, submitting, trackLocation } =
     usePunchMutation({
-      timezone,
+      timezone: summaryTimezone,
       client,
       refreshSummary,
-      summary: summary?.workDate === today ? summary : null,
+      summary: summaryIsWithinWindow ? summary : null,
       summaryPhase,
+      summaryOwner: identity,
     });
   const nextIsCheckIn = !summary?.openSegment;
   const buttonLabel = getButtonLabel(submitting, nextIsCheckIn);
-  const summaryIsReady = summaryPhase === 'ready' && summary?.workDate === today;
+  const summaryIsReady = summaryPhase === 'ready' && summaryIsWithinWindow;
   const lastEventCoords = getLastEventCoords(lastPunch);
 
   return (
@@ -309,10 +355,20 @@ const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
       <div className="space-y-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3">
           <div className="text-xl font-semibold tabular-nums text-content-primary">
-            {formatTime(currentTime, timezone)}
+            {formatTime(currentTime, summaryTimezone)}
           </div>
-          <div className="text-xs text-content-secondary">{formatDate(currentTime, timezone)}</div>
+          <div className="text-xs text-content-secondary">
+            Calendar date: {formatDate(currentTime, summaryTimezone)}
+          </div>
         </div>
+        {summary ? (
+          <div className="rounded-lg bg-canvas px-3 py-2 text-xs text-content-secondary">
+            <p className="font-medium text-content-primary">
+              Attendance work date: {summary.workDate}
+            </p>
+            <p>{formatAttendanceWindow(summary)}</p>
+          </div>
+        ) : null}
         <PunchSummaryContent
           error={summaryError}
           phase={summaryPhase}
@@ -355,14 +411,15 @@ const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
 };
 
 const PunchInOut = () => {
-  const { clientSession } = useAuth();
+  const { clientSession, tenantId, user } = useAuth();
   const permissions = createPermissionService(clientSession);
   if (!permissions.canCapability('dashboard.attendance')) return null;
 
   return (
     <AuthorizedPunchInOut
-      key={authorizationStateKey(clientSession)}
+      key={`${tenantId ?? ''}:${user?.id ?? ''}:${authorizationStateKey(clientSession)}`}
       canPunch={permissions.canCapability('action.attendance.punch')}
+      identity={`${tenantId ?? ''}:${user?.id ?? ''}:${authorizationStateKey(clientSession)}`}
     />
   );
 };

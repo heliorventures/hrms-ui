@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, vi } from 'vitest';
 
+import { AttendanceCurrentDayWindowDocument } from '../../api/attendance/graphql';
 import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
 import type { ParsedClientSession } from '../../auth/clientSession';
 
@@ -25,6 +26,7 @@ const authState = vi.hoisted(() => ({
     mustChangePassword: false,
   } as ParsedClientSession,
 }));
+const tenantState = vi.hoisted(() => ({ timezone: 'Asia/Kolkata' }));
 
 vi.mock('../../hooks/useGraphClient', () => ({
   useGraphClient: () => graphClientState.current,
@@ -33,8 +35,20 @@ vi.mock('../../hooks/useGraphClient', () => ({
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => authState,
 }));
+vi.mock('../../contexts/TenantContext', () => ({
+  useTenant: () => ({ currentTenant: { timezone: tenantState.timezone } }),
+}));
 
 export const policyResponse = { attendanceAdjustmentPolicy: { maxSelfAdjustDays: 14 } };
+export const currentWindowResponse = {
+  attendanceDayWindow: {
+    workDate: '2026-08-25',
+    startsAt: '2026-08-24T23:30:00Z',
+    endsAt: '2026-08-25T23:30:00Z',
+    timezone: 'Asia/Kolkata',
+    boundaryMinutes: 300,
+  },
+};
 
 export function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -124,9 +138,13 @@ beforeEach(() => {
   graphClientState.current = graphClient;
   authState.clientSession.employeeId = 'employee-self';
   authState.clientSession.permissions = new Set();
+  tenantState.timezone = 'Asia/Kolkata';
   graphClient.request.mockReset();
   graphClient.request.mockImplementation((document: unknown) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument) {
+      return Promise.resolve(currentWindowResponse);
+    }
     return Promise.resolve(boardResponse({ endCursor: 'opaque-next', hasNextPage: true }));
   });
 });
@@ -139,4 +157,4 @@ afterEach(() => {
 export const requestCalls = () =>
   graphClient.request.mock.calls as Array<[unknown, Record<string, unknown>?]>;
 
-export { graphClientState, authState };
+export { graphClientState, authState, tenantState };

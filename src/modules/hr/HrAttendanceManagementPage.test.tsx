@@ -6,9 +6,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
-  ManagedAttendancePageDocument,
-  UpdateManagedAttendanceSegmentDocument,
-} from '../../api/graphql/graphql';
+  AttendanceCorrectionWindowsDocument,
+  AttendanceUpdateManagedSegmentDocument,
+} from '../../api/attendance/graphql';
+import { ManagedAttendancePageDocument } from '../../api/graphql/graphql';
 
 import HrAttendanceManagementPage from './HrAttendanceManagementPage';
 
@@ -34,6 +35,8 @@ const ashaRow = {
   employeeName: 'Asha Rao',
   employeeCode: 'EMP-0042',
   workDate: '2026-08-24',
+  checkInAt: '2026-08-24T03:30:00Z',
+  checkOutAt: '2026-08-24T12:00:00Z',
   checkInTime: '09:00:00',
   checkOutTime: '17:30:00',
   status: 'PRESENT',
@@ -71,6 +74,23 @@ const settle = async () => {
     await Promise.resolve();
     await Promise.resolve();
   });
+};
+
+const correctionWindows = {
+  currentWindow: {
+    workDate: '2026-08-25',
+    startsAt: '2026-08-24T23:30:00Z',
+    endsAt: '2026-08-25T23:30:00Z',
+    timezone: 'Asia/Kolkata',
+    boundaryMinutes: 300,
+  },
+  selectedWindow: {
+    workDate: '2026-08-24',
+    startsAt: '2026-08-23T23:30:00Z',
+    endsAt: '2026-08-24T23:30:00Z',
+    timezone: 'Asia/Kolkata',
+    boundaryMinutes: 300,
+  },
 };
 
 beforeEach(() => {
@@ -260,7 +280,10 @@ it('returns to the prior page and refreshes the current opaque page', async () =
 it('resets to page one, refetches, and identifies the employee after a successful adjustment', async () => {
   graphState.client.request.mockImplementation(
     (document: unknown, variables?: { after?: string }) => {
-      if (document === UpdateManagedAttendanceSegmentDocument) return Promise.resolve({});
+      if (document === AttendanceUpdateManagedSegmentDocument) return Promise.resolve({});
+      if (document === AttendanceCorrectionWindowsDocument) {
+        return Promise.resolve(correctionWindows);
+      }
       return Promise.resolve(
         variables?.after === 'opaque-next'
           ? managedPage(
@@ -283,6 +306,8 @@ it('resets to page one, refetches, and identifies the employee after a successfu
   fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
   await settle();
   fireEvent.click(screen.getAllByRole('button', { name: 'Adjust Bina Shah on 2026-08-24' })[0]);
+  await settle();
+  expect(screen.getByText(/Attendance window:/)).toBeTruthy();
   fireEvent.change(screen.getByLabelText('Reason'), {
     target: { value: 'Approved biometric correction' },
   });
@@ -290,7 +315,7 @@ it('resets to page one, refetches, and identifies the employee after a successfu
   await settle();
 
   expect(graphState.client.request).toHaveBeenCalledWith(
-    UpdateManagedAttendanceSegmentDocument,
+    AttendanceUpdateManagedSegmentDocument,
     expect.anything()
   );
   expect(graphState.client.request).toHaveBeenLastCalledWith(ManagedAttendancePageDocument, {
@@ -373,7 +398,7 @@ it('fails closed across a client replacement and ignores the old page request', 
     await Promise.resolve();
   });
   expect(screen.getAllByText('Replacement Client Row')[0]).toBeTruthy();
-  expect(oldClient.request).toHaveBeenCalledTimes(4);
+  expect(oldClient.request).toHaveBeenCalledTimes(5);
 });
 
 it('does not publish a late query completion from a replaced client', async () => {

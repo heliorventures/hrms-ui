@@ -1,17 +1,21 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { parseIsoDate, toIsoDate } from '../../../utils/calendarRange';
 import type { FlatSegmentRow } from '../types';
 
-function calendarDaysBetweenWorkAndToday(workIso: string): number {
-  const a = parseIsoDate(workIso);
-  a.setHours(0, 0, 0, 0);
-  const b = new Date();
-  b.setHours(0, 0, 0, 0);
-  return Math.round((b.getTime() - a.getTime()) / 86400000);
+function dateOrdinal(iso: string): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return null;
+  const value = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isFinite(value) ? value / 86_400_000 : null;
 }
 
-export function useAttendanceEditor(adjustPolicyDays: number, client: object, identity: string) {
+export function useAttendanceEditor(
+  adjustPolicyDays: number,
+  client: object,
+  identity: string,
+  currentWorkDate: string | null,
+  currentCalendarDate: string
+) {
   const owner = useMemo(() => ({ client, identity }), [client, identity]);
   const currentOwner = useRef<typeof owner | null>(owner);
   const [selection, setSelection] = useState<{
@@ -35,13 +39,16 @@ export function useAttendanceEditor(adjustPolicyDays: number, client: object, id
   };
 
   const selfAdjustAllowedForDate = (workIso: string) => {
-    const delta = calendarDaysBetweenWorkAndToday(workIso);
+    const work = dateOrdinal(workIso);
+    const current = dateOrdinal(currentCalendarDate);
+    if (work === null || current === null) return false;
+    const delta = current - work;
     if (delta < 0) return false;
     return delta <= adjustPolicyDays;
   };
   return {
     adjustOpen: visible !== null,
-    adjustDefaultDate: visible?.date ?? toIsoDate(new Date()),
+    adjustDefaultDate: visible?.date ?? currentWorkDate ?? '',
     adjustDefaultSegment: visible?.segment ?? null,
     closeAdjust,
     isEditorCurrent,

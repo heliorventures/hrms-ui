@@ -21,6 +21,42 @@ export function segmentWorkedMinutes(
   return diff > 0 ? diff : null;
 }
 
+export interface AttendanceSegmentDurationInput {
+  checkInAt?: unknown;
+  checkOutAt?: unknown;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+}
+
+/**
+ * Returns undefined only for legacy rows where both canonical timestamps are absent.
+ * A partial or malformed canonical pair is intentionally incomplete and must not fall
+ * back to wall-clock values, which can be ambiguous around overnight and DST boundaries.
+ */
+export function canonicalSegmentMinutes({
+  checkInAt,
+  checkOutAt,
+}: Pick<AttendanceSegmentDurationInput, 'checkInAt' | 'checkOutAt'>): number | null | undefined {
+  const checkInAbsent = checkInAt === null || checkInAt === undefined;
+  const checkOutAbsent = checkOutAt === null || checkOutAt === undefined;
+  if (checkInAbsent && checkOutAbsent) return undefined;
+  if (typeof checkInAt !== 'string' || typeof checkOutAt !== 'string') return null;
+
+  const checkInMillis = Date.parse(checkInAt);
+  const checkOutMillis = Date.parse(checkOutAt);
+  if (!Number.isFinite(checkInMillis) || !Number.isFinite(checkOutMillis)) return null;
+
+  const durationMinutes = (checkOutMillis - checkInMillis) / 60_000;
+  return durationMinutes > 0 ? durationMinutes : null;
+}
+
+export function attendanceSegmentMinutes(input: AttendanceSegmentDurationInput): number | null {
+  const canonicalMinutes = canonicalSegmentMinutes(input);
+  return canonicalMinutes === undefined
+    ? segmentWorkedMinutes(input.checkInTime, input.checkOutTime)
+    : canonicalMinutes;
+}
+
 export function formatMinutesAsHhMm(totalMinutes: number): string {
   const roundedMinutes = Math.round(totalMinutes);
   const h = Math.floor(roundedMinutes / 60);

@@ -1,4 +1,4 @@
-import { segmentWorkedMinutes } from '../../../utils/attendanceDuration';
+import { attendanceSegmentMinutes } from '../../../utils/attendanceDuration';
 import { isoDateRangeContains } from '../../../utils/calendarRange';
 import { formatBackendTime } from '../../../utils/timeFormat';
 import type { AttendanceRow, FlatSegmentRow } from '../types';
@@ -13,7 +13,7 @@ export function attendanceSegmentRows(
     if (!isoDateRangeContains(r.workDate, monthBounds.start, monthBounds.end)) continue;
     out.push({
       ...r,
-      segmentMinutes: segmentWorkedMinutes(r.checkInTime, r.checkOutTime),
+      segmentMinutes: attendanceSegmentMinutes(r),
     });
   }
   out.sort((a, b) => {

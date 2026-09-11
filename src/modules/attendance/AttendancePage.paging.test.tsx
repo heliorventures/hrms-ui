@@ -2,11 +2,15 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
 
-import { MyAttendanceBoardDocument } from '../../api/attendance/graphql';
+import {
+  AttendanceCurrentDayWindowDocument,
+  MyAttendanceBoardDocument,
+} from '../../api/attendance/graphql';
 import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
 
 import {
   graphClient,
+  currentWindowResponse,
   policyResponse,
   boardResponse,
   renderPage,
@@ -77,6 +81,8 @@ it('keeps complete monthly totals unchanged when navigating attendance pages', a
   });
   graphClient.request.mockImplementation((document: unknown, variables?: { after?: string }) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     return Promise.resolve(variables?.after === 'page-two' ? secondPage : firstPage);
   });
 
@@ -102,6 +108,8 @@ it('keeps complete monthly totals unchanged when navigating attendance pages', a
 it('shows no average for an open-only month while identifying incomplete punches', async () => {
   graphClient.request.mockImplementation((document: unknown) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     return Promise.resolve(
       boardResponse({
         summary: {
@@ -123,6 +131,8 @@ it('shows no average for an open-only month while identifying incomplete punches
 it('uses the local cursor stack when returning to a prior page', async () => {
   graphClient.request.mockImplementation((document: unknown, variables?: { after?: string }) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     if (variables?.after === 'cursor-one') {
       return Promise.resolve(boardResponse({ endCursor: 'cursor-two', hasNextPage: true }));
     }

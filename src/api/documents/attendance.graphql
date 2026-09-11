@@ -1,4 +1,9 @@
-query MyAttendanceBoard($fromDate: NaiveDate!, $toDate: NaiveDate!, $first: Int = 50, $after: String) {
+query MyAttendanceBoard(
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $first: Int = 50
+  $after: String
+) {
   shifts(limit: 100) {
     id
     name
@@ -37,5 +42,240 @@ query MyAttendanceBoard($fromDate: NaiveDate!, $toDate: NaiveDate!, $first: Int 
       endCursor
       hasNextPage
     }
+  }
+}
+
+query AttendanceCurrentDayWindow {
+  attendanceDayWindow {
+    workDate
+    startsAt
+    endsAt
+    timezone
+    boundaryMinutes
+  }
+}
+
+query AttendanceCorrectionWindows($workDate: NaiveDate!) {
+  currentWindow: attendanceDayWindow {
+    workDate
+    startsAt
+    endsAt
+    timezone
+    boundaryMinutes
+  }
+  selectedWindow: attendanceDayWindow(workDate: $workDate) {
+    workDate
+    startsAt
+    endsAt
+    timezone
+    boundaryMinutes
+  }
+}
+
+query AttendancePolicySettings($slim: Int! = 50) {
+  attendanceDayPolicy {
+    revision
+    initialized
+    legacyActivationPending
+    legacyActivationDate
+    currentPolicy {
+      effectiveWorkDate
+      boundaryMinutes
+      timezone
+    }
+    pendingPolicy {
+      effectiveWorkDate
+      boundaryMinutes
+      timezone
+    }
+    currentWindow {
+      workDate
+      startsAt
+      endsAt
+      timezone
+      boundaryMinutes
+    }
+  }
+  attendancePunchPolicy {
+    id
+    tenantId
+    isEnforced
+    siteLatitude
+    siteLongitude
+    maxDistanceMeters
+    ipAllowlist
+    updatedAt
+  }
+  shifts(limit: $slim) {
+    id
+    name
+    startTime
+    endTime
+    workHours
+    isNightShift
+  }
+}
+
+query PreviewAttendanceDayPolicy($input: ScheduleAttendanceDayPolicyInput!) {
+  previewAttendanceDayPolicy(input: $input) {
+    revision
+    transition {
+      workDate
+      startsAt
+      endsAt
+      timezone
+      boundaryMinutes
+    }
+    following {
+      workDate
+      startsAt
+      endsAt
+      timezone
+      boundaryMinutes
+    }
+  }
+}
+
+mutation ScheduleAttendanceDayPolicy($input: ScheduleAttendanceDayPolicyInput!) {
+  scheduleAttendanceDayPolicy(input: $input) {
+    revision
+    initialized
+    legacyActivationPending
+    legacyActivationDate
+    currentPolicy {
+      effectiveWorkDate
+      boundaryMinutes
+      timezone
+    }
+    pendingPolicy {
+      effectiveWorkDate
+      boundaryMinutes
+      timezone
+    }
+    currentWindow {
+      workDate
+      startsAt
+      endsAt
+      timezone
+      boundaryMinutes
+    }
+  }
+}
+
+query AttendancePunchDaySummary {
+  punchDaySummary {
+    workDate
+    startsAt
+    endsAt
+    timezone
+    boundaryMinutes
+    totalWorkedMinutes
+    openSegment {
+      id
+      checkInAt
+      checkOutAt
+      checkInTime
+      checkOutTime
+      checkInLat
+      checkInLng
+      checkOutLat
+      checkOutLng
+      source
+      status
+    }
+    segments {
+      id
+      checkInAt
+      checkOutAt
+      checkInTime
+      checkOutTime
+      checkInLat
+      checkInLng
+      checkOutLat
+      checkOutLng
+      source
+      status
+    }
+  }
+}
+
+mutation AttendancePunchToday($input: PunchTodayInput) {
+  punchToday(input: $input) {
+    id
+    workDate
+    checkInAt
+    checkOutAt
+    checkInTime
+    checkOutTime
+    checkInLat
+    checkInLng
+    checkOutLat
+    checkOutLng
+    source
+    status
+  }
+}
+
+mutation AttendanceAddManualSegment($input: AddManualAttendanceSegmentInput!) {
+  addManualAttendanceSegment(input: $input) {
+    id
+    workDate
+    checkInAt
+    checkOutAt
+    checkInTime
+    checkOutTime
+    source
+    status
+  }
+}
+
+mutation AttendanceUpdateManualSegment($input: UpdateManualAttendanceSegmentInput!) {
+  updateManualAttendanceSegment(input: $input) {
+    id
+    workDate
+    checkInAt
+    checkOutAt
+    checkInTime
+    checkOutTime
+    source
+    status
+  }
+}
+
+mutation AttendanceAddManagedSegment($input: AddManagedAttendanceSegmentInput!) {
+  addManagedAttendanceSegment(input: $input) {
+    id
+    employeeId
+    employeeName
+    employeeCode
+    workDate
+    checkInAt
+    checkOutAt
+    checkInTime
+    checkOutTime
+    status
+    source
+    regularizationStatus
+    createdAt
+    updatedAt
+  }
+}
+
+mutation AttendanceUpdateManagedSegment($input: UpdateManagedAttendanceSegmentInput!) {
+  updateManagedAttendanceSegment(input: $input) {
+    id
+    employeeId
+    employeeName
+    employeeCode
+    workDate
+    checkInAt
+    checkOutAt
+    checkInTime
+    checkOutTime
+    status
+    source
+    regularizationStatus
+    createdAt
+    updatedAt
   }
 }

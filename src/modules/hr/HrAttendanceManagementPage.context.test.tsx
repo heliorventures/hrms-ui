@@ -6,10 +6,11 @@ import { Link, MemoryRouter, Route, Routes, useLocation, useNavigate } from 'rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  AddManagedAttendanceSegmentDocument,
-  ManagedAttendancePageDocument,
-  UpdateManagedAttendanceSegmentDocument,
-} from '../../api/graphql/graphql';
+  AttendanceAddManagedSegmentDocument,
+  AttendanceCorrectionWindowsDocument,
+  AttendanceUpdateManagedSegmentDocument,
+} from '../../api/attendance/graphql';
+import { ManagedAttendancePageDocument } from '../../api/graphql/graphql';
 
 import HrAttendanceManagementPage from './HrAttendanceManagementPage';
 
@@ -64,6 +65,8 @@ const ashaRow = {
   employeeName: 'Asha Rao',
   employeeCode: 'EMP-0042',
   workDate: '2026-08-24',
+  checkInAt: '2026-08-24T03:30:00Z',
+  checkOutAt: '2026-08-24T12:00:00Z',
   checkInTime: '09:00:00',
   checkOutTime: '17:30:00',
   status: 'PRESENT',
@@ -93,6 +96,23 @@ const settle = async () => {
   });
 };
 
+const correctionWindows = {
+  currentWindow: {
+    workDate: '2026-08-25',
+    startsAt: '2026-08-24T23:30:00Z',
+    endsAt: '2026-08-25T23:30:00Z',
+    timezone: 'Asia/Kolkata',
+    boundaryMinutes: 300,
+  },
+  selectedWindow: {
+    workDate: '2026-08-24',
+    startsAt: '2026-08-23T23:30:00Z',
+    endsAt: '2026-08-24T23:30:00Z',
+    timezone: 'Asia/Kolkata',
+    boundaryMinutes: 300,
+  },
+};
+
 beforeEach(() => {
   authState.identity = 'employee-a';
   authState.userId = 'user-a';
@@ -100,7 +120,11 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date(2026, 7, 25, 12));
   graphState.client = { request: vi.fn() };
-  graphState.client.request.mockResolvedValue(managedPage());
+  graphState.client.request.mockImplementation((document: unknown) =>
+    Promise.resolve(
+      document === AttendanceCorrectionWindowsDocument ? correctionWindows : managedPage()
+    )
+  );
 });
 
 afterEach(() => {
@@ -113,6 +137,8 @@ describe('HR attendance context', () => {
     render(<HrAttendanceManagementPage />);
     await settle();
     fireEvent.click(screen.getAllByRole('button', { name: 'Add segment for Asha Rao' })[0]);
+    await settle();
+    expect(screen.getByText(/Attendance window:/)).toBeTruthy();
     expect(screen.getByLabelText<HTMLInputElement>('Work Date').value).toBe('2026-08-24');
     fireEvent.change(screen.getByLabelText('Punch In'), { target: { value: '18:00' } });
     fireEvent.change(screen.getByLabelText('Punch Out'), { target: { value: '19:00' } });
@@ -121,10 +147,12 @@ describe('HR attendance context', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save segment' }));
     await settle();
-    expect(graphState.client.request).toHaveBeenCalledWith(AddManagedAttendanceSegmentDocument, {
+    expect(graphState.client.request).toHaveBeenCalledWith(AttendanceAddManagedSegmentDocument, {
       input: {
         employeeId: 'employee-42',
         workDate: '2026-08-24',
+        checkInDate: '2026-08-24',
+        checkOutDate: '2026-08-24',
         checkInTime: '18:00:00',
         checkOutTime: '19:00:00',
         reason: 'Approved evening work',
@@ -132,7 +160,7 @@ describe('HR attendance context', () => {
     });
     expect(
       graphState.client.request.mock.calls.some(
-        ([document]) => document === UpdateManagedAttendanceSegmentDocument
+        ([document]) => document === AttendanceUpdateManagedSegmentDocument
       )
     ).toBe(false);
     expect(screen.queryByRole('dialog')).toBeNull();

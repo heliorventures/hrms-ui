@@ -107,3 +107,55 @@ describe('ManagedAttendanceTable', () => {
     expect(screen.getAllByText('Unavailable')[0]).toBeTruthy();
   });
 });
+
+describe('ManagedAttendanceTable canonical durations', () => {
+  it('uses canonical instants for an overnight Kolkata segment', () => {
+    render(
+      <ManagedAttendanceTable
+        rows={[
+          {
+            ...row,
+            checkInAt: '2026-09-11T17:30:00Z',
+            checkOutAt: '2026-09-11T22:30:00Z',
+            checkInTime: '23:00:00',
+            checkOutTime: '04:00:00',
+          },
+        ]}
+        loading={false}
+        errorMessage={null}
+      />
+    );
+
+    expect(screen.getAllByText('5h 00m')[0]).toBeTruthy();
+  });
+
+  it('uses canonical instants across DST and keeps partial canonical rows unavailable', () => {
+    render(
+      <ManagedAttendanceTable
+        rows={[
+          {
+            ...row,
+            id: 'dst-complete',
+            checkInAt: '2026-11-01T03:00:00Z',
+            checkOutAt: '2026-11-01T09:00:00Z',
+            checkInTime: '23:00:00',
+            checkOutTime: '04:00:00',
+          },
+          {
+            ...row,
+            id: 'canonical-incomplete',
+            checkInAt: '2026-11-01T03:00:00Z',
+            checkOutAt: null,
+            checkInTime: '23:00:00',
+            checkOutTime: '04:00:00',
+          },
+        ]}
+        loading={false}
+        errorMessage={null}
+      />
+    );
+
+    expect(screen.getAllByText('6h 00m')[0]).toBeTruthy();
+    expect(screen.getAllByText('Unavailable')[0]).toBeTruthy();
+  });
+});

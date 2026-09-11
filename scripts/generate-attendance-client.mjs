@@ -40,7 +40,15 @@ await generate(
       [destination]: {
         preset,
         presetConfig: { fragmentMasking: false, gqlTagName: 'attendanceGraphql' },
-        config: { onlyOperationTypes: true, useTypeImports: true },
+        config: {
+          onlyOperationTypes: true,
+          useTypeImports: true,
+          scalars: {
+            DateTime: 'string',
+            NaiveDate: 'string',
+            NaiveTime: 'string',
+          },
+        },
       },
     },
   },

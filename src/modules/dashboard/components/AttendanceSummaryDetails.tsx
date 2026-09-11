@@ -20,7 +20,10 @@ const AttendanceSegments = ({ segments, startIndex = 0 }: AttendanceSegmentsProp
     {segments.map((segment, index) => {
       const checkInCoords = formatCoord(segment.checkInLat, segment.checkInLng);
       const checkOutCoords = formatCoord(segment.checkOutLat, segment.checkOutLng);
-      const checkOutTime = segment.checkOutTime ? formatBackendTime(segment.checkOutTime) : 'open';
+      const incomplete = segment.status?.trim().toUpperCase() === 'INCOMPLETE';
+      let checkOutTime = 'open';
+      if (incomplete) checkOutTime = 'missed punch out';
+      if (segment.checkOutTime) checkOutTime = formatBackendTime(segment.checkOutTime);
       return (
         <li key={segment.id} className="relative text-xs">
           <span
@@ -33,6 +36,11 @@ const AttendanceSegments = ({ segments, startIndex = 0 }: AttendanceSegmentsProp
               {formatBackendTime(segment.checkInTime ?? null)} → {checkOutTime}
             </span>
           </div>
+          {incomplete ? (
+            <p className="mt-1 text-amber-800 dark:text-amber-200">
+              Missed punch out — correction required. No checkout time was recorded.
+            </p>
+          ) : null}
           {checkInCoords || checkOutCoords ? (
             <details className="mt-1">
               <summary className="cursor-pointer rounded text-xs text-content-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">

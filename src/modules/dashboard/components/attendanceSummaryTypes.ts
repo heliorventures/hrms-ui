@@ -14,6 +14,10 @@ export type AttendanceRow = {
 
 export type Summary = {
   workDate: string;
+  startsAt: string;
+  endsAt: string;
+  timezone: string;
+  boundaryMinutes: number;
   totalWorkedMinutes: number;
   openSegment: AttendanceRow | null;
   segments: AttendanceRow[];

@@ -1,16 +1,22 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PunchDaySummaryDocument, PunchTodayDocument } from '../../../api/graphql/graphql';
+import {
+  AttendancePunchDaySummaryDocument,
+  AttendancePunchTodayDocument,
+} from '../../../api/attendance/graphql';
 
 import PunchInOut from './PunchInOut';
 
 const graphState = vi.hoisted(() => ({
   client: { request: vi.fn() },
   permissions: new Set<string>(),
+  tenantId: 'tenant-1',
+  userId: 'user-1',
 }));
 
 vi.mock('../../../hooks/useGraphClient', () => ({
@@ -19,6 +25,8 @@ vi.mock('../../../hooks/useGraphClient', () => ({
 
 vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
+    tenantId: graphState.tenantId,
+    user: { id: graphState.userId },
     clientSession: {
       employeeId: 'employee-1',
       permissions: graphState.permissions,
@@ -57,6 +65,10 @@ const segment = (index: number) => ({
 const summary = (segmentCount = 1) => ({
   punchDaySummary: {
     workDate: '2026-08-21',
+    startsAt: '2026-08-20T23:30:00Z',
+    endsAt: '2026-08-21T23:30:00Z',
+    timezone: 'Asia/Kolkata',
+    boundaryMinutes: 300,
     totalWorkedMinutes: segmentCount * 60,
     openSegment: null,
     segments: Array.from({ length: segmentCount }, (_, index) => segment(index)),
@@ -75,10 +87,13 @@ function renderCard() {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
   vi.setSystemTime(new Date('2026-08-21T12:00:00Z'));
   graphState.permissions = new Set(['attendance:read', 'attendance:punch_self']);
+  graphState.tenantId = 'tenant-1';
+  graphState.userId = 'user-1';
   graphState.client.request = vi.fn((document) => {
-    if (document === PunchDaySummaryDocument) return Promise.resolve(summary());
+    if (document === AttendancePunchDaySummaryDocument) return Promise.resolve(summary());
     return Promise.resolve({ punchToday: segment(2) });
   });
 });
@@ -105,7 +120,7 @@ describe('PunchInOut truthful states', () => {
 
     expect(await screen.findByText('Session 1')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Punch In' })).toBeNull();
-    expect(graphState.client.request).toHaveBeenCalledWith(PunchDaySummaryDocument);
+    expect(graphState.client.request).toHaveBeenCalledWith(AttendancePunchDaySummaryDocument);
   });
 
   it('renders an actionable summary failure and disables punching until summary data is ready', async () => {
@@ -128,6 +143,159 @@ describe('PunchInOut truthful states', () => {
       false
     );
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('accepts the server-owned prior work date before the tenant boundary', async () => {
+    vi.setSystemTime(new Date('2026-08-21T20:00:00Z'));
+    renderCard();
+
+    expect(await screen.findByText('Attendance work date: 2026-08-21')).toBeTruthy();
+    expect(screen.getByText(/05:00.*05:00.*Asia\/Kolkata/)).toBeTruthy();
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Punch In' }).disabled).toBe(
+      false
+    );
+  });
+
+  it('invalidates at the exact exclusive end and loads the replacement summary', async () => {
+    vi.setSystemTime(new Date('2026-08-21T23:29:59Z'));
+    const next = summary(0);
+    next.punchDaySummary.workDate = '2026-08-22';
+    next.punchDaySummary.startsAt = '2026-08-21T23:30:00Z';
+    next.punchDaySummary.endsAt = '2026-08-22T23:30:00Z';
+    graphState.client.request.mockResolvedValueOnce(summary()).mockResolvedValueOnce(next);
+    renderCard();
+    await screen.findByText('Session 1');
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText('Attendance work date: 2026-08-22')).toBeTruthy();
+    expect(graphState.client.request).toHaveBeenCalledTimes(2);
+  });
+
+  it('refreshes stale attendance once when the window regains focus', async () => {
+    renderCard();
+    await screen.findByText('Session 1');
+    window.dispatchEvent(new Event('focus'));
+    await waitFor(() => expect(graphState.client.request).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('PunchInOut lifecycle ownership', () => {
+  it('keeps one focus listener after a StrictMode remount', async () => {
+    render(
+      <StrictMode>
+        <PunchInOut />
+      </StrictMode>
+    );
+    await screen.findByText('Session 1');
+    const initialSummaryRequests = graphState.client.request.mock.calls.filter(
+      ([document]) => document === AttendancePunchDaySummaryDocument
+    ).length;
+
+    window.dispatchEvent(new Event('focus'));
+
+    await waitFor(() =>
+      expect(
+        graphState.client.request.mock.calls.filter(
+          ([document]) => document === AttendancePunchDaySummaryDocument
+        )
+      ).toHaveLength(initialSummaryRequests + 1)
+    );
+  });
+
+  it('does not publish a late focus refresh after the tenant and client change', async () => {
+    const stale = deferred<ReturnType<typeof summary>>();
+    const oldClient = graphState.client;
+    oldClient.request.mockResolvedValueOnce(summary()).mockImplementationOnce(() => stale.promise);
+    const view = renderCard();
+    await screen.findByText('Attendance work date: 2026-08-21');
+
+    window.dispatchEvent(new Event('focus'));
+    await waitFor(() => expect(oldClient.request).toHaveBeenCalledTimes(2));
+
+    const replacement = summary(0);
+    replacement.punchDaySummary.workDate = '2026-08-22';
+    replacement.punchDaySummary.startsAt = '2026-08-21T00:00:00Z';
+    replacement.punchDaySummary.endsAt = '2026-08-22T23:30:00Z';
+    graphState.tenantId = 'tenant-2';
+    graphState.client = { request: vi.fn().mockResolvedValue(replacement) };
+    view.rerender(<PunchInOut />);
+    await screen.findByText('Attendance work date: 2026-08-22');
+
+    const late = summary(0);
+    late.punchDaySummary.workDate = '2026-08-20';
+    await act(async () => {
+      stale.resolve(late);
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByText('Attendance work date: 2026-08-20')).toBeNull();
+    expect(screen.getByText('Attendance work date: 2026-08-22')).toBeTruthy();
+  });
+
+  it('clears an owned busy mutation when only the GraphQL client is replaced', async () => {
+    const staleMutation = deferred<{ punchToday: ReturnType<typeof segment> }>();
+    const oldClient = graphState.client;
+    oldClient.request.mockImplementation((document) => {
+      if (document === AttendancePunchDaySummaryDocument) return Promise.resolve(summary());
+      if (document === AttendancePunchTodayDocument) return staleMutation.promise;
+      throw new Error('Unexpected document');
+    });
+    const user = userEvent.setup();
+    const view = renderCard();
+    await screen.findByText('Session 1');
+    await user.click(screen.getByRole('checkbox', { name: /Record GPS location/i }));
+    await user.click(screen.getByRole('button', { name: 'Punch In' }));
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: /Recording/i }).disabled).toBe(
+      true
+    );
+
+    const replacementPunch = { ...segment(4), source: 'replacement-client' };
+    const replacementClient = {
+      request: vi.fn((document) => {
+        if (document === AttendancePunchDaySummaryDocument) return Promise.resolve(summary(0));
+        if (document === AttendancePunchTodayDocument) {
+          return Promise.resolve({ punchToday: replacementPunch });
+        }
+        throw new Error('Unexpected document');
+      }),
+    };
+    graphState.client = replacementClient;
+    view.rerender(<PunchInOut />);
+
+    const replacementButton = await screen.findByRole<HTMLButtonElement>('button', {
+      name: 'Punch In',
+    });
+    expect(replacementButton.disabled).toBe(false);
+    await user.click(replacementButton);
+    expect(await screen.findByText('Source: replacement-client')).toBeTruthy();
+
+    await act(async () => {
+      staleMutation.resolve({ punchToday: { ...segment(5), source: 'stale-client' } });
+      await staleMutation.promise;
+    });
+
+    expect(screen.queryByText('Source: stale-client')).toBeNull();
+    expect(screen.getByText('Source: replacement-client')).toBeTruthy();
+  });
+});
+
+describe('PunchInOut truthful refresh states', () => {
+  it('shows an expired incomplete segment as correction-required without a fake checkout', async () => {
+    graphState.client.request.mockResolvedValueOnce({
+      punchDaySummary: {
+        ...summary(0).punchDaySummary,
+        segments: [{ ...segment(1), checkOutAt: null, checkOutTime: null, status: 'INCOMPLETE' }],
+      },
+    });
+    renderCard();
+
+    expect(await screen.findByText(/Missed punch out.*correction required/i)).toBeTruthy();
+    expect(screen.queryByText(/Select.*Punch Out.*close this block/i)).toBeNull();
   });
 
   it('shows loading while retrying an initial summary failure and then renders ready data', async () => {
@@ -173,13 +341,14 @@ describe('PunchInOut truthful states', () => {
     const retry = deferred<ReturnType<typeof openSummary>>();
     let summaryRequestCount = 0;
     graphState.client.request = vi.fn((document) => {
-      if (document === PunchDaySummaryDocument) {
+      if (document === AttendancePunchDaySummaryDocument) {
         summaryRequestCount += 1;
         if (summaryRequestCount === 1) return Promise.resolve(summary());
         if (summaryRequestCount === 2) return Promise.reject(new Error('Failed to fetch'));
         return retry.promise;
       }
-      if (document === PunchTodayDocument) return Promise.resolve({ punchToday: segment(2) });
+      if (document === AttendancePunchTodayDocument)
+        return Promise.resolve({ punchToday: segment(2) });
       throw new Error('Unexpected document');
     });
     const user = userEvent.setup();
@@ -204,8 +373,9 @@ describe('PunchInOut truthful states', () => {
 
   it('keeps mutation errors separate from the loaded summary', async () => {
     graphState.client.request = vi.fn((document) => {
-      if (document === PunchDaySummaryDocument) return Promise.resolve(summary());
-      if (document === PunchTodayDocument) return Promise.reject(new Error('Failed to fetch'));
+      if (document === AttendancePunchDaySummaryDocument) return Promise.resolve(summary());
+      if (document === AttendancePunchTodayDocument)
+        return Promise.reject(new Error('Failed to fetch'));
       throw new Error('Unexpected document');
     });
     const user = userEvent.setup();
@@ -225,8 +395,8 @@ describe('PunchInOut submission and display safeguards', () => {
   it('prevents duplicate punch submissions while a mutation is busy', async () => {
     const mutation = deferred<{ punchToday: ReturnType<typeof segment> }>();
     graphState.client.request = vi.fn((document) => {
-      if (document === PunchDaySummaryDocument) return Promise.resolve(summary());
-      if (document === PunchTodayDocument) return mutation.promise;
+      if (document === AttendancePunchDaySummaryDocument) return Promise.resolve(summary());
+      if (document === AttendancePunchTodayDocument) return mutation.promise;
       throw new Error('Unexpected document');
     });
     const user = userEvent.setup();

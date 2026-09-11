@@ -2,7 +2,11 @@ import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import DataTable, { type DataTableColumn } from '../../../components/common/DataTable';
-import { formatMinutesAsHhMm, naiveTimeToMinutes } from '../../../utils/attendanceDuration';
+import {
+  canonicalSegmentMinutes,
+  formatMinutesAsHhMm,
+  naiveTimeToMinutes,
+} from '../../../utils/attendanceDuration';
 import { formatBackendTime } from '../../../utils/timeFormat';
 
 import {
@@ -36,6 +40,11 @@ function statusVariant(status: string | null | undefined) {
 }
 
 function completedSameDayDuration(row: ManagedAttendanceRow): string {
+  const canonicalMinutes = canonicalSegmentMinutes(row);
+  if (canonicalMinutes !== undefined) {
+    return canonicalMinutes === null ? 'Unavailable' : formatMinutesAsHhMm(canonicalMinutes);
+  }
+
   const checkIn = naiveTimeToMinutes(String(row.checkInTime ?? ''));
   const checkOut = naiveTimeToMinutes(String(row.checkOutTime ?? ''));
   if (!Number.isFinite(checkIn) || !Number.isFinite(checkOut) || checkOut <= checkIn)

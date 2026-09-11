@@ -2,7 +2,10 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 
-import { MyAttendanceBoardDocument } from '../../api/attendance/graphql';
+import {
+  AttendanceCurrentDayWindowDocument,
+  MyAttendanceBoardDocument,
+} from '../../api/attendance/graphql';
 import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
 
 import {
@@ -10,6 +13,7 @@ import {
   graphClient,
   authState,
   policyResponse,
+  currentWindowResponse,
   deferred,
   boardResponse,
   renderPage,
@@ -22,6 +26,8 @@ it('does not let a deferred refresh overwrite a newer month request', async () =
   let boardCalls = 0;
   graphClient.request.mockImplementation((document: unknown, variables?: { fromDate?: string }) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     boardCalls += 1;
     if (boardCalls === 2) return refresh.promise;
     return Promise.resolve(
@@ -87,6 +93,8 @@ it('hides stale paging controls and rows during a deferred month transition', as
   let boardCalls = 0;
   graphClient.request.mockImplementation((document: unknown, variables?: { fromDate?: string }) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     boardCalls += 1;
     if (boardCalls === 2) return nextMonth.promise;
     return Promise.resolve(
@@ -160,6 +168,8 @@ it('hides stale board rows and paging during a deferred client/session transitio
   const replacementClient = { request: vi.fn() };
   graphClient.request.mockImplementation((document: unknown) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     return Promise.resolve(
       boardResponse({
         endCursor: 'client-a-next',
@@ -185,6 +195,8 @@ it('hides stale board rows and paging during a deferred client/session transitio
   });
   replacementClient.request.mockImplementation((document: unknown) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     return replacement.promise;
   });
 
@@ -243,6 +255,8 @@ it('resets a page-two cursor before requesting a deferred client/session transit
   const replacementClient = { request: vi.fn() };
   graphClient.request.mockImplementation((document: unknown, variables?: { after?: string }) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     if (variables?.after === 'client-a-page-two') {
       return Promise.resolve(
         boardResponse({
@@ -292,6 +306,8 @@ it('resets a page-two cursor before requesting a deferred client/session transit
   });
   replacementClient.request.mockImplementation((document: unknown) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     return replacement.promise;
   });
 

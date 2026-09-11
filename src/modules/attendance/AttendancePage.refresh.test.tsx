@@ -2,6 +2,7 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { expect, it } from 'vitest';
 
+import { AttendanceCurrentDayWindowDocument } from '../../api/attendance/graphql';
 import { AttendanceAdjustmentPolicyDocument } from '../../api/graphql/graphql';
 
 import {
@@ -10,6 +11,7 @@ import {
   policyResponse,
   deferred,
   boardResponse,
+  currentWindowResponse,
   renderPage,
   advanceToNextPage,
 } from './attendancePageTestSupport';
@@ -19,6 +21,8 @@ it('does not show refresh success after refresh A is superseded by B and return 
   let boardCalls = 0;
   graphClient.request.mockImplementation((document: unknown, variables?: { fromDate?: string }) => {
     if (document === AttendanceAdjustmentPolicyDocument) return Promise.resolve(policyResponse);
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     boardCalls += 1;
     if (boardCalls === 2) return pendingRefresh.promise;
     return Promise.resolve(
@@ -65,6 +69,8 @@ it('keeps adjustment controls unavailable until the policy is resolved without r
   authState.clientSession.permissions = new Set(['attendance:punch_self']);
   graphClient.request.mockImplementation((document: unknown, variables?: { after?: string }) => {
     if (document === AttendanceAdjustmentPolicyDocument) return policy.promise;
+    if (document === AttendanceCurrentDayWindowDocument)
+      return Promise.resolve(currentWindowResponse);
     return Promise.resolve(
       boardResponse({
         endCursor: variables?.after ? null : 'page-two',
@@ -78,7 +84,7 @@ it('keeps adjustment controls unavailable until the policy is resolved without r
   expect((addButton as HTMLButtonElement).disabled).toBe(true);
   expect(screen.queryByRole('button', { name: 'Adjust day' })).toBeNull();
   await advanceToNextPage();
-  await waitFor(() => expect(graphClient.request).toHaveBeenCalledTimes(3));
+  await waitFor(() => expect(graphClient.request).toHaveBeenCalledTimes(4));
 
   await act(async () => {
     await Promise.resolve();
