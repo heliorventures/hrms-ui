@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import PerformancePage from './PerformancePage';
+import { resetPerformanceState } from './PerformancePage.test.shared';
 
 const state = vi.hoisted(() => ({
   request: vi.fn(),
@@ -13,6 +14,7 @@ const state = vi.hoisted(() => ({
     string
   >,
 }));
+
 vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => state }));
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
@@ -25,25 +27,7 @@ vi.mock('../../contexts/AuthContext', () => ({
   }),
 }));
 afterEach(cleanup);
-beforeEach(() => {
-  state.permissions = new Set(['performance:self', 'performance:manage']);
-  state.permissionScopes = { 'performance:self': 'SELF', 'performance:manage': 'ALL' };
-  state.request.mockImplementation((document: unknown) => {
-    const source = String(document);
-    if (source.includes('MyPerformanceReviewsWorkspace'))
-      return Promise.resolve({ myPerformanceReviews: [] });
-    if (source.includes('TeamPerformanceReviewsWorkspace'))
-      return Promise.resolve({ myTeamPerformanceReviews: [] });
-    if (source.includes('PerformanceProgramsWorkspace'))
-      return Promise.resolve({
-        performancePrograms: [{ id: 'p1', name: 'Annual', status: 'DRAFT' }],
-      });
-    if (source.includes('AppraisalTemplatesWorkspace'))
-      return Promise.resolve({ appraisalTemplates: [] });
-    return Promise.resolve({ reviewCycles: [], goals: [] });
-  });
-  state.request.mockClear();
-});
+beforeEach(() => resetPerformanceState(state));
 
 it.each([
   {
@@ -190,127 +174,4 @@ it('preserves the setup draft when switching workflow tabs', async () => {
   expect(screen.queryByLabelText('Process name')).toBeNull();
   fireEvent.click(screen.getByRole('tab', { name: 'Setup' }));
   expect(screen.getByLabelText('Process name')).toHaveProperty('value', 'Quarterly growth');
-});
-
-it('opens the linked submitted appraisal with saved answers and no resubmission control', async () => {
-  state.permissions = new Set(['performance:self']);
-  state.permissionScopes = { 'performance:self': 'SELF' };
-  const review = {
-    id: 'r1',
-    employeeId: 'me',
-    employeeName: 'Employee',
-    cycleName: 'Annual',
-    cycleStage: 'SELF_REVIEW',
-    status: 'SELF_SUBMITTED',
-    selfSubmittedAt: '2026-09-01',
-  };
-  state.request.mockImplementation((document: unknown) =>
-    String(document).includes('PerformanceReviewDetailWorkspace')
-      ? Promise.resolve({
-          performanceReviewDetail: {
-            review,
-            goals: [],
-            feedback: [],
-            template: {
-              sections: [
-                {
-                  questions: [
-                    {
-                      id: 'q1',
-                      prompt: 'Achievements',
-                      answerer: 'BOTH',
-                      questionType: 'LONG_TEXT',
-                      options: [],
-                    },
-                  ],
-                },
-              ],
-            },
-            answers: [
-              {
-                questionId: 'q1',
-                employeeTextAnswer: 'Delivered the project',
-                employeeSelectedOptionIds: [],
-                managerSelectedOptionIds: [],
-              },
-            ],
-          },
-        })
-      : Promise.resolve({ myPerformanceReviews: [review] })
-  );
-  render(
-    <MemoryRouter initialEntries={['/performance?tab=my&review=r1']}>
-      <PerformancePage />
-    </MemoryRouter>
-  );
-  expect(await screen.findByText('Employee response: Delivered the project')).toBeTruthy();
-  expect(screen.queryByRole('button', { name: 'Submit self-appraisal' })).toBeNull();
-  expect(state.request).toHaveBeenCalledWith(
-    expect.stringContaining('PerformanceReviewDetailWorkspace'),
-    { participantId: 'r1' }
-  );
-});
-
-it('submits an untouched optional appraisal question as an empty answer', async () => {
-  state.permissions = new Set(['performance:self']);
-  state.permissionScopes = { 'performance:self': 'SELF' };
-  const review = {
-    id: 'r1',
-    employeeId: 'me',
-    employeeName: 'Employee',
-    cycleName: 'Annual',
-    cycleStage: 'SELF_REVIEW',
-    status: 'PENDING',
-  };
-  const detail = {
-    review,
-    goals: [],
-    feedback: [],
-    answers: [],
-    template: {
-      sections: [
-        {
-          questions: [
-            {
-              id: 'optional',
-              prompt: 'Anything else?',
-              answerer: 'BOTH',
-              questionType: 'LONG_TEXT',
-              isRequired: false,
-              options: [],
-            },
-          ],
-        },
-      ],
-    },
-  };
-  state.request.mockImplementation((document: unknown) => {
-    if (String(document).includes('PerformanceReviewDetailWorkspace'))
-      return Promise.resolve({ performanceReviewDetail: detail });
-    if (String(document).includes('SubmitSelfAppraisalWorkspace'))
-      return Promise.resolve({ submitSelfAppraisal: detail });
-    return Promise.resolve({ myPerformanceReviews: [review] });
-  });
-  render(
-    <MemoryRouter initialEntries={['/performance?tab=my&review=r1']}>
-      <PerformancePage />
-    </MemoryRouter>
-  );
-  fireEvent.click(await screen.findByRole('button', { name: 'Submit self-appraisal' }));
-  await waitFor(() =>
-    expect(state.request).toHaveBeenCalledWith(
-      expect.stringContaining('SubmitSelfAppraisalWorkspace'),
-      {
-        id: 'r1',
-        answers: [
-          {
-            questionId: 'optional',
-            textAnswer: null,
-            rating: null,
-            selectedOptionIds: [],
-          },
-        ],
-      }
-    )
-  );
 });

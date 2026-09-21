@@ -34,3 +34,29 @@ it('isolates loading, prevents duplicate actions and releases failures for retry
   expect(result.current.error).toBe('We could not complete this action. Try again.');
   expect(result.current.isBusy('save')).toBe(false);
 });
+
+it('suppresses stale completion messages while preserving three-argument notices', async () => {
+  const { result } = renderHook(() => useKeyedAction());
+
+  await act(async () => {
+    await result.current.run('current', () => Promise.resolve(), 'Saved');
+  });
+  expect(result.current.notice).toBe('Saved');
+
+  await act(async () => {
+    await result.current.run('stale-success', () => Promise.resolve(), 'Stale', () => false);
+  });
+  expect(result.current.notice).toBeNull();
+  expect(result.current.isBusy('stale-success')).toBe(false);
+
+  await act(async () => {
+    await result.current.run(
+      'stale-error',
+      () => Promise.reject(new Error('Unavailable')),
+      'Stale',
+      () => false
+    );
+  });
+  expect(result.current.error).toBeNull();
+  expect(result.current.isBusy('stale-error')).toBe(false);
+});

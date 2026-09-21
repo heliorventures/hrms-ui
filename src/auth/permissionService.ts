@@ -1,4 +1,5 @@
 import type { ParsedClientSession } from './clientSession';
+import { evaluateCapability } from './permissionCapability';
 import { PERMISSIONS, type PermissionCode } from './permissions';
 
 export type ExplicitPermissionScope = 'SELF' | 'TEAM' | 'DEPARTMENT' | 'ALL';
@@ -222,114 +223,12 @@ export function createPermissionService(session: ParsedClientSession | null): Pe
   };
 
   const canCapability = (capability: Capability): boolean => {
-    const scopedPermission = SCOPED_CAPABILITY_PERMISSIONS[capability];
-    if (scopedPermission) {
-      return canScopedPermission(scopedPermission.permission, scopedPermission.scopes);
-    }
-    switch (capability) {
-      case 'route.dashboard':
-      case 'route.organization.documents':
-        return session != null;
-      case 'route.expenses':
-        return (
-          canScopedPermission(PERMISSIONS.expenseRead) ||
-          canScopedPermission(PERMISSIONS.expenseSubmit, SELF_SCOPE) ||
-          canScopedPermission(PERMISSIONS.expenseApprove, APPROVAL_SCOPES) ||
-          canScopedPermission(PERMISSIONS.expenseManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.expensePay, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.travelRead) ||
-          canScopedPermission(PERMISSIONS.travelSubmit, SELF_SCOPE) ||
-          canScopedPermission(PERMISSIONS.travelApprove, APPROVAL_SCOPES) ||
-          canScopedPermission(PERMISSIONS.travelManage, ALL_SCOPE)
-        );
-      case 'action.onboarding.manage':
-        return (
-          canScopedPermission(PERMISSIONS.onboardingManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.employeeManage, ALL_SCOPE)
-        );
-      case 'action.people.search':
-        return canScopedPermission(PERMISSIONS.employeeDirectoryRead, ALL_SCOPE);
-      case 'route.hr.home':
-        return (
-          canScopedPermission(PERMISSIONS.employeeWrite, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.leaveManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE) ||
-          canCapability('action.leave.approve') ||
-          canCapability('action.timesheet.approve')
-        );
-      case 'route.hr.people':
-      case 'route.organization.profileReviews':
-      case 'route.admin.employees':
-        return canScopedPermission(PERMISSIONS.employeeManage, ALL_SCOPE);
-      case 'route.hr.leaves':
-        return (
-          canCapability('action.leave.approve') ||
-          canScopedPermission(PERMISSIONS.leaveManage, ALL_SCOPE)
-        );
-      case 'route.hr.timesheets':
-        return canCapability('action.timesheet.approve');
-      case 'route.hr.timesheetAssignments':
-        return canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE);
-      case 'route.admin.reports':
-        return (
-          canScopedPermission(PERMISSIONS.attendanceRead, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.employeeRead, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.leaveRead, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.payrollRead, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.timesheetRead, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.expenseRead, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.travelRead, ALL_SCOPE)
-        );
-      case 'route.admin.timesheetSettings':
-        return (
-          canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE) &&
-          canScopedPermission(PERMISSIONS.attendancePunchPolicy, ALL_SCOPE)
-        );
-      case 'route.admin.notifications':
-        return canCapability('action.notifications.manage');
-      case 'route.workplace.benefits':
-        return (
-          canScopedPermission(PERMISSIONS.benefitsManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.benefitsSelf, SELF_SCOPE)
-        );
-      case 'route.workplace.assets':
-        return (
-          canScopedPermission(PERMISSIONS.assetsManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.assetsRead, ANY_EXPLICIT_SCOPE) ||
-          canScopedPermission(PERMISSIONS.assetsSelf, SELF_SCOPE)
-        );
-      case 'route.workplace.onboarding':
-        return (
-          canScopedPermission(PERMISSIONS.onboardingManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.onboardingSelf, SELF_SCOPE)
-        );
-      case 'route.workplace.prejoining':
-        return (
-          canScopedPermission(PERMISSIONS.prejoiningManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.prejoiningReview, ALL_SCOPE)
-        );
-      case 'route.workplace.grievance':
-        return (
-          canScopedPermission(PERMISSIONS.grievanceManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.grievanceSelf, SELF_SCOPE)
-        );
-      case 'route.myWork':
-        return Boolean(session?.employeeId);
-      case 'route.workplace.performance':
-        return (
-          canScopedPermission(PERMISSIONS.performanceManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.performanceEvaluate, ['TEAM']) ||
-          canScopedPermission(PERMISSIONS.performanceSelf, SELF_SCOPE)
-        );
-      case 'route.workplace.surveys':
-        return (
-          canScopedPermission(PERMISSIONS.surveyManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.surveyRespond, SELF_SCOPE) ||
-          canScopedPermission(PERMISSIONS.surveyResults, ['TEAM', 'DEPARTMENT', 'ALL'])
-        );
-      default:
-        return false;
-    }
+    return evaluateCapability(
+      capability,
+      session,
+      canScopedPermission,
+      SCOPED_CAPABILITY_PERMISSIONS
+    );
   };
 
   const canRoute = (path: string): boolean => {

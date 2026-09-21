@@ -239,16 +239,6 @@ export const AdvancePerformanceCycleDocument = gql`
     advancePerformanceCycle(reviewCycleId: $id)
   }
 `;
-export const ProposePerformanceGoalDocument = gql`
-  mutation ProposePerformanceGoalWorkspace($input: SavePerformanceGoalInput!) {
-    proposePerformanceGoal(input: $input) {
-      id
-      title
-      weightage
-      status
-    }
-  }
-`;
 export const ApprovePerformanceGoalsDocument = gql`
   mutation ApprovePerformanceGoalsWorkspace($id: ID!) {
     approvePerformanceGoals(participantId: $id) {
@@ -379,6 +369,8 @@ export interface PerformanceReviewDetailRow {
   review: PerformanceReviewRow;
   goals: Array<{
     id: string;
+    employeeId?: string;
+    reviewCycleId?: string;
     title: string;
     description?: string | null;
     weightage?: string | null;
