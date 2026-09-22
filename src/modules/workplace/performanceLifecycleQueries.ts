@@ -72,6 +72,7 @@ export const MyPerformanceReviewsDocument = gql`
       selfSubmittedAt
       managerSubmittedAt
       acknowledgedAt
+      responseRevision
       finalRating
       performanceBand
     }
@@ -96,6 +97,7 @@ export const TeamPerformanceReviewsDocument = gql`
       selfSubmittedAt
       managerSubmittedAt
       acknowledgedAt
+      responseRevision
       finalRating
       performanceBand
     }
@@ -121,6 +123,7 @@ export const PerformanceReviewDetailDocument = gql`
         selfSubmittedAt
         managerSubmittedAt
         acknowledgedAt
+        responseRevision
         finalRating
         performanceBand
       }
@@ -257,8 +260,8 @@ export const AddPerformanceFeedbackDocument = gql`
   }
 `;
 export const SubmitSelfAppraisalDocument = gql`
-  mutation SubmitSelfAppraisalWorkspace($id: ID!, $answers: [AppraisalAnswerInput!]!) {
-    submitSelfAppraisal(participantId: $id, answers: $answers) {
+  mutation SubmitSelfAppraisalWorkspace($id: ID!, $answers: [AppraisalAnswerInput!]!, $expectedRevision: Int) {
+    submitSelfAppraisal(participantId: $id, answers: $answers, expectedRevision: $expectedRevision) {
       review {
         id
         status
@@ -273,12 +276,14 @@ export const SubmitManagerAppraisalDocument = gql`
     $answers: [AppraisalAnswerInput!]!
     $rating: String!
     $band: String
+    $expectedRevision: Int
   ) {
     submitManagerAppraisal(
       participantId: $id
       answers: $answers
       finalRating: $rating
       performanceBand: $band
+      expectedRevision: $expectedRevision
     ) {
       review {
         id
@@ -290,8 +295,8 @@ export const SubmitManagerAppraisalDocument = gql`
   }
 `;
 export const AcknowledgePerformanceReviewDocument = gql`
-  mutation AcknowledgePerformanceReviewWorkspace($id: ID!, $comment: String) {
-    acknowledgePerformanceReview(participantId: $id, comment: $comment) {
+  mutation AcknowledgePerformanceReviewWorkspace($id: ID!, $comment: String, $expectedRevision: Int) {
+    acknowledgePerformanceReview(participantId: $id, comment: $comment, expectedRevision: $expectedRevision) {
       review {
         id
         acknowledgedAt
@@ -362,6 +367,7 @@ export interface PerformanceReviewRow {
   selfSubmittedAt?: string | null;
   managerSubmittedAt?: string | null;
   acknowledgedAt?: string | null;
+  responseRevision: number;
   finalRating?: string | null;
   performanceBand?: string | null;
 }

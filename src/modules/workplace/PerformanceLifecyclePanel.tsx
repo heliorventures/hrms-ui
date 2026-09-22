@@ -36,7 +36,8 @@ const PerformanceLifecyclePanel = ({
   const { clearResult: clearGoalResult, runGoalAction: runSerializedGoalAction } = goalActions;
   const showSetup = canManage && tab === 'setup';
   const showProcess = canManage && tab === 'process';
-  const showAdmin = showSetup || showProcess;
+  const showAdministration = canManage && tab === 'administration';
+  const showAdmin = showSetup || showProcess || showAdministration;
   const showTeam =
     (canEvaluate || canManage) && (tab === 'team' || tab === 'review' || showProcess);
   const showSelf = canSelf && tab === 'my';
@@ -53,8 +54,8 @@ const PerformanceLifecyclePanel = ({
   const reviewData = usePerformanceReviewData({
     actorEmployeeId,
     clearGoalResult,
+    hydrateReviewDrafts: reviewDrafts.hydrateReviewDrafts,
     initialReviewId,
-    resetReviewDrafts: reviewDrafts.resetReviewDrafts,
     run,
     showProcess,
     showSelf,
@@ -130,6 +131,7 @@ const PerformanceLifecyclePanel = ({
         setPeriodDate={setPeriodDate}
         setProgramDraft={setProgramDraft}
         setup={setup}
+        showAdministration={showAdministration}
         showSetup={showSetup}
         showProcess={showProcess}
         showSelf={showSelf}

@@ -124,6 +124,18 @@ describe('Dashboard', () => {
     expect(screen.queryByTestId('upcoming-holidays')).toBeNull();
   });
 
+  it('shows notifications on Home when notification read access is available', () => {
+    authState.clientSession.permissions = new Set(['notification:read']);
+    authState.clientSession.permissionScopes = { 'notification:read': 'SELF' };
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('notifications-preview')).toBeTruthy();
+  });
+
   it('does not expose the opaque employee UUID in the welcome header', () => {
     render(
       <MemoryRouter>

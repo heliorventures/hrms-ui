@@ -58,6 +58,7 @@ it.each([
       cycleName: 'Annual',
       cycleStage: reviewer.stage,
       status: 'PENDING',
+      responseRevision: 1,
     };
     const questions = [
       {
@@ -83,6 +84,8 @@ it.each([
       },
     ].map((question) => ({ ...question, answerer: 'BOTH', isRequired: false, options: [] }));
     state.request.mockImplementation((document: unknown) => {
+      if (String(document).includes('PerformanceGoalKpisWorkspace'))
+        return Promise.resolve({ performanceGoalKpis: [] });
       if (String(document).includes('PerformanceReviewDetailWorkspace'))
         return Promise.resolve({
           performanceReviewDetail: {
@@ -141,7 +144,7 @@ it('does not fetch administrative catalogs for a personal tab, including HR user
   await screen.findByText('No assigned performance reviews.');
   expect(
     state.request.mock.calls.some(([document]) =>
-      /PerformanceCatalog|PerformanceProgramsWorkspace|TeamPerformanceReviewsWorkspace/.test(
+      /PerformanceCatalog|PerformanceProgramsWorkspace|TeamPerformanceReviewsWorkspace|PrivatePerformanceFeedbackWorkspace/.test(
         String(document)
       )
     )
@@ -159,6 +162,26 @@ it('does not expose administrator tabs to employees even with a setup URL', asyn
   );
   expect(await screen.findByRole('tab', { name: 'My Performance' })).toBeTruthy();
   expect(screen.queryByRole('tab', { name: 'Setup' })).toBeNull();
+  expect(screen.queryByRole('tab', { name: 'Administration' })).toBeNull();
+});
+
+it('does not request administration data for an unauthorized administration URL', async () => {
+  state.permissions = new Set(['performance:evaluate']);
+  state.permissionScopes = { 'performance:evaluate': 'TEAM' };
+  render(
+    <MemoryRouter initialEntries={['/performance?tab=administration']}>
+      <PerformancePage />
+    </MemoryRouter>
+  );
+  await screen.findByText('No assigned performance reviews.');
+
+  expect(
+    state.request.mock.calls.some(([document]) =>
+      /PerformanceAdminCyclesWorkspace|PerformanceCycleAdministrationWorkspace/.test(
+        String(document)
+      )
+    )
+  ).toBe(false);
 });
 
 it('preserves the setup draft when switching workflow tabs', async () => {

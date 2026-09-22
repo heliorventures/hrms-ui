@@ -3,6 +3,7 @@ import PerformanceCycleLaunchCards from './PerformanceCycleLaunchCards';
 import type { DraftQuestion } from './performanceDraftQuestion';
 import type { AppraisalTemplateRow, PerformanceProgramRow } from './performanceLifecycleQueries';
 import PerformanceProgramSetupCard from './PerformanceProgramSetupCard';
+import PerformanceProgramPolicyEditor from './performance-admin/PerformanceProgramPolicyEditor';
 import type { PerformanceProgramDraft } from './usePerformanceProgramActions';
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
   onProgramDraftChange: (draft: PerformanceProgramDraft) => void;
   onPublishTemplate: (templateId: string) => void;
   onRemoveQuestion: (index: number) => void;
+  onReloadPrograms: () => Promise<void>;
   onSaveProgram: () => void;
   onSaveTemplate: () => void;
   onSelectedProgramChange: (programId: string) => void;
@@ -45,6 +47,7 @@ const PerformanceLifecycleSetup = ({
   onProgramDraftChange,
   onPublishTemplate,
   onRemoveQuestion,
+  onReloadPrograms,
   onSaveProgram,
   onSaveTemplate,
   onSelectedProgramChange,
@@ -74,6 +77,13 @@ const PerformanceLifecycleSetup = ({
         programDraft={programDraft}
         programs={programs}
         selectedProgram={selectedProgram}
+      />
+    )}
+    {showSetup && selectedProgram && (
+      <PerformanceProgramPolicyEditor
+        performanceProgramId={selectedProgram}
+        programName={activeProgram?.name ?? 'Performance program'}
+        onArchived={onReloadPrograms}
       />
     )}
     {showSetup && selectedProgram && (

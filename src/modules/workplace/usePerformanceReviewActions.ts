@@ -102,6 +102,7 @@ export const usePerformanceReviewActions = ({
           await client.request(SubmitSelfAppraisalDocument, {
             id: detail.review.id,
             answers: answerPayload(detail, responses, 'EMPLOYEE'),
+            expectedRevision: detail.review.responseRevision,
           });
           await reloadCurrent(detail.review.id, revision);
         },
@@ -123,6 +124,7 @@ export const usePerformanceReviewActions = ({
             answers: answerPayload(detail, responses, 'MANAGER'),
             rating: finalRating,
             band: performanceBand || null,
+            expectedRevision: detail.review.responseRevision,
           });
           await reloadCurrent(detail.review.id, revision);
         },
@@ -142,6 +144,7 @@ export const usePerformanceReviewActions = ({
           await client.request(AcknowledgePerformanceReviewDocument, {
             id: detail.review.id,
             comment: acknowledgementComment.trim() || null,
+            expectedRevision: detail.review.responseRevision,
           });
           if (isCurrent(detail.review.id, revision)) setAcknowledgementComment('');
           await reloadCurrent(detail.review.id, revision);

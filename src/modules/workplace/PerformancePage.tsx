@@ -24,6 +24,7 @@ const PerformancePage = () => {
           { id: 'setup', label: 'Setup' },
           { id: 'process', label: 'Process' },
           { id: 'review', label: 'Review' },
+          { id: 'administration', label: 'Administration' },
         ]
       : []),
   ];

@@ -23,6 +23,7 @@ const createDetail = (status = 'PROPOSED'): PerformanceReviewDetailRow => ({
     cycleEndDate: '2026-12-31',
     cycleStage: 'GOAL_SETTING',
     status: 'PENDING',
+    responseRevision: 1,
   },
   goals: [
     {

@@ -7,6 +7,7 @@ import { useEmployeeDisplayName } from '../../contexts/employeeDisplayNameContex
 import { useTenant } from '../../contexts/TenantContext';
 
 import LeaveBalanceCard from './components/LeaveBalanceCard';
+import NotificationsPreview from './components/NotificationsPreview';
 import OnLeaveToday from './components/OnLeaveToday';
 import PunchInOut from './components/PunchInOut';
 import UpcomingHolidays from './components/UpcomingHolidays';
@@ -42,7 +43,8 @@ const Dashboard = () => {
   const authorizationKey = authorizationStateKey(clientSession);
   const canReadAttendance = permissions.canCapability('dashboard.attendance');
   const canReadLeave = permissions.canCapability('dashboard.leave');
-  const hasSummary = canReadAttendance || canReadLeave;
+  const canReadNotifications = permissions.canCapability('dashboard.notifications');
+  const hasSummary = canReadAttendance || canReadLeave || canReadNotifications;
 
   return (
     <div className="space-y-5">
@@ -71,6 +73,12 @@ const Dashboard = () => {
           <h2 className="sr-only">Your day</h2>
           {canReadAttendance ? <PunchInOut key={`attendance:${authorizationKey}`} /> : null}
           {canReadLeave ? <LeaveBalanceCard key={`leave-balance:${authorizationKey}`} /> : null}
+        </section>
+      ) : null}
+      {canReadNotifications ? (
+        <section aria-label="Your notifications">
+          <h2 className="sr-only">Your notifications</h2>
+          <NotificationsPreview />
         </section>
       ) : null}
       {canReadLeave ? (

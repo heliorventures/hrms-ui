@@ -44,10 +44,13 @@ it('opens the linked submitted appraisal with saved answers and no resubmission 
     cycleName: 'Annual',
     cycleStage: 'SELF_REVIEW',
     status: 'SELF_SUBMITTED',
+    responseRevision: 1,
     selfSubmittedAt: '2026-09-01',
   };
   state.request.mockImplementation((document: unknown) =>
-    String(document).includes('PerformanceReviewDetailWorkspace')
+    String(document).includes('PerformanceGoalKpisWorkspace')
+      ? Promise.resolve({ performanceGoalKpis: [] })
+      : String(document).includes('PerformanceReviewDetailWorkspace')
       ? Promise.resolve({
           performanceReviewDetail: {
             review,
@@ -103,6 +106,7 @@ it('submits an untouched optional appraisal question as an empty answer', async 
     cycleName: 'Annual',
     cycleStage: 'SELF_REVIEW',
     status: 'PENDING',
+    responseRevision: 1,
   };
   const detail = {
     review,
@@ -127,6 +131,8 @@ it('submits an untouched optional appraisal question as an empty answer', async 
     },
   };
   state.request.mockImplementation((document: unknown) => {
+    if (String(document).includes('PerformanceGoalKpisWorkspace'))
+      return Promise.resolve({ performanceGoalKpis: [] });
     if (String(document).includes('PerformanceReviewDetailWorkspace'))
       return Promise.resolve({ performanceReviewDetail: detail });
     if (String(document).includes('SubmitSelfAppraisalWorkspace'))
@@ -144,6 +150,7 @@ it('submits an untouched optional appraisal question as an empty answer', async 
       expect.stringContaining('SubmitSelfAppraisalWorkspace'),
       {
         id: 'r1',
+        expectedRevision: 1,
         answers: [
           {
             questionId: 'optional',
@@ -171,6 +178,8 @@ it.each(goalApprovalScenarios)(
     };
     const detail = { ...acknowledgementDetail, review };
     state.request.mockImplementation((document: unknown) => {
+      if (String(document).includes('PerformanceGoalKpisWorkspace'))
+        return Promise.resolve({ performanceGoalKpis: [] });
       if (String(document).includes('PerformanceReviewDetailWorkspace'))
         return Promise.resolve({ performanceReviewDetail: detail });
       return Promise.resolve({ myTeamPerformanceReviews: [review] });
@@ -191,6 +200,8 @@ it('submits an acknowledgement comment and clears it only after success', async 
   state.permissions = new Set(['performance:self']);
   state.permissionScopes = { 'performance:self': 'SELF' };
   state.request.mockImplementation((document: unknown) => {
+    if (String(document).includes('PerformanceGoalKpisWorkspace'))
+      return Promise.resolve({ performanceGoalKpis: [] });
     if (String(document).includes('PerformanceReviewDetailWorkspace'))
       return Promise.resolve({ performanceReviewDetail: acknowledgementDetail });
     if (String(document).includes('AcknowledgePerformanceReviewWorkspace'))
@@ -210,7 +221,7 @@ it('submits an acknowledgement comment and clears it only after success', async 
   await waitFor(() =>
     expect(state.request).toHaveBeenCalledWith(
       expect.stringContaining('AcknowledgePerformanceReviewWorkspace'),
-      { id: 'ack-review', comment: 'I have reviewed the goals.' }
+      { id: 'ack-review', comment: 'I have reviewed the goals.', expectedRevision: 1 }
     )
   );
   await waitFor(() => expect(comment.value).toBe(''));
@@ -220,6 +231,8 @@ it('retains an acknowledgement comment after a mutation failure', async () => {
   state.permissions = new Set(['performance:self']);
   state.permissionScopes = { 'performance:self': 'SELF' };
   state.request.mockImplementation((document: unknown) => {
+    if (String(document).includes('PerformanceGoalKpisWorkspace'))
+      return Promise.resolve({ performanceGoalKpis: [] });
     if (String(document).includes('PerformanceReviewDetailWorkspace'))
       return Promise.resolve({ performanceReviewDetail: acknowledgementDetail });
     if (String(document).includes('AcknowledgePerformanceReviewWorkspace'))

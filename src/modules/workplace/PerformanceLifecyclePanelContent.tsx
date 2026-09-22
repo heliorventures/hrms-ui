@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from 'react';
 
 import PerformanceLifecycleReviews from './PerformanceLifecycleReviews';
 import PerformanceLifecycleSetup from './PerformanceLifecycleSetup';
+import PerformanceAdministrationPanel from './performance-admin/PerformanceAdministrationPanel';
 import type { usePerformanceGoalActions } from './usePerformanceGoalActions';
 import type { usePerformanceLifecycleActions } from './usePerformanceLifecycleActions';
 import type { PerformanceProgramDraft } from './usePerformanceProgramActions';
@@ -31,6 +32,7 @@ interface Props {
   setProgramDraft: Dispatch<SetStateAction<PerformanceProgramDraft>>;
   setup: ReturnType<typeof usePerformanceSetupData>;
   showProcess: boolean;
+  showAdministration: boolean;
   showSelf: boolean;
   showSetup: boolean;
   showTeam: boolean;
@@ -57,6 +59,7 @@ const PerformanceLifecyclePanelContent = ({
   setPeriodDate,
   setProgramDraft,
   setup,
+  showAdministration,
   showProcess,
   showSelf,
   showSetup,
@@ -79,6 +82,7 @@ const PerformanceLifecyclePanelContent = ({
         onRemoveQuestion={templateActions.removeQuestion}
         onSaveProgram={programActions.saveProgram}
         onSaveTemplate={templateActions.saveTemplate}
+        onReloadPrograms={setup.loadPrograms}
         onSelectedProgramChange={showProcess ? setup.selectProcess : setup.setSelectedProgram}
         onTemplateNameChange={templateActions.setTemplateName}
         onTemplateSelectionChange={setup.setSelectedTemplate}
@@ -94,6 +98,9 @@ const PerformanceLifecyclePanelContent = ({
         templateName={templateActions.templateName}
         templates={setup.templates}
       />
+      {showAdministration && (
+        <PerformanceAdministrationPanel performanceProgramId={setup.selectedProgram || undefined} />
+      )}
       <PerformanceLifecycleReviews
         actorEmployeeId={actorEmployeeId}
         canEvaluate={canEvaluate}

@@ -23,6 +23,8 @@ export const resetPerformanceState = (state: PerformanceTestState) => {
       });
     if (source.includes('AppraisalTemplatesWorkspace'))
       return Promise.resolve({ appraisalTemplates: [] });
+    if (source.includes('PerformanceGoalKpisWorkspace'))
+      return Promise.resolve({ performanceGoalKpis: [] });
     return Promise.resolve({ reviewCycles: [], goals: [] });
   });
   state.request.mockClear();
@@ -40,6 +42,7 @@ export const acknowledgementReview = {
   cycleEndDate: '2026-12-31',
   cycleStage: 'EMPLOYEE_ACKNOWLEDGEMENT',
   status: 'PENDING',
+  responseRevision: 1,
 };
 
 export const acknowledgementDetail = {

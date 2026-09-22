@@ -4,6 +4,7 @@ import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 
 import PerformanceGoalSection from './PerformanceGoalSection';
+import PerformanceGoalKpis from './performance-admin/PerformanceGoalKpis';
 import type {
   AppraisalQuestionRow,
   PerformanceReviewDetailRow,
@@ -117,6 +118,17 @@ const GoalReview = ({
       actorEmployeeId={actorEmployeeId}
       isMutationBusy={isGoalMutationBusy}
       mutationMessage={goalMutationMessage}
+      onReload={onReload}
+      onRunGoalAction={onRunGoalAction}
+    />
+    <PerformanceGoalKpis
+      key={`${detail.review.id}:${detail.review.responseRevision}:${detail.review.cycleStage}`}
+      detail={detail}
+      canManage={canManage}
+      canEvaluate={canEvaluate}
+      canSelf={canSelf}
+      actorEmployeeId={actorEmployeeId}
+      isMutationBusy={isGoalMutationBusy}
       onReload={onReload}
       onRunGoalAction={onRunGoalAction}
     />

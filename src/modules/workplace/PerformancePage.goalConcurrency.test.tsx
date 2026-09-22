@@ -43,6 +43,7 @@ const review = (id: string) => ({
   cycleEndDate: '2026-12-31',
   cycleStage: 'GOAL_SETTING',
   status: 'PENDING',
+  responseRevision: 1,
 });
 
 const detail = (id: string) => ({
@@ -65,6 +66,9 @@ const openEvaluation = (employeeName: string) => {
 const installReviewRequests = () => {
   state.request.mockImplementation((document: unknown, variables?: { participantId?: string }) => {
     const source = String(document);
+    if (source.includes('PerformanceGoalKpisWorkspace')) {
+      return Promise.resolve({ performanceGoalKpis: [] });
+    }
     if (source.includes('TeamPerformanceReviewsWorkspace')) {
       return Promise.resolve({
         myTeamPerformanceReviews: [review('review-a'), review('review-b')],
@@ -91,6 +95,9 @@ it('retains an active B draft when an older A save completes', async () => {
   const save = deferred<unknown>();
   state.request.mockImplementation((document: unknown, variables?: { participantId?: string }) => {
     const source = String(document);
+    if (source.includes('PerformanceGoalKpisWorkspace')) {
+      return Promise.resolve({ performanceGoalKpis: [] });
+    }
     if (source.includes('TeamPerformanceReviewsWorkspace')) {
       return Promise.resolve({
         myTeamPerformanceReviews: [review('review-a'), review('review-b')],
@@ -133,6 +140,9 @@ it('keeps a new A editor state clean after an A to B to A switch and stale save 
   const save = deferred<unknown>();
   state.request.mockImplementation((document: unknown, variables?: { participantId?: string }) => {
     const source = String(document);
+    if (source.includes('PerformanceGoalKpisWorkspace')) {
+      return Promise.resolve({ performanceGoalKpis: [] });
+    }
     if (source.includes('TeamPerformanceReviewsWorkspace')) {
       return Promise.resolve({
         myTeamPerformanceReviews: [review('review-a'), review('review-b')],
@@ -173,6 +183,9 @@ it('blocks approval while a save for the same participant is pending', async () 
   const save = deferred<unknown>();
   state.request.mockImplementation((document: unknown, variables?: { participantId?: string }) => {
     const source = String(document);
+    if (source.includes('PerformanceGoalKpisWorkspace')) {
+      return Promise.resolve({ performanceGoalKpis: [] });
+    }
     if (source.includes('TeamPerformanceReviewsWorkspace')) {
       return Promise.resolve({ myTeamPerformanceReviews: [review('review-a')] });
     }

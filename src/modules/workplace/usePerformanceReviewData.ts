@@ -16,8 +16,8 @@ type RunAction = ReturnType<typeof useKeyedAction>['run'];
 interface UsePerformanceReviewDataOptions {
   actorEmployeeId?: string;
   clearGoalResult: () => void;
+  hydrateReviewDrafts: (detail: PerformanceReviewDetailRow) => void;
   initialReviewId?: string | null;
-  resetReviewDrafts: () => void;
   run: RunAction;
   showProcess: boolean;
   showSelf: boolean;
@@ -28,8 +28,8 @@ interface UsePerformanceReviewDataOptions {
 export const usePerformanceReviewData = ({
   actorEmployeeId,
   clearGoalResult,
+  hydrateReviewDrafts,
   initialReviewId,
-  resetReviewDrafts,
   run,
   showProcess,
   showSelf,
@@ -41,6 +41,7 @@ export const usePerformanceReviewData = ({
   const [teamReviews, setTeamReviews] = useState<PerformanceReviewRow[]>([]);
   const [detail, setDetail] = useState<PerformanceReviewDetailRow | null>(null);
   const detailRequest = useRef(0);
+  const loadedResponseRevision = useRef<number | null>(null);
   const selectedReviewId = useRef<string | null>(null);
   const selectedReviewRevision = useRef(0);
 
@@ -72,6 +73,8 @@ export const usePerformanceReviewData = ({
         selectedReviewId.current = id;
         selectedReviewRevision.current += 1;
         clearGoalResult();
+        setDetail(null);
+        loadedResponseRevision.current = null;
       }
       return isDistinctReview;
     },
@@ -105,10 +108,14 @@ export const usePerformanceReviewData = ({
       )
         return;
 
+      const responseRevisionChanged =
+        loadedResponseRevision.current !== result.performanceReviewDetail.review.responseRevision;
+      loadedResponseRevision.current = result.performanceReviewDetail.review.responseRevision;
       setDetail(result.performanceReviewDetail);
-      if (resetDrafts) resetReviewDrafts();
+      if (resetDrafts || responseRevisionChanged)
+        hydrateReviewDrafts(result.performanceReviewDetail);
     },
-    [client, resetReviewDrafts, selectReview]
+    [client, hydrateReviewDrafts, selectReview]
   );
 
   const openReview = useCallback(
