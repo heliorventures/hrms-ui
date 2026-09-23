@@ -2,13 +2,11 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import App from './App';
+import { applyAppearance } from './appearance/applyAppearance';
+import { initialAppearance } from './appearance/initialAppearance';
+import { systemPrefersDark } from './appearance/useSystemTheme';
 import { loadAppConfig } from './config';
-import {
-  applyDocumentTheme,
-  persistThemePreference,
-  readThemePreference,
-  resolveInitialTheme,
-} from './contexts/themePreference';
+import { applyDocumentTheme } from './contexts/themePreference';
 import { ConfigurationError } from './startup/ConfigurationError';
 import './index.css';
 
@@ -19,13 +17,10 @@ void (async () => {
     return;
   }
 
-  const preference = readThemePreference();
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const theme = resolveInitialTheme(preference, prefersDark);
-  if (preference) {
-    persistThemePreference(preference);
-  }
-  applyDocumentTheme(theme);
+  const preference = initialAppearance();
+  const dark = preference.mode === 'dark' || (preference.mode === 'system' && systemPrefersDark());
+  applyDocumentTheme(dark ? 'dark' : 'light');
+  applyAppearance(preference, dark);
 
   try {
     await loadAppConfig();

@@ -1,6 +1,12 @@
 import type { AppChildRoute } from './routeTypes';
 
 export const TENANT_APP_ROUTES: AppChildRoute[] = [
+  {
+    kind: 'page',
+    path: 'appearance',
+    title: 'Appearance',
+    load: () => import('../appearance/AppearancePage'),
+  },
   { kind: 'redirect', path: 'my-work', to: '/my-work/tasks' },
   {
     kind: 'page',

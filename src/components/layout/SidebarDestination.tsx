@@ -11,9 +11,9 @@ interface SidebarDestinationProps {
 }
 
 const activeClasses =
-  'bg-white text-slate-950 shadow-card ring-1 ring-slate-200/90 dark:bg-slate-800 dark:text-white dark:ring-slate-600/90';
+  'bg-surface-selected text-content-primary';
 const inactiveClasses =
-  'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-white';
+  'text-content-secondary hover:bg-surface-selected hover:text-content-primary';
 
 const SidebarDestination = ({
   destination,

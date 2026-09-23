@@ -1,4 +1,4 @@
-import { LogOut, Moon, RefreshCw, Sun, UserRound } from 'lucide-react';
+import { LogOut, Moon, RefreshCw, SlidersHorizontal, Sun, UserRound } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -51,6 +51,12 @@ const ProfileDropdown = ({
         label: 'Profile settings',
         href: profilePath,
         icon: <UserRound className="h-5 w-5" />,
+      },
+      {
+        id: 'appearance',
+        label: 'Appearance',
+        href: '/appearance',
+        icon: <SlidersHorizontal className="h-5 w-5" />,
       },
       {
         id: 'theme',

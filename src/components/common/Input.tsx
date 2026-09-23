@@ -26,11 +26,11 @@ export type InputProps = Omit<
   'aria-label' | 'aria-labelledby'
 > &
   AccessibleNameProps & {
-  description?: string;
-  error?: string;
-  optionalLabel?: string;
-  fullWidth?: boolean;
-};
+    description?: string;
+    error?: string;
+    optionalLabel?: string;
+    fullWidth?: boolean;
+  };
 
 const baseInputClasses =
   'min-h-11 rounded-lg border border-line bg-surface px-3 py-2 text-base text-content-primary placeholder:text-content-muted transition-colors focus-visible:border-focus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30 disabled:cursor-not-allowed disabled:bg-canvas disabled:text-content-muted disabled:opacity-70 read-only:bg-canvas md:min-h-9 md:text-sm';
@@ -88,7 +88,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       const descriptionId = messageId(description, inputId, 'description');
       const errorId = messageId(error, inputId, 'error');
       return (
-        <div className={`space-y-1.5 ${when(fullWidth, 'w-full')}`}>
+        <div
+          data-search-field={props.type === 'search' || undefined}
+          className={`space-y-1.5 ${when(fullWidth, 'w-full')}`}
+        >
           {renderInput(mergeDescribedBy(descriptionId, errorId), Boolean(error))}
           {description ? (
             <p id={descriptionId} className="text-sm text-content-muted">
@@ -105,7 +108,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     }
 
     return (
-      <div className={when(fullWidth, 'w-full')}>
+      <div
+        data-search-field={props.type === 'search' || undefined}
+        className={when(fullWidth, 'w-full')}
+      >
         <FormField
           id={inputId}
           label={visibleLabel}

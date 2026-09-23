@@ -2,15 +2,12 @@ import { Menu } from 'lucide-react';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 
+import { useNavigationAppearance } from '../../appearance/useNavigationAppearance';
 import { authorizationStateKey } from '../../auth/permissionService';
 import { useAuth } from '../../contexts/AuthContext';
 import EmployeeDisplayNameProvider from '../../contexts/EmployeeDisplayNameProvider';
 import { useTenant } from '../../contexts/TenantContext';
 import { useIdleLogout } from '../../hooks/useIdleLogout';
-import {
-  readDesktopNavigationCollapsed,
-  writeDesktopNavigationCollapsed,
-} from '../../navigation/navigationPreference';
 import { CompactPageContext } from '../common/compactPageContext';
 import IconButton from '../common/IconButton';
 import PageInformationProvider from '../common/PageInformationProvider';
@@ -38,9 +35,8 @@ function shellOverlayIsOpen(): boolean {
 
 const AppLayout = () => {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
-  const [desktopNavigationCollapsed, setDesktopNavigationCollapsed] = useState(() =>
-    readDesktopNavigationCollapsed()
-  );
+  const { collapsed: desktopNavigationCollapsed, toggle: toggleDesktopNavigation } =
+    useNavigationAppearance();
   const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const previousLocationRef = useRef<{ key: string; pathname: string } | null>(null);
@@ -125,14 +121,6 @@ const AppLayout = () => {
     },
   });
 
-  const toggleDesktopNavigation = () => {
-    setDesktopNavigationCollapsed((current) => {
-      const next = !current;
-      writeDesktopNavigationCollapsed(next);
-      return next;
-    });
-  };
-
   return (
     <div
       id="app-shell"
@@ -173,7 +161,7 @@ const AppLayout = () => {
             data-scroll-container="main-content"
             className="scrollbar-subtle min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-[env(safe-area-inset-bottom)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
           >
-            <div className="mx-auto max-w-screen-2xl py-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:pl-[max(1.5rem,env(safe-area-inset-left))] md:pr-[max(1.5rem,env(safe-area-inset-right))]">
+            <div className="app-page-content mx-auto">
               <CompactPageContext.Provider value>
                 <Outlet context={routeOutletContext} />
               </CompactPageContext.Provider>

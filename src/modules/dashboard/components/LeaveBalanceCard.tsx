@@ -87,24 +87,20 @@ const LeaveBalanceList = ({ rows, typeMap }: LeaveBalanceListProps) => {
   }
 
   return (
-    <ul className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-x-3 gap-y-5">
+    <ul className="space-y-4">
       {rows.map((row) => {
         const name = typeMap[row.leaveTypeId] ?? 'Leave';
         return (
-          <li key={row.id} className="min-w-0 text-center">
+          <li key={row.id} className="min-w-0">
             <LeaveBalanceMeter
               name={name}
               balanceDays={row.balanceDays}
               entitledDays={row.entitledDays}
             />
-            <p className="mt-2 min-w-0 break-words text-sm font-medium text-content-primary">
-              {name}
-            </p>
-            <p className="mt-1 text-xs tabular-nums text-content-secondary">
-              Used {formatLeaveDays(row.usedDays)}
-            </p>
-            <p className="mt-0.5 text-xs tabular-nums text-content-secondary">
-              Pending {formatLeaveDays(row.pendingDays)}
+            <p className="mt-1 text-xs tabular-nums text-content-muted">
+              <span>Used {formatLeaveDays(row.usedDays)}</span>
+              {' · '}
+              <span>Pending {formatLeaveDays(row.pendingDays)}</span>
             </p>
           </li>
         );

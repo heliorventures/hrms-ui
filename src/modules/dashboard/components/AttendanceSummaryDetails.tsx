@@ -63,9 +63,9 @@ interface AttendanceSummaryDetailsProps {
 
 const AttendanceSummaryDetails = ({ summary }: AttendanceSummaryDetailsProps) => (
   <div className="space-y-4 text-sm">
-    <div className="flex items-center justify-between">
-      <span className="font-medium text-gray-900 dark:text-white">Worked today (completed)</span>
-      <span className="text-2xl font-semibold tabular-nums tracking-tight text-accent">
+    <div className="flex flex-col gap-1">
+      <span className="text-xs text-content-muted">Worked today (completed)</span>
+      <span className="text-4xl font-semibold tabular-nums tracking-tight text-content-primary">
         {Math.floor(summary.totalWorkedMinutes / 60)}h {summary.totalWorkedMinutes % 60}m
       </span>
     </div>

@@ -14,9 +14,12 @@ it('keeps a semantic title and visible actions in the compact application shell'
       <PageHeader title="Insights" actions={<button>Export</button>} />
     </CompactPageContext.Provider>
   );
-  expect(screen.getByRole('heading', { name: 'Insights' }).parentElement?.className).toBe(
-    'sr-only'
-  );
+  expect(
+    screen
+      .getByRole('heading', { name: 'Insights' })
+      .parentElement?.getAttribute('data-optional-heading')
+  ).toBe('true');
+  expect(screen.getByRole('heading', { name: 'Insights' }).className).toBe('page-heading');
   expect(screen.getByRole('button', { name: 'Export' })).toBeTruthy();
 });
 

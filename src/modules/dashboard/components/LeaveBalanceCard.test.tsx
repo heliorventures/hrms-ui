@@ -100,7 +100,7 @@ describe('LeaveBalanceCard truthful states', () => {
     expect(screen.getByText('Pending 0.5')).toBeTruthy();
     expect(screen.queryByText('5.5000')).toBeNull();
   });
-  it('shows the remaining balance inside an accessible circular meter', async () => {
+  it('shows the remaining balance with an accessible compact meter', async () => {
     renderCard();
     const meter = await screen.findByRole('meter', { name: 'Leave Type 0 remaining' });
     expect(meter.getAttribute('aria-valuenow')).toBe('10');
@@ -109,7 +109,7 @@ describe('LeaveBalanceCard truthful states', () => {
   });
 
   it.each(['0', '-2', 'invalid'])(
-    'does not draw a misleading ring for entitlement %s',
+    'does not draw a misleading progress bar for entitlement %s',
     async (entitledDays) => {
       graphState.client.request = vi.fn((_document, variables) =>
         Promise.resolve(

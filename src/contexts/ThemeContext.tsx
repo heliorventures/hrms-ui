@@ -1,12 +1,14 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import {
-  applyDocumentTheme,
-  persistThemePreference,
-  readThemePreference,
-  resolveInitialTheme,
-} from './themePreference';
+import { AppearanceContext } from '../appearance/appearanceContext';
+import { applyAppearance } from '../appearance/applyAppearance';
+import { initialAppearance } from '../appearance/initialAppearance';
+import type { AppearancePreferences } from '../appearance/preferences';
+import { saveAppearance } from '../appearance/storage';
+import { useSystemTheme } from '../appearance/useSystemTheme';
+
+import { applyDocumentTheme, persistThemePreference } from './themePreference';
 import type { Theme } from './themePreference';
 
 interface ThemeContextType {
@@ -21,26 +23,39 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return resolveInitialTheme(readThemePreference(), prefersDark);
-  });
+  const [preferences, setPreferences] = useState(initialAppearance);
+  const systemDark = useSystemTheme();
+  const dark = preferences.mode === 'dark' || (preferences.mode === 'system' && systemDark);
+  const theme: Theme = dark ? 'dark' : 'light';
 
   useEffect(() => {
     applyDocumentTheme(theme);
-    persistThemePreference(theme);
-  }, [theme]);
+    applyAppearance(preferences, dark);
+    if (preferences.mode !== 'system') persistThemePreference(theme);
+  }, [dark, preferences, theme]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+  const savePreferences = useCallback((next: AppearancePreferences) => {
+    if (!saveAppearance(next)) return false;
+    setPreferences(next);
+    return true;
+  }, []);
+  const toggleTheme = useCallback(() => {
+    const next: AppearancePreferences = { ...preferences, mode: dark ? 'light' : 'dark' };
+    saveAppearance(next);
+    setPreferences(next);
+  }, [dark, preferences]);
 
-  const value = {
-    theme,
-    toggleTheme,
-  };
+  const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
+  const appearance = useMemo(
+    () => ({ preferences, savePreferences }),
+    [preferences, savePreferences]
+  );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>
+      <AppearanceContext.Provider value={appearance}>{children}</AppearanceContext.Provider>
+    </ThemeContext.Provider>
+  );
 };
 
 export const useTheme = () => {

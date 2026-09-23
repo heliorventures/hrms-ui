@@ -21,7 +21,7 @@ const LeaveBalanceMeter = ({ name, balanceDays, entitledDays }: LeaveBalanceMete
   const percentage = valid ? (visualBalance / entitlement) * 100 : 0;
   return (
     <div
-      className="relative mx-auto flex h-28 w-28 items-center justify-center"
+      className="space-y-2"
       {...(valid
         ? {
             role: 'meter',
@@ -33,37 +33,19 @@ const LeaveBalanceMeter = ({ name, balanceDays, entitledDays }: LeaveBalanceMete
           }
         : {})}
     >
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 120 120"
-        className="absolute inset-0 h-full w-full -rotate-90"
-      >
-        <circle
-          cx="60"
-          cy="60"
-          r="50"
-          fill="none"
-          strokeWidth="9"
-          className="stroke-current text-surface-selected"
-        />
-        <circle
-          cx="60"
-          cy="60"
-          r="50"
-          fill="none"
-          strokeWidth="9"
-          pathLength="100"
-          strokeDasharray={`${percentage} 100`}
-          strokeLinecap={percentage > 0 && percentage < 100 ? 'round' : 'butt'}
-          className="stroke-current text-accent"
-        />
-      </svg>
-      <span
-        className={`relative flex max-w-[88px] flex-col items-center text-center tabular-nums ${balance < 0 ? 'text-status-danger' : 'text-content-primary'}`}
-      >
-        <span className="max-w-full break-words text-xl font-semibold">{label}</span>
-        <span className="text-[10px] text-content-secondary">days left</span>
-      </span>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <span className="font-medium text-content-primary">{name}</span>
+        <span
+          className={`tabular-nums ${balance < 0 ? 'text-status-danger' : 'text-content-secondary'}`}
+        >
+          <strong>{label}</strong> days left {valid ? `/ ${formatLeaveDays(entitledDays)}` : ''}
+        </span>
+      </div>
+      {valid ? (
+        <div className="h-1.5 overflow-hidden rounded-full bg-line-subtle" aria-hidden="true">
+          <div className="h-full rounded-full bg-accent" style={{ width: `${percentage}%` }} />
+        </div>
+      ) : null}
     </div>
   );
 };

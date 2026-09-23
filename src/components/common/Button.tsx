@@ -80,7 +80,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${presentation.className} ${
+        className={`app-button ${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${presentation.className} ${
           fullWidth ? 'w-full' : ''
         } ${className}`}
         disabled={disabled || busy}

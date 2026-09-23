@@ -356,7 +356,6 @@ describe('AppLayout', () => {
     expect(root?.className).toContain('min-h-[100dvh]');
     expect(root?.className).not.toContain('h-screen');
     expect(main.className).toContain('safe-area-inset-bottom');
-    expect(main.firstElementChild?.className).toContain('safe-area-inset-left');
-    expect(main.firstElementChild?.className).toContain('safe-area-inset-right');
+    expect(main.firstElementChild?.className).toContain('app-page-content');
   });
 });

@@ -25,10 +25,10 @@ const PageHeader = ({
   const compact = useContext(CompactPageContext) && !retainTitle;
   return (
     <div
-      className={`${compact && !actions ? '' : 'mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'} ${className}`}
+      className={`app-page-header mb-3 flex flex-wrap items-center justify-between gap-2 ${className}`}
     >
-      <div className={compact ? 'sr-only' : 'min-w-0 flex-1'}>
-        <h1 className="text-2xl font-semibold tracking-tight text-content-primary">{title}</h1>
+      <div data-optional-heading={compact || undefined} className="min-w-0 flex-1">
+        <h1 className="page-heading">{title}</h1>
       </div>
       {actions ? <PageActions className="sm:w-auto">{actions}</PageActions> : null}
       {description ? (

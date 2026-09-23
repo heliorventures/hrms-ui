@@ -204,7 +204,7 @@ const DataTable = <T,>({
 
   const renderDesktopTable = () => (
     <div className={mobileAlternative ? 'hidden overflow-x-auto md:block' : 'overflow-x-auto'}>
-      <table className="min-w-full border-separate border-spacing-0 bg-surface text-content-primary">
+      <table className="app-data-table min-w-full border-separate border-spacing-0 bg-surface text-content-primary">
         <caption className="sr-only">{ariaLabel}</caption>
         <thead>
           <tr>

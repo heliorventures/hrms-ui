@@ -13,34 +13,7 @@ import ReportPeriodFields from '../reports/ReportPeriodFields';
 import ReportResult from '../reports/ReportResult';
 
 import HrInsightCharts from './HrInsightCharts';
-
-const InsightSummary = ({ data }: { data: HrInsights }) => {
-  const items = [
-    ['Current active employees', data.activeHeadcount],
-    ['Joiners in period', data.joiners],
-    ['Exits in period', data.exits],
-    ['Net salary generated', data.netSalaryGenerated],
-    ['Generated payslips', data.generatedPayslips],
-    ['Pending requests', data.pendingRequests],
-    ['Incomplete attendance days', data.incompleteDays],
-  ].filter(([, value]) => value !== null);
-  if (items.length === 0)
-    return (
-      <p role="status" className="text-sm text-content-secondary">
-        No company metrics are available with your current permissions.
-      </p>
-    );
-  return (
-    <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
-      {items.map(([label, value]) => (
-        <div key={String(label)} className="rounded-xl border border-line bg-surface px-3 py-3">
-          <dt className="text-xs text-content-secondary">{label}</dt>
-          <dd className="mt-1 break-words text-xl font-semibold">{value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-};
+import InsightSummary from './InsightSummary';
 
 const InsightsData = ({ period }: { period: { fromDate: string; toDate: string } }) => {
   const client = useGraphClient('client');

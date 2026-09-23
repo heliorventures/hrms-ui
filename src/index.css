@@ -1,4 +1,6 @@
 @import './styles/semantic-tokens.css';
+@import './styles/appearance.css';
+@import './styles/appearance-settings.css';
 
 @tailwind base;
 @tailwind components;
