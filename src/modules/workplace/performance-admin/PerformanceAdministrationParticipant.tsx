@@ -8,7 +8,6 @@ import type {
   PerformanceAdminParticipant,
   PerformanceFeedbackRow,
   PerformanceRevisionDetailRow,
-  PerformanceRevisionRow,
 } from '../performanceAdminQueries';
 
 const fieldClass =
