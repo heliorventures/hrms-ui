@@ -70,15 +70,12 @@ const AttendanceSummaryDetails = ({ summary }: AttendanceSummaryDetailsProps) =>
       </span>
     </div>
     {summary.segments.length > 0 ? (
-      <AttendanceSegments segments={summary.segments.slice(0, 3)} />
-    ) : null}
-    {summary.segments.length > 3 ? (
       <details className="rounded-lg bg-surface-selected p-3">
         <summary className="cursor-pointer text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
-          View {summary.segments.length - 3} more sessions
+          View attendance sessions ({summary.segments.length})
         </summary>
         <div className="mt-3">
-          <AttendanceSegments segments={summary.segments.slice(3)} startIndex={3} />
+          <AttendanceSegments segments={summary.segments} />
         </div>
       </details>
     ) : null}

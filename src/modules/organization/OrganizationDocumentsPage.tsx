@@ -24,6 +24,7 @@ import { deferObjectUrlRevocation, privateFileObjectUrl } from '../../utils/priv
 import { validateTenantUploadFile } from '../../utils/tenantFileUpload';
 
 import { buildCreateCompanyDocumentInput, stageCompanyDocumentFile } from './companyDocumentUpload';
+import CompanyDocumentPreview from './CompanyDocumentPreview';
 
 const COMPANY_DOCUMENT_CATEGORIES = [
   { value: 'COMPANY_POLICY', label: 'Company Policy' },
@@ -64,7 +65,11 @@ function fileSizeLabel(size?: number | null): string {
 
 const OrganizationDocumentsPage = () => {
   const client = useGraphClient('client');
-  const { canAny } = useAuth();
+  const { canAny, tenantId, user } = useAuth();
+  const [preview, setPreview] = useState<{ document: CompanyDocumentRow; owner: string } | null>(
+    null
+  );
+  const previewOwner = `${tenantId ?? ''}:${user?.id ?? ''}`;
   const { confirm } = useDialogs();
   const canManageCompanyDocuments = canAny([
     PERMISSIONS.employeeWrite,
@@ -367,6 +372,12 @@ const OrganizationDocumentsPage = () => {
                       <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
+                          onClick={() => setPreview({ document, owner: previewOwner })}
+                        >
+                          Preview
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => void downloadCompanyDocument(document)}
                         >
@@ -467,6 +478,14 @@ const OrganizationDocumentsPage = () => {
           )}
         </Card>
       </PageTabPanel>
+      {preview && preview.owner === previewOwner ? (
+        <CompanyDocumentPreview
+          key={`${previewOwner}:${preview.document.id}`}
+          documentId={preview.document.id}
+          title={preview.document.title}
+          onClose={() => setPreview(null)}
+        />
+      ) : null}
     </div>
   );
 };
