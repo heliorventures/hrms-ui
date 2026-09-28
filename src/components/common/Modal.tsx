@@ -63,7 +63,7 @@ const Modal = ({
     'relative flex w-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-white',
     'overscroll-contain',
     mobilePresentation === 'full-height'
-      ? 'h-[100dvh] w-full rounded-b-none rounded-t-2xl sm:h-auto sm:w-[min(90vw,42rem)]'
+      ? `h-[100dvh] w-full rounded-b-none rounded-t-2xl sm:h-auto ${size === 'xl' ? 'sm:w-[min(90vw,56rem)]' : 'sm:w-[min(90vw,42rem)]'}`
       : `w-full ${MODAL_SIZE_CLASSES[size]} h-auto`,
   ].join(' ');
 

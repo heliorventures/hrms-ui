@@ -1,12 +1,10 @@
-import { PanelLeft, PanelLeftOpen, Search, X } from 'lucide-react';
+import { PanelLeft, PanelLeftOpen, X } from 'lucide-react';
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 
 import { APP_BRAND } from '../../constants/brand';
 import { UI_A11Y_TEXT } from '../../constants/uiText';
 import { AppLogo } from '../brand/AppLogo';
 import IconButton from '../common/IconButton';
-
-import { useCommandPalette } from './CommandPaletteContext';
 
 const SidebarHeader = ({
   compact = false,
@@ -23,7 +21,6 @@ const SidebarHeader = ({
   onCloseMobile: () => void;
   onToggleDesktop: () => void;
 }) => {
-  const { open } = useCommandPalette();
   const toggleRef = useRef<HTMLButtonElement>(null);
   const previousCompact = useRef(compact);
   useLayoutEffect(() => {
@@ -48,12 +45,6 @@ const SidebarHeader = ({
           </div>
         </div>
       )}
-      <IconButton
-        label="Search pages and tools"
-        title="Search pages and tools (Ctrl/Cmd K)"
-        icon={<Search className="h-5 w-5" />}
-        onClick={(event) => open(event.currentTarget)}
-      />
       {desktopViewport ? (
         <IconButton
           ref={toggleRef}

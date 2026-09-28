@@ -79,7 +79,13 @@ const NotificationDropdown = ({
         ) : null}
       </span>
 
-      <Drawer title="Notifications" isOpen={isOpen} onClose={() => setIsOpen(false)} side="right">
+      <Drawer
+        title="Notifications"
+        description="Your updates, ready when you are."
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        side="right"
+      >
         <NotificationDropdownPanel
           countError={dropdown.countError}
           notifications={dropdown.notifications}

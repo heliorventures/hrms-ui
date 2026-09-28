@@ -80,8 +80,36 @@ html body,
   letter-spacing: -0.015em;
 }
 .app-page-content {
-  padding: 14px max(20px, env(safe-area-inset-right)) max(72px, env(safe-area-inset-bottom))
+  padding: 24px max(20px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom))
     max(20px, env(safe-area-inset-left));
+}
+@keyframes workspace-drawer-right {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes workspace-drawer-left {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion='standard'] .app-drawer[data-side='right'] {
+    animation: workspace-drawer-right 180ms ease-out;
+  }
+  [data-motion='standard'] .app-drawer[data-side='left'] {
+    animation: workspace-drawer-left 180ms ease-out;
+  }
 }
 [data-content-width='centered'] .app-page-content {
   max-width: 1536px;

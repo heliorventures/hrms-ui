@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { formatBackendTime } from '../../../utils/timeFormat';
 
 import type { AttendanceRow, Summary } from './attendanceSummaryTypes';
@@ -59,16 +61,28 @@ const AttendanceSegments = ({ segments, startIndex = 0 }: AttendanceSegmentsProp
 
 interface AttendanceSummaryDetailsProps {
   summary: Summary;
+  actions?: ReactNode;
 }
 
-const AttendanceSummaryDetails = ({ summary }: AttendanceSummaryDetailsProps) => (
+const AttendanceSummaryDetails = ({ summary, actions }: AttendanceSummaryDetailsProps) => (
   <div className="space-y-4 text-sm">
     <div className="flex flex-col gap-1">
       <span className="text-xs text-content-muted">Worked today (completed)</span>
-      <span className="text-4xl font-semibold tabular-nums tracking-tight text-content-primary">
+      <span className="text-5xl font-semibold tabular-nums tracking-tight text-content-primary">
         {Math.floor(summary.totalWorkedMinutes / 60)}h {summary.totalWorkedMinutes % 60}m
       </span>
     </div>
+    {summary.openSegment ? (
+      <p className="text-sm text-content-secondary">
+        Current session started at {formatBackendTime(summary.openSegment.checkInTime)}
+      </p>
+    ) : null}
+    {summary.segments.some((segment) => segment.status?.toUpperCase() === 'INCOMPLETE') ? (
+      <p role="status" className="text-sm text-status-warning">
+        A session has a missed punch out. Open attendance sessions to review.
+      </p>
+    ) : null}
+    {actions}
     {summary.segments.length > 0 ? (
       <details className="rounded-lg bg-surface-selected p-3">
         <summary className="cursor-pointer text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">

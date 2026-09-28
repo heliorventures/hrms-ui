@@ -19,7 +19,8 @@ function statusVariant(status: string): 'success' | 'danger' | 'warning' | 'neut
   }
 }
 
-interface LeaveRequestsTableSectionProps {
+export interface LeaveRequestsTableSectionProps {
+  actionsDisabled?: boolean;
   rows: LeaveRequestRow[];
   leaveTypeNameById: Map<string, string>;
   employeeLabel?: (employeeId: string) => string;
@@ -39,14 +40,21 @@ type RowProps = Omit<LeaveRequestsTableSectionProps, 'rows' | 'emptyLabel'> & {
   row: LeaveRequestRow;
 };
 
-const ApprovalActions = ({
+export const ApprovalActions = ({
   row,
   approveBusyId,
   cancelBusyId,
   onApprove,
   onRejectClick,
+  viewerId,
+  actionsDisabled = false,
 }: RowProps) => {
-  if (row.status.toLowerCase() !== 'pending' || row.viewerMayApprove !== true) return null;
+  if (
+    row.status.toLowerCase() !== 'pending' ||
+    row.viewerMayApprove !== true ||
+    viewerId === row.employeeId
+  )
+    return null;
   if (!row.pendingApprovalStepId?.trim()) {
     return (
       <p role="status" className="max-w-56 text-xs text-amber-700 dark:text-amber-300">
@@ -54,7 +62,7 @@ const ApprovalActions = ({
       </p>
     );
   }
-  const busy = approveBusyId === row.id || cancelBusyId === row.id;
+  const busy = actionsDisabled || approveBusyId === row.id || cancelBusyId === row.id;
   return (
     <div className="flex flex-wrap gap-2">
       <Button
@@ -79,12 +87,13 @@ const ApprovalActions = ({
   );
 };
 
-const OwnRequestAction = ({
+export const OwnRequestAction = ({
   row,
   viewerId,
   approveBusyId,
   cancelBusyId,
   onCancelOwn,
+  actionsDisabled = false,
 }: RowProps) => {
   if (viewerId !== row.employeeId || row.status.toLowerCase() !== 'pending') return null;
   return (
@@ -92,7 +101,7 @@ const OwnRequestAction = ({
       variant="outline"
       type="button"
       className="!py-1 !text-xs"
-      disabled={cancelBusyId === row.id || approveBusyId === row.id}
+      disabled={actionsDisabled || cancelBusyId === row.id || approveBusyId === row.id}
       onClick={() => onCancelOwn(row.id)}
     >
       {cancelBusyId === row.id ? 'Cancelling...' : 'Cancel'}
@@ -100,7 +109,7 @@ const OwnRequestAction = ({
   );
 };
 
-const RequestStatus = ({ row }: { row: LeaveRequestRow }) => (
+export const RequestStatus = ({ row }: { row: LeaveRequestRow }) => (
   <div className="space-y-1">
     <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
     {row.pendingApprovalStage ? (
@@ -115,7 +124,7 @@ function appliedAtLabel(value: unknown): string {
   return Number.isNaN(date.getTime()) ? 'Unavailable' : date.toLocaleString('en-IN');
 }
 
-const RequestDetails = ({ row }: { row: LeaveRequestRow }) => (
+export const RequestDetails = ({ row }: { row: LeaveRequestRow }) => (
   <details className="max-w-64 break-words text-sm">
     <summary className="cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
       Details

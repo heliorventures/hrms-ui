@@ -5,13 +5,13 @@ import { Link } from 'react-router-dom';
 import { OnLeaveTodayDocument, type OnLeaveTodayQuery } from '../../../api/graphql/graphql';
 import AsyncState from '../../../components/common/AsyncState';
 import Button from '../../../components/common/Button';
-import Card from '../../../components/common/Card';
 import { useAnchoredPopoverPosition } from '../../../components/common/useAnchoredPopoverPosition';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 import { toIsoDate } from '../../../utils/calendarRange';
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
+import Card from './WorkplaceSection';
 
 const LEAVE_REQUEST_LIMIT = 50;
 const LEAVE_TYPE_LIMIT = 50;
@@ -43,7 +43,7 @@ const OnLeaveTodayFooter = ({ hasData, onRefresh, phase }: OnLeaveTodayFooterPro
         busyLabel="Refreshing Leave Requests…"
         onClick={onRefresh}
       >
-        Refresh Leave Requests
+        Refresh
       </Button>
     ) : null}
     <Link
@@ -149,11 +149,9 @@ const OnLeaveTodayList = ({ capped, people }: OnLeaveTodayListProps) => {
 
   if (people.length === 0) {
     return (
-      <AsyncState
-        kind="empty"
-        title="No One Is on Leave Today."
-        description="Approved leave for today will appear here."
-      />
+      <p role="status" className="text-sm text-content-secondary">
+        No one is on leave today.
+      </p>
     );
   }
 

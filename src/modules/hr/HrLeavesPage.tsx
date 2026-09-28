@@ -217,6 +217,7 @@ const HrLeavePageTop = ({ model: m }: { model: PageModel }) => (
 const HrLeavePageBottom = ({ model: m }: { model: PageModel }) => (
   <>
     <HrLeaveQueueSection
+      readOnly={Boolean(m.activeFailure)}
       dataPresent={m.data !== null}
       loading={m.loading}
       queueRef={m.queueRef}
@@ -262,7 +263,14 @@ const HrLeavePageBottom = ({ model: m }: { model: PageModel }) => (
     />
 
     <CompOffApprovalPanel key={authorizationStateKey(m.clientSession)} />
-    <LeaveTeamCalendar />
+    <section
+      id="approval-team-calendar"
+      aria-label="Team leave calendar"
+      tabIndex={-1}
+      className="scroll-mt-4"
+    >
+      <LeaveTeamCalendar />
+    </section>
 
     <HrLeaveWorkflowDialog
       trail={{

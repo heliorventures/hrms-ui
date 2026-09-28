@@ -6,7 +6,6 @@ import {
   LeaveBalancesDocument,
 } from '../../../api/graphql/graphql';
 import { authorizationStateKey, createPermissionService } from '../../../auth/permissionService';
-import AsyncState from '../../../components/common/AsyncState';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -15,7 +14,6 @@ import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRet
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
 import { formatLeaveDays } from './leaveBalanceFormat';
-import LeaveBalanceMeter from './LeaveBalanceMeter';
 
 interface TypeRow {
   id: string;
@@ -58,11 +56,11 @@ const LeaveBalanceFooter = ({ hasData, onRefresh, phase }: LeaveBalanceFooterPro
         busyLabel="Refreshing Leave Balances…"
         onClick={onRefresh}
       >
-        Refresh Leave Balances
+        Refresh
       </Button>
     ) : null}
     <Link
-      to="/leave#leave-requests"
+      to="/leave"
       className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
     >
       Open Leave Center →
@@ -78,25 +76,25 @@ interface LeaveBalanceListProps {
 const LeaveBalanceList = ({ rows, typeMap }: LeaveBalanceListProps) => {
   if (rows.length === 0) {
     return (
-      <AsyncState
-        kind="empty"
-        title="No Leave Balances Yet."
-        description="Your available leave will appear here after balances are assigned."
-      />
+      <p className="py-3 text-sm text-content-secondary">
+        Your available leave will appear here after balances are assigned.
+      </p>
     );
   }
 
   return (
-    <ul className="space-y-4">
-      {rows.map((row) => {
+    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+      {rows.slice(0, 3).map((row) => {
         const name = typeMap[row.leaveTypeId] ?? 'Leave';
         return (
           <li key={row.id} className="min-w-0">
-            <LeaveBalanceMeter
-              name={name}
-              balanceDays={row.balanceDays}
-              entitledDays={row.entitledDays}
-            />
+            <p className="text-3xl font-semibold tabular-nums">
+              {formatLeaveDays(row.balanceDays)}
+            </p>
+            <p className="mt-1 text-sm font-medium text-content-secondary">{name}</p>
+            <p className="text-xs text-content-muted">
+              days available of {formatLeaveDays(row.entitledDays)}
+            </p>
             <p className="mt-1 text-xs tabular-nums text-content-muted">
               <span>Used {formatLeaveDays(row.usedDays)}</span>
               {' · '}
@@ -161,6 +159,11 @@ const AuthorizedLeaveBalanceCard = () => {
         onRetry={onRefresh}
       />
       <LeaveBalanceList rows={rows} typeMap={typeMap} />
+      {rows.length > 3 ? (
+        <p className="mt-3 text-xs text-content-secondary">
+          Open My Leave to see all leave balances.
+        </p>
+      ) : null}
       {rows.length === BALANCE_LIMIT ? (
         <p role="status" className="mt-3 text-xs text-content-secondary">
           Showing up to {BALANCE_LIMIT} leave balances. More may be available.

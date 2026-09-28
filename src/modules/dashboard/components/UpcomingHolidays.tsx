@@ -2,14 +2,13 @@ import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 
 import { ClientOpsUpcomingHolidaysDocument } from '../../../api/graphql/graphql';
-import AsyncState from '../../../components/common/AsyncState';
 import Button from '../../../components/common/Button';
-import Card from '../../../components/common/Card';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
 import HolidayDateChip from './HolidayDateChip';
+import Card from './WorkplaceSection';
 
 interface HolidayRow {
   id: string;
@@ -37,7 +36,7 @@ const UpcomingHolidaysFooter = ({ hasRows, onRefresh, phase }: UpcomingHolidaysF
         busyLabel="Refreshing Upcoming Holidays…"
         onClick={onRefresh}
       >
-        Refresh Upcoming Holidays
+        Refresh
       </Button>
     ) : null}
     <Link
@@ -56,11 +55,9 @@ interface UpcomingHolidaysListProps {
 const UpcomingHolidaysList = ({ rows }: UpcomingHolidaysListProps) => {
   if (rows.length === 0) {
     return (
-      <AsyncState
-        kind="empty"
-        title="No Upcoming Holidays in Range."
-        description="Published holidays will appear here when they enter the upcoming range."
-      />
+      <p role="status" className="text-sm text-content-secondary">
+        No upcoming holidays in this period.
+      </p>
     );
   }
 

@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type ReactNode,
+} from 'react';
 
 import { AttendancePunchTodayDocument } from '../../../api/attendance/graphql';
 import { authorizationStateKey, createPermissionService } from '../../../auth/permissionService';
@@ -194,13 +201,20 @@ const getLastEventCoords = (lastPunch: AttendanceRow | null) => {
 };
 
 interface PunchSummaryContentProps {
+  actions?: ReactNode;
   error: string | null;
   onRefresh: () => void;
   phase: RetainedQueryPhase;
   summary: Summary | null;
 }
 
-const PunchSummaryContent = ({ error, onRefresh, phase, summary }: PunchSummaryContentProps) => {
+const PunchSummaryContent = ({
+  error,
+  onRefresh,
+  phase,
+  summary,
+  actions,
+}: PunchSummaryContentProps) => {
   if (phase === 'initial-loading' || phase === 'initial-error') {
     return (
       <DashboardCardInitialState
@@ -226,7 +240,7 @@ const PunchSummaryContent = ({ error, onRefresh, phase, summary }: PunchSummaryC
         error={error}
         onRetry={onRefresh}
       />
-      <AttendanceSummaryDetails summary={summary} />
+      <AttendanceSummaryDetails summary={summary} actions={actions} />
     </>
   );
 };
@@ -283,7 +297,7 @@ const PunchActionArea = ({
         {mutationError}
       </PageNotice>
     ) : null}
-    <label className="flex cursor-pointer items-center justify-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+    <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-content-secondary">
       <input
         type="checkbox"
         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
@@ -291,7 +305,7 @@ const PunchActionArea = ({
         disabled={submitting}
         onChange={(event) => onTrackLocationChange(event.target.checked)}
       />
-      Record GPS location (saved with punch in / punch out)
+      Record GPS location with this punch
     </label>
     <PageInformation title="Attendance totals">
       <p className="text-center text-xs text-gray-500 dark:text-gray-400">
@@ -301,7 +315,7 @@ const PunchActionArea = ({
     </PageInformation>
     <Button
       variant="primary"
-      fullWidth
+      className="min-w-36"
       busy={submitting}
       busyLabel="Recording Attendance…"
       disabled={disabled}
@@ -353,27 +367,26 @@ const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps)
   return (
     <Card title="Today’s attendance">
       <div className="space-y-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3">
-          <div className="text-xl font-semibold tabular-nums text-content-primary">
-            {formatTime(currentTime, summaryTimezone)}
-          </div>
-          <div className="text-xs text-content-secondary">
-            Calendar date: {formatDate(currentTime, summaryTimezone)}
-          </div>
-        </div>
-        {summary ? (
-          <div className="rounded-lg bg-canvas px-3 py-2 text-xs text-content-secondary">
-            <p className="font-medium text-content-primary">
-              Attendance work date: {summary.workDate}
-            </p>
-            <p>{formatAttendanceWindow(summary)}</p>
-          </div>
-        ) : null}
         <PunchSummaryContent
           error={summaryError}
           phase={summaryPhase}
           summary={summary}
           onRefresh={onRefresh}
+          actions={
+            canPunch ? (
+              <div className="space-y-3">
+                <PunchActionArea
+                  buttonLabel={buttonLabel}
+                  disabled={!summaryIsReady}
+                  mutationError={mutationError}
+                  onPunch={handlePunch}
+                  onTrackLocationChange={setTrackLocation}
+                  submitting={submitting}
+                  trackLocation={trackLocation}
+                />
+              </div>
+            ) : null
+          }
         />
         {summary ? (
           <Button
@@ -383,7 +396,7 @@ const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps)
             busyLabel="Refreshing Attendance Summary…"
             onClick={onRefresh}
           >
-            Refresh Attendance Summary
+            Refresh
           </Button>
         ) : null}
         {lastPunch ? (
@@ -394,16 +407,17 @@ const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps)
             <LastPunchDetails lastPunch={lastPunch} lastEventCoords={lastEventCoords} />
           </details>
         ) : null}
-        {canPunch ? (
-          <PunchActionArea
-            buttonLabel={buttonLabel}
-            disabled={!summaryIsReady}
-            mutationError={mutationError}
-            onPunch={handlePunch}
-            onTrackLocationChange={setTrackLocation}
-            submitting={submitting}
-            trackLocation={trackLocation}
-          />
+        {summary ? (
+          <details className="text-xs text-content-secondary">
+            <summary className="min-h-11 cursor-pointer py-3 focus-visible:ring-2 focus-visible:ring-focus">
+              Attendance work date: {summary.workDate}
+            </summary>
+            <p>{formatAttendanceWindow(summary)}</p>
+            <p>
+              {formatDate(currentTime, summaryTimezone)} ·{' '}
+              {formatTime(currentTime, summaryTimezone)}
+            </p>
+          </details>
         ) : null}
       </div>
     </Card>

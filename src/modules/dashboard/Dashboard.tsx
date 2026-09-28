@@ -1,4 +1,4 @@
-import { CalendarPlus, ClipboardList } from 'lucide-react';
+import { CalendarPlus } from 'lucide-react';
 
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import PageActionLink from '../../components/common/PageActionLink';
@@ -6,9 +6,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useEmployeeDisplayName } from '../../contexts/employeeDisplayNameContext';
 import { useTenant } from '../../contexts/TenantContext';
 
+import HomeQuickAccess from './components/HomeQuickAccess';
 import LeaveBalanceCard from './components/LeaveBalanceCard';
 import OnLeaveToday from './components/OnLeaveToday';
 import PunchInOut from './components/PunchInOut';
+import RecentLeaveRequest from './components/RecentLeaveRequest';
 import UpcomingHolidays from './components/UpcomingHolidays';
 
 const HomeShortcuts = () => {
@@ -23,19 +25,12 @@ const HomeShortcuts = () => {
           icon={<CalendarPlus className="h-5 w-5" />}
         />
       ) : null}
-      {permissions.canRoute('/my-work/tasks') ? (
-        <PageActionLink
-          to="/my-work/tasks"
-          label="My Tasks"
-          icon={<ClipboardList className="h-5 w-5" />}
-        />
-      ) : null}
     </nav>
   );
 };
 
 const Dashboard = () => {
-  const { clientSession } = useAuth();
+  const { clientSession, tenantId, user } = useAuth();
   const displayName = useEmployeeDisplayName();
   const { currentTenant } = useTenant();
   const permissions = createPermissionService(clientSession);
@@ -49,7 +44,7 @@ const Dashboard = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1 className="sr-only">Home</h1>
-          <p className="break-words text-lg font-semibold text-content-primary sm:text-xl">
+          <p className="break-words text-2xl font-semibold tracking-tight text-content-primary sm:text-3xl">
             Welcome back, {displayName || 'there'}.
           </p>
           <p className="mt-1 text-xs text-content-muted">
@@ -73,10 +68,14 @@ const Dashboard = () => {
           {canReadLeave ? <LeaveBalanceCard key={`leave-balance:${authorizationKey}`} /> : null}
         </section>
       ) : null}
+      <HomeQuickAccess />
+      {canReadLeave && permissions.canRoute('/leave') ? (
+        <RecentLeaveRequest key={`${tenantId}:${user?.id}:${authorizationKey}`} />
+      ) : null}
       {canReadLeave ? (
         <section
           aria-label="Around your workplace"
-          className="grid items-start gap-4 md:grid-cols-2"
+          className="grid items-start gap-6 border-t border-line md:grid-cols-2"
         >
           <h2 className="sr-only">Around your workplace</h2>
           <OnLeaveToday key={`on-leave:${authorizationKey}`} />

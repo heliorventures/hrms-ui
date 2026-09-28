@@ -7,6 +7,7 @@ import {
   OrgDocumentsListDocument,
   type OrgDocumentsListQuery,
 } from '../../api/graphql/graphql';
+import { authorizationStateKey } from '../../auth/permissionService';
 import { PERMISSIONS } from '../../auth/permissions';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -23,16 +24,10 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { deferObjectUrlRevocation, privateFileObjectUrl } from '../../utils/privateFileAttachment';
 import { validateTenantUploadFile } from '../../utils/tenantFileUpload';
 
+import CompanyDocumentLibrary from './CompanyDocumentLibrary';
+import { COMPANY_DOCUMENT_CATEGORIES, type CompanyDocumentRow } from './companyDocumentTypes';
 import { buildCreateCompanyDocumentInput, stageCompanyDocumentFile } from './companyDocumentUpload';
-import CompanyDocumentPreview from './CompanyDocumentPreview';
 
-const COMPANY_DOCUMENT_CATEGORIES = [
-  { value: 'COMPANY_POLICY', label: 'Company Policy' },
-  { value: 'ONBOARDING', label: 'Onboarding' },
-  { value: 'EXIT_FORMALITY', label: 'Exit Formality' },
-] as const;
-
-type CompanyDocumentRow = OrgDocumentsListQuery['companyDocuments'][number];
 type DocumentTypeRow = OrgDocumentsListQuery['documentTypes'][number];
 type EmployeeDocumentRow = OrgDocumentsListQuery['employeeDocuments'][number];
 
@@ -52,24 +47,9 @@ const initialForm: UploadFormState = {
   file: null,
 };
 
-function categoryLabel(category: string): string {
-  return COMPANY_DOCUMENT_CATEGORIES.find((option) => option.value === category)?.label ?? category;
-}
-
-function fileSizeLabel(size?: number | null): string {
-  if (!size || size <= 0) return '—';
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-const OrganizationDocumentsPage = () => {
+const DocumentsContent = () => {
   const client = useGraphClient('client');
-  const { canAny, tenantId, user } = useAuth();
-  const [preview, setPreview] = useState<{ document: CompanyDocumentRow; owner: string } | null>(
-    null
-  );
-  const previewOwner = `${tenantId ?? ''}:${user?.id ?? ''}`;
+  const { canAny } = useAuth();
   const { confirm } = useDialogs();
   const canManageCompanyDocuments = canAny([
     PERMISSIONS.employeeWrite,
@@ -82,6 +62,15 @@ const OrganizationDocumentsPage = () => {
   const [employeeDocs, setEmployeeDocs] = useState<EmployeeDocumentRow[]>([]);
   const [form, setForm] = useState<UploadFormState>(initialForm);
   const uploadFileInputRef = useRef<HTMLInputElement>(null);
+  const mounted = useRef(false);
+  const requestSequence = useRef(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,33 +79,27 @@ const OrganizationDocumentsPage = () => {
   const typeName = useMemo(() => Object.fromEntries(types.map((t) => [t.id, t.name])), [types]);
 
   const loadDocuments = useCallback(async () => {
+    if (!mounted.current) return;
+    const sequence = ++requestSequence.current;
     setLoading(true);
-    setError(null);
-    const response = await client.request(OrgDocumentsListDocument, {
-      tlim: 50,
-      dlim: 50,
-    });
-    setCompanyDocuments(response.companyDocuments);
-    setTypes(response.documentTypes);
-    setEmployeeDocs(response.employeeDocuments);
-    setLoading(false);
+    setLoadError(null);
+    try {
+      const response = await client.request(OrgDocumentsListDocument, { tlim: 50, dlim: 50 });
+      if (!mounted.current || sequence !== requestSequence.current) return;
+      setCompanyDocuments(response.companyDocuments);
+      setTypes(response.documentTypes);
+      setEmployeeDocs(response.employeeDocuments);
+    } catch (reason) {
+      if (mounted.current && sequence === requestSequence.current)
+        setLoadError(graphQlUserMessage(reason));
+      throw reason;
+    } finally {
+      if (mounted.current && sequence === requestSequence.current) setLoading(false);
+    }
   }, [client]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        await loadDocuments();
-      } catch (e) {
-        if (!cancelled) {
-          setError(graphQlUserMessage(e));
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    void loadDocuments().catch(() => undefined);
   }, [loadDocuments]);
 
   const submitCompanyDocument = async (event: FormEvent<HTMLFormElement>) => {
@@ -142,6 +125,7 @@ const OrganizationDocumentsPage = () => {
     try {
       setBusy(true);
       const stagedUploadId = await stageCompanyDocumentFile(client, form.file);
+      if (!mounted.current) return;
       await client.request(CreateCompanyDocumentDocument, {
         input: buildCreateCompanyDocumentInput({
           category: form.category,
@@ -151,15 +135,16 @@ const OrganizationDocumentsPage = () => {
           visibleToEmployees: form.visibleToEmployees,
         }),
       });
+      if (!mounted.current) return;
       setForm(initialForm);
       if (uploadFileInputRef.current) uploadFileInputRef.current.value = '';
-      await loadDocuments();
       setSuccess('Company document uploaded successfully.');
       setUploadOpen(false);
+      await loadDocuments().catch(() => undefined);
     } catch (e) {
-      setError(graphQlUserMessage(e));
+      if (mounted.current) setError(graphQlUserMessage(e));
     } finally {
-      setBusy(false);
+      if (mounted.current) setBusy(false);
     }
   };
 
@@ -169,6 +154,7 @@ const OrganizationDocumentsPage = () => {
       const result = await client.request(CompanyDocumentAttachmentDocument, {
         companyDocumentId: document.id,
       });
+      if (!mounted.current) return;
       const url = privateFileObjectUrl(result.companyDocumentAttachment);
       const anchor = window.document.createElement('a');
       anchor.href = url;
@@ -179,7 +165,7 @@ const OrganizationDocumentsPage = () => {
       anchor.remove();
       deferObjectUrlRevocation(url);
     } catch (e) {
-      setError(graphQlUserMessage(e));
+      if (mounted.current) setError(graphQlUserMessage(e));
     }
   };
 
@@ -191,18 +177,19 @@ const OrganizationDocumentsPage = () => {
       confirmLabel: 'Delete document',
       variant: 'danger',
     });
-    if (!confirmed) return;
+    if (!confirmed || !mounted.current) return;
     try {
       setBusy(true);
       setError(null);
       setSuccess(null);
       await client.request(DeleteCompanyDocumentDocument, { companyDocumentId: document.id });
-      await loadDocuments();
+      if (!mounted.current) return;
       setSuccess('Company document removed.');
+      await loadDocuments().catch(() => undefined);
     } catch (e) {
-      setError(graphQlUserMessage(e));
+      if (mounted.current) setError(graphQlUserMessage(e));
     } finally {
-      setBusy(false);
+      if (mounted.current) setBusy(false);
     }
   };
 
@@ -218,9 +205,22 @@ const OrganizationDocumentsPage = () => {
     <div className="space-y-4">
       <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       <div>
-        <h1 className="sr-only">Organization Documents</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Documents</h1>
+        <p className="mt-1 text-sm text-content-secondary">
+          Find policies and employee resources. Read them here.
+        </p>
       </div>
 
+      {loadError ? (
+        <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-status-danger">
+          <p>{loadError}</p>
+          {tab !== 'company' ? (
+            <Button variant="outline" onClick={() => void loadDocuments().catch(() => undefined)}>
+              Try again
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       {error && (
         <Card>
           <p className="text-sm text-amber-800 dark:text-amber-200">{error}</p>
@@ -313,102 +313,26 @@ const OrganizationDocumentsPage = () => {
           </div>
         )}
 
-        <div hidden={canManageCompanyDocuments && uploadOpen}>
-          <Card title="Company Document Library">
-            {loading ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
-            ) : companyDocuments.length ? (
-              <Table
-                data={companyDocuments}
-                keyExtractor={(document) => document.id}
-                columns={[
-                  {
-                    key: 'title',
-                    label: 'Document',
-                    render: (document: CompanyDocumentRow) => (
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {document.title}
-                        </p>
-                        {document.description && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {document.description}
-                          </p>
-                        )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {document.originalFileName ?? 'Document'} ·{' '}
-                          {fileSizeLabel(document.fileSizeBytes)}
-                        </p>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'category',
-                    label: 'Category',
-                    render: (document: CompanyDocumentRow) => categoryLabel(document.category),
-                  },
-                  {
-                    key: 'status',
-                    label: 'Status',
-                    render: (document: CompanyDocumentRow) => (
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant={document.status === 'ACTIVE' ? 'success' : 'warning'}>
-                          {document.status}
-                        </Badge>
-                        {!document.visibleToEmployees && <Badge variant="info">Hidden</Badge>}
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'updatedAt',
-                    label: 'Updated',
-                    render: (document: CompanyDocumentRow) =>
-                      new Date(document.updatedAt).toLocaleString('en-IN'),
-                  },
-                  {
-                    key: 'actions',
-                    label: 'Actions',
-                    render: (document: CompanyDocumentRow) => (
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => setPreview({ document, owner: previewOwner })}
-                        >
-                          Preview
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void downloadCompanyDocument(document)}
-                        >
-                          Download
-                        </Button>
-                        {canManageCompanyDocuments && (
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            disabled={busy}
-                            onClick={() => void deleteCompanyDocument(document)}
-                          >
-                            Delete
-                          </Button>
-                        )}
-                      </div>
-                    ),
-                  },
-                ]}
-              />
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                No company documents have been published yet.
-              </p>
-            )}
-          </Card>
-        </div>
+        {!uploadOpen ? (
+          <CompanyDocumentLibrary
+            documents={companyDocuments}
+            loading={loading}
+            failed={Boolean(loadError)}
+            busy={busy}
+            canManage={canManageCompanyDocuments}
+            onRetry={() => void loadDocuments().catch(() => undefined)}
+            onDownload={downloadCompanyDocument}
+            onDelete={deleteCompanyDocument}
+          />
+        ) : null}
       </PageTabPanel>
       <PageTabPanel id="types" activeTab={tab}>
         <Card title="Document Types">
-          {loading ? (
+          {loadError ? (
+            <p className="text-sm text-content-secondary">
+              Document requirements are unavailable. Refresh the library to try again.
+            </p>
+          ) : loading ? (
             <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
           ) : types.length ? (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -437,7 +361,11 @@ const OrganizationDocumentsPage = () => {
 
       <PageTabPanel id="personal" activeTab={tab}>
         <Card title="Your Documents">
-          {loading ? (
+          {loadError ? (
+            <p className="text-sm text-content-secondary">
+              Your documents are unavailable. Refresh the library to try again.
+            </p>
+          ) : loading ? (
             <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
           ) : employeeDocs.length ? (
             <Table
@@ -478,15 +406,27 @@ const OrganizationDocumentsPage = () => {
           )}
         </Card>
       </PageTabPanel>
-      {preview && preview.owner === previewOwner ? (
-        <CompanyDocumentPreview
-          key={`${previewOwner}:${preview.document.id}`}
-          documentId={preview.document.id}
-          title={preview.document.title}
-          onClose={() => setPreview(null)}
-        />
-      ) : null}
     </div>
+  );
+};
+
+const OrganizationDocumentsPage = () => {
+  const client = useGraphClient('client');
+  const { tenantId, user, clientSession } = useAuth();
+  const [owner, setOwner] = useState({ client, generation: 0 });
+  if (owner.client !== client) setOwner({ client, generation: owner.generation + 1 });
+  return (
+    <DocumentsContent
+      key={
+        String(tenantId) +
+        ':' +
+        String(user?.id) +
+        ':' +
+        authorizationStateKey(clientSession) +
+        ':' +
+        owner.generation
+      }
+    />
   );
 };
 

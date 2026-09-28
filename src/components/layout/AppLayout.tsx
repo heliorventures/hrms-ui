@@ -1,4 +1,3 @@
-import { Menu } from 'lucide-react';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 
@@ -9,17 +8,16 @@ import EmployeeDisplayNameProvider from '../../contexts/EmployeeDisplayNameProvi
 import { useTenant } from '../../contexts/TenantContext';
 import { useIdleLogout } from '../../hooks/useIdleLogout';
 import { CompactPageContext } from '../common/compactPageContext';
-import IconButton from '../common/IconButton';
 import PageInformationProvider from '../common/PageInformationProvider';
 
 import CommandPalette from './CommandPalette';
-import PageTools from './PageTools';
 import {
   hasMainFocusHandoff,
   type RouteContentCommit,
   type RouteContentOutletContext,
 } from './routeFocus';
 import Sidebar from './Sidebar';
+import WorkspaceHeader from './WorkspaceHeader';
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 
@@ -141,15 +139,10 @@ const AppLayout = () => {
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <IconButton
-          ref={mobileNavigationTriggerRef}
-          label="Open navigation"
-          variant="outline"
-          icon={<Menu className="h-5 w-5" />}
-          onClick={() => setMobileNavigationOpen(true)}
-          aria-controls="app-navigation"
-          aria-expanded={mobileNavigationOpen}
-          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] z-20 rounded-xl border border-line bg-surface shadow-card-md lg:hidden"
+        <WorkspaceHeader
+          triggerRef={mobileNavigationTriggerRef}
+          mobileOpen={mobileNavigationOpen}
+          onOpenNavigation={() => setMobileNavigationOpen(true)}
         />
 
         <div className="relative flex min-h-0 flex-1">
@@ -167,7 +160,6 @@ const AppLayout = () => {
               </CompactPageContext.Provider>
             </div>
           </main>
-          <PageTools />
         </div>
       </div>
       <CommandPalette />
