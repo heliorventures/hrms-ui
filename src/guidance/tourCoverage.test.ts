@@ -117,7 +117,9 @@ describe('tenant page tour registry coverage', () => {
         `${propName} is not forwarded to a DOM anchor`
       ).toBe(true);
     }
-    const declaredAnchors = new Set(pageSources.flatMap(collectDeclaredAnchors));
+    const declaredAnchors = new Set<string>(
+      pageSources.flatMap((source) => [...collectDeclaredAnchors(source)])
+    );
     const missingAnchors = TOUR_REGISTRY.flatMap((tour) =>
       tour.steps
         .filter((step) => step.anchor !== null && !declaredAnchors.has(step.anchor))

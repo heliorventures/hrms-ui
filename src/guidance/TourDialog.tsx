@@ -8,8 +8,8 @@ type TourDialogProps = {
   stepCount: number;
   targetMissing: boolean;
   dialogPosition: CSSProperties;
-  dialogRef: RefObject<HTMLDivElement | null>;
-  closeButtonRef: RefObject<HTMLButtonElement | null>;
+  dialogRef: RefObject<HTMLDivElement>;
+  closeButtonRef: RefObject<HTMLButtonElement>;
   onBack: () => void;
   onSkipStep: () => void;
   onAdvance: () => void;
