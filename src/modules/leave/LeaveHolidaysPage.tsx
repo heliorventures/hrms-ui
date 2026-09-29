@@ -67,7 +67,7 @@ const LeaveHolidaysPage = () => {
         <div>
           <h1 className="sr-only">Company Holidays</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2" data-tour-anchor="leave.holidays-navigation">
           <Link to="/dashboard" className={outlineLink}>
             Home
           </Link>
@@ -80,10 +80,11 @@ const LeaveHolidaysPage = () => {
       <Card
         title={
           <span className="flex flex-wrap items-center justify-between gap-3">
-            <span>Holidays ({year})</span>
+            <span data-tour-anchor="leave.holidays-list">Holidays ({year})</span>
             <label className="flex items-center gap-2 text-xs font-normal text-gray-600 dark:text-gray-400">
               Year
               <select
+                data-tour-anchor="leave.holidays-year"
                 value={year}
                 onChange={(e) => setYear(Number(e.target.value))}
                 disabled={loading}

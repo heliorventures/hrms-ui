@@ -54,74 +54,80 @@ const PayrollPayPage = () => {
       <PayrollPayTabs activeTab={activeTab} canReadTax={canReadTax} onChange={setActiveTab} />
 
       {activeTab === 'salary' && (
-        <PayrollSalaryTab
-          preview={pay.salaryPreview}
-          loading={pay.loadingSalary}
-          error={pay.errorSalary}
-        />
+        <div data-tour-anchor="payroll.pay.salary-preview">
+          <PayrollSalaryTab
+            preview={pay.salaryPreview}
+            loading={pay.loadingSalary}
+            error={pay.errorSalary}
+          />
+        </div>
       )}
 
       {activeTab === 'payslip' && (
-        <PayrollPayslipTab
-          activePayslip={pay.activePayslip}
-          unpaidLeave={unpaidLeave.data}
-          unpaidLeaveLoading={unpaidLeave.loading}
-          unpaidLeaveError={unpaidLeave.error}
-          onRetryUnpaidLeave={unpaidLeave.retry}
-          employeeCode={user?.employeeId ?? ''}
-          employeeName={user?.name ?? 'Employee'}
-          labelForLine={pay.labelForLine}
-          payslipBranding={pay.payslipBranding}
-          payslipError={pay.payslipError}
-          payslipLogoReadUrl={pay.payslipLogoReadUrl}
-          payslipMigrationRequired={pay.payslipMigrationRequired}
-          payslipPeriodOptions={pay.payslipPeriodOptions}
-          payslips={pay.payslips}
-          payslipsLoading={pay.payslipsLoading}
-          selectedPeriodKey={pay.selectedPeriodKey}
-          tenantId={currentTenant?.id}
-          tenantName={currentTenant?.name ?? 'Organization'}
-          onSelectedPeriodChange={pay.setSelectedPeriodKey}
-        />
+        <div data-tour-anchor="payroll.pay.payslip-period">
+          <PayrollPayslipTab
+            activePayslip={pay.activePayslip}
+            unpaidLeave={unpaidLeave.data}
+            unpaidLeaveLoading={unpaidLeave.loading}
+            unpaidLeaveError={unpaidLeave.error}
+            onRetryUnpaidLeave={unpaidLeave.retry}
+            employeeCode={user?.employeeId ?? ''}
+            employeeName={user?.name ?? 'Employee'}
+            labelForLine={pay.labelForLine}
+            payslipBranding={pay.payslipBranding}
+            payslipError={pay.payslipError}
+            payslipLogoReadUrl={pay.payslipLogoReadUrl}
+            payslipMigrationRequired={pay.payslipMigrationRequired}
+            payslipPeriodOptions={pay.payslipPeriodOptions}
+            payslips={pay.payslips}
+            payslipsLoading={pay.payslipsLoading}
+            selectedPeriodKey={pay.selectedPeriodKey}
+            tenantId={currentTenant?.id}
+            tenantName={currentTenant?.name ?? 'Organization'}
+            onSelectedPeriodChange={pay.setSelectedPeriodKey}
+          />
+        </div>
       )}
 
       {activeTab === 'incometax' && (
-        <PayrollIncomeTaxTab
-          activeTaxConfig={pay.activeTaxConfig}
-          activeTaxSlabs={pay.activeTaxSlabs}
-          canSubmitTax={canSubmitTax}
-          declDed={pay.declDed}
-          declFy={pay.declFy}
-          declGross={pay.declGross}
-          declMsg={pay.declMsg}
-          declRegime={pay.declRegime}
-          declSubmitting={pay.declSubmitting}
-          employeeTaxError={pay.employeeTaxError}
-          loadingEmployeeTax={pay.loadingEmployeeTax}
-          loadingShell={pay.loadingShell}
-          payslipError={pay.payslipError}
-          payslipIndiaFyTotals={pay.payslipIndiaFyTotals}
-          payslipsLoading={pay.payslipsLoading}
-          proofActual={pay.proofActual}
-          proofBusy={pay.proofBusy}
-          proofDeclared={pay.proofDeclared}
-          proofFile={pay.proofFile}
-          proofMsg={pay.proofMsg}
-          proofSectionCode={pay.proofSectionCode}
-          taxComputationsSelf={pay.taxComputationsSelf}
-          taxProofLinesSelf={pay.taxProofLinesSelf}
-          taxSectionCatalog={pay.taxSectionCatalog}
-          onDeclDedChange={pay.setDeclDed}
-          onDeclFyChange={pay.setDeclFy}
-          onDeclGrossChange={pay.setDeclGross}
-          onDeclRegimeChange={pay.setDeclRegime}
-          onDeclSubmit={pay.handleDeclUpsert}
-          onProofActualChange={pay.setProofActual}
-          onProofDeclaredChange={pay.setProofDeclared}
-          onProofFileChange={pay.setProofFile}
-          onProofSectionCodeChange={pay.setProofSectionCode}
-          onProofSubmit={pay.handleProofSubmit}
-        />
+        <div data-tour-anchor="payroll.pay.income-tax-actions">
+          <PayrollIncomeTaxTab
+            activeTaxConfig={pay.activeTaxConfig}
+            activeTaxSlabs={pay.activeTaxSlabs}
+            canSubmitTax={canSubmitTax}
+            declDed={pay.declDed}
+            declFy={pay.declFy}
+            declGross={pay.declGross}
+            declMsg={pay.declMsg}
+            declRegime={pay.declRegime}
+            declSubmitting={pay.declSubmitting}
+            employeeTaxError={pay.employeeTaxError}
+            loadingEmployeeTax={pay.loadingEmployeeTax}
+            loadingShell={pay.loadingShell}
+            payslipError={pay.payslipError}
+            payslipIndiaFyTotals={pay.payslipIndiaFyTotals}
+            payslipsLoading={pay.payslipsLoading}
+            proofActual={pay.proofActual}
+            proofBusy={pay.proofBusy}
+            proofDeclared={pay.proofDeclared}
+            proofFile={pay.proofFile}
+            proofMsg={pay.proofMsg}
+            proofSectionCode={pay.proofSectionCode}
+            taxComputationsSelf={pay.taxComputationsSelf}
+            taxProofLinesSelf={pay.taxProofLinesSelf}
+            taxSectionCatalog={pay.taxSectionCatalog}
+            onDeclDedChange={pay.setDeclDed}
+            onDeclFyChange={pay.setDeclFy}
+            onDeclGrossChange={pay.setDeclGross}
+            onDeclRegimeChange={pay.setDeclRegime}
+            onDeclSubmit={pay.handleDeclUpsert}
+            onProofActualChange={pay.setProofActual}
+            onProofDeclaredChange={pay.setProofDeclared}
+            onProofFileChange={pay.setProofFile}
+            onProofSectionCodeChange={pay.setProofSectionCode}
+            onProofSubmit={pay.handleProofSubmit}
+          />
+        </div>
       )}
     </div>
   );

@@ -190,6 +190,7 @@ const AdminEmployeesPage = () => {
           <Button
             size="sm"
             variant="outline"
+            data-tour-anchor="employees.edit-trigger"
             onClick={() => {
               setEditRow(row);
             }}
@@ -206,7 +207,9 @@ const AdminEmployeesPage = () => {
     <div className="space-y-4">
       <PageActions>
         <h1 className="sr-only">Employee Management</h1>
-        <Button onClick={() => setCreateOpen(true)}>Add Employee</Button>
+        <Button data-tour-anchor="employees.add-trigger" onClick={() => setCreateOpen(true)}>
+          Add Employee
+        </Button>
       </PageActions>
 
       {error && (
@@ -219,7 +222,9 @@ const AdminEmployeesPage = () => {
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading Employees...</p>
         ) : employees.length > 0 ? (
-          <Table data={employees} columns={columns} keyExtractor={(employee) => employee.id} />
+          <div data-tour-anchor="employees.list">
+            <Table data={employees} columns={columns} keyExtractor={(employee) => employee.id} />
+          </div>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">No Employees Found</p>
         )}

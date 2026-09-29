@@ -316,6 +316,7 @@ const PunchActionArea = ({
     <Button
       variant="primary"
       className="min-w-36"
+      data-tour-anchor="dashboard-punch-action"
       busy={submitting}
       busyLabel="Recording Attendance…"
       disabled={disabled}
@@ -366,7 +367,7 @@ const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps)
 
   return (
     <Card title="Today’s attendance">
-      <div className="space-y-4">
+      <div className="space-y-4" data-tour-anchor="dashboard-attendance-summary">
         <PunchSummaryContent
           error={summaryError}
           phase={summaryPhase}

@@ -171,7 +171,10 @@ const OrgChartPage = () => {
       </div>
 
       <Card>
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div
+          className="mb-4 flex flex-wrap items-end justify-between gap-3"
+          data-tour-anchor="organization-chart-controls"
+        >
           <div className="w-full max-w-md">
             <Input label="Find employee" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, code, department, or designation" fullWidth />
           </div>
@@ -198,7 +201,10 @@ const OrgChartPage = () => {
           </p>
         )}
         {!loading && !error && roots.length > 0 && (
-          <div className="overflow-auto rounded-xl border border-slate-200/80 bg-slate-50/80 p-6 dark:border-slate-700 dark:bg-slate-900/40">
+          <div
+            className="overflow-auto rounded-xl border border-slate-200/80 bg-slate-50/80 p-6 dark:border-slate-700 dark:bg-slate-900/40"
+            data-tour-anchor="organization-chart-tree"
+          >
             <div className="flex min-w-max origin-top flex-row items-start justify-center gap-16 pb-4 transition-transform" style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}>
               {roots.map((r) => (
                 <OrgSubtree key={r.employeeId} row={r} childMap={childMap} collapsedIds={search ? new Set() : collapsedIds} onToggle={toggleNode} />

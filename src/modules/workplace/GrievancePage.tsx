@@ -95,8 +95,12 @@ const GrievancePage = () => {
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <div className="flex justify-end">
-        <Button disabled={submitting} onClick={() => setFiling((open) => !open)}>
+      <div className="flex justify-end" data-tour-anchor="grievance.workspace">
+        <Button
+          disabled={submitting}
+          onClick={() => setFiling((open) => !open)}
+          data-tour-anchor="grievance.file-trigger"
+        >
           {filing ? 'Back to cases' : 'File a Case'}
         </Button>
       </div>
@@ -143,25 +147,29 @@ const GrievancePage = () => {
       </div>
       <div hidden={filing}>
         <Card title="Cases">
-          {loading ? (
-            <p className="text-sm text-gray-500">Loading...</p>
-          ) : cases.length ? (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {cases.map((x) => (
-                <li key={x.id} className="py-3">
-                  <p className="font-medium text-gray-900 dark:text-white">{x.subject}</p>
-                  <p className="text-xs text-gray-500">
-                    {x.status} · {new Date(x.filedAt).toLocaleString()}
-                  </p>
-                  {x.description && (
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{x.description}</p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500">No Cases.</p>
-          )}
+          <div data-tour-anchor="grievance.case-list">
+            {loading ? (
+              <p className="text-sm text-gray-500">Loading...</p>
+            ) : cases.length ? (
+              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                {cases.map((x) => (
+                  <li key={x.id} className="py-3">
+                    <p className="font-medium text-gray-900 dark:text-white">{x.subject}</p>
+                    <p className="text-xs text-gray-500">
+                      {x.status} · {new Date(x.filedAt).toLocaleString()}
+                    </p>
+                    {x.description && (
+                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                        {x.description}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500">No Cases.</p>
+            )}
+          </div>
         </Card>
       </div>
     </div>

@@ -107,7 +107,12 @@ const PrivateNotificationBoardCard = ({ board }: NotificationBoardContentProps) 
           </p>
         </PageInformation>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => board.setFilter(nextFilter)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => board.setFilter(nextFilter)}
+            data-tour-anchor="notifications-private-filter"
+          >
             {filterLabel}
           </Button>
           <Button
@@ -115,6 +120,7 @@ const PrivateNotificationBoardCard = ({ board }: NotificationBoardContentProps) 
             size="sm"
             disabled={board.actionBusy}
             onClick={() => void board.markAllRead()}
+            data-tour-anchor="notifications-mark-all-read"
           >
             {board.actionBusy ? 'Working...' : 'Mark all private read'}
           </Button>

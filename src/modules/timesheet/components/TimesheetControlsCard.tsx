@@ -89,6 +89,7 @@ const TimesheetControlsCard = ({
             </label>
             <select
               id="timesheet-period-view"
+              data-tour-anchor="timesheet.period-view"
               className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               value={periodMode}
               onChange={(event) => onModeChange(event.target.value as PeriodMode)}
@@ -139,6 +140,7 @@ const TimesheetControlsCard = ({
         <div className="flex flex-wrap gap-2">
           {canWrite ? (
             <Button
+              data-tour-anchor="timesheet.add-entry"
               variant="primary"
               type="button"
               onClick={onAddEntry}
@@ -152,6 +154,7 @@ const TimesheetControlsCard = ({
             Refresh
           </Button>
           <Button
+            data-tour-anchor="timesheet.export"
             variant="outline"
             type="button"
             onClick={onExportCsv}
@@ -175,6 +178,7 @@ const TimesheetControlsCard = ({
       {canWrite && periodMode === 'week' && (
         <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-gray-200 pt-3 dark:border-gray-700">
           <Button
+            data-tour-anchor="timesheet.submit-week"
             variant="primary"
             type="button"
             disabled={!submitWeekEditable || submitBusy}

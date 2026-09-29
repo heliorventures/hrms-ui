@@ -13,7 +13,11 @@ const PreferenceControl = ({ setting, preferences, onChange }: PreferenceControl
   const id = useId();
   if (!setting.options) {
     return (
-      <label className="appearance-option" htmlFor={id}>
+      <label
+        className="appearance-option"
+        htmlFor={id}
+        data-tour-anchor={`appearance-setting-${setting.key}`}
+      >
         <span>
           <span className="block font-medium">{setting.label}</span>
           <span className="text-xs text-content-muted">{setting.description}</span>
@@ -30,7 +34,10 @@ const PreferenceControl = ({ setting, preferences, onChange }: PreferenceControl
     );
   }
   return (
-    <fieldset className="appearance-choice">
+    <fieldset
+      className="appearance-choice"
+      data-tour-anchor={`appearance-setting-${setting.key}`}
+    >
       <legend className="font-medium">{setting.label}</legend>
       <p className="mb-2 text-xs text-content-muted">{setting.description}</p>
       <div className="flex flex-wrap gap-1">

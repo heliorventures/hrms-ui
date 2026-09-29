@@ -11,6 +11,7 @@ const PersonalLeaveToolbar = ({ model }: { model: PersonalLeaveModel }) => {
       </div>
       <div className="flex flex-wrap gap-2">
         <Button
+          data-tour-anchor="leave.refresh"
           variant="outline"
           type="button"
           onClick={() => void refreshBoard()}
@@ -20,6 +21,7 @@ const PersonalLeaveToolbar = ({ model }: { model: PersonalLeaveModel }) => {
         </Button>
         {canSubmitLeave ? (
           <Button
+            data-tour-anchor="leave.apply-trigger"
             variant="primary"
             type="button"
             onClick={() => setApplyOpen(true)}

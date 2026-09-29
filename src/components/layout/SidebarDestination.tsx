@@ -30,6 +30,7 @@ const SidebarDestination = ({
     <Link
       to={destination.path}
       onClick={onNavigate}
+      data-tour-anchor={destination.path === '/dashboard' ? 'navigation-home' : undefined}
       title={compact ? destination.label : undefined}
       aria-current={isActive ? 'page' : undefined}
       className={[

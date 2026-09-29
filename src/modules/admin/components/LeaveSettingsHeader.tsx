@@ -30,7 +30,13 @@ const LeaveSettingsHeader = ({
           </p>
         </PageInformation>
       </div>
-      <Button variant="outline" type="button" onClick={onRefresh} disabled={loading}>
+      <Button
+        data-tour-anchor="leave-settings.refresh"
+        variant="outline"
+        type="button"
+        onClick={onRefresh}
+        disabled={loading}
+      >
         Refresh
       </Button>
     </PageActions>
@@ -40,6 +46,7 @@ const LeaveSettingsHeader = ({
         <button
           key={item.key}
           type="button"
+          data-tour-anchor={`leave-settings.tab.${item.key}`}
           aria-pressed={tab === item.key}
           className={tabClassName(tab === item.key)}
           onClick={() => onTabChange(item.key)}

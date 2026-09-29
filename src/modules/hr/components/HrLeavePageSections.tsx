@@ -26,15 +26,32 @@ export const HrLeavePageHeader = ({
   <PageActions>
     <h1 className="sr-only">Leave Approvals</h1>
     <div className="flex flex-wrap gap-2">
-      <Button variant="outline" type="button" onClick={onRefresh} disabled={loading}>
+      <Button
+        data-tour-anchor="hr-leaves.refresh"
+        variant="outline"
+        type="button"
+        onClick={onRefresh}
+        disabled={loading}
+      >
         {loading ? 'Refreshing...' : 'Refresh'}
       </Button>
       {canConfigure ? (
-        <Button variant="outline" type="button" onClick={onConfigure}>
+        <Button
+          data-tour-anchor="hr-leaves.configure-trigger"
+          variant="outline"
+          type="button"
+          onClick={onConfigure}
+        >
           Leave & holidays setup
         </Button>
       ) : null}
-      <Button variant="primary" type="button" onClick={onApply} disabled={loading}>
+      <Button
+        data-tour-anchor="hr-leaves.apply-trigger"
+        variant="primary"
+        type="button"
+        onClick={onApply}
+        disabled={loading}
+      >
         Apply for leave
       </Button>
     </div>

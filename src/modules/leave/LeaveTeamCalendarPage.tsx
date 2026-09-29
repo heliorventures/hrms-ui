@@ -10,7 +10,7 @@ const LeaveTeamCalendarPage = () => {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="sr-only">Team Leave Calendar</h1>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2" data-tour-anchor="leave.team-calendar-navigation">
           <Link to="/dashboard" className={outlineLink}>
             Home
           </Link>

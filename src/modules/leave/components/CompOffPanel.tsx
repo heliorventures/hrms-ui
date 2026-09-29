@@ -195,7 +195,12 @@ const PolicyStatus = ({
         credit expires.
       </p>
       {canSubmit && (
-        <Button size="sm" disabled={disabled} onClick={open}>
+        <Button
+          data-tour-anchor="leave.comp-off-trigger"
+          size="sm"
+          disabled={disabled}
+          onClick={open}
+        >
           Request credit
         </Button>
       )}

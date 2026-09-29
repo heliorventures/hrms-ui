@@ -1,0 +1,12 @@
+"""Dismissal state for the authenticated user's application overview."""
+type MyGuidanceState {
+  overviewDismissedAt: DateTime
+}
+
+extend type Query {
+  myGuidanceState: MyGuidanceState!
+}
+
+extend type Mutation {
+  dismissMyApplicationOverview: MyGuidanceState!
+}

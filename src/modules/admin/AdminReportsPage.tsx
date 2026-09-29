@@ -47,7 +47,10 @@ const ReportWorkspace = ({
   return (
     <div className="space-y-4">
       <PageHeader title={title} retainTitle />
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-surface p-3">
+      <div
+        className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-surface p-3"
+        data-tour-anchor="admin.reports.filters"
+      >
         <label className="min-w-60 space-y-1 text-sm font-medium">
           Report
           <select
@@ -101,12 +104,14 @@ const ReportWorkspace = ({
           {error}
         </p>
       )}
-      {!error && selected === 'ATTENDANCE_DAILY' && (
-        <AttendanceDailyReportPanel key={JSON.stringify(period)} {...period} />
-      )}
-      {!error && selected !== 'ATTENDANCE_DAILY' && (
-        <ReportResult key={JSON.stringify(filter)} filter={filter} />
-      )}
+      <div data-tour-anchor="admin.reports.output">
+        {!error && selected === 'ATTENDANCE_DAILY' && (
+          <AttendanceDailyReportPanel key={JSON.stringify(period)} {...period} />
+        )}
+        {!error && selected !== 'ATTENDANCE_DAILY' && (
+          <ReportResult key={JSON.stringify(filter)} filter={filter} />
+        )}
+      </div>
     </div>
   );
 };

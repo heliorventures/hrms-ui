@@ -256,14 +256,16 @@ const OnboardingPage = () => {
         title="Onboarding & Exit"
       />
 
-      <Tabs
-        value={mainTab}
-        onValueChange={(id) => setMainTab(id as MainTab)}
-        tabs={[
-          { id: 'join', label: 'Joining Checklist', panelId: 'onboarding-tab-join' },
-          { id: 'exit', label: 'Exit & Separation', panelId: 'onboarding-tab-exit' },
-        ]}
-      />
+      <div data-tour-anchor="onboarding.sections">
+        <Tabs
+          value={mainTab}
+          onValueChange={(id) => setMainTab(id as MainTab)}
+          tabs={[
+            { id: 'join', label: 'Joining Checklist', panelId: 'onboarding-tab-join' },
+            { id: 'exit', label: 'Exit & Separation', panelId: 'onboarding-tab-exit' },
+          ]}
+        />
+      </div>
 
       {error && (
         <Card>

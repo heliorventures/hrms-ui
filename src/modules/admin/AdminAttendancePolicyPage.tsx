@@ -238,7 +238,11 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
         {loading || !ownerIsCurrent ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : (
-          <form onSubmit={(e) => void onSave(e)} className="space-y-4">
+          <form
+            onSubmit={(e) => void onSave(e)}
+            className="space-y-4"
+            data-tour-anchor="attendance-policy.live-punch-rules"
+          >
             {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
             <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
               <input
@@ -285,7 +289,11 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
             {policy?.updatedAt && (
               <p className="text-xs text-gray-500">Last updated: {policy.updatedAt}</p>
             )}
-            <Button type="submit" disabled={saving}>
+            <Button
+              data-tour-anchor="attendance-policy.save-punch-rules"
+              type="submit"
+              disabled={saving}
+            >
               {saving ? 'Saving...' : 'Save Policy'}
             </Button>
           </form>

@@ -48,16 +48,18 @@ const AttendancePage = () => {
       <AttendanceMonthlySummary summary={currentBoard?.summary ?? null} loading={loading} />
 
       <AttendancePageNotices model={model} />
-      <AttendanceSegmentsTable
-        adjustPolicyDays={adjustPolicyDays}
-        canAdjust={canPunchAttendance && policyReady}
-        canRegularize={canRegularize}
-        loading={loading}
-        rows={filteredSegments}
-        title="Attendance records"
-        selfAdjustAllowedForDate={selfAdjustAllowedForDate}
-        onAdjust={(row) => openAdjust(row.workDate, row)}
-      />
+      <div data-tour-anchor="attendance.records">
+        <AttendanceSegmentsTable
+          adjustPolicyDays={adjustPolicyDays}
+          canAdjust={canPunchAttendance && policyReady}
+          canRegularize={canRegularize}
+          loading={loading}
+          rows={filteredSegments}
+          title="Attendance records"
+          selfAdjustAllowedForDate={selfAdjustAllowedForDate}
+          onAdjust={(row) => openAdjust(row.workDate, row)}
+        />
+      </div>
       <AttendanceCursorPager
         cursorStack={effectiveCursorStack}
         endCursor={currentBoard?.pageInfo.endCursor}

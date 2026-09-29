@@ -193,7 +193,9 @@ const AdminHrTimesheetSettingsPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="timesheet-settings.tabs">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <div>
         <h1 className="sr-only">Timesheet & attendance rules</h1>
       </div>
@@ -207,7 +209,11 @@ const AdminHrTimesheetSettingsPage = () => {
 
       <PageTabPanel id="adjustments" activeTab={tab}>
         <Card title="Attendance Self-Adjust Window">
-          <form className="space-y-3 max-w-md" onSubmit={(ev) => void saveAdjustment(ev)}>
+          <form
+            className="space-y-3 max-w-md"
+            data-tour-anchor="timesheet-settings.adjustment-policy"
+            onSubmit={(ev) => void saveAdjustment(ev)}
+          >
             <Input
               label="Max Calendar Days Employees May Self-Add Missed Punches"
               value={maxSelfDays}
@@ -230,7 +236,11 @@ const AdminHrTimesheetSettingsPage = () => {
 
       <PageTabPanel id="locking" activeTab={tab}>
         <Card title="Timesheet Lock Policy">
-          <form className="space-y-3 max-w-md" onSubmit={(ev) => void saveLock(ev)}>
+          <form
+            className="space-y-3 max-w-md"
+            data-tour-anchor="timesheet-settings.lock-policy"
+            onSubmit={(ev) => void saveLock(ev)}
+          >
             <Input
               label="Editable Week Span (Rolling Mondays HR Allows Drafts For)"
               value={editableWeekSpan}
@@ -260,6 +270,7 @@ const AdminHrTimesheetSettingsPage = () => {
         <Card title="Company Projects">
           <form
             className="grid max-w-xl gap-3 md:grid-cols-2"
+            data-tour-anchor="timesheet-settings.project-catalog"
             onSubmit={(ev) => void addProject(ev)}
           >
             <Input
@@ -289,7 +300,11 @@ const AdminHrTimesheetSettingsPage = () => {
 
       <PageTabPanel id="tasks" activeTab={tab}>
         <Card title="Task Types Per Project">
-          <form className="space-y-3 max-w-xl" onSubmit={(ev) => void saveTasks(ev)}>
+          <form
+            className="space-y-3 max-w-xl"
+            data-tour-anchor="timesheet-settings.task-catalog"
+            onSubmit={(ev) => void saveTasks(ev)}
+          >
             <Select
               label="Project"
               value={taskProjectCode}

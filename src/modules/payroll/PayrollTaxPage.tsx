@@ -358,7 +358,9 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="payroll.tax.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <h1 className="sr-only">Tax Settings</h1>
 
       {error && (
@@ -383,23 +385,24 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
           </Button>
         </div>
 
-        <TaxConfigurationsCard configs={data?.taxConfigurations ?? []} loading={loading} />
-
-        {canManageTax ? (
-          <TaxVersionFormCard
-            configActive={cfgActive}
-            configBusy={cfgUpsertBusy}
-            configCountry={cfgCountry}
-            configFiscalYear={cfgFy}
-            configMessage={cfgUpsertMsg}
-            configRegime={cfgRegime}
-            onConfigActiveChange={setCfgActive}
-            onConfigCountryChange={setCfgCountry}
-            onConfigFiscalYearChange={setCfgFy}
-            onConfigRegimeChange={setCfgRegime}
-            onConfigSubmit={handleUpsertTaxConfiguration}
-          />
-        ) : null}
+        <div data-tour-anchor="payroll.tax.configuration">
+          <TaxConfigurationsCard configs={data?.taxConfigurations ?? []} loading={loading} />
+          {canManageTax ? (
+            <TaxVersionFormCard
+              configActive={cfgActive}
+              configBusy={cfgUpsertBusy}
+              configCountry={cfgCountry}
+              configFiscalYear={cfgFy}
+              configMessage={cfgUpsertMsg}
+              configRegime={cfgRegime}
+              onConfigActiveChange={setCfgActive}
+              onConfigCountryChange={setCfgCountry}
+              onConfigFiscalYearChange={setCfgFy}
+              onConfigRegimeChange={setCfgRegime}
+              onConfigSubmit={handleUpsertTaxConfiguration}
+            />
+          ) : null}
+        </div>
       </PageTabPanel>
       <PageTabPanel id="slabs" activeTab={tab}>
         <TaxSlabsCard loading={loading} slabs={slabs} />

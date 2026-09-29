@@ -74,6 +74,7 @@ export const AnnouncementWorkspace = ({ model, tab }: WorkspaceProps) => {
     <PageTabPanel id="announcements" activeTab={tab}>
       <div className="flex flex-wrap justify-end gap-3">
         <Button
+          data-tour-anchor="admin-notifications.announcement-action"
           disabled={model.loading || model.busy}
           onClick={() => setAnnouncementOpen((open) => !open)}
         >
@@ -118,6 +119,7 @@ export const DirectNotificationWorkspace = ({ model, tab }: WorkspaceProps) => {
     <PageTabPanel id="direct" activeTab={tab}>
       <div className="flex flex-wrap justify-end gap-3">
         <Button
+          data-tour-anchor="admin-notifications.direct-action"
           disabled={model.loading || model.busy}
           onClick={() => setDirectOpen((open) => !open)}
         >

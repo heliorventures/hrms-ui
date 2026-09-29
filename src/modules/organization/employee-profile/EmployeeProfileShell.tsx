@@ -103,7 +103,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
     return (
       <div className="min-h-[60vh] space-y-4 pb-8">
         <EmployeeHeader employeeName={employee.fullName} employeeCode={employee.employeeCode} />
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50" data-tour-anchor="employee-profile-directory-details">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             Employee details
           </h2>
@@ -152,7 +152,14 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
         employeeName={model.core.fullName}
         employeeCode={model.core.employeeCode}
         actions={
-          <Button type="button" variant="outline" size="sm" disabled={refreshing} onClick={() => refetch()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={refreshing}
+            onClick={() => refetch()}
+            data-tour-anchor="employee-profile-refresh"
+          >
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
         }

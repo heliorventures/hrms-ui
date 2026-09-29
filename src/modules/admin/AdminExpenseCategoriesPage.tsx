@@ -21,13 +21,17 @@ const AdminExpenseCategoriesPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="expense-categories.tabs">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <PageActions>
         <div>
           <h1 className="sr-only">Expense Categories</h1>
         </div>
         {tab === 'categories' ? (
-          <Button onClick={model.openNewCategory}>Add Category</Button>
+          <Button data-tour-anchor="expense-categories.add-category" onClick={model.openNewCategory}>
+            Add Category
+          </Button>
         ) : null}
       </PageActions>
 

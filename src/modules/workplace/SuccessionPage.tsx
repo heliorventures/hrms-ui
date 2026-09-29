@@ -76,7 +76,9 @@ const SuccessionPage = () => {
   return (
     <div className="space-y-4">
       <PageHeader title="Succession" />
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="succession.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -88,7 +90,11 @@ const SuccessionPage = () => {
             <span className="flex items-center justify-between gap-3">
               <span>Competencies</span>
               {canManage && (
-                <Button size="sm" onClick={() => setEditor({ kind: 'competency' })}>
+                <Button
+                  size="sm"
+                  onClick={() => setEditor({ kind: 'competency' })}
+                  data-tour-anchor="succession.setup-actions"
+                >
                   Create Competency
                 </Button>
               )}
@@ -131,7 +137,11 @@ const SuccessionPage = () => {
             <span className="flex items-center justify-between gap-3">
               <span>Talent Pools</span>
               {canManage && (
-                <Button size="sm" onClick={() => setEditor({ kind: 'pool' })}>
+                <Button
+                  size="sm"
+                  onClick={() => setEditor({ kind: 'pool' })}
+                  data-tour-anchor="succession.setup-actions"
+                >
                   Create Talent Pool
                 </Button>
               )}
@@ -167,7 +177,11 @@ const SuccessionPage = () => {
           )}
         </Card>
       </PageTabPanel>
-      <nav aria-label="Succession pages" className="flex items-center justify-end gap-3">
+      <nav
+        aria-label="Succession pages"
+        className="flex items-center justify-end gap-3"
+        data-tour-anchor="succession.pages"
+      >
         <Button
           size="sm"
           variant="outline"

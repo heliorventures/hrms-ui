@@ -41,6 +41,7 @@ const DisplayBars = ({
         variant="quiet"
         className="mt-3"
         aria-label={`View all ${title.toLowerCase()} records for selected period`}
+        data-tour-anchor="insights-report-details"
         onClick={() => open(report)}
       >
         View all period records

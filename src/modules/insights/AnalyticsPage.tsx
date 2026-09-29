@@ -19,16 +19,18 @@ const InsightsWorkspace = () => {
   return (
     <div className="space-y-4">
       <PageHeader title="Insights" />
-      <Tabs
-        value={tab}
-        onValueChange={setTab}
-        tabs={[
-          { id: 'hr', label: 'HR overview', panelId: 'analytics-tab-hr' },
-          ...(workplace
-            ? [{ id: 'workplace', label: 'Workplace', panelId: 'analytics-tab-workplace' }]
-            : []),
-        ]}
-      />
+      <div data-tour-anchor="insights-tabs">
+        <Tabs
+          value={tab}
+          onValueChange={setTab}
+          tabs={[
+            { id: 'hr', label: 'HR overview', panelId: 'analytics-tab-hr' },
+            ...(workplace
+              ? [{ id: 'workplace', label: 'Workplace', panelId: 'analytics-tab-workplace' }]
+              : []),
+          ]}
+        />
+      </div>
       {tab === 'workplace' && workplace ? <WorkplaceInsightsPanel /> : <HrInsightsPanel />}
     </div>
   );

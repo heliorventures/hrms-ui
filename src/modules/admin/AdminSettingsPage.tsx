@@ -63,41 +63,43 @@ const AdminSettingsPage = () => {
         </Card>
       )}
 
-      <Card title="Employee Directory Snapshot">
-        {loading ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading Employees...</p>
-        ) : employees.length > 0 ? (
-          <Table
-            data={employees}
-            keyExtractor={(row) => row.id}
-            columns={[
-              { key: 'employeeCode', label: 'Employee ID' },
-              { key: 'fullName', label: 'Name' },
-              {
-                key: 'userId',
-                label: 'Linked User',
-                render: (row: EmployeeRow) => row.userId ?? '—',
-              },
-              {
-                key: 'employmentType',
-                label: 'Employment',
-                render: (row: EmployeeRow) => row.employmentType ?? '—',
-              },
-              {
-                key: 'status',
-                label: 'Status',
-                render: (row: EmployeeRow) => (
-                  <Badge variant={row.status.toLowerCase() === 'active' ? 'success' : 'neutral'}>
-                    {row.status}
-                  </Badge>
-                ),
-              },
-            ]}
-          />
-        ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No Employees Found.</p>
-        )}
-      </Card>
+      <div data-tour-anchor="admin.settings.directory-snapshot">
+        <Card title="Employee Directory Snapshot">
+          {loading ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">Loading Employees...</p>
+          ) : employees.length > 0 ? (
+            <Table
+              data={employees}
+              keyExtractor={(row) => row.id}
+              columns={[
+                { key: 'employeeCode', label: 'Employee ID' },
+                { key: 'fullName', label: 'Name' },
+                {
+                  key: 'userId',
+                  label: 'Linked User',
+                  render: (row: EmployeeRow) => row.userId ?? '—',
+                },
+                {
+                  key: 'employmentType',
+                  label: 'Employment',
+                  render: (row: EmployeeRow) => row.employmentType ?? '—',
+                },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  render: (row: EmployeeRow) => (
+                    <Badge variant={row.status.toLowerCase() === 'active' ? 'success' : 'neutral'}>
+                      {row.status}
+                    </Badge>
+                  ),
+                },
+              ]}
+            />
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No Employees Found.</p>
+          )}
+        </Card>
+      </div>
 
       <PageInformation title="Administration notes">
         <Card title="Pending Admin Controls">

@@ -82,7 +82,12 @@ const MyWorkPage = () => {
         <h1 className="sr-only">
           {completed ? 'Completed / Archive' : 'My Tasks'}
         </h1>
-        <Button variant="outline" busy={loading} onClick={() => setRevision((value) => value + 1)}>
+        <Button
+          variant="outline"
+          busy={loading}
+          onClick={() => setRevision((value) => value + 1)}
+          data-tour-anchor="my-work-refresh"
+        >
           Refresh
         </Button>
       </PageActions>
@@ -113,6 +118,7 @@ const MyWorkList = ({
   hasErrors: boolean;
 }) => (
   <Card>
+    <div data-tour-anchor={completed ? 'my-work-completed-list' : 'my-work-task-list'}>
     {loading && <p role="status">Loading your work…</p>}
     {!loading && visible.length > 0 && (
       <ul className="divide-y divide-line">
@@ -132,6 +138,7 @@ const MyWorkList = ({
               <Link
                 className="rounded-md border border-line px-3 py-2 text-sm text-accent"
                 to={task.href}
+                data-tour-anchor={completed ? 'my-work-view-review' : 'my-work-open-task'}
               >
                 {completed ? 'View review' : 'Open task'}
               </Link>
@@ -147,6 +154,7 @@ const MyWorkList = ({
         {completed ? 'No completed tasks yet.' : 'You have no pending tasks.'}
       </p>
     )}
+    </div>
   </Card>
 );
 

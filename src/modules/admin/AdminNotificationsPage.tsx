@@ -20,7 +20,9 @@ const AdminNotificationsPage = () => {
   return (
     <div className="space-y-4">
       <h1 className="sr-only">Communications</h1>
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="admin-notifications.tabs">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
 
       {model.error ? (
         <Card>

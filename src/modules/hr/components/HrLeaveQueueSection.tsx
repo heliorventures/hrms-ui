@@ -45,7 +45,12 @@ const HrLeaveQueueSection = ({
 }: HrLeaveQueueSectionProps) => {
   const [review, setReview] = useState(true);
   return (
-    <section ref={queueRef} tabIndex={-1} aria-label="Leave approval queue">
+    <section
+      ref={queueRef}
+      tabIndex={-1}
+      aria-label="Leave approval queue"
+      data-tour-anchor="hr-leaves.queue"
+    >
       <Card title="Requests">
         <HrLeaveQueueFilters {...filters} />
         <div role="group" aria-label="Request view" className="my-4 flex gap-2">

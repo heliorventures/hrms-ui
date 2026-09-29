@@ -103,7 +103,7 @@ const SurveyAdminRow = ({
         ))}
       </dl>
     </div>
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2" data-tour-anchor="surveys.manage-actions">
       <Button
         size="sm"
         variant="outline"
@@ -120,7 +120,12 @@ const SurveyAdminRow = ({
       </Button>
       <SurveyLifecycleActions item={item} model={model} />
       {model.canResults && item.status !== 'DRAFT' && (
-        <Button size="sm" variant="quiet" onClick={() => void model.openResults(item.id)}>
+        <Button
+          size="sm"
+          variant="quiet"
+          onClick={() => void model.openResults(item.id)}
+          data-tour-anchor="surveys.review-submissions"
+        >
           Responses
         </Button>
       )}

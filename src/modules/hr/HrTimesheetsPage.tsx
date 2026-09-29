@@ -205,7 +205,12 @@ const HrTimesheetsPage = () => {
       </div>
 
       <Card title="Queue">
-        <div className="mb-4 flex flex-wrap items-center gap-2">{filterTabs}</div>
+        <div
+          className="mb-4 flex flex-wrap items-center gap-2"
+          data-tour-anchor="hr-timesheets.filters"
+        >
+          {filterTabs}
+        </div>
         {infoNotice ? (
           <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
             {infoNotice}
@@ -287,6 +292,7 @@ const HrTimesheetsPage = () => {
                         type="button"
                         variant="outline"
                         className="!py-1 !text-xs"
+                        data-tour-anchor="hr-timesheets.preview-trigger"
                         disabled={busyId === row.id}
                         onClick={() => setPreviewFor(row)}
                       >
@@ -301,6 +307,7 @@ const HrTimesheetsPage = () => {
                           type="button"
                           variant="outline"
                           className="!py-1 !text-xs"
+                          data-tour-anchor="hr-timesheets.preview-trigger"
                           disabled={busyId === row.id}
                           onClick={() => setPreviewFor(row)}
                         >
@@ -310,6 +317,7 @@ const HrTimesheetsPage = () => {
                           type="button"
                           variant="primary"
                           className="!py-1 !text-xs"
+                          data-tour-anchor="hr-timesheets.approve-trigger"
                           disabled={busyId === row.id}
                           onClick={() => void handleApprove(row)}
                         >
@@ -319,6 +327,7 @@ const HrTimesheetsPage = () => {
                           type="button"
                           variant="outline"
                           className="!py-1 !text-xs"
+                          data-tour-anchor="hr-timesheets.reject-trigger"
                           disabled={busyId === row.id}
                           onClick={() => {
                             setPreviewFor(null);
@@ -364,7 +373,12 @@ const HrTimesheetsPage = () => {
             fullWidth
           />
           <div className="flex gap-2">
-            <Button type="button" variant="primary" onClick={() => void handleReject()}>
+            <Button
+              type="button"
+              variant="primary"
+              data-tour-anchor="hr-timesheets.reject-trigger"
+              onClick={() => void handleReject()}
+            >
               Confirm Reject
             </Button>
             <Button

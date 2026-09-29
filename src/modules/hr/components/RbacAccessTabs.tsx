@@ -21,6 +21,7 @@ const RbacAccessTabs = ({ activeTab, onReload, onTabChange }: RbacAccessTabsProp
         <button
           key={tab}
           type="button"
+          data-tour-anchor={`admin.access.tab.${tab}`}
           aria-pressed={activeTab === tab}
           className={tabClassName(activeTab === tab)}
           onClick={() => onTabChange(tab)}
@@ -29,9 +30,11 @@ const RbacAccessTabs = ({ activeTab, onReload, onTabChange }: RbacAccessTabsProp
         </button>
       ))}
     </div>
-    <Button type="button" variant="outline" className="!py-1.5 !text-xs" onClick={onReload}>
-      Reload catalog
-    </Button>
+    <div data-tour-anchor="admin.access.reload-catalog">
+      <Button type="button" variant="outline" className="!py-1.5 !text-xs" onClick={onReload}>
+        Reload catalog
+      </Button>
+    </div>
   </div>
 );
 

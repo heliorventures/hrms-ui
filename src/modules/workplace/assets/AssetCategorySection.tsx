@@ -66,6 +66,7 @@ export default function AssetCategorySection(props: AssetCategorySectionProps) {
         placeholder="Name or code"
         loading={props.loading}
         actionLabel={props.canManage ? 'New Category' : undefined}
+        actionAnchor="assets.category-action"
         onAction={props.onCreate}
         onSearch={(search) => props.onFilterChange({ ...props.filter, page: 1, search })}
       />

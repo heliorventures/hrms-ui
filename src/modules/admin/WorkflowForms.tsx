@@ -89,7 +89,12 @@ export const CreateWorkflowForm = ({
             Already configured. Select the existing workflow under Add Step to manage it.
           </p>
         )}
-        <Button type="submit" variant="primary" disabled={wBusy || loading || Boolean(hasWorkflow)}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={wBusy || loading || Boolean(hasWorkflow)}
+          data-tour-anchor="workflows.create-action"
+        >
           {wBusy ? 'Creating...' : 'Create Approval Workflow'}
         </Button>
       </form>
@@ -186,7 +191,12 @@ export const AddWorkflowStepForm = ({
           value={sApprover}
           onChange={(event) => setSApprover(event.target.value)}
         />
-        <Button type="submit" variant="primary" disabled={sBusy || !selectedWorkflow || !stepsData}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={sBusy || !selectedWorkflow || !stepsData}
+          data-tour-anchor="workflows.add-step-action"
+        >
           {sBusy ? 'Saving...' : 'Add Step'}
         </Button>
       </form>

@@ -12,6 +12,7 @@ export const AttendancePageToolbar = ({ model }: { model: AttendancePageModel })
       <h1 className="sr-only">Attendance</h1>
       {canPunchAttendance ? (
         <Button
+          data-tour-anchor="attendance.adjust-trigger"
           variant="primary"
           type="button"
           disabled={!policyReady}

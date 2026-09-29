@@ -14,7 +14,6 @@ import type { ProbeState } from './moduleHealthTypes';
 import { useGraphClient } from '@/hooks/useGraphClient';
 import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
 
-
 const initialProbeState = () =>
   Object.fromEntries(
     MODULE_HEALTH_PROBES.map((probe) => [probe.key, { status: 'idle' } as ProbeState])
@@ -87,25 +86,25 @@ const ModuleHealth = () => {
         <button
           type="button"
           className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+          data-tour-anchor="admin.module-health.rerun"
           onClick={() => setRunToken((current) => current + 1)}
         >
           Re-run probes
         </button>
       </header>
 
-      <div className="flex gap-3 text-sm">
-        <span className="rounded bg-emerald-100 px-2 py-1 text-emerald-800">
-          OK: {summary.ok}
-        </span>
-        <span className="rounded bg-rose-100 px-2 py-1 text-rose-800">
-          Failed: {summary.error}
-        </span>
+      <div className="flex gap-3 text-sm" data-tour-anchor="admin.module-health.summary">
+        <span className="rounded bg-emerald-100 px-2 py-1 text-emerald-800">OK: {summary.ok}</span>
+        <span className="rounded bg-rose-100 px-2 py-1 text-rose-800">Failed: {summary.error}</span>
         <span className="rounded bg-slate-100 px-2 py-1 text-slate-800">
           Pending: {summary.pending}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+        data-tour-anchor="admin.module-health.probes"
+      >
         {MODULE_HEALTH_PROBES.map((probe) => {
           const state = results[probe.key];
           return (

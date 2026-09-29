@@ -98,7 +98,9 @@ const AssetsWorkspaceSections = (props: WorkspaceSectionsProps) => {
   const activeTab = tabs.some((tab) => tab.id === selectedTab) ? selectedTab : 'assignments';
   return (
     <>
-      <Tabs tabs={tabs} value={activeTab} onValueChange={setSelectedTab} />
+      <div data-tour-anchor="assets.sections">
+        <Tabs tabs={tabs} value={activeTab} onValueChange={setSelectedTab} />
+      </div>
 
       <InventoryPanels {...props} activeTab={activeTab} />
 

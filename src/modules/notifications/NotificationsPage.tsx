@@ -27,13 +27,16 @@ const NotificationsPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="notifications-tabs">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <PageActions>
         <div>
           <h1 className="sr-only">Notifications</h1>
           <p className="mt-1 text-sm">
             <Link
               to="/profile/settings"
+              data-tour-anchor="notifications-preferences-link"
               className="text-primary-600 hover:underline dark:text-primary-400"
             >
               Notification preferences
@@ -48,13 +51,19 @@ const NotificationsPage = () => {
           {showAdminNotifLink ? (
             <Link
               to="/admin/notifications"
+              data-tour-anchor="notifications-admin-console"
               className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/80 dark:focus-visible:ring-offset-slate-900"
             >
               Admin console
             </Link>
           ) : null}
           {tab === 'announcements' ? (
-            <Button variant="primary" size="sm" onClick={() => setComposeOpen(true)}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setComposeOpen(true)}
+              data-tour-anchor="notifications-compose"
+            >
               {composeLabel}
             </Button>
           ) : null}

@@ -28,15 +28,18 @@ const InsightsData = ({ period }: { period: { fromDate: string; toDate: string }
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <PageInformation title="Metrics guide">
-          <p className="text-xs text-content-secondary">
-            Punctuality counts employee-days. Salary totals are generated payslips in payroll
-            currency.
-          </p>
-        </PageInformation>
+        <div data-tour-anchor="insights-metrics-guide">
+          <PageInformation title="Metrics guide">
+            <p className="text-xs text-content-secondary">
+              Punctuality counts employee-days. Salary totals are generated payslips in payroll
+              currency.
+            </p>
+          </PageInformation>
+        </div>
         <Button
           size="sm"
           variant="outline"
+          data-tour-anchor="insights-refresh"
           disabled={busy}
           onClick={() => {
             void query.refresh();
@@ -74,7 +77,12 @@ const InsightsData = ({ period }: { period: { fromDate: string; toDate: string }
                 Pending workload:{' '}
                 {data.includedPendingDomains.join(', ') || 'no accessible domains'}
               </p>
-              <Button size="sm" variant="outline" onClick={() => setReport('PENDING_REQUESTS')}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setReport('PENDING_REQUESTS')}
+                data-tour-anchor="insights-pending-requests"
+              >
                 View pending requests
               </Button>
             </div>

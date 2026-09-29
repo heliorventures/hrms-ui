@@ -252,7 +252,9 @@ const BenefitsPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="benefits.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <h1 className="sr-only">Benefits</h1>
       {error && (
         <Card>
@@ -318,6 +320,7 @@ const BenefitsPage = () => {
             <button
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
               onClick={() => editType()}
+              data-tour-anchor="benefits.types.actions"
             >
               Create benefit type
             </button>
@@ -371,88 +374,93 @@ const BenefitsPage = () => {
         </Card>
       </PageTabPanel>
       <PageTabPanel id="plans" activeTab={tab}>
-        <Card title={canManage ? 'Benefit Plans' : 'Active Plans'}>
-          {canManage && (
-            <button
-              disabled={preparingPlan || loading}
-              className="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-700 disabled:opacity-50 dark:text-indigo-300"
-              onClick={() => void editPlan()}
-            >
-              {preparingPlan ? 'Loading benefit types...' : 'Create benefit plan'}
-            </button>
-          )}
-          {loading ? (
-            <p className="text-sm text-gray-500">Loading...</p>
-          ) : data?.benefitPlans.length ? (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {data.benefitPlans.slice(0, 20).map((p) => {
-                const enrolled = enrolledPlanIds.has(p.id);
-                return (
-                  <li
-                    key={p.id}
-                    className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{p.name}</p>
-                      {canManage && (
+        <div data-tour-anchor="benefits.plan.enroll">
+          <Card title={canManage ? 'Benefit Plans' : 'Active Plans'}>
+            {canManage && (
+              <button
+                disabled={preparingPlan || loading}
+                className="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-medium text-indigo-700 disabled:opacity-50 dark:text-indigo-300"
+                onClick={() => void editPlan()}
+                data-tour-anchor="benefits.plans.actions"
+              >
+                {preparingPlan ? 'Loading benefit types...' : 'Create benefit plan'}
+              </button>
+            )}
+            {loading ? (
+              <p className="text-sm text-gray-500">Loading...</p>
+            ) : data?.benefitPlans.length ? (
+              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                {data.benefitPlans.slice(0, 20).map((p) => {
+                  const enrolled = enrolledPlanIds.has(p.id);
+                  return (
+                    <li
+                      key={p.id}
+                      className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">{p.name}</p>
+                        {canManage && (
+                          <button
+                            className="text-sm font-medium text-indigo-600"
+                            disabled={preparingPlan}
+                            onClick={() => void editPlan(p)}
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {!p.isActive && (
+                          <span className="ml-2 text-xs text-gray-500">Inactive</span>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          {p.isMandatory ? 'Mandatory' : 'Optional'}
+                          {p.contributionType ? ` · ${p.contributionType}` : ''}
+                          {enrolled ? (
+                            <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+                              enrolled
+                            </span>
+                          ) : null}
+                        </p>
+                      </div>
+                      {canEnroll && !enrolled && p.isActive ? (
                         <button
-                          className="text-sm font-medium text-indigo-600"
-                          disabled={preparingPlan}
-                          onClick={() => void editPlan(p)}
+                          type="button"
+                          className="shrink-0 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-800 hover:bg-indigo-50 disabled:opacity-60 dark:border-indigo-800 dark:bg-gray-800 dark:text-indigo-200 dark:hover:bg-indigo-950/60"
+                          disabled={enrollBusyId === p.id}
+                          onClick={() => void enrollIn(p.id)}
                         >
-                          Edit
+                          {enrollBusyId === p.id ? 'Enrolling…' : 'Enroll'}
                         </button>
-                      )}
-                      {!p.isActive && <span className="ml-2 text-xs text-gray-500">Inactive</span>}
-                      <p className="text-xs text-gray-500">
-                        {p.isMandatory ? 'Mandatory' : 'Optional'}
-                        {p.contributionType ? ` · ${p.contributionType}` : ''}
-                        {enrolled ? (
-                          <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-                            enrolled
-                          </span>
-                        ) : null}
-                      </p>
-                    </div>
-                    {canEnroll && !enrolled && p.isActive ? (
-                      <button
-                        type="button"
-                        className="shrink-0 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-800 hover:bg-indigo-50 disabled:opacity-60 dark:border-indigo-800 dark:bg-gray-800 dark:text-indigo-200 dark:hover:bg-indigo-950/60"
-                        disabled={enrollBusyId === p.id}
-                        onClick={() => void enrollIn(p.id)}
-                      >
-                        {enrollBusyId === p.id ? 'Enrolling…' : 'Enroll'}
-                      </button>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500">No Active Plans.</p>
-          )}
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label="Previous benefit plans"
-              disabled={loading || planOffset === 0}
-              onClick={() => setPlanOffset((offset) => Math.max(0, offset - 20))}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-content-muted">Page {planOffset / 20 + 1}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label="Next benefit plans"
-              disabled={loading || (data?.benefitPlans.length ?? 0) <= 20}
-              onClick={() => setPlanOffset((offset) => offset + 20)}
-            >
-              Next
-            </Button>
-          </div>
-        </Card>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500">No Active Plans.</p>
+            )}
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label="Previous benefit plans"
+                disabled={loading || planOffset === 0}
+                onClick={() => setPlanOffset((offset) => Math.max(0, offset - 20))}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-content-muted">Page {planOffset / 20 + 1}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label="Next benefit plans"
+                disabled={loading || (data?.benefitPlans.length ?? 0) <= 20}
+                onClick={() => setPlanOffset((offset) => offset + 20)}
+              >
+                Next
+              </Button>
+            </div>
+          </Card>
+        </div>
       </PageTabPanel>
     </div>
   );

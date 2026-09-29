@@ -103,6 +103,7 @@ const SeparationRequestsCard = ({
                       variant="primary"
                       disabled={actionId === separation.id}
                       onClick={() => onHrAction(separation.id, true)}
+                      data-tour-anchor="onboarding.separation-requests"
                     >
                       {actionId === separation.id ? '...' : 'Approve'}
                     </Button>

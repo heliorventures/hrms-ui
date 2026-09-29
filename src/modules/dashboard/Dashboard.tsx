@@ -19,10 +19,11 @@ const HomeShortcuts = () => {
   return (
     <nav aria-label="Home shortcuts" className="ml-auto flex flex-wrap justify-end gap-2">
       {permissions.canCapability('action.leave.submit') && permissions.canRoute('/leave') ? (
-        <PageActionLink
-          to="/leave?apply=1"
-          label="Request leave"
-          icon={<CalendarPlus className="h-5 w-5" />}
+          <PageActionLink
+            to="/leave?apply=1"
+            label="Request leave"
+            icon={<CalendarPlus className="h-5 w-5" />}
+            tourAnchor="dashboard-request-leave"
         />
       ) : null}
     </nav>
@@ -42,7 +43,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
+        <div className="min-w-0" data-tour-anchor="dashboard-welcome">
           <h1 className="sr-only">Home</h1>
           <p className="break-words text-2xl font-semibold tracking-tight text-content-primary sm:text-3xl">
             Welcome back, {displayName || 'there'}.
@@ -61,6 +62,7 @@ const Dashboard = () => {
       {hasSummary ? (
         <section
           aria-label="Your day"
+          data-tour-anchor="dashboard-your-day"
           className={`grid items-start gap-4 ${canReadAttendance && canReadLeave ? 'md:grid-cols-2' : ''}`}
         >
           <h2 className="sr-only">Your day</h2>
@@ -68,7 +70,9 @@ const Dashboard = () => {
           {canReadLeave ? <LeaveBalanceCard key={`leave-balance:${authorizationKey}`} /> : null}
         </section>
       ) : null}
-      <HomeQuickAccess />
+      <div data-tour-anchor="dashboard-quick-access">
+        <HomeQuickAccess />
+      </div>
       {canReadLeave && permissions.canRoute('/leave') ? (
         <RecentLeaveRequest key={`${tenantId}:${user?.id}:${authorizationKey}`} />
       ) : null}

@@ -6,6 +6,7 @@ import { authorizationStateKey } from '../../auth/permissionService';
 import { useAuth } from '../../contexts/AuthContext';
 import EmployeeDisplayNameProvider from '../../contexts/EmployeeDisplayNameProvider';
 import { useTenant } from '../../contexts/TenantContext';
+import TenantGuidanceProvider from '../../guidance/TenantGuidanceProvider';
 import { useIdleLogout } from '../../hooks/useIdleLogout';
 import { CompactPageContext } from '../common/compactPageContext';
 import PageInformationProvider from '../common/PageInformationProvider';
@@ -176,7 +177,9 @@ const AppLayoutWithInformation = () => {
       scopeKey={`${location.key}:${currentTenant.id}:${authorizationStateKey(clientSession)}`}
     >
       <EmployeeDisplayNameProvider>
-        <AppLayout />
+        <TenantGuidanceProvider>
+          <AppLayout />
+        </TenantGuidanceProvider>
       </EmployeeDisplayNameProvider>
     </PageInformationProvider>
   );

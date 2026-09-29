@@ -24,6 +24,7 @@ export const SurveyRespondentCatalog = ({ model }: { model: SurveyWorkspaceModel
               busy={model.isBusy(`open:${item.id}`)}
               disabled={!canFillSurvey(item)}
               onClick={() => void model.openSurvey(item.id, 'respond')}
+              data-tour-anchor="surveys.respond"
             >
               {item.completed ? 'Completed' : 'Fill survey'}
             </Button>
@@ -47,7 +48,12 @@ export const SurveyReportCatalog = ({ model }: { model: SurveyWorkspaceModel }) 
                 {surveyAvailabilityLabel(item)} · privacy threshold {item.minimumReportGroupSize}
               </p>
             </div>
-            <Button size="sm" variant="outline" onClick={() => void model.openResults(item.id)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void model.openResults(item.id)}
+              data-tour-anchor="surveys.results"
+            >
               Aggregate results
             </Button>
           </li>

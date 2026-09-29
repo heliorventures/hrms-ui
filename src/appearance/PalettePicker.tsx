@@ -7,7 +7,7 @@ const PalettePicker = ({
   value: PaletteId;
   onChange: (value: PaletteId) => void;
 }) => (
-  <fieldset>
+  <fieldset data-tour-anchor="appearance-accent-colors">
     <legend className="mb-2 text-sm font-medium">Accent color</legend>
     <p className="mb-3 text-xs text-content-muted">
       Status colors keep their meaning. Accent shades adapt for readable contrast.

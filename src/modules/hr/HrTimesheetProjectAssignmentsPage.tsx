@@ -199,7 +199,11 @@ const HrTimesheetProjectAssignmentsPage = () => {
         {loading ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : (
-          <form className="space-y-4" onSubmit={(ev) => void save(ev)}>
+          <form
+            className="space-y-4"
+            onSubmit={(ev) => void save(ev)}
+            data-tour-anchor="hr-timesheet-assignments.editor"
+          >
             {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
             {message && <p className="text-sm text-green-700 dark:text-green-400">{message}</p>}
 

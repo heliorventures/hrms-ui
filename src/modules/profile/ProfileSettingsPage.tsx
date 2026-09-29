@@ -63,12 +63,17 @@ const ProfileSettingsPage = () => {
   if (activeView === 'security') {
     return (
       <div className="space-y-4">
-        <PageActions>
+        <PageActions tourAnchor="profile-settings-navigation">
           <div>
             <h1 className="sr-only">Security Settings</h1>
           </div>
           {!clientSession?.mustChangePassword && employeeId ? (
-            <Button type="button" variant="outline" onClick={() => setActiveView('profile')}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setActiveView('profile')}
+              data-tour-anchor="profile-back-to-profile"
+            >
               Back to profile
             </Button>
           ) : null}
@@ -97,9 +102,14 @@ const ProfileSettingsPage = () => {
   if (profileError) {
     return (
       <div className="space-y-4">
-        <PageActions>
+        <PageActions tourAnchor="profile-settings-navigation">
           <h1 className="sr-only">My Profile</h1>
-          <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setActiveView('security')}
+            data-tour-anchor="profile-security-settings"
+          >
             Security settings
           </Button>
         </PageActions>
@@ -116,9 +126,14 @@ const ProfileSettingsPage = () => {
   if (!employeeId) {
     return (
       <div className="space-y-4">
-        <PageActions>
+        <PageActions tourAnchor="profile-settings-navigation">
           <h1 className="sr-only">My Profile</h1>
-          <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setActiveView('security')}
+            data-tour-anchor="profile-security-settings"
+          >
             Security settings
           </Button>
         </PageActions>
@@ -136,13 +151,20 @@ const ProfileSettingsPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageActions>
+      <PageActions tourAnchor="profile-settings-navigation">
         <h1 className="sr-only">My Profile</h1>
-        <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setActiveView('security')}
+          data-tour-anchor="profile-security-settings"
+        >
           Security settings
         </Button>
       </PageActions>
-      <EmployeeProfileShell employeeId={employeeId} />
+      <div data-tour-anchor="profile-employee-record">
+        <EmployeeProfileShell employeeId={employeeId} />
+      </div>
     </div>
   );
 };

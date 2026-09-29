@@ -57,7 +57,9 @@ const PayrollPage = () => {
         <h1 className="sr-only">Payroll</h1>
       </div>
 
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="payroll.process.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <PayrollAdminNotice />
 
       {board.error && (
@@ -99,20 +101,22 @@ const PayrollPage = () => {
         />
       </PageTabPanel>
       <PageTabPanel id="runs" activeTab={tab}>
-        <PayrollCyclesCard
-          rows={board.data?.payrollCycles ?? []}
-          form={actions.cycleForm}
-          loading={board.loading}
-          createBusy={actions.createBusy}
-          createError={actions.createError}
-          createOk={actions.createOk}
-          runBusy={actions.runBusy}
-          runError={actions.runError}
-          runOk={actions.runOk}
-          onChange={actions.setCycleField}
-          onCreate={() => void actions.createCycle()}
-          onRun={(payrollCycleId) => void actions.runPayroll(payrollCycleId)}
-        />
+        <div data-tour-anchor="payroll.cycles">
+          <PayrollCyclesCard
+            rows={board.data?.payrollCycles ?? []}
+            form={actions.cycleForm}
+            loading={board.loading}
+            createBusy={actions.createBusy}
+            createError={actions.createError}
+            createOk={actions.createOk}
+            runBusy={actions.runBusy}
+            runError={actions.runError}
+            runOk={actions.runOk}
+            onChange={actions.setCycleField}
+            onCreate={() => void actions.createCycle()}
+            onRun={(payrollCycleId) => void actions.runPayroll(payrollCycleId)}
+          />
+        </div>
       </PageTabPanel>
       {canExportPayroll ? (
         <PageTabPanel id="exports" activeTab={tab}>

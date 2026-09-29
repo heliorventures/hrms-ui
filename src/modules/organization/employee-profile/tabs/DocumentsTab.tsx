@@ -185,12 +185,14 @@ export function DocumentsTab({
       <>
         {actionError ? <p role="alert" className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p> : null}
         {successMessage ? <p role="status" className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{successMessage}</p> : null}
-        <EmptySection
-          title="No Documents Yet"
-          description="Upload PAN, Aadhaar, offer letters, or appraisal letters. Employee uploads require HR approval."
-          actionLabel="Upload document"
-          onAction={() => setUploadOpen(true)}
-        />
+        <div data-tour-anchor="employee-profile-document-upload">
+          <EmptySection
+            title="No Documents Yet"
+            description="Upload PAN, Aadhaar, offer letters, or appraisal letters. Employee uploads require HR approval."
+            actionLabel="Upload document"
+            onAction={() => setUploadOpen(true)}
+          />
+        </div>
         <UploadModal
           isOpen={uploadOpen}
           onClose={() => setUploadOpen(false)}

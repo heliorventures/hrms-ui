@@ -66,6 +66,7 @@ export const ApprovalActions = ({
   return (
     <div className="flex flex-wrap gap-2">
       <Button
+        data-tour-anchor="leave.approve-trigger"
         variant="primary"
         type="button"
         className="!py-1 !text-xs"
@@ -75,6 +76,7 @@ export const ApprovalActions = ({
         {approveBusyId === row.id ? 'Approving...' : 'Approve'}
       </Button>
       <Button
+        data-tour-anchor="leave.reject-trigger"
         variant="outline"
         type="button"
         className="!py-1 !text-xs"
@@ -157,7 +159,12 @@ const MobileRequest = (props: RowProps) => {
       {row.reason ? <p className="break-words text-sm">{row.reason}</p> : null}
       {showApprovalColumn ? <ApprovalActions {...props} /> : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" onClick={() => onOpenTrail(row)}>
+        <Button
+          type="button"
+          variant="outline"
+          data-tour-anchor="leave.workflow-trigger"
+          onClick={() => onOpenTrail(row)}
+        >
           History
         </Button>
         <OwnRequestAction {...props} />
@@ -234,6 +241,7 @@ function requestColumns(props: LeaveRequestsTableSectionProps) {
           type="button"
           variant="outline"
           className="!py-1 !text-xs"
+          data-tour-anchor="leave.workflow-trigger"
           onClick={() => onOpenTrail(row)}
         >
           View

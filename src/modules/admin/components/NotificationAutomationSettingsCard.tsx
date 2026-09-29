@@ -231,7 +231,13 @@ const NotificationAutomationSettingsCard = ({ initialSettings }: Props) => {
 
       <AutomationSettingsFields settings={settings} errors={errors} setField={setField} />
       <div className="mt-4">
-        <Button type="button" variant="primary" busy={saving} onClick={() => void save()}>
+        <Button
+          data-tour-anchor="admin-notifications.automation-save"
+          type="button"
+          variant="primary"
+          busy={saving}
+          onClick={() => void save()}
+        >
           Save Automated Events
         </Button>
       </div>

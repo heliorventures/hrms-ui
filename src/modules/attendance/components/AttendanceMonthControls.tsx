@@ -18,7 +18,12 @@ const AttendanceMonthControls = ({
   resetCursorStack,
   refreshBoard,
 }: Props) => (
-  <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Attendance month">
+  <div
+    className="flex flex-wrap items-center gap-2"
+    role="group"
+    aria-label="Attendance month"
+    data-tour-anchor="attendance.month-controls"
+  >
     <Button
       variant="outline"
       type="button"

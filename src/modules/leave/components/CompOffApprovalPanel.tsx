@@ -147,59 +147,61 @@ const ApprovalQueue = () => {
     board.mutate(DecideCompOffDocument, { claimId, approve, reason });
   return (
     <Card title="Comp-off credit approvals">
-      {board.loading && (
-        <p role="status" className="text-sm text-content-secondary">
-          Loading requests…
-        </p>
-      )}
-      {board.error && !reject && (
-        <div role="alert" className="flex items-center gap-3 text-sm text-status-danger">
-          {board.error}
-          <Button size="sm" variant="outline" onClick={board.reload}>
-            Retry
-          </Button>
-        </div>
-      )}
-      {board.data && (
-        <>
-          <QueueTable
-            rows={rows}
-            busy={busy}
-            approve={(id) => {
-              void decide(id, true);
-            }}
-            reject={setReject}
-          />
-          <div className="mt-2 flex items-center justify-end gap-3">
-            <Button
-              size="sm"
-              variant="quiet"
-              disabled={page === 0 || busy}
-              onClick={() => setPage((value) => value - 1)}
-            >
-              Previous
-            </Button>
-            <span className="text-xs text-content-secondary">Page {page + 1}</span>
-            <Button
-              size="sm"
-              variant="quiet"
-              disabled={rows.length < 20 || busy}
-              onClick={() => setPage((value) => value + 1)}
-            >
-              Next
+      <div data-tour-anchor="leave.comp-off-approvals">
+        {board.loading && (
+          <p role="status" className="text-sm text-content-secondary">
+            Loading requests…
+          </p>
+        )}
+        {board.error && !reject && (
+          <div role="alert" className="flex items-center gap-3 text-sm text-status-danger">
+            {board.error}
+            <Button size="sm" variant="outline" onClick={board.reload}>
+              Retry
             </Button>
           </div>
-        </>
-      )}
-      {reject && (
-        <RejectCredit
-          claim={reject}
-          busy={board.busy}
-          error={board.error}
-          close={() => setReject(null)}
-          submit={(reason) => decide(reject.id, false, reason)}
-        />
-      )}
+        )}
+        {board.data && (
+          <>
+            <QueueTable
+              rows={rows}
+              busy={busy}
+              approve={(id) => {
+                void decide(id, true);
+              }}
+              reject={setReject}
+            />
+            <div className="mt-2 flex items-center justify-end gap-3">
+              <Button
+                size="sm"
+                variant="quiet"
+                disabled={page === 0 || busy}
+                onClick={() => setPage((value) => value - 1)}
+              >
+                Previous
+              </Button>
+              <span className="text-xs text-content-secondary">Page {page + 1}</span>
+              <Button
+                size="sm"
+                variant="quiet"
+                disabled={rows.length < 20 || busy}
+                onClick={() => setPage((value) => value + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </>
+        )}
+        {reject && (
+          <RejectCredit
+            claim={reject}
+            busy={board.busy}
+            error={board.error}
+            close={() => setReject(null)}
+            submit={(reason) => decide(reject.id, false, reason)}
+          />
+        )}
+      </div>
     </Card>
   );
 };

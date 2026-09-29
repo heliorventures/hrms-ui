@@ -12,6 +12,8 @@ import {
 } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { matchedTenantRoute } from '../../guidance/matchedTenantRoute';
+
 import AppLayout from './AppLayout';
 
 vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => ({ request: vi.fn() }) }));
@@ -162,6 +164,14 @@ afterEach(() => {
 });
 
 describe('AppLayout', () => {
+  it('resolves contextual URLs to their registered tenant route identity', () => {
+    expect(matchedTenantRoute('/organization/employees/employee-7')).toBe(
+      'organization/employees/:employeeId'
+    );
+    expect(matchedTenantRoute('/dashboard')).toBe('dashboard');
+    expect(matchedTenantRoute('/not-a-tenant-page')).toBeNull();
+  });
+
   it('provides a focus-visible skip link and a labelled programmatic main target', async () => {
     renderLayout();
 

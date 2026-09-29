@@ -3,13 +3,24 @@ import { Link } from 'react-router-dom';
 
 import { useAppearance } from '../../appearance/appearanceContext';
 
-const PageActionLink = ({ to, label, icon }: { to: string; label: string; icon: ReactNode }) => {
+const PageActionLink = ({
+  to,
+  label,
+  icon,
+  tourAnchor,
+}: {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  tourAnchor?: string;
+}) => {
   const { preferences } = useAppearance();
   return (
     <Link
       to={to}
       aria-label={label}
       title={preferences.tooltips ? label : undefined}
+      data-tour-anchor={tourAnchor}
       className="app-button group relative inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-2.5 text-sm text-accent hover:bg-surface-selected focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
     >
       <span aria-hidden="true">{icon}</span>

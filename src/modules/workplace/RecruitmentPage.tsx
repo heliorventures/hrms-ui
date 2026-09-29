@@ -160,7 +160,9 @@ const RecruitmentPage = () => {
   return (
     <div className="space-y-4">
       <h1 className="sr-only">Hiring</h1>
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="recruitment.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -170,6 +172,7 @@ const RecruitmentPage = () => {
         <button
           className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
           onClick={() => editJob()}
+          data-tour-anchor="recruitment.job-actions"
         >
           Create job opening
         </button>
@@ -260,7 +263,10 @@ const RecruitmentPage = () => {
               </Button>
             </div>
           ) : null}
-          <p className="mb-3 text-xs text-content-muted">
+          <p
+            className="mb-3 text-xs text-content-muted"
+            data-tour-anchor="recruitment.applicant-review"
+          >
             Showing up to 50 recent applications{selectedJobId ? ', filtered by job opening' : ''}.
           </p>
           {loading ? (

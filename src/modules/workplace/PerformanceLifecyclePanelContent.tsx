@@ -69,55 +69,65 @@ const PerformanceLifecyclePanelContent = ({
 }: Props) => {
   return (
     <>
-      <PerformanceLifecycleSetup
-        activeProgram={activeProgram}
-        isBusy={isBusy}
-        launchTemplateId={setup.launchTemplateId}
-        onActivateProgram={programActions.activateProgram}
-        onAddQuestion={templateActions.addQuestion}
-        onLaunchCycle={lifecycleActions.launchCycle}
-        onPeriodDateChange={setPeriodDate}
-        onProgramDraftChange={setProgramDraft}
-        onPublishTemplate={templateActions.publishTemplate}
-        onRemoveQuestion={templateActions.removeQuestion}
-        onSaveProgram={programActions.saveProgram}
-        onSaveTemplate={templateActions.saveTemplate}
-        onReloadPrograms={setup.loadPrograms}
-        onSelectedProgramChange={showProcess ? setup.selectProcess : setup.setSelectedProgram}
-        onTemplateNameChange={templateActions.setTemplateName}
-        onTemplateSelectionChange={setup.setSelectedTemplate}
-        onUpdateQuestion={templateActions.updateQuestion}
-        periodDate={periodDate}
-        programDraft={programDraft}
-        programs={setup.programs}
-        publishedTemplates={setup.publishedTemplates}
-        questions={templateActions.questions}
-        selectedProgram={setup.selectedProgram}
-        showProcess={showProcess}
-        showSetup={showSetup}
-        templateName={templateActions.templateName}
-        templates={setup.templates}
-      />
+      <div
+        data-tour-anchor={
+          showProcess ? 'performance.lifecycle.process' : 'performance.lifecycle.setup'
+        }
+      >
+        <PerformanceLifecycleSetup
+          activeProgram={activeProgram}
+          isBusy={isBusy}
+          launchTemplateId={setup.launchTemplateId}
+          onActivateProgram={programActions.activateProgram}
+          onAddQuestion={templateActions.addQuestion}
+          onLaunchCycle={lifecycleActions.launchCycle}
+          onPeriodDateChange={setPeriodDate}
+          onProgramDraftChange={setProgramDraft}
+          onPublishTemplate={templateActions.publishTemplate}
+          onRemoveQuestion={templateActions.removeQuestion}
+          onSaveProgram={programActions.saveProgram}
+          onSaveTemplate={templateActions.saveTemplate}
+          onReloadPrograms={setup.loadPrograms}
+          onSelectedProgramChange={showProcess ? setup.selectProcess : setup.setSelectedProgram}
+          onTemplateNameChange={templateActions.setTemplateName}
+          onTemplateSelectionChange={setup.setSelectedTemplate}
+          onUpdateQuestion={templateActions.updateQuestion}
+          periodDate={periodDate}
+          programDraft={programDraft}
+          programs={setup.programs}
+          publishedTemplates={setup.publishedTemplates}
+          questions={templateActions.questions}
+          selectedProgram={setup.selectedProgram}
+          showProcess={showProcess}
+          showSetup={showSetup}
+          templateName={templateActions.templateName}
+          templates={setup.templates}
+        />
+      </div>
       {showAdministration && (
-        <PerformanceAdministrationPanel performanceProgramId={setup.selectedProgram || undefined} />
+        <div data-tour-anchor="performance.lifecycle.administration">
+          <PerformanceAdministrationPanel performanceProgramId={setup.selectedProgram || undefined} />
+        </div>
       )}
-      <PerformanceLifecycleReviews
-        actorEmployeeId={actorEmployeeId}
-        canEvaluate={canEvaluate}
-        canManage={canManage}
-        canSelf={canSelf}
-        detailRevision={detailRevision}
-        goalActions={goalActions}
-        isBusy={isBusy}
-        lifecycleActions={lifecycleActions}
-        reviewActions={reviewActions}
-        reviewData={reviewData}
-        reviewDrafts={reviewDrafts}
-        showProcess={showProcess}
-        showSelf={showSelf}
-        showTeam={showTeam}
-        tab={tab}
-      />
+      <div data-tour-anchor="performance.lifecycle.reviews">
+        <PerformanceLifecycleReviews
+          actorEmployeeId={actorEmployeeId}
+          canEvaluate={canEvaluate}
+          canManage={canManage}
+          canSelf={canSelf}
+          detailRevision={detailRevision}
+          goalActions={goalActions}
+          isBusy={isBusy}
+          lifecycleActions={lifecycleActions}
+          reviewActions={reviewActions}
+          reviewData={reviewData}
+          reviewDrafts={reviewDrafts}
+          showProcess={showProcess}
+          showSelf={showSelf}
+          showTeam={showTeam}
+          tab={tab}
+        />
+      </div>
     </>
   );
 };

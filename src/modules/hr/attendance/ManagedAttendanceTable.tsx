@@ -120,6 +120,7 @@ const ActionsCell = ({
   <div className="flex flex-wrap gap-1 whitespace-nowrap">
     {onAdd ? (
       <Button
+        data-tour-anchor="hr-attendance.add-segment-trigger"
         type="button"
         variant="outline"
         size="sm"
@@ -131,6 +132,7 @@ const ActionsCell = ({
     ) : null}
     {onAdjust ? (
       <Button
+        data-tour-anchor="hr-attendance.adjust-trigger"
         type="button"
         variant="outline"
         size="sm"
@@ -159,34 +161,36 @@ const ManagedAttendanceTable = ({
 
   return (
     <Card title="Attendance records">
-      <DataTable
-        ariaLabel="Managed attendance records"
-        rows={rows}
-        columns={columns}
-        getRowId={(row) => row.id}
-        getRowLabel={(row) => `${row.employeeName} on ${row.workDate}`}
-        renderMobileRow={(row) => (
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              {columns[0].cell(row)}
-              {columns[1].cell(row)}
+      <div data-tour-anchor="hr-attendance.records">
+        <DataTable
+          ariaLabel="Managed attendance records"
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          getRowLabel={(row) => `${row.employeeName} on ${row.workDate}`}
+          renderMobileRow={(row) => (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                {columns[0].cell(row)}
+                {columns[1].cell(row)}
+              </div>
+              {columns.find((column) => column.id === 'actions')?.cell(row)}
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                {columns
+                  .filter((column) => !['employee', 'date', 'actions'].includes(column.id))
+                  .map((column) => (
+                    <div key={column.id} className="min-w-0 break-words">
+                      <dt className="text-xs text-content-secondary">{column.header}</dt>
+                      <dd className="mt-1 tabular-nums">{column.cell(row)}</dd>
+                    </div>
+                  ))}
+              </dl>
             </div>
-            {columns.find((column) => column.id === 'actions')?.cell(row)}
-            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-              {columns
-                .filter((column) => !['employee', 'date', 'actions'].includes(column.id))
-                .map((column) => (
-                  <div key={column.id} className="min-w-0 break-words">
-                    <dt className="text-xs text-content-secondary">{column.header}</dt>
-                    <dd className="mt-1 tabular-nums">{column.cell(row)}</dd>
-                  </div>
-                ))}
-            </dl>
-          </div>
-        )}
-        state={state}
-        stateMessage={stateMessage}
-      />
+          )}
+          state={state}
+          stateMessage={stateMessage}
+        />
+      </div>
     </Card>
   );
 };

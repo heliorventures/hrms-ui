@@ -203,7 +203,9 @@ const DocumentsContent = () => {
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="organization-documents-tabs">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Documents</h1>
         <p className="mt-1 text-sm text-content-secondary">
@@ -235,7 +237,11 @@ const DocumentsContent = () => {
       <PageTabPanel id="company" activeTab={tab}>
         {canManageCompanyDocuments ? (
           <div className="flex justify-end">
-            <Button disabled={busy} onClick={() => setUploadOpen((open) => !open)}>
+            <Button
+              disabled={busy}
+              onClick={() => setUploadOpen((open) => !open)}
+              data-tour-anchor="organization-company-document-upload"
+            >
               {uploadOpen ? 'Back to document library' : 'Add Company Document'}
             </Button>
           </div>
@@ -314,16 +320,18 @@ const DocumentsContent = () => {
         )}
 
         {!uploadOpen ? (
-          <CompanyDocumentLibrary
-            documents={companyDocuments}
-            loading={loading}
-            failed={Boolean(loadError)}
-            busy={busy}
-            canManage={canManageCompanyDocuments}
-            onRetry={() => void loadDocuments().catch(() => undefined)}
-            onDownload={downloadCompanyDocument}
-            onDelete={deleteCompanyDocument}
-          />
+          <div data-tour-anchor="organization-company-document-library">
+            <CompanyDocumentLibrary
+              documents={companyDocuments}
+              loading={loading}
+              failed={Boolean(loadError)}
+              busy={busy}
+              canManage={canManageCompanyDocuments}
+              onRetry={() => void loadDocuments().catch(() => undefined)}
+              onDownload={downloadCompanyDocument}
+              onDelete={deleteCompanyDocument}
+            />
+          </div>
         ) : null}
       </PageTabPanel>
       <PageTabPanel id="types" activeTab={tab}>

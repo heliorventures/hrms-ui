@@ -1,0 +1,43 @@
+import type { TourDefinition } from '../../../guidance/tourTypes';
+
+export const payrollPayPageTour: TourDefinition = {
+  id: 'payroll-payslips-page',
+  routePaths: ['payroll/payslips'],
+  steps: [
+    {
+      id: 'payroll-pay-sections',
+      anchor: 'payroll.pay.sections',
+      title: 'Choose a pay section',
+      body: 'Salary shows your current salary breakdown. Payslip lets you choose a pay period and view its payslip. Income Tax appears when your role can read tax details.',
+    },
+    {
+      id: 'payroll-pay-salary-preview',
+      anchor: 'payroll.pay.sections',
+      title: 'Review your salary breakdown',
+      body: 'After the tour, select Salary to see the current salary components and amounts available to your account. Contact payroll if the displayed structure needs correction.',
+    },
+    {
+      id: 'payroll-pay-payslip-period',
+      anchor: 'payroll.pay.sections',
+      title: 'Choose a payslip period',
+      body: 'Open Payslip after the tour to choose a pay period and review its generated payslip, including earnings, deductions, and net pay. A period without a payslip shows that one is not available yet.',
+    },
+    {
+      id: 'payroll-pay-income-tax',
+      anchor: 'payroll.pay.sections',
+      title: 'Review income tax details',
+      body: 'The Income Tax section shows your available tax declaration, deduction proof, and tax computation information. Select that section after closing the tour.',
+      isVisible: ({ canScopedPermission }) =>
+        canScopedPermission?.('tax:read', ['SELF', 'TEAM', 'DEPARTMENT', 'ALL']) ?? false,
+    },
+    {
+      id: 'payroll-pay-tax-declaration',
+      anchor: 'payroll.pay.sections',
+      title: 'Submit a tax declaration or proof',
+      body: 'With tax submission access, the Income Tax section accepts an estimated fiscal year, regime, gross income, and deductions, or a deduction section, declared and actual amount, and proof file. Submitting saves the tax record; this tour does not submit it.',
+      isVisible: ({ canCapability, canScopedPermission }) =>
+        (canScopedPermission?.('tax:read', ['SELF', 'TEAM', 'DEPARTMENT', 'ALL']) ?? false) &&
+        (canCapability?.('action.tax.submit') ?? false),
+    },
+  ],
+};

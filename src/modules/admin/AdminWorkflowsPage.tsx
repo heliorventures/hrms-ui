@@ -28,15 +28,17 @@ const WorkflowWorkspace = ({ domain }: { domain: WorkflowDomain }) => {
           <p className="text-sm text-red-600 dark:text-red-400">{workspace.error}</p>
         </Card>
       )}
-      <WorkflowRecords
-        data={workspace.data}
-        stepsData={workspace.stepsData}
-        loading={workspace.loading}
-        reorderBusyWfId={editor.reorderBusyWfId}
-        delStepBusy={editor.delStepBusy}
-        onReorderSteps={editor.onReorderSteps}
-        onDeleteStep={editor.onDeleteStep}
-      />
+      <div data-tour-anchor="workflows.records">
+        <WorkflowRecords
+          data={workspace.data}
+          stepsData={workspace.stepsData}
+          loading={workspace.loading}
+          reorderBusyWfId={editor.reorderBusyWfId}
+          delStepBusy={editor.delStepBusy}
+          onReorderSteps={editor.onReorderSteps}
+          onDeleteStep={editor.onDeleteStep}
+        />
+      </div>
     </div>
   );
 };

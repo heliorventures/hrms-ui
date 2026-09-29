@@ -92,7 +92,9 @@ const LearningPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="learning.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <h1 className="sr-only">Learning</h1>
       {notice && (
         <p role="status" className="text-sm text-content-secondary">
@@ -111,6 +113,7 @@ const LearningPage = () => {
               variant="outline"
               size="sm"
               className="mb-3 text-sm font-medium text-primary-600"
+              data-tour-anchor="learning.skill-actions"
               onClick={() =>
                 setEditor({ kind: 'skill', values: { name: '', category: '', level: '' } })
               }
@@ -165,6 +168,7 @@ const LearningPage = () => {
               variant="outline"
               size="sm"
               className="mb-3 text-sm font-medium text-primary-600"
+              data-tour-anchor="learning.course-actions"
               onClick={() =>
                 setEditor({
                   kind: 'course',

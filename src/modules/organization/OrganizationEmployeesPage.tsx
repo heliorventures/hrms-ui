@@ -98,6 +98,7 @@ const OrganizationEmployeesPage = () => {
         <div className="app-search-slot w-full sm:w-80">
           <Input
             aria-label="Search employees"
+            data-tour-anchor="organization-employees-search"
             type="search"
             placeholder="Search by name, employee code, status..."
             value={searchQuery}
@@ -123,7 +124,9 @@ const OrganizationEmployeesPage = () => {
       )}
 
       {!loading && filteredEmployees.length > 0 && (
-        <EmployeeDirectoryTable rows={filteredEmployees} />
+        <div data-tour-anchor="organization-employees-results">
+          <EmployeeDirectoryTable rows={filteredEmployees} />
+        </div>
       )}
 
       {!loading && filteredEmployees.length === 0 && (

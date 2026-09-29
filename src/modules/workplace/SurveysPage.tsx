@@ -101,7 +101,9 @@ const SurveyLists = ({ model }: { model: SurveyWorkspaceModel }) => {
   if (tabs.length === 0) return <p>No surveys are available with your permissions.</p>;
   return (
     <>
-      <Tabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="surveys.workspace">
+        <Tabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <section role="tabpanel" id={active.panelId} aria-labelledby={`${active.panelId}-tab`}>
         {tab === 'created' && <SurveyAdminCatalog model={model} />}
         {tab === 'mine' && <SurveyRespondentCatalog model={model} />}
@@ -198,7 +200,11 @@ const SurveysWorkspace = ({ respondentOnly = false, initialSurveyId }: SurveysPa
         actions={
           model.screen === 'list' ? (
             model.canManage && (
-              <Button startIcon={<Plus size={18} />} onClick={model.createSurvey}>
+              <Button
+                startIcon={<Plus size={18} />}
+                onClick={model.createSurvey}
+                data-tour-anchor="surveys.add"
+              >
                 Add survey
               </Button>
             )

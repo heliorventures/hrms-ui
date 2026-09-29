@@ -81,6 +81,7 @@ export default function AssetAllocationsSection(props: AssetAllocationsSectionPr
         placeholder="Asset, tag, serial, or employee"
         loading={props.loading}
         actionLabel={props.canManage ? 'Assign Asset' : undefined}
+        actionAnchor="assets.assignment-action"
         onAction={props.onAssign}
         onSearch={(search) => props.onFilterChange({ ...props.filter, page: 1, search })}
       />

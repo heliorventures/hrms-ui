@@ -18,7 +18,12 @@ interface TabNavigationProps {
 export const TabNavigation = ({ tabs, activeId, onChange }: TabNavigationProps) => {
   return (
     <div className="min-w-0">
-      <div className={TAB_LIST_CLASS} role="tablist" aria-label="Employee Profile Sections">
+      <div
+        className={TAB_LIST_CLASS}
+        role="tablist"
+        aria-label="Employee Profile Sections"
+        data-tour-anchor="profile-section-navigation"
+      >
         {tabs.map((t) => {
           const Icon = t.icon;
           const active = t.id === activeId;
@@ -29,6 +34,7 @@ export const TabNavigation = ({ tabs, activeId, onChange }: TabNavigationProps) 
               role="tab"
               aria-selected={active}
               onClick={() => onChange(t.id)}
+              data-tour-anchor={`profile-section-${t.id}`}
               className={tabClassName(active)}
             >
               <Icon className="h-4 w-4 shrink-0 opacity-80" aria-hidden />

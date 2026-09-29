@@ -46,11 +46,13 @@ const PrejoiningAdminWorkspace = () => {
           {error}
         </p>
       ) : null}
-      <Tabs
-        tabs={tabs}
-        value={tab}
-        onValueChange={(value) => setTab(value as 'config' | 'candidates')}
-      />
+      <div data-tour-anchor="prejoining.sections">
+        <Tabs
+          tabs={tabs}
+          value={tab}
+          onValueChange={(value) => setTab(value as 'config' | 'candidates')}
+        />
+      </div>
 
       {tab === 'config' && canManage ? <PrejoiningConfigPanel model={model} /> : null}
       {tab === 'candidates' && canReview ? <PrejoiningCandidatesPanel model={model} /> : null}

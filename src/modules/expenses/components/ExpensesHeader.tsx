@@ -23,17 +23,26 @@ const ExpensesHeader = ({
   return (
     <PageActions>
       <h1 className="sr-only">Expenses & Travel</h1>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3" data-tour-anchor="expenses.action-bar">
         {canManageExpense ? (
           <PageActionLink
             to="/admin/expense-categories"
             label="Configure categories"
             icon={<Settings className="h-5 w-5" />}
+            tourAnchor="expenses.category-settings"
           />
         ) : null}
-        {canSubmitExpense ? <Button onClick={onOpenExpense}>Submit Expense</Button> : null}
+        {canSubmitExpense ? (
+          <Button onClick={onOpenExpense} data-tour-anchor="expenses.submit-expense">
+            Submit Expense
+          </Button>
+        ) : null}
         {canSubmitTravel ? (
-          <Button variant="secondary" onClick={onOpenTravel}>
+          <Button
+            variant="secondary"
+            onClick={onOpenTravel}
+            data-tour-anchor="expenses.request-travel"
+          >
             Request travel
           </Button>
         ) : null}

@@ -22,7 +22,11 @@ const HomeQuickAccess = () => {
   const available = destinations.filter(({ path }) => permissions.canRoute(path));
   if (!available.length) return null;
   return (
-    <nav aria-label="Quick access" className="space-y-3">
+    <nav
+      aria-label="Quick access"
+      className="space-y-3"
+      data-tour-anchor="dashboard-quick-access"
+    >
       <h2 className="text-base font-semibold">Quick access</h2>
       <div className="flex flex-wrap gap-3">
         {available.map(({ path, to, label, icon: Icon }) => (

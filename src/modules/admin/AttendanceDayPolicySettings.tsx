@@ -91,7 +91,11 @@ const AttendanceDayPolicySettings = (props: Props) => {
           success={success}
         />
 
-        <form className="space-y-3" onSubmit={(event) => void requestPreview(event)}>
+        <form
+          className="space-y-3"
+          data-tour-anchor="attendance-policy.boundary-preview"
+          onSubmit={(event) => void requestPreview(event)}
+        >
           <div className="grid gap-3 sm:grid-cols-2">
             <Input
               type="time"
@@ -146,6 +150,7 @@ const AttendanceDayPolicySettings = (props: Props) => {
               I confirm this exact transition interval and timezone.
             </label>
             <Button
+              data-tour-anchor="attendance-policy.schedule-change"
               type="button"
               disabled={!confirmed || busy !== null}
               onClick={() => void schedule()}

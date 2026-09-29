@@ -8,7 +8,11 @@ interface Props extends Omit<PreferenceControlProps, 'setting'> {
 const AppearanceNavigation = ({ preferences, onChange, section, onSectionChange }: Props) => (
   <aside className="space-y-4">
     <PreferenceControl setting={MODE_SETTING} preferences={preferences} onChange={onChange} />
-    <nav aria-label="Appearance sections" className="flex flex-wrap gap-1 lg:flex-col">
+    <nav
+      aria-label="Appearance sections"
+      className="flex flex-wrap gap-1 lg:flex-col"
+      data-tour-anchor="appearance-sections"
+    >
       {APPEARANCE_SECTIONS.map((label) => (
         <button
           key={label}

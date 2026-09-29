@@ -126,7 +126,9 @@ const CompensationPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="compensation.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <PageHeader title="Salary Bands & Reviews" />
       {(error || designationError) && (
         <Card>
@@ -139,7 +141,11 @@ const CompensationPage = () => {
             <span className="flex items-center justify-between gap-3">
               <span>Review Cycles</span>
               {canManage && (
-                <Button size="sm" onClick={() => setEditor({ kind: 'cycle' })}>
+                <Button
+                  size="sm"
+                  onClick={() => setEditor({ kind: 'cycle' })}
+                  data-tour-anchor="compensation.setup-actions"
+                >
                   Create Review Cycle
                 </Button>
               )}
@@ -186,7 +192,11 @@ const CompensationPage = () => {
             <span className="flex items-center justify-between gap-3">
               <span>Salary Bands</span>
               {canManage && (
-                <Button size="sm" onClick={() => setEditor({ kind: 'band' })}>
+                <Button
+                  size="sm"
+                  onClick={() => setEditor({ kind: 'band' })}
+                  data-tour-anchor="compensation.setup-actions"
+                >
                   Create Salary Band
                 </Button>
               )}
@@ -243,7 +253,11 @@ const CompensationPage = () => {
           )}
         </Card>
       </PageTabPanel>
-      <nav aria-label="Compensation pages" className="flex items-center justify-end gap-3">
+      <nav
+        aria-label="Compensation pages"
+        className="flex items-center justify-end gap-3"
+        data-tour-anchor="compensation.pages"
+      >
         <Button
           size="sm"
           variant="outline"

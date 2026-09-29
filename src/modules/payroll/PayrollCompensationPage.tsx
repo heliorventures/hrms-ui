@@ -318,7 +318,9 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="payroll.compensation.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <div>
         <h1 className="sr-only">Salary Setup</h1>
       </div>
@@ -345,14 +347,16 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
             Next: Build Salary Structure
           </Button>
         </div>
-        <SalaryComponentsSection
-          board={board}
-          busy={busy}
-          loading={loading}
-          componentForm={componentForm}
-          onComponentFormChange={setComponentForm}
-          onSubmit={addComponent}
-        />
+        <div data-tour-anchor="payroll.compensation.components">
+          <SalaryComponentsSection
+            board={board}
+            busy={busy}
+            loading={loading}
+            componentForm={componentForm}
+            onComponentFormChange={setComponentForm}
+            onSubmit={addComponent}
+          />
+        </div>
       </PageTabPanel>
       <PageTabPanel id="structures" activeTab={tab}>
         <div className="flex justify-end">

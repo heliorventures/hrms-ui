@@ -86,6 +86,7 @@ export const DocumentsConfigPanel = ({ model }: { model: PrejoiningAdminModel })
                 setInviteOpen(true);
                 setInvitation(null);
               }}
+              data-tour-anchor="prejoining.invitation-actions"
             >
               Create invitation
             </Button>

@@ -56,6 +56,7 @@ const HrAttendanceManagementView = ({
           <h1 className="sr-only">Attendance management</h1>
         </div>
         <Button
+          data-tour-anchor="hr-attendance.refresh"
           type="button"
           variant="outline"
           aria-label="Refresh attendance"
@@ -67,11 +68,13 @@ const HrAttendanceManagementView = ({
       </PageActions>
 
       <Card>
-        <ManagedAttendanceFilters
-          key={rawFiltersOwned ? 'active-client-filters' : 'replacement-client-filters'}
-          value={rawFilters}
-          onChange={changeFilters}
-        />
+        <div data-tour-anchor="hr-attendance.filters">
+          <ManagedAttendanceFilters
+            key={rawFiltersOwned ? 'active-client-filters' : 'replacement-client-filters'}
+            value={rawFilters}
+            onChange={changeFilters}
+          />
+        </div>
       </Card>
 
       <ManagedAttendanceNotices state={state} refresh={refresh} />

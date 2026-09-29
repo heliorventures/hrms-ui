@@ -232,12 +232,13 @@ const ProfileReviewPage = () => {
             </p>
           </PageInformation>
         </div>
-        <Button type="button" variant="outline" className="gap-2" disabled={loading} onClick={() => void loadQueue()}>
+        <Button type="button" variant="outline" className="gap-2" disabled={loading} onClick={() => void loadQueue()} data-tour-anchor="profile-review-refresh">
           <RefreshCw className="h-4 w-4" aria-hidden /> Refresh
         </Button>
       </div>
 
-      <Card title={`Education and work evidence (${evidenceRows.length})`}>
+      <div data-tour-anchor="profile-review-evidence-queue">
+        <Card title={`Education and work evidence (${evidenceRows.length})`}>
         {loading ? <p className="text-sm text-slate-500">Loading evidence...</p> : null}
         {!loading && evidenceRows.length === 0 ? <p className="text-sm text-slate-500">No education or work evidence is awaiting review.</p> : null}
         <div className="space-y-3">
@@ -247,7 +248,7 @@ const ProfileReviewPage = () => {
             return (
               <div key={`${row.evidenceType}-${row.recordId}`} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
                 <div><p className="font-semibold text-slate-900 dark:text-white">{row.employeeName} · {row.evidenceType === 'EDUCATION' ? 'Education' : 'Work experience'}</p><p className="text-sm text-slate-500">{row.employeeCode} · {row.summary}</p></div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2" data-tour-anchor="profile-review-evidence-actions">
                   {firstDocumentId ? <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void loadEvidenceDocument(firstDocumentId)}>Secure evidence</Button> : null}
                   {openUrl ? <a href={openUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-indigo-600">Open</a> : null}
                   <Button type="button" size="sm" variant="danger" disabled={busy} onClick={() => { setEvidenceReject(row); setRejectionReason(''); }}>Reject</Button>
@@ -257,11 +258,12 @@ const ProfileReviewPage = () => {
             );
           })}
         </div>
-      </Card>
+        </Card>
+      </div>
 
       {error ? <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div> : null}
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3" data-tour-anchor="profile-review-status-filter">
         <label htmlFor="profile-review-status" className="text-sm font-medium text-slate-700 dark:text-slate-200">Status</label>
         <select id="profile-review-status" value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900">
           <option value="PENDING">Pending</option>
@@ -272,7 +274,8 @@ const ProfileReviewPage = () => {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.4fr)]">
-        <Card title={`${status.charAt(0)}${status.slice(1).toLowerCase()} requests (${rows.length})`}>
+        <div data-tour-anchor="profile-review-request-list">
+          <Card title={`${status.charAt(0)}${status.slice(1).toLowerCase()} requests (${rows.length})`}>
           {loading ? <p className="text-sm text-slate-500">Loading requests...</p> : null}
           {!loading && rows.length === 0 ? <p className="text-sm text-slate-500">No requests in this queue.</p> : null}
           <div className="space-y-2">
@@ -284,9 +287,11 @@ const ProfileReviewPage = () => {
               </button>
             ))}
           </div>
-        </Card>
+          </Card>
+        </div>
 
-        <Card title={detail ? `${detail.employeeName} · ${detail.request.requestType.split('_').join(' ')}` : 'Review details'}>
+        <div data-tour-anchor="profile-review-request-details">
+          <Card title={detail ? `${detail.employeeName} · ${detail.request.requestType.split('_').join(' ')}` : 'Review details'}>
           {!selectedId ? <p className="text-sm text-slate-500">Select a request to load its protected details.</p> : null}
           {detailLoading ? <p className="text-sm text-slate-500">Decrypting protected values...</p> : null}
           {detail && !detailLoading ? (
@@ -306,14 +311,15 @@ const ProfileReviewPage = () => {
                 </div>
               ) : <p className="text-sm text-amber-700">No supporting document was attached.</p>}
               {detail.request.status === 'PENDING' ? (
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2" data-tour-anchor="profile-review-decision-actions">
                   <Button type="button" variant="danger" disabled={busy} onClick={() => setRejectionOpen(true)}>Reject</Button>
                   <Button type="button" variant="primary" disabled={busy} onClick={() => void resolve(true)}>{busy ? 'Saving...' : 'Approve'}</Button>
                 </div>
               ) : null}
             </div>
           ) : null}
-        </Card>
+          </Card>
+        </div>
       </div>
 
       <Modal isOpen={rejectionOpen} onClose={() => !busy && setRejectionOpen(false)} title="Reject profile change">

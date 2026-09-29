@@ -8,6 +8,7 @@ interface AssetSectionToolbarProps {
   placeholder: string;
   loading: boolean;
   actionLabel?: string;
+  actionAnchor?: string;
   onSearch: (search: string) => void;
   onAction?: () => void;
   children?: React.ReactNode;
@@ -18,6 +19,7 @@ const AssetSectionToolbar = ({
   placeholder,
   loading,
   actionLabel,
+  actionAnchor,
   onSearch,
   onAction,
   children,
@@ -59,7 +61,11 @@ const AssetSectionToolbar = ({
         ) : null}
       </form>
       {children}
-      {actionLabel && onAction ? <Button onClick={onAction}>{actionLabel}</Button> : null}
+      {actionLabel && onAction ? (
+        <Button onClick={onAction} data-tour-anchor={actionAnchor}>
+          {actionLabel}
+        </Button>
+      ) : null}
     </div>
   );
 };

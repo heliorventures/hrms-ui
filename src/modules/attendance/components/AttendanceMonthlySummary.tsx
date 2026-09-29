@@ -19,7 +19,11 @@ const AttendanceMonthlySummary = ({ summary, loading }: Props) => {
     ['Incomplete punches', summary ? String(summary.incompleteSegments) : '—'],
   ];
   return (
-    <section aria-label="Monthly attendance summary" aria-busy={loading}>
+    <section
+      aria-label="Monthly attendance summary"
+      aria-busy={loading}
+      data-tour-anchor="attendance.month-summary"
+    >
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4">
         {metrics.map(([label, value]) => (
           <div key={label} className="min-w-0 bg-surface px-4 py-3">

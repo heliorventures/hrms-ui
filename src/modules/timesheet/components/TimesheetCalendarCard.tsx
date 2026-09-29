@@ -51,7 +51,11 @@ const TimesheetCalendarCard = ({
   onEdit,
 }: TimesheetCalendarCardProps) => (
   <Card
-    title={`Calendar - ${sortedCount} entr${sortedCount === 1 ? 'y' : 'ies'} - ${totalHours.toFixed(2)} h in view`}
+    title={
+      <span data-tour-anchor="timesheet.entries">
+        {`Calendar - ${sortedCount} entr${sortedCount === 1 ? 'y' : 'ies'} - ${totalHours.toFixed(2)} h in view`}
+      </span>
+    }
   >
     {loading ? (
       <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>

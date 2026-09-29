@@ -14,7 +14,11 @@ interface PayrollPayTabsProps {
 }
 
 const PayrollPayTabs = ({ activeTab, canReadTax, onChange }: PayrollPayTabsProps) => (
-  <nav className={TAB_LIST_CLASS} aria-label="Payslips and tax sections">
+  <nav
+    className={TAB_LIST_CLASS}
+    aria-label="Payslips and tax sections"
+    data-tour-anchor="payroll.pay.sections"
+  >
     {payrollPayTabs
       .filter((tab) => tab.id !== 'incometax' || canReadTax)
       .map((tab) => (

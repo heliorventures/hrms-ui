@@ -33,7 +33,12 @@ const PerformancePage = () => {
   return (
     <div className="space-y-4">
       <h1 className="sr-only">Performance</h1>
-      <div role="tablist" aria-label="Performance workflow" className={TAB_LIST_CLASS}>
+      <div
+        role="tablist"
+        aria-label="Performance workflow"
+        className={TAB_LIST_CLASS}
+        data-tour-anchor="performance.workflow.tabs"
+      >
         {tabs.map((item, index) => (
           <button
             key={item.id}
@@ -78,6 +83,7 @@ const PerformancePage = () => {
               className="mt-4"
               open={showLegacy}
               onToggle={(event) => setShowLegacy(event.currentTarget.open)}
+              data-tour-anchor="performance.legacy-catalog"
             >
               <summary className="cursor-pointer py-2 text-sm text-content-secondary">
                 Legacy cycles and goals

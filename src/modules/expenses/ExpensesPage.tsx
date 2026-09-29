@@ -101,7 +101,9 @@ const ExpensesPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      <div data-tour-anchor="expenses.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
       <ExpensesHeader
         canManageExpense={canManageExpense && tab === 'expenses'}
         canSubmitExpense={canSubmitExpense && tab === 'expenses'}
@@ -187,32 +189,34 @@ const ExpensesPage = () => {
 
       {canAccessExpenses ? (
         <PageTabPanel id="expenses" activeTab={tab}>
-          <ExpenseClaimsTable
-            busyKey={actions.busyKey}
-            canApprove={canApproveExpense}
-            canMarkPayment={canMarkPayment}
-            categories={categories}
-            employeeLabels={employeeLabels}
-            expenses={expenses}
-            loading={loading}
-            travelRequestLabels={travelRequestLabels}
-            onApprove={actions.openApproveExpense}
-            onMarkPaid={setPaymentTarget}
-            onReject={(row) => {
-              if (!row.pendingApprovalStepId) {
-                setNotice({
-                  variant: 'warning',
-                  message: 'Refresh the expense board before rejecting this claim.',
+          <div data-tour-anchor="expenses.claim-actions">
+            <ExpenseClaimsTable
+              busyKey={actions.busyKey}
+              canApprove={canApproveExpense}
+              canMarkPayment={canMarkPayment}
+              categories={categories}
+              employeeLabels={employeeLabels}
+              expenses={expenses}
+              loading={loading}
+              travelRequestLabels={travelRequestLabels}
+              onApprove={actions.openApproveExpense}
+              onMarkPaid={setPaymentTarget}
+              onReject={(row) => {
+                if (!row.pendingApprovalStepId) {
+                  setNotice({
+                    variant: 'warning',
+                    message: 'Refresh the expense board before rejecting this claim.',
+                  });
+                  return;
+                }
+                actions.setRejectTarget({
+                  kind: 'expense',
+                  id: row.id,
+                  expectedWorkflowStepId: row.pendingApprovalStepId,
                 });
-                return;
-              }
-              actions.setRejectTarget({
-                kind: 'expense',
-                id: row.id,
-                expectedWorkflowStepId: row.pendingApprovalStepId,
-              });
-            }}
-          />
+              }}
+            />
+          </div>
         </PageTabPanel>
       ) : null}
 

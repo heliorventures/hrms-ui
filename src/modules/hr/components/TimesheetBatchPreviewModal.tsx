@@ -151,6 +151,7 @@ const TimesheetBatchPreviewModal = ({
             <Button
               type="button"
               variant="primary"
+              data-tour-anchor="hr-timesheets.approve-trigger"
               disabled={busy || loading || rows.length === 0}
               onClick={() => onApprove(batch)}
             >
@@ -159,6 +160,7 @@ const TimesheetBatchPreviewModal = ({
             <Button
               type="button"
               variant="outline"
+              data-tour-anchor="hr-timesheets.reject-trigger"
               disabled={busy || loading}
               onClick={() => onReject(batch)}
             >

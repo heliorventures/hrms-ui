@@ -60,6 +60,7 @@ export const PrejoiningCandidatesPanel = ({ model }: { model: PrejoiningAdminMod
       role="tabpanel"
       aria-labelledby="prejoining-candidates-panel-tab"
       className="space-y-3"
+      data-tour-anchor="prejoining.candidates"
     >
       <Card>
         <div className="flex flex-wrap items-end justify-between gap-3">

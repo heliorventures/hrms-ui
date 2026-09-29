@@ -50,7 +50,10 @@ export function DocumentTable({ rows, isHr, onPreview, onApprove, onReject }: Do
                 <DocumentStatusBadge status={row.status} />
               </td>
               <td className="px-4 py-3">
-                <div className="flex flex-wrap justify-end gap-1">
+                <div
+                  className="flex flex-wrap justify-end gap-1"
+                  data-tour-anchor="employee-profile-document-review"
+                >
                   <Button
                     type="button"
                     variant="outline"

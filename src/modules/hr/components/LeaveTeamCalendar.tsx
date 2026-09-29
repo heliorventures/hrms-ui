@@ -229,7 +229,10 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
       title={
         <span className="flex flex-wrap items-center justify-between gap-3">
           <span>Team Leave Calendar</span>
-          <div className="flex flex-wrap items-center gap-2 text-xs font-normal">
+          <div
+            className="flex flex-wrap items-center gap-2 text-xs font-normal"
+            data-tour-anchor="leave.team-calendar-controls"
+          >
             <button
               type="button"
               className="rounded border border-gray-300 px-2 py-1 dark:border-gray-600"
@@ -297,7 +300,7 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
       {loading && !data ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
-        <div className="overflow-x-auto pb-2">
+        <div className="overflow-x-auto pb-2" data-tour-anchor="leave.team-calendar-grid">
           <table className="border-collapse text-[11px]">
             <thead>
               <tr>

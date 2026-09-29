@@ -12,6 +12,7 @@ export const PrejoiningConfigPanel = ({ model }: { model: PrejoiningAdminModel }
       role="tabpanel"
       aria-labelledby="prejoining-config-panel-tab"
       className="space-y-4"
+      data-tour-anchor="prejoining.configuration"
     >
       <PersonalFieldsPanel model={model} />
       <DocumentsConfigPanel model={model} />

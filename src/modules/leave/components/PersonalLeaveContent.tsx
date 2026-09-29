@@ -45,20 +45,28 @@ const PersonalLeaveContent = (options: PersonalLeaveOptions) => {
           <p className="text-sm text-sky-800 dark:text-sky-200">{approveWorkflowNotice}</p>
         </Card>
       )}
-      <LeaveBalancesCard
-        balanceYear={balanceYear}
-        balances={data?.leaveBalances ?? []}
-        leaveTypes={data?.leaveTypes ?? []}
-        leaveTypeNameById={leaveTypeNameById}
-        loading={loading}
-        yearChoices={yearChoices}
-        onYearChange={(year) => {
-          updateView({ page: '0', year: String(year) });
-        }}
-      />
-      <CompOffPanel canSubmit={canSubmitLeave} />
-      <PersonalLeaveRequests model={model} />
-      <PersonalLeaveReferences model={model} />
+      <div data-tour-anchor="leave.balances">
+        <LeaveBalancesCard
+          balanceYear={balanceYear}
+          balances={data?.leaveBalances ?? []}
+          leaveTypes={data?.leaveTypes ?? []}
+          leaveTypeNameById={leaveTypeNameById}
+          loading={loading}
+          yearChoices={yearChoices}
+          onYearChange={(year) => {
+            updateView({ page: '0', year: String(year) });
+          }}
+        />
+      </div>
+      <div data-tour-anchor="leave.comp-off-panel">
+        <CompOffPanel canSubmit={canSubmitLeave} />
+      </div>
+      <div data-tour-anchor="leave.requests">
+        <PersonalLeaveRequests model={model} />
+      </div>
+      <div data-tour-anchor="leave.holiday-summary">
+        <PersonalLeaveReferences model={model} />
+      </div>
       <FlashToastBar toast={flash.flash} onDismiss={flash.clear} />
     </div>
   );

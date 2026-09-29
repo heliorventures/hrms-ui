@@ -128,6 +128,7 @@ const AssetInventorySection = (props: AssetInventorySectionProps) => {
         placeholder="Name, tag, or serial number"
         loading={props.loading}
         actionLabel={props.canManage ? 'New Asset' : undefined}
+        actionAnchor="assets.inventory-action"
         onAction={props.onCreate}
         onSearch={(search) => props.onFilterChange({ ...props.filter, page: 1, search })}
       >

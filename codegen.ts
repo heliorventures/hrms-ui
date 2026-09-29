@@ -50,6 +50,7 @@ const schema: CodegenConfig['schema'] = [
   join(__dirname, 'src', 'api', 'schema-extensions', 'performance-survey.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'hr-reports.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'prejoining.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-guidance.graphql'),
 ];
 
 const config: CodegenConfig = {
