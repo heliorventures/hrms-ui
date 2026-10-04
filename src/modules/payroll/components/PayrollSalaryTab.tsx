@@ -11,19 +11,13 @@ interface PayrollSalaryTabProps {
 
 const SalaryDetails = ({ preview }: { preview: NonNullable<EmployeeSalaryPreview> }) => (
   <div className="space-y-6">
-    <dl className="grid gap-4 sm:grid-cols-3">
+    <dl className="grid gap-4 sm:grid-cols-2">
       {[
         [
           'Annual CTC',
-          preview.financials
-            ? (preview.financials.annual_ctc ?? 'Pending employer PF configuration')
-            : preview.annualCtc,
-        ],
-        ['Monthly Gross', preview.monthlyGross],
-        [
-          'Annual Gross',
           preview.financials?.annual_gross ?? String(Number(preview.monthlyGross) * 12),
         ],
+        ['Monthly Gross', preview.monthlyGross],
       ].map(([label, value]) => (
         <div key={label} className="rounded-lg border border-line bg-surface-raised p-4">
           <dt className="text-xs font-medium uppercase tracking-wide text-content-secondary">
@@ -36,15 +30,33 @@ const SalaryDetails = ({ preview }: { preview: NonNullable<EmployeeSalaryPreview
       ))}
     </dl>
     {preview.financials && (
-      <p className="text-sm text-content-secondary">
-        Annual gross (monthly gross × 12): {formatAmountString(preview.financials.annual_gross)}.
-        Annual employer PF:{' '}
-        {preview.financials.annual_employer_pf === null
-          ? 'Awaiting configuration'
-          : formatAmountString(preview.financials.annual_employer_pf)}
-        .
-      </p>
+      <dl className="grid gap-4 rounded-lg border border-line p-4 sm:grid-cols-3">
+        {[
+          ['Regular annual salary', formatAmountString(preview.financials.annual_gross)],
+          [
+            'Other: annual employer PF',
+            preview.financials.annual_employer_pf === null
+              ? 'Awaiting configuration'
+              : formatAmountString(preview.financials.annual_employer_pf),
+          ],
+          [
+            'Total including employer PF',
+            preview.financials.annual_ctc === null
+              ? 'Awaiting configuration'
+              : formatAmountString(preview.financials.annual_ctc),
+          ],
+        ].map(([label, value]) => (
+          <div key={label}>
+            <dt className="text-sm text-content-secondary">{label}</dt>
+            <dd className="mt-1 font-semibold">{value}</dd>
+          </div>
+        ))}
+      </dl>
     )}
+    <p className="text-sm text-content-secondary">
+      Annual CTC here is regular salary (monthly gross × 12). Employer PF is a separate company
+      contribution, excluded from payslip earnings and income-tax salary.
+    </p>
 
     <Table
       ariaLabel="Your salary breakup"

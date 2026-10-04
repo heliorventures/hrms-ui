@@ -36,3 +36,26 @@ it('labels partial recorded deductions and hides unsupported remaining liability
   expect(screen.getByText(/New tax regime/)).toBeTruthy();
   expect(screen.getByText(/10% of BASIC \+ HRA earned for the month/)).toBeTruthy();
 });
+
+it('identifies the selected recorded withholding instead of calling it projected', () => {
+  render(
+    <TaxProjectionSummary
+      projection={{
+        fiscal_year: 2026,
+        annual_earnings: '600000',
+        tax: null,
+        withholding: null,
+        recorded_tds: '3210',
+        history_complete: false,
+        selected_monthly_tds: '3210',
+        selected_month: { year: 2026, month: 9, evidence: 'IMPORTED_ACTUAL' },
+        limitations: [],
+        note: '',
+        months: [],
+        opening_history: [],
+      }}
+    />
+  );
+  expect(screen.getByText('Recorded monthly withholding · September 2026')).toBeTruthy();
+  expect(screen.queryByText('Projected monthly withholding')).toBeNull();
+});

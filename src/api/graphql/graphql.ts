@@ -3984,7 +3984,7 @@ export type SubmitTaxProofLineInput = {
   fileStorageId: Scalars['ID']['input'];
   fiscalYear: Scalars['Int']['input'];
   sectionCode: Scalars['String']['input'];
-  taxConfigVersionId: Scalars['ID']['input'];
+  taxConfigVersionId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type SubmitTravelRequestInput = {
@@ -4565,7 +4565,7 @@ export type UpsertTaxComputationInput = {
   finalTax?: InputMaybe<Scalars['String']['input']>;
   fiscalYear: Scalars['Int']['input'];
   grossIncome?: InputMaybe<Scalars['String']['input']>;
-  taxConfigVersionId: Scalars['ID']['input'];
+  taxConfigVersionId?: InputMaybe<Scalars['ID']['input']>;
   taxRegimeChosen?: InputMaybe<Scalars['String']['input']>;
   taxableIncome?: InputMaybe<Scalars['String']['input']>;
   tdsPerMonth?: InputMaybe<Scalars['String']['input']>;

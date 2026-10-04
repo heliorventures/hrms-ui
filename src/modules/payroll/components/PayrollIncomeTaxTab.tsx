@@ -4,18 +4,16 @@ import Card from '../../../components/common/Card';
 import type {
   PayslipIndiaFyTotals,
   TaxComputationSelfRow,
-  TaxConfigurationRow,
   TaxProofLineSelfRow,
   TaxSectionCatalogRow,
-  TaxSlabRow,
 } from '../payrollTypes';
+import type { TaxSubmissionContext } from '../taxSubmissionContext';
 
 import { EmployeeTaxTables, PayslipFySummaryCard } from './EmployeeTaxCards';
 import { EmployeeTaxDeclarationFormCard, EmployeeTaxProofFormCard } from './EmployeeTaxForms';
 
 interface PayrollIncomeTaxTabProps {
-  activeTaxConfig: TaxConfigurationRow | null;
-  activeTaxSlabs: TaxSlabRow[];
+  submissionContext: TaxSubmissionContext | null;
   canSubmitTax: boolean;
   declDed: string;
   declFy: string;
@@ -39,9 +37,7 @@ interface PayrollIncomeTaxTabProps {
   taxProofLinesSelf: TaxProofLineSelfRow[] | null;
   taxSectionCatalog: TaxSectionCatalogRow[] | null;
   onDeclDedChange: (value: string) => void;
-  onDeclFyChange: (value: string) => void;
   onDeclGrossChange: (value: string) => void;
-  onDeclRegimeChange: (value: string) => void;
   onDeclSubmit: (event: FormEvent) => void;
   onProofActualChange: (value: string) => void;
   onProofDeclaredChange: (value: string) => void;
@@ -51,7 +47,7 @@ interface PayrollIncomeTaxTabProps {
 }
 
 const PayrollIncomeTaxTab = ({
-  activeTaxConfig,
+  submissionContext,
   canSubmitTax,
   declDed,
   declFy,
@@ -74,9 +70,7 @@ const PayrollIncomeTaxTab = ({
   taxProofLinesSelf,
   taxSectionCatalog,
   onDeclDedChange,
-  onDeclFyChange,
   onDeclGrossChange,
-  onDeclRegimeChange,
   onDeclSubmit,
   onProofActualChange,
   onProofDeclaredChange,
@@ -98,6 +92,7 @@ const PayrollIncomeTaxTab = ({
       </Card>
     )}
     <EmployeeTaxTables
+      submissionContext={submissionContext}
       computations={taxComputationsSelf}
       proofs={taxProofLinesSelf}
       loading={loadingEmployeeTax}
@@ -105,7 +100,7 @@ const PayrollIncomeTaxTab = ({
     />
     {canSubmitTax ? (
       <EmployeeTaxProofFormCard
-        activeTaxConfig={activeTaxConfig}
+        submissionContext={submissionContext}
         loading={loadingEmployeeTax}
         catalog={taxSectionCatalog}
         sectionCode={proofSectionCode}
@@ -123,7 +118,7 @@ const PayrollIncomeTaxTab = ({
     ) : null}
     {canSubmitTax ? (
       <EmployeeTaxDeclarationFormCard
-        activeTaxConfig={activeTaxConfig}
+        submissionContext={submissionContext}
         fiscalYear={declFy}
         regime={declRegime}
         gross={declGross}
@@ -131,8 +126,6 @@ const PayrollIncomeTaxTab = ({
         submitting={declSubmitting}
         loading={loadingEmployeeTax}
         message={declMsg}
-        onFiscalYearChange={onDeclFyChange}
-        onRegimeChange={onDeclRegimeChange}
         onGrossChange={onDeclGrossChange}
         onDeductionsChange={onDeclDedChange}
         onSubmit={onDeclSubmit}

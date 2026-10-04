@@ -25982,7 +25982,7 @@
                               "id": "U9W34",
                               "name": "CTC value",
                               "fill": "#425570",
-                              "content": "₹9,36,000",
+                              "content": "₹9,00,000",
                               "fontFamily": "Manrope",
                               "fontSize": 20,
                               "fontWeight": "600"
@@ -26030,46 +26030,108 @@
                               "letterSpacing": -0.5
                             }
                           ]
-                        },
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "JH2K1",
+                      "name": "Regular salary plus employer contribution",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 10,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "gap": 20,
+                      "padding": 18,
+                      "children": [
                         {
                           "type": "frame",
-                          "id": "Jpuq6",
-                          "name": "Annual earnings",
+                          "id": "L1dT8o",
+                          "name": "Regular annual salary",
                           "width": "fill_container",
-                          "fill": "$surface",
-                          "cornerRadius": 10,
-                          "stroke": "$line",
-                          "strokeWidth": 1,
                           "layout": "vertical",
                           "gap": 6,
-                          "padding": 18,
                           "children": [
                             {
                               "type": "text",
-                              "id": "lsfIf",
-                              "name": "Annual earnings",
+                              "id": "ea65e",
+                              "name": "Regular annual salary label",
                               "fill": "$muted",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
-                              "content": "Annual gross",
-                              "lineHeight": 1.4,
+                              "content": "Regular annual salary",
                               "fontFamily": "Inter",
-                              "fontSize": 12,
-                              "fontWeight": "500"
+                              "fontSize": 13,
+                              "fontWeight": "normal"
                             },
                             {
                               "type": "text",
-                              "id": "Wybyo",
-                              "name": "₹9,00,000",
-                              "fill": "#425570",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
+                              "id": "fXmKR",
+                              "name": "Regular annual salary value",
+                              "fill": "$ink",
                               "content": "₹9,00,000",
-                              "lineHeight": 1.4,
                               "fontFamily": "Manrope",
-                              "fontSize": 20,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.5
+                              "fontSize": 18,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "fy0fV",
+                          "name": "Other: annual employer PF",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "hP105",
+                              "name": "Other: annual employer PF label",
+                              "fill": "$muted",
+                              "content": "Other: annual employer PF",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "FZ44L",
+                              "name": "Other: annual employer PF value",
+                              "fill": "$ink",
+                              "content": "₹36,000",
+                              "fontFamily": "Manrope",
+                              "fontSize": 18,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "lJDLN",
+                          "name": "Total including employer PF",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "o3t5Ld",
+                              "name": "Total including employer PF label",
+                              "fill": "$muted",
+                              "content": "Total including employer PF",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "JmYis",
+                              "name": "Total including employer PF value",
+                              "fill": "$ink",
+                              "content": "₹9,36,000",
+                              "fontFamily": "Manrope",
+                              "fontSize": 18,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -26442,7 +26504,7 @@
                           "fill": "#334155",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Annual gross ₹9,00,000 + annual employer PF ₹36,000 = annual CTC ₹9,36,000. Fictional recurring salary; monthly deductions appear in the payslip.",
+                          "content": "Annual CTC is regular salary (monthly gross × 12). Employer PF is a separate company contribution, excluded from payslip earnings and salary income tax.",
                           "fontFamily": "Inter",
                           "fontSize": 13,
                           "fontWeight": "normal"
@@ -76240,7 +76302,7 @@
                           "fill": "#334155",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Projected annual income tax  ₹2,92,500     Projected monthly withholding  ₹24,375",
+                          "content": "Projected annual income tax ₹2,92,500     Projected monthly withholding · October 2026 ₹24,375",
                           "fontFamily": "Inter",
                           "fontSize": 13,
                           "fontWeight": "normal"
@@ -76507,6 +76569,18 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "Estimated tax based on your current salary structure, joining date and available payroll information. Missing historical earnings are estimated. Actual deductions may change when HR updates your records. Contact HR for confirmation.",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "qMFGr",
+                      "name": "Declarations and proofs disclosure",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "▸ Declarations, proofs and recorded payslip totals\nFinancial year and assigned regime match the projection. Declaration estimates do not change payroll calculations. Existing proofs remain available for the selected year.",
                       "fontFamily": "Inter",
                       "fontSize": 13,
                       "fontWeight": "normal"

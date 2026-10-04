@@ -14,7 +14,7 @@ export const payrollPayPageTour: TourDefinition = {
       id: 'payroll-pay-salary-preview',
       anchor: 'payroll.pay.sections',
       title: 'Review your salary breakdown',
-      body: 'After the tour, select Salary to see recurring earnings, monthly gross, annual gross and annual CTC including configured employer PF. Monthly deductions and settlement amounts are shown on the payslip. Contact payroll if the displayed structure needs correction.',
+      body: 'After the tour, select Salary to see recurring earnings and annual CTC based on regular salary. Employer PF appears separately as Other, with the combined annual total below. Employer PF is excluded from payslip earnings and salary income tax. Monthly deductions and settlement amounts are shown on the payslip. Contact HR if the structure needs correction.',
     },
     {
       id: 'payroll-pay-payslip-period',
@@ -34,7 +34,7 @@ export const payrollPayPageTour: TourDefinition = {
       id: 'payroll-pay-tax-declaration',
       anchor: 'payroll.pay.sections',
       title: 'Submit a tax declaration or proof',
-      body: 'With tax submission access, the Income Tax section accepts an estimated fiscal year, regime, gross income, and deductions, or a deduction section, declared and actual amount, and proof file. Submitting saves the tax record; this tour does not submit it.',
+      body: 'With tax submission access, choose a financial year in Income Tax, then open Declarations and proofs. Your assigned regime and financial year are shared with the projection. Save estimated gross income and deductions, or submit a deduction section, declared and actual amounts and proof file. HR changes your assigned regime; declaration estimates do not change payroll calculations. This tour does not submit records.',
       isVisible: ({ canCapability, canScopedPermission }) =>
         (canScopedPermission?.('tax:read', ['SELF', 'TEAM', 'DEPARTMENT', 'ALL']) ?? false) &&
         (canCapability?.('action.tax.submit') ?? false),

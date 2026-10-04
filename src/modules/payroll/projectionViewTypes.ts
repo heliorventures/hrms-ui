@@ -53,6 +53,7 @@ export interface TaxProjection {
   recorded_tds: string;
   history_complete: boolean;
   selected_monthly_tds: string | null;
+  selected_month?: { year: number; month: number; evidence: Evidence } | null;
   limitations: string[];
   note: string;
   opening_history: TaxHistory[];

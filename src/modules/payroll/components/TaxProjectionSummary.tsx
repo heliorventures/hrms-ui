@@ -1,6 +1,18 @@
 import Card from '../../../components/common/Card';
 import { formatTaxMoney, type TaxProjection } from '../projectionViewTypes';
 
+function selectedWithholdingLabel(selected: TaxProjection['selected_month']): string {
+  if (!selected) return 'Selected monthly withholding';
+  const recorded =
+    selected.evidence === 'IMPORTED_ACTUAL' || selected.evidence === 'FINALIZED_PAYROLL';
+  const period = new Intl.DateTimeFormat('en-IN', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(selected.year, selected.month - 1, 1)));
+  return `${recorded ? 'Recorded' : 'Projected'} monthly withholding · ${period}`;
+}
+
 const TaxProjectionSummary = ({ projection }: { projection: TaxProjection }) => {
   const entries = [
     ['Annual earnings', formatTaxMoney(projection.annual_earnings)],
@@ -16,7 +28,10 @@ const TaxProjectionSummary = ({ projection }: { projection: TaxProjection }) => 
         ? formatTaxMoney(projection.withholding?.remaining)
         : 'Not available until history is complete',
     ],
-    ['Projected monthly withholding', formatTaxMoney(projection.selected_monthly_tds)],
+    [
+      selectedWithholdingLabel(projection.selected_month),
+      formatTaxMoney(projection.selected_monthly_tds),
+    ],
   ];
   return (
     <Card

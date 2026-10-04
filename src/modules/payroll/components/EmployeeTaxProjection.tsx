@@ -11,24 +11,33 @@ import TaxProjectionTimeline from './TaxProjectionTimeline';
 import TaxSalaryMatrix from './TaxSalaryMatrix';
 import TaxSlabBreakdown from './TaxSlabBreakdown';
 
+function projectionMonth(year: number, currentYear: number, currentMonth: number): number {
+  if (year < currentYear) return 3;
+  if (year > currentYear) return 4;
+  return currentMonth;
+}
+
 const EmployeeTaxProjection = ({
   client,
   ownerKey,
   employeeId = null,
+  fiscalYear,
+  onFiscalYearChange,
 }: {
   client: GraphQLClient;
   ownerKey: string;
   employeeId?: string | null;
+  fiscalYear?: number;
+  onFiscalYearChange?: (year: number) => void;
 }) => {
   const { currentTenant } = useTenant();
   const current = tenantCalendarPeriod(new Date(), currentTenant.timezone);
   const currentYear = current.year - (current.month < 4 ? 1 : 0);
-  const [year, setYear] = useState(currentYear);
+  const [localYear, setLocalYear] = useState(currentYear);
+  const year = fiscalYear ?? localYear;
+  const setYear = onFiscalYearChange ?? setLocalYear;
   const [reviewMonth, setReviewMonth] = useState(current.month);
-  let { month } = current;
-  if (year < currentYear) month = 3;
-  if (year > currentYear) month = 4;
-  if (employeeId) month = reviewMonth;
+  const month = employeeId ? reviewMonth : projectionMonth(year, currentYear, current.month);
   const state = useTaxProjection(client, ownerKey, employeeId, year, month);
   return (
     <div className="space-y-4">

@@ -10,8 +10,7 @@ const EmployeeTaxFormsPanel = ({
   canSubmitTax: boolean;
 }) => (
   <PayrollIncomeTaxTab
-    activeTaxConfig={pay.activeTaxConfig}
-    activeTaxSlabs={pay.activeTaxSlabs}
+    submissionContext={pay.submissionContext}
     canSubmitTax={canSubmitTax}
     declDed={pay.declDed}
     declFy={pay.declFy}
@@ -35,9 +34,7 @@ const EmployeeTaxFormsPanel = ({
     taxProofLinesSelf={pay.taxProofLinesSelf}
     taxSectionCatalog={pay.taxSectionCatalog}
     onDeclDedChange={pay.setDeclDed}
-    onDeclFyChange={pay.setDeclFy}
     onDeclGrossChange={pay.setDeclGross}
-    onDeclRegimeChange={pay.setDeclRegime}
     onDeclSubmit={(event) => void pay.handleDeclUpsert(event)}
     onProofActualChange={pay.setProofActual}
     onProofDeclaredChange={pay.setProofDeclared}

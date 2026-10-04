@@ -69,7 +69,13 @@ const PayrollPayPage = () => {
 
       {activeTab === 'incometax' && (
         <div data-tour-anchor="payroll.pay.income-tax-actions">
-          <EmployeeTaxProjection key={ownerKey} client={client} ownerKey={ownerKey} />
+          <EmployeeTaxProjection
+            key={ownerKey}
+            client={client}
+            ownerKey={ownerKey}
+            fiscalYear={pay.taxFiscalYear}
+            onFiscalYearChange={pay.setTaxFiscalYear}
+          />
           <details className="mt-4 rounded-lg border border-line p-4">
             <summary className="cursor-pointer font-semibold">
               Declarations, proofs and recorded payslip totals

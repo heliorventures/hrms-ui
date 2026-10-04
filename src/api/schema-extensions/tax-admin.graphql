@@ -19,7 +19,28 @@ extend type Query {
   employeeTaxHistory(employeeId: ID, fiscalYear: Int!): JSON!
   employeeTaxDeclaration(employeeId: ID, fiscalYear: Int!): JSON
   employeeTaxProjection(employeeId: ID, fiscalYear: Int!, month: Int!): JSON!
+  employeeTaxSubmissionContext(employeeId: ID, fiscalYear: Int!): JSON
   taxSectionDefinitions(activeOnly: Boolean = true, limit: Int = 100): [TaxSectionDefinition!]!
+}
+
+input UpsertTaxComputationInput {
+  taxConfigVersionId: ID
+  fiscalYear: Int!
+  taxRegimeChosen: String
+  grossIncome: String
+  totalDeductions: String
+  taxableIncome: String
+  finalTax: String
+  tdsPerMonth: String
+}
+
+input SubmitTaxProofLineInput {
+  taxConfigVersionId: ID
+  fiscalYear: Int!
+  sectionCode: String!
+  declaredAmount: String!
+  actualAmount: String!
+  fileStorageId: ID!
 }
 
 input UpsertTaxSectionDefinitionInput {
