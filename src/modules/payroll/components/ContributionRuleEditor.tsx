@@ -74,8 +74,8 @@ const ContributionRuleEditor = ({
   return (
     <form onSubmit={submit} className="space-y-4" data-tour-anchor="payroll.company-rules">
       <p className="text-sm">
-        These company rules apply by effective date. Individual PF/ESI applicability is reviewed in
-        monthly inputs. Imported custom rules require an HR explanation.
+        These company rules apply by effective date. Individual PF/ESI applicability carries forward
+        from Employee Payroll Settings. Imported custom rules require an HR explanation.
       </p>
       {current && (
         <p>

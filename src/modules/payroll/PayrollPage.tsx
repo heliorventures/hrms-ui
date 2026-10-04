@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
+import { PERMISSIONS } from '../../auth/permissions';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Card from '../../components/common/Card';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
@@ -9,14 +10,16 @@ import { usePageTabs } from '../../hooks/usePageTabs';
 
 import CompanyContributionRules from './components/CompanyContributionRules';
 import CompanyPayslipComponents from './components/CompanyPayslipComponents';
+import EmployeePayrollSettings from './components/EmployeePayrollSettings';
+import ManagedPayslips from './components/ManagedPayslips';
 import PayrollAdminNotice from './components/PayrollAdminNotice';
 import PayrollArrearsCard from './components/PayrollArrearsCard';
 import PayrollComplianceCard from './components/PayrollComplianceCard';
 import PayrollExportsSection from './components/PayrollExportsSection';
+import PayrollLwpRules from './components/PayrollLwpRules';
 import PayrollPeriodInputs from './components/PayrollPeriodInputs';
 import PayrollRunsSection from './components/PayrollRunsSection';
 import PayrollSalaryComponentsCard from './components/PayrollSalaryComponentsCard';
-import UnpaidLeavePolicyCard from './components/UnpaidLeavePolicyCard';
 import { usePayrollBoard } from './hooks/usePayrollBoard';
 import { usePayrollBoardActions } from './hooks/usePayrollBoardActions';
 import { usePayrollExports } from './hooks/usePayrollExports';
@@ -28,6 +31,7 @@ const PayrollPage = () => {
   const ownerKey = authorizationStateKey(clientSession);
   const canManagePayroll = permissions.canCapability('action.payroll.manage');
   const canExportPayroll = permissions.canCapability('action.payroll.export');
+  const canReadAllPayslips = permissions.canScopedPermission(PERMISSIONS.payrollRead, ['ALL']);
   const board = usePayrollBoard(client, { enabled: canManagePayroll, ownerKey });
   const actions = usePayrollBoardActions({
     client,
@@ -45,7 +49,9 @@ const PayrollPage = () => {
 
   const tabs = [
     { id: 'runs', label: 'Payroll Runs' },
+    ...(canReadAllPayslips ? [{ id: 'payslips', label: 'Employee Payslips' }] : []),
     { id: 'monthly-inputs', label: 'Monthly Inputs' },
+    { id: 'employee-settings', label: 'Employee Payroll Settings' },
     { id: 'contribution-rules', label: 'Contribution Rules' },
     { id: 'arrears', label: 'Arrears' },
     { id: 'compliance', label: 'Employer & Statutory Details' },
@@ -74,10 +80,13 @@ const PayrollPage = () => {
       )}
 
       <PageTabPanel id="unpaid-leave" activeTab={tab}>
-        <UnpaidLeavePolicyCard client={client} ownerKey={ownerKey} />
+        <PayrollLwpRules key={ownerKey} client={client} />
       </PageTabPanel>
       <PageTabPanel id="monthly-inputs" activeTab={tab}>
         <PayrollPeriodInputs key={ownerKey} client={client} />
+      </PageTabPanel>
+      <PageTabPanel id="employee-settings" activeTab={tab}>
+        <EmployeePayrollSettings key={ownerKey} client={client} />
       </PageTabPanel>
       <PageTabPanel id="contribution-rules" activeTab={tab}>
         <CompanyContributionRules key={ownerKey} client={client} />
@@ -115,6 +124,11 @@ const PayrollPage = () => {
       <PageTabPanel id="runs" activeTab={tab}>
         <PayrollRunsSection board={board} actions={actions} />
       </PageTabPanel>
+      {canReadAllPayslips && (
+        <PageTabPanel id="payslips" activeTab={tab}>
+          <ManagedPayslips key={ownerKey} client={client} ownerKey={ownerKey} />
+        </PageTabPanel>
+      )}
       {canExportPayroll ? (
         <PageTabPanel id="exports" activeTab={tab}>
           <PayrollExportsSection

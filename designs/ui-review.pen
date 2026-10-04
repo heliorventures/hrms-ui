@@ -26551,7 +26551,7 @@
       "x": -7920,
       "y": -1700,
       "name": "07 Pay & Benefits / Payroll Processing / Working",
-      "context": "{\"source\":\"src/modules/payroll/PayrollPage.tsx\",\"route\":\"/payroll/pay\",\"variant\":\"Working\",\"sampleData\":true,\"notes\":\"Reviewed remuneration, protected component semantics, effective dates and reconciled exports. Browser validation pending.\",\"revision\":5,\"chromeVerified\":false,\"density\":\"Compact\",\"theme\":\"Two-tone navy / indigo\"}",
+      "context": "{\"route\":\"/payroll/pay?tab=runs\",\"revision\":6,\"sampleData\":true,\"browserVerified\":false,\"notes\":\"Automatic monthly preparation, effective eligibility and employee payslip review. Local tests separate from deployment.\"}",
       "clip": true,
       "width": 1440,
       "height": 900,
@@ -26661,7 +26661,7 @@
                       "fill": "$muted",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Calculate a draft, review each employee, then finalize and lock.",
+                      "content": "Calculate routine months from effective settings; enter only monthly exceptions.",
                       "lineHeight": 1.4,
                       "fontFamily": "Inter",
                       "fontSize": 13,
@@ -26676,7 +26676,7 @@
                       "strokeWidth": {
                         "bottom": 1
                       },
-                      "gap": 2,
+                      "gap": 1,
                       "padding": [
                         0,
                         0,
@@ -26689,12 +26689,12 @@
                           "type": "frame",
                           "id": "T0xyAJ",
                           "name": "Payroll Runs",
-                          "fill": "$selected",
+                          "fill": "#EEF2FF",
                           "cornerRadius": 6,
                           "gap": 16,
                           "padding": [
                             8,
-                            7
+                            4
                           ],
                           "alignItems": "center",
                           "children": [
@@ -26702,11 +26702,34 @@
                               "type": "text",
                               "id": "SMaSn",
                               "name": "Payroll Runs",
-                              "fill": "$accent",
+                              "fill": "#4F46E5",
                               "content": "Payroll Runs",
                               "fontFamily": "Inter",
-                              "fontSize": 11,
+                              "fontSize": 10,
                               "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "LPIdb",
+                          "name": "Employee Payslips",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "PKCVT",
+                              "name": "Employee Payslips label",
+                              "fill": "#5D6F89",
+                              "content": "Employee Payslips",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
                             }
                           ]
                         },
@@ -26718,7 +26741,7 @@
                           "cornerRadius": 6,
                           "padding": [
                             8,
-                            7
+                            4
                           ],
                           "alignItems": "center",
                           "children": [
@@ -26726,10 +26749,10 @@
                               "type": "text",
                               "id": "GJoZU",
                               "name": "Monthly Inputs",
-                              "fill": "$muted",
+                              "fill": "#5D6F89",
                               "content": "Monthly Inputs",
                               "fontFamily": "Inter",
-                              "fontSize": 11,
+                              "fontSize": 10,
                               "fontWeight": "normal"
                             }
                           ]
@@ -26742,7 +26765,7 @@
                           "cornerRadius": 6,
                           "padding": [
                             8,
-                            7
+                            4
                           ],
                           "alignItems": "center",
                           "children": [
@@ -26750,10 +26773,33 @@
                               "type": "text",
                               "id": "bio5e",
                               "name": "Contribution Rules",
-                              "fill": "$muted",
+                              "fill": "#5D6F89",
                               "content": "Contribution Rules",
                               "fontFamily": "Inter",
-                              "fontSize": 11,
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ZzoUa",
+                          "name": "Employee Payroll Settings",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "s8QpOS",
+                              "name": "Employee Settings label",
+                              "fill": "#5D6F89",
+                              "content": "Employee Payroll Settings",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
                               "fontWeight": "normal"
                             }
                           ]
@@ -26767,7 +26813,7 @@
                           "gap": 16,
                           "padding": [
                             8,
-                            7
+                            4
                           ],
                           "alignItems": "center",
                           "children": [
@@ -26775,10 +26821,10 @@
                               "type": "text",
                               "id": "iNiHX",
                               "name": "Arrears",
-                              "fill": "$muted",
+                              "fill": "#5D6F89",
                               "content": "Arrears",
                               "fontFamily": "Inter",
-                              "fontSize": 11,
+                              "fontSize": 10,
                               "fontWeight": "normal"
                             }
                           ]
@@ -26792,7 +26838,7 @@
                           "gap": 16,
                           "padding": [
                             8,
-                            7
+                            4
                           ],
                           "alignItems": "center",
                           "children": [
@@ -26800,10 +26846,10 @@
                               "type": "text",
                               "id": "Nqy8I",
                               "name": "Employer & Statutory Details",
-                              "fill": "$muted",
+                              "fill": "#5D6F89",
                               "content": "Employer & Statutory Details",
                               "fontFamily": "Inter",
-                              "fontSize": 11,
+                              "fontSize": 10,
                               "fontWeight": "normal"
                             }
                           ]
@@ -26817,7 +26863,7 @@
                           "gap": 16,
                           "padding": [
                             8,
-                            7
+                            4
                           ],
                           "alignItems": "center",
                           "children": [
@@ -26825,10 +26871,10 @@
                               "type": "text",
                               "id": "x7iBH",
                               "name": "Unpaid Leave Rules",
-                              "fill": "$muted",
+                              "fill": "#5D6F89",
                               "content": "Unpaid Leave Rules",
                               "fontFamily": "Inter",
-                              "fontSize": 11,
+                              "fontSize": 10,
                               "fontWeight": "normal"
                             }
                           ]
@@ -26842,7 +26888,7 @@
                           "gap": 16,
                           "padding": [
                             8,
-                            7
+                            4
                           ],
                           "alignItems": "center",
                           "children": [
@@ -26850,10 +26896,10 @@
                               "type": "text",
                               "id": "elcps",
                               "name": "Salary Components",
-                              "fill": "$muted",
+                              "fill": "#5D6F89",
                               "content": "Salary Components",
                               "fontFamily": "Inter",
-                              "fontSize": 11,
+                              "fontSize": 10,
                               "fontWeight": "normal"
                             }
                           ]
@@ -26867,7 +26913,7 @@
                           "gap": 16,
                           "padding": [
                             8,
-                            7
+                            4
                           ],
                           "alignItems": "center",
                           "children": [
@@ -26875,10 +26921,10 @@
                               "type": "text",
                               "id": "S7LAI",
                               "name": "Payroll Exports",
-                              "fill": "$muted",
+                              "fill": "#5D6F89",
                               "content": "Payroll Exports",
                               "fontFamily": "Inter",
-                              "fontSize": 11,
+                              "fontSize": 10,
                               "fontWeight": "normal"
                             }
                           ]
@@ -27197,7 +27243,7 @@
                           "fill": "$secondary",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Recalculate drafts without consuming arrears. Review ARREAR earnings before finalizing; finalization applies each accrual once.",
+                          "content": "Effective salary, PF/ESI eligibility, company rules and approved unpaid leave prepare the draft. Recalculate while editable; finalization applies arrears once.",
                           "lineHeight": 1.4,
                           "fontFamily": "Inter",
                           "fontSize": 12,
@@ -27565,7 +27611,7 @@
                           "fill": "$secondary",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "September retains source deductions. Annual exports reconcile payslips, imported months and opening history; unknown deductions stay blank.",
+                          "content": "September retains source deductions. Missing settings identify employees requiring review. Finalized payslips and unpaid-leave reports appear after Finalize & Lock.",
                           "lineHeight": 1.4,
                           "fontFamily": "Inter",
                           "fontSize": 12,
@@ -27911,7 +27957,7 @@
                       "fill": "$muted",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Define salary, set effective assignments, then review company contribution rules.",
+                      "content": "Select an employee to view the salary assigned as of a date. Assign a new structure only when changing salary.",
                       "lineHeight": 1.4,
                       "fontFamily": "Inter",
                       "fontSize": 13,
@@ -28643,6 +28689,57 @@
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
                           "content": "Used component code, type and tax treatment are protected. Create a new component for future financial changes.",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "f9Rpn",
+                      "name": "Existing employee salary assignment",
+                      "width": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 12,
+                      "stroke": "#E7EBF0",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 8,
+                      "padding": 16,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "J6h2o",
+                          "name": "Assignment lookup",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "View assigned salary as of: 01 October 2026",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "hFPst",
+                          "name": "Assigned salary",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "EXAMPLE/01 · Monthly gross ₹30,000 · Annual gross ₹3,60,000",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "mv21L",
+                          "name": "Read-only guidance",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Selection loads the existing breakup. No salary assignment is changed by viewing it.",
                           "fontFamily": "Inter",
                           "fontSize": 13,
                           "fontWeight": "normal"
@@ -79546,6 +79643,2338 @@
                         {
                           "type": "icon",
                           "id": "iunGm",
+                          "name": "Grievance & Speak Up",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "message-square-warning",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "QaFoB",
+      "x": 12480,
+      "y": -1700,
+      "name": "07 Pay & Benefits / Monthly Inputs / Effective payroll",
+      "context": "{\"route\":\"/payroll/pay?tab=monthly-inputs\",\"revision\":6,\"sampleData\":true,\"browserVerified\":false,\"notes\":\"Automatic monthly preparation, effective eligibility and employee payslip review. Local tests separate from deployment.\"}",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#F6F8FB",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "aIDzq",
+          "name": "Review annotation",
+          "width": "fill_container",
+          "height": 24,
+          "fill": "#E8EDF4",
+          "gap": 16,
+          "padding": [
+            4,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "DvIZL",
+              "name": "IMPROVED  /  07 Pay & Benefits  /  Payroll Processing",
+              "fill": "#526079",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "APPROVED FLOW · Fictional example · Browser verification pending",
+              "lineHeight": 1.4,
+              "fontFamily": "$font",
+              "fontSize": 10,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "VKqYG",
+          "name": "Application",
+          "width": "fill_container",
+          "height": "fill_container",
+          "children": [
+            {
+              "id": "lY8Co",
+              "type": "ref",
+              "ref": "wjx4J",
+              "name": "Main navigation",
+              "width": 216,
+              "height": "fill_container",
+              "descendants": {
+                "c2yYT": {
+                  "fill": "#334761"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "a7GmL",
+              "name": "Page",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "KgB0Y",
+                  "name": "Page content",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20,
+                    56,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "xtxjQ",
+                      "name": "In-content heading — scrolls with page",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "HEqVI",
+                          "name": "Payroll Processing",
+                          "fill": "#5D6F89",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Monthly Inputs",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Manrope",
+                          "fontSize": 16,
+                          "fontWeight": "600",
+                          "letterSpacing": -0.6
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vG2Uh",
+                      "name": "Tabs",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 1,
+                      "padding": [
+                        0,
+                        0,
+                        8,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "FDpbs",
+                          "name": "Payroll Runs",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "H50lW",
+                              "name": "Payroll Runs",
+                              "fill": "#5D6F89",
+                              "content": "Payroll Runs",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "XDobb",
+                          "name": "Employee Payslips",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "KSJJj",
+                              "name": "Employee Payslips label",
+                              "fill": "#5D6F89",
+                              "content": "Employee Payslips",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "QAdia",
+                          "name": "Monthly Inputs",
+                          "fill": "#EEF2FF",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rur7l",
+                              "name": "Monthly Inputs",
+                              "fill": "#4F46E5",
+                              "content": "Monthly Inputs",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Imw64",
+                          "name": "Contribution Rules",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ULaCw",
+                              "name": "Contribution Rules",
+                              "fill": "#5D6F89",
+                              "content": "Contribution Rules",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Y56Bhl",
+                          "name": "Employee Payroll Settings",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "iIyi2",
+                              "name": "Employee Settings label",
+                              "fill": "#5D6F89",
+                              "content": "Employee Payroll Settings",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "SGOgl",
+                          "name": "Arrears",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "BpoRr",
+                              "name": "Arrears",
+                              "fill": "#5D6F89",
+                              "content": "Arrears",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "VtIkn",
+                          "name": "Employer & Statutory Details",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "SX2Xd",
+                              "name": "Employer & Statutory Details",
+                              "fill": "#5D6F89",
+                              "content": "Employer & Statutory Details",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "jeyvf",
+                          "name": "Unpaid Leave Rules",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rgYmW",
+                              "name": "Unpaid Leave Rules",
+                              "fill": "#5D6F89",
+                              "content": "Unpaid Leave Rules",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "dZFDR",
+                          "name": "Salary Components",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "D5ch2i",
+                              "name": "Salary Components",
+                              "fill": "#5D6F89",
+                              "content": "Salary Components",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "A0zed",
+                          "name": "Payroll Exports",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "k4n7wL",
+                              "name": "Payroll Exports",
+                              "fill": "#5D6F89",
+                              "content": "Payroll Exports",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Ev4uu",
+                      "name": "Monthly Inputs configuration",
+                      "width": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 12,
+                      "stroke": "#E7EBF0",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 22,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "OkLAi",
+                          "name": "Employee and payroll period selectors",
+                          "width": "fill_container",
+                          "height": 48,
+                          "fill": "#F8FAFC",
+                          "cornerRadius": 6,
+                          "stroke": "#CBD5E1",
+                          "strokeWidth": 1,
+                          "padding": 12,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rHumX",
+                              "name": "Selected employee and period",
+                              "fill": "#334155",
+                              "content": "Employee: EXAMPLE/01    Payroll month: October 2026",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "h1Soi",
+                          "name": "Monthly Inputs row 2",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Calculated from effective settings · No monthly entry required",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "n5Hqgb",
+                          "name": "Monthly Inputs row 3",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Regular gross ₹30,000 · Approved unpaid leave 1 day · Company divisor 31",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "MpkMz",
+                          "name": "Monthly Inputs row 4",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Monthly exceptions: Incentive ₹0 · Overtime ₹0 · Salary advance already paid ₹0",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "smWZM",
+                          "name": "Monthly Inputs row 5",
+                          "fill": "#4F46E5",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Optional unpaid-day override requires a reason and must include approved days.",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "K3X3N",
+                          "name": "Monthly Inputs row 6",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Validate and save exceptions → Return to Payroll Runs → Recalculate draft",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "nCVQf",
+                  "layoutPosition": "absolute",
+                  "x": 1158,
+                  "y": 708,
+                  "name": "Floating page tools",
+                  "width": 54,
+                  "height": 152,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 14,
+                  "stroke": "#E7EBF0",
+                  "strokeWidth": 1,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#10182812",
+                    "offset": {
+                      "x": 0,
+                      "y": 4
+                    },
+                    "blur": 16
+                  },
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 5,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "lnI0A",
+                      "name": "Notifications",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "ntBH1",
+                          "name": "Notifications",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "bell",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "zpDyU",
+                      "name": "Page information",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "wv99p",
+                          "name": "Page information",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "info",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "yLJs6",
+                      "name": "Grievance & Speak Up",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "Bzok4",
+                          "name": "Grievance & Speak Up",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "message-square-warning",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Ko67Y",
+      "x": 14000,
+      "y": -1700,
+      "name": "07 Pay & Benefits / Employee Settings / Effective payroll",
+      "context": "{\"route\":\"/payroll/pay?tab=employee-settings\",\"revision\":6,\"sampleData\":true,\"browserVerified\":false,\"notes\":\"Automatic monthly preparation, effective eligibility and employee payslip review. Local tests separate from deployment.\"}",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#F6F8FB",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "cSW5j",
+          "name": "Review annotation",
+          "width": "fill_container",
+          "height": 24,
+          "fill": "#E8EDF4",
+          "gap": 16,
+          "padding": [
+            4,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Edddy",
+              "name": "IMPROVED  /  07 Pay & Benefits  /  Payroll Processing",
+              "fill": "#526079",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "APPROVED FLOW · Fictional example · Browser verification pending",
+              "lineHeight": 1.4,
+              "fontFamily": "$font",
+              "fontSize": 10,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "pIXLv",
+          "name": "Application",
+          "width": "fill_container",
+          "height": "fill_container",
+          "children": [
+            {
+              "id": "Wy1el",
+              "type": "ref",
+              "ref": "wjx4J",
+              "name": "Main navigation",
+              "width": 216,
+              "height": "fill_container",
+              "descendants": {
+                "c2yYT": {
+                  "fill": "#334761"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "GaRY6",
+              "name": "Page",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "b64kZX",
+                  "name": "Page content",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20,
+                    56,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "kIdfS",
+                      "name": "In-content heading — scrolls with page",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "XkOjG",
+                          "name": "Payroll Processing",
+                          "fill": "#5D6F89",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Employee Settings",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Manrope",
+                          "fontSize": 16,
+                          "fontWeight": "600",
+                          "letterSpacing": -0.6
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "OJPzG",
+                      "name": "Tabs",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 1,
+                      "padding": [
+                        0,
+                        0,
+                        8,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "e291s",
+                          "name": "Payroll Runs",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "cG4YX",
+                              "name": "Payroll Runs",
+                              "fill": "#5D6F89",
+                              "content": "Payroll Runs",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "LuM5e",
+                          "name": "Employee Payslips",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "kdwIB",
+                              "name": "Employee Payslips label",
+                              "fill": "#5D6F89",
+                              "content": "Employee Payslips",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "DIc2C",
+                          "name": "Monthly Inputs",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "wf0Z2",
+                              "name": "Monthly Inputs",
+                              "fill": "#5D6F89",
+                              "content": "Monthly Inputs",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oeydo",
+                          "name": "Contribution Rules",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "GC8q9",
+                              "name": "Contribution Rules",
+                              "fill": "#5D6F89",
+                              "content": "Contribution Rules",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "bs22O",
+                          "name": "Employee Payroll Settings",
+                          "fill": "#EEF2FF",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "iJMFd",
+                              "name": "Employee Settings label",
+                              "fill": "#4F46E5",
+                              "content": "Employee Payroll Settings",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "tM8a3",
+                          "name": "Arrears",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "guClP",
+                              "name": "Arrears",
+                              "fill": "#5D6F89",
+                              "content": "Arrears",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "MkjKU",
+                          "name": "Employer & Statutory Details",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "pX4tu",
+                              "name": "Employer & Statutory Details",
+                              "fill": "#5D6F89",
+                              "content": "Employer & Statutory Details",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "KbAxG",
+                          "name": "Unpaid Leave Rules",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "tbukT",
+                              "name": "Unpaid Leave Rules",
+                              "fill": "#5D6F89",
+                              "content": "Unpaid Leave Rules",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "L7Fmz",
+                          "name": "Salary Components",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "O0JuSb",
+                              "name": "Salary Components",
+                              "fill": "#5D6F89",
+                              "content": "Salary Components",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "e1RC7A",
+                          "name": "Payroll Exports",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "F6ZAG",
+                              "name": "Payroll Exports",
+                              "fill": "#5D6F89",
+                              "content": "Payroll Exports",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "biu2w",
+                      "name": "Employee Settings configuration",
+                      "width": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 12,
+                      "stroke": "#E7EBF0",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 22,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "AL9hY",
+                          "name": "Employee and payroll period selectors",
+                          "width": "fill_container",
+                          "height": 48,
+                          "fill": "#F8FAFC",
+                          "cornerRadius": 6,
+                          "stroke": "#CBD5E1",
+                          "strokeWidth": 1,
+                          "padding": 12,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "a5F32",
+                              "name": "Selected employee and period",
+                              "fill": "#334155",
+                              "content": "Employee: EXAMPLE/01    Effective month: October 2026",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "TVm3F",
+                          "name": "Employee Settings row 2",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "PF applies: Yes    ESI applies: Not confirmed",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "vPgBi",
+                          "name": "Employee Settings row 3",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "ESI disability ceiling: Not confirmed · Continuation through: —",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "yaMhJ",
+                          "name": "Employee Settings row 4",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "ESI average daily wage: —    Reason for configuration: Required",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "V5TdAp",
+                          "name": "Employee Settings row 5",
+                          "fill": "#4F46E5",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Save employee payroll settings",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "iuoyN",
+                          "name": "Employee Settings row 6",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Eligibility carries forward until changed. Missing information remains a review item.",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ueLrO",
+                  "layoutPosition": "absolute",
+                  "x": 1158,
+                  "y": 708,
+                  "name": "Floating page tools",
+                  "width": 54,
+                  "height": 152,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 14,
+                  "stroke": "#E7EBF0",
+                  "strokeWidth": 1,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#10182812",
+                    "offset": {
+                      "x": 0,
+                      "y": 4
+                    },
+                    "blur": 16
+                  },
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 5,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Y8iLan",
+                      "name": "Notifications",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "W7nBg",
+                          "name": "Notifications",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "bell",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ZAmps",
+                      "name": "Page information",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "q6pS3",
+                          "name": "Page information",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "info",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "uKjdb",
+                      "name": "Grievance & Speak Up",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "ux2F4",
+                          "name": "Grievance & Speak Up",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "message-square-warning",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "vYHz0",
+      "x": 15520,
+      "y": -1700,
+      "name": "07 Pay & Benefits / Unpaid Leave Rules / Effective payroll",
+      "context": "{\"route\":\"/payroll/pay?tab=unpaid-leave\",\"revision\":6,\"sampleData\":true,\"browserVerified\":false,\"notes\":\"Automatic monthly preparation, effective eligibility and employee payslip review. Local tests separate from deployment.\"}",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#F6F8FB",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "ZcR5s",
+          "name": "Review annotation",
+          "width": "fill_container",
+          "height": 24,
+          "fill": "#E8EDF4",
+          "gap": 16,
+          "padding": [
+            4,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "I5LNq",
+              "name": "IMPROVED  /  07 Pay & Benefits  /  Payroll Processing",
+              "fill": "#526079",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "APPROVED FLOW · Fictional example · Browser verification pending",
+              "lineHeight": 1.4,
+              "fontFamily": "$font",
+              "fontSize": 10,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "G3LxQV",
+          "name": "Application",
+          "width": "fill_container",
+          "height": "fill_container",
+          "children": [
+            {
+              "id": "y2PI7",
+              "type": "ref",
+              "ref": "wjx4J",
+              "name": "Main navigation",
+              "width": 216,
+              "height": "fill_container",
+              "descendants": {
+                "c2yYT": {
+                  "fill": "#334761"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "j86qz",
+              "name": "Page",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "tYGMp",
+                  "name": "Page content",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20,
+                    56,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "O9en8l",
+                      "name": "In-content heading — scrolls with page",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "tM2CT",
+                          "name": "Payroll Processing",
+                          "fill": "#5D6F89",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Unpaid Leave Rules",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Manrope",
+                          "fontSize": 16,
+                          "fontWeight": "600",
+                          "letterSpacing": -0.6
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "sg9QF",
+                      "name": "Tabs",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 1,
+                      "padding": [
+                        0,
+                        0,
+                        8,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "In0lt",
+                          "name": "Payroll Runs",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Qjz7T",
+                              "name": "Payroll Runs",
+                              "fill": "#5D6F89",
+                              "content": "Payroll Runs",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "z570sA",
+                          "name": "Employee Payslips",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "hMg9s",
+                              "name": "Employee Payslips label",
+                              "fill": "#5D6F89",
+                              "content": "Employee Payslips",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "bFz1U",
+                          "name": "Monthly Inputs",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "LAALe",
+                              "name": "Monthly Inputs",
+                              "fill": "#5D6F89",
+                              "content": "Monthly Inputs",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "yuRIq",
+                          "name": "Contribution Rules",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "bG7jB",
+                              "name": "Contribution Rules",
+                              "fill": "#5D6F89",
+                              "content": "Contribution Rules",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "wNrPV",
+                          "name": "Employee Payroll Settings",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "OONSo",
+                              "name": "Employee Settings label",
+                              "fill": "#5D6F89",
+                              "content": "Employee Payroll Settings",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "sgwWA",
+                          "name": "Arrears",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "q2QrY2",
+                              "name": "Arrears",
+                              "fill": "#5D6F89",
+                              "content": "Arrears",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "fOlf7",
+                          "name": "Employer & Statutory Details",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "qljp5",
+                              "name": "Employer & Statutory Details",
+                              "fill": "#5D6F89",
+                              "content": "Employer & Statutory Details",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "WbOF6",
+                          "name": "Unpaid Leave Rules",
+                          "fill": "#EEF2FF",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "plvSU",
+                              "name": "Unpaid Leave Rules",
+                              "fill": "#4F46E5",
+                              "content": "Unpaid Leave Rules",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "DfdOA",
+                          "name": "Salary Components",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Jku0E",
+                              "name": "Salary Components",
+                              "fill": "#5D6F89",
+                              "content": "Salary Components",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "HXoG4",
+                          "name": "Payroll Exports",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "p9hmba",
+                              "name": "Payroll Exports",
+                              "fill": "#5D6F89",
+                              "content": "Payroll Exports",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Hyvkc",
+                      "name": "Unpaid Leave Rules configuration",
+                      "width": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 12,
+                      "stroke": "#E7EBF0",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 22,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Sk3at",
+                          "name": "Employee and payroll period selectors",
+                          "width": "fill_container",
+                          "height": 48,
+                          "fill": "#F8FAFC",
+                          "cornerRadius": 6,
+                          "stroke": "#CBD5E1",
+                          "strokeWidth": 1,
+                          "padding": 12,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "AsGgI",
+                              "name": "Selected employee and period",
+                              "fill": "#334155",
+                              "content": "Payroll month: October 2026",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "B2NOd",
+                          "name": "Unpaid Leave Rules row 2",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Effective company rule · From 01 October 2026",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "l4FIR2",
+                          "name": "Unpaid Leave Rules row 3",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Regular gross ÷ 31 × approved unpaid days",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "K40QEu",
+                          "name": "Unpaid Leave Rules row 4",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Company divisor: 31    Reason: Client reviewed calculation",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "bZjTL",
+                          "name": "Unpaid Leave Rules row 5",
+                          "fill": "#4F46E5",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Review or configure company contribution and LWP rules",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "KGrKz",
+                          "name": "Unpaid Leave Rules row 6",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Imported source months retain their LWP amounts. Historical unpaid usage is not deducted again.",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "cTgvW",
+                  "layoutPosition": "absolute",
+                  "x": 1158,
+                  "y": 708,
+                  "name": "Floating page tools",
+                  "width": 54,
+                  "height": 152,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 14,
+                  "stroke": "#E7EBF0",
+                  "strokeWidth": 1,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#10182812",
+                    "offset": {
+                      "x": 0,
+                      "y": 4
+                    },
+                    "blur": 16
+                  },
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 5,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "L8jln",
+                      "name": "Notifications",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "divbX",
+                          "name": "Notifications",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "bell",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "V3YAz",
+                      "name": "Page information",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "dXQ6U",
+                          "name": "Page information",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "info",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "W7t2N",
+                      "name": "Grievance & Speak Up",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "c7OKva",
+                          "name": "Grievance & Speak Up",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "message-square-warning",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "dD0DU",
+      "x": 17040,
+      "y": -1700,
+      "name": "07 Pay & Benefits / Employee Payslips / Effective payroll",
+      "context": "{\"route\":\"/payroll/pay?tab=payslips\",\"revision\":6,\"sampleData\":true,\"browserVerified\":false,\"notes\":\"Automatic monthly preparation, effective eligibility and employee payslip review. Local tests separate from deployment.\"}",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#F6F8FB",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "xN2Qr",
+          "name": "Review annotation",
+          "width": "fill_container",
+          "height": 24,
+          "fill": "#E8EDF4",
+          "gap": 16,
+          "padding": [
+            4,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "y35KEN",
+              "name": "IMPROVED  /  07 Pay & Benefits  /  Payroll Processing",
+              "fill": "#526079",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "APPROVED FLOW · Fictional example · Browser verification pending",
+              "lineHeight": 1.4,
+              "fontFamily": "$font",
+              "fontSize": 10,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "wYvFa",
+          "name": "Application",
+          "width": "fill_container",
+          "height": "fill_container",
+          "children": [
+            {
+              "id": "L5dMg",
+              "type": "ref",
+              "ref": "wjx4J",
+              "name": "Main navigation",
+              "width": 216,
+              "height": "fill_container",
+              "descendants": {
+                "c2yYT": {
+                  "fill": "#334761"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "EPt7n",
+              "name": "Page",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "NdcWb",
+                  "name": "Page content",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20,
+                    56,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ACFAl",
+                      "name": "In-content heading — scrolls with page",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lSDqX",
+                          "name": "Payroll Processing",
+                          "fill": "#5D6F89",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Employee Payslips",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Manrope",
+                          "fontSize": 16,
+                          "fontWeight": "600",
+                          "letterSpacing": -0.6
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Z0ofeU",
+                      "name": "Tabs",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "gap": 1,
+                      "padding": [
+                        0,
+                        0,
+                        8,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "E18UuJ",
+                          "name": "Payroll Runs",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Ew9Xy",
+                              "name": "Payroll Runs",
+                              "fill": "#5D6F89",
+                              "content": "Payroll Runs",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Usny8",
+                          "name": "Employee Payslips",
+                          "fill": "#EEF2FF",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "aBNgY",
+                              "name": "Employee Payslips label",
+                              "fill": "#4F46E5",
+                              "content": "Employee Payslips",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "hBH7G",
+                          "name": "Monthly Inputs",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "DahMa",
+                              "name": "Monthly Inputs",
+                              "fill": "#5D6F89",
+                              "content": "Monthly Inputs",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "l1gFH",
+                          "name": "Contribution Rules",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "SPZWS",
+                              "name": "Contribution Rules",
+                              "fill": "#5D6F89",
+                              "content": "Contribution Rules",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "eweCi",
+                          "name": "Employee Payroll Settings",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "DoB1n",
+                              "name": "Employee Settings label",
+                              "fill": "#5D6F89",
+                              "content": "Employee Payroll Settings",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "dw7Yy",
+                          "name": "Arrears",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "P8S6z",
+                              "name": "Arrears",
+                              "fill": "#5D6F89",
+                              "content": "Arrears",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "w2rZT",
+                          "name": "Employer & Statutory Details",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "wCbuU",
+                              "name": "Employer & Statutory Details",
+                              "fill": "#5D6F89",
+                              "content": "Employer & Statutory Details",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "F7iL2",
+                          "name": "Unpaid Leave Rules",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "W58n1",
+                              "name": "Unpaid Leave Rules",
+                              "fill": "#5D6F89",
+                              "content": "Unpaid Leave Rules",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "VdUzE",
+                          "name": "Salary Components",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Kp4Fm",
+                              "name": "Salary Components",
+                              "fill": "#5D6F89",
+                              "content": "Salary Components",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "AjV9E",
+                          "name": "Payroll Exports",
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 6,
+                          "gap": 16,
+                          "padding": [
+                            8,
+                            4
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "s7Wrt",
+                              "name": "Payroll Exports",
+                              "fill": "#5D6F89",
+                              "content": "Payroll Exports",
+                              "fontFamily": "Inter",
+                              "fontSize": 10,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UZUBk",
+                      "name": "Employee Payslips configuration",
+                      "width": "fill_container",
+                      "fill": "#FFFFFF",
+                      "cornerRadius": 12,
+                      "stroke": "#E7EBF0",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 22,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Fbav7",
+                          "name": "Employee and payroll period selectors",
+                          "width": "fill_container",
+                          "height": 48,
+                          "fill": "#F8FAFC",
+                          "cornerRadius": 6,
+                          "stroke": "#CBD5E1",
+                          "strokeWidth": 1,
+                          "padding": 12,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "LVysj",
+                              "name": "Selected employee and period",
+                              "fill": "#334155",
+                              "content": "Employee: EXAMPLE/01 — Example employee    Period: September 2026",
+                              "fontFamily": "Inter",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "hAEjc",
+                          "name": "Employee Payslips row 2",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Finalized payslip · Example company",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "NeMoL",
+                          "name": "Employee Payslips row 3",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Earnings ₹30,000    Deductions ₹3,000    Net earned ₹27,000",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Ek0kz",
+                          "name": "Employee Payslips row 4",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Salary advance already paid ₹1,000    Remaining payable ₹26,000",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Q8MwwV",
+                          "name": "Employee Payslips row 5",
+                          "fill": "#4F46E5",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Download PDF",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "MahrQ",
+                          "name": "Employee Payslips row 6",
+                          "fill": "#334155",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Requires company-wide payroll read access. Draft calculations are reviewed in Payroll Runs.",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "n1rmsY",
+                  "layoutPosition": "absolute",
+                  "x": 1158,
+                  "y": 708,
+                  "name": "Floating page tools",
+                  "width": 54,
+                  "height": 152,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 14,
+                  "stroke": "#E7EBF0",
+                  "strokeWidth": 1,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#10182812",
+                    "offset": {
+                      "x": 0,
+                      "y": 4
+                    },
+                    "blur": 16
+                  },
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 5,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "oT0lK",
+                      "name": "Notifications",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "CUDaF",
+                          "name": "Notifications",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "bell",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mqx0o",
+                      "name": "Page information",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "Egrcm",
+                          "name": "Page information",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "info",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "AntCH",
+                      "name": "Grievance & Speak Up",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "LB7PQ",
                           "name": "Grievance & Speak Up",
                           "width": 20,
                           "height": 20,

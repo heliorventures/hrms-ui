@@ -46,7 +46,8 @@ export const REPORTS: ReportDefinition[] = [
   {
     kind: 'UNPAID_LEAVE',
     label: 'Unpaid-leave calculations',
-    description: 'Stored basic pay, divisor, unpaid days, deduction and calculation treatment.',
+    description:
+      'Finalized payslips: wage basis, divisor, unpaid days, deduction and calculation treatment.',
     permissions: ['payroll:read'],
   },
   {

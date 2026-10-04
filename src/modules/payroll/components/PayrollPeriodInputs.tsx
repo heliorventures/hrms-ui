@@ -43,8 +43,9 @@ const PayrollPeriodInputs = ({ client }: { client: GraphQLClient }) => {
   return (
     <Card title="Monthly payroll inputs">
       <p className="mb-3 text-sm text-slate-600">
-        Review salary, LWP, incentive, advance and deductions before running payroll. Generated or
-        processed periods cannot be changed.
+        Routine payroll is prepared automatically from effective salary, company rules and approved
+        unpaid leave. Use this page for monthly exceptions or reviewed imported amounts. Finalized
+        periods cannot be changed.
       </p>
       {error && (
         <p role="alert" className="text-sm text-red-600">

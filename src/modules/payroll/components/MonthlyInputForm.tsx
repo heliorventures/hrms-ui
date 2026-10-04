@@ -38,6 +38,8 @@ const MonthlyInputForm = ({
               automatic:
                 event.target.value === 'AUTOMATIC'
                   ? {
+                      use_employee_configuration: true,
+                      lwp_override: null,
                       eligibility: {
                         pf_applicable: null,
                         esi_applicable: null,
@@ -60,23 +62,27 @@ const MonthlyInputForm = ({
       ) : (
         <PeriodInputFields draft={draft} disabled={state.busy} onChange={state.setDraft} />
       )}
-      <ApprovedLwpReview
-        client={client}
-        employeeId={employeeId}
-        draft={draft}
-        disabled={state.busy}
-        onChange={state.setDraft}
-      />
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={state.revised}
+      {!draft.automatic?.use_employee_configuration && (
+        <ApprovedLwpReview
+          client={client}
+          employeeId={employeeId}
+          draft={draft}
           disabled={state.busy}
-          onChange={(event) => state.setRevised(event.target.checked)}
+          onChange={state.setDraft}
         />
-        I reviewed changed amounts; reconcile using these inputs instead of the original source
-        totals.
-      </label>
+      )}
+      {!draft.automatic && (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={state.revised}
+            disabled={state.busy}
+            onChange={(event) => state.setRevised(event.target.checked)}
+          />
+          I reviewed changed amounts; reconcile using these inputs instead of the original source
+          totals.
+        </label>
+      )}
       {!state.locked && (
         <Button disabled={state.busy} onClick={() => void state.save()}>
           Validate and save

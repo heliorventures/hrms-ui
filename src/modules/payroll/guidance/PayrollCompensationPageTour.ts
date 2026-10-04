@@ -15,7 +15,7 @@ export const payrollCompensationPageTour: TourDefinition = {
       id: 'payroll-compensation-components',
       anchor: 'payroll.compensation.components',
       title: 'Review salary components',
-      body: 'Configure component codes, types and tax treatment before assigning a structure. Once used, these financial definitions are protected; create a new component for a future change. Company payslip visibility remains editable and changes presentation only. Review contribution rules and monthly eligibility in Payroll Processing.',
+      body: 'Configure component codes, types and tax treatment before assigning a structure. Once used, these financial definitions are protected; create a new component for a future change. Company payslip visibility remains editable and changes presentation only. Review company contribution rules and effective employee eligibility in Payroll Processing.',
       isVisible: ({ canCapability }) => canCapability?.('action.payroll.manage') ?? false,
     },
     {

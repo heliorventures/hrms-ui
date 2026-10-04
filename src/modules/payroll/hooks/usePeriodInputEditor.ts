@@ -52,6 +52,12 @@ export const usePeriodInputEditor = (
           setRecord(result.payrollPeriodInput);
           setLocked(result.payrollPeriodLocked === true);
           setDraft(result.payrollPeriodInput?.input ?? null);
+          setNotice(
+            result.payrollPeriodInput?.validationError ??
+              (result.payrollPeriodInput?.derived
+                ? 'Prepared automatically from employee and company settings. Save only when recording an exception.'
+                : null)
+          );
           setBusy(false);
         }
       })

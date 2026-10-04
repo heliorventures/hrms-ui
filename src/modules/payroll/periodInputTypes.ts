@@ -6,6 +6,8 @@ export interface AdditionalDeduction {
 }
 export interface PeriodInput {
   automatic?: {
+    use_employee_configuration?: boolean;
+    lwp_override?: { days: string; reason: string } | null;
     eligibility: {
       pf_applicable: boolean | null;
       esi_applicable: boolean | null;
@@ -45,9 +47,10 @@ export interface PeriodInput {
   approved_lwp_review_hash?: string | null;
 }
 export interface PeriodRecord {
-  id: string;
+  id: string | null;
   input: PeriodInput;
-  revision: number;
+  revision: number | null;
+  derived?: boolean;
   ready: boolean;
   validationError?: string | null;
 }

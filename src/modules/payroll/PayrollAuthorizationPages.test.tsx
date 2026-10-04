@@ -48,6 +48,61 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
+it('loads the selected employee existing salary without submitting an assignment', async () => {
+  testState.permissions = new Set(['payroll:manage']);
+  testState.permissionScopes = { 'payroll:manage': 'ALL' };
+  testState.request.mockImplementation((query: string) =>
+    Promise.resolve(
+      query.includes('PayrollCompensationBoard')
+        ? {
+            employees: [
+              {
+                id: 'employee-1',
+                employeeCode: 'SCL/01',
+                fullName: 'Test Employee',
+                status: 'ACTIVE',
+                dateOfJoining: '2025-07-01',
+              },
+            ],
+            salaryComponents: [],
+            salaryStructures: [],
+          }
+        : {
+            salaryComponents: [],
+            employeeSalaryBreakupPreview: {
+              employeeId: 'employee-1',
+              annualCtc: '120000',
+              monthlyGross: '10000',
+              monthlyDeductions: '0',
+              monthlyNetBeforeStatutory: '10000',
+              lines: [],
+            },
+          }
+    )
+  );
+  render(
+    <MemoryRouter initialEntries={['/?tab=assignments']}>
+      <PayrollCompensationPage />
+    </MemoryRouter>
+  );
+  await screen.findByText('SCL/01 - Test Employee');
+  const [employeeSelect] = screen.getAllByRole('combobox');
+  fireEvent.change(employeeSelect, { target: { value: 'employee-1' } });
+  await waitFor(() =>
+    expect(
+      testState.request.mock.calls.some(([query]) =>
+        String(query).includes('EmployeeSalaryBreakupPreview')
+      )
+    ).toBe(true)
+  );
+  expect(
+    testState.request.mock.calls.some(([query]) =>
+      String(query).includes('mutation AssignEmployeeSalaryStructure')
+    )
+  ).toBe(false);
+  expect(await screen.findByText('Monthly gross: 10000')).toBeTruthy();
+});
+
 describe('payroll administration page authorization', () => {
   it('suppresses tax administration requests for employee tax self-service', async () => {
     testState.permissions = new Set(['tax:read', 'tax:submit']);

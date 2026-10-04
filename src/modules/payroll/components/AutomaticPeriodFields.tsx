@@ -1,7 +1,10 @@
+import { Link } from 'react-router-dom';
+
 import Input from '../../../components/common/Input';
 import type { PeriodInput } from '../periodInputTypes';
 
 import AdditionalDeductionFields from './AdditionalDeductionFields';
+import AutomaticLwpFields from './AutomaticLwpFields';
 import MonthlyWithholdingFields from './MonthlyWithholdingFields';
 
 const AutomaticPeriodFields = ({
@@ -27,45 +30,60 @@ const AutomaticPeriodFields = ({
     <fieldset disabled={disabled} className="space-y-3">
       <p className="text-sm">
         Salary comes from the effective assignment. Company rules calculate PF, ESI and PT; employee
-        tax settings calculate TDS. Enter zero only for confirmed unused monthly amounts.
+        tax settings calculate TDS. Routine monthly extras default to zero; enter only exceptions.
       </p>
+      {automatic.use_employee_configuration && (
+        <p className="text-sm">
+          PF/ESI eligibility comes from{' '}
+          <Link className="text-indigo-600 underline" to="/payroll/pay?tab=employee-settings">
+            Employee payroll settings
+          </Link>
+          . Approved unpaid leave refreshes automatically when calculating the draft.
+        </p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
-        {(['pf_applicable', 'esi_applicable', 'disability'] as const).map((key) => (
-          <label key={key}>
-            {
+        {!automatic.use_employee_configuration &&
+          (['pf_applicable', 'esi_applicable', 'disability'] as const).map((key) => (
+            <label key={key}>
               {
-                pf_applicable: 'PF applies',
-                esi_applicable: 'ESI applies',
-                disability: 'ESI disability ceiling applies',
-              }[key]
-            }
-            <select
-              className="block w-full rounded border p-2"
-              value={automatic.eligibility[key] === null ? '' : String(automatic.eligibility[key])}
-              onChange={(e) =>
-                changeEligibility(key, e.target.value === '' ? null : e.target.value === 'true')
+                {
+                  pf_applicable: 'PF applies',
+                  esi_applicable: 'ESI applies',
+                  disability: 'ESI disability ceiling applies',
+                }[key]
               }
-            >
-              <option value="">Not confirmed</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
-          </label>
-        ))}
-        <Input
-          label="ESI continuation through"
-          type="date"
-          value={automatic.eligibility.esi_continuation_until ?? ''}
-          onChange={(e) => changeEligibility('esi_continuation_until', e.target.value || null)}
-        />
-        <Input
-          label="ESI average daily wage"
-          value={automatic.eligibility.average_daily_wage ?? ''}
-          onChange={(e) => changeEligibility('average_daily_wage', e.target.value || null)}
-        />
+              <select
+                className="block w-full rounded border p-2"
+                value={
+                  automatic.eligibility[key] === null ? '' : String(automatic.eligibility[key])
+                }
+                onChange={(e) =>
+                  changeEligibility(key, e.target.value === '' ? null : e.target.value === 'true')
+                }
+              >
+                <option value="">Not confirmed</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </label>
+          ))}
+        {!automatic.use_employee_configuration && (
+          <>
+            <Input
+              label="ESI continuation through"
+              type="date"
+              value={automatic.eligibility.esi_continuation_until ?? ''}
+              onChange={(e) => changeEligibility('esi_continuation_until', e.target.value || null)}
+            />
+            <Input
+              label="ESI average daily wage"
+              value={automatic.eligibility.average_daily_wage ?? ''}
+              onChange={(e) => changeEligibility('average_daily_wage', e.target.value || null)}
+            />
+          </>
+        )}
         {(
           [
-            ['lwp_days', 'Unpaid leave days'],
             ['variable_allowance_ot', 'Overtime / variable allowance'],
             ['incentive', 'Monthly incentive'],
             ['advance_already_paid', 'Salary advance already paid'],
@@ -79,6 +97,7 @@ const AutomaticPeriodFields = ({
           />
         ))}
       </div>
+      <AutomaticLwpFields draft={draft} onChange={onChange} />
       <MonthlyWithholdingFields draft={draft} onChange={onChange} />
       <AdditionalDeductionFields draft={draft} disabled={disabled} onChange={onChange} />
     </fieldset>
