@@ -12,6 +12,7 @@ import PayrollPayTabs from './components/PayrollPayTabs';
 import PayrollSalaryTab from './components/PayrollSalaryTab';
 import { usePayrollPayData } from './hooks/usePayrollPayData';
 import { usePayslipUnpaidLeave } from './hooks/usePayslipUnpaidLeave';
+import { usePayslipPresentation } from './hooks/usePayslipPresentation';
 import type { PayrollTabId } from './payrollTypes';
 
 const PayrollPayPage = () => {
@@ -33,6 +34,7 @@ const PayrollPayPage = () => {
   });
 
   const unpaidLeave = usePayslipUnpaidLeave(client, ownerKey, canReadPayroll && activeTab === 'payslip' ? pay.activePayslip?.id ?? null : null);
+  const presentation = usePayslipPresentation(client, ownerKey, canReadPayroll && activeTab === 'payslip' ? pay.activePayslip?.id ?? null : null);
 
   useEffect(() => {
     if (activeTab === 'incometax' && !canReadTax) setActiveTab('salary');
@@ -67,6 +69,10 @@ const PayrollPayPage = () => {
         <div data-tour-anchor="payroll.pay.payslip-period">
           <PayrollPayslipTab
             activePayslip={pay.activePayslip}
+            presentation={presentation.data}
+            presentationLoading={presentation.loading}
+            presentationError={presentation.error}
+            onRetryPresentation={presentation.retry}
             unpaidLeave={unpaidLeave.data}
             unpaidLeaveLoading={unpaidLeave.loading}
             unpaidLeaveError={unpaidLeave.error}

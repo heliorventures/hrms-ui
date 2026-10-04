@@ -35,6 +35,7 @@ export interface SalaryStructureRow {
 }
 
 export interface SalaryBreakupPreview {
+  financials?: import('./importSalaryPreview').ImportedSalaryFinancials | null;
   annualCtc: string;
   monthlyGross: string;
   monthlyDeductions: string;

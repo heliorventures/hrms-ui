@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import CompanyPayslipComponents from './components/CompanyPayslipComponents';
 
 import {
   AssignAnnualCtcSection,
@@ -103,6 +104,7 @@ const SALARY_BREAKUP_PREVIEW = /* GraphQL */ `
     employeeSalaryBreakupPreview(employeeId: $employeeId, asOf: $asOf) {
       employeeId
       annualCtc
+      financials
       monthlyGross
       monthlyDeductions
       monthlyNetBeforeStatutory
@@ -342,6 +344,7 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
       ) : null}
 
       <PageTabPanel id="components" activeTab={tab}>
+        <CompanyPayslipComponents client={client} />
         <div className="flex justify-end">
           <Button variant="outline" onClick={() => setTab('structures')}>
             Next: Build Salary Structure

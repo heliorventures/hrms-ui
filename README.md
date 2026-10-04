@@ -84,7 +84,7 @@ the new UI is released. The gateway checks for `myAttendanceSummary` at startup.
 
 ## Typical local order
 
-1. **kabipay-database** — `npm run migrate-ops`, then `provision-tenant` + optional `seed-demo-data` (see **kabipay-svc** scripts).
+1. **hrms-database** — `npm run migrate-ops`, then `scripts/reusable/provisioning/provision-tenant.ps1` + optional `seed-demo-data.ps1` from the same folder (see the database repository's root README).
 2. **kabipay-svc** — `kabipay-auth` + subgraphs (e.g. `start-subgraphs.ps1`).
 3. **kabipay-gateway** — `npm run dev`.
 4. **This UI** — set `public/config.json`, then `npm run dev`.

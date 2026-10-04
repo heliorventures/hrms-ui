@@ -3,9 +3,7 @@ import type { GraphQLClient } from 'graphql-request';
 import {
   ClientOpsPayslipsForPayrollHubDocument,
   ClientOpsPayrollTaxBoardDocument,
-  EmployeeSalaryBreakupPreviewDocument,
   PayrollComplianceSettingDocument,
-  type EmployeeSalaryBreakupPreviewQuery,
   type PayrollComplianceSettingQuery,
 } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -15,6 +13,7 @@ import {
   type TenantCalendarPeriod,
 } from '../../../utils/tenantCalendar';
 import { PayslipLogoSignedReadUrlDocument } from '../documents';
+import { ImportedSalaryPreviewDocument } from '../importSalaryPreview';
 import { isMissingPayrollCoreError } from '../payrollFormatters';
 import type {
   EmployeeSalaryPreview,
@@ -127,8 +126,8 @@ export function usePayrollPayData(
         setLoadingPayroll(true);
         setErrorSalary(null);
         setSalaryMigrationRequired(false);
-        const response = await client.request<EmployeeSalaryBreakupPreviewQuery>(
-          EmployeeSalaryBreakupPreviewDocument,
+        const response = await client.request<{ employeeSalaryBreakupPreview: EmployeeSalaryPreview }>(
+          ImportedSalaryPreviewDocument,
           { asOf: null }
         );
         if (!cancelled) {

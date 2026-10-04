@@ -6,11 +6,12 @@ import type {
   TaxSectionDefinitionsQuery,
 } from '../../api/graphql/graphql';
 import type { PayslipDocModel } from './components/PayslipDocument';
+import type { ImportedSalaryFinancials } from './importSalaryPreview';
 
 export type PayrollTabId = 'salary' | 'payslip' | 'incometax';
 
 export type EmployeeSalaryPreview =
-  EmployeeSalaryBreakupPreviewQuery['employeeSalaryBreakupPreview'];
+  (NonNullable<EmployeeSalaryBreakupPreviewQuery['employeeSalaryBreakupPreview']> & { financials?: ImportedSalaryFinancials | null }) | null | undefined;
 
 export interface SalaryComponentRow {
   id: string;

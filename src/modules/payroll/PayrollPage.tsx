@@ -14,6 +14,8 @@ import PayrollCyclesCard from './components/PayrollCyclesCard';
 import PayrollExportsSection from './components/PayrollExportsSection';
 import PayrollSalaryComponentsCard from './components/PayrollSalaryComponentsCard';
 import UnpaidLeavePolicyCard from './components/UnpaidLeavePolicyCard';
+import CompanyPayslipComponents from './components/CompanyPayslipComponents';
+import PayrollPeriodInputs from './components/PayrollPeriodInputs';
 import { usePayrollBoard } from './hooks/usePayrollBoard';
 import { usePayrollBoardActions } from './hooks/usePayrollBoardActions';
 import { usePayrollExports } from './hooks/usePayrollExports';
@@ -42,6 +44,7 @@ const PayrollPage = () => {
 
   const tabs = [
     { id: 'runs', label: 'Payroll Runs' },
+    { id: 'monthly-inputs', label: 'Monthly Inputs' },
     { id: 'arrears', label: 'Arrears' },
     { id: 'compliance', label: 'Employer & Statutory Details' },
     { id: 'unpaid-leave', label: 'Unpaid Leave Rules' },
@@ -71,6 +74,9 @@ const PayrollPage = () => {
       <PageTabPanel id="unpaid-leave" activeTab={tab}>
         <UnpaidLeavePolicyCard client={client} ownerKey={ownerKey} />
       </PageTabPanel>
+      <PageTabPanel id="monthly-inputs" activeTab={tab}>
+        <PayrollPeriodInputs key={ownerKey} client={client} />
+      </PageTabPanel>
       <PageTabPanel id="compliance" activeTab={tab}>
         <PayrollComplianceCard
           form={board.complianceForm}
@@ -95,6 +101,7 @@ const PayrollPage = () => {
         />
       </PageTabPanel>
       <PageTabPanel id="components" activeTab={tab}>
+        <CompanyPayslipComponents key={ownerKey} client={client} />
         <PayrollSalaryComponentsCard
           rows={board.data?.salaryComponents ?? []}
           loading={board.loading}

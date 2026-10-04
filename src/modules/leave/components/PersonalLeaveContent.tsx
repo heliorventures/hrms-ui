@@ -1,8 +1,10 @@
 import Card from '../../../components/common/Card';
 import FlashToastBar from '../../../components/common/FlashToastBar';
+import { useImportedLeaveHistory } from '../hooks/useImportedLeaveHistory';
 import { usePersonalLeaveModel, type PersonalLeaveOptions } from '../hooks/usePersonalLeaveModel';
 
 import CompOffPanel from './CompOffPanel';
+import ImportedLeaveHistoryCard from './ImportedLeaveHistoryCard';
 import LeaveBalancesCard from './LeaveBalancesCard';
 import LeaveRecoveryNotice from './LeaveRecoveryNotice';
 import PersonalLeaveDialogs from './PersonalLeaveDialogs';
@@ -12,6 +14,7 @@ import PersonalLeaveToolbar from './PersonalLeaveToolbar';
 
 const PersonalLeaveContent = (options: PersonalLeaveOptions) => {
   const model = usePersonalLeaveModel(options);
+  const history = useImportedLeaveHistory(options.client, options.balanceYear);
   const {
     activeFailure,
     retryBoard,
@@ -48,6 +51,7 @@ const PersonalLeaveContent = (options: PersonalLeaveOptions) => {
       <div data-tour-anchor="leave.balances">
         <LeaveBalancesCard
           balanceYear={balanceYear}
+          importedHistory={history.data}
           balances={data?.leaveBalances ?? []}
           leaveTypes={data?.leaveTypes ?? []}
           leaveTypeNameById={leaveTypeNameById}
@@ -58,6 +62,7 @@ const PersonalLeaveContent = (options: PersonalLeaveOptions) => {
           }}
         />
       </div>
+      <ImportedLeaveHistoryCard data={history.data} error={history.error} onRetry={history.retry} />
       <div data-tour-anchor="leave.comp-off-panel">
         <CompOffPanel canSubmit={canSubmitLeave} />
       </div>

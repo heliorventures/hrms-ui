@@ -26,7 +26,7 @@ const PayrollSalaryTab = ({ preview, loading, error }: PayrollSalaryTabProps) =>
       <div className="space-y-6">
         <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
-            ['Annual CTC', preview.annualCtc],
+            ['Annual CTC', preview.financials ? preview.financials.annual_ctc ?? 'Pending employer PF configuration' : preview.annualCtc],
             ['Monthly Gross', preview.monthlyGross],
             ['Monthly Deductions', preview.monthlyDeductions],
             ['Net Before Statutory', preview.monthlyNetBeforeStatutory],
@@ -41,6 +41,7 @@ const PayrollSalaryTab = ({ preview, loading, error }: PayrollSalaryTabProps) =>
             </div>
           ))}
         </dl>
+        {preview.financials && <p className="text-sm text-content-secondary">Annual gross (monthly gross × 12): {formatAmountString(preview.financials.annual_gross)}. Annual employer PF: {preview.financials.annual_employer_pf === null ? 'Awaiting configuration' : formatAmountString(preview.financials.annual_employer_pf)}.</p>}
 
         <Table
           ariaLabel="Your salary breakup"

@@ -2,6 +2,7 @@ import Card from '../../../components/common/Card';
 import PayslipDocument from './PayslipDocument';
 import Button from '../../../components/common/Button';
 import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
+import type { PayslipPresentation } from '../payslipPresentation';
 import type {
   PayrollComplianceSettingRow,
   PayslipPeriodOption,
@@ -9,6 +10,10 @@ import type {
 } from '../payrollTypes';
 
 interface PayrollPayslipTabProps {
+  presentation?: PayslipPresentation | null;
+  presentationLoading?: boolean;
+  presentationError?: string | null;
+  onRetryPresentation?: () => void;
   unpaidLeave?: UnpaidLeaveSnapshot | null;
   unpaidLeaveLoading?: boolean;
   unpaidLeaveError?: string | null;
@@ -31,6 +36,10 @@ interface PayrollPayslipTabProps {
 }
 
 const PayrollPayslipTab = ({
+  presentation,
+  presentationLoading,
+  presentationError,
+  onRetryPresentation,
   unpaidLeave,
   unpaidLeaveLoading,
   unpaidLeaveError,
@@ -98,6 +107,8 @@ const PayrollPayslipTab = ({
 
         {activePayslip && (
           <>
+          {presentationError && <div role="alert" className="no-print text-sm text-red-600">Payslip display details could not be loaded. {presentationError}<Button size="sm" variant="outline" onClick={onRetryPresentation}>Retry</Button></div>}
+          {presentationLoading && <p role="status" className="no-print text-sm text-slate-500">Loading payslip display details...</p>}
           {unpaidLeaveError && <div role="alert" className="no-print flex items-center gap-3 text-sm text-red-600">Unpaid leave details could not be loaded. {unpaidLeaveError}<Button size="sm" variant="outline" onClick={onRetryUnpaidLeave}>Retry</Button></div>}
           {unpaidLeaveLoading && <p role="status" className="no-print text-sm text-slate-500">Loading unpaid leave details…</p>}
           <PayslipDocument
@@ -112,8 +123,8 @@ const PayrollPayslipTab = ({
               )?.label ?? 'Payslip'
             }
             labelForLine={labelForLine}
-            slip={{ ...activePayslip, unpaidLeave }}
-            detailsPending={unpaidLeaveLoading || !!unpaidLeaveError}
+            slip={{ ...activePayslip, unpaidLeave, presentation }}
+            detailsPending={unpaidLeaveLoading || !!unpaidLeaveError || presentationLoading || !!presentationError}
           />
           </>
         )}

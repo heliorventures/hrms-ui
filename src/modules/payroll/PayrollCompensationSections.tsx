@@ -271,11 +271,12 @@ export function SalaryBreakupPreviewSection({ preview }: { preview: SalaryBreaku
   return (
     <Card title="Salary Breakup Preview">
       <div className="grid gap-3 text-sm md:grid-cols-4">
-        <div>Annual CTC: {preview.annualCtc}</div>
+        <div>Annual CTC: {preview.financials ? preview.financials.annual_ctc ?? 'Pending employer PF configuration' : preview.annualCtc}</div>
         <div>Monthly gross: {preview.monthlyGross}</div>
         <div>Monthly deductions: {preview.monthlyDeductions}</div>
         <div>Net before statutory: {preview.monthlyNetBeforeStatutory}</div>
       </div>
+      {preview.financials && <p className="mt-3 text-sm">Annual gross (monthly gross × 12): {preview.financials.annual_gross}. Annual employer PF: {preview.financials.annual_employer_pf ?? 'Awaiting configuration'}.</p>}
       <ul className="mt-4 divide-y divide-slate-200">
         {preview.lines.map((line) => (
           <li key={line.salaryComponentId} className="grid gap-2 py-2 text-sm md:grid-cols-5">

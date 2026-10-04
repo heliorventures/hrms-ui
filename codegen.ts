@@ -37,6 +37,7 @@ const schema: CodegenConfig['schema'] = [
   schemaUrl,
   join(__dirname, 'src', 'api', 'schema-extensions', 'payroll-run.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'payroll-unpaid-leave.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'tenant-import.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'tax-admin.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'backlog-catchup.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-rbac.graphql'),

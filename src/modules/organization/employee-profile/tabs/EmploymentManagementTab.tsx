@@ -5,6 +5,7 @@ import type { CanonicalEmployeeStatus } from '../../../employeeStatus';
 
 import type { EmployeeProfileModel, EmploymentStatusUi } from '../types';
 import { InfoCard } from '../components/InfoCard';
+import ImportedProfileDetails from '../components/ImportedProfileDetails';
 import { EmploymentStatusBadge } from '../components/StatusBadge';
 import { SalaryTimeline } from '../components/SalaryTimeline';
 import { LifecycleTimeline } from '../components/LifecycleTimeline';
@@ -311,6 +312,7 @@ export function EmploymentManagementTab({
         </div>
       </InfoCard>
 
+      <ImportedProfileDetails client={client} employeeId={employeeId} section="employment" />
       <InfoCard title="Lifecycle" subtitle="Unified employment events">
         <LifecycleTimeline events={model.lifecycleEvents} />
       </InfoCard>

@@ -7,7 +7,6 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ClientOpsPayslipsForPayrollHubDocument,
   ClientOpsPayrollTaxBoardDocument,
-  EmployeeSalaryBreakupPreviewDocument,
   PayrollBoardDocument,
   PayrollComplianceSettingDocument,
   PayrollShellDocument,
@@ -15,6 +14,7 @@ import {
   TaxProofLinesDocument,
   TaxSectionDefinitionsDocument,
 } from '../../../api/graphql/graphql';
+import { ImportedSalaryPreviewDocument } from '../importSalaryPreview';
 
 import { usePayrollPayData } from './usePayrollPayData';
 
@@ -53,7 +53,7 @@ describe('usePayrollPayData exact read authority', () => {
       lines: [],
     };
     const request = vi.fn((document: unknown) => {
-      if (document === EmployeeSalaryBreakupPreviewDocument) {
+      if (document === ImportedSalaryPreviewDocument) {
         return Promise.resolve({ employeeSalaryBreakupPreview: preview });
       }
       return Promise.reject(new Error('Unexpected GraphQL document.'));
@@ -71,7 +71,7 @@ describe('usePayrollPayData exact read authority', () => {
 
     await waitFor(() => expect(result.current.loadingSalary).toBe(false));
     expect(result.current.salaryPreview).toEqual(preview);
-    expect(request).toHaveBeenCalledWith(EmployeeSalaryBreakupPreviewDocument, {
+    expect(request).toHaveBeenCalledWith(ImportedSalaryPreviewDocument, {
       asOf: null,
     });
     expect(request).not.toHaveBeenCalledWith(PayrollBoardDocument, expect.anything());
@@ -89,7 +89,7 @@ describe('usePayrollPayData exact read authority', () => {
     };
     let salaryRequestCount = 0;
     const request = vi.fn((document: unknown) => {
-      if (document !== EmployeeSalaryBreakupPreviewDocument) {
+      if (document !== ImportedSalaryPreviewDocument) {
         return Promise.reject(new Error('Unexpected GraphQL document.'));
       }
       salaryRequestCount += 1;
