@@ -29,7 +29,7 @@ Work through **§2 → §5** in order: **ops migrations** → **provision tenant
 | **Windows: MSVC C++ build tools** | Default Rust host **`x86_64-pc-windows-msvc`** needs Microsoft’s **`link.exe`**. Install **[Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)** with workload **Desktop development with C++** (MSVC + Windows SDK). Without this, `cargo build` may fail with **linker `link.exe` not found**. Alternative: `rustup default stable-x86_64-pc-windows-gnu` + a MinGW linker (more setup). |
 | **Node.js** LTS (v20+) + **npm** | `kabipay-database` (Liquibase scripts), `kabipay-gateway`, and this UI. |
 | **JRE 17** | Used by bundled Liquibase under `kabipay-database` (downloaded into `vendor/` on first migrate if needed). |
-| **PowerShell** (Windows) | Used by `kabipay-svc/scripts` (provision, seed, start-subgraphs). |
+| **PowerShell** (Windows) | Used by `hrms-database/scripts/reusable/provisioning` (provision/seed) and `kabipay-svc/scripts` (start-subgraphs). |
 | **Git** | Clone the repos. |
 
 **Hardware:** a full `cargo build --workspace` is heavy; on low-RAM Windows machines build crates one at a time or use `cargo build -j 1` (see `kabipay-svc/README.md`).
@@ -62,12 +62,12 @@ This creates the **`kabipay_ops`** schema and related ops/control-plane objects.
 
 You need at least **one tenant schema** with **tenant-plane** Liquibase applied, or auth/UI data calls will have nothing to work against.
 
-**Recommended (Windows):** from **`kabipay-svc/`**, with Postgres running and DB connection variables in **`kabipay-database/.env` and/or `kabipay-svc/.env`**:
+**Recommended (Windows):** from **`hrms-database/`**, with Postgres running and DB connection variables in **`hrms-database/.env`**:
 
 For **cloud** hosts (Aiven, Neon, …), ensure `.env` has the real host and `POSTGRES_SSLMODE=require` as needed; you can pass **`-PostgresSsl`** to the script if you set host on the command line (see `provision-tenant.ps1` help).
 
 ```powershell
-.\scripts\provision-tenant.ps1 -Name "Demo Co" -Code demo
+.\scripts\reusable\provisioning\provision-tenant.ps1 -Name "Demo Co" -Code demo
 ```
 
 The script:
@@ -78,10 +78,10 @@ The script:
 
 Note the **tenant UUID** printed by the script. You will paste it into **`kabipay-ui/public/config.json`** as **`devTenantId`**.
 
-**Optional demo data** (users, employees, sample rows for many modules) — after provisioning, from **`kabipay-svc/`**:
+**Optional demo data** (users, employees, sample rows for many modules) — after provisioning, from **`hrms-database/`**:
 
 ```powershell
-.\scripts\seed-demo-data.ps1 -TenantId "<UUID printed by provision-tenant>" -Schema "<schema printed by provision-tenant, e.g. tenant_342205fc>"
+.\scripts\reusable\provisioning\seed-demo-data.ps1 -TenantId "<UUID printed by provision-tenant>" -Schema "<schema printed by provision-tenant, e.g. tenant_342205fc>"
 ```
 
 `-Schema` must match the PostgreSQL schema name created for that tenant (shown when you run `provision-tenant.ps1`). `-TenantId` is the tenant’s UUID from the same script’s output.

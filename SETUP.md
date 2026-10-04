@@ -32,7 +32,7 @@ Runtime URLs live in **`public/config.json`** (not `.env` for API):
 
 - `gatewayUrl` — e.g. `http://127.0.0.1:4009/graphql`
 - `authUrl` — e.g. `http://127.0.0.1:4001`
-- `devTenantId` — tenant UUID from `kabipay-svc/scripts/provision-tenant.ps1`
+- `devTenantId` — tenant UUID from `hrms-database/scripts/reusable/provisioning/provision-tenant.ps1`
 
 Optional GraphQL types: **`npm run codegen`** (gateway must be up; reads `gatewayUrl` from `public/config.json`).
 
