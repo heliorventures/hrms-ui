@@ -3,8 +3,7 @@ import type { GraphQLClient } from 'graphql-request';
 import Button from '../../../components/common/Button';
 import { usePeriodInputEditor } from '../hooks/usePeriodInputEditor';
 
-import ApprovedLwpReview from './ApprovedLwpReview';
-import PeriodInputFields from './PeriodInputFields';
+import MonthlyInputForm from './MonthlyInputForm';
 
 interface Props {
   client: GraphQLClient;
@@ -28,35 +27,8 @@ const PeriodEditor = ({ client, employeeId, year, month }: Props) => {
           {state.notice}
         </p>
       )}
-      {draft && (
-        <>
-          <p className="text-sm">
-            Status: {state.record?.ready ? 'Ready' : 'Draft: review required'}
-          </p>
-          <PeriodInputFields draft={draft} disabled={state.busy} onChange={state.setDraft} />
-          <ApprovedLwpReview
-            client={client}
-            employeeId={employeeId}
-            draft={draft}
-            disabled={state.busy}
-            onChange={state.setDraft}
-          />
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={state.revised}
-              disabled={state.busy}
-              onChange={(event) => state.setRevised(event.target.checked)}
-            />
-            I reviewed changed amounts; reconcile using these inputs instead of the original source
-            totals.
-          </label>
-          <Button disabled={state.busy} onClick={() => void state.save()}>
-            Validate and save
-          </Button>
-        </>
-      )}
-      {!draft && !state.busy && !state.error && (
+      {draft && <MonthlyInputForm state={state} client={client} employeeId={employeeId} />}
+      {!draft && !state.busy && !state.error && !state.locked && (
         <div className="space-y-2 text-sm">
           <p>
             No monthly input exists for this employee and period. Create a draft and review every

@@ -7,15 +7,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 
+import CompanyContributionRules from './components/CompanyContributionRules';
+import CompanyPayslipComponents from './components/CompanyPayslipComponents';
 import PayrollAdminNotice from './components/PayrollAdminNotice';
 import PayrollArrearsCard from './components/PayrollArrearsCard';
 import PayrollComplianceCard from './components/PayrollComplianceCard';
-import PayrollCyclesCard from './components/PayrollCyclesCard';
 import PayrollExportsSection from './components/PayrollExportsSection';
+import PayrollPeriodInputs from './components/PayrollPeriodInputs';
+import PayrollRunsSection from './components/PayrollRunsSection';
 import PayrollSalaryComponentsCard from './components/PayrollSalaryComponentsCard';
 import UnpaidLeavePolicyCard from './components/UnpaidLeavePolicyCard';
-import CompanyPayslipComponents from './components/CompanyPayslipComponents';
-import PayrollPeriodInputs from './components/PayrollPeriodInputs';
 import { usePayrollBoard } from './hooks/usePayrollBoard';
 import { usePayrollBoardActions } from './hooks/usePayrollBoardActions';
 import { usePayrollExports } from './hooks/usePayrollExports';
@@ -45,6 +46,7 @@ const PayrollPage = () => {
   const tabs = [
     { id: 'runs', label: 'Payroll Runs' },
     { id: 'monthly-inputs', label: 'Monthly Inputs' },
+    { id: 'contribution-rules', label: 'Contribution Rules' },
     { id: 'arrears', label: 'Arrears' },
     { id: 'compliance', label: 'Employer & Statutory Details' },
     { id: 'unpaid-leave', label: 'Unpaid Leave Rules' },
@@ -77,6 +79,9 @@ const PayrollPage = () => {
       <PageTabPanel id="monthly-inputs" activeTab={tab}>
         <PayrollPeriodInputs key={ownerKey} client={client} />
       </PageTabPanel>
+      <PageTabPanel id="contribution-rules" activeTab={tab}>
+        <CompanyContributionRules key={ownerKey} client={client} />
+      </PageTabPanel>
       <PageTabPanel id="compliance" activeTab={tab}>
         <PayrollComplianceCard
           form={board.complianceForm}
@@ -108,22 +113,7 @@ const PayrollPage = () => {
         />
       </PageTabPanel>
       <PageTabPanel id="runs" activeTab={tab}>
-        <div data-tour-anchor="payroll.cycles">
-          <PayrollCyclesCard
-            rows={board.data?.payrollCycles ?? []}
-            form={actions.cycleForm}
-            loading={board.loading}
-            createBusy={actions.createBusy}
-            createError={actions.createError}
-            createOk={actions.createOk}
-            runBusy={actions.runBusy}
-            runError={actions.runError}
-            runOk={actions.runOk}
-            onChange={actions.setCycleField}
-            onCreate={() => void actions.createCycle()}
-            onRun={(payrollCycleId) => void actions.runPayroll(payrollCycleId)}
-          />
-        </div>
+        <PayrollRunsSection board={board} actions={actions} />
       </PageTabPanel>
       {canExportPayroll ? (
         <PageTabPanel id="exports" activeTab={tab}>

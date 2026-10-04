@@ -20,13 +20,13 @@ export const payrollPayPageTour: TourDefinition = {
       id: 'payroll-pay-payslip-period',
       anchor: 'payroll.pay.sections',
       title: 'Choose a payslip period',
-      body: 'Open Payslip after the tour to choose a pay period and review its generated payslip, including earnings, deductions, and net pay. A period without a payslip shows that one is not available yet.',
+      body: 'Open Payslip after the tour to review finalized earnings, deductions, LWP and net salary. A salary advance reduces the remaining payable amount, not earned salary. HR controls company-wide component visibility. A period without a finalized payslip is not available yet.',
     },
     {
       id: 'payroll-pay-income-tax',
       anchor: 'payroll.pay.sections',
       title: 'Review income tax details',
-      body: 'The Income Tax section shows your available tax declaration, deduction proof, and tax computation information. Select that section after closing the tour.',
+      body: 'Income Tax shows an April–March projection from your joining date, monthly salary components and slab details. Imported actuals and finalized payroll are distinguished from estimates. Earlier TDS stays Not provided until HR supplies it. Recorded deductions do not confirm government remittance. Contact HR about actual liability. Select this section after closing the tour.',
       isVisible: ({ canScopedPermission }) =>
         canScopedPermission?.('tax:read', ['SELF', 'TEAM', 'DEPARTMENT', 'ALL']) ?? false,
     },

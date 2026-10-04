@@ -1,5 +1,6 @@
-import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+
 import {
   SubmitTaxProofLineDocument,
   TaxComputationsListDocument,
@@ -27,7 +28,8 @@ const parseYear = (raw: string) => {
 const validateOptionalMoney = (raw: string, label: string): string | null => {
   const trimmed = raw.trim();
   if (!trimmed) return null;
-  if (!MONEY_PATTERN.test(trimmed)) return `${label} must be a non-negative amount with up to 2 decimal places.`;
+  if (!MONEY_PATTERN.test(trimmed))
+    return `${label} must be a non-negative amount with up to 2 decimal places.`;
   return Number(trimmed) >= 0 ? null : `${label} must be non-negative.`;
 };
 
@@ -44,10 +46,12 @@ export function useEmployeeTaxSelfService(
     ownerKey: string;
   }
 ) {
-  const [taxComputationsSelf, setTaxComputationsSelf] =
-    useState<TaxComputationsListQuery['taxComputations'] | null>(null);
-  const [taxProofLinesSelf, setTaxProofLinesSelf] =
-    useState<TaxProofLinesQuery['taxProofLines'] | null>(null);
+  const [taxComputationsSelf, setTaxComputationsSelf] = useState<
+    TaxComputationsListQuery['taxComputations'] | null
+  >(null);
+  const [taxProofLinesSelf, setTaxProofLinesSelf] = useState<
+    TaxProofLinesQuery['taxProofLines'] | null
+  >(null);
   const [loadingEmployeeTax, setLoadingEmployeeTax] = useState(false);
   const [employeeTaxError, setEmployeeTaxError] = useState<string | null>(null);
   const [declFy, setDeclFy] = useState(() => String(new Date().getFullYear()));
@@ -179,9 +183,6 @@ export function useEmployeeTaxSelfService(
             taxRegimeChosen: declRegime.trim() || null,
             grossIncome: declGross.trim() || null,
             totalDeductions: declDed.trim() || null,
-            taxableIncome: null,
-            finalTax: null,
-            tdsPerMonth: null,
           },
         });
         setDeclMsg('Saved your estimated declaration.');
@@ -192,7 +193,17 @@ export function useEmployeeTaxSelfService(
         setDeclSubmitting(false);
       }
     },
-    [activeTaxConfig?.id, canSubmit, client, declDed, declFy, declGross, declRegime, enabled, loadEmployeeTax]
+    [
+      activeTaxConfig?.id,
+      canSubmit,
+      client,
+      declDed,
+      declFy,
+      declGross,
+      declRegime,
+      enabled,
+      loadEmployeeTax,
+    ]
   );
 
   const handleProofSubmit = useCallback(
@@ -271,20 +282,23 @@ export function useEmployeeTaxSelfService(
     ]
   );
 
-  const handleProofFileChange = useCallback((file: File | null) => {
-    if (!canSubmit) {
-      setProofFile(null);
-      setProofMsg('You do not have permission to submit tax proofs.');
-      return;
-    }
-    setProofFile(file);
-    if (!file) {
-      setProofMsg(null);
-      return;
-    }
-    const proofFileError = validateTenantUploadFile(file, 'Proof file');
-    setProofMsg(proofFileError);
-  }, [canSubmit]);
+  const handleProofFileChange = useCallback(
+    (file: File | null) => {
+      if (!canSubmit) {
+        setProofFile(null);
+        setProofMsg('You do not have permission to submit tax proofs.');
+        return;
+      }
+      setProofFile(file);
+      if (!file) {
+        setProofMsg(null);
+        return;
+      }
+      const proofFileError = validateTenantUploadFile(file, 'Proof file');
+      setProofMsg(proofFileError);
+    },
+    [canSubmit]
+  );
 
   return {
     taxComputationsSelf,

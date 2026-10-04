@@ -15,6 +15,10 @@ type TaxSectionDefinition {
 }
 
 extend type Query {
+  employeeTaxSettings(employeeId: ID): JSON!
+  employeeTaxHistory(employeeId: ID, fiscalYear: Int!): JSON!
+  employeeTaxDeclaration(employeeId: ID, fiscalYear: Int!): JSON
+  employeeTaxProjection(employeeId: ID, fiscalYear: Int!, month: Int!): JSON!
   taxSectionDefinitions(activeOnly: Boolean = true, limit: Int = 100): [TaxSectionDefinition!]!
 }
 
@@ -47,6 +51,8 @@ input UpsertTaxSlabInput {
 }
 
 extend type Mutation {
+  saveEmployeeTaxSettings(employeeId: ID!, input: JSON!, expectedRevision: Int): JSON!
+  saveEmployeeTaxHistory(employeeId: ID!, input: JSON!, expectedRevision: Int): JSON!
   upsertTaxSectionDefinition(input: UpsertTaxSectionDefinitionInput!): TaxSectionDefinition!
   upsertTaxConfigurationVersion(
     input: UpsertTaxConfigurationVersionInput!

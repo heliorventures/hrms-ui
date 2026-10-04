@@ -5,6 +5,16 @@ export interface AdditionalDeduction {
   origin?: string | null;
 }
 export interface PeriodInput {
+  automatic?: {
+    eligibility: {
+      pf_applicable: boolean | null;
+      esi_applicable: boolean | null;
+      esi_continuation_until: string | null;
+      disability: boolean | null;
+      average_daily_wage: string | null;
+    };
+    withholding_override: { amount: string; reason: string } | null;
+  } | null;
   year: number;
   month: number;
   gross_rule: string;
@@ -69,6 +79,7 @@ export const amountFields: [PeriodAmountField, string][] = [
 export const periodInputQuery = /* GraphQL */ `
   query PayrollPeriodInput($employeeId: ID!, $year: Int!, $month: Int!) {
     payrollPeriodInput(employeeId: $employeeId, year: $year, month: $month)
+    payrollPeriodLocked(year: $year, month: $month)
   }
 `;
 export const savePeriodInputMutation = /* GraphQL */ `

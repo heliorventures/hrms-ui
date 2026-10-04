@@ -22,6 +22,9 @@ input UpsertPayrollComplianceSettingInput {
 }
 
 extend type Query {
+  payrollDraft(cycleId: ID!): JSON
+  payrollPeriodLocked(year: Int!, month: Int!): Boolean!
+  companyPayrollPolicies: JSON!
   payrollComplianceSetting: PayrollComplianceSetting
   payslipLogoSignedReadUrl(fileStorageId: ID!, ttlSeconds: Int = 600): String!
   payrollBankTransferCsv(month: Int!, year: Int!): String!
@@ -34,6 +37,9 @@ extend type Query {
 }
 
 extend type Mutation {
+  calculatePayrollCycle(cycleId: ID!, expectedRevision: Int): JSON!
+  finalizePayrollCycle(cycleId: ID!, draftRevision: Int!, fingerprint: String!, acknowledgement: JSON!): JSON!
+  saveCompanyPayrollPolicy(input: JSON!, expectedRevision: Int): JSON!
   upsertPayrollComplianceSetting(
     input: UpsertPayrollComplianceSettingInput!
   ): PayrollComplianceSetting!

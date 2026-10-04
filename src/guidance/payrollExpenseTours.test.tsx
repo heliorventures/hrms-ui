@@ -206,7 +206,7 @@ it('explains submission requirements and the results of expense approval dialogs
 it.each([
   [expensesPageTour, 'expense-submit-claim', 'expenses.submit-expense', 'Submit Expense'],
   [expensesPageTour, 'expense-approval-result', 'expenses.claim-actions', 'Submit Approval'],
-  [payrollPageTour, 'payroll-run-cycle', 'payroll.cycles', 'Run pay (v1)'],
+  [payrollPageTour, 'payroll-run-cycle', 'payroll.cycles', 'Calculate draft'],
 ] as const)(
   'blocks the live %s control while its tour is open',
   async (tour, stepId, anchor, label) => {

@@ -18,6 +18,7 @@ import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
+import EmployeeTaxWorkspace from './components/EmployeeTaxWorkspace';
 import { TaxVersionFormCard, TaxSlabFormCard } from './components/TaxAdminFormsCard';
 import TaxComputationsCard from './components/TaxComputationsCard';
 import TaxConfigurationsCard from './components/TaxConfigurationsCard';
@@ -333,9 +334,6 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
           taxRegimeChosen: formRegime.trim() || null,
           grossIncome: formGross.trim() || null,
           totalDeductions: formDed.trim() || null,
-          taxableIncome: null,
-          finalTax: null,
-          tdsPerMonth: null,
         },
       });
       setFormMsg('Saved.');
@@ -348,6 +346,7 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
   };
 
   const tabs = [
+    ...(canManageTax ? [{ id: 'employee-settings', label: 'Employee Tax & History' }] : []),
     { id: 'configuration', label: 'Tax Versions' },
     { id: 'slabs', label: 'Income Tax Slabs' },
     ...(canManageTax ? [{ id: 'deductions', label: 'Deduction Sections' }] : []),
@@ -378,6 +377,11 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
           onChange={setSelectedConfigId}
         />
       ) : null}
+      {canManageTax && (
+        <PageTabPanel id="employee-settings" activeTab={tab}>
+          <EmployeeTaxWorkspace client={client} />
+        </PageTabPanel>
+      )}
       <PageTabPanel id="configuration" activeTab={tab}>
         <div className="flex justify-end">
           <Button variant="outline" onClick={() => setTab('slabs')}>

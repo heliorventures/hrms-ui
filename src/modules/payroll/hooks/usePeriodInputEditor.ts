@@ -1,5 +1,5 @@
 import type { GraphQLClient } from 'graphql-request';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { newPeriodInput } from '../newPeriodInput';
@@ -9,6 +9,11 @@ import {
   type PeriodInput,
   type PeriodRecord,
 } from '../periodInputTypes';
+
+const savedNotice = (record: PeriodRecord) =>
+  record.ready
+    ? 'Monthly input is ready for payroll generation.'
+    : `Saved as a draft. ${record.validationError ?? 'Review unresolved amounts, component totals and deduction reasons.'}`;
 
 export const usePeriodInputEditor = (
   client: GraphQLClient,
@@ -22,33 +27,47 @@ export const usePeriodInputEditor = (
   const [busy, setBusy] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
   const [revised, setRevised] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const lifetime = useRef(0);
   useEffect(() => {
-    let active = true;
+    const generation = ++lifetime.current;
+    setBusy(true);
+    setRecord(null);
+    setDraft(null);
+    setError(null);
+    setNotice(null);
+    setRevised(false);
+    setLocked(false);
     client
-      .request<{ payrollPeriodInput: PeriodRecord | null }>(periodInputQuery, {
-        employeeId,
-        year,
-        month,
-      })
+      .request<{ payrollPeriodInput: PeriodRecord | null; payrollPeriodLocked?: boolean }>(
+        periodInputQuery,
+        {
+          employeeId,
+          year,
+          month,
+        }
+      )
       .then((result) => {
-        if (active) {
+        if (lifetime.current === generation) {
           setRecord(result.payrollPeriodInput);
+          setLocked(result.payrollPeriodLocked === true);
           setDraft(result.payrollPeriodInput?.input ?? null);
           setBusy(false);
         }
       })
       .catch((reason: unknown) => {
-        if (active) {
+        if (lifetime.current === generation) {
           setError(graphQlUserMessage(reason));
           setBusy(false);
         }
       });
     return () => {
-      active = false;
+      lifetime.current = generation + 1;
     };
   }, [client, employeeId, year, month]);
   const save = async () => {
-    if (!draft) return;
+    if (!draft || locked) return;
+    const generation = lifetime.current;
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -62,17 +81,14 @@ export const usePeriodInputEditor = (
         savePeriodInputMutation,
         { employeeId, input, expectedRevision: record?.revision ?? null }
       );
+      if (lifetime.current !== generation) return;
       setRecord(result.savePayrollPeriodInput);
       setDraft(result.savePayrollPeriodInput.input);
-      setNotice(
-        result.savePayrollPeriodInput.ready
-          ? 'Monthly input is ready for payroll generation.'
-          : `Saved as a draft. ${result.savePayrollPeriodInput.validationError ?? 'Review unresolved amounts, component totals and deduction reasons.'}`
-      );
+      setNotice(savedNotice(result.savePayrollPeriodInput));
     } catch (reason) {
-      setError(graphQlUserMessage(reason));
+      if (lifetime.current === generation) setError(graphQlUserMessage(reason));
     } finally {
-      setBusy(false);
+      if (lifetime.current === generation) setBusy(false);
     }
   };
   return {
@@ -83,6 +99,7 @@ export const usePeriodInputEditor = (
     busy,
     notice,
     revised,
+    locked,
     setRevised,
     save,
     create: () => setDraft(newPeriodInput(year, month)),

@@ -8,14 +8,14 @@ export const payrollTaxPageTour: TourDefinition = {
       id: 'payroll-tax-sections',
       anchor: 'payroll.tax.sections',
       title: 'Choose a tax administration section',
-      body: 'Tax Versions maintains active tax configurations. Income Tax Slabs and Deduction Sections define calculation inputs. Tax Computations is a read-only results view. Submit Declaration is available only to users with tax submission access.',
+      body: 'Employee Tax & History sets each employee’s annual regime and withholding method with effective dates. A percentage override needs a component basis and HR reason. Record earlier earnings and TDS only when supplied; a blank deduction is unknown, not zero. Previous finalized payslips remain unchanged.',
       isVisible: ({ canCapability }) => canCapability?.('action.tax.manage') ?? false,
     },
     {
       id: 'payroll-tax-configuration',
       anchor: 'payroll.tax.configuration',
       title: 'Manage tax versions',
-      body: 'Review the listed tax configurations and use the form to create or update country, fiscal year, regime, and active status. Saving a version changes the tax configuration used by the tenant.',
+      body: 'Tax Versions and Income Tax Slabs maintain the declaration catalog. Annual projections display the specific published calculation version they use. Editing this catalog does not replace that calculation version. Use Employee Tax & History for effective employee settings.',
       isVisible: ({ canCapability }) => canCapability?.('action.tax.manage') ?? false,
     },
     {

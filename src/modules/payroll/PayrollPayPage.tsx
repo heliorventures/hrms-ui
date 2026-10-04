@@ -1,23 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
-import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
+
 import { PERMISSIONS } from '../../auth/permissions';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Card from '../../components/common/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import PayrollIncomeTaxTab from './components/PayrollIncomeTaxTab';
+
+import EmployeePayslipPanel from './components/EmployeePayslipPanel';
+import EmployeeTaxFormsPanel from './components/EmployeeTaxFormsPanel';
+import EmployeeTaxProjection from './components/EmployeeTaxProjection';
 import PayrollMigrationHint from './components/PayrollMigrationHint';
-import PayrollPayslipTab from './components/PayrollPayslipTab';
 import PayrollPayTabs from './components/PayrollPayTabs';
 import PayrollSalaryTab from './components/PayrollSalaryTab';
 import { usePayrollPayData } from './hooks/usePayrollPayData';
-import { usePayslipUnpaidLeave } from './hooks/usePayslipUnpaidLeave';
-import { usePayslipPresentation } from './hooks/usePayslipPresentation';
 import type { PayrollTabId } from './payrollTypes';
 
 const PayrollPayPage = () => {
   const client = useGraphClient('client');
-  const { clientSession, user } = useAuth();
+  const { clientSession } = useAuth();
   const { currentTenant } = useTenant();
   const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
   const ownerKey = authorizationStateKey(clientSession);
@@ -33,9 +34,6 @@ const PayrollPayPage = () => {
     tenantTimezone: currentTenant.timezone,
   });
 
-  const unpaidLeave = usePayslipUnpaidLeave(client, ownerKey, canReadPayroll && activeTab === 'payslip' ? pay.activePayslip?.id ?? null : null);
-  const presentation = usePayslipPresentation(client, ownerKey, canReadPayroll && activeTab === 'payslip' ? pay.activePayslip?.id ?? null : null);
-
   useEffect(() => {
     if (activeTab === 'incometax' && !canReadTax) setActiveTab('salary');
   }, [activeTab, canReadTax]);
@@ -46,7 +44,7 @@ const PayrollPayPage = () => {
     <div className="space-y-4">
       <h1 className="sr-only">Pay</h1>
 
-      {pay.showMigrationHint && <PayrollMigrationHint tenantId={currentTenant?.id} />}
+      {pay.showMigrationHint && <PayrollMigrationHint tenantId={currentTenant.id} />}
 
       {activeTab === 'incometax' && pay.errorShell && !pay.showMigrationHint && (
         <Card>
@@ -66,73 +64,13 @@ const PayrollPayPage = () => {
       )}
 
       {activeTab === 'payslip' && (
-        <div data-tour-anchor="payroll.pay.payslip-period">
-          <PayrollPayslipTab
-            activePayslip={pay.activePayslip}
-            presentation={presentation.data}
-            presentationLoading={presentation.loading}
-            presentationError={presentation.error}
-            onRetryPresentation={presentation.retry}
-            unpaidLeave={unpaidLeave.data}
-            unpaidLeaveLoading={unpaidLeave.loading}
-            unpaidLeaveError={unpaidLeave.error}
-            onRetryUnpaidLeave={unpaidLeave.retry}
-            employeeCode={user?.employeeId ?? ''}
-            employeeName={user?.name ?? 'Employee'}
-            labelForLine={pay.labelForLine}
-            payslipBranding={pay.payslipBranding}
-            payslipError={pay.payslipError}
-            payslipLogoReadUrl={pay.payslipLogoReadUrl}
-            payslipMigrationRequired={pay.payslipMigrationRequired}
-            payslipPeriodOptions={pay.payslipPeriodOptions}
-            payslips={pay.payslips}
-            payslipsLoading={pay.payslipsLoading}
-            selectedPeriodKey={pay.selectedPeriodKey}
-            tenantId={currentTenant?.id}
-            tenantName={currentTenant?.name ?? 'Organization'}
-            onSelectedPeriodChange={pay.setSelectedPeriodKey}
-          />
-        </div>
+        <EmployeePayslipPanel client={client} ownerKey={ownerKey} pay={pay} />
       )}
 
       {activeTab === 'incometax' && (
         <div data-tour-anchor="payroll.pay.income-tax-actions">
-          <PayrollIncomeTaxTab
-            activeTaxConfig={pay.activeTaxConfig}
-            activeTaxSlabs={pay.activeTaxSlabs}
-            canSubmitTax={canSubmitTax}
-            declDed={pay.declDed}
-            declFy={pay.declFy}
-            declGross={pay.declGross}
-            declMsg={pay.declMsg}
-            declRegime={pay.declRegime}
-            declSubmitting={pay.declSubmitting}
-            employeeTaxError={pay.employeeTaxError}
-            loadingEmployeeTax={pay.loadingEmployeeTax}
-            loadingShell={pay.loadingShell}
-            payslipError={pay.payslipError}
-            payslipIndiaFyTotals={pay.payslipIndiaFyTotals}
-            payslipsLoading={pay.payslipsLoading}
-            proofActual={pay.proofActual}
-            proofBusy={pay.proofBusy}
-            proofDeclared={pay.proofDeclared}
-            proofFile={pay.proofFile}
-            proofMsg={pay.proofMsg}
-            proofSectionCode={pay.proofSectionCode}
-            taxComputationsSelf={pay.taxComputationsSelf}
-            taxProofLinesSelf={pay.taxProofLinesSelf}
-            taxSectionCatalog={pay.taxSectionCatalog}
-            onDeclDedChange={pay.setDeclDed}
-            onDeclFyChange={pay.setDeclFy}
-            onDeclGrossChange={pay.setDeclGross}
-            onDeclRegimeChange={pay.setDeclRegime}
-            onDeclSubmit={pay.handleDeclUpsert}
-            onProofActualChange={pay.setProofActual}
-            onProofDeclaredChange={pay.setProofDeclared}
-            onProofFileChange={pay.setProofFile}
-            onProofSectionCodeChange={pay.setProofSectionCode}
-            onProofSubmit={pay.handleProofSubmit}
-          />
+          <EmployeeTaxProjection key={ownerKey} client={client} ownerKey={ownerKey} />
+          <EmployeeTaxFormsPanel pay={pay} canSubmitTax={canSubmitTax} />
         </div>
       )}
     </div>

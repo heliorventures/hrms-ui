@@ -108,6 +108,10 @@ it('keeps tax setup actions with their feature and excludes employee submission 
       <PayrollTaxPage />
     </MemoryRouter>
   );
+  expect(
+    screen.getByRole('tab', { name: 'Employee Tax & History' }).getAttribute('aria-selected')
+  ).toBe('true');
+  fireEvent.click(screen.getByRole('tab', { name: 'Tax Versions' }));
   expect(await screen.findByRole('button', { name: 'Add or Update Tax Version' })).toBeTruthy();
   expect(screen.queryByRole('tab', { name: 'Submit Declaration' })).toBeNull();
   fireEvent.click(screen.getByRole('tab', { name: 'Income Tax Slabs' }));
