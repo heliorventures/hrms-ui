@@ -14,6 +14,7 @@ export interface PeriodInput {
       esi_continuation_until: string | null;
       disability: boolean | null;
       average_daily_wage: string | null;
+      professional_tax?: string | null;
     };
     withholding_override: { amount: string; reason: string } | null;
   } | null;

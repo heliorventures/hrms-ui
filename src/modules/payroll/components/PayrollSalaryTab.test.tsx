@@ -38,6 +38,8 @@ describe('PayrollSalaryTab employee self-service', () => {
 
     expect(screen.getByText('Annual CTC')).toBeTruthy();
     expect(screen.getByText('Basic Salary')).toBeTruthy();
+    expect(screen.queryByText('Monthly Deductions')).toBeNull();
+    expect(screen.queryByText('Net Before Statutory')).toBeNull();
     expect(screen.queryByText('Salary Components')).toBeNull();
     expect(screen.queryByText('Payroll Cycles')).toBeNull();
   });

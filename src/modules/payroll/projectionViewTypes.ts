@@ -33,6 +33,13 @@ export interface AnnualTax {
   statutory_tax: string;
 }
 export interface TaxProjection {
+  configuration?: {
+    regime: 'NEW' | 'OLD';
+    method: 'ANNUAL_PROJECTION' | 'PERCENTAGE_OVERRIDE';
+    percentage: string | null;
+    basis_components: string[];
+    effective_from: string;
+  } | null;
   fiscal_year: number;
   months: ProjectionMonth[];
   annual_earnings: string;

@@ -22,7 +22,7 @@ export const payrollPageTour: TourDefinition = {
       id: 'payroll-effective-settings',
       anchor: 'payroll.process.sections',
       title: 'Review effective contribution and unpaid leave rules',
-      body: 'Employee Settings records PF and ESI eligibility from an effective month and carries it forward. Unpaid Leave Rules shows the company divisor effective in the selected month. Historical unpaid usage is not charged again. Recalculate an editable draft after configuration changes.',
+      body: 'Employee Settings records PF and ESI eligibility and an optional recurring professional tax override from an effective month. Blank PT uses the company rule; zero explicitly means no PT. These settings carry forward. Unpaid Leave Rules shows the effective company divisor. Historical unpaid usage is not charged again. Recalculate an editable draft after configuration changes.',
       isVisible: ({ canCapability }) => canCapability?.('action.payroll.manage') ?? false,
     },
     {

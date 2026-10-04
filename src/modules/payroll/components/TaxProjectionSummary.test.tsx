@@ -10,6 +10,13 @@ it('labels partial recorded deductions and hides unsupported remaining liability
     <TaxProjectionSummary
       projection={{
         fiscal_year: 2026,
+        configuration: {
+          regime: 'NEW',
+          method: 'PERCENTAGE_OVERRIDE',
+          percentage: '0.10',
+          basis_components: ['BASIC', 'HRA'],
+          effective_from: '2026-10-01',
+        },
         annual_earnings: '600000',
         tax: null,
         withholding: null,
@@ -26,4 +33,6 @@ it('labels partial recorded deductions and hides unsupported remaining liability
   expect(screen.getByText('Recorded TDS (partial history)')).toBeTruthy();
   expect(screen.getByText('Not available until history is complete')).toBeTruthy();
   expect(screen.queryByText(/tax paid/i)).toBeNull();
+  expect(screen.getByText(/New tax regime/)).toBeTruthy();
+  expect(screen.getByText(/10% of BASIC \+ HRA earned for the month/)).toBeTruthy();
 });

@@ -70,7 +70,12 @@ const PayrollPayPage = () => {
       {activeTab === 'incometax' && (
         <div data-tour-anchor="payroll.pay.income-tax-actions">
           <EmployeeTaxProjection key={ownerKey} client={client} ownerKey={ownerKey} />
-          <EmployeeTaxFormsPanel pay={pay} canSubmitTax={canSubmitTax} />
+          <details className="mt-4 rounded-lg border border-line p-4">
+            <summary className="cursor-pointer font-semibold">
+              Declarations, proofs and recorded payslip totals
+            </summary>
+            <EmployeeTaxFormsPanel pay={pay} canSubmitTax={canSubmitTax} />
+          </details>
         </div>
       )}
     </div>

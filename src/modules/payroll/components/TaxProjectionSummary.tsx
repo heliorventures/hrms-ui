@@ -16,13 +16,23 @@ const TaxProjectionSummary = ({ projection }: { projection: TaxProjection }) => 
         ? formatTaxMoney(projection.withholding?.remaining)
         : 'Not available until history is complete',
     ],
-    ['Selected month withholding', formatTaxMoney(projection.selected_monthly_tds)],
+    ['Projected monthly withholding', formatTaxMoney(projection.selected_monthly_tds)],
   ];
   return (
     <Card
       title={`Tax projection · April ${projection.fiscal_year}–March ${projection.fiscal_year + 1}`}
     >
       <div data-tour-anchor="payroll.pay.tax-projection">
+        {projection.configuration && (
+          <p className="mb-4 rounded-lg bg-surface-raised p-3">
+            {projection.configuration.regime === 'NEW' ? 'New tax regime' : 'Old tax regime'} ·
+            Effective {projection.configuration.effective_from}. Withholding:{' '}
+            {projection.configuration.method === 'PERCENTAGE_OVERRIDE'
+              ? `${Number(projection.configuration.percentage) * 100}% of ${projection.configuration.basis_components.join(' + ')} earned for the month`
+              : 'Projected annual liability adjusted for recorded deductions and remaining months'}
+            .
+          </p>
+        )}
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {entries.map(([label, value]) => (
             <div key={label}>

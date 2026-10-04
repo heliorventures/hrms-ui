@@ -10,6 +10,14 @@ export const EmployeeEligibilityFields = ({
   onChange: (value: Eligibility) => void;
 }) => (
   <>
+    <Input
+      label="Recurring professional tax override"
+      value={eligibility.professional_tax ?? ''}
+      placeholder="Company rule when blank; 0 means no PT"
+      onChange={(event) =>
+        onChange({ ...eligibility, professional_tax: event.target.value || null })
+      }
+    />
     {(['pf_applicable', 'esi_applicable', 'disability'] as const).map((key) => (
       <label key={key}>
         {

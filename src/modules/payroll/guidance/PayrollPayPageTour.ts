@@ -14,7 +14,7 @@ export const payrollPayPageTour: TourDefinition = {
       id: 'payroll-pay-salary-preview',
       anchor: 'payroll.pay.sections',
       title: 'Review your salary breakdown',
-      body: 'After the tour, select Salary to see the current salary components and amounts available to your account. Contact payroll if the displayed structure needs correction.',
+      body: 'After the tour, select Salary to see recurring earnings, monthly gross, annual gross and annual CTC including configured employer PF. Monthly deductions and settlement amounts are shown on the payslip. Contact payroll if the displayed structure needs correction.',
     },
     {
       id: 'payroll-pay-payslip-period',

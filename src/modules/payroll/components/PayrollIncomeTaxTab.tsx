@@ -1,12 +1,6 @@
 import type { FormEvent } from 'react';
+
 import Card from '../../../components/common/Card';
-import {
-  ActiveTaxConfigurationCard,
-  EmployeeTaxTables,
-  PayslipFySummaryCard,
-  TaxSlabsCard,
-} from './EmployeeTaxCards';
-import { EmployeeTaxDeclarationFormCard, EmployeeTaxProofFormCard } from './EmployeeTaxForms';
 import type {
   PayslipIndiaFyTotals,
   TaxComputationSelfRow,
@@ -15,6 +9,9 @@ import type {
   TaxSectionCatalogRow,
   TaxSlabRow,
 } from '../payrollTypes';
+
+import { EmployeeTaxTables, PayslipFySummaryCard } from './EmployeeTaxCards';
+import { EmployeeTaxDeclarationFormCard, EmployeeTaxProofFormCard } from './EmployeeTaxForms';
 
 interface PayrollIncomeTaxTabProps {
   activeTaxConfig: TaxConfigurationRow | null;
@@ -55,7 +52,6 @@ interface PayrollIncomeTaxTabProps {
 
 const PayrollIncomeTaxTab = ({
   activeTaxConfig,
-  activeTaxSlabs,
   canSubmitTax,
   declDed,
   declFy,
@@ -65,7 +61,6 @@ const PayrollIncomeTaxTab = ({
   declSubmitting,
   employeeTaxError,
   loadingEmployeeTax,
-  loadingShell,
   payslipError,
   payslipIndiaFyTotals,
   payslipsLoading,
@@ -90,8 +85,6 @@ const PayrollIncomeTaxTab = ({
   onProofSubmit,
 }: PayrollIncomeTaxTabProps) => (
   <div className="space-y-6">
-    <ActiveTaxConfigurationCard activeTaxConfig={activeTaxConfig} loadingShell={loadingShell} />
-    <TaxSlabsCard activeTaxSlabs={activeTaxSlabs} loadingShell={loadingShell} />
     {payslipIndiaFyTotals && (
       <PayslipFySummaryCard
         totals={payslipIndiaFyTotals}
@@ -110,37 +103,41 @@ const PayrollIncomeTaxTab = ({
       loading={loadingEmployeeTax}
       hasError={Boolean(employeeTaxError)}
     />
-    {canSubmitTax ? <EmployeeTaxProofFormCard
-      activeTaxConfig={activeTaxConfig}
-      loading={loadingEmployeeTax}
-      catalog={taxSectionCatalog}
-      sectionCode={proofSectionCode}
-      declared={proofDeclared}
-      actual={proofActual}
-      proofFile={proofFile}
-      busy={proofBusy}
-      message={proofMsg}
-      onSectionCodeChange={onProofSectionCodeChange}
-      onDeclaredChange={onProofDeclaredChange}
-      onActualChange={onProofActualChange}
-      onProofFileChange={onProofFileChange}
-      onSubmit={onProofSubmit}
-    /> : null}
-    {canSubmitTax ? <EmployeeTaxDeclarationFormCard
-      activeTaxConfig={activeTaxConfig}
-      fiscalYear={declFy}
-      regime={declRegime}
-      gross={declGross}
-      deductions={declDed}
-      submitting={declSubmitting}
-      loading={loadingEmployeeTax}
-      message={declMsg}
-      onFiscalYearChange={onDeclFyChange}
-      onRegimeChange={onDeclRegimeChange}
-      onGrossChange={onDeclGrossChange}
-      onDeductionsChange={onDeclDedChange}
-      onSubmit={onDeclSubmit}
-    /> : null}
+    {canSubmitTax ? (
+      <EmployeeTaxProofFormCard
+        activeTaxConfig={activeTaxConfig}
+        loading={loadingEmployeeTax}
+        catalog={taxSectionCatalog}
+        sectionCode={proofSectionCode}
+        declared={proofDeclared}
+        actual={proofActual}
+        proofFile={proofFile}
+        busy={proofBusy}
+        message={proofMsg}
+        onSectionCodeChange={onProofSectionCodeChange}
+        onDeclaredChange={onProofDeclaredChange}
+        onActualChange={onProofActualChange}
+        onProofFileChange={onProofFileChange}
+        onSubmit={onProofSubmit}
+      />
+    ) : null}
+    {canSubmitTax ? (
+      <EmployeeTaxDeclarationFormCard
+        activeTaxConfig={activeTaxConfig}
+        fiscalYear={declFy}
+        regime={declRegime}
+        gross={declGross}
+        deductions={declDed}
+        submitting={declSubmitting}
+        loading={loadingEmployeeTax}
+        message={declMsg}
+        onFiscalYearChange={onDeclFyChange}
+        onRegimeChange={onDeclRegimeChange}
+        onGrossChange={onDeclGrossChange}
+        onDeductionsChange={onDeclDedChange}
+        onSubmit={onDeclSubmit}
+      />
+    ) : null}
   </div>
 );
 
