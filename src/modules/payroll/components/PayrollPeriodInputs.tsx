@@ -41,7 +41,7 @@ const PayrollPeriodInputs = ({ client }: { client: GraphQLClient }) => {
     };
   }, [client]);
   return (
-    <Card title="Monthly payroll inputs">
+    <Card title="Monthly exceptions and reviewed inputs">
       <p className="mb-3 text-sm text-slate-600">
         Routine payroll is prepared automatically from effective salary, company rules and approved
         unpaid leave. Use this page for monthly exceptions or reviewed imported amounts. Finalized

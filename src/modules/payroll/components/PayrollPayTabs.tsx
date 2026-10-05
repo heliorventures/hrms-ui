@@ -1,4 +1,4 @@
-import { TAB_LIST_CLASS, tabClassName } from '../../../components/common/tabStyles';
+import { tabClassName } from '../../../components/common/tabStyles';
 import type { PayrollTabId } from '../payrollTypes';
 
 const payrollPayTabs: { id: PayrollTabId; label: string }[] = [
@@ -15,7 +15,7 @@ interface PayrollPayTabsProps {
 
 const PayrollPayTabs = ({ activeTab, canReadTax, onChange }: PayrollPayTabsProps) => (
   <nav
-    className={TAB_LIST_CLASS}
+    className="flex flex-wrap gap-4 border-b border-line"
     aria-label="Payslips and tax sections"
     data-tour-anchor="payroll.pay.sections"
   >

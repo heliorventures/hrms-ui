@@ -158,21 +158,39 @@ const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey
   return (
     <Card title="Employee payslips">
       <div className="space-y-4" data-tour-anchor="payroll.employee-payslips">
-        <label className="block">
-          Employee payslips
-          <select
-            className="ml-3 rounded border p-2"
-            value={employeeId}
-            onChange={(event) => setEmployeeId(event.target.value)}
-          >
-            <option value="">Select employee</option>
-            {employees.map((employee) => (
-              <option key={employee.id} value={employee.id}>
-                {employee.employeeCode} — {employee.fullName}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="grid items-end gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm">
+            Employee payslips
+            <select
+              className="h-11 w-full rounded-lg border border-line bg-surface px-3"
+              value={employeeId}
+              onChange={(event) => setEmployeeId(event.target.value)}
+            >
+              <option value="">Select employee</option>
+              {employees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.employeeCode} — {employee.fullName}
+                </option>
+              ))}
+            </select>
+          </label>
+          {result && result.payslips.length > 0 && (
+            <label className="flex flex-col gap-1 text-sm">
+              Payslip period
+              <select
+                className="h-11 w-full rounded-lg border border-line bg-surface px-3"
+                value={slipId}
+                onChange={(event) => setSlipId(event.target.value)}
+              >
+                {result.payslips.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.periodYear}-{String(item.periodMonth).padStart(2, '0')}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
         {error && <p role="alert">{error}</p>}
         {busy && <p role="status">Loading employee payslips...</p>}
         {result && result.payslips.length === 0 && (
@@ -180,22 +198,6 @@ const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey
             No finalized payslips for this employee. Draft calculations are available in Payroll
             Runs.
           </p>
-        )}
-        {result && result.payslips.length > 0 && (
-          <label className="block">
-            Payslip period
-            <select
-              className="ml-3 rounded border p-2"
-              value={slipId}
-              onChange={(event) => setSlipId(event.target.value)}
-            >
-              {result.payslips.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.periodYear}-{String(item.periodMonth).padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-          </label>
         )}
         <SelectedPayslip
           key={`${ownerKey}:${employeeId}:${slipId}`}

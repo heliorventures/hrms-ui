@@ -26634,11 +26634,11 @@
       "id": "b4ghOM",
       "x": -7920,
       "y": -1700,
-      "name": "07 Pay & Benefits / Payroll Processing / Working",
-      "context": "{\"route\":\"/payroll/pay?tab=runs\",\"revision\":6,\"sampleData\":true,\"browserVerified\":false,\"notes\":\"Automatic monthly preparation, effective eligibility and employee payslip review. Local tests separate from deployment.\"}",
+      "name": "07 Pay & Benefits / Payroll Runs / Working",
+      "context": "{\"route\":\"/payroll/pay?section=runs&tab=runs\",\"revision\":8,\"sampleData\":true,\"browserVerified\":false,\"notes\":\"Four business workspaces; compact aligned controls; recurring settings; exceptions only. Updated 5 October 2026.\"}",
       "clip": true,
       "width": 1440,
-      "height": 900,
+      "height": 1100,
       "fill": "#F6F8FB",
       "layout": "vertical",
       "children": [
@@ -26745,7 +26745,7 @@
                       "fill": "$muted",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Calculate routine months from effective settings; enter only monthly exceptions.",
+                      "content": "Configure once. Settings carry forward; monthly adjustments are exceptions only.",
                       "lineHeight": 1.4,
                       "fontFamily": "Inter",
                       "fontSize": 13,
@@ -26753,263 +26753,106 @@
                     },
                     {
                       "type": "frame",
-                      "id": "x10603",
-                      "name": "Tabs",
+                      "id": "ZpJjE",
+                      "name": "Payroll workspaces",
                       "width": "fill_container",
-                      "stroke": "$line",
-                      "strokeWidth": {
-                        "bottom": 1
-                      },
-                      "gap": 1,
+                      "gap": 8,
                       "padding": [
                         0,
                         0,
                         8,
                         0
                       ],
-                      "alignItems": "center",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "T0xyAJ",
+                          "id": "gwC4I",
                           "name": "Payroll Runs",
-                          "fill": "#EEF2FF",
+                          "fill": "#4F46E5",
                           "cornerRadius": 6,
-                          "gap": 16,
                           "padding": [
-                            8,
-                            4
+                            10,
+                            12
                           ],
-                          "alignItems": "center",
                           "children": [
                             {
                               "type": "text",
-                              "id": "SMaSn",
+                              "id": "WZfEp",
                               "name": "Payroll Runs",
-                              "fill": "#4F46E5",
+                              "fill": "#FFFFFF",
                               "content": "Payroll Runs",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
+                              "fontSize": 13,
                               "fontWeight": "600"
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "LPIdb",
-                          "name": "Employee Payslips",
-                          "fill": "#FFFFFF00",
+                          "id": "lnHnC",
+                          "name": "Monthly Adjustments",
+                          "fill": "#FFFFFF",
                           "cornerRadius": 6,
                           "padding": [
-                            8,
-                            4
+                            10,
+                            12
                           ],
                           "children": [
                             {
                               "type": "text",
-                              "id": "PKCVT",
-                              "name": "Employee Payslips label",
-                              "fill": "#5D6F89",
-                              "content": "Employee Payslips",
+                              "id": "R1uIfO",
+                              "name": "Monthly Adjustments",
+                              "fill": "#526079",
+                              "content": "Monthly Adjustments",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
+                              "fontSize": 13,
+                              "fontWeight": "600"
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "lbRsN",
-                          "name": "Monthly Inputs",
-                          "fill": "#FFFFFF00",
+                          "id": "ZmIIX",
+                          "name": "Payroll Setup",
+                          "fill": "#FFFFFF",
                           "cornerRadius": 6,
                           "padding": [
-                            8,
-                            4
+                            10,
+                            12
                           ],
-                          "alignItems": "center",
                           "children": [
                             {
                               "type": "text",
-                              "id": "GJoZU",
-                              "name": "Monthly Inputs",
-                              "fill": "#5D6F89",
-                              "content": "Monthly Inputs",
+                              "id": "quAN3",
+                              "name": "Payroll Setup",
+                              "fill": "#526079",
+                              "content": "Payroll Setup",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
+                              "fontSize": 13,
+                              "fontWeight": "600"
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "CoF8Q",
-                          "name": "Contribution Rules",
-                          "fill": "#FFFFFF00",
+                          "id": "lOmZw",
+                          "name": "Payslips & Exports",
+                          "fill": "#FFFFFF",
                           "cornerRadius": 6,
                           "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "bio5e",
-                              "name": "Contribution Rules",
-                              "fill": "#5D6F89",
-                              "content": "Contribution Rules",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "ZzoUa",
-                          "name": "Employee Payroll Settings",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "padding": [
-                            8,
-                            4
+                            10,
+                            12
                           ],
                           "children": [
                             {
                               "type": "text",
-                              "id": "s8QpOS",
-                              "name": "Employee Settings label",
-                              "fill": "#5D6F89",
-                              "content": "Employee Payroll Settings",
+                              "id": "cLaXX",
+                              "name": "Payslips & Exports",
+                              "fill": "#526079",
+                              "content": "Payslips & Exports",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "ADPWU",
-                          "name": "Arrears",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "iNiHX",
-                              "name": "Arrears",
-                              "fill": "#5D6F89",
-                              "content": "Arrears",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "D0xAR",
-                          "name": "Employer & Statutory Details",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "Nqy8I",
-                              "name": "Employer & Statutory Details",
-                              "fill": "#5D6F89",
-                              "content": "Employer & Statutory Details",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "nzDlz",
-                          "name": "Unpaid Leave Rules",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "x7iBH",
-                              "name": "Unpaid Leave Rules",
-                              "fill": "#5D6F89",
-                              "content": "Unpaid Leave Rules",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "NBDxs",
-                          "name": "Salary Components",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "elcps",
-                              "name": "Salary Components",
-                              "fill": "#5D6F89",
-                              "content": "Salary Components",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "S3S5w",
-                          "name": "Payroll Exports",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "S7LAI",
-                              "name": "Payroll Exports",
-                              "fill": "#5D6F89",
-                              "content": "Payroll Exports",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
+                              "fontSize": 13,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -27021,12 +26864,12 @@
                       "name": "Payroll Cycles",
                       "width": "fill_container",
                       "fill": "#FFFFFF",
-                      "cornerRadius": 12,
+                      "cornerRadius": 8,
                       "stroke": "#E7EBF0",
                       "strokeWidth": 1,
                       "layout": "vertical",
-                      "gap": 12,
-                      "padding": 16,
+                      "gap": 8,
+                      "padding": 12,
                       "children": [
                         {
                           "type": "text",
@@ -27046,7 +26889,7 @@
                           "id": "AYmCK",
                           "name": "New cycle",
                           "width": "fill_container",
-                          "gap": 16,
+                          "gap": 10,
                           "alignItems": "end",
                           "children": [
                             {
@@ -27264,33 +27107,33 @@
                                   ]
                                 }
                               ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "foXSO",
-                          "name": "New cycle",
-                          "fill": "$accent",
-                          "cornerRadius": 10,
-                          "stroke": "$accent",
-                          "strokeWidth": 1,
-                          "gap": 8,
-                          "padding": [
-                            10,
-                            14
-                          ],
-                          "alignItems": "center",
-                          "children": [
+                            },
                             {
-                              "type": "text",
-                              "id": "VUaVf",
+                              "type": "frame",
+                              "id": "foXSO",
                               "name": "New cycle",
-                              "fill": "#FFFFFF",
-                              "content": "New cycle",
-                              "fontFamily": "Inter",
-                              "fontSize": 13,
-                              "fontWeight": "600"
+                              "fill": "$accent",
+                              "cornerRadius": 10,
+                              "stroke": "$accent",
+                              "strokeWidth": 1,
+                              "gap": 8,
+                              "padding": [
+                                10,
+                                14
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "VUaVf",
+                                  "name": "New cycle",
+                                  "fill": "#FFFFFF",
+                                  "content": "Create Draft Cycle",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
                             }
                           ]
                         }
@@ -27305,7 +27148,7 @@
                       "cornerRadius": 8,
                       "layout": "vertical",
                       "gap": 5,
-                      "padding": 16,
+                      "padding": 10,
                       "children": [
                         {
                           "type": "text",
@@ -27673,7 +27516,7 @@
                       "cornerRadius": 8,
                       "layout": "vertical",
                       "gap": 5,
-                      "padding": 16,
+                      "padding": 10,
                       "children": [
                         {
                           "type": "text",
@@ -27711,8 +27554,8 @@
                       "fill": "#FFFFFF",
                       "cornerRadius": 6,
                       "layout": "vertical",
-                      "gap": 12,
-                      "padding": 16,
+                      "gap": 8,
+                      "padding": 12,
                       "children": [
                         {
                           "type": "text",
@@ -27728,6 +27571,16 @@
                         },
                         {
                           "type": "text",
+                          "id": "Z6MXw",
+                          "name": "Calculation readiness",
+                          "fill": "#334155",
+                          "content": "1 ready  ·  1 needs review  ·  0 excluded     ⓘ Review help",
+                          "fontFamily": "Inter",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
                           "id": "nlvM5",
                           "name": "Fictional employee amounts",
                           "fill": "#334155",
@@ -27736,6 +27589,18 @@
                           "content": "Example employee  •  READY     Salary ₹60,000     Deductions ₹6,000     Net ₹54,000     Remaining ₹49,000",
                           "fontFamily": "Inter",
                           "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "qg4Ms",
+                          "name": "Missing configuration example",
+                          "fill": "#92400E",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Example employee 2  ·  REVIEW  ·  Calculation blocked: confirm PF/ESI eligibility in Payroll Setup.",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
                           "fontWeight": "normal"
                         },
                         {
@@ -76027,7 +75892,7 @@
       "context": "{\"source\":\"src/modules/payroll/PayrollPayPage.tsx\",\"route\":\"/payroll/payslips\",\"variant\":\"Working\",\"sampleData\":true,\"notes\":\"Aligned with Salary recurring earnings and annual financial-year tax projection; assigned regime, method, component matrix and incomplete-history disclosure. Updated 2026-10-05. Browser validation pending.\",\"revision\":7,\"chromeVerified\":false,\"density\":\"Compact\",\"theme\":\"Two-tone navy / indigo\"}",
       "clip": true,
       "width": 1440,
-      "height": 1220,
+      "height": 1000,
       "fill": "#F6F8FB",
       "layout": "vertical",
       "children": [
@@ -76250,86 +76115,156 @@
                     },
                     {
                       "type": "frame",
-                      "id": "gaR6g",
-                      "name": "Annual tax summary",
+                      "id": "OKt9J",
+                      "name": "Tax summary and slab calculation",
                       "width": "fill_container",
-                      "fill": "#FFFFFF",
-                      "cornerRadius": 6,
-                      "layout": "vertical",
                       "gap": 12,
-                      "padding": 16,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "XJQrY",
-                          "name": "Projection summary title",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
+                          "type": "frame",
+                          "id": "gaR6g",
+                          "name": "Annual tax summary",
                           "width": "fill_container",
-                          "content": "Your annual tax projection",
-                          "fontFamily": "Inter",
-                          "fontSize": 18,
-                          "fontWeight": "600"
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "XJQrY",
+                              "name": "Projection summary title",
+                              "fill": "#334155",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Your annual tax projection",
+                              "fontFamily": "Inter",
+                              "fontSize": 18,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "vtbMA",
+                              "name": "Effective tax configuration",
+                              "fill": "#334155",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "New tax regime · Effective 01 Oct 2026 · Annual projection adjusted for recorded deductions and remaining months",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "S2Fbjz",
+                              "name": "Annual earnings  ₹24,00,000   ",
+                              "fill": "#334155",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Annual earnings  ₹24,00,000     Net taxable income  ₹23,25,000",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "q9RWMB",
+                              "name": "Projected annual income tax  ₹",
+                              "fill": "#334155",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Projected annual income tax ₹2,92,500     Projected monthly withholding · October 2026 ₹24,375",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "dsQJP",
+                              "name": "Recorded TDS (partial history)",
+                              "fill": "#334155",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Recorded TDS (partial history)  ₹10,000     Remaining liability  Not available until history is complete",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "kxwA3",
+                              "name": "Incomplete history notice",
+                              "fill": "#92400E",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Earlier TDS: Not provided. Estimates are not recorded deductions. Contact HR to supply or correct historical records.",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            }
+                          ]
                         },
                         {
-                          "type": "text",
-                          "id": "vtbMA",
-                          "name": "Effective tax configuration",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
+                          "type": "frame",
+                          "id": "q6T7SP",
+                          "name": "Tax slab calculation",
                           "width": "fill_container",
-                          "content": "New tax regime · Effective 01 Oct 2026 · Annual projection adjusted for recorded deductions and remaining months",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "S2Fbjz",
-                          "name": "Annual earnings  ₹24,00,000   ",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Annual earnings  ₹24,00,000     Net taxable income  ₹23,25,000",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "q9RWMB",
-                          "name": "Projected annual income tax  ₹",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Projected annual income tax ₹2,92,500     Projected monthly withholding · October 2026 ₹24,375",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "dsQJP",
-                          "name": "Recorded TDS (partial history)",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Recorded TDS (partial history)  ₹10,000     Remaining liability  Not available until history is complete",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "kxwA3",
-                          "name": "Incomplete history notice",
-                          "fill": "#92400E",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Earlier TDS: Not provided. Estimates are not recorded deductions. Contact HR to supply or correct historical records.",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 6,
+                          "layout": "vertical",
+                          "gap": 10,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "xPTdD",
+                              "name": "Slab heading",
+                              "fill": "#334155",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Projected income tax calculation",
+                              "fontFamily": "Inter",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "zs4QM",
+                              "name": "Standard deduction",
+                              "fill": "#334155",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Salary ₹24,00,000 − standard deduction ₹75,000 = taxable income ₹23,25,000",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "wwaot",
+                              "name": "Tax band totals",
+                              "fill": "#334155",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "0–4L: ₹0  ·  4–8L at 5%: ₹20,000  ·  8–12L at 10%: ₹40,000\n12–16L at 15%: ₹60,000  ·  16–20L at 20%: ₹80,000  ·  20–23.25L at 25%: ₹81,250",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "CHIkX",
+                              "name": "Tax total",
+                              "fill": "#334155",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Gross income tax ₹2,81,250 + health & education cess ₹11,250 = ₹2,92,500",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            }
+                          ]
                         }
                       ]
                     },
@@ -76429,135 +76364,21 @@
                     },
                     {
                       "type": "frame",
-                      "id": "q6T7SP",
-                      "name": "Tax slab calculation",
+                      "id": "zGXy1",
+                      "name": "Monthly records disclosure",
                       "width": "fill_container",
                       "fill": "#FFFFFF",
-                      "cornerRadius": 6,
-                      "layout": "vertical",
-                      "gap": 10,
-                      "padding": 16,
+                      "padding": 12,
                       "children": [
                         {
                           "type": "text",
-                          "id": "xPTdD",
-                          "name": "Slab heading",
+                          "id": "l6yTxV",
+                          "name": "Timeline disclosure",
                           "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Projected income tax calculation",
+                          "content": "▸ Month by month records and projections",
                           "fontFamily": "Inter",
-                          "fontSize": 16,
+                          "fontSize": 13,
                           "fontWeight": "600"
-                        },
-                        {
-                          "type": "text",
-                          "id": "zs4QM",
-                          "name": "Standard deduction",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Salary ₹24,00,000 − standard deduction ₹75,000 = taxable income ₹23,25,000",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "wwaot",
-                          "name": "Tax band totals",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "0–4L: ₹0  ·  4–8L at 5%: ₹20,000  ·  8–12L at 10%: ₹40,000\n12–16L at 15%: ₹60,000  ·  16–20L at 20%: ₹80,000  ·  20–23.25L at 25%: ₹81,250",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "CHIkX",
-                          "name": "Tax total",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Gross income tax ₹2,81,250 + health & education cess ₹11,250 = ₹2,92,500",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "FDLkQ",
-                      "name": "Monthly evidence timeline",
-                      "width": "fill_container",
-                      "fill": "#FFFFFF",
-                      "cornerRadius": 6,
-                      "layout": "vertical",
-                      "gap": 12,
-                      "padding": 16,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "nUIpW",
-                          "name": "Timeline heading",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Month by month earnings and deductions",
-                          "fontFamily": "Inter",
-                          "fontSize": 16,
-                          "fontWeight": "600"
-                        },
-                        {
-                          "type": "text",
-                          "id": "gzusz",
-                          "name": "MONTH                 EVID",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "MONTH                 EVIDENCE                         EARNINGS             RECORDED TDS",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "B7h0ov",
-                          "name": "Apr–Aug 2026       Histori",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Apr–Aug 2026       Historical estimates             ₹2,00,000 / month     Not provided",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "fppZd",
-                          "name": "Sep 2026              Impo",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Sep 2026              Imported actual                  ₹2,00,000               ₹10,000",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "text",
-                          "id": "OujBm",
-                          "name": "Oct 2026–Mar 2027   Future",
-                          "fill": "#334155",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Oct 2026–Mar 2027   Future projections           ₹2,00,000 / month     Not provided",
-                          "fontFamily": "Inter",
-                          "fontSize": 13,
-                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -81616,7 +81437,7 @@
       "id": "dD0DU",
       "x": 17040,
       "y": -1700,
-      "name": "07 Pay & Benefits / Employee Payslips / Effective payroll",
+      "name": "07 Pay & Benefits / Payslips & Exports / Working",
       "context": "{\"route\":\"/payroll/pay?tab=payslips\",\"revision\":6,\"sampleData\":true,\"browserVerified\":false,\"notes\":\"Automatic monthly preparation, effective eligibility and employee payslip review. Local tests separate from deployment.\"}",
       "clip": true,
       "width": 1440,
@@ -81722,263 +81543,106 @@
                     },
                     {
                       "type": "frame",
-                      "id": "Z0ofeU",
-                      "name": "Tabs",
+                      "id": "ksyTl",
+                      "name": "Payroll workspaces",
                       "width": "fill_container",
-                      "stroke": "$line",
-                      "strokeWidth": {
-                        "bottom": 1
-                      },
-                      "gap": 1,
+                      "gap": 8,
                       "padding": [
                         0,
                         0,
                         8,
                         0
                       ],
-                      "alignItems": "center",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "E18UuJ",
+                          "id": "W4ze09",
                           "name": "Payroll Runs",
-                          "fill": "#FFFFFF00",
+                          "fill": "#FFFFFF",
                           "cornerRadius": 6,
-                          "gap": 16,
                           "padding": [
-                            8,
-                            4
+                            10,
+                            12
                           ],
-                          "alignItems": "center",
                           "children": [
                             {
                               "type": "text",
-                              "id": "Ew9Xy",
+                              "id": "HEyge",
                               "name": "Payroll Runs",
-                              "fill": "#5D6F89",
+                              "fill": "#526079",
                               "content": "Payroll Runs",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
+                              "fontSize": 13,
                               "fontWeight": "600"
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "Usny8",
-                          "name": "Employee Payslips",
-                          "fill": "#EEF2FF",
+                          "id": "u1GdM6",
+                          "name": "Monthly Adjustments",
+                          "fill": "#FFFFFF",
                           "cornerRadius": 6,
                           "padding": [
-                            8,
-                            4
+                            10,
+                            12
                           ],
                           "children": [
                             {
                               "type": "text",
-                              "id": "aBNgY",
-                              "name": "Employee Payslips label",
-                              "fill": "#4F46E5",
-                              "content": "Employee Payslips",
+                              "id": "w0OtS0",
+                              "name": "Monthly Adjustments",
+                              "fill": "#526079",
+                              "content": "Monthly Adjustments",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
+                              "fontSize": 13,
+                              "fontWeight": "600"
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "hBH7G",
-                          "name": "Monthly Inputs",
-                          "fill": "#FFFFFF00",
+                          "id": "M5CFzO",
+                          "name": "Payroll Setup",
+                          "fill": "#FFFFFF",
                           "cornerRadius": 6,
                           "padding": [
-                            8,
-                            4
+                            10,
+                            12
                           ],
-                          "alignItems": "center",
                           "children": [
                             {
                               "type": "text",
-                              "id": "DahMa",
-                              "name": "Monthly Inputs",
-                              "fill": "#5D6F89",
-                              "content": "Monthly Inputs",
+                              "id": "I4AOgz",
+                              "name": "Payroll Setup",
+                              "fill": "#526079",
+                              "content": "Payroll Setup",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
+                              "fontSize": 13,
+                              "fontWeight": "600"
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "l1gFH",
-                          "name": "Contribution Rules",
-                          "fill": "#FFFFFF00",
+                          "id": "h0C6A1",
+                          "name": "Payslips & Exports",
+                          "fill": "#4F46E5",
                           "cornerRadius": 6,
                           "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "SPZWS",
-                              "name": "Contribution Rules",
-                              "fill": "#5D6F89",
-                              "content": "Contribution Rules",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "eweCi",
-                          "name": "Employee Payroll Settings",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "padding": [
-                            8,
-                            4
+                            10,
+                            12
                           ],
                           "children": [
                             {
                               "type": "text",
-                              "id": "DoB1n",
-                              "name": "Employee Settings label",
-                              "fill": "#5D6F89",
-                              "content": "Employee Payroll Settings",
+                              "id": "dtlcO",
+                              "name": "Payslips & Exports",
+                              "fill": "#FFFFFF",
+                              "content": "Payslips & Exports",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "dw7Yy",
-                          "name": "Arrears",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "P8S6z",
-                              "name": "Arrears",
-                              "fill": "#5D6F89",
-                              "content": "Arrears",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "w2rZT",
-                          "name": "Employer & Statutory Details",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "wCbuU",
-                              "name": "Employer & Statutory Details",
-                              "fill": "#5D6F89",
-                              "content": "Employer & Statutory Details",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "F7iL2",
-                          "name": "Unpaid Leave Rules",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "W58n1",
-                              "name": "Unpaid Leave Rules",
-                              "fill": "#5D6F89",
-                              "content": "Unpaid Leave Rules",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "VdUzE",
-                          "name": "Salary Components",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "Kp4Fm",
-                              "name": "Salary Components",
-                              "fill": "#5D6F89",
-                              "content": "Salary Components",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "AjV9E",
-                          "name": "Payroll Exports",
-                          "fill": "#FFFFFF00",
-                          "cornerRadius": 6,
-                          "gap": 16,
-                          "padding": [
-                            8,
-                            4
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "s7Wrt",
-                              "name": "Payroll Exports",
-                              "fill": "#5D6F89",
-                              "content": "Payroll Exports",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
+                              "fontSize": 13,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -81994,8 +81658,8 @@
                       "stroke": "#E7EBF0",
                       "strokeWidth": 1,
                       "layout": "vertical",
-                      "gap": 22,
-                      "padding": 24,
+                      "gap": 12,
+                      "padding": 12,
                       "children": [
                         {
                           "type": "frame",
@@ -82016,7 +81680,7 @@
                               "fill": "#334155",
                               "content": "Employee: EXAMPLE/01 — Example employee    Period: September 2026",
                               "fontFamily": "Inter",
-                              "fontSize": 14,
+                              "fontSize": 13,
                               "fontWeight": "normal"
                             }
                           ]
@@ -82061,17 +81725,83 @@
                           "fontWeight": "normal"
                         },
                         {
-                          "type": "text",
-                          "id": "Q8MwwV",
-                          "name": "Employee Payslips row 5",
-                          "fill": "#4F46E5",
-                          "textGrowth": "fixed-width",
+                          "type": "frame",
+                          "id": "c3phIk",
+                          "name": "Aligned payslip actions",
                           "width": "fill_container",
-                          "content": "Download PDF",
-                          "lineHeight": 1.5,
-                          "fontFamily": "Inter",
-                          "fontSize": 14,
-                          "fontWeight": "normal"
+                          "gap": 8,
+                          "justifyContent": "end",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "BWbfj",
+                              "name": "Download PDF",
+                              "fill": "#4F46E5",
+                              "cornerRadius": 6,
+                              "padding": [
+                                10,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "oEYkw",
+                                  "name": "Download PDF",
+                                  "fill": "#FFFFFF",
+                                  "content": "Download PDF",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "I7rfab",
+                              "name": "Print / Save as PDF",
+                              "fill": "#4F46E5",
+                              "cornerRadius": 6,
+                              "padding": [
+                                10,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "AAEKI",
+                                  "name": "Print / Save as PDF",
+                                  "fill": "#FFFFFF",
+                                  "content": "Print / Save as PDF",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "YPn9A",
+                              "name": "ⓘ",
+                              "fill": "#4F46E5",
+                              "cornerRadius": 6,
+                              "padding": [
+                                10,
+                                12
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "JUwbx",
+                                  "name": "ⓘ",
+                                  "fill": "#FFFFFF",
+                                  "content": "ⓘ",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
                         },
                         {
                           "type": "text",
@@ -82080,10 +81810,10 @@
                           "fill": "#334155",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Requires company-wide payroll read access. Draft calculations are reviewed in Payroll Runs.",
+                          "content": "ⓘ Download help appears on hover, keyboard focus or tap. Draft calculations remain in Payroll Runs.",
                           "lineHeight": 1.5,
                           "fontFamily": "Inter",
-                          "fontSize": 14,
+                          "fontSize": 12,
                           "fontWeight": "normal"
                         }
                       ]
@@ -82177,6 +81907,1436 @@
                         {
                           "type": "icon",
                           "id": "LB7PQ",
+                          "name": "Grievance & Speak Up",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "message-square-warning",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "OgyOz",
+      "x": 18580,
+      "y": -1700,
+      "name": "07 Pay & Benefits / Payroll Setup / Working",
+      "context": "{\"route\":\"/payroll/pay?section=setup\",\"sampleData\":true,\"browserVerified\":false,\"revision\":8}",
+      "clip": true,
+      "width": 1440,
+      "height": 1000,
+      "fill": "#F6F8FB",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "HL1O8",
+          "name": "Review annotation",
+          "width": "fill_container",
+          "height": 24,
+          "fill": "#E8EDF4",
+          "gap": 16,
+          "padding": [
+            4,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "B100T",
+              "name": "IMPROVED  /  07 Pay & Benefits  /  Payroll Processing",
+              "fill": "#526079",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "07 Pay & Benefits  ·  Payroll Processing  /  WORKING DESIGN",
+              "lineHeight": 1.4,
+              "fontFamily": "$font",
+              "fontSize": 10,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "weNlC",
+          "name": "Application",
+          "width": "fill_container",
+          "height": "fill_container",
+          "children": [
+            {
+              "id": "Rmle2",
+              "type": "ref",
+              "ref": "wjx4J",
+              "name": "Main navigation",
+              "width": 216,
+              "height": "fill_container",
+              "descendants": {
+                "c2yYT": {
+                  "fill": "#334761"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "f4rIZk",
+              "name": "Page",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "R0bGs",
+                  "name": "Page content",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20,
+                    56,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "gEvS4",
+                      "name": "In-content heading — scrolls with page",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "o9YPBP",
+                          "name": "Payroll Processing",
+                          "fill": "#5D6F89",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Payroll Setup",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Manrope",
+                          "fontSize": 16,
+                          "fontWeight": "600",
+                          "letterSpacing": -0.6
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "xXuAE",
+                      "name": "Create a monthly cycle, run pay, then review the resulting payslips.",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Configure once. Settings carry forward; monthly adjustments are exceptions only.",
+                      "lineHeight": 1.4,
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dQ8Si",
+                      "name": "Payroll workspaces",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Q7zUMR",
+                          "name": "Payroll Runs",
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 6,
+                          "padding": [
+                            10,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Ed3Ju",
+                              "name": "Payroll Runs",
+                              "fill": "#526079",
+                              "content": "Payroll Runs",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "rkrng",
+                          "name": "Monthly Adjustments",
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 6,
+                          "padding": [
+                            10,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "MEwcH",
+                              "name": "Monthly Adjustments",
+                              "fill": "#526079",
+                              "content": "Monthly Adjustments",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "heXNI",
+                          "name": "Payroll Setup",
+                          "fill": "#4F46E5",
+                          "cornerRadius": 6,
+                          "padding": [
+                            10,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "tc39c",
+                              "name": "Payroll Setup",
+                              "fill": "#FFFFFF",
+                              "content": "Payroll Setup",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ZEFOb",
+                          "name": "Payslips & Exports",
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 6,
+                          "padding": [
+                            10,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rwKiJ",
+                              "name": "Payslips & Exports",
+                              "fill": "#526079",
+                              "content": "Payslips & Exports",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "KtPDr",
+                      "name": "Task workspace",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "I2Q7K",
+                          "name": "Vertical task navigation",
+                          "width": 200,
+                          "layout": "vertical",
+                          "gap": 12,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "xdiW6",
+                              "name": "Company Rules",
+                              "width": "fill_container",
+                              "fill": "#EEF2FF",
+                              "cornerRadius": 6,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "cAPSt",
+                                  "name": "Company Rules",
+                                  "fill": "#4F46E5",
+                                  "content": "Company Rules",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "EdlHY",
+                              "name": "Employee Eligibility",
+                              "width": "fill_container",
+                              "fill": "#FFFFFF",
+                              "cornerRadius": 6,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "FfveW",
+                                  "name": "Employee Eligibility",
+                                  "fill": "#526079",
+                                  "content": "Employee Eligibility",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "JslPs",
+                              "name": "Unpaid Leave",
+                              "width": "fill_container",
+                              "fill": "#FFFFFF",
+                              "cornerRadius": 6,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "HuEB9",
+                                  "name": "Unpaid Leave",
+                                  "fill": "#526079",
+                                  "content": "Unpaid Leave",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "rQ4th",
+                              "name": "Payslip Display",
+                              "width": "fill_container",
+                              "fill": "#FFFFFF",
+                              "cornerRadius": 6,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Ja2Ts",
+                                  "name": "Payslip Display",
+                                  "fill": "#526079",
+                                  "content": "Payslip Display",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "pgdnW",
+                              "name": "Employer Details",
+                              "width": "fill_container",
+                              "fill": "#FFFFFF",
+                              "cornerRadius": 6,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "E8I77C",
+                                  "name": "Employer Details",
+                                  "fill": "#526079",
+                                  "content": "Employer Details",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "k8JQi",
+                          "name": "Company contribution rules",
+                          "width": "fill_container",
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 8,
+                          "layout": "vertical",
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "J7tbR3",
+                              "name": "Title",
+                              "fill": "#1B273A",
+                              "content": "Company contribution rules",
+                              "fontFamily": "Inter",
+                              "fontSize": 18,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "MjTAf",
+                              "name": "Guidance 0",
+                              "fill": "#526079",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Effective from: 1 October 2026",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "gWXKQ",
+                              "name": "Editable controls",
+                              "width": "fill_container",
+                              "gap": 12,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "sgdKh",
+                                  "name": "Effective from",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "XaArl",
+                                      "name": "Effective from label",
+                                      "fill": "#526079",
+                                      "content": "Effective from",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "NNRCj",
+                                      "name": "Effective from input",
+                                      "width": "fill_container",
+                                      "fill": "#FFFFFF",
+                                      "cornerRadius": 6,
+                                      "stroke": "#CBD5E1",
+                                      "strokeWidth": 1,
+                                      "padding": 10,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "OxjAZ",
+                                          "name": "Effective from value",
+                                          "fill": "#526079",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "01-10-2026",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 13,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "L7BkhC",
+                                  "name": "PF rate",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "I5VBqG",
+                                      "name": "PF rate label",
+                                      "fill": "#526079",
+                                      "content": "PF rate",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "shJ3h",
+                                      "name": "PF rate input",
+                                      "width": "fill_container",
+                                      "fill": "#FFFFFF",
+                                      "cornerRadius": 6,
+                                      "stroke": "#CBD5E1",
+                                      "strokeWidth": 1,
+                                      "padding": 10,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "E31aKQ",
+                                          "name": "PF rate value",
+                                          "fill": "#526079",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "12%",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 13,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "FBDVe",
+                                  "name": "PF wage ceiling",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "pKUQN",
+                                      "name": "PF wage ceiling label",
+                                      "fill": "#526079",
+                                      "content": "PF wage ceiling",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "w9SIgf",
+                                      "name": "PF wage ceiling input",
+                                      "width": "fill_container",
+                                      "fill": "#FFFFFF",
+                                      "cornerRadius": 6,
+                                      "stroke": "#CBD5E1",
+                                      "strokeWidth": 1,
+                                      "padding": 10,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "B28xSi",
+                                          "name": "PF wage ceiling value",
+                                          "fill": "#526079",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "₹25,000",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 13,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "OF4h1",
+                                  "name": "PF rounding",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "tEFrS",
+                                      "name": "PF rounding label",
+                                      "fill": "#526079",
+                                      "content": "PF rounding",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "rbKim",
+                                      "name": "PF rounding input",
+                                      "width": "fill_container",
+                                      "fill": "#FFFFFF",
+                                      "cornerRadius": 6,
+                                      "stroke": "#CBD5E1",
+                                      "strokeWidth": 1,
+                                      "padding": 10,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "lBmaP",
+                                          "name": "PF rounding value",
+                                          "fill": "#526079",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "Half up · 2 decimals",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 13,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "FXAgl",
+                              "name": "Guidance 1",
+                              "fill": "#526079",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Employee PF: 12% of configured earnings · monthly cap ₹3,000",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "mURAx",
+                              "name": "Guidance 2",
+                              "fill": "#526079",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Employer PF: recurring employee rule · excluded from tax and payslips",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "rtqP0",
+                              "name": "Guidance 3",
+                              "fill": "#526079",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "ESI: configured company wage basis · employee eligibility applies",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "lEZWb",
+                              "name": "Guidance 4",
+                              "fill": "#526079",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "These rules carry forward until HR saves a prospective change.",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "k1IDg",
+                              "name": "Save action",
+                              "fill": "#4F46E5",
+                              "cornerRadius": 6,
+                              "padding": [
+                                10,
+                                14
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "jkMyE",
+                                  "name": "Save label",
+                                  "fill": "#FFFFFF",
+                                  "content": "Save company rules",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "U2Rbdw",
+                  "layoutPosition": "absolute",
+                  "x": 1158,
+                  "y": 708,
+                  "name": "Floating page tools",
+                  "width": 54,
+                  "height": 152,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 14,
+                  "stroke": "#E7EBF0",
+                  "strokeWidth": 1,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#10182812",
+                    "offset": {
+                      "x": 0,
+                      "y": 4
+                    },
+                    "blur": 16
+                  },
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 5,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "TmGeq",
+                      "name": "Notifications",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "PkkGV",
+                          "name": "Notifications",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "bell",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "T0ba0",
+                      "name": "Page information",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "V8yics",
+                          "name": "Page information",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "info",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "r66NDL",
+                      "name": "Grievance & Speak Up",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "nLybc",
+                          "name": "Grievance & Speak Up",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "message-square-warning",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "fh87G",
+      "x": 20120,
+      "y": -1700,
+      "name": "07 Pay & Benefits / Monthly Adjustments / Working",
+      "context": "{\"route\":\"/payroll/pay?section=adjustments\",\"sampleData\":true,\"browserVerified\":false,\"revision\":8}",
+      "clip": true,
+      "width": 1440,
+      "height": 1000,
+      "fill": "#F6F8FB",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "cOzpP",
+          "name": "Review annotation",
+          "width": "fill_container",
+          "height": 24,
+          "fill": "#E8EDF4",
+          "gap": 16,
+          "padding": [
+            4,
+            16
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Q7WNxj",
+              "name": "IMPROVED  /  07 Pay & Benefits  /  Payroll Processing",
+              "fill": "#526079",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "07 Pay & Benefits  ·  Payroll Processing  /  WORKING DESIGN",
+              "lineHeight": 1.4,
+              "fontFamily": "$font",
+              "fontSize": 10,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "T9zfgK",
+          "name": "Application",
+          "width": "fill_container",
+          "height": "fill_container",
+          "children": [
+            {
+              "id": "w41F6I",
+              "type": "ref",
+              "ref": "wjx4J",
+              "name": "Main navigation",
+              "width": 216,
+              "height": "fill_container",
+              "descendants": {
+                "c2yYT": {
+                  "fill": "#334761"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "YZ4Fu",
+              "name": "Page",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bodOj",
+                  "name": "Page content",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20,
+                    56,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "wWE0I",
+                      "name": "In-content heading — scrolls with page",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "q06kRn",
+                          "name": "Payroll Processing",
+                          "fill": "#5D6F89",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Monthly Adjustments",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Manrope",
+                          "fontSize": 16,
+                          "fontWeight": "600",
+                          "letterSpacing": -0.6
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "e1pquB",
+                      "name": "Create a monthly cycle, run pay, then review the resulting payslips.",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Configure once. Settings carry forward; monthly adjustments are exceptions only.",
+                      "lineHeight": 1.4,
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "I99DNi",
+                      "name": "Payroll workspaces",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "W68gv",
+                          "name": "Payroll Runs",
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 6,
+                          "padding": [
+                            10,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "q1NBd",
+                              "name": "Payroll Runs",
+                              "fill": "#526079",
+                              "content": "Payroll Runs",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "OyoSO",
+                          "name": "Monthly Adjustments",
+                          "fill": "#4F46E5",
+                          "cornerRadius": 6,
+                          "padding": [
+                            10,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "kaoo3",
+                              "name": "Monthly Adjustments",
+                              "fill": "#FFFFFF",
+                              "content": "Monthly Adjustments",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "k0aQZL",
+                          "name": "Payroll Setup",
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 6,
+                          "padding": [
+                            10,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ksRea",
+                              "name": "Payroll Setup",
+                              "fill": "#526079",
+                              "content": "Payroll Setup",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "mSQRQ",
+                          "name": "Payslips & Exports",
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 6,
+                          "padding": [
+                            10,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "x4szGJ",
+                              "name": "Payslips & Exports",
+                              "fill": "#526079",
+                              "content": "Payslips & Exports",
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "IhrmV",
+                      "name": "Task workspace",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "nKHku",
+                          "name": "Vertical task navigation",
+                          "width": 200,
+                          "layout": "vertical",
+                          "gap": 12,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "NtJhx",
+                              "name": "Monthly Exceptions",
+                              "width": "fill_container",
+                              "fill": "#EEF2FF",
+                              "cornerRadius": 6,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "m2hV8O",
+                                  "name": "Monthly Exceptions",
+                                  "fill": "#4F46E5",
+                                  "content": "Monthly Exceptions",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "l7VQN3",
+                              "name": "Arrears",
+                              "width": "fill_container",
+                              "fill": "#FFFFFF",
+                              "cornerRadius": 6,
+                              "padding": 12,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "LdQ4j",
+                                  "name": "Arrears",
+                                  "fill": "#526079",
+                                  "content": "Arrears",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "TLNWp",
+                          "name": "Monthly exceptions and reviewed inputs",
+                          "width": "fill_container",
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 8,
+                          "layout": "vertical",
+                          "gap": 12,
+                          "padding": 16,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "k2Is0w",
+                              "name": "Title",
+                              "fill": "#1B273A",
+                              "content": "Monthly exceptions and reviewed inputs",
+                              "fontFamily": "Inter",
+                              "fontSize": 18,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "oR8Oh",
+                              "name": "Guidance 0",
+                              "fill": "#526079",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Employee: SCL/01 — Example employee        Year: 2026        Month: October",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "vBN7a",
+                              "name": "Editable controls",
+                              "width": "fill_container",
+                              "gap": 12,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "LQvKu",
+                                  "name": "Monthly incentive",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "ad35o",
+                                      "name": "Monthly incentive label",
+                                      "fill": "#526079",
+                                      "content": "Monthly incentive",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "qiUmD",
+                                      "name": "Monthly incentive input",
+                                      "width": "fill_container",
+                                      "fill": "#FFFFFF",
+                                      "cornerRadius": 6,
+                                      "stroke": "#CBD5E1",
+                                      "strokeWidth": 1,
+                                      "padding": 10,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "RRtG4",
+                                          "name": "Monthly incentive value",
+                                          "fill": "#526079",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "₹0.00",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 13,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "CLxr4",
+                                  "name": "Variable allowance / OT",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "gwSjY",
+                                      "name": "Variable allowance / OT label",
+                                      "fill": "#526079",
+                                      "content": "Variable allowance / OT",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "eT0BC",
+                                      "name": "Variable allowance / OT input",
+                                      "width": "fill_container",
+                                      "fill": "#FFFFFF",
+                                      "cornerRadius": 6,
+                                      "stroke": "#CBD5E1",
+                                      "strokeWidth": 1,
+                                      "padding": 10,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "sR51x",
+                                          "name": "Variable allowance / OT value",
+                                          "fill": "#526079",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "₹0.00",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 13,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "F1NSn",
+                                  "name": "Salary advance already paid",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "y13Ip",
+                                      "name": "Salary advance already paid label",
+                                      "fill": "#526079",
+                                      "content": "Salary advance already paid",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "Qf5Xu",
+                                      "name": "Salary advance already paid input",
+                                      "width": "fill_container",
+                                      "fill": "#FFFFFF",
+                                      "cornerRadius": 6,
+                                      "stroke": "#CBD5E1",
+                                      "strokeWidth": 1,
+                                      "padding": 10,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "GVAnE",
+                                          "name": "Salary advance already paid value",
+                                          "fill": "#526079",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "₹0.00",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 13,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ZMPGL",
+                                  "name": "Reason",
+                                  "width": "fill_container",
+                                  "layout": "vertical",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "Dbp3k",
+                                      "name": "Reason label",
+                                      "fill": "#526079",
+                                      "content": "Reason",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "r1tOUO",
+                                      "name": "Reason input",
+                                      "width": "fill_container",
+                                      "fill": "#FFFFFF",
+                                      "cornerRadius": 6,
+                                      "stroke": "#CBD5E1",
+                                      "strokeWidth": 1,
+                                      "padding": 10,
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "qnQVo",
+                                          "name": "Reason value",
+                                          "fill": "#526079",
+                                          "textGrowth": "fixed-width",
+                                          "width": "fill_container",
+                                          "content": "Required for an override",
+                                          "fontFamily": "Inter",
+                                          "fontSize": 13,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "rtsNV",
+                              "name": "Guidance 1",
+                              "fill": "#526079",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Routine salary and statutory amounts are calculated automatically.",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "F9I1Uy",
+                              "name": "Guidance 2",
+                              "fill": "#526079",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Add an incentive, variable pay, advance settlement or a reasoned override only when needed.",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "bLJek",
+                              "name": "Guidance 3",
+                              "fill": "#526079",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "September reviewed source inputs remain available as the historical baseline.",
+                              "lineHeight": 1.5,
+                              "fontFamily": "Inter",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "QNW0n",
+                              "name": "Save action",
+                              "fill": "#4F46E5",
+                              "cornerRadius": 6,
+                              "padding": [
+                                10,
+                                14
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "VJ8vr",
+                                  "name": "Save label",
+                                  "fill": "#FFFFFF",
+                                  "content": "Save exception",
+                                  "fontFamily": "Inter",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "g46RC",
+                  "layoutPosition": "absolute",
+                  "x": 1158,
+                  "y": 708,
+                  "name": "Floating page tools",
+                  "width": 54,
+                  "height": 152,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 14,
+                  "stroke": "#E7EBF0",
+                  "strokeWidth": 1,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#10182812",
+                    "offset": {
+                      "x": 0,
+                      "y": 4
+                    },
+                    "blur": 16
+                  },
+                  "layout": "vertical",
+                  "gap": 4,
+                  "padding": 5,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "awYxx",
+                      "name": "Notifications",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "KqXL5",
+                          "name": "Notifications",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "bell",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "beINC",
+                      "name": "Page information",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "LlPHQ",
+                          "name": "Page information",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "info",
+                          "library": "lucide",
+                          "fill": "#475467"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "wABhH",
+                      "name": "Grievance & Speak Up",
+                      "width": 44,
+                      "height": 44,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 14,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "jx8Km",
                           "name": "Grievance & Speak Up",
                           "width": 20,
                           "height": 20,

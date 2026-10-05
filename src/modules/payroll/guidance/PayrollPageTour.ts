@@ -7,8 +7,8 @@ export const payrollPageTour: TourDefinition = {
     {
       id: 'payroll-processing-sections',
       anchor: 'payroll.process.sections',
-      title: 'Review payroll sections',
-      body: 'Configure effective salary, company Contribution Rules, Employee Settings and employee tax settings once. Calculate draft prepares routine months automatically, including approved unpaid leave. Use Monthly Inputs only for exceptions such as incentives, advances or reasoned overrides. Missing configuration appears in the employee review; September imported source amounts stay unchanged.',
+      title: 'Choose a payroll task',
+      body: 'Payroll Runs prepares and reviews cycles. Monthly Adjustments holds exceptions and arrears. Payroll Setup contains company rules, recurring employee eligibility, unpaid leave and payslip display. Payslips & Exports provides finalized employee documents and authorized downloads. Configure salary and employee settings once; they carry forward until changed. Routine months are automatic, including approved unpaid leave. This tour does not calculate or change payroll.',
       isVisible: ({ canCapability }) => canCapability?.('action.payroll.manage') ?? false,
     },
     {
@@ -22,14 +22,14 @@ export const payrollPageTour: TourDefinition = {
       id: 'payroll-effective-settings',
       anchor: 'payroll.process.sections',
       title: 'Review effective contribution and unpaid leave rules',
-      body: 'Employee Settings records PF and ESI eligibility and an optional recurring professional tax override from an effective month. Blank PT uses the company rule; zero explicitly means no PT. These settings carry forward. Unpaid Leave Rules shows the effective company divisor. Historical unpaid usage is not charged again. Recalculate an editable draft after configuration changes.',
+      body: 'After the tour, open Payroll Setup. Its vertical task menu separates Company Rules, Employee Eligibility, Unpaid Leave, Payslip Display and Employer Details. Employee eligibility and professional tax carry forward from their effective month; zero PT explicitly means no PT. Employee tax settings remain in Tax Administration. Use Monthly Adjustments only for period-specific exceptions. Historical unpaid usage is not charged again.',
       isVisible: ({ canCapability }) => canCapability?.('action.payroll.manage') ?? false,
     },
     {
       id: 'payroll-employee-payslips',
       anchor: 'payroll.process.sections',
       title: 'View and download employee payslips',
-      body: 'With company-wide payroll read access, open Employee Payslips and select an employee and finalized period to view or download the PDF. Draft calculations are reviewed in Payroll Runs. Unpaid-leave reports show finalized payroll calculations, not opening leave balances.',
+      body: 'With company-wide payroll read access, open Payslips & Exports, then Employee Payslips. Select an employee and finalized period to view, download or print. Help beside the actions works with hover, keyboard focus or tap. Draft calculations and configuration blockers are reviewed in Payroll Runs. Unpaid-leave reports show finalized calculations, not opening balances.',
       isVisible: ({ canScopedPermission }) =>
         canScopedPermission?.('payroll:read', ['ALL']) ?? false,
     },

@@ -3,26 +3,18 @@ import { useEffect, useMemo } from 'react';
 import { PERMISSIONS } from '../../auth/permissions';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Card from '../../components/common/Card';
-import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { usePageTabs } from '../../hooks/usePageTabs';
 
-import CompanyContributionRules from './components/CompanyContributionRules';
-import CompanyPayslipComponents from './components/CompanyPayslipComponents';
-import EmployeePayrollSettings from './components/EmployeePayrollSettings';
-import ManagedPayslips from './components/ManagedPayslips';
-import PayrollAdminNotice from './components/PayrollAdminNotice';
-import PayrollArrearsCard from './components/PayrollArrearsCard';
-import PayrollComplianceCard from './components/PayrollComplianceCard';
-import PayrollExportsSection from './components/PayrollExportsSection';
-import PayrollLwpRules from './components/PayrollLwpRules';
-import PayrollPeriodInputs from './components/PayrollPeriodInputs';
-import PayrollRunsSection from './components/PayrollRunsSection';
-import PayrollSalaryComponentsCard from './components/PayrollSalaryComponentsCard';
+import PayrollWorkspaceNavigation, {
+  PayrollWorkspaceTaskMenu,
+} from './components/PayrollWorkspaceNavigation';
+import PayrollWorkspacePanels from './components/PayrollWorkspacePanels';
 import { usePayrollBoard } from './hooks/usePayrollBoard';
 import { usePayrollBoardActions } from './hooks/usePayrollBoardActions';
 import { usePayrollExports } from './hooks/usePayrollExports';
+import { usePayrollWorkspace } from './hooks/usePayrollWorkspace';
+import { payrollWorkspaceTasks } from './payrollWorkspace';
 
 const PayrollPage = () => {
   const client = useGraphClient('client');
@@ -40,115 +32,54 @@ const PayrollPage = () => {
     ownerKey,
     reload: board.loadData,
   });
-  const payrollExports = usePayrollExports(client, { enabled: canExportPayroll, ownerKey });
+  const payrollExports = usePayrollExports(client, {
+    enabled: canExportPayroll && canManagePayroll,
+    ownerKey,
+  });
   const { setLatestCyclePeriod } = payrollExports;
 
   useEffect(() => {
     setLatestCyclePeriod(board.data?.payrollCycles[0]);
   }, [board.data?.payrollCycles, setLatestCyclePeriod]);
 
-  const tabs = [
-    { id: 'runs', label: 'Payroll Runs' },
-    ...(canReadAllPayslips ? [{ id: 'payslips', label: 'Employee Payslips' }] : []),
-    { id: 'monthly-inputs', label: 'Monthly Inputs' },
-    { id: 'employee-settings', label: 'Employee Payroll Settings' },
-    { id: 'contribution-rules', label: 'Contribution Rules' },
-    { id: 'arrears', label: 'Arrears' },
-    { id: 'compliance', label: 'Employer & Statutory Details' },
-    { id: 'unpaid-leave', label: 'Unpaid Leave Rules' },
-    { id: 'components', label: 'Salary Components' },
-    ...(canExportPayroll ? [{ id: 'exports', label: 'Payroll Exports' }] : []),
-  ];
-  const { tab, setTab } = usePageTabs(tabs);
+  const workspace = usePayrollWorkspace(
+    payrollWorkspaceTasks(canReadAllPayslips, canExportPayroll)
+  );
   if (!canManagePayroll) return null;
-
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="sr-only">Payroll</h1>
-      </div>
-
-      <div data-tour-anchor="payroll.process.sections">
-        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
-      </div>
-      <PayrollAdminNotice />
-
+    <div className="space-y-3">
+      <h1 className="text-xl font-semibold">{workspace.workspace.label}</h1>
+      <p className="text-sm text-content-secondary">
+        Salary and payroll settings carry forward. Monthly adjustments are for exceptions only.
+      </p>
+      <PayrollWorkspaceNavigation state={workspace} />
       {board.error && (
         <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{board.error}</p>
+          <p role="alert" className="text-sm text-danger">
+            {board.error}
+          </p>
         </Card>
       )}
-
-      <PageTabPanel id="unpaid-leave" activeTab={tab}>
-        <PayrollLwpRules key={ownerKey} client={client} />
-      </PageTabPanel>
-      <PageTabPanel id="monthly-inputs" activeTab={tab}>
-        <PayrollPeriodInputs key={ownerKey} client={client} />
-      </PageTabPanel>
-      <PageTabPanel id="employee-settings" activeTab={tab}>
-        <EmployeePayrollSettings key={ownerKey} client={client} />
-      </PageTabPanel>
-      <PageTabPanel id="contribution-rules" activeTab={tab}>
-        <CompanyContributionRules key={ownerKey} client={client} />
-      </PageTabPanel>
-      <PageTabPanel id="compliance" activeTab={tab}>
-        <PayrollComplianceCard
-          form={board.complianceForm}
-          loading={board.loading}
-          busy={actions.complianceSaveBusy}
-          error={actions.complianceSaveError}
-          ok={actions.complianceSaveOk}
-          onChange={board.setComplianceField}
-          onSave={() => void actions.savePayrollCompliance()}
+      <div
+        className={
+          workspace.visibleTasks.length > 1
+            ? 'grid items-start gap-4 lg:grid-cols-[13rem_minmax(0,1fr)]'
+            : ''
+        }
+      >
+        <PayrollWorkspaceTaskMenu state={workspace} />
+        <PayrollWorkspacePanels
+          key={ownerKey}
+          activeTask={workspace.task.id}
+          tasks={workspace.tasks}
+          ownerKey={ownerKey}
+          client={client}
+          board={board}
+          actions={actions}
+          exports={payrollExports}
         />
-      </PageTabPanel>
-      <PageTabPanel id="arrears" activeTab={tab}>
-        <PayrollArrearsCard
-          arrears={board.data?.payrollArrears ?? []}
-          form={actions.arrearForm}
-          loading={board.loading}
-          busy={actions.arrearBusy}
-          error={actions.arrearError}
-          ok={actions.arrearOk}
-          onChange={actions.setArrearField}
-          onCreate={() => void actions.createArrear()}
-        />
-      </PageTabPanel>
-      <PageTabPanel id="components" activeTab={tab}>
-        <CompanyPayslipComponents key={ownerKey} client={client} />
-        <PayrollSalaryComponentsCard
-          rows={board.data?.salaryComponents ?? []}
-          loading={board.loading}
-        />
-      </PageTabPanel>
-      <PageTabPanel id="runs" activeTab={tab}>
-        <PayrollRunsSection board={board} actions={actions} />
-      </PageTabPanel>
-      {canReadAllPayslips && (
-        <PageTabPanel id="payslips" activeTab={tab}>
-          <ManagedPayslips key={ownerKey} client={client} ownerKey={ownerKey} />
-        </PageTabPanel>
-      )}
-      {canExportPayroll ? (
-        <PageTabPanel id="exports" activeTab={tab}>
-          <PayrollExportsSection
-            month={payrollExports.month}
-            year={payrollExports.year}
-            fyStartYear={payrollExports.fyStartYear}
-            fyQuarter={payrollExports.fyQuarter}
-            monthlyStatus={payrollExports.monthlyStatus}
-            fyStatus={payrollExports.fyStatus}
-            onMonthChange={payrollExports.setMonth}
-            onYearChange={payrollExports.setYear}
-            onFyStartYearChange={payrollExports.setFyStartYear}
-            onFyQuarterChange={payrollExports.setFyQuarter}
-            onMonthlyDownload={(key) => void payrollExports.downloadMonthly(key)}
-            onFyDownload={(key) => void payrollExports.downloadFy(key)}
-          />
-        </PageTabPanel>
-      ) : null}
+      </div>
     </div>
   );
 };
-
 export default PayrollPage;

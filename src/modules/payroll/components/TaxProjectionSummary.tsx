@@ -39,7 +39,7 @@ const TaxProjectionSummary = ({ projection }: { projection: TaxProjection }) => 
     >
       <div data-tour-anchor="payroll.pay.tax-projection">
         {projection.configuration && (
-          <p className="mb-4 rounded-lg bg-surface-raised p-3">
+          <p className="mb-3 rounded-lg bg-surface-raised p-2 text-sm">
             {projection.configuration.regime === 'NEW' ? 'New tax regime' : 'Old tax regime'} ·
             Effective {projection.configuration.effective_from}. Withholding:{' '}
             {projection.configuration.method === 'PERCENTAGE_OVERRIDE'
@@ -48,7 +48,7 @@ const TaxProjectionSummary = ({ projection }: { projection: TaxProjection }) => 
             .
           </p>
         )}
-        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
           {entries.map(([label, value]) => (
             <div key={label}>
               <dt className="text-sm text-slate-600">{label}</dt>
@@ -57,17 +57,22 @@ const TaxProjectionSummary = ({ projection }: { projection: TaxProjection }) => 
           ))}
         </dl>
         {!projection.history_complete && (
-          <p className="mt-3 rounded bg-amber-50 p-3 text-amber-900">
+          <p className="mt-3 rounded bg-amber-50 p-2 text-sm text-amber-900">
             Earlier deduction history is incomplete. Estimates are not recorded deductions. HR must
             review provisional withholding.
           </p>
         )}
-        {projection.limitations.map((value) => (
-          <p className="mt-2 text-sm" key={value}>
-            {value}
-          </p>
-        ))}
-        <p className="mt-4 text-sm text-slate-600">{projection.note}</p>
+        {projection.limitations.length > 0 && (
+          <details className="mt-2 text-sm">
+            <summary className="cursor-pointer">Projection assumptions and limitations</summary>
+            {projection.limitations.map((value) => (
+              <p className="mt-2" key={value}>
+                {value}
+              </p>
+            ))}
+          </details>
+        )}
+        <p className="mt-3 text-xs text-content-secondary">{projection.note}</p>
       </div>
     </Card>
   );

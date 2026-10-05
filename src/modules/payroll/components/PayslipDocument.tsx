@@ -5,6 +5,7 @@ import type { PayslipPresentation } from '../payslipPresentation';
 import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
 import { downloadPayslipPdf, loadLogoDataUrlForPdf } from '../utils/payslipPdf';
 
+import PayrollHelp from './PayrollHelp';
 import PayslipSheet from './PayslipSheet';
 
 export type PayslipLine = {
@@ -109,7 +110,7 @@ const PayslipDocument = ({
 
   return (
     <div>
-      <div className="no-print mb-4 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+      <div className="no-print mb-3 flex flex-wrap items-center justify-end gap-2">
         <Button
           type="button"
           variant="secondary"
@@ -121,9 +122,10 @@ const PayslipDocument = ({
         <Button type="button" variant="primary" onClick={onPrint} disabled={detailsUnavailable}>
           Print / Save as PDF
         </Button>
-        <p className="text-right text-xs text-slate-500">
-          In the print dialog, choose &quot;Save as PDF&quot; to download.
-        </p>
+        <PayrollHelp label="About payslip downloads">
+          Download PDF directly, or select Save as PDF in the print dialog. Downloads are available
+          after payslip display and calculation details load.
+        </PayrollHelp>
       </div>
 
       {detailsUnavailable ? (

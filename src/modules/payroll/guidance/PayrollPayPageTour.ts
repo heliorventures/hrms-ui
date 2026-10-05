@@ -26,7 +26,7 @@ export const payrollPayPageTour: TourDefinition = {
       id: 'payroll-pay-income-tax',
       anchor: 'payroll.pay.sections',
       title: 'Review income tax details',
-      body: 'Income Tax shows an April–March projection from your joining date, monthly salary components and slab details. Imported actuals and finalized payroll are distinguished from estimates. Earlier TDS stays Not provided until HR supplies it. Recorded deductions do not confirm government remittance. Contact HR about actual liability. Select this section after closing the tour.',
+      body: 'After closing the tour, open Income Tax and select a financial year. The compact summary and slab calculation appear side by side on wide screens, followed by the salary component matrix. Expand Month by month records and projections for the timeline. Imported actuals and finalized payroll remain distinct from estimates. Earlier TDS stays Not provided until HR supplies it. Employer PF is excluded. Recorded deductions do not confirm government remittance; contact HR about actual liability.',
       isVisible: ({ canScopedPermission }) =>
         canScopedPermission?.('tax:read', ['SELF', 'TEAM', 'DEPARTMENT', 'ALL']) ?? false,
     },

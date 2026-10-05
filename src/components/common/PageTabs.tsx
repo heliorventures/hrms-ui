@@ -28,17 +28,20 @@ export default PageTabs;
 export const PageTabPanel = ({
   id,
   activeTab,
+  label,
   children,
 }: {
   id: string;
   activeTab: string;
+  label?: string;
   children: ReactNode;
 }) => (
   <PageTabVisibilityContext.Provider value={id === activeTab}>
     <section
       id={panelId(id)}
       role="tabpanel"
-      aria-labelledby={`${panelId(id)}-tab`}
+      aria-labelledby={label ? undefined : `${panelId(id)}-tab`}
+      aria-label={label}
       hidden={id !== activeTab}
       tabIndex={0}
       className="min-w-0 space-y-4"

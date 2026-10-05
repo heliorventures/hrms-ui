@@ -5,6 +5,34 @@ import { afterEach, expect, it, vi } from 'vitest';
 import PayrollDraftReview from './PayrollDraftReview';
 
 afterEach(cleanup);
+it('summarizes blocked calculations and keeps the missing configuration visible', () => {
+  render(
+    <PayrollDraftReview
+      draft={{
+        cycle_id: 'cycle',
+        revision: 2,
+        fingerprint: 'review',
+        can_finalize: false,
+        employees: [
+          {
+            employee_id: 'one',
+            employee_label: 'EMP-01',
+            outcome: 'REVIEW',
+            reason: 'Confirm employee PF/ESI eligibility',
+            prepared: null,
+          },
+        ],
+      }}
+      busy={false}
+      onFinalize={vi.fn()}
+      onRecalculate={vi.fn()}
+    />
+  );
+  expect(screen.getByText('1 needs review')).toBeTruthy();
+  expect(screen.getByText('Confirm employee PF/ESI eligibility')).toBeTruthy();
+  expect(screen.getByText('Calculation blocked')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Finalize & Lock' })).toHaveProperty('disabled', true);
+});
 it('requires provisional tax acknowledgement before finalization', () => {
   const finalize = vi.fn();
   render(

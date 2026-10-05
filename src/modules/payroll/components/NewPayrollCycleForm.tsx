@@ -3,6 +3,8 @@ import Input from '../../../components/common/Input';
 import { PAYROLL_MONTHS } from '../payrollFormatters';
 import type { PayrollCycleFormState } from '../payrollTypes';
 
+import PayrollHelp from './PayrollHelp';
+
 interface Props {
   form: PayrollCycleFormState;
   createBusy: boolean;
@@ -19,25 +21,28 @@ const NewPayrollCycleForm = ({
   onChange,
   onCreate,
 }: Props) => (
-  <div className="mb-6 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">New cycle</h3>
-    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-      Opens a <span className="font-mono">DRAFT</span> row for one calendar month. You cannot add a
-      second cycle for the same month and year.
-    </p>
-    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+  <div className="mb-3">
+    <div className="flex items-center justify-between">
+      <h3 className="text-sm font-semibold">New payroll cycle</h3>
+      <PayrollHelp label="About payroll cycles">
+        Create one draft per calendar month. Effective salary, recurring settings and approved
+        unpaid leave prepare routine payroll automatically. Use Monthly Adjustments only for
+        exceptions.
+      </PayrollHelp>
+    </div>
+    <div className="grid items-end gap-3 [&>*]:min-w-0 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_8rem_6rem_11rem_auto]">
       <Input
         label="Name"
         type="text"
         value={form.newCycleName}
         onChange={(event) => onChange('newCycleName', event.target.value)}
         placeholder="e.g. April 2026 payroll"
-        className="min-w-[12rem]"
+        className="min-w-0 w-full"
       />
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-gray-600 dark:text-gray-400">Month</span>
         <select
-          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          className="min-w-0 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           value={form.newCycleMonth}
           onChange={(event) => onChange('newCycleMonth', Number(event.target.value))}
         >
@@ -57,11 +62,12 @@ const NewPayrollCycleForm = ({
         onChange={(event) =>
           onChange('newCycleYear', Number(event.target.value) || form.newCycleYear)
         }
-        className="w-28"
+        className="min-w-0 w-full"
       />
       <Input
         label="Payment Date (Optional)"
         type="date"
+        className="min-w-0 w-full"
         value={form.newCyclePayDate}
         onChange={(event) => onChange('newCyclePayDate', event.target.value)}
       />
