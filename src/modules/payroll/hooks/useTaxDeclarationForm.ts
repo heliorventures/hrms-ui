@@ -5,7 +5,7 @@ import { UpsertTaxComputationDocument } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type { TaxSubmissionContext } from '../taxSubmissionContext';
 
-import { declarationError, declarationInput } from './taxFormValidation';
+import { declarationError, declarationInput, hasTaxSubmissionSettings } from './taxFormValidation';
 
 export function useTaxDeclarationForm(
   client: GraphQLClient,
@@ -20,7 +20,7 @@ export function useTaxDeclarationForm(
     busy: false,
     message: null as string | null,
   });
-  const operationKey = `${key}:${canSubmit}`;
+  const operationKey = `${key}:${canSubmit}:${context?.settings?.regime}:${context?.settings?.effective_from}`;
   const currentKey = useRef(operationKey);
   currentKey.current = operationKey;
   const saved = context?.declaration;
@@ -31,12 +31,12 @@ export function useTaxDeclarationForm(
       busy: false,
       message: null,
     });
-  }, [key, saved]);
+  }, [operationKey, saved]);
   const handleDeclUpsert = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
       const error = declarationError(canSubmit, state.gross, state.deductions);
-      if (error || !context) {
+      if (error || !context || !hasTaxSubmissionSettings(context)) {
         setState((current) => ({
           ...current,
           message: error ?? 'No employee tax settings apply to this financial year. Contact HR.',

@@ -7,7 +7,7 @@ import { uploadTenantFile, validateTenantUploadFile } from '../../../utils/tenan
 import type { TaxSectionCatalogRow } from '../payrollTypes';
 import type { TaxSubmissionContext } from '../taxSubmissionContext';
 
-import { proofError, proofInput } from './taxFormValidation';
+import { hasTaxSubmissionSettings, proofError, proofInput } from './taxFormValidation';
 
 const emptyForm = {
   section: '',
@@ -27,10 +27,10 @@ export function useTaxProofForm(
   refresh: () => Promise<void>
 ) {
   const [state, setState] = useState(emptyForm);
-  const operationKey = `${key}:${canSubmit}`;
+  const operationKey = `${key}:${canSubmit}:${context?.settings?.regime}:${context?.settings?.effective_from}`;
   const currentKey = useRef(operationKey);
   currentKey.current = operationKey;
-  useEffect(() => setState(emptyForm), [key]);
+  useEffect(() => setState(emptyForm), [operationKey]);
   useEffect(() => {
     if (catalog?.length)
       setState((current) => ({ ...current, section: current.section || catalog[0].sectionCode }));
@@ -40,7 +40,7 @@ export function useTaxProofForm(
       event.preventDefault();
       const sectionCode = state.section.trim().toUpperCase();
       const error = proofError(canSubmit, sectionCode, state.declared, state.actual, state.file);
-      if (error || !context || !state.file) {
+      if (error || !context || !state.file || !hasTaxSubmissionSettings(context)) {
         setState((current) => ({
           ...current,
           message: error ?? 'No employee tax settings apply to this financial year. Contact HR.',
@@ -49,7 +49,11 @@ export function useTaxProofForm(
       }
       setState((current) => ({ ...current, busy: true, message: null }));
       try {
-        const fileStorageId = await uploadTenantFile(client, state.file);
+        const fileStorageId = await uploadTenantFile(
+          client,
+          state.file,
+          () => currentKey.current === operationKey
+        );
         if (currentKey.current !== operationKey) return;
         await client.request(SubmitTaxProofLineDocument, {
           input: proofInput(context, sectionCode, state.declared, state.actual, fileStorageId),
@@ -64,8 +68,10 @@ export function useTaxProofForm(
         }));
         await refresh();
       } catch (failure) {
-        if (currentKey.current === operationKey)
+        if (currentKey.current === operationKey) {
           setState((current) => ({ ...current, message: graphQlUserMessage(failure) }));
+          await refresh();
+        }
       } finally {
         if (currentKey.current === operationKey)
           setState((current) => ({ ...current, busy: false }));

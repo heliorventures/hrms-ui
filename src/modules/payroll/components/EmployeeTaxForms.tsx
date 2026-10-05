@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
+import { hasTaxSubmissionSettings } from '../hooks/taxFormValidation';
 import type { TaxSectionCatalogRow } from '../payrollTypes';
 import type { TaxSubmissionContext } from '../taxSubmissionContext';
 
@@ -42,7 +43,7 @@ export const EmployeeTaxProofFormCard = ({
   onSubmit: (event: FormEvent) => void;
 }) => (
   <Card title="Submit Deduction Proof">
-    {!submissionContext || loading ? (
+    {!hasTaxSubmissionSettings(submissionContext) || loading ? (
       <p className="text-sm text-slate-500">
         {loading
           ? 'Loading...'
@@ -154,7 +155,7 @@ export const EmployeeTaxDeclarationFormCard = ({
   onSubmit: (event: FormEvent) => void;
 }) => (
   <Card title="Estimated Declaration">
-    {!submissionContext ? (
+    {!hasTaxSubmissionSettings(submissionContext) ? (
       <p className="text-sm text-slate-500">
         No employee tax settings apply to this financial year. Contact HR.
       </p>

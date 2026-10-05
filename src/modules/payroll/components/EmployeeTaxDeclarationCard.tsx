@@ -23,7 +23,7 @@ const EmployeeTaxDeclarationCard = ({
       </Card>
     );
   const entries = [
-    ['Assigned regime', context.settings.regime === 'NEW' ? 'New tax regime' : 'Old tax regime'],
+    ['Saved declaration regime', saved.input.regime ?? 'Not specified'],
     ['Gross income estimate', formatAmountString(saved.input.gross_income)],
     ['Deduction estimate', formatAmountString(saved.input.declared_deductions)],
   ];

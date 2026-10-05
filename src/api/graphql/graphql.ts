@@ -3976,6 +3976,8 @@ export type SubmitSeparationInput = {
 };
 
 export type SubmitTaxProofLineInput = {
+  /** Assigned regime displayed when the proof was prepared. Reject changed settings. */
+  taxRegimeChosen?: InputMaybe<Scalars['String']['input']>;
   /** Submitted **actual** from proof (string decimal); must be approved to count in `tax_computation`. */
   actualAmount: Scalars['String']['input'];
   /** Declared amount at the start of the year (string decimal). */

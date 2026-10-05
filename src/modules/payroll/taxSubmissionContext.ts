@@ -4,7 +4,8 @@ export interface TaxSubmissionContext {
     regime: 'NEW' | 'OLD';
     method: 'ANNUAL_PROJECTION' | 'PERCENTAGE_OVERRIDE';
     effective_from: string;
-  };
+  } | null;
+  can_submit?: boolean;
   declaration: {
     revision: number;
     input: {

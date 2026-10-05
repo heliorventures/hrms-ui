@@ -48,7 +48,7 @@ export function declarationInput(
 ): UpsertTaxComputationInput {
   return {
     fiscalYear: context.fiscal_year,
-    taxRegimeChosen: context.settings.regime,
+    taxRegimeChosen: context.settings?.regime,
     grossIncome: gross.trim() || null,
     totalDeductions: deductions.trim() || null,
   };
@@ -63,9 +63,14 @@ export function proofInput(
 ): SubmitTaxProofLineInput {
   return {
     fiscalYear: context.fiscal_year,
+    taxRegimeChosen: context.settings?.regime,
     sectionCode,
     declaredAmount: declared.trim() || '0',
     actualAmount: actual.trim() || declared.trim() || '0',
     fileStorageId,
   };
+}
+
+export function hasTaxSubmissionSettings(context: TaxSubmissionContext | null): boolean {
+  return Boolean(context?.settings) && context?.can_submit !== false;
 }

@@ -35,6 +35,7 @@ input UpsertTaxComputationInput {
 }
 
 input SubmitTaxProofLineInput {
+  taxRegimeChosen: String
   taxConfigVersionId: ID
   fiscalYear: Int!
   sectionCode: String!

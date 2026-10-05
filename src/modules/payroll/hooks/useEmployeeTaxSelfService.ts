@@ -35,6 +35,6 @@ export function useEmployeeTaxSelfService(
     ...declaration,
     ...proof,
     declFy: String(fiscalYear),
-    declRegime: data.submissionContext?.settings.regime ?? '',
+    declRegime: data.submissionContext?.settings?.regime ?? '',
   };
 }
