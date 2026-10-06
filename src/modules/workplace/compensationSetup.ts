@@ -1,21 +1,13 @@
-import { gql } from 'graphql-request';
+export {
+  SaveCompensationReviewCycleDocument as saveCompensationCycleDocument,
+  SaveSalaryBandDocument as saveSalaryBandDocument,
+  CompensationSetupPageDocument as compensationSetupPageDocument,
+  CompensationDesignationsDocument as compensationDesignationsDocument,
+} from '../../api/graphql/graphql';
 
 export type CompensationSetupKind = 'cycle' | 'band';
 export type CompensationSetupValues = Partial<Record<string, string>>;
-export const saveCompensationCycleDocument = gql`
-  mutation SaveCompensationReviewCycle($input: SaveCompensationReviewCycleInput!) {
-    saveCompensationReviewCycle(input: $input) {
-      id
-    }
-  }
-`;
-export const saveSalaryBandDocument = gql`
-  mutation SaveSalaryBand($input: SaveSalaryBandInput!) {
-    saveSalaryBand(input: $input) {
-      id
-    }
-  }
-`;
+
 export function validateCompensationSetup(
   kind: CompensationSetupKind,
   values: CompensationSetupValues
@@ -48,37 +40,3 @@ export function validateCompensationSetup(
     return 'Salary values must be ordered minimum, midpoint, maximum.';
   return null;
 }
-
-export const compensationSetupPageDocument = gql`
-  query CompensationSetupPage($offset: Int!) {
-    salaryBands(limit: 21, offset: $offset) {
-      id
-      tenantId
-      designationId
-      grade
-      minSalary
-      midSalary
-      maxSalary
-      currency
-      effectiveYear
-    }
-    compensationReviewCycles(limit: 21, offset: $offset) {
-      id
-      tenantId
-      name
-      year
-      startDate
-      endDate
-      status
-      budgetPercentage
-    }
-  }
-`;
-export const compensationDesignationsDocument = gql`
-  query CompensationDesignations($offset: Int!) {
-    designations(limit: 200, offset: $offset) {
-      id
-      title
-    }
-  }
-`;

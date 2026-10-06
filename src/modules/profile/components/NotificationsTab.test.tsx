@@ -4,6 +4,8 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../../testUtils/graphqlDocumentSource';
+
 import NotificationsTab from './NotificationsTab';
 
 const graphClient = vi.hoisted(() => ({
@@ -17,7 +19,7 @@ vi.mock('../../../hooks/useGraphClient', () => ({
 beforeEach(() => {
   graphClient.request.mockReset();
   graphClient.request.mockImplementation((document: unknown) => {
-    if (typeof document === 'string' && document.includes('UpdateMyCelebrationPreferences')) {
+    if (graphqlDocumentSource(document).includes('UpdateMyCelebrationPreferences')) {
       return Promise.resolve({
         updateMyCelebrationPreferences: {
           shareBirthday: true,
@@ -25,7 +27,7 @@ beforeEach(() => {
         },
       });
     }
-    if (typeof document === 'string' && document.includes('MyCelebrationPreferences')) {
+    if (graphqlDocumentSource(document).includes('MyCelebrationPreferences')) {
       return Promise.resolve({
         myCelebrationPreferences: {
           shareBirthday: false,
@@ -72,9 +74,8 @@ describe('NotificationsTab celebration privacy', () => {
     await user.click(screen.getByRole('button', { name: 'Save Celebration Privacy' }));
 
     await waitFor(() => {
-      const call = graphClient.request.mock.calls.find(
-        ([document]) =>
-          typeof document === 'string' && document.includes('UpdateMyCelebrationPreferences')
+      const call = graphClient.request.mock.calls.find(([document]) =>
+        graphqlDocumentSource(document).includes('UpdateMyCelebrationPreferences')
       );
       expect(call?.[1]).toEqual({
         input: {

@@ -1,0 +1,69 @@
+query PayrollApprovedLwpReview($employeeId: ID!, $year: Int!, $month: Int!) {
+  payrollApprovedLwpReview(employeeId: $employeeId, year: $year, month: $month)
+}
+
+query EmployeeSalaryBreakupPreview($employeeId: ID, $asOf: NaiveDate) {
+  employeeSalaryBreakupPreview(employeeId: $employeeId, asOf: $asOf) {
+    employeeId
+    annualCtc
+    financials
+    monthlyGross
+    monthlyDeductions
+    monthlyNetBeforeStatutory
+    lines {
+      salaryComponentId
+      componentName
+      componentCode
+      componentType
+      calculationBasis
+      calculationValue
+      annualAmount
+      monthlyAmount
+      isOverride
+    }
+  }
+}
+
+query CompanyPayrollPolicies {
+  companyPayrollPolicies
+}
+
+mutation SaveCompanyPayrollPolicy($input: JSON!, $expectedRevision: Int) {
+  saveCompanyPayrollPolicy(input: $input, expectedRevision: $expectedRevision)
+}
+
+query EmployeePayrollEligibility($employeeId: ID!, $asOf: NaiveDate!) {
+  employeePayrollEligibility(employeeId: $employeeId, asOf: $asOf)
+}
+
+mutation SaveEmployeePayrollEligibility($employeeId: ID!, $input: JSON!) {
+  saveEmployeePayrollEligibility(employeeId: $employeeId, input: $input)
+}
+
+query EligibilityEmployees {
+  employees(limit: 500) {
+    id
+    employeeCode
+    fullName
+  }
+}
+
+query TaxSettingsEmployees {
+  employees(limit: 500) {
+    id
+    fullName
+    employeeCode
+  }
+}
+
+query PayrollLwpRules {
+  companyPayrollPolicies
+}
+
+query PeriodInputEmployees {
+  employees(limit: 500) {
+    id
+    employeeCode
+    fullName
+  }
+}

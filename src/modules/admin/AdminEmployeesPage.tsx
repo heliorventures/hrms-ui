@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
+import {
+  ClientOpsAdminOrgLabelsDocument,
+  ClientOpsAdminEmployeesWithLoginDocument,
+} from '../../api/graphql/graphql';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -36,30 +39,6 @@ interface EmployeeRow {
 interface EmployeesData {
   employees: EmployeeRow[];
 }
-
-const ClientOpsAdminEmployeesWithLoginDocument = `
-  query ClientOpsAdminEmployeesWithLogin($limit: Int! = 100) {
-    employees(limit: $limit) {
-      id
-      employeeCode
-      firstName
-      lastName
-      fullName
-      status
-      employmentType
-      dateOfJoining
-      departmentId
-      designationId
-      reportingManagerId
-      userId
-      departmentName
-      designationTitle
-      linkedUserEmail
-      linkedUserUsername
-      reportingManagerName
-    }
-  }
-`;
 
 const AdminEmployeesPage = () => {
   const client = useGraphClient('client');

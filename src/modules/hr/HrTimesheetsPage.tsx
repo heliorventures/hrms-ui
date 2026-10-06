@@ -5,6 +5,7 @@ import {
   RejectTimesheetWeekBatchDocument,
   ViewerEmployeeIdDocument,
   type ViewerEmployeeIdQuery,
+  HrTimesheetWeekBatchesDocument as TIMESHEET_WEEK_BATCHES_DOCUMENT,
 } from '../../api/graphql/graphql';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -21,24 +22,6 @@ import {
 } from '../timesheet/timesheetApproval';
 
 import TimesheetBatchPreviewModal from './components/TimesheetBatchPreviewModal';
-
-const TIMESHEET_WEEK_BATCHES_DOCUMENT = `
-  query HrTimesheetWeekBatches($status: String, $limit: Int! = 80) {
-    timesheetWeekBatches(status: $status, limit: $limit) {
-      id
-      employeeId
-      employeeCode
-      employeeName
-      weekStartDate
-      status
-      submittedAt
-      workflowInstanceId
-      pendingApprovalStage
-      pendingApprovalStepId
-      viewerMayApprove
-    }
-  }
-`;
 
 type BatchRow = {
   id: string;

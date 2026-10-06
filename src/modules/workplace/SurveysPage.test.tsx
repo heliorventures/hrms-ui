@@ -4,6 +4,8 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import SurveysPage from './SurveysPage';
 
 const state = vi.hoisted(() => ({
@@ -34,7 +36,7 @@ beforeEach(() => {
   state.scopes = { 'survey:respond': 'SELF' };
   state.request.mockReset();
   state.request.mockImplementation((document: unknown) => {
-    const source = String(document);
+    const source = graphqlDocumentSource(document);
     if (source.includes('AvailableSurveysWorkspace')) {
       return Promise.resolve({
         availableSurveys: [
@@ -112,7 +114,7 @@ describe('SurveysPage', () => {
     let resolveDetail!: (result: unknown) => void;
     const fallback = state.request.getMockImplementation()!;
     state.request.mockImplementation((document: unknown, variables: unknown) => {
-      if (String(document).includes('SurveyDetailWorkspace'))
+      if (graphqlDocumentSource(document).includes('SurveyDetailWorkspace'))
         return new Promise((resolve) => {
           resolveDetail = resolve;
         });
@@ -154,7 +156,7 @@ describe('SurveysPage', () => {
       completed: false,
     };
     state.request.mockImplementation((document: unknown) => {
-      const source = String(document);
+      const source = graphqlDocumentSource(document);
       if (source.includes('SurveysAdminWorkspace')) return Promise.resolve({ surveys: [summary] });
       if (source.includes('OpenSurveyWorkspace')) {
         summary.opensAt = '2020-01-01T00:00:00Z';
@@ -166,16 +168,22 @@ describe('SurveysPage', () => {
     render(<SurveysPage />);
     await user.click(await screen.findByRole('button', { name: 'Open now' }));
     expect(
-      state.request.mock.calls.some(([doc]) => String(doc).includes('OpenSurveyWorkspace'))
+      state.request.mock.calls.some(([doc]) =>
+        graphqlDocumentSource(doc).includes('OpenSurveyWorkspace')
+      )
     ).toBe(false);
     await user.click(screen.getByRole('button', { name: 'Confirm open now' }));
     await waitFor(() =>
       expect(
-        state.request.mock.calls.find(([doc]) => String(doc).includes('OpenSurveyWorkspace'))?.[1]
+        state.request.mock.calls.find(([doc]) =>
+          graphqlDocumentSource(doc).includes('OpenSurveyWorkspace')
+        )?.[1]
       ).toEqual({ id: 'scheduled' })
     );
     expect(
-      state.request.mock.calls.some(([doc]) => String(doc).includes('PublishSurveyWorkspace'))
+      state.request.mock.calls.some(([doc]) =>
+        graphqlDocumentSource(doc).includes('PublishSurveyWorkspace')
+      )
     ).toBe(false);
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Open now' })).toBeNull());
   });
@@ -185,7 +193,7 @@ describe('SurveysPage', () => {
     let resolveResults!: (result: unknown) => void;
     const fallback = state.request.getMockImplementation()!;
     state.request.mockImplementation((document: unknown, variables: unknown) => {
-      if (String(document).includes('SurveysAdminWorkspace'))
+      if (graphqlDocumentSource(document).includes('SurveysAdminWorkspace'))
         return Promise.resolve({
           surveys: [
             {
@@ -197,7 +205,7 @@ describe('SurveysPage', () => {
             },
           ],
         });
-      if (String(document).includes('SurveyResultsWorkspace'))
+      if (graphqlDocumentSource(document).includes('SurveyResultsWorkspace'))
         return new Promise((resolve) => {
           resolveResults = resolve;
         });
@@ -229,7 +237,7 @@ describe('SurveysPage', () => {
     state.permissions = new Set(['survey:manage']);
     state.scopes = { 'survey:manage': 'ALL' };
     state.request.mockImplementation((document: unknown, variables: unknown) => {
-      const source = String(document);
+      const source = graphqlDocumentSource(document);
       if (source.includes('SurveysAdminWorkspace')) return Promise.resolve({ surveys: [] });
       if (source.includes('SurveyDepartmentsWorkspace'))
         return Promise.resolve({ departments: [] });
@@ -253,7 +261,9 @@ describe('SurveysPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await waitFor(() =>
       expect(
-        state.request.mock.calls.find(([doc]) => String(doc).includes('SaveSurveyWorkspace'))?.[1]
+        state.request.mock.calls.find(([doc]) =>
+          graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
+        )?.[1]
       ).toMatchObject({
         input: {
           audienceDepartmentIds: [],
@@ -295,7 +305,7 @@ describe('SurveysPage', () => {
       ],
     });
     state.request.mockImplementation((document: unknown) => {
-      const source = String(document);
+      const source = graphqlDocumentSource(document);
       if (source.includes('SurveysAdminWorkspace')) return Promise.resolve({ surveys: [summary] });
       if (source.includes('SurveyDepartmentsWorkspace'))
         return Promise.resolve({ departments: [{ id: 'dept-1', name: 'Engineering' }] });
@@ -343,7 +353,9 @@ describe('SurveysPage', () => {
     await screen.findByRole('alert');
     expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Existing');
     expect(
-      state.request.mock.calls.find(([doc]) => String(doc).includes('SaveSurveyWorkspace'))?.[1]
+      state.request.mock.calls.find(([doc]) =>
+        graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
+      )?.[1]
     ).toMatchObject({
       input: {
         id: 'draft-1',
@@ -369,11 +381,13 @@ describe('SurveysPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await waitFor(() =>
       expect(
-        state.request.mock.calls.filter(([doc]) => String(doc).includes('SaveSurveyWorkspace'))
+        state.request.mock.calls.filter(([doc]) =>
+          graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
+        )
       ).toHaveLength(2)
     );
     const copied = state.request.mock.calls.filter(([doc]) =>
-      String(doc).includes('SaveSurveyWorkspace')
+      graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
     )[1]?.[1] as { input: Record<string, unknown> };
     expect(copied.input.id).toBeUndefined();
     expect(copied.input.opensAt).toBeNull();
@@ -385,9 +399,9 @@ describe('SurveysPage', () => {
     state.permissions = new Set(['survey:manage']);
     state.scopes = { 'survey:manage': 'ALL' };
     state.request.mockImplementation((document: unknown) => {
-      if (String(document).includes('SurveysAdminWorkspace'))
+      if (graphqlDocumentSource(document).includes('SurveysAdminWorkspace'))
         return Promise.resolve({ surveys: [] });
-      if (String(document).includes('SurveyDepartmentsWorkspace'))
+      if (graphqlDocumentSource(document).includes('SurveyDepartmentsWorkspace'))
         return Promise.resolve({ departments: [] });
       return Promise.resolve({ saveSurvey: { summary: { id: 'new' } } });
     });
@@ -411,7 +425,9 @@ describe('SurveysPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(
-      state.request.mock.calls.some(([doc]) => String(doc).includes('SaveSurveyWorkspace'))
+      state.request.mock.calls.some(([doc]) =>
+        graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
+      )
     ).toBe(false);
     fireEvent.change(screen.getByLabelText('Closes at (Asia/Kolkata)'), {
       target: { value: '2030-01-16T10:00' },
@@ -419,7 +435,9 @@ describe('SurveysPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await waitFor(() =>
       expect(
-        state.request.mock.calls.find(([doc]) => String(doc).includes('SaveSurveyWorkspace'))?.[1]
+        state.request.mock.calls.find(([doc]) =>
+          graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
+        )?.[1]
       ).toMatchObject({
         input: {
           opensAt: '2030-01-15T04:30:00.000Z',
@@ -433,9 +451,9 @@ describe('SurveysPage', () => {
     state.permissions = new Set(['survey:manage']);
     state.scopes = { 'survey:manage': 'ALL' };
     state.request.mockImplementation((document: unknown) => {
-      if (String(document).includes('SurveysAdminWorkspace'))
+      if (graphqlDocumentSource(document).includes('SurveysAdminWorkspace'))
         return Promise.resolve({ surveys: [] });
-      if (String(document).includes('SurveyDepartmentsWorkspace'))
+      if (graphqlDocumentSource(document).includes('SurveyDepartmentsWorkspace'))
         return Promise.resolve({ departments: [] });
       return Promise.resolve({ saveSurvey: { summary: { id: 'new' } } });
     });
@@ -452,7 +470,9 @@ describe('SurveysPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await waitFor(() =>
       expect(
-        state.request.mock.calls.find(([doc]) => String(doc).includes('SaveSurveyWorkspace'))?.[1]
+        state.request.mock.calls.find(([doc]) =>
+          graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
+        )?.[1]
       ).toMatchObject({
         input: {
           sections: [
@@ -480,7 +500,7 @@ describe('SurveysPage', () => {
     await waitFor(() =>
       expect(
         state.request.mock.calls.filter(([doc]) =>
-          String(doc).includes('SaveSurveyWorkspace')
+          graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
         )[1]?.[1]
       ).toMatchObject({
         input: { sections: [{ questions: [{ options: [], ratingMin: null, ratingMax: null }] }] },
@@ -496,7 +516,7 @@ describe('SurveysPage', () => {
     expect(
       state.request.mock.calls.some(([document]) =>
         /SurveysAdminWorkspace|SurveyDepartmentsWorkspace|SurveyAudienceWorkspace|SurveyAudienceOptionsWorkspace|SurveyManagementEventsWorkspace/.test(
-          String(document)
+          graphqlDocumentSource(document)
         )
       )
     ).toBe(false);
@@ -509,7 +529,7 @@ describe('SurveysPage', () => {
     await user.click(screen.getByRole('button', { name: 'Submit survey' }));
     await waitFor(() => {
       const call = state.request.mock.calls.find(([document]) =>
-        String(document).includes('SubmitSurveyWorkspace')
+        graphqlDocumentSource(document).includes('SubmitSurveyWorkspace')
       );
       expect(call?.[1]).toEqual({
         id: 'survey-1',
@@ -531,7 +551,7 @@ describe('SurveysPage', () => {
     state.permissions = new Set(['survey:results']);
     state.scopes = { 'survey:results': 'TEAM' };
     state.request.mockImplementation((document: unknown) => {
-      if (String(document).includes('SurveyResultsCatalogWorkspace'))
+      if (graphqlDocumentSource(document).includes('SurveyResultsCatalogWorkspace'))
         return Promise.resolve({
           surveyResultsCatalog: [
             {
@@ -543,7 +563,7 @@ describe('SurveysPage', () => {
             },
           ],
         });
-      if (String(document).includes('SurveyResultsWorkspace'))
+      if (graphqlDocumentSource(document).includes('SurveyResultsWorkspace'))
         return Promise.resolve({
           surveyResults: {
             surveyId: 'survey-1',

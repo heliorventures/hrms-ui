@@ -1,7 +1,10 @@
-import { gql } from 'graphql-request';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { EnrollInBenefitPlanDocument } from '../../api/graphql/graphql';
+import {
+  EnrollInBenefitPlanDocument,
+  BenefitsSetupDocument as WorkplaceBenefitsDocument,
+  BenefitsSetupEnrollmentsDocument as MyBenefitEnrollmentsDocument,
+} from '../../api/graphql/graphql';
 import { scopeForPermission } from '../../auth/approvalScope';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -22,40 +25,6 @@ import {
   type SetupEditor,
 } from './benefitsSetup';
 
-const WorkplaceBenefitsDocument = gql`
-  query BenefitsSetup($activeOnly: Boolean!, $typeOffset: Int!, $planOffset: Int!) {
-    benefitTypes(limit: 21, offset: $typeOffset) {
-      id
-      name
-      code
-      category
-    }
-    benefitPlans(limit: 21, offset: $planOffset, activeOnly: $activeOnly) {
-      id
-      name
-      benefitTypeId
-      employerContribution
-      employeeContribution
-      contributionType
-      isMandatory
-      isActive
-    }
-  }
-`;
-const MyBenefitEnrollmentsDocument = gql`
-  query BenefitsSetupEnrollments($limit: Int!) {
-    myBenefitEnrollments(limit: $limit) {
-      id
-      benefitPlanId
-      benefitPlanName
-      status
-      enrolledOn
-      effectiveFrom
-      employeeContributionAmount
-      employerContributionAmount
-    }
-  }
-`;
 type BenefitsHead = {
   benefitTypes: { id: string; name: string; code: string; category?: string | null }[];
   benefitPlans: {

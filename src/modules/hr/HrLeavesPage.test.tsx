@@ -3,6 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import HrLeavesPage from './HrLeavesPage';
 
 const state = vi.hoisted(() => ({
@@ -83,7 +85,7 @@ beforeEach(() => {
         document &&
         typeof document === 'object' &&
         'document' in document &&
-        String(document.document).includes('HrLeaveApplicationHolidays')
+        graphqlDocumentSource(document.document).includes('HrLeaveApplicationHolidays')
       )
         return Promise.resolve({ upcomingHolidays: [] });
       return state.client.request(document, variables) as Promise<unknown>;
@@ -261,7 +263,7 @@ it('publishes the approval queue while the optional holidays request is still pe
       document &&
       typeof document === 'object' &&
       'document' in document &&
-      String(document.document).includes('HrLeaveApplicationHolidays')
+      graphqlDocumentSource(document.document).includes('HrLeaveApplicationHolidays')
     ) {
       return new Promise(() => undefined);
     }

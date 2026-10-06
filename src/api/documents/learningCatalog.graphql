@@ -1,0 +1,16 @@
+query LearningCatalog($offset: Int!) {
+  skills(limit: 20, offset: $offset) {
+    id
+    name
+    category
+    level
+  }
+  courses(limit: 20, offset: $offset) {
+    id
+    title
+    category
+    deliveryMode
+    durationMinutes
+    isMandatory
+  }
+}

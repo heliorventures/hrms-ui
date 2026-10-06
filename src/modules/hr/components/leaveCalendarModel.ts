@@ -1,5 +1,7 @@
 import type { HolidayEntry, HrLeaveCalendarQuery } from '../../../api/graphql/graphql';
 
+export { HrLeaveCalendarRangeDocument } from '../../../api/graphql/graphql';
+
 export type LeaveCalendarData = Omit<HrLeaveCalendarQuery, 'upcomingHolidays'> & {
   upcomingHolidays: Pick<
     HolidayEntry,
@@ -10,48 +12,6 @@ export type LeaveCalendarResponse = Omit<LeaveCalendarData, 'orgChart' | 'upcomi
   Partial<Pick<LeaveCalendarData, 'orgChart' | 'upcomingHolidays'>>;
 
 export const MAX_EMPLOYEES = 45;
-
-export const HrLeaveCalendarRangeDocument = `
-  query HrLeaveCalendarRange(
-    $includeEmployees: Boolean! = true
-    $includeHolidays: Boolean! = true
-    $reqLim: Int! = 400
-    $orgLim: Int! = 500
-    $typeLim: Int! = 80
-    $holidayFrom: NaiveDate!
-    $holidayLimit: Int! = 400
-    $fromDate: NaiveDate
-    $toDate: NaiveDate
-  ) {
-    leaveRequests(limit: $reqLim, fromDate: $fromDate, toDate: $toDate) {
-      id
-      employeeId
-      leaveTypeId
-      fromDate
-      toDate
-      status
-      isHalfDay
-      halfDaySession
-    }
-    orgChart(limit: $orgLim) @include(if: $includeEmployees) {
-      employeeId
-      fullName
-      employeeCode
-    }
-    leaveTypes(limit: $typeLim) {
-      id
-      name
-      code
-    }
-    upcomingHolidays(fromDate: $holidayFrom, limit: $holidayLimit) @include(if: $includeHolidays) {
-      id
-      holidayDate
-      name
-      calendarName
-      holidayType
-    }
-  }
-`;
 
 export const MONTH_LABELS = [
   'January',

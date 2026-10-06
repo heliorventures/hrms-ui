@@ -1,0 +1,3 @@
+query EmployeeImportedProfile($employeeId: ID!) {
+  employeeImportedProfile(employeeId: $employeeId)
+}

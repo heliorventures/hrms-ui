@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import Modal from '../../../components/common/Modal';
-import Input from '../../../components/common/Input';
-import Select from '../../../components/common/Select';
+
+import {
+  CreateEmployeeDocument,
+  type CreateEmployeeInput,
+  EmployeeModalDirectoryDocument,
+  EmployeeModalAdminDirectoryDocument,
+} from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
-import { useGraphClient } from '../../../hooks/useGraphClient';
+import Input from '../../../components/common/Input';
+import Modal from '../../../components/common/Modal';
+import Select from '../../../components/common/Select';
+import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useGraphClient } from '../../../hooks/useGraphClient';
 import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
-import { CreateEmployeeDocument, type CreateEmployeeInput } from '../../../api/graphql/graphql';
 import {
   buildDepartmentOptions,
   buildDesignationOptions,
@@ -17,54 +23,6 @@ import {
   LOADING_EMPLOYEE_FORM_OPTION,
   type SelectOption,
 } from '../employeeFormOptions';
-
-const EmployeeModalDirectoryDocument = `
-  query ClientOpsOrgListsForEmployeeModal($dlim: Int! = 100, $glim: Int! = 100, $elim: Int! = 100) {
-    departments(limit: $dlim) {
-      id
-      name
-      code
-    }
-    designations(limit: $glim) {
-      id
-      title
-    }
-    employees(limit: $elim) {
-      id
-      employeeCode
-      fullName
-    }
-  }
-`;
-
-const EmployeeModalAdminDirectoryDocument = `
-  query ClientOpsOrgListsForEmployeeModal(
-    $dlim: Int! = 100
-    $glim: Int! = 100
-    $elim: Int! = 100
-    $rlim: Int! = 80
-  ) {
-    departments(limit: $dlim) {
-      id
-      name
-      code
-    }
-    designations(limit: $glim) {
-      id
-      title
-    }
-    employees(limit: $elim) {
-      id
-      employeeCode
-      fullName
-    }
-    tenantDirectoryRoles(limit: $rlim) {
-      id
-      name
-      isSystemRole
-    }
-  }
-`;
 
 interface CreateEmployeeModalProps {
   isOpen: boolean;

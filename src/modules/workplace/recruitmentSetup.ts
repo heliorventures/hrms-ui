@@ -1,11 +1,5 @@
-import { gql } from 'graphql-request';
-export const SaveJobPosting = gql`
-  mutation SaveJobPosting($id: ID, $input: JobPostingInput!) {
-    saveJobPosting(id: $id, input: $input) {
-      id
-    }
-  }
-`;
+export { SaveJobPostingDocument as SaveJobPosting } from '../../api/graphql/graphql';
+
 export function validateJobPosting(input: {
   title: string;
   vacancies: number;

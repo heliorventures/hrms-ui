@@ -5,6 +5,8 @@ import { userEvent } from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../../testUtils/graphqlDocumentSource';
+
 import PrejoiningAdminPage from './PrejoiningAdminPage';
 
 const state = vi.hoisted(() => ({
@@ -72,7 +74,7 @@ const candidate = {
 
 function installResponses() {
   state.request.mockImplementation((document: unknown) => {
-    const source = String(document);
+    const source = graphqlDocumentSource(document);
     if (source.includes('PrejoiningAdminBootstrap')) {
       return Promise.resolve({
         prejoiningConfig: candidate.config,
@@ -201,7 +203,7 @@ describe('PrejoiningAdminPage', () => {
 
   it('saves an optional personal field as required when HR selects that setting', async () => {
     state.request.mockImplementation((document: unknown, variables?: Record<string, unknown>) => {
-      const source = String(document);
+      const source = graphqlDocumentSource(document);
       if (source.includes('PrejoiningAdminBootstrap'))
         return Promise.resolve({
           prejoiningConfig: candidate.config,
@@ -224,7 +226,7 @@ describe('PrejoiningAdminPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save configuration' }));
     await waitFor(() => {
       const save = state.request.mock.calls.find(([document]) =>
-        String(document).includes('SavePrejoiningConfigAdmin')
+        graphqlDocumentSource(document).includes('SavePrejoiningConfigAdmin')
       );
       const savedConfig = save?.[1]?.config;
       if (!savedConfig || typeof savedConfig !== 'object' || !('fields' in savedConfig)) {
@@ -253,7 +255,7 @@ describe('PrejoiningAdminPage loading ownership', () => {
   it('keeps configuration controls disabled while configuration is still loading', async () => {
     let resolveConfig: ((value: unknown) => void) | undefined;
     state.request.mockImplementation((document: unknown) => {
-      const source = String(document);
+      const source = graphqlDocumentSource(document);
       if (source.includes('PrejoiningAdminBootstrap'))
         return new Promise((resolve) => {
           resolveConfig = resolve;
@@ -282,7 +284,7 @@ describe('PrejoiningAdminPage loading ownership', () => {
     expect(await screen.findByDisplayValue('48')).toBeTruthy();
     expect(
       state.request.mock.calls.some(([document]) =>
-        String(document).includes('PrejoiningAdminBootstrap')
+        graphqlDocumentSource(document).includes('PrejoiningAdminBootstrap')
       )
     ).toBe(true);
   });
@@ -298,7 +300,7 @@ describe('PrejoiningAdminPage loading ownership', () => {
     await Promise.all([user.click(submit), user.click(submit)]);
     await waitFor(() => {
       const calls = state.request.mock.calls.filter(([document]) =>
-        String(document).includes('PrejoiningRequestChangesAdmin')
+        graphqlDocumentSource(document).includes('PrejoiningRequestChangesAdmin')
       );
       expect(calls).toHaveLength(1);
       expect(calls[0]?.[1]).toEqual({
@@ -329,7 +331,7 @@ describe('PrejoiningAdminPage ownership and conversion', () => {
     expect(await within(dialog).findByText(/employee code is required/i)).toBeTruthy();
     expect(
       state.request.mock.calls.some(([document]) =>
-        String(document).includes('PrejoiningConfirmJoinedAdmin')
+        graphqlDocumentSource(document).includes('PrejoiningConfirmJoinedAdmin')
       )
     ).toBe(false);
   });
@@ -337,11 +339,11 @@ describe('PrejoiningAdminPage ownership and conversion', () => {
   it('ignores a completed request after the tenant owner changes', async () => {
     let resolveList: ((value: unknown) => void) | undefined;
     state.request.mockImplementation((document: unknown) => {
-      if (String(document).includes('PrejoiningCandidatesAdmin'))
+      if (graphqlDocumentSource(document).includes('PrejoiningCandidatesAdmin'))
         return new Promise((resolve) => {
           resolveList = resolve;
         });
-      if (String(document).includes('PrejoiningAdminBootstrap'))
+      if (graphqlDocumentSource(document).includes('PrejoiningAdminBootstrap'))
         return Promise.resolve({
           prejoiningConfig: candidate.config,
           prejoiningFieldCatalog: candidate.config.fields,
@@ -362,7 +364,7 @@ describe('PrejoiningAdminPage ownership and conversion', () => {
     const second = { ...approved, id: 'candidate-2', email: 'sam@example.com', revision: 5 };
     let detailCount = 0;
     state.request.mockImplementation((document: unknown) => {
-      const source = String(document);
+      const source = graphqlDocumentSource(document);
       if (source.includes('PrejoiningCandidatesAdmin'))
         return Promise.resolve({ prejoiningCandidates: { nodes: [approved, second], total: 2 } });
       if (source.includes('PrejoiningCandidateAdmin')) {

@@ -1,17 +1,10 @@
 import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 
+import { HomeRecentLeaveDocument as RECENT_LEAVE } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery } from '../../../hooks/useRetainedQuery';
-
-const RECENT_LEAVE = `query HomeRecentLeave {
-  viewerEmployeeId
-  pagedLeaveRequests(limit: 20, offset: 0) {
-    id employeeId leaveTypeId fromDate toDate status pendingApprovalStage appliedAt
-  }
-  leaveTypes(limit: 50) { id name }
-}`;
 
 interface Result {
   viewerEmployeeId: string | null;

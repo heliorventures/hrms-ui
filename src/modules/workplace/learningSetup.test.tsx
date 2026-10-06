@@ -2,6 +2,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { LearningCatalogDocument, SaveSkillDocument } from '../../api/graphql/graphql';
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import LearningPage from './LearningPage';
 import PerformancePage from './PerformancePage';
 
@@ -42,7 +45,7 @@ it('creates a skill and refreshes the catalog', async () => {
   fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: ' Security ' } });
   fireEvent.click(screen.getByRole('button', { name: 'Save' }));
   await waitFor(() =>
-    expect(state.request).toHaveBeenCalledWith(expect.stringContaining('mutation SaveSkill'), {
+    expect(state.request).toHaveBeenCalledWith(SaveSkillDocument, {
       input: { id: null, name: 'Security', category: null, level: null },
     })
   );
@@ -62,8 +65,8 @@ it('closes after a saved mutation even if refreshing fails, without offering a d
   await screen.findByText(/Saved, but the list could not refresh/);
   expect(screen.queryByRole('dialog')).toBeNull();
   expect(
-    state.request.mock.calls.filter(
-      ([document]) => typeof document === 'string' && document.includes('mutation SaveSkill')
+    state.request.mock.calls.filter(([document]) =>
+      graphqlDocumentSource(document).includes('mutation SaveSkill')
     )
   ).toHaveLength(1);
 });
@@ -82,7 +85,7 @@ it('loads and edits catalog entries beyond the first page', async () => {
   await screen.findByText('Skill 0');
   fireEvent.click(screen.getByRole('button', { name: 'Next' }));
   await screen.findByText('Zulu');
-  expect(state.request).toHaveBeenCalledWith(expect.stringContaining('offset: $offset'), {
+  expect(state.request).toHaveBeenCalledWith(LearningCatalogDocument, {
     offset: 20,
   });
   fireEvent.click(screen.getByRole('button', { name: 'Edit skill Zulu' }));

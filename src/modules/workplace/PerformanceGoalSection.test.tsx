@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { UpdatePerformanceGoalWorkspaceDocument } from '../../api/graphql/graphql';
+
 import PerformanceGoalSection from './PerformanceGoalSection';
 import type { PerformanceReviewDetailRow } from './performanceLifecycleQueries';
 
@@ -94,18 +96,15 @@ it('preserves the saved description while an employee edits a proposal', async (
   fireEvent.click(screen.getByRole('button', { name: 'Save goal' }));
 
   await waitFor(() =>
-    expect(request).toHaveBeenCalledWith(
-      expect.stringContaining('UpdatePerformanceGoalWorkspace'),
-      {
-        goalId: 'goal-1',
-        input: {
-          participantId: 'participant-1',
-          title: 'Ship safely',
-          description: 'Original description',
-          weightage: '40',
-        },
-      }
-    )
+    expect(request).toHaveBeenCalledWith(UpdatePerformanceGoalWorkspaceDocument, {
+      goalId: 'goal-1',
+      input: {
+        participantId: 'participant-1',
+        title: 'Ship safely',
+        description: 'Original description',
+        weightage: '40',
+      },
+    })
   );
   expect(onReload).toHaveBeenCalledWith('participant-1');
 });

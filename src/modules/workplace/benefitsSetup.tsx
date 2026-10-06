@@ -1,25 +1,19 @@
+import type { RequestDocument } from 'graphql-request';
 import { useRef, useState, type FormEvent } from 'react';
-import { gql } from 'graphql-request';
-import Modal from '../../components/common/Modal';
+
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import Modal from '../../components/common/Modal';
 import Select from '../../components/common/Select';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
-export const SaveBenefitType = gql`
-  mutation SaveBenefitType($id: ID, $input: BenefitTypeInput!) {
-    saveBenefitType(id: $id, input: $input) {
-      id
-    }
-  }
-`;
-export const SaveBenefitPlan = gql`
-  mutation SaveBenefitPlan($id: ID, $input: BenefitPlanInput!) {
-    saveBenefitPlan(id: $id, input: $input) {
-      id
-    }
-  }
-`;
+
+export {
+  SaveBenefitTypeDocument as SaveBenefitType,
+  SaveBenefitPlanDocument as SaveBenefitPlan,
+  BenefitTypeOptionsDocument,
+} from '../../api/graphql/graphql';
+
 export type SetupField = {
   name: string;
   label: string;
@@ -33,7 +27,7 @@ export type SetupValues = Record<string, string | number | boolean | null>;
 export type SetupEditor = {
   title: string;
   id?: string;
-  mutation: string;
+  mutation: RequestDocument;
   fields: SetupField[];
   values: SetupValues;
   validate?: (values: SetupValues) => string | null;
@@ -178,14 +172,6 @@ export const benefitTypeFields: SetupField[] = [
   { name: 'category', label: 'Category', maxLength: 100 },
 ];
 
-export const BenefitTypeOptionsDocument = gql`
-  query BenefitTypeOptions($offset: Int!) {
-    benefitTypes(limit: 100, offset: $offset) {
-      id
-      name
-    }
-  }
-`;
 export async function loadBenefitTypeOptions(
   fetchPage: (offset: number) => Promise<{ id: string; name: string }[]>
 ): Promise<{ value: string; label: string }[]> {

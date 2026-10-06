@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import PerformancePage from './PerformancePage';
 import { resetPerformanceState } from './PerformancePage.test.shared';
 
@@ -84,9 +86,9 @@ it.each([
       },
     ].map((question) => ({ ...question, answerer: 'BOTH', isRequired: false, options: [] }));
     state.request.mockImplementation((document: unknown) => {
-      if (String(document).includes('PerformanceGoalKpisWorkspace'))
+      if (graphqlDocumentSource(document).includes('PerformanceGoalKpisWorkspace'))
         return Promise.resolve({ performanceGoalKpis: [] });
-      if (String(document).includes('PerformanceReviewDetailWorkspace'))
+      if (graphqlDocumentSource(document).includes('PerformanceReviewDetailWorkspace'))
         return Promise.resolve({
           performanceReviewDetail: {
             review,
@@ -145,7 +147,7 @@ it('does not fetch administrative catalogs for a personal tab, including HR user
   expect(
     state.request.mock.calls.some(([document]) =>
       /PerformanceCatalog|PerformanceProgramsWorkspace|TeamPerformanceReviewsWorkspace|PrivatePerformanceFeedbackWorkspace/.test(
-        String(document)
+        graphqlDocumentSource(document)
       )
     )
   ).toBe(false);
@@ -178,7 +180,7 @@ it('does not request administration data for an unauthorized administration URL'
   expect(
     state.request.mock.calls.some(([document]) =>
       /PerformanceAdminCyclesWorkspace|PerformanceCycleAdministrationWorkspace/.test(
-        String(document)
+        graphqlDocumentSource(document)
       )
     )
   ).toBe(false);

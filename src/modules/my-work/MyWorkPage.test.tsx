@@ -3,6 +3,8 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import MyWorkPage from './MyWorkPage';
 
 const state = vi.hoisted(() => ({ request: vi.fn() }));
@@ -34,7 +36,7 @@ beforeEach(() => {
 
 it('loads only employee-scoped queries for HR personal work and links to the exact review', async () => {
   state.request.mockImplementation((document: unknown) =>
-    String(document).includes('MyPerformanceReviewsWorkspace')
+    graphqlDocumentSource(document).includes('MyPerformanceReviewsWorkspace')
       ? Promise.resolve({
           myPerformanceReviews: [
             { id: 'r1', cycleStage: 'SELF_REVIEW', cycleName: 'Annual', status: 'GOALS_APPROVED' },
@@ -52,7 +54,9 @@ it('loads only employee-scoped queries for HR personal work and links to the exa
   );
   expect(
     state.request.mock.calls.every(([document]) =>
-      /MyPerformanceReviewsWorkspace|AvailableSurveysWorkspace/.test(String(document))
+      /MyPerformanceReviewsWorkspace|AvailableSurveysWorkspace/.test(
+        graphqlDocumentSource(document)
+      )
     )
   ).toBe(true);
 });

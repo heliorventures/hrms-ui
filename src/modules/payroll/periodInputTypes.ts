@@ -1,3 +1,7 @@
+export {
+  PayrollPeriodInputDocument as periodInputQuery,
+  SavePayrollPeriodInputDocument as savePeriodInputMutation,
+} from '../../api/graphql/graphql';
 export interface AdditionalDeduction {
   code: string;
   amount: string | null;
@@ -80,18 +84,3 @@ export const amountFields: [PeriodAmountField, string][] = [
   ['incentive', 'Monthly incentive'],
   ['advance_already_paid', 'Salary advance already paid'],
 ];
-export const periodInputQuery = /* GraphQL */ `
-  query PayrollPeriodInput($employeeId: ID!, $year: Int!, $month: Int!) {
-    payrollPeriodInput(employeeId: $employeeId, year: $year, month: $month)
-    payrollPeriodLocked(year: $year, month: $month)
-  }
-`;
-export const savePeriodInputMutation = /* GraphQL */ `
-  mutation SavePayrollPeriodInput($employeeId: ID!, $input: JSON!, $expectedRevision: Int) {
-    savePayrollPeriodInput(
-      employeeId: $employeeId
-      input: $input
-      expectedRevision: $expectedRevision
-    )
-  }
-`;

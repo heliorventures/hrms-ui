@@ -1,3 +1,4 @@
+export { EmployeeImportedProfileDocument as importedProfileDocument } from '../../../api/graphql/graphql';
 export interface ImportedProfile {
   confirmation_date: string | null;
   source_exit_date: string | null;
@@ -5,9 +6,3 @@ export interface ImportedProfile {
   account_holder: string | null;
   bank_branch: string | null;
 }
-
-export const importedProfileDocument = /* GraphQL */ `
-  query EmployeeImportedProfile($employeeId: ID!) {
-    employeeImportedProfile(employeeId: $employeeId)
-  }
-`;

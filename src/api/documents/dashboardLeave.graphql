@@ -1,0 +1,17 @@
+query HomeRecentLeave {
+  viewerEmployeeId
+  pagedLeaveRequests(limit: 20, offset: 0) {
+    id
+    employeeId
+    leaveTypeId
+    fromDate
+    toDate
+    status
+    pendingApprovalStage
+    appliedAt
+  }
+  leaveTypes(limit: 50) {
+    id
+    name
+  }
+}

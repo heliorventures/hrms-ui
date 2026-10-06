@@ -1,6 +1,11 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
+import {
+  EmployeePayrollEligibilityDocument,
+  SaveEmployeePayrollEligibilityDocument,
+  EligibilityEmployeesDocument,
+} from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
@@ -46,10 +51,10 @@ const EmployeeEligibilityEditor = ({
   useEffect(() => {
     let active = true;
     void client
-      .request<{ employeePayrollEligibility: Setting | null }>(
-        'query EmployeePayrollEligibility($employeeId:ID!,$asOf:NaiveDate!){employeePayrollEligibility(employeeId:$employeeId,asOf:$asOf)}',
-        { employeeId, asOf: date }
-      )
+      .request<{ employeePayrollEligibility: Setting | null }>(EmployeePayrollEligibilityDocument, {
+        employeeId,
+        asOf: date,
+      })
       .then((result) => {
         if (active && result.employeePayrollEligibility) {
           setSetting({ ...result.employeePayrollEligibility, effective_from: date });
@@ -77,7 +82,7 @@ const EmployeeEligibilityEditor = ({
     setNotice('');
     try {
       const result = await client.request<{ saveEmployeePayrollEligibility: Setting }>(
-        'mutation SaveEmployeePayrollEligibility($employeeId:ID!,$input:JSON!){saveEmployeePayrollEligibility(employeeId:$employeeId,input:$input)}',
+        SaveEmployeePayrollEligibilityDocument,
         { employeeId, input: setting }
       );
       setSetting(result.saveEmployeePayrollEligibility);
@@ -120,9 +125,7 @@ const EmployeePayrollSettings = ({ client }: { client: GraphQLClient }) => {
   useEffect(() => {
     let active = true;
     void client
-      .request<{ employees: typeof employees }>(
-        'query EligibilityEmployees { employees(limit:500) { id employeeCode fullName } }'
-      )
+      .request<{ employees: typeof employees }>(EligibilityEmployeesDocument)
       .then((result) => {
         if (active) setEmployees(result.employees);
       })

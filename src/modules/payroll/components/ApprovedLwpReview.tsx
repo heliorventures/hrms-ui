@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
+import { PayrollApprovedLwpReviewDocument as query } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type { PeriodInput } from '../periodInputTypes';
 
@@ -16,11 +17,7 @@ interface Props {
   disabled: boolean;
   onChange: (draft: PeriodInput) => void;
 }
-const query = /* GraphQL */ `
-  query PayrollApprovedLwpReview($employeeId: ID!, $year: Int!, $month: Int!) {
-    payrollApprovedLwpReview(employeeId: $employeeId, year: $year, month: $month)
-  }
-`;
+
 const ApprovedLwpReview = ({ client, employeeId, draft, disabled, onChange }: Props) => {
   const [review, setReview] = useState<Review | null>(null);
   const [error, setError] = useState<string | null>(null);

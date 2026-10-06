@@ -1,3 +1,14 @@
+export {
+  CancellableCompOffLeaveDocument as ApprovedCompOffLeavesDocument,
+  CancelApprovedCompOffDocument as CancelApprovedCompOffLeaveDocument,
+  MyCompOffSummaryDocument as MyCompOffDocument,
+  RequestCompOffCreditDocument as SubmitCompOffDocument,
+  WithdrawCompOffCreditClaimDocument as CancelCompOffDocument,
+  PendingCompOffCreditsDocument as CompOffApprovalDocument,
+  ReviewCompOffCreditDocument as DecideCompOffDocument,
+  CompanyCompOffPoliciesDocument as CompOffSettingsDocument,
+  SaveCompanyCompOffPolicyDocument as SaveCompOffPolicyDocument,
+} from '../../api/graphql/graphql';
 export interface CompOffPolicy {
   id: string;
   designationId: string | null;
@@ -42,33 +53,3 @@ export interface ApprovedCompOffLeave {
   toDate: string;
   daysRequested: string;
 }
-export const ApprovedCompOffLeavesDocument = `query CancellableCompOffLeave($offset: Int!) {
-  approvedCompOffLeaves(limit: 20, offset: $offset) { id employeeId employeeName employeeCode fromDate toDate daysRequested }
-}`;
-export const CancelApprovedCompOffLeaveDocument = `mutation CancelApprovedCompOff($leaveRequestId: ID!) {
-  cancelApprovedCompOffLeave(leaveRequestId: $leaveRequestId) { id status }
-}`;
-export const MyCompOffDocument = `query MyCompOffSummary($offset: Int!) {
-  compOffPolicy { id enabled validityDays claimDeadlineDays }
-  compOffBalance { earnedUnits reservedUnits usedUnits expiredUnits availableUnits }
-  compOffClaims(mine: true, limit: 20, offset: $offset) { id workedDate units status reason rejectionReason }
-}`;
-export const SubmitCompOffDocument = `mutation RequestCompOffCredit($input: SubmitCompOffClaimInput!) {
-  submitCompOffClaim(input: $input) { id status }
-}`;
-export const CancelCompOffDocument = `mutation WithdrawCompOffCreditClaim($claimId: ID!) {
-  cancelCompOffClaim(claimId: $claimId) { id status }
-}`;
-export const CompOffApprovalDocument = `query PendingCompOffCredits($offset: Int!) {
-  compOffClaims(status: "PENDING", forApproval: true, limit: 20, offset: $offset) { id employeeId employeeName employeeCode workedDate units status reason rejectionReason }
-}`;
-export const DecideCompOffDocument = `mutation ReviewCompOffCredit($claimId: ID!, $approve: Boolean!, $reason: String) {
-  decideCompOffClaim(claimId: $claimId, approve: $approve, reason: $reason) { id status }
-}`;
-export const CompOffSettingsDocument = `query CompanyCompOffPolicies {
-  compOffPolicyTargets { employees { id employeeCode fullName } designations { id title } }
-  compOffPolicies { id designationId employeeId leaveTypeId enabled validityDays claimDeadlineDays monthlyEarningLimit yearlyEarningLimit maxUnusedBalance allowApprovedLeaveCancellation }
-}`;
-export const SaveCompOffPolicyDocument = `mutation SaveCompanyCompOffPolicy($input: UpsertCompOffPolicyInput!) {
-  upsertCompOffPolicy(input: $input) { id enabled }
-}`;

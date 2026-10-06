@@ -1,3 +1,4 @@
+export { EmployeeTaxSubmissionContextDocument as taxSubmissionContextQuery } from '../../api/graphql/graphql';
 export interface TaxSubmissionContext {
   fiscal_year: number;
   settings: {
@@ -15,9 +16,3 @@ export interface TaxSubmissionContext {
     };
   } | null;
 }
-
-export const taxSubmissionContextQuery = /* GraphQL */ `
-  query EmployeeTaxSubmissionContext($fiscalYear: Int!) {
-    employeeTaxSubmissionContext(fiscalYear: $fiscalYear)
-  }
-`;

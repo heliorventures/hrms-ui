@@ -1,13 +1,3 @@
-export const MyEmployeeDocument = `
-  query MyEmployee {
-    myEmployee {
-      id
-    }
-  }
-`;
+export { MyEmployeeDocument } from '../../api/graphql/graphql';
 
-export interface MyEmployeeQuery {
-  myEmployee: {
-    id: string;
-  } | null;
-}
+export type { MyEmployeeQuery } from '../../api/graphql/graphql';

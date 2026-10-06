@@ -1,0 +1,31 @@
+mutation SaveCompetency($input: SaveCompetencyInput!) {
+  saveCompetency(input: $input) {
+    id
+  }
+}
+
+mutation SaveTalentPool($input: SaveTalentPoolInput!) {
+  saveTalentPool(input: $input) {
+    id
+  }
+}
+
+query SuccessionSetupPage($offset: Int!) {
+  competencies(limit: 21, offset: $offset) {
+    id
+    tenantId
+    name
+    category
+    description
+    createdAt
+    updatedAt
+  }
+  talentPools(limit: 21, offset: $offset) {
+    id
+    tenantId
+    name
+    description
+    createdAt
+    updatedAt
+  }
+}

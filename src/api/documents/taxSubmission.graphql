@@ -1,0 +1,3 @@
+query EmployeeTaxSubmissionContext($fiscalYear: Int!) {
+  employeeTaxSubmissionContext(fiscalYear: $fiscalYear)
+}

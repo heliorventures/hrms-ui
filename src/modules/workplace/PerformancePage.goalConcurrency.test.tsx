@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import PerformancePage from './PerformancePage';
 
 const state = vi.hoisted(() => ({
@@ -65,7 +67,7 @@ const openEvaluation = (employeeName: string) => {
 
 const installReviewRequests = () => {
   state.request.mockImplementation((document: unknown, variables?: { participantId?: string }) => {
-    const source = String(document);
+    const source = graphqlDocumentSource(document);
     if (source.includes('PerformanceGoalKpisWorkspace')) {
       return Promise.resolve({ performanceGoalKpis: [] });
     }
@@ -94,7 +96,7 @@ afterEach(cleanup);
 it('retains an active B draft when an older A save completes', async () => {
   const save = deferred<unknown>();
   state.request.mockImplementation((document: unknown, variables?: { participantId?: string }) => {
-    const source = String(document);
+    const source = graphqlDocumentSource(document);
     if (source.includes('PerformanceGoalKpisWorkspace')) {
       return Promise.resolve({ performanceGoalKpis: [] });
     }
@@ -139,7 +141,7 @@ it('retains an active B draft when an older A save completes', async () => {
 it('keeps a new A editor state clean after an A to B to A switch and stale save completion', async () => {
   const save = deferred<unknown>();
   state.request.mockImplementation((document: unknown, variables?: { participantId?: string }) => {
-    const source = String(document);
+    const source = graphqlDocumentSource(document);
     if (source.includes('PerformanceGoalKpisWorkspace')) {
       return Promise.resolve({ performanceGoalKpis: [] });
     }
@@ -182,7 +184,7 @@ it('keeps a new A editor state clean after an A to B to A switch and stale save 
 it('blocks approval while a save for the same participant is pending', async () => {
   const save = deferred<unknown>();
   state.request.mockImplementation((document: unknown, variables?: { participantId?: string }) => {
-    const source = String(document);
+    const source = graphqlDocumentSource(document);
     if (source.includes('PerformanceGoalKpisWorkspace')) {
       return Promise.resolve({ performanceGoalKpis: [] });
     }
@@ -214,7 +216,7 @@ it('blocks approval while a save for the same participant is pending', async () 
 
   expect(
     state.request.mock.calls.some(([document]) =>
-      String(document).includes('ApprovePerformanceGoalsWorkspace')
+      graphqlDocumentSource(document).includes('ApprovePerformanceGoalsWorkspace')
     )
   ).toBe(false);
   save.resolve({});

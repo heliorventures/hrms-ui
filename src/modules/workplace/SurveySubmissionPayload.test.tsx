@@ -2,6 +2,8 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import type { SurveyDetailRow } from './surveyQueries';
 import { useSurveyWorkspace } from './useSurveyWorkspace';
 
@@ -55,7 +57,7 @@ beforeEach(() => {
   client.request.mockReset();
   client.request.mockImplementation((document: unknown) =>
     Promise.resolve(
-      String(document).includes('AvailableSurveysWorkspace')
+      graphqlDocumentSource(document).includes('AvailableSurveysWorkspace')
         ? { availableSurveys: [survey.summary] }
         : { submitSurvey: true }
     )
@@ -74,7 +76,7 @@ it('submits the selected star and its comment without any respondent identity', 
     await hook.result.current.submit();
   });
   const payload = client.request.mock.calls.find(([document]) =>
-    String(document).includes('SubmitSurveyWorkspace')
+    graphqlDocumentSource(document).includes('SubmitSurveyWorkspace')
   )?.[1];
   expect(payload).toEqual({
     id: 'survey',
@@ -103,7 +105,7 @@ it('does not silently discard a comment entered without its rating or choice', a
   });
   expect(
     client.request.mock.calls.some(([document]) =>
-      String(document).includes('SubmitSurveyWorkspace')
+      graphqlDocumentSource(document).includes('SubmitSurveyWorkspace')
     )
   ).toBe(false);
   expect(hook.result.current.error).toMatch(/Choose a rating or option/);

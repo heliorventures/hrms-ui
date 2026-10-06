@@ -1,6 +1,10 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useRef, useState } from 'react';
 
+import {
+  CompanyPayrollPoliciesDocument,
+  SaveCompanyPayrollPolicyDocument,
+} from '../../../api/graphql/graphql';
 import Card from '../../../components/common/Card';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type { ContributionPolicy, PolicyVersion } from '../contributionTypes';
@@ -18,9 +22,7 @@ const CompanyContributionRules = ({ client }: { client: GraphQLClient }) => {
     setVersions([]);
     setError('');
     void client
-      .request<{ companyPayrollPolicies: PolicyVersion[] }>(
-        'query CompanyPayrollPolicies { companyPayrollPolicies }'
-      )
+      .request<{ companyPayrollPolicies: PolicyVersion[] }>(CompanyPayrollPoliciesDocument)
       .then((value) => {
         if (lifetime.current === generation) setVersions(value.companyPayrollPolicies);
       })
@@ -44,7 +46,7 @@ const CompanyContributionRules = ({ client }: { client: GraphQLClient }) => {
     setError('');
     try {
       const value = await client.request<{ saveCompanyPayrollPolicy: PolicyVersion }>(
-        'mutation SaveCompanyPayrollPolicy($input:JSON!,$expectedRevision:Int){saveCompanyPayrollPolicy(input:$input,expectedRevision:$expectedRevision)}',
+        SaveCompanyPayrollPolicyDocument,
         { input, expectedRevision: latest?.revision ?? null }
       );
       if (lifetime.current === generation)

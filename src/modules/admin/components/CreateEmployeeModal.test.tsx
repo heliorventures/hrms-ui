@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../../testUtils/graphqlDocumentSource';
+
 import CreateEmployeeModal from './CreateEmployeeModal';
 
 const graphClient = vi.hoisted(() => ({ request: vi.fn() }));
@@ -41,7 +43,7 @@ const Harness = () => {
 
 beforeEach(() => {
   graphClient.request.mockImplementation(async (document: unknown) => {
-    if (String(document).includes('ClientOpsOrgListsForEmployeeModal')) {
+    if (graphqlDocumentSource(document).includes('EmployeeModal')) {
       return directoryResponse();
     }
     throw Object.assign(new Error('email is already in use in this tenant'), {

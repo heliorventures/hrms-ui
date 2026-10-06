@@ -8,6 +8,7 @@ import {
   RejectTimesheetWeekBatchDocument,
   ViewerEmployeeIdDocument,
 } from '../../api/graphql/graphql';
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
 import { TIMESHEET_APPROVAL_REFRESH_MESSAGE } from '../timesheet/timesheetApproval';
 
 import HrTimesheetsPage from './HrTimesheetsPage';
@@ -27,7 +28,7 @@ beforeEach(() => {
       if (document === ViewerEmployeeIdDocument) {
         return Promise.resolve({ viewerEmployeeId: 'manager-1' });
       }
-      if (typeof document === 'string' && document.includes('HrTimesheetWeekBatches')) {
+      if (graphqlDocumentSource(document).includes('HrTimesheetWeekBatches')) {
         return Promise.resolve({
           timesheetWeekBatches: [
             {

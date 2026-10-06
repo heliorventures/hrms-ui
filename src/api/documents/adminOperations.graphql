@@ -1,0 +1,65 @@
+query ClientOpsAdminEmployeesWithLogin($limit: Int! = 100) {
+  employees(limit: $limit) {
+    id
+    employeeCode
+    firstName
+    lastName
+    fullName
+    status
+    employmentType
+    dateOfJoining
+    departmentId
+    designationId
+    reportingManagerId
+    userId
+    departmentName
+    designationTitle
+    linkedUserEmail
+    linkedUserUsername
+    reportingManagerName
+  }
+}
+
+query EmployeeModalDirectory($dlim: Int! = 100, $glim: Int! = 100, $elim: Int! = 100) {
+  departments(limit: $dlim) {
+    id
+    name
+    code
+  }
+  designations(limit: $glim) {
+    id
+    title
+  }
+  employees(limit: $elim) {
+    id
+    employeeCode
+    fullName
+  }
+}
+
+query EmployeeModalAdminDirectory(
+  $dlim: Int! = 100
+  $glim: Int! = 100
+  $elim: Int! = 100
+  $rlim: Int! = 80
+) {
+  departments(limit: $dlim) {
+    id
+    name
+    code
+  }
+  designations(limit: $glim) {
+    id
+    title
+  }
+  employees(limit: $elim) {
+    id
+    employeeCode
+    fullName
+  }
+  tenantDirectoryRoles(limit: $rlim) {
+    id
+    name
+    isSystemRole
+  }
+}

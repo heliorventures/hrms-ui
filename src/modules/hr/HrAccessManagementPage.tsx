@@ -11,6 +11,7 @@ import {
   type PermissionScopesForRoleQuery,
   type RbacAdminBoardQuery,
   type RoleIdsForUserQuery,
+  RbacAdminBoardWithUsernameDocument,
 } from '../../api/graphql/graphql';
 import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
@@ -39,29 +40,6 @@ type RbacAdminBoardData = Omit<RbacAdminBoardQuery, 'tenantDirectoryUsers'> & {
     isActive: boolean;
   }>;
 };
-
-const RbacAdminBoardWithUsernameDocument = `
-  query RbacAdminBoardWithUsername($uLim: Int! = 120, $rLim: Int! = 80, $pLim: Int! = 400) {
-    tenantDirectoryUsers(limit: $uLim) {
-      id
-      username
-      email
-      isActive
-    }
-    tenantDirectoryRoles(limit: $rLim) {
-      id
-      name
-      description
-      isSystemRole
-    }
-    tenantCatalogPermissions(limit: $pLim) {
-      id
-      resource
-      action
-      description
-    }
-  }
-`;
 
 const HrAccessManagementPage = () => {
   const client = useGraphClient('client');

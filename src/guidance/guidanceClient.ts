@@ -1,24 +1,9 @@
-import { gql, type GraphQLClient } from 'graphql-request';
+import type { GraphQLClient } from 'graphql-request';
 
-type GuidanceStatePayload = {
-  overviewDismissedAt: string | null;
-};
-
-const MY_GUIDANCE_STATE = gql`
-  query MyGuidanceState {
-    myGuidanceState {
-      overviewDismissedAt
-    }
-  }
-`;
-
-const DISMISS_MY_APPLICATION_OVERVIEW = gql`
-  mutation DismissMyApplicationOverview {
-    dismissMyApplicationOverview {
-      overviewDismissedAt
-    }
-  }
-`;
+import {
+  MyGuidanceStateDocument as MY_GUIDANCE_STATE,
+  DismissMyApplicationOverviewDocument as DISMISS_MY_APPLICATION_OVERVIEW,
+} from '../api/graphql/graphql';
 
 const RFC3339_TIMESTAMP =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|([+-])(\d{2}):(\d{2}))$/;
@@ -94,13 +79,11 @@ function toRequiredDate(value: unknown): Date {
 }
 
 export async function loadMyGuidanceState(client: GraphQLClient): Promise<Date | null> {
-  const result = await client.request<{ myGuidanceState: GuidanceStatePayload }>(MY_GUIDANCE_STATE);
+  const result = await client.request(MY_GUIDANCE_STATE);
   return toNullableDate(result.myGuidanceState.overviewDismissedAt);
 }
 
 export async function dismissMyApplicationOverview(client: GraphQLClient): Promise<Date> {
-  const result = await client.request<{ dismissMyApplicationOverview: GuidanceStatePayload }>(
-    DISMISS_MY_APPLICATION_OVERVIEW
-  );
+  const result = await client.request(DISMISS_MY_APPLICATION_OVERVIEW);
   return toRequiredDate(result.dismissMyApplicationOverview.overviewDismissedAt);
 }

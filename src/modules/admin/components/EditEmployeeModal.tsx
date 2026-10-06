@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
-import Modal from '../../../components/common/Modal';
-import Input from '../../../components/common/Input';
-import Select from '../../../components/common/Select';
+
+import {
+  type UpdateEmployeeInput,
+  EmployeeModalDirectoryDocument,
+  EmployeeModalAdminDirectoryDocument,
+  ProvisionEmployeeLoginDocument,
+  ResetEmployeePasswordDocument,
+  UpdateEmployeeDocument as UpdateEmployeeWithLoginEmailDocument,
+} from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
-import { useGraphClient } from '../../../hooks/useGraphClient';
+import Input from '../../../components/common/Input';
+import Modal from '../../../components/common/Modal';
+import Select from '../../../components/common/Select';
+import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { parseEmployeeStatus } from '../../employeeStatus';
-import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
-import { type UpdateEmployeeInput } from '../../../api/graphql/graphql';
 import {
   buildDepartmentOptions,
   buildDesignationOptions,
@@ -17,88 +25,6 @@ import {
   LOADING_EMPLOYEE_FORM_OPTION,
   type SelectOption,
 } from '../employeeFormOptions';
-
-const EmployeeModalDirectoryDocument = `
-  query ClientOpsOrgListsForEmployeeModal($dlim: Int! = 100, $glim: Int! = 100, $elim: Int! = 100) {
-    departments(limit: $dlim) {
-      id
-      name
-      code
-    }
-    designations(limit: $glim) {
-      id
-      title
-    }
-    employees(limit: $elim) {
-      id
-      employeeCode
-      fullName
-    }
-  }
-`;
-
-const EmployeeModalAdminDirectoryDocument = `
-  query ClientOpsOrgListsForEmployeeModal(
-    $dlim: Int! = 100
-    $glim: Int! = 100
-    $elim: Int! = 100
-    $rlim: Int! = 80
-  ) {
-    departments(limit: $dlim) {
-      id
-      name
-      code
-    }
-    designations(limit: $glim) {
-      id
-      title
-    }
-    employees(limit: $elim) {
-      id
-      employeeCode
-      fullName
-    }
-    tenantDirectoryRoles(limit: $rlim) {
-      id
-      name
-      isSystemRole
-    }
-  }
-`;
-
-const ProvisionEmployeeLoginDocument = `
-  mutation ProvisionEmployeeLogin($input: ProvisionEmployeeLoginInput!) {
-    provisionEmployeeLogin(input: $input) {
-      id
-      userId
-      linkedUserUsername
-      linkedUserEmail
-    }
-  }
-`;
-
-const ResetEmployeePasswordDocument = `
-  mutation ResetEmployeePassword($input: ResetEmployeePasswordInput!) {
-    resetEmployeePassword(input: $input)
-  }
-`;
-
-const UpdateEmployeeWithLoginEmailDocument = `
-  mutation UpdateEmployee($input: UpdateEmployeeInput!) {
-    updateEmployee(input: $input) {
-      id
-      employeeCode
-      fullName
-      status
-      dateOfJoining
-      departmentId
-      designationId
-      employmentType
-      reportingManagerId
-      linkedUserEmail
-    }
-  }
-`;
 
 export interface EditEmployeeRow {
   id: string;
@@ -169,10 +95,10 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
       setManagerOptions(buildManagerOptions(res.employees ?? [], employee?.id));
       setRoleOptions([
         { value: '', label: 'No role assigned' },
-        ...((res.tenantDirectoryRoles ?? []).map((role) => ({
+        ...(res.tenantDirectoryRoles ?? []).map((role) => ({
           value: role.id,
           label: role.isSystemRole ? `${role.name} (system)` : role.name,
-        }))),
+        })),
       ]);
     } catch (e) {
       setOrgLoadError(graphQlUserMessage(e));
@@ -235,7 +161,9 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
       });
       setAccountPassword('');
       setAccountConfirmPassword('');
-      setAccountMessage('Login provisioned. The employee must change the temporary password at next login.');
+      setAccountMessage(
+        'Login provisioned. The employee must change the temporary password at next login.'
+      );
       onUpdated();
     } catch (err) {
       setFormError(graphQlUserMessage(err));
@@ -259,7 +187,9 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
       });
       setAccountPassword('');
       setAccountConfirmPassword('');
-      setAccountMessage('Password reset. Active sessions were revoked and the employee must change it at next login.');
+      setAccountMessage(
+        'Password reset. Active sessions were revoked and the employee must change it at next login.'
+      );
       onUpdated();
     } catch (err) {
       setFormError(graphQlUserMessage(err));
@@ -296,10 +226,16 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         input.designationId = designationId;
       }
       input.reportingManagerId = reportingManagerId || null;
-      if (canManageLoginAccounts && employee.userId && accountEmail.trim() !== (employee.linkedUserEmail ?? '')) {
+      if (
+        canManageLoginAccounts &&
+        employee.userId &&
+        accountEmail.trim() !== (employee.linkedUserEmail ?? '')
+      ) {
         input.linkedUserEmail = accountEmail.trim();
       }
-      await client.request(UpdateEmployeeWithLoginEmailDocument, { input: input as UpdateEmployeeInput });
+      await client.request(UpdateEmployeeWithLoginEmailDocument, {
+        input: input as UpdateEmployeeInput,
+      });
       onUpdated();
       onClose();
     } catch (err) {
@@ -388,7 +324,10 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           <p>
             Linked login:{' '}
             <span className="font-medium">
-              {employee.linkedUserUsername || employee.linkedUserEmail || employee.userId || 'Not provisioned'}
+              {employee.linkedUserUsername ||
+                employee.linkedUserEmail ||
+                employee.userId ||
+                'Not provisioned'}
             </span>
           </p>
           {accountMessage && (
@@ -396,29 +335,9 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           )}
           {canManageLoginAccounts ? (
             <div className="mt-3 space-y-3">
-            {employee.userId && (
-              <Input
-                label="Login Email"
-                type="email"
-                value={accountEmail}
-                onChange={(e) => setAccountEmail(e.target.value)}
-                fullWidth
-                autoComplete="off"
-                placeholder="optional"
-              />
-            )}
-            {!employee.userId && (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {employee.userId && (
                 <Input
-                  label="Username *"
-                  value={accountUsername}
-                  onChange={(e) => setAccountUsername(e.target.value)}
-                  fullWidth
-                  autoComplete="off"
-                  placeholder="mobile number or unique name"
-                />
-                <Input
-                  label="Email"
+                  label="Login Email"
                   type="email"
                   value={accountEmail}
                   onChange={(e) => setAccountEmail(e.target.value)}
@@ -426,58 +345,76 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
                   autoComplete="off"
                   placeholder="optional"
                 />
+              )}
+              {!employee.userId && (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <Input
+                    label="Username *"
+                    value={accountUsername}
+                    onChange={(e) => setAccountUsername(e.target.value)}
+                    fullWidth
+                    autoComplete="off"
+                    placeholder="mobile number or unique name"
+                  />
+                  <Input
+                    label="Email"
+                    type="email"
+                    value={accountEmail}
+                    onChange={(e) => setAccountEmail(e.target.value)}
+                    fullWidth
+                    autoComplete="off"
+                    placeholder="optional"
+                  />
+                </div>
+              )}
+              {!employee.userId && canReadRoleDirectory && (
+                <Select
+                  label="Initial Role"
+                  value={accountRoleId}
+                  onChange={(e) => setAccountRoleId(e.target.value)}
+                  options={
+                    roleOptions.length ? roleOptions : [{ value: '', label: 'No role assigned' }]
+                  }
+                  fullWidth
+                />
+              )}
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <Input
+                  label={employee.userId ? 'New Password *' : 'Initial Password *'}
+                  type="password"
+                  value={accountPassword}
+                  onChange={(e) => setAccountPassword(e.target.value)}
+                  fullWidth
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+                <Input
+                  label="Confirm Password *"
+                  type="password"
+                  value={accountConfirmPassword}
+                  onChange={(e) => setAccountConfirmPassword(e.target.value)}
+                  fullWidth
+                  minLength={8}
+                  autoComplete="new-password"
+                />
               </div>
-            )}
-            {!employee.userId && canReadRoleDirectory && (
-              <Select
-                label="Initial Role"
-                value={accountRoleId}
-                onChange={(e) => setAccountRoleId(e.target.value)}
-                options={roleOptions.length ? roleOptions : [{ value: '', label: 'No role assigned' }]}
-                fullWidth
-              />
-            )}
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <Input
-                label={employee.userId ? 'New Password *' : 'Initial Password *'}
-                type="password"
-                value={accountPassword}
-                onChange={(e) => setAccountPassword(e.target.value)}
-                fullWidth
-                minLength={8}
-                autoComplete="new-password"
-              />
-              <Input
-                label="Confirm Password *"
-                type="password"
-                value={accountConfirmPassword}
-                onChange={(e) => setAccountConfirmPassword(e.target.value)}
-                fullWidth
-                minLength={8}
-                autoComplete="new-password"
-              />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={accountBusy}
-              onClick={() => {
-                if (employee.userId) {
-                  void handleResetPassword();
-                } else {
-                  void handleProvisionLogin();
-                }
-              }}
-            >
-              {accountBusy
-                ? 'Saving...'
-                : employee.userId
-                  ? 'Reset password'
-                  : 'Provision login'}
-            </Button>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Admin-set passwords are temporary; the employee must change them at next login.
-            </p>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={accountBusy}
+                onClick={() => {
+                  if (employee.userId) {
+                    void handleResetPassword();
+                  } else {
+                    void handleProvisionLogin();
+                  }
+                }}
+              >
+                {accountBusy ? 'Saving...' : employee.userId ? 'Reset password' : 'Provision login'}
+              </Button>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Admin-set passwords are temporary; the employee must change them at next login.
+              </p>
             </div>
           ) : (
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -511,9 +448,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           onChange={(e) => {
             setReportingManagerId(e.target.value);
           }}
-          options={
-            managerOptions.length ? managerOptions : [LOADING_EMPLOYEE_FORM_OPTION]
-          }
+          options={managerOptions.length ? managerOptions : [LOADING_EMPLOYEE_FORM_OPTION]}
           fullWidth
         />
         <div className="flex gap-2">

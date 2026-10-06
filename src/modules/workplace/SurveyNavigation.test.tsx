@@ -3,6 +3,8 @@ import { act, cleanup, render, screen, waitFor, within } from '@testing-library/
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import SurveysPage from './SurveysPage';
 
 const state = vi.hoisted(() => ({
@@ -71,7 +73,7 @@ const deferred = () => {
 beforeEach(() => {
   state.request.mockReset();
   state.request.mockImplementation((document) => {
-    const source = String(document);
+    const source = graphqlDocumentSource(document);
     if (source.includes('SurveysAdminWorkspace')) return Promise.resolve({ surveys: [summary] });
     if (source.includes('SurveyDetailWorkspace')) return Promise.resolve({ survey: detail() });
     if (source.includes('SurveyAudienceWorkspace'))
@@ -114,7 +116,7 @@ describe('survey list and navigation workflows', () => {
     if (!fallback) throw new Error('Missing request mock');
     let historyRequests = 0;
     state.request.mockImplementation((document, variables) => {
-      if (String(document).includes('SurveyManagementEventsWorkspace')) {
+      if (graphqlDocumentSource(document).includes('SurveyManagementEventsWorkspace')) {
         historyRequests += 1;
         return historyRequests === 1 ? old.promise : current.promise;
       }
@@ -162,11 +164,13 @@ describe('survey draft and detail navigation', () => {
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await waitFor(() =>
       expect(
-        state.request.mock.calls.some(([doc]) => String(doc).includes('SaveSurveyWorkspace'))
+        state.request.mock.calls.some(([doc]) =>
+          graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
+        )
       ).toBe(true)
     );
     const save = state.request.mock.calls.find(([doc]) =>
-      String(doc).includes('SaveSurveyWorkspace')
+      graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
     );
     expect(save?.[1]).toMatchObject({
       input: { sourceSurveyId: 'previous', title: 'New pulse', opensAt: null, closesAt: null },
@@ -178,7 +182,7 @@ describe('survey draft and detail navigation', () => {
     expect(variables).not.toContain('submissionId');
     expect(
       state.request.mock.calls.some(([doc]) =>
-        /SurveySubmissionsWorkspace|SurveyResultsWorkspace/.test(String(doc))
+        /SurveySubmissionsWorkspace|SurveyResultsWorkspace/.test(graphqlDocumentSource(doc))
       )
     ).toBe(false);
   });
@@ -190,7 +194,7 @@ describe('survey draft and detail navigation', () => {
     if (!fallback) throw new Error('Missing request mock');
     let detailRequests = 0;
     state.request.mockImplementation((document, variables) => {
-      if (String(document).includes('SurveyDetailWorkspace')) {
+      if (graphqlDocumentSource(document).includes('SurveyDetailWorkspace')) {
         detailRequests += 1;
         return detailRequests === 1 ? old.promise : current.promise;
       }

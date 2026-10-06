@@ -1,16 +1,12 @@
-import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
+import {
+  LeaveBoardQuery,
+  HrLeaveApplicationHolidaysDocument as HOLIDAY_DOCUMENT,
+} from '../../../api/graphql/graphql';
 import type { useGraphClient } from '../../../hooks/useGraphClient';
 
 export type HolidayClient = Pick<ReturnType<typeof useGraphClient>, 'request'>;
 export const HOLIDAY_TIMEOUT_MESSAGE = 'Company holidays took too long to load. Try again.';
 const HOLIDAY_TIMEOUT_MS = 30 * 1000;
-const HOLIDAY_DOCUMENT = `
-  query HrLeaveApplicationHolidays {
-    upcomingHolidays(limit: 100) {
-      id calendarId calendarName holidayDate name holidayType
-    }
-  }
-`;
 
 /** Each request owns its timer and abort signal; old requests cannot cancel new deadlines. */
 export function requestLeaveApplicationHolidays(client: HolidayClient) {

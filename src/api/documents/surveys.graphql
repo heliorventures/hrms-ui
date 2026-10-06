@@ -1,0 +1,219 @@
+query SurveysAdminWorkspace {
+  surveys {
+    id
+    title
+    description
+    status
+    opensAt
+    closesAt
+    minimumReportGroupSize
+    completed
+    responseReviewMode
+    assignedCount
+    completedCount
+    pendingCount
+  }
+}
+
+query SurveyDepartmentsWorkspace {
+  departments(limit: 200) {
+    id
+    name
+    code
+  }
+}
+
+query SurveyAudienceWorkspace($id: ID!) {
+  surveyAudience(surveyId: $id) {
+    audienceKind
+    departmentIds
+    locationIds
+    employeeIds
+    sourceSurveyId
+  }
+}
+
+query SurveyAudienceOptionsWorkspace($kind: String!, $search: String, $after: ID, $limit: Int) {
+  surveyAudienceOptions(kind: $kind, search: $search, after: $after, limit: $limit) {
+    nodes {
+      id
+      label
+    }
+    nextCursor
+  }
+}
+
+query SurveyManagementEventsWorkspace($id: ID!) {
+  surveyManagementEvents(surveyId: $id) {
+    action
+    occurredAt
+    message
+  }
+}
+
+query AvailableSurveysWorkspace {
+  availableSurveys {
+    id
+    title
+    description
+    status
+    opensAt
+    closesAt
+    minimumReportGroupSize
+    completed
+    responseReviewMode
+  }
+}
+
+query SurveyResultsCatalogWorkspace {
+  surveyResultsCatalog {
+    id
+    title
+    description
+    status
+    opensAt
+    closesAt
+    minimumReportGroupSize
+    completed
+    responseReviewMode
+  }
+}
+
+query SurveyDetailWorkspace($id: ID!) {
+  survey(surveyId: $id) {
+    summary {
+      id
+      title
+      description
+      status
+      opensAt
+      closesAt
+      minimumReportGroupSize
+      completed
+      responseReviewMode
+    }
+    audienceDepartmentIds
+    sections {
+      id
+      title
+      displayOrder
+      questions {
+        id
+        dimension
+        questionType
+        prompt
+        description
+        commentEnabled
+        isRequired
+        ratingMin
+        ratingMax
+        displayOrder
+        options {
+          id
+          label
+          score
+          displayOrder
+        }
+      }
+    }
+  }
+}
+
+query SurveyResultsWorkspace($id: ID!) {
+  surveyResults(surveyId: $id) {
+    surveyId
+    suppressed
+    suppressionReason
+    respondentCount
+    minimumReportGroupSize
+    dimensions {
+      dimension
+      scoredAnswerCount
+      averageScore
+    }
+    questions {
+      questionId
+      prompt
+      dimension
+      responseCount
+      averageScore
+      options {
+        optionId
+        label
+        responseCount
+      }
+      comments
+      questionType
+      ratingMin
+      ratingMax
+      skippedCount
+      suppressed
+      ratingDistribution {
+        score
+        responseCount
+      }
+    }
+  }
+}
+
+query SurveySubmissionsWorkspace($id: ID!, $offset: Int!, $limit: Int!) {
+  surveySubmissions(surveyId: $id, offset: $offset, limit: $limit) {
+    available
+    reason
+    totalCount
+    hasMore
+    nodes {
+      number
+      answers {
+        questionId
+        prompt
+        numericAnswer
+        textAnswer
+        comment
+        selectedOptions
+      }
+    }
+  }
+}
+
+mutation SaveSurveyWorkspace($input: SaveSurveyInput!) {
+  saveSurvey(input: $input) {
+    summary {
+      id
+      title
+      status
+    }
+  }
+}
+
+mutation PublishSurveyWorkspace($id: ID!) {
+  publishSurvey(surveyId: $id) {
+    summary {
+      id
+      status
+    }
+  }
+}
+
+mutation CloseSurveyWorkspace($id: ID!) {
+  closeSurvey(surveyId: $id) {
+    summary {
+      id
+      status
+    }
+  }
+}
+
+mutation OpenSurveyWorkspace($id: ID!) {
+  openSurvey(surveyId: $id) {
+    summary {
+      id
+      status
+      opensAt
+    }
+  }
+}
+
+mutation SubmitSurveyWorkspace($id: ID!, $answers: [SurveyAnswerInput!]!) {
+  submitSurvey(surveyId: $id, answers: $answers)
+}

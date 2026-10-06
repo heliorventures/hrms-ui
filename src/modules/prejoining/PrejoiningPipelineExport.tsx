@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
+import { PrejoiningPipelineCsvDocument } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,9 +9,7 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { downloadReportCsv } from '../reports/downloadReportCsv';
 import { useReportOwner } from '../reports/useReportOwner';
 
-export const PrejoiningPipelineCsvDocument = `
-  query PrejoiningPipelineCsv($status: String) { prejoiningCandidatesCsv(status: $status) }
-`;
+export { PrejoiningPipelineCsvDocument } from '../../api/graphql/graphql';
 
 const PrejoiningPipelineExport = ({ status }: { status: string }) => {
   const client = useGraphClient('client');

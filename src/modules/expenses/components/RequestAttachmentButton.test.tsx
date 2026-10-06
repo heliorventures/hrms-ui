@@ -3,6 +3,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { ExpenseEvidenceDocument } from '../../../api/graphql/graphql';
+
 import RequestAttachmentButton from './RequestAttachmentButton';
 
 const state = vi.hoisted(() => ({ request: vi.fn(), userId: 'user-1' }));
@@ -36,10 +38,7 @@ it('retrieves evidence using the parent request ID and revokes the download URL'
   render(<RequestAttachmentButton kind="expense" requestId="expense-1" hasFile />);
   fireEvent.click(screen.getByRole('button', { name: 'Download file' }));
   await waitFor(() => expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1));
-  expect(state.request).toHaveBeenCalledWith(
-    expect.stringContaining('expenseAttachment(expenseId: $id)'),
-    { id: 'expense-1' }
-  );
+  expect(state.request).toHaveBeenCalledWith(ExpenseEvidenceDocument, { id: 'expense-1' });
   await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:receipt'));
 });
 

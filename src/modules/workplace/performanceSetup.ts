@@ -1,14 +1,7 @@
-import { gql } from 'graphql-request';
-
 import type { SetupField } from './performanceSetupEditor';
 
-export const SaveReviewCycleDocument = gql`
-  mutation SaveReviewCycle($input: SaveReviewCycleInput!) {
-    saveReviewCycle(input: $input) {
-      id
-    }
-  }
-`;
+export { SaveReviewCycleDocument } from '../../api/graphql/graphql';
+
 export const cycleFields: SetupField[] = [
   { key: 'name', label: 'Name', required: true, maxLength: 255 },
   { key: 'startDate', label: 'Start date', type: 'date', required: true },

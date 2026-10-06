@@ -1,33 +1,10 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
+import { EmployeeSalaryBreakupPreviewDocument as SALARY_BREAKUP_PREVIEW } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { SalaryBreakupPreviewSection } from '../PayrollCompensationSections';
 import type { SalaryBreakupPreview } from '../payrollCompensationTypes';
-
-const SALARY_BREAKUP_PREVIEW = /* GraphQL */ `
-  query EmployeeSalaryBreakupPreview($employeeId: ID, $asOf: NaiveDate) {
-    employeeSalaryBreakupPreview(employeeId: $employeeId, asOf: $asOf) {
-      employeeId
-      annualCtc
-      financials
-      monthlyGross
-      monthlyDeductions
-      monthlyNetBeforeStatutory
-      lines {
-        salaryComponentId
-        componentName
-        componentCode
-        componentType
-        calculationBasis
-        calculationValue
-        annualAmount
-        monthlyAmount
-        isOverride
-      }
-    }
-  }
-`;
 
 const today = () => new Date().toISOString().slice(0, 10);
 const AssignedSalaryPreview = ({

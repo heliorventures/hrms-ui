@@ -1,0 +1,275 @@
+query PerformanceProgramPolicyWorkspace($performanceProgramId: ID!) {
+  performanceProgramPolicy(performanceProgramId: $performanceProgramId) {
+    performanceProgramId
+    archivedAt
+    populationMode
+    populationIds
+    goalSettingDueDays
+    selfReviewDueDays
+    managerReviewDueDays
+    calibrationDueDays
+    acknowledgementDueDays
+  }
+}
+
+query PerformancePopulationOptionsWorkspace($input: PerformancePopulationOptionsInput!) {
+  performancePopulationOptions(input: $input) {
+    items {
+      id
+      name
+      departmentId
+      locationId
+    }
+    nextCursor
+  }
+}
+
+mutation SavePerformanceProgramPolicyWorkspace($input: PerformanceProgramPolicyInput!) {
+  savePerformanceProgramPolicy(input: $input) {
+    performanceProgramId
+    archivedAt
+    populationMode
+    populationIds
+    goalSettingDueDays
+    selfReviewDueDays
+    managerReviewDueDays
+    calibrationDueDays
+    acknowledgementDueDays
+  }
+}
+
+mutation ArchivePerformanceProgramWorkspace($performanceProgramId: ID!, $reason: String!) {
+  archivePerformanceProgram(performanceProgramId: $performanceProgramId, reason: $reason) {
+    id
+    status
+  }
+}
+
+query PerformanceAdminCyclesWorkspace($input: PerformanceAdminCyclesInput!) {
+  performanceAdminCycles(input: $input) {
+    items {
+      reviewCycle {
+        id
+        name
+        status
+        startDate
+        endDate
+      }
+      currentStage
+      participantCount
+      excludedParticipantCount
+      actionableExceptionCount
+    }
+    nextCursor
+  }
+}
+
+query PerformanceCycleAdministrationWorkspace($reviewCycleId: ID!, $cursor: String, $limit: Int) {
+  performanceCycleAdministration(reviewCycleId: $reviewCycleId, cursor: $cursor, limit: $limit) {
+    reviewCycle {
+      id
+      name
+      status
+      startDate
+      endDate
+    }
+    currentStage
+    deadlines {
+      stage
+      dueDate
+    }
+    participants {
+      participantId
+      employeeId
+      employeeName
+      managerEmployeeId
+      status
+      isExcluded
+      exclusionReason
+      responseRevision
+      selfSubmittedAt
+      managerSubmittedAt
+      acknowledgedAt
+      managerRating
+      finalRating
+      performanceBand
+      calibrationProvenance
+      revisions {
+        revision
+        reopenedAt
+        reopenedByUserId
+        reopenReason
+        correctionStage
+        selfSubmittedAt
+        managerSubmittedAt
+        acknowledgedAt
+        managerRating
+        finalRating
+        performanceBand
+        calibrationProvenance
+      }
+    }
+    nextParticipantCursor
+    exceptions {
+      id
+      exceptionCode
+      details
+      resolvedAt
+      createdAt
+    }
+  }
+}
+
+query PerformanceReviewRevisionWorkspace($participantId: ID!, $revision: Int!) {
+  performanceReviewRevision(participantId: $participantId, revision: $revision) {
+    review {
+      revision
+      reopenedAt
+      reopenedByUserId
+      reopenReason
+      correctionStage
+      selfSubmittedAt
+      managerSubmittedAt
+      acknowledgedAt
+      managerRating
+      finalRating
+      performanceBand
+      calibrationProvenance
+    }
+    answers {
+      questionId
+      employeeTextAnswer
+      employeeSelectedOptionIds
+      selfRating
+      managerTextAnswer
+      managerSelectedOptionIds
+      managerRating
+    }
+    kpis {
+      id
+      goalId
+      metricName
+      targetValue
+      actualValue
+      unit
+      evidence
+      comment
+      measurementDate
+    }
+    calibrations {
+      id
+      revision
+      finalRating
+      performanceBand
+      reason
+      decidedByUserId
+      decidedAt
+    }
+    acknowledgementComment
+  }
+}
+
+query PrivatePerformanceFeedbackWorkspace($input: PrivatePerformanceFeedbackInput!) {
+  privatePerformanceFeedback(input: $input) {
+    items {
+      id
+      reviewCycleId
+      goalId
+      observationDate
+      comments
+      createdAt
+    }
+    nextCursor
+  }
+}
+
+mutation SavePerformanceCalibrationWorkspace($input: SavePerformanceCalibrationInput!) {
+  savePerformanceCalibration(input: $input) {
+    participantId
+    responseRevision
+    finalRating
+    performanceBand
+  }
+}
+
+mutation ReopenPerformanceReviewWorkspace($input: ReopenPerformanceReviewInput!) {
+  reopenPerformanceReview(input: $input) {
+    participantId
+    responseRevision
+    status
+  }
+}
+
+mutation SetPerformanceParticipantExcludedWorkspace(
+  $input: SetPerformanceParticipantExcludedInput!
+) {
+  setPerformanceParticipantExcluded(input: $input) {
+    participantId
+    isExcluded
+    exclusionReason
+  }
+}
+
+mutation AddPrivatePerformanceFeedbackWorkspace($input: AddPrivatePerformanceFeedbackInput!) {
+  addPrivatePerformanceFeedback(input: $input) {
+    id
+    comments
+    observationDate
+  }
+}
+
+query PerformanceGoalKpisWorkspace($participantId: ID!, $goalId: ID) {
+  performanceGoalKpis(participantId: $participantId, goalId: $goalId) {
+    id
+    goalId
+    metricName
+    targetValue
+    actualValue
+    unit
+    evidence
+    comment
+    measurementDate
+  }
+}
+
+mutation SavePerformanceKpiTargetWorkspace($input: SavePerformanceKpiTargetInput!) {
+  savePerformanceKpiTarget(input: $input) {
+    id
+    goalId
+    metricName
+    targetValue
+    actualValue
+    unit
+    evidence
+    comment
+    measurementDate
+  }
+}
+
+mutation SubmitPerformanceKpiActualWorkspace($input: SubmitPerformanceKpiActualInput!) {
+  submitPerformanceKpiActual(input: $input) {
+    id
+    goalId
+    metricName
+    targetValue
+    actualValue
+    unit
+    evidence
+    comment
+    measurementDate
+  }
+}
+
+mutation DeletePerformanceGoalKpiWorkspace($participantId: ID!, $goalKpiId: ID!) {
+  deletePerformanceGoalKpi(participantId: $participantId, goalKpiId: $goalKpiId)
+}
+
+mutation RetryPerformanceExceptionWorkspace($exceptionId: ID!) {
+  retryPerformanceException(exceptionId: $exceptionId) {
+    id
+    exceptionCode
+    details
+    resolvedAt
+    createdAt
+  }
+}

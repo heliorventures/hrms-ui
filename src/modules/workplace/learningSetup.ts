@@ -1,21 +1,7 @@
-import { gql } from 'graphql-request';
-
 import type { SetupField } from './performanceSetupEditor';
 
-export const SaveSkillDocument = gql`
-  mutation SaveSkill($input: SaveSkillInput!) {
-    saveSkill(input: $input) {
-      id
-    }
-  }
-`;
-export const SaveCourseDocument = gql`
-  mutation SaveCourse($input: SaveCourseInput!) {
-    saveCourse(input: $input) {
-      id
-    }
-  }
-`;
+export { SaveSkillDocument, SaveCourseDocument } from '../../api/graphql/graphql';
+
 export const skillFields: SetupField[] = [
   { key: 'name', label: 'Name', required: true, maxLength: 255 },
   { key: 'category', label: 'Category', maxLength: 100 },

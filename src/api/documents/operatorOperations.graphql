@@ -1,0 +1,229 @@
+query OpsTenants($limit: Int) {
+  tenants(limit: $limit) {
+    id
+    name
+    status
+    plan
+    country
+    currency
+    subdomain
+    createdAt
+    updatedAt
+  }
+}
+
+# Operator view: include inactive modules from catalog.
+query OpsModules($limit: Int) {
+  modules(limit: $limit, includeInactive: true) {
+    id
+    code
+    name
+    category
+    description
+    isActive
+    displayOrder
+    isCore
+  }
+}
+
+query OpsFeatureFlags($tenantId: ID!, $limit: Int) {
+  featureFlags(tenantId: $tenantId, limit: $limit) {
+    id
+    tenantId
+    featureName
+    isEnabled
+    createdAt
+    updatedAt
+  }
+}
+
+mutation OpsProvisionTenant($input: ProvisionTenantInput!) {
+  provisionTenant(input: $input) {
+    schemaName
+    migrationsRan
+    detail
+    tenant {
+      id
+      name
+      status
+      subdomain
+    }
+  }
+}
+
+mutation OpsRunTenantMigrations($tenantId: ID!) {
+  runTenantMigrations(tenantId: $tenantId) {
+    schemaName
+    migrationsRan
+    detail
+    tenant {
+      id
+      name
+      status
+    }
+  }
+}
+
+mutation OpsUpdateTenant($input: UpdateTenantInput!) {
+  updateTenant(input: $input) {
+    id
+    name
+    status
+    plan
+  }
+}
+
+mutation OpsUpsertSubscription($input: UpsertTenantSubscriptionInput!) {
+  upsertTenantSubscription(input: $input) {
+    id
+    tenantId
+    moduleId
+    status
+    contractedSeats
+    currentSeatUsage
+    overagePolicy
+  }
+}
+
+mutation OpsRemoveSubscription($subscriptionId: ID!) {
+  removeTenantSubscription(subscriptionId: $subscriptionId)
+}
+
+mutation OpsSetModuleActive($moduleId: ID!, $isActive: Boolean!) {
+  setModuleActive(moduleId: $moduleId, isActive: $isActive) {
+    id
+    code
+    isActive
+  }
+}
+
+mutation OpsUpsertFeatureFlag($tenantId: ID!, $featureName: String!, $isEnabled: Boolean!) {
+  upsertFeatureFlag(tenantId: $tenantId, featureName: $featureName, isEnabled: $isEnabled) {
+    id
+    featureName
+    isEnabled
+  }
+}
+
+query OpsSubscriptions($tenantId: ID, $limit: Int) {
+  tenantSubscriptions(tenantId: $tenantId, limit: $limit) {
+    id
+    tenantId
+    moduleId
+    status
+    activatedAt
+    expiresAt
+    contractedSeats
+    currentSeatUsage
+    overagePolicy
+  }
+}
+
+query OpsInvoices($tenantId: ID, $limit: Int) {
+  invoices(tenantId: $tenantId, limit: $limit) {
+    id
+    tenantId
+    billingCycleId
+    invoiceNumber
+    subtotal
+    discountTotal
+    taxAmount
+    totalAmount
+    currency
+    status
+    dueDate
+    sentAt
+    paidAt
+    createdAt
+  }
+}
+
+query OpsPayments($invoiceId: ID, $limit: Int) {
+  payments(invoiceId: $invoiceId, limit: $limit) {
+    id
+    invoiceId
+    amount
+    paymentMethod
+    status
+    paidAt
+    gatewayRef
+    failureReason
+    createdAt
+  }
+}
+
+query OpsOperatorUsers($limit: Int) {
+  operatorUsers(limit: $limit) {
+    id
+    email
+    fullName
+    phone
+    isActive
+    lastLoginAt
+    createdAt
+  }
+}
+
+query OpsOperatorRoles($limit: Int) {
+  operatorRoles(limit: $limit) {
+    id
+    code
+    name
+    description
+    createdAt
+  }
+}
+
+query OpsBillingCycles($tenantId: ID, $limit: Int) {
+  billingCycles(tenantId: $tenantId, limit: $limit) {
+    id
+    tenantId
+    periodStart
+    periodEnd
+    frequency
+    status
+    createdAt
+  }
+}
+
+mutation OpsCreateInvoice($input: CreateInvoiceInput!) {
+  createInvoice(input: $input) {
+    id
+    invoiceNumber
+    totalAmount
+    currency
+    status
+    tenantId
+  }
+}
+
+mutation OpsRecordPayment($input: RecordPaymentInput!) {
+  recordPayment(input: $input) {
+    id
+    invoiceId
+    amount
+    status
+    paidAt
+  }
+}
+
+mutation OpsCreateOperatorUser($input: CreateOperatorUserInput!) {
+  createOperatorUser(input: $input) {
+    id
+    email
+    fullName
+    isActive
+  }
+}
+
+query OpsOperatorRolesForUser($operatorUserId: ID!) {
+  operatorRolesForUser(operatorUserId: $operatorUserId) {
+    id
+    code
+    name
+  }
+}
+
+mutation OpsSetOperatorUserRoles($operatorUserId: ID!, $roleIds: [ID!]!) {
+  setOperatorUserRoles(operatorUserId: $operatorUserId, roleIds: $roleIds)
+}

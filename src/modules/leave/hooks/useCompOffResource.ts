@@ -1,3 +1,4 @@
+import type { RequestDocument } from 'graphql-request';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { authorizationStateKey } from '../../../auth/permissionService';
@@ -12,7 +13,10 @@ export function useCompOffOwnerKey() {
   return `${currentTenant.id}|${authorizationStateKey(clientSession)}`;
 }
 
-export function useCompOffResource<T>(document: string, variables: Record<string, unknown>) {
+export function useCompOffResource<T>(
+  document: RequestDocument,
+  variables: Record<string, unknown>
+) {
   const client = useGraphClient('client');
   const ownerKey = useCompOffOwnerKey();
   const variablesKey = JSON.stringify(variables);
@@ -60,7 +64,7 @@ export function useCompOffResource<T>(document: string, variables: Record<string
   }, [client, document, owner, revision, variablesKey]);
 
   const mutate = useCallback(
-    async (mutation: string, input: Record<string, unknown>) => {
+    async (mutation: RequestDocument, input: Record<string, unknown>) => {
       if (mutationOwner.current === owner) return false;
       mutationOwner.current = owner;
       const request = ++generation.current;

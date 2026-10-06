@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
+import { TaxSettingsEmployeesDocument } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
@@ -85,9 +86,7 @@ const EmployeeTaxWorkspace = ({ client }: { client: GraphQLClient }) => {
   useEffect(() => {
     let active = true;
     void client
-      .request<{ employees: typeof employees }>(
-        'query TaxSettingsEmployees { employees(limit:500) { id fullName employeeCode } }'
-      )
+      .request<{ employees: typeof employees }>(TaxSettingsEmployeesDocument)
       .then((value) => {
         if (active) setEmployees(value.employees);
       })

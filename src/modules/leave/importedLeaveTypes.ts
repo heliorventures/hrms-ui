@@ -1,3 +1,4 @@
+export { LeaveImportHistoryDocument as leaveImportHistoryDocument } from '../../api/graphql/graphql';
 export interface ImportedLeaveHistory {
   leave_type_id: string;
   as_of: string;
@@ -15,8 +16,3 @@ export interface ImportedLeaveHistory {
     planned: string | null;
   };
 }
-export const leaveImportHistoryDocument = /* GraphQL */ `
-  query LeaveImportHistory($employeeId: ID, $year: Int!) {
-    leaveImportHistory(employeeId: $employeeId, year: $year)
-  }
-`;

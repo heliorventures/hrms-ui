@@ -1,7 +1,7 @@
-import { gql } from 'graphql-request';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { RecruitmentSetupDocument as WorkplaceRecruitmentDocument } from '../../api/graphql/graphql';
 import { scopeForPermission } from '../../auth/approvalScope';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -15,29 +15,6 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import { SetupModal, type SetupEditor } from './benefitsSetup';
 import { SaveJobPosting, validateJobPosting } from './recruitmentSetup';
-
-const WorkplaceRecruitmentDocument = gql`
-  query RecruitmentSetup($jlim: Int!, $alim: Int!, $jobOffset: Int!) {
-    jobPostings(limit: $jlim, offset: $jobOffset) {
-      id
-      title
-      description
-      status
-      vacancies
-      employmentType
-      openDate
-      closeDate
-    }
-    applications(limit: $alim) {
-      id
-      jobId
-      candidateName
-      candidateEmail
-      status
-      appliedAt
-    }
-  }
-`;
 
 const RecruitmentPage = () => {
   const tabs = [

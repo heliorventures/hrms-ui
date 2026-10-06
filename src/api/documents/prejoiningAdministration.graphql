@@ -1,0 +1,174 @@
+query PrejoiningAdminBootstrap {
+  prejoiningConfig
+  prejoiningFieldCatalog
+  prejoiningDocumentTypes
+}
+
+query PrejoiningCandidatesAdmin($offset: Int!, $limit: Int!, $status: String) {
+  prejoiningCandidates(offset: $offset, limit: $limit, status: $status) {
+    total
+    nodes {
+      id
+      email
+      status
+      revision
+      config
+      answers
+      feedback
+      documents
+      expiresAt
+      employeeId
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+query PrejoiningCandidateAdmin($id: ID!) {
+  prejoiningCandidate(id: $id) {
+    id
+    email
+    status
+    revision
+    config
+    answers
+    feedback
+    documents
+    expiresAt
+    employeeId
+    createdAt
+    updatedAt
+  }
+}
+
+query PrejoiningConversionDirectory($managerSearch: String, $managerOffset: Int) {
+  prejoiningConversionOptions(managerSearch: $managerSearch, managerOffset: $managerOffset)
+}
+
+mutation SavePrejoiningConfigAdmin($config: JSON!) {
+  savePrejoiningConfig(config: $config)
+}
+
+mutation PrejoiningInviteAdmin($email: String!, $sendEmail: Boolean!) {
+  invitePrejoining(email: $email, sendEmail: $sendEmail) {
+    candidate {
+      id
+      email
+      status
+      revision
+      config
+      answers
+      feedback
+      documents
+      expiresAt
+      employeeId
+      createdAt
+      updatedAt
+    }
+    privateUrl
+    emailStatus
+    emailError
+  }
+}
+
+mutation PrejoiningReissueAdmin($id: ID!, $revision: Int!, $sendEmail: Boolean!) {
+  reissuePrejoining(id: $id, revision: $revision, sendEmail: $sendEmail) {
+    candidate {
+      id
+      email
+      status
+      revision
+      config
+      answers
+      feedback
+      documents
+      expiresAt
+      employeeId
+      createdAt
+      updatedAt
+    }
+    privateUrl
+    emailStatus
+    emailError
+  }
+}
+
+mutation PrejoiningRequestChangesAdmin($id: ID!, $revision: Int!, $feedback: String!) {
+  requestPrejoiningChanges(id: $id, revision: $revision, feedback: $feedback) {
+    id
+    email
+    status
+    revision
+    config
+    answers
+    feedback
+    documents
+    expiresAt
+    employeeId
+    createdAt
+    updatedAt
+  }
+}
+
+mutation PrejoiningApproveAdmin($id: ID!, $revision: Int!) {
+  approvePrejoining(id: $id, revision: $revision) {
+    id
+    email
+    status
+    revision
+    config
+    answers
+    feedback
+    documents
+    expiresAt
+    employeeId
+    createdAt
+    updatedAt
+  }
+}
+
+mutation PrejoiningCancelAdmin($id: ID!, $revision: Int!) {
+  cancelPrejoining(id: $id, revision: $revision) {
+    id
+    email
+    status
+    revision
+    config
+    answers
+    feedback
+    documents
+    expiresAt
+    employeeId
+    createdAt
+    updatedAt
+  }
+}
+
+mutation PrejoiningConfirmJoinedAdmin($input: ConfirmPrejoiningInput!) {
+  confirmPrejoiningJoined(input: $input) {
+    id
+    email
+    status
+    revision
+    config
+    answers
+    feedback
+    documents
+    expiresAt
+    employeeId
+    createdAt
+    updatedAt
+  }
+}
+
+query PrejoiningDocumentAdmin($candidateId: ID!, $documentId: ID!) {
+  prejoiningDocument(candidateId: $candidateId, documentId: $documentId) {
+    filename
+    mimeType
+    base64Content
+  }
+}
+
+query PrejoiningPipelineCsv($status: String) {
+  prejoiningCandidatesCsv(status: $status)
+}

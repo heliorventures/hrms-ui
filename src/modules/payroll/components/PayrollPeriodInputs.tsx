@@ -1,21 +1,13 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
+import { PeriodInputEmployeesDocument as employeesQuery } from '../../../api/graphql/graphql';
 import Card from '../../../components/common/Card';
 import PageInformation from '../../../components/common/PageInformation';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 import PeriodEditor from './PeriodEditor';
 
-const employeesQuery = /* GraphQL */ `
-  query PeriodInputEmployees {
-    employees(limit: 500) {
-      id
-      employeeCode
-      fullName
-    }
-  }
-`;
 interface Employee {
   id: string;
   employeeCode: string;

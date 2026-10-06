@@ -1,7 +1,6 @@
-import { gql } from 'graphql-request';
 import { useCallback, useEffect, useState } from 'react';
 
-import type { WorkplaceLearningQuery } from '../../api/graphql/graphql';
+import { WorkplaceLearningQuery, LearningCatalogDocument } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -20,25 +19,6 @@ import {
   learningInput,
 } from './learningSetup';
 import { SetupEditor } from './performanceSetupEditor';
-
-const LearningCatalogDocument = gql`
-  query LearningCatalog($offset: Int!) {
-    skills(limit: 20, offset: $offset) {
-      id
-      name
-      category
-      level
-    }
-    courses(limit: 20, offset: $offset) {
-      id
-      title
-      category
-      deliveryMode
-      durationMinutes
-      isMandatory
-    }
-  }
-`;
 
 const LearningPage = () => {
   const { clientSession } = useAuth();

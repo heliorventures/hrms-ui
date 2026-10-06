@@ -2,11 +2,11 @@
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MemoryRouter } from 'react-router-dom';
-
 import { DialogProvider } from '../../contexts/DialogContext';
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
 
 import AdminNotificationsPage from './AdminNotificationsPage';
 
@@ -125,7 +125,7 @@ beforeEach(() => {
   videoState.cancelUpload.mockReset();
   graphState.client = {
     request: vi.fn<[unknown, unknown?], Promise<unknown>>().mockImplementation((document) => {
-      if (typeof document === 'string' && document.includes('SaveNotificationAutomationSettings')) {
+      if (graphqlDocumentSource(document).includes('SaveNotificationAutomationSettings')) {
         return Promise.resolve({
           saveNotificationAutomationSettings: consoleData.notificationAutomationSettings,
         });
@@ -420,9 +420,8 @@ describe('AdminNotificationsPage automated employee events', () => {
     await user.click(screen.getByRole('button', { name: 'Save Automated Events' }));
 
     await waitFor(() => {
-      const saveCall = graphState.client.request.mock.calls.find(
-        ([document]) =>
-          typeof document === 'string' && document.includes('SaveNotificationAutomationSettings')
+      const saveCall = graphState.client.request.mock.calls.find(([document]) =>
+        graphqlDocumentSource(document).includes('SaveNotificationAutomationSettings')
       );
       expect(saveCall?.[1]).toEqual({
         input: {
@@ -448,9 +447,8 @@ describe('AdminNotificationsPage automated employee events', () => {
 
     expect((await screen.findByRole('alert')).textContent).toContain('unsupported token');
     expect(
-      graphState.client.request.mock.calls.some(
-        ([document]) =>
-          typeof document === 'string' && document.includes('SaveNotificationAutomationSettings')
+      graphState.client.request.mock.calls.some(([document]) =>
+        graphqlDocumentSource(document).includes('SaveNotificationAutomationSettings')
       )
     ).toBe(false);
   });

@@ -1,0 +1,66 @@
+query PayrollCompensationBoard($employeeLimit: Int! = 300) {
+  employees(limit: $employeeLimit) {
+    id
+    employeeCode
+    fullName
+    status
+    dateOfJoining
+  }
+  salaryComponents(limit: 200) {
+    id
+    name
+    code
+    componentType
+    isTaxable
+    isFixed
+    isActive
+  }
+  salaryStructures(limit: 100) {
+    id
+    name
+    description
+    components {
+      id
+      salaryComponentId
+      componentName
+      componentCode
+      componentType
+      calculationBasis
+      calculationValue
+      displayOrder
+    }
+  }
+}
+
+mutation UpsertSalaryComponent($input: UpsertSalaryComponentInput!) {
+  upsertSalaryComponent(input: $input) {
+    id
+    name
+    code
+    componentType
+    isActive
+  }
+}
+
+mutation UpsertSalaryStructure($input: UpsertSalaryStructureInput!) {
+  upsertSalaryStructure(input: $input) {
+    id
+    name
+    components {
+      id
+      componentCode
+      calculationBasis
+      calculationValue
+    }
+  }
+}
+
+mutation AssignEmployeeSalaryStructure($input: AssignEmployeeSalaryStructureInput!) {
+  assignEmployeeSalaryStructure(input: $input) {
+    id
+    employeeId
+    salaryStructureId
+    ctc
+    effectiveFrom
+  }
+}

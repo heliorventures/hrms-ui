@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import BenefitsPage from './BenefitsPage';
+
 const state = vi.hoisted(() => ({
   scope: 'ALL',
   employeeId: undefined as string | undefined,
@@ -50,7 +54,7 @@ describe('benefits setup access', () => {
       code: `CODE${i}`,
     }));
     state.request.mockImplementation(
-      (_query: string, variables: { typeOffset?: number; offset?: number }) => {
+      (_query: unknown, variables: { typeOffset?: number; offset?: number }) => {
         if (variables.offset !== undefined)
           return Promise.resolve({
             benefitTypes: types.slice(variables.offset, variables.offset + 100),
@@ -76,9 +80,9 @@ describe('benefits setup access', () => {
   it('shows enrollment plan names even when the plan is outside the current page', async () => {
     state.scope = 'ALL';
     state.employeeId = 'employee-1';
-    state.request.mockImplementation((query: string) =>
+    state.request.mockImplementation((query: unknown) =>
       Promise.resolve(
-        query.includes('BenefitsSetupEnrollments')
+        graphqlDocumentSource(query).includes('BenefitsSetupEnrollments')
           ? {
               myBenefitEnrollments: [
                 {

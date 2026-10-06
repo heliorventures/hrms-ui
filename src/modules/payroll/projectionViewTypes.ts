@@ -1,5 +1,7 @@
 import type { TaxHistory } from './taxProjectionTypes';
 
+export { EmployeeTaxProjectionDocument as projectionQuery } from '../../api/graphql/graphql';
+
 export type Evidence =
   | 'IMPORTED_ACTUAL'
   | 'FINALIZED_PAYROLL'
@@ -58,11 +60,7 @@ export interface TaxProjection {
   note: string;
   opening_history: TaxHistory[];
 }
-export const projectionQuery = /* GraphQL */ `
-  query EmployeeTaxProjection($employeeId: ID, $fiscalYear: Int!, $month: Int!) {
-    employeeTaxProjection(employeeId: $employeeId, fiscalYear: $fiscalYear, month: $month)
-  }
-`;
+
 export const formatTaxMoney = (value: string | null | undefined) =>
   value === null || value === undefined
     ? 'Not provided'

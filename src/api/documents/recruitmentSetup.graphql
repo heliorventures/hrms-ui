@@ -1,0 +1,5 @@
+mutation SaveJobPosting($id: ID, $input: JobPostingInput!) {
+  saveJobPosting(id: $id, input: $input) {
+    id
+  }
+}

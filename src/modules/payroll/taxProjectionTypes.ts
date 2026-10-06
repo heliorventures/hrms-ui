@@ -1,3 +1,12 @@
+export {
+  EmployeeTaxSettingsDocument as taxSettingsQuery,
+  EmployeeTaxHistoryDocument as taxHistoryQuery,
+  SaveEmployeeTaxSettingsDocument as saveTaxSettings,
+  SaveEmployeeTaxHistoryDocument as saveTaxHistory,
+  PayrollDraftDocument as draftQuery,
+  CalculatePayrollCycleDocument as calculateMutation,
+  FinalizePayrollCycleDocument as finalizeMutation,
+} from '../../api/graphql/graphql';
 export interface TaxSettingsInput {
   regime: 'OLD' | 'NEW';
   method: 'ANNUAL_PROJECTION' | 'PERCENTAGE_OVERRIDE';
@@ -56,56 +65,3 @@ export interface PayrollDraft {
     } | null;
   }[];
 }
-export const taxSettingsQuery = /* GraphQL */ `
-  query EmployeeTaxSettings($employeeId: ID!) {
-    employeeTaxSettings(employeeId: $employeeId)
-  }
-`;
-export const taxHistoryQuery = /* GraphQL */ `
-  query EmployeeTaxHistory($employeeId: ID!, $fiscalYear: Int!) {
-    employeeTaxHistory(employeeId: $employeeId, fiscalYear: $fiscalYear)
-  }
-`;
-export const saveTaxSettings = /* GraphQL */ `
-  mutation SaveEmployeeTaxSettings($employeeId: ID!, $input: JSON!, $expectedRevision: Int) {
-    saveEmployeeTaxSettings(
-      employeeId: $employeeId
-      input: $input
-      expectedRevision: $expectedRevision
-    )
-  }
-`;
-export const saveTaxHistory = /* GraphQL */ `
-  mutation SaveEmployeeTaxHistory($employeeId: ID!, $input: JSON!, $expectedRevision: Int) {
-    saveEmployeeTaxHistory(
-      employeeId: $employeeId
-      input: $input
-      expectedRevision: $expectedRevision
-    )
-  }
-`;
-export const draftQuery = /* GraphQL */ `
-  query PayrollDraft($cycleId: ID!) {
-    payrollDraft(cycleId: $cycleId)
-  }
-`;
-export const calculateMutation = /* GraphQL */ `
-  mutation CalculatePayrollCycle($cycleId: ID!, $expectedRevision: Int) {
-    calculatePayrollCycle(cycleId: $cycleId, expectedRevision: $expectedRevision)
-  }
-`;
-export const finalizeMutation = /* GraphQL */ `
-  mutation FinalizePayrollCycle(
-    $cycleId: ID!
-    $draftRevision: Int!
-    $fingerprint: String!
-    $acknowledgement: JSON!
-  ) {
-    finalizePayrollCycle(
-      cycleId: $cycleId
-      draftRevision: $draftRevision
-      fingerprint: $fingerprint
-      acknowledgement: $acknowledgement
-    )
-  }
-`;

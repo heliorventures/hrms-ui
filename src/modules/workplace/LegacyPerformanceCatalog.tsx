@@ -1,7 +1,6 @@
-import { gql } from 'graphql-request';
 import { useCallback, useEffect, useState } from 'react';
 
-import type { WorkplacePerformanceQuery } from '../../api/graphql/graphql';
+import { WorkplacePerformanceQuery, PerformanceCatalogDocument } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -11,27 +10,6 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import { cycleFields, SaveReviewCycleDocument } from './performanceSetup';
 import { SetupEditor } from './performanceSetupEditor';
-
-const PerformanceCatalogDocument = gql`
-  query PerformanceCatalog($offset: Int!) {
-    reviewCycles(limit: 20, offset: $offset) {
-      id
-      name
-      startDate
-      endDate
-      status
-      reviewType
-    }
-    goals(limit: 80) {
-      id
-      employeeId
-      reviewCycleId
-      title
-      status
-      weightage
-    }
-  }
-`;
 
 const LegacyPerformanceCatalog = () => {
   const { clientSession } = useAuth();

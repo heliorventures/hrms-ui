@@ -1,14 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
 
+import { EmployeeDisplayNameDocument } from '../api/graphql/graphql';
 import { useGraphClient } from '../hooks/useGraphClient';
 
 import { useAuth } from './AuthContext';
 import { EmployeeDisplayNameContext } from './employeeDisplayNameContext';
 import { useTenant } from './TenantContext';
-
-const EmployeeDisplayNameDocument = `query EmployeeDisplayName {
-  myEmployee { firstName lastName }
-}`;
 
 interface EmployeeNameResponse {
   myEmployee: { firstName: string; lastName: string | null } | null;

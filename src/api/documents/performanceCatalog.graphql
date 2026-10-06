@@ -1,0 +1,18 @@
+query PerformanceCatalog($offset: Int!) {
+  reviewCycles(limit: 20, offset: $offset) {
+    id
+    name
+    startDate
+    endDate
+    status
+    reviewType
+  }
+  goals(limit: 80) {
+    id
+    employeeId
+    reviewCycleId
+    title
+    status
+    weightage
+  }
+}

@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 import PayrollCompensationPage from './PayrollCompensationPage';
 import PayrollTaxPage from './PayrollTaxPage';
 
@@ -51,9 +53,9 @@ afterEach(cleanup);
 it('loads the selected employee existing salary without submitting an assignment', async () => {
   testState.permissions = new Set(['payroll:manage']);
   testState.permissionScopes = { 'payroll:manage': 'ALL' };
-  testState.request.mockImplementation((query: string) =>
+  testState.request.mockImplementation((query: unknown) =>
     Promise.resolve(
-      query.includes('PayrollCompensationBoard')
+      graphqlDocumentSource(query).includes('PayrollCompensationBoard')
         ? {
             employees: [
               {
@@ -91,13 +93,13 @@ it('loads the selected employee existing salary without submitting an assignment
   await waitFor(() =>
     expect(
       testState.request.mock.calls.some(([query]) =>
-        String(query).includes('EmployeeSalaryBreakupPreview')
+        graphqlDocumentSource(query).includes('EmployeeSalaryBreakupPreview')
       )
     ).toBe(true)
   );
   expect(
     testState.request.mock.calls.some(([query]) =>
-      String(query).includes('mutation AssignEmployeeSalaryStructure')
+      graphqlDocumentSource(query).includes('mutation AssignEmployeeSalaryStructure')
     )
   ).toBe(false);
   expect(await screen.findByText('Monthly gross: 10000')).toBeTruthy();

@@ -2,6 +2,7 @@ import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { PayrollLwpRulesDocument } from '../../../api/graphql/graphql';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -15,9 +16,7 @@ const PayrollLwpRules = ({ client }: { client: GraphQLClient }) => {
   useEffect(() => {
     let active = true;
     void client
-      .request<{ companyPayrollPolicies: PolicyVersion[] }>(
-        'query PayrollLwpRules { companyPayrollPolicies }'
-      )
+      .request<{ companyPayrollPolicies: PolicyVersion[] }>(PayrollLwpRulesDocument)
       .then((result) => {
         if (active) setVersions(result.companyPayrollPolicies);
       })

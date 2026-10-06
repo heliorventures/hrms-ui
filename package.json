@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "npm run graphql:check && eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "graphql:check": "node scripts/check-graphql-callers.mjs",
     "preview": "vite preview",
     "codegen": "graphql-codegen --config codegen.ts",
     "codegen:attendance": "node scripts/generate-attendance-client.mjs",

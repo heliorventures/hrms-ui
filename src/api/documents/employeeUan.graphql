@@ -1,0 +1,7 @@
+query EmployeeUanNumber($employeeId: ID!) {
+  employeeUanNumber(employeeId: $employeeId)
+}
+
+mutation SetEmployeeUanNumber($input: SetEmployeeUanNumberInput!) {
+  setEmployeeUanNumber(input: $input)
+}

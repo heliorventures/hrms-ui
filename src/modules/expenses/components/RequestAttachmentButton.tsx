@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { ExpenseEvidenceDocument, TravelEvidenceDocument } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
@@ -17,10 +18,8 @@ interface Props {
 }
 
 const documents = {
-  expense:
-    'query ExpenseEvidence($id: ID!) { attachment: expenseAttachment(expenseId: $id) { fileName mimeType contentBase64 } }',
-  travel:
-    'query TravelEvidence($id: ID!) { attachment: travelRequestAttachment(travelRequestId: $id) { fileName mimeType contentBase64 } }',
+  expense: ExpenseEvidenceDocument,
+  travel: TravelEvidenceDocument,
 };
 
 const RequestAttachmentButton = ({ kind, requestId, hasFile }: Props) => {

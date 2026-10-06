@@ -1,3 +1,5 @@
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+
 export type PerformanceTestState = {
   request: {
     mockImplementation: (implementation: (document: unknown) => unknown) => void;
@@ -12,7 +14,7 @@ export const resetPerformanceState = (state: PerformanceTestState) => {
   state.permissions = new Set(['performance:self', 'performance:manage']);
   state.permissionScopes = { 'performance:self': 'SELF', 'performance:manage': 'ALL' };
   state.request.mockImplementation((document: unknown) => {
-    const source = String(document);
+    const source = graphqlDocumentSource(document);
     if (source.includes('MyPerformanceReviewsWorkspace'))
       return Promise.resolve({ myPerformanceReviews: [] });
     if (source.includes('TeamPerformanceReviewsWorkspace'))
