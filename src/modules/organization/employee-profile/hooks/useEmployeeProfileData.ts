@@ -22,6 +22,7 @@ export function useEmployeeProfileData(
   model: EmployeeProfileModel | null;
   access: NonNullable<EmployeeProfileAccessQuery['employeeProfileAccess']> | null;
   documentTypes: TenantDocumentTypeOption[];
+  refreshVersion: number;
   refetch: () => void;
 } {
   const [loading, setLoading] = useState(true);
@@ -123,5 +124,14 @@ export function useEmployeeProfileData(
     };
   }, [client, employeeId, reloadToken]);
 
-  return { loading, refreshing, error, model, access, documentTypes, refetch };
+  return {
+    loading,
+    refreshing,
+    error,
+    model,
+    access,
+    documentTypes,
+    refreshVersion: reloadToken,
+    refetch,
+  };
 }

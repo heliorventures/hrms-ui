@@ -16,6 +16,7 @@ import PageInformation from '../../../components/common/PageInformation';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 
 import { EmployeeHeader } from './components/EmployeeHeader';
+import EmployeeUanCard from './components/EmployeeUanCard';
 import { ProfileSectionSkeleton, ErrorSection } from './components/SectionStates';
 import { SidebarProfile } from './components/SidebarProfile';
 import { TabNavigation, type ProfileTabDef } from './components/TabNavigation';
@@ -49,10 +50,8 @@ interface EmployeeProfileShellProps {
 
 export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) {
   const client = useGraphClient('client');
-  const { loading, refreshing, error, model, access, documentTypes, refetch } = useEmployeeProfileData(
-    client,
-    employeeId
-  );
+  const { loading, refreshing, error, model, access, documentTypes, refreshVersion, refetch } =
+    useEmployeeProfileData(client, employeeId);
 
   const canManageOrganizationFields = access?.canManageOrganizationFields ?? false;
   const visibleTabs = useMemo(
@@ -103,7 +102,10 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
     return (
       <div className="min-h-[60vh] space-y-4 pb-8">
         <EmployeeHeader employeeName={employee.fullName} employeeCode={employee.employeeCode} />
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50" data-tour-anchor="employee-profile-directory-details">
+        <div
+          className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50"
+          data-tour-anchor="employee-profile-directory-details"
+        >
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             Employee details
           </h2>
@@ -144,7 +146,10 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
   return (
     <div className="min-h-[60vh] space-y-4 pb-8">
       {error ? (
-        <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+        >
           Refresh failed; the last loaded profile remains visible. {error}
         </div>
       ) : null}
@@ -199,14 +204,26 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
               />
             ) : null}
             {activeTab === 'identity' ? (
-              <IdentityTab
-                employeeId={model.core.id}
-                client={client}
-                model={model}
-                documentTypes={documentTypes}
-                isHr={canManageOrganizationFields}
-                onChanged={refetch}
-              />
+              <div className="space-y-4">
+                {showSalary ? (
+                  <EmployeeUanCard
+                    key={model.core.id}
+                    employeeId={model.core.id}
+                    client={client}
+                    canEdit={canManageOrganizationFields}
+                    refreshVersion={refreshVersion}
+                    onChanged={refetch}
+                  />
+                ) : null}
+                <IdentityTab
+                  employeeId={model.core.id}
+                  client={client}
+                  model={model}
+                  documentTypes={documentTypes}
+                  isHr={canManageOrganizationFields}
+                  onChanged={refetch}
+                />
+              </div>
             ) : null}
             {activeTab === 'education' ? (
               <EducationTab

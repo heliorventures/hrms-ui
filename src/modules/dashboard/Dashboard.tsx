@@ -1,7 +1,4 @@
-import { CalendarPlus } from 'lucide-react';
-
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
-import PageActionLink from '../../components/common/PageActionLink';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEmployeeDisplayName } from '../../contexts/employeeDisplayNameContext';
 import { useTenant } from '../../contexts/TenantContext';
@@ -12,23 +9,6 @@ import OnLeaveToday from './components/OnLeaveToday';
 import PunchInOut from './components/PunchInOut';
 import RecentLeaveRequest from './components/RecentLeaveRequest';
 import UpcomingHolidays from './components/UpcomingHolidays';
-
-const HomeShortcuts = () => {
-  const { clientSession } = useAuth();
-  const permissions = createPermissionService(clientSession);
-  return (
-    <nav aria-label="Home shortcuts" className="ml-auto flex flex-wrap justify-end gap-2">
-      {permissions.canCapability('action.leave.submit') && permissions.canRoute('/leave') ? (
-          <PageActionLink
-            to="/leave?apply=1"
-            label="Request leave"
-            icon={<CalendarPlus className="h-5 w-5" />}
-            tourAnchor="dashboard-request-leave"
-        />
-      ) : null}
-    </nav>
-  );
-};
 
 const Dashboard = () => {
   const { clientSession, tenantId, user } = useAuth();
@@ -57,7 +37,6 @@ const Dashboard = () => {
             }).format(new Date())}
           </p>
         </div>
-        <HomeShortcuts />
       </div>
       {hasSummary ? (
         <section
@@ -67,12 +46,14 @@ const Dashboard = () => {
         >
           <h2 className="sr-only">Your day</h2>
           {canReadAttendance ? <PunchInOut key={`attendance:${authorizationKey}`} /> : null}
-          {canReadLeave ? <LeaveBalanceCard key={`leave-balance:${authorizationKey}`} /> : null}
+          <div className="min-w-0 space-y-4">
+            <HomeQuickAccess />
+            {canReadLeave ? <LeaveBalanceCard key={`leave-balance:${authorizationKey}`} /> : null}
+          </div>
         </section>
-      ) : null}
-      <div data-tour-anchor="dashboard-quick-access">
+      ) : (
         <HomeQuickAccess />
-      </div>
+      )}
       {canReadLeave && permissions.canRoute('/leave') ? (
         <RecentLeaveRequest key={`${tenantId}:${user?.id}:${authorizationKey}`} />
       ) : null}

@@ -66,11 +66,14 @@ interface AttendanceSummaryDetailsProps {
 
 const AttendanceSummaryDetails = ({ summary, actions }: AttendanceSummaryDetailsProps) => (
   <div className="space-y-4 text-sm">
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-content-muted">Worked today (completed)</span>
-      <span className="text-5xl font-semibold tabular-nums tracking-tight text-content-primary">
-        {Math.floor(summary.totalWorkedMinutes / 60)}h {summary.totalWorkedMinutes % 60}m
-      </span>
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-content-muted">Worked today (completed)</span>
+        <span className="text-5xl font-semibold tabular-nums tracking-tight text-content-primary">
+          {Math.floor(summary.totalWorkedMinutes / 60)}h {summary.totalWorkedMinutes % 60}m
+        </span>
+      </div>
+      {actions ? <div className="min-w-0 flex-1 basis-56">{actions}</div> : null}
     </div>
     {summary.openSegment ? (
       <p className="text-sm text-content-secondary">
@@ -82,7 +85,6 @@ const AttendanceSummaryDetails = ({ summary, actions }: AttendanceSummaryDetails
         A session has a missed punch out. Open attendance sessions to review.
       </p>
     ) : null}
-    {actions}
     {summary.segments.length > 0 ? (
       <details className="rounded-lg bg-surface-selected p-3">
         <summary className="cursor-pointer text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">

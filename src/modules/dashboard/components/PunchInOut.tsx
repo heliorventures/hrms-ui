@@ -297,7 +297,7 @@ const PunchActionArea = ({
         {mutationError}
       </PageNotice>
     ) : null}
-    <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-content-secondary">
+    <label className="flex min-h-11 cursor-pointer items-start gap-2 text-sm text-content-secondary">
       <input
         type="checkbox"
         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
@@ -366,7 +366,21 @@ const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps)
   const lastEventCoords = getLastEventCoords(lastPunch);
 
   return (
-    <Card title="Today’s attendance">
+    <Card>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-base font-semibold tracking-tight">Today’s attendance</h3>
+        {summary ? (
+          <Button
+            variant="quiet"
+            size="sm"
+            busy={summaryPhase === 'refreshing'}
+            busyLabel="Refreshing Attendance Summary…"
+            onClick={onRefresh}
+          >
+            Refresh
+          </Button>
+        ) : null}
+      </div>
       <div className="space-y-4" data-tour-anchor="dashboard-attendance-summary">
         <PunchSummaryContent
           error={summaryError}
@@ -375,7 +389,7 @@ const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps)
           onRefresh={onRefresh}
           actions={
             canPunch ? (
-              <div className="space-y-3">
+              <div className="flex flex-col items-start gap-2">
                 <PunchActionArea
                   buttonLabel={buttonLabel}
                   disabled={!summaryIsReady}
@@ -389,17 +403,6 @@ const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps)
             ) : null
           }
         />
-        {summary ? (
-          <Button
-            variant="quiet"
-            size="sm"
-            busy={summaryPhase === 'refreshing'}
-            busyLabel="Refreshing Attendance Summary…"
-            onClick={onRefresh}
-          >
-            Refresh
-          </Button>
-        ) : null}
         {lastPunch ? (
           <details className="rounded-lg bg-surface-selected p-3">
             <summary className="cursor-pointer text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
