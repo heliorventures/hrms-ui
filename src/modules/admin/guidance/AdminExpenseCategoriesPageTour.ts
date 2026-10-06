@@ -5,6 +5,14 @@ export const adminExpenseCategoriesPageTour: TourDefinition = {
   routePaths: ['admin/expense-categories'],
   steps: [
     {
+      id: 'expense-category-create',
+      anchor: 'expense-categories.tabs',
+      title: 'Configure expense categories',
+      body: 'Choose Categories, then Add. Enter Display Name, Code, and an optional Max Amount Per Claim. Save and check the category row. Codes are fixed once created. Configure an applicable expense policy next. Every new claim needs evidence.',
+      destination: { path: '/admin/expense-categories?tab=categories', tabId: 'categories' },
+      isVisible: ({ canCapability }) => canCapability?.('action.expense.manage') ?? false,
+    },
+    {
       id: 'expense-categories-tabs',
       anchor: 'expense-categories.tabs',
       title: 'Choose categories or policies',

@@ -3,7 +3,7 @@ import type { PropsWithChildren } from 'react';
 import AutomaticOverviewController from './AutomaticOverviewController';
 import GuidanceProvider from './GuidanceProvider';
 import OverviewPreferenceNotice from './OverviewPreferenceNotice';
-import type { TourContext, TourDefinition } from './tourTypes';
+import type { TourContext, TourDefinition, TourStep } from './tourTypes';
 import { useOverviewPreference } from './useOverviewPreference';
 
 type Props = PropsWithChildren<{
@@ -12,6 +12,7 @@ type Props = PropsWithChildren<{
   authorizationKey: string;
   tourContext: Omit<TourContext, 'routePath'>;
   overviewTour: TourDefinition;
+  navigateStep?: (step: TourStep, confirmed?: boolean) => boolean;
 }>;
 
 const GuidanceLifecycle = ({ identityKey, children, ...providerProps }: Props) => {

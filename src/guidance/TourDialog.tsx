@@ -14,6 +14,8 @@ type TourDialogProps = {
   onSkipStep: () => void;
   onAdvance: () => void;
   onClose: () => void;
+  navigationBlocked?: boolean;
+  onConfirmNavigation?: () => void;
 };
 
 const TourDialog = ({
@@ -28,6 +30,8 @@ const TourDialog = ({
   onSkipStep,
   onAdvance,
   onClose,
+  navigationBlocked,
+  onConfirmNavigation,
 }: TourDialogProps) => {
   const titleId = useId();
   const descriptionId = useId();
@@ -77,8 +81,19 @@ const TourDialog = ({
             className="mt-3 rounded-md bg-surface-selected px-3 py-2 text-sm text-content-secondary"
             role="status"
           >
-            This item isn&apos;t available right now. You can continue the tour from here.
+            {navigationBlocked
+              ? 'Navigation paused. Save or close your current form, or confirm leaving it. Unsaved changes may be lost.'
+              : "This item isn't available right now. You can continue the tour from here."}
           </p>
+        ) : null}
+        {navigationBlocked && onConfirmNavigation ? (
+          <button
+            type="button"
+            className="mt-3 min-h-11 rounded-md border border-line px-3 text-sm focus-visible:ring-2 focus-visible:ring-focus"
+            onClick={onConfirmNavigation}
+          >
+            Leave current form and continue
+          </button>
         ) : null}
       </div>
 

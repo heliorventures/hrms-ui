@@ -339,6 +339,13 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   },
   {
     kind: 'page',
+    path: 'admin/company-locations',
+    title: 'Company locations',
+    tenantPath: '/admin/company-locations',
+    load: () => import('../modules/admin/AdminCompanyLocationsPage'),
+  },
+  {
+    kind: 'page',
     path: 'admin/timesheet-settings',
     title: 'Timesheet settings',
     tenantPath: '/admin/timesheet-settings',

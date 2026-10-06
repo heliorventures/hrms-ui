@@ -23,6 +23,21 @@ function serviceWith(
 }
 
 describe('performance and survey workspace route permissions', () => {
+  it('requires exact tenant-wide company location management authority', () => {
+    for (const permission of ['employee:manage', 'employee:write']) {
+      expect(
+        serviceWith([permission], [], { [permission]: 'ALL' }).canRoute('/admin/company-locations')
+      ).toBe(true);
+      expect(
+        serviceWith([permission], [], { [permission]: 'SELF' }).canRoute('/admin/company-locations')
+      ).toBe(false);
+    }
+    expect(
+      serviceWith(['attendance:punch_policy'], [], { 'attendance:punch_policy': 'ALL' }).canRoute(
+        '/admin/company-locations'
+      )
+    ).toBe(false);
+  });
   it('allows each exact scoped performance persona', () => {
     expect(
       serviceWith(['performance:self'], [], { 'performance:self': 'SELF' }).canRoute(

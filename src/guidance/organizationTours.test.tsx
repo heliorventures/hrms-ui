@@ -32,7 +32,9 @@ const context = (
     routePath,
     canCapability: (capability) => availableCapabilities.has(capability),
     canScopedPermission: (permission, scopes) =>
-      (scopes ?? []).some((scope) => availablePermissions.has(`${permission}:${scope}`)),
+      (scopes ?? ['SELF', 'TEAM', 'DEPARTMENT', 'ALL']).some((scope) =>
+        availablePermissions.has(`${permission}:${scope}`)
+      ),
   };
 };
 
@@ -163,12 +165,7 @@ it('limits document management, employee management, and review guidance to matc
 });
 
 it.each([
-  [
-    employeeDetailTour,
-    'employee-profile-document-upload',
-    'employee-profile-document-upload',
-    'Upload',
-  ],
+  [employeeDetailTour, 'employee-profile-document-upload', 'profile-section-navigation', 'Upload'],
   [
     organizationDocumentsTour,
     'organization-company-document-upload',

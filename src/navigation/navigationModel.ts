@@ -165,6 +165,13 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
     'bank',
   ]),
   page('people', '/organization/documents', 'Documents', 25, ['policies', 'handbook', 'files']),
+  page('people', '/admin/company-locations', 'Company Locations', 26, [
+    'office',
+    'branch',
+    'location',
+    'weekly off',
+    'working calendar',
+  ]),
   page('attendance', '/attendance', 'My Attendance', 31, [
     'punch',
     'clock',
@@ -329,6 +336,7 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
   reports('leave', 'leave', 55),
   approvalRules('leave', 57),
   approvalRules('expenses', 63),
+  reports('expenses', 'expenses', 64),
   reports('payroll', 'payroll', 77),
   ...WORKPLACE_DESTINATIONS,
   {

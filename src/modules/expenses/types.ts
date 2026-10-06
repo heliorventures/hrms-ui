@@ -8,6 +8,7 @@ export interface ExpenseCategoryRow {
 }
 
 export interface ExpenseRow {
+  hasSupportingFile?: boolean;
   id: string;
   employeeId: string;
   expenseCategoryId: string;
@@ -30,6 +31,8 @@ export interface ExpenseRow {
 }
 
 export interface TravelRequestRow {
+  hasSupportingFile?: boolean;
+  supportingFileStorageId?: string | null;
   id: string;
   employeeId: string;
   originLocation?: string | null;

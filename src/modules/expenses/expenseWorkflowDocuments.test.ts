@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+
 import {
   Kind,
   parse,
@@ -10,10 +11,14 @@ import {
 import { describe, expect, it } from 'vitest';
 
 const operations = parse(
-  readFileSync(new URL('../../api/documents/clientOperations.graphql', import.meta.url), 'utf8')
+  readFileSync(new URL('../../api/documents/clientOperations.graphql', import.meta.url), 'utf8') +
+    readFileSync(new URL('../../api/documents/expenseBoard.graphql', import.meta.url), 'utf8')
 );
 const extensions = parse(
-  readFileSync(new URL('../../api/schema-extensions/backlog-catchup.graphql', import.meta.url), 'utf8')
+  readFileSync(
+    new URL('../../api/schema-extensions/backlog-catchup.graphql', import.meta.url),
+    'utf8'
+  )
 );
 
 function operation(name: string): OperationDefinitionNode {
@@ -33,31 +38,29 @@ function rootField(value: OperationDefinitionNode): FieldNode {
   return field;
 }
 
-describe.each([
-  'ApproveExpense',
-  'RejectExpense',
-  'ApproveTravelRequest',
-  'RejectTravelRequest',
-])('%s source operation', (operationName) => {
-  it('requires and passes expectedWorkflowStepId', () => {
-    const value = operation(operationName);
-    const variable = value.variableDefinitions?.find(
-      (definition) => definition.variable.name.value === 'expectedWorkflowStepId'
-    );
-    const argument = rootField(value).arguments?.find(
-      (candidate) => candidate.name.value === 'expectedWorkflowStepId'
-    );
+describe.each(['ApproveExpense', 'RejectExpense', 'ApproveTravelRequest', 'RejectTravelRequest'])(
+  '%s source operation',
+  (operationName) => {
+    it('requires and passes expectedWorkflowStepId', () => {
+      const value = operation(operationName);
+      const variable = value.variableDefinitions?.find(
+        (definition) => definition.variable.name.value === 'expectedWorkflowStepId'
+      );
+      const argument = rootField(value).arguments?.find(
+        (candidate) => candidate.name.value === 'expectedWorkflowStepId'
+      );
 
-    expect(variable?.type).toMatchObject({
-      kind: Kind.NON_NULL_TYPE,
-      type: { kind: Kind.NAMED_TYPE, name: { value: 'ID' } },
+      expect(variable?.type).toMatchObject({
+        kind: Kind.NON_NULL_TYPE,
+        type: { kind: Kind.NAMED_TYPE, name: { value: 'ID' } },
+      });
+      expect(argument?.value).toMatchObject({
+        kind: Kind.VARIABLE,
+        name: { value: 'expectedWorkflowStepId' },
+      });
     });
-    expect(argument?.value).toMatchObject({
-      kind: Kind.VARIABLE,
-      name: { value: 'expectedWorkflowStepId' },
-    });
-  });
-});
+  }
+);
 
 it('selects pendingApprovalStepId for expense and travel action rows', () => {
   const board = operation('ExpenseBoard');
@@ -68,7 +71,8 @@ it('selects pendingApprovalStepId for expense and travel action rows', () => {
     );
     expect(
       field?.selectionSet?.selections.some(
-        (selection) => selection.kind === Kind.FIELD && selection.name.value === 'pendingApprovalStepId'
+        (selection) =>
+          selection.kind === Kind.FIELD && selection.name.value === 'pendingApprovalStepId'
       )
     ).toBe(true);
   }
@@ -81,7 +85,8 @@ it('extends expense and travel rows with pendingApprovalStepId for source codege
         definition.kind === Kind.OBJECT_TYPE_EXTENSION && definition.name.value === typeName
     );
     const field = extension?.fields?.find(
-      (candidate): candidate is FieldDefinitionNode => candidate.name.value === 'pendingApprovalStepId'
+      (candidate): candidate is FieldDefinitionNode =>
+        candidate.name.value === 'pendingApprovalStepId'
     );
     expect(field?.type).toMatchObject({ kind: Kind.NAMED_TYPE, name: { value: 'ID' } });
   }

@@ -25,9 +25,10 @@ export interface LeaveValidationInput {
   consumesLeaveBalance: boolean;
   balanceForType?: ApplyBalanceRow;
   upcomingHolidays: ApplyHolidayRow[];
+  requestedDays?: number;
 }
 type LeaveFieldFailure = { field: ApplyLeaveField; message: string } | null;
-function validateRequiredFields({
+export function validateRequiredFields({
   leaveTypeId,
   fromDate,
   toDate,
@@ -139,12 +140,14 @@ export function validateLeaveApplication(input: LeaveValidationInput): LeaveFiel
   const requiredError = validateRequiredFields(input);
   if (requiredError) return requiredError;
   const sandwichOn = input.selectedType?.sandwichRule === true;
-  const reqDays = requestedLeaveDays(
-    input.fromDate,
-    input.toDate,
-    input.halfDayEligible && input.isHalfDay,
-    sandwichOn,
-    input.upcomingHolidays
-  );
+  const reqDays =
+    input.requestedDays ??
+    requestedLeaveDays(
+      input.fromDate,
+      input.toDate,
+      input.halfDayEligible && input.isHalfDay,
+      sandwichOn,
+      input.upcomingHolidays
+    );
   return validateLeaveRange(input, reqDays, sandwichOn) ?? validateLeaveBalance(input, reqDays);
 }

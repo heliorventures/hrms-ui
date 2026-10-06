@@ -11,6 +11,15 @@ const graphClients = vi.hoisted(() => {
 });
 const request = graphClients.initialRequest;
 const uploadState = vi.hoisted(() => ({ upload: vi.fn() }));
+// Ownership tests isolate the mutation; useLeaveDatePreview.test.tsx covers the real async preview.
+vi.mock('./useLeaveDatePreview', () => ({
+  useLeaveDatePreview: () => ({
+    requestedDays: 1,
+    previewLoading: false,
+    previewError: undefined,
+    retryPreview: () => undefined,
+  }),
+}));
 
 vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({ tenantId: 'tenant-a', user: { id: 'user-a' }, clientSession: null }),

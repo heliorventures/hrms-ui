@@ -1,8 +1,6 @@
-import type {
-  EmployeePrivateProfileQuery,
-  PayrollEmploymentHistoryQuery,
-} from '../../../../api/graphql/graphql';
+import type { PayrollEmploymentHistoryQuery } from '../../../../api/graphql/graphql';
 import { employeeStatusForDisplay } from '../../../employeeStatus';
+import type { EmployeeProfileLocationQuery } from '../profileDocuments';
 import type {
   CompanyAssignment,
   CoreEmployeeRecord,
@@ -41,7 +39,7 @@ function verifyFromBool(v: boolean): VerificationStatus {
 
 /** Build full profile view model from `EmployeeProfileBundle`. */
 export function mapBundleToEmployeeProfileModel(
-  bundle: EmployeePrivateProfileQuery,
+  bundle: EmployeeProfileLocationQuery,
   employmentHistoryRecords: PayrollEmploymentHistoryQuery['employmentHistoryRecords'] = []
 ): EmployeeProfileModel | null {
   const emp = bundle.employee;
@@ -251,7 +249,7 @@ export function mapBundleToEmployeeProfileModel(
   const companyAssignment: CompanyAssignment = {
     leavePolicyName: '—',
     shiftName: '—',
-    locationName: '—',
+    locationName: emp.locationName ?? 'Company default',
     gradeBand: '—',
   };
 

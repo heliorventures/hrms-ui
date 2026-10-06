@@ -1,4 +1,6 @@
 export type HrReportKind =
+  | 'EXPENSE_CLAIMS'
+  | 'TRAVEL_REQUESTS'
   | 'ATTENDANCE_PUNCTUALITY'
   | 'LEAVE_REQUESTS'
   | 'LEAVE_BALANCES'
@@ -9,10 +11,19 @@ export type HrReportKind =
   | 'COMP_OFF_CREDITS'
   | 'PENDING_REQUESTS';
 export interface ReportFilter {
+  claimTravelFilter?: ClaimTravelFilter | null;
   kind: HrReportKind;
   fromDate: string;
   toDate: string;
   employeeSearch?: string | null;
+}
+export interface ClaimTravelFilter {
+  departmentId?: string | null;
+  locationId?: string | null;
+  expenseCategoryId?: string | null;
+  approvalStatus?: string | null;
+  paymentStatus?: string | null;
+  routeSearch?: string | null;
 }
 export interface ReportRows {
   columns: string[];
@@ -25,13 +36,13 @@ export interface ReportCsv {
   rowCount: number;
 }
 export const HrReportRowsDocument = `
-  query HrReportRows($kind: HrReportKind!, $fromDate: NaiveDate!, $toDate: NaiveDate!, $employeeSearch: String, $offset: Int! = 0) {
-    hrReportRows(kind: $kind, fromDate: $fromDate, toDate: $toDate, employeeSearch: $employeeSearch, offset: $offset, limit: 50) { columns rows totalRows }
+  query HrReportRows($kind: HrReportKind!, $fromDate: NaiveDate!, $toDate: NaiveDate!, $employeeSearch: String, $offset: Int! = 0, $claimTravelFilter: ClaimTravelReportFilterInput) {
+    hrReportRows(kind: $kind, fromDate: $fromDate, toDate: $toDate, employeeSearch: $employeeSearch, offset: $offset, limit: 50, claimTravelFilter: $claimTravelFilter) { columns rows totalRows }
   }
 `;
 export const HrReportCsvDocument = `
-  query HrReportCsv($kind: HrReportKind!, $fromDate: NaiveDate!, $toDate: NaiveDate!, $employeeSearch: String) {
-    hrReportCsv(kind: $kind, fromDate: $fromDate, toDate: $toDate, employeeSearch: $employeeSearch) { fileName csv rowCount }
+  query HrReportCsv($kind: HrReportKind!, $fromDate: NaiveDate!, $toDate: NaiveDate!, $employeeSearch: String, $claimTravelFilter: ClaimTravelReportFilterInput) {
+    hrReportCsv(kind: $kind, fromDate: $fromDate, toDate: $toDate, employeeSearch: $employeeSearch, claimTravelFilter: $claimTravelFilter) { fileName csv rowCount }
   }
 `;
 export const HrInsightsDocument = `

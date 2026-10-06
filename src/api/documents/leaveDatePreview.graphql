@@ -1,0 +1,13 @@
+query LeaveDatePreview(
+  $leaveTypeId: ID!
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $isHalfDay: Boolean = false
+) {
+  leaveDatePreview(
+    leaveTypeId: $leaveTypeId
+    fromDate: $fromDate
+    toDate: $toDate
+    isHalfDay: $isHalfDay
+  )
+}

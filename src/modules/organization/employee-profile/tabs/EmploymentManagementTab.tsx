@@ -1,24 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { History, Settings2, Wallet } from 'lucide-react';
-import type { CanonicalEmployeeStatus } from '../../../employeeStatus';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { EmployeeProfileModel, EmploymentStatusUi } from '../types';
-import { InfoCard } from '../components/InfoCard';
-import ImportedProfileDetails from '../components/ImportedProfileDetails';
-import { EmploymentStatusBadge } from '../components/StatusBadge';
-import { SalaryTimeline } from '../components/SalaryTimeline';
-import { LifecycleTimeline } from '../components/LifecycleTimeline';
-import { EmploymentActionModals } from '../components/EmploymentActionModals';
-import Button from '../../../../components/common/Button';
-import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
-import { formatCompactDate, formatInrAnnual } from '../lib/masking';
 import {
   ExpensePolicyDirectoryDocument,
   OrgChartDocument,
   PayrollSetEmployeeCompensationDocument,
   UpdateEmployeeDocument,
 } from '../../../../api/graphql/graphql';
+import Button from '../../../../components/common/Button';
+import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
+import type { CanonicalEmployeeStatus } from '../../../employeeStatus';
+import EmployeeLocationSettings from '../components/EmployeeLocationSettings';
+import { EmploymentActionModals } from '../components/EmploymentActionModals';
+import ImportedProfileDetails from '../components/ImportedProfileDetails';
+import { InfoCard } from '../components/InfoCard';
+import { LifecycleTimeline } from '../components/LifecycleTimeline';
+import { SalaryTimeline } from '../components/SalaryTimeline';
+import { EmploymentStatusBadge } from '../components/StatusBadge';
+import { formatCompactDate, formatInrAnnual } from '../lib/masking';
+import type { EmployeeProfileModel, EmploymentStatusUi } from '../types';
 
 interface EmploymentManagementTabProps {
   employeeId: string;
@@ -46,7 +47,9 @@ export function EmploymentManagementTab({
   const [assignOpen, setAssignOpen] = useState(false);
   const [termEffective, setTermEffective] = useState('');
   const [termReason, setTermReason] = useState('');
-  const [newSalaryAnnual, setNewSalaryAnnual] = useState(String(model.compensation.baseSalaryAnnual));
+  const [newSalaryAnnual, setNewSalaryAnnual] = useState(
+    String(model.compensation.baseSalaryAnnual)
+  );
   const [salaryEffective, setSalaryEffective] = useState('');
   const [salaryReason, setSalaryReason] = useState('');
   const [salarySaving, setSalarySaving] = useState(false);
@@ -58,7 +61,9 @@ export function EmploymentManagementTab({
   const [orgLoading, setOrgLoading] = useState(true);
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [designations, setDesignations] = useState<{ id: string; title: string }[]>([]);
-  const [orgRows, setOrgRows] = useState<{ employeeId: string; fullName: string; employeeCode: string }[]>([]);
+  const [orgRows, setOrgRows] = useState<
+    { employeeId: string; fullName: string; employeeCode: string }[]
+  >([]);
   const [salaryAnnual, setSalaryAnnual] = useState(model.compensation.baseSalaryAnnual);
   const [roleAssignment, setRoleAssignment] = useState(model.roleAssignment);
 
@@ -92,7 +97,9 @@ export function EmploymentManagementTab({
           client.request(OrgChartDocument, { limit: 500 }),
         ]);
         if (cancelled) return;
-        setDepartments(directory.departments.map((department) => ({ id: department.id, name: department.name })));
+        setDepartments(
+          directory.departments.map((department) => ({ id: department.id, name: department.name }))
+        );
         setDesignations(
           directory.designations.map((designation) => ({
             id: designation.id,
@@ -207,8 +214,15 @@ export function EmploymentManagementTab({
       setRoleAssignment((current) => ({
         ...current,
         department: departments.find((row) => row.id === departmentId)?.name ?? current.department,
-        designation: designations.find((row) => row.id === designationId)?.title ?? current.designation,
-        reportingManagerName: managerChoice === CLEAR_MANAGER ? '—' : managerChoice === NO_MANAGER_CHANGE ? current.reportingManagerName : orgRows.find((row) => row.employeeId === managerChoice)?.fullName ?? current.reportingManagerName,
+        designation:
+          designations.find((row) => row.id === designationId)?.title ?? current.designation,
+        reportingManagerName:
+          managerChoice === CLEAR_MANAGER
+            ? '—'
+            : managerChoice === NO_MANAGER_CHANGE
+              ? current.reportingManagerName
+              : (orgRows.find((row) => row.employeeId === managerChoice)?.fullName ??
+                current.reportingManagerName),
       }));
       setRoleOpen(false);
       setBanner('Role and reporting updated.');
@@ -238,23 +252,59 @@ export function EmploymentManagementTab({
         <div className="flex flex-wrap items-center gap-2">
           <EmploymentStatusBadge status={statusUi} />
           {statusUi !== 'ACTIVE' ? (
-            <Button type="button" size="sm" variant="secondary" disabled={statusSaving} onClick={() => void patchEmployeeStatus('ACTIVE')}>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={statusSaving}
+              onClick={() => void patchEmployeeStatus('ACTIVE')}
+            >
               Activate
             </Button>
           ) : null}
-          <Button type="button" size="sm" variant="outline" disabled={statusSaving} onClick={() => void patchEmployeeStatus('PROBATION')}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={statusSaving}
+            onClick={() => void patchEmployeeStatus('PROBATION')}
+          >
             Mark probation
           </Button>
-          <Button type="button" size="sm" variant="outline" disabled={statusSaving} onClick={() => void patchEmployeeStatus('INACTIVE')}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={statusSaving}
+            onClick={() => void patchEmployeeStatus('INACTIVE')}
+          >
             Deactivate
           </Button>
-          <Button type="button" size="sm" variant="outline" disabled={statusSaving} onClick={() => void patchEmployeeStatus('ON_LEAVE')}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={statusSaving}
+            onClick={() => void patchEmployeeStatus('ON_LEAVE')}
+          >
             Mark on leave
           </Button>
-          <Button type="button" size="sm" variant="outline" disabled={statusSaving} onClick={() => void patchEmployeeStatus('SUSPENDED')}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={statusSaving}
+            onClick={() => void patchEmployeeStatus('SUSPENDED')}
+          >
             Suspend
           </Button>
-          <Button type="button" size="sm" variant="danger" disabled={statusSaving} onClick={() => setTerminateOpen(true)}>
+          <Button
+            type="button"
+            size="sm"
+            variant="danger"
+            disabled={statusSaving}
+            onClick={() => setTerminateOpen(true)}
+          >
             Terminate
           </Button>
         </div>
@@ -263,7 +313,11 @@ export function EmploymentManagementTab({
       <InfoCard
         title="Compensation"
         subtitle={`Last updated ${formatCompactDate(model.compensation.lastUpdatedAt)}`}
-        action={<Button type="button" size="sm" variant="primary" onClick={() => setSalaryOpen(true)}>Update Salary</Button>}
+        action={
+          <Button type="button" size="sm" variant="primary" onClick={() => setSalaryOpen(true)}>
+            Update Salary
+          </Button>
+        }
       >
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <div className="rounded-2xl bg-slate-50/90 p-4 dark:bg-slate-800/50">
@@ -278,7 +332,9 @@ export function EmploymentManagementTab({
               {model.compensation.components.map((component) => (
                 <li key={component.code} className="flex justify-between gap-2">
                   <span>{component.label}</span>
-                  <span className="tabular-nums">{formatInrAnnual(component.amountAnnual, true)}</span>
+                  <span className="tabular-nums">
+                    {formatInrAnnual(component.amountAnnual, true)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -296,7 +352,11 @@ export function EmploymentManagementTab({
       <InfoCard
         title="Role & Reporting"
         subtitle="Updates department, designation, and reporting manager"
-        action={<Button type="button" size="sm" variant="outline" onClick={() => setRoleOpen(true)}>Change</Button>}
+        action={
+          <Button type="button" size="sm" variant="outline" onClick={() => setRoleOpen(true)}>
+            Change
+          </Button>
+        }
       >
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {[
@@ -319,7 +379,7 @@ export function EmploymentManagementTab({
 
       <InfoCard
         title="Company Assignments"
-        subtitle="Leave policy, shift, location, grade"
+        subtitle="Leave policy, shift, grade"
         action={
           <Button type="button" size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
             <Settings2 className="mr-1 h-4 w-4" aria-hidden />
@@ -331,10 +391,12 @@ export function EmploymentManagementTab({
           {[
             ['Leave policy', model.companyAssignment.leavePolicyName],
             ['Shift', model.companyAssignment.shiftName],
-            ['Location', model.companyAssignment.locationName],
             ['Grade / band', model.companyAssignment.gradeBand],
           ].map(([label, value]) => (
-            <div key={label} className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">
+            <div
+              key={label}
+              className="rounded-xl border border-slate-100 p-3 dark:border-slate-800"
+            >
               <p className="text-[11px] font-semibold uppercase text-slate-400">{label}</p>
               <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{value}</p>
             </div>
@@ -342,6 +404,7 @@ export function EmploymentManagementTab({
         </div>
       </InfoCard>
 
+      <EmployeeLocationSettings employeeId={employeeId} onChanged={onChanged} />
       <EmploymentActionModals
         assignOpen={assignOpen}
         departmentId={departmentId}

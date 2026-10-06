@@ -3,6 +3,7 @@ import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Table from '../../../components/common/Table';
+import CompanyLocationPicker from '../CompanyLocationPicker';
 import type { AdminLeaveSettingsModel } from '../hooks/useAdminLeaveSettings';
 import { formatDateForTenant, HOLIDAY_TYPE_OPTIONS, selectFieldClass } from '../leaveSettingsUtils';
 
@@ -22,7 +23,12 @@ const LeaveHolidaysSection = ({ model }: LeaveHolidaysSectionProps) => (
 const HolidayCalendarsCard = ({ model }: LeaveHolidaysSectionProps) => (
   <Card title="Calendars">
     <div className="mb-3 flex gap-2">
-      <Button type="button" variant="primary" className="!text-sm" onClick={() => model.setCalendarModal(true)}>
+      <Button
+        type="button"
+        variant="primary"
+        className="!text-sm"
+        onClick={() => model.setCalendarModal(true)}
+      >
         New calendar
       </Button>
     </div>
@@ -66,7 +72,12 @@ const HolidayDaysCard = ({ model }: LeaveHolidaysSectionProps) => (
     {model.selectedCalendarId ? (
       <>
         <div className="mb-3">
-          <Button type="button" variant="primary" className="!text-sm" onClick={() => model.setHolidayModal(true)}>
+          <Button
+            type="button"
+            variant="primary"
+            className="!text-sm"
+            onClick={() => model.setHolidayModal(true)}
+          >
             Add Holiday
           </Button>
         </div>
@@ -105,7 +116,11 @@ const HolidayDaysCard = ({ model }: LeaveHolidaysSectionProps) => (
 const HolidayCalendarModal = ({ model }: LeaveHolidaysSectionProps) => {
   const form = model.calendarForm;
   return (
-    <Modal isOpen={model.calendarModal} onClose={() => model.setCalendarModal(false)} title="New Holiday Calendar">
+    <Modal
+      isOpen={model.calendarModal}
+      onClose={() => model.setCalendarModal(false)}
+      title="New Holiday Calendar"
+    >
       <form className="space-y-3" onSubmit={(event) => void model.saveCalendar(event)}>
         <Input
           label="Name"
@@ -121,11 +136,10 @@ const HolidayCalendarModal = ({ model }: LeaveHolidaysSectionProps) => {
           fullWidth
           required
         />
-        <Input
-          label="Location ID (Optional UUID)"
+        <CompanyLocationPicker
+          label="Holiday scope"
           value={form.locationId}
-          onChange={(event) => model.setCalendarForm({ ...form, locationId: event.target.value })}
-          fullWidth
+          onChange={(value) => model.setCalendarForm({ ...form, locationId: value })}
         />
         <div className="flex gap-2">
           <Button type="submit" variant="primary">
@@ -143,7 +157,11 @@ const HolidayCalendarModal = ({ model }: LeaveHolidaysSectionProps) => {
 const HolidayDayModal = ({ model }: LeaveHolidaysSectionProps) => {
   const form = model.holidayForm;
   return (
-    <Modal isOpen={model.holidayModal} onClose={() => model.setHolidayModal(false)} title="Add Holiday">
+    <Modal
+      isOpen={model.holidayModal}
+      onClose={() => model.setHolidayModal(false)}
+      title="Add Holiday"
+    >
       <form className="space-y-3" onSubmit={(event) => void model.saveHoliday(event)}>
         <Input
           type="date"
@@ -160,7 +178,9 @@ const HolidayDayModal = ({ model }: LeaveHolidaysSectionProps) => {
           fullWidth
           required
         />
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Holiday Type</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Holiday Type
+        </label>
         <select
           className={selectFieldClass}
           value={form.holidayType}

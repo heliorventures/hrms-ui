@@ -11,6 +11,25 @@ const graphClients = vi.hoisted(() => {
 });
 const request = graphClients.initialRequest;
 const uploadState = vi.hoisted(() => ({ upload: vi.fn() }));
+const previewFixture = vi.hoisted(() => ({ days: null as number | null }));
+
+vi.mock('./useLeaveDatePreview', async () => {
+  const { requestedLeaveDays } = await import('./applyLeavePolicy');
+  return {
+    useLeaveDatePreview: (
+      _ownership: unknown,
+      fields: { fromDate: string; toDate: string; isHalfDay: boolean },
+      eligible: boolean
+    ) => ({
+      requestedDays:
+        previewFixture.days ??
+        requestedLeaveDays(fields.fromDate, fields.toDate, eligible && fields.isHalfDay, false, []),
+      previewLoading: false,
+      previewError: undefined,
+      retryPreview: () => undefined,
+    }),
+  };
+});
 
 vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({ tenantId: 'tenant-a', user: { id: 'user-a' }, clientSession: null }),
@@ -24,6 +43,7 @@ vi.mock('../../../utils/tenantFileUpload', () => ({
 }));
 
 beforeEach(() => {
+  previewFixture.days = null;
   request.mockReset();
   uploadState.upload.mockReset();
   graphClients.current = { request };
@@ -259,6 +279,7 @@ it('uploads mandatory leave evidence and submits the resulting private file id',
 });
 
 it('omits the holiday list while still excluding holidays from the requested balance', async () => {
+  previewFixture.days = 1;
   request.mockResolvedValue({});
   const onSubmitted = vi.fn();
   render(

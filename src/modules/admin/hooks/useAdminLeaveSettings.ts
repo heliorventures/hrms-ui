@@ -1,7 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useDialogs } from '../../../contexts/DialogContext';
-import { useGraphClient } from '../../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+
 import {
   AdminLeaveConsoleDocument,
   AdjustLeaveBalanceEntitlementAdminDocument,
@@ -14,7 +12,17 @@ import {
   type AdminLeaveConsoleQuery,
   type AdjustLeaveBalanceEntitlementAdminMutationVariables,
 } from '../../../api/graphql/graphql';
-import type { LeavePolicyRow, LeaveSettingsTabKey, LeaveTypeForm, LeaveTypeRow } from '../leaveSettingsTypes';
+import { useDialogs } from '../../../contexts/DialogContext';
+import { captureGuidanceFormSave } from '../../../guidance/tourNavigation';
+import { useGraphClient } from '../../../hooks/useGraphClient';
+import { usePageTabs } from '../../../hooks/usePageTabs';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import type {
+  LeavePolicyRow,
+  LeaveSettingsTabKey,
+  LeaveTypeForm,
+  LeaveTypeRow,
+} from '../leaveSettingsTypes';
 import {
   createAdjustmentForm,
   createBalanceForm,
@@ -27,13 +35,18 @@ import {
   numberOrNull,
   provisionBalancesDialog,
 } from '../leaveSettingsUtils';
+import { LEAVE_SETTINGS_TABS } from '../leaveSettingsUtils';
+
 import { useAdminLeaveHolidays } from './useAdminLeaveHolidays';
 
 export function useAdminLeaveSettings() {
   const client = useGraphClient('client');
   const { confirm, alert: showAlert } = useDialogs();
   const currentYear = useMemo(() => new Date().getFullYear(), []);
-  const [tab, setTab] = useState<LeaveSettingsTabKey>('types');
+  const tabs = LEAVE_SETTINGS_TABS.map((item) => ({ id: item.key, label: item.label }));
+  const { tab: selectedTab, setTab } = usePageTabs(tabs);
+  const tab: LeaveSettingsTabKey =
+    LEAVE_SETTINGS_TABS.find((item) => item.key === selectedTab)?.key ?? 'types';
   const [data, setData] = useState<AdminLeaveConsoleQuery | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -219,6 +232,7 @@ export function useAdminLeaveSettings() {
 
   const saveBalance = async (event: FormEvent) => {
     event.preventDefault();
+    const markSaved = captureGuidanceFormSave(event.currentTarget);
     try {
       setError(null);
       await client.request(UpsertLeaveBalanceAdminDocument, {
@@ -232,6 +246,7 @@ export function useAdminLeaveSettings() {
           carriedForwardDays: balanceForm.carried,
         },
       });
+      markSaved();
       await refresh();
     } catch (err) {
       setError(graphQlUserMessage(err));
@@ -240,6 +255,7 @@ export function useAdminLeaveSettings() {
 
   const adjustBalance = async (event: FormEvent) => {
     event.preventDefault();
+    const markSaved = captureGuidanceFormSave(event.currentTarget);
     try {
       setError(null);
       const variables: AdjustLeaveBalanceEntitlementAdminMutationVariables = {
@@ -251,6 +267,7 @@ export function useAdminLeaveSettings() {
         },
       };
       await client.request(AdjustLeaveBalanceEntitlementAdminDocument, variables);
+      markSaved();
       await refresh();
     } catch (err) {
       setError(graphQlUserMessage(err));

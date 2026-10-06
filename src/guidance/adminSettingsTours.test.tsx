@@ -120,9 +120,15 @@ it('covers each requested tenant route and reuses the employee directory alias',
 it('selects leave, expense, communications, and attendance actions through their page permissions', () => {
   const readOnly = context('admin/leave-settings');
   const leaveManager = context('admin/leave-settings', ['action.leave.manage']);
-  const expenseManager = context('admin/expense-categories', ['action.expense.manage']);
+  const expenseManager = context('admin/expense-categories', [
+    'action.expense.manage',
+    'route.admin.expenseCategories',
+  ]);
   const noExpensePermission = context('admin/expense-categories');
-  const notificationManager = context('admin/notifications', ['route.admin.notifications']);
+  const notificationManager = context('admin/notifications', [
+    'route.admin.notifications',
+    'action.notifications.manage',
+  ]);
   const noNotificationPermission = context('admin/notifications');
   const attendanceAdmin = context('admin/attendance-policy', ['route.admin.attendancePolicy']);
 
@@ -133,6 +139,7 @@ it('selects leave, expense, communications, and attendance actions through their
     'leave-settings-comp-off'
   );
   expect(ids(visibleSteps(adminExpenseCategoriesPageTour, expenseManager))).toEqual([
+    'expense-category-create',
     'expense-categories-tabs',
     'expense-policy-matching',
   ]);
@@ -144,6 +151,7 @@ it('selects leave, expense, communications, and attendance actions through their
   ]);
   expect(ids(visibleSteps(adminNotificationsPageTour, noNotificationPermission))).toEqual([]);
   expect(ids(visibleSteps(adminAttendancePolicyPageTour, attendanceAdmin))).toEqual([
+    'attendance-policy-weekly-offs',
     'attendance-policy-boundary',
     'attendance-policy-punch-rules',
   ]);
@@ -161,7 +169,6 @@ it('keeps timesheet policy and catalog explanations on their actual permission p
     'timesheet-settings-adjustment',
   ]);
   expect(ids(visibleSteps(adminHrTimesheetSettingsPageTour, catalogAdmin))).toEqual([
-    'timesheet-settings-adjustment',
     'timesheet-settings-locking',
     'timesheet-settings-projects',
     'timesheet-settings-task-types',

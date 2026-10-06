@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+
+import ExpenseBoardDocument from '../../../api/documents/expenseBoard.graphql?raw';
 import {
-  ExpenseBoardDocument,
   ExpenseSubmissionHintsDocument,
   OrgChartDocument,
   type ExpenseBoardQueryVariables,

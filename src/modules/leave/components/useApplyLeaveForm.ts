@@ -11,6 +11,7 @@ import { useApplyLeaveDialogOwnership } from './useApplyLeaveDialogOwnership';
 import { useApplyLeaveFields } from './useApplyLeaveFields';
 import { useApplyLeaveSelection } from './useApplyLeaveSelection';
 import { useApplyLeaveSubmission } from './useApplyLeaveSubmission';
+import { useLeaveDatePreview } from './useLeaveDatePreview';
 
 export interface ApplyLeaveModalProps {
   isOpen: boolean;
@@ -32,13 +33,15 @@ export const useApplyLeaveForm = (
   const ownership = useApplyLeaveDialogOwnership(client, props.isOpen);
   const fields = useApplyLeaveFields(props.onClose, ownership);
   const selection = useApplyLeaveSelection(props, fields);
-  const submission = useApplyLeaveSubmission(props, fields, selection, ownership);
+  const preview = useLeaveDatePreview(ownership, fields, selection.halfDayEligible);
+  const submission = useApplyLeaveSubmission(props, fields, selection, ownership, preview);
   const visibleFormError =
     fields.formError?.context === ownership.dialogContext ? fields.formError : null;
   return {
     ...fields,
     ...selection,
     ...submission,
+    ...preview,
     ...leaveFieldHandlers(props.leaveTypes, fields),
     visibleFormError,
   };

@@ -400,11 +400,7 @@ mutation ApproveLeaveRequest($leaveRequestId: ID!, $expectedWorkflowStepId: ID!)
   }
 }
 
-mutation RejectLeaveRequest(
-  $leaveRequestId: ID!
-  $expectedWorkflowStepId: ID!
-  $reason: String
-) {
+mutation RejectLeaveRequest($leaveRequestId: ID!, $expectedWorkflowStepId: ID!, $reason: String) {
   rejectLeaveRequest(
     leaveRequestId: $leaveRequestId
     expectedWorkflowStepId: $expectedWorkflowStepId
@@ -608,11 +604,7 @@ mutation ApproveTravelRequest($travelRequestId: ID!, $expectedWorkflowStepId: ID
   }
 }
 
-mutation RejectTravelRequest(
-  $travelRequestId: ID!
-  $expectedWorkflowStepId: ID!
-  $reason: String
-) {
+mutation RejectTravelRequest($travelRequestId: ID!, $expectedWorkflowStepId: ID!, $reason: String) {
   rejectTravelRequest(
     travelRequestId: $travelRequestId
     expectedWorkflowStepId: $expectedWorkflowStepId
@@ -1582,60 +1574,6 @@ mutation EnrollInBenefitPlan($benefitPlanId: ID!) {
 }
 
 # Expenses, leave, attendance, notifications, dashboard widgets (codegen; §0.2)
-query ExpenseBoard(
-  $limit: Int! = 20
-  $includeExpenses: Boolean!
-  $includeTravel: Boolean!
-) {
-  expenseCategories(limit: $limit) @include(if: $includeExpenses) {
-    id
-    name
-    code
-    maxAmountPerClaim
-  }
-  expenses(limit: $limit) @include(if: $includeExpenses) {
-    id
-    employeeId
-    expenseCategoryId
-    travelRequestId
-    workflowInstanceId
-    amount
-    currency
-    expenseDate
-    title
-    status
-    pendingApprovalStage
-    pendingApprovalStepId
-    viewerMayApprove
-    submittedAt
-    approvedAmount
-    paymentStatus
-    paidAt
-    paymentReference
-    receiptFileStorageId
-  }
-  travelRequests(limit: $limit) @include(if: $includeTravel) {
-    id
-    employeeId
-    originLocation
-    destinationLocation
-    fromDate
-    toDate
-    purpose
-    estimatedAmount
-    currency
-    status
-    pendingApprovalStage
-    pendingApprovalStepId
-    viewerMayApprove
-    rejectionReason
-    approvedBy
-    rejectedBy
-    workflowInstanceId
-    submittedAt
-  }
-}
-
 query LeaveBoard(
   $limit: Int! = 20
   $requestOffset: Int! = 0
@@ -2544,120 +2482,7 @@ query EmployeeEvidenceReviewQueue($limit: Int! = 100) {
   }
 }
 
-query EmployeePrivateProfile($employeeId: ID!) {
-  employee(id: $employeeId) {
-    id
-    employeeCode
-    firstName
-    lastName
-    fullName
-    status
-    employmentType
-    dateOfJoining
-    departmentId
-    designationId
-    reportingManagerId
-    userId
-    departmentName
-    designationTitle
-    linkedUserEmail
-    linkedUserUsername
-    reportingManagerName
-    personalPhone
-    currentAddress
-    permanentAddress
-    dateOfBirth
-    gender
-    nationality
-    bloodGroup
-    emergencyContactName
-    emergencyContactPhone
-    emergencyContactRelation
-    createdAt
-    updatedAt
-  }
-  employeeDocuments(employeeId: $employeeId, limit: 100) {
-    id
-    documentTypeId
-    status
-    uploadedAt
-    originalFileName
-    mimeType
-    uploadedByUserId
-    documentTypeName
-    documentTypeCategory
-  }
-  documentTypes(limit: 100) {
-    id
-    name
-    category
-    systemKey
-  }
-  employeePrimaryBank(employeeId: $employeeId) {
-    id
-    bankName
-    accountNumberMasked
-    ifscCode
-    accountType
-    isVerified
-  }
-  employeeIdentityProfile(employeeId: $employeeId) {
-    pan {
-      id
-      maskedPan
-      isVerified
-    }
-    aadhaar {
-      id
-      maskedAadhaar
-      isVerified
-    }
-  }
-  employeeProfileChangeRequests(employeeId: $employeeId) {
-    id
-    requestType
-    status
-    requestedSummary
-    supportingDocumentId
-    reviewedAt
-    rejectionReason
-    createdAt
-    updatedAt
-  }
-  employeeEducationRecords(employeeId: $employeeId) {
-    id
-    employeeId
-    educationLevel
-    qualification
-    fieldOfStudy
-    institution
-    boardUniversity
-    startDate
-    completionYear
-    gradeScore
-    description
-    verificationStatus
-    evidenceDocumentIds
-    rejectionReason
-    updatedAt
-  }
-  employeeWorkExperienceRecords(employeeId: $employeeId) {
-    id
-    employeeId
-    company
-    roleTitle
-    employmentType
-    location
-    startDate
-    endDate
-    isCurrent
-    description
-    verificationStatus
-    evidenceDocumentIds
-    rejectionReason
-    updatedAt
-  }
-}
+# EmployeePrivateProfile is owned by employeePrivateProfile.graphql.
 
 query ClientOpsEmployeeDetail($id: ID!) {
   employee(id: $id) {

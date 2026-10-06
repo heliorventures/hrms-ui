@@ -2,11 +2,20 @@ import { PERMISSIONS } from '../../../auth/permissions';
 import type { TourContext, TourDefinition } from '../../../guidance/tourTypes';
 
 const canManageEmployee = (context: TourContext) =>
-  context.canScopedPermission?.(PERMISSIONS.employeeManage, ['ALL']) ?? false;
+  'profileAccess' in context
+    ? context.profileAccess?.canManageOrganizationFields === true
+    : (context.canScopedPermission?.(PERMISSIONS.employeeManage, ['ALL']) ?? false);
 const canViewPrivateProfile = (context: TourContext) =>
-  (context.canScopedPermission?.(PERMISSIONS.employeeRead, ['SELF', 'TEAM', 'DEPARTMENT', 'ALL']) ??
-    false) ||
-  canManageEmployee(context);
+  'profileAccess' in context
+    ? context.profileAccess?.canViewPrivateProfile === true
+    : (context.canScopedPermission?.(PERMISSIONS.employeeRead, [
+        'SELF',
+        'TEAM',
+        'DEPARTMENT',
+        'ALL',
+      ]) ??
+        false) ||
+      canManageEmployee(context);
 
 export const employeeDetailTour: TourDefinition = {
   id: 'organization-employee-detail',
@@ -59,13 +68,23 @@ export const employeeDetailTour: TourDefinition = {
       anchor: 'profile-section-navigation',
       title: 'Review employee documents',
       body: 'After this tour, open Documents to find the review controls. For a pending employee upload, authorized HR users can preview it, then approve or reject it. The review controls change the document status, so they remain in the live workflow and are not opened by this tour.',
-      isVisible: canManageEmployee,
+      isVisible: (context) =>
+        'profileAccess' in context
+          ? context.profileAccess?.canReviewProfileChanges === true
+          : canManageEmployee(context),
     },
     {
       id: 'employee-profile-employment',
       anchor: 'profile-section-employment',
       title: 'Employment management',
       body: 'Authorized HR users can manage salary, role and organization assignments, and employment lifecycle actions in this section. The live forms and confirmation dialogs validate and save those changes; this tour only explains where they are.',
+      isVisible: canManageEmployee,
+    },
+    {
+      id: 'employee-profile-location',
+      anchor: 'employee-profile.location',
+      title: 'Assign employee company location',
+      body: 'In Employment (HR), Employee Location shows the current location and effective date. Select a named active company location or Company default, then Assign Location Today. The change takes effect on the displayed company business date. Reload and review before retrying a stale revision. This tour does not change the assignment.',
       isVisible: canManageEmployee,
     },
   ],

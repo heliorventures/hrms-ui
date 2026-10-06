@@ -2,9 +2,16 @@ import type { PermissionCode } from '../auth/permissions';
 import type { Capability, ExplicitPermissionScope } from '../auth/permissionService';
 
 /** Information a page tour may use to select permission and tab specific steps. */
+export type ProfileGuidanceAccess = {
+  canViewPrivateProfile: boolean;
+  canEditPersonalProfile: boolean;
+  canManageOrganizationFields: boolean;
+  canReviewProfileChanges: boolean;
+};
 export type TourContext = {
   routePath: string | null;
   hasEmployeeProfile?: boolean;
+  profileAccess?: ProfileGuidanceAccess;
   canPermission?: (permission: PermissionCode) => boolean;
   canCapability?: (capability: Capability) => boolean;
   canScopedPermission?: (
@@ -12,6 +19,7 @@ export type TourContext = {
     allowedScopes?: readonly ExplicitPermissionScope[]
   ) => boolean;
   activeTab?: string | null;
+  allowedTabIds?: (routePath: string) => readonly string[] | undefined;
 };
 
 export type TourStep = {
@@ -22,6 +30,8 @@ export type TourStep = {
   body: string;
   /** Omit a step when its action is unavailable to the current user. */
   isVisible?: (context: TourContext) => boolean;
+  destination?: { path: string; tabId?: string; anchor?: string };
+  featureId?: string;
 };
 
 export type TourDefinition = {

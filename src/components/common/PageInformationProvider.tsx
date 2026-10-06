@@ -81,7 +81,7 @@ const PageInformationProvider = ({ children, scopeKey }: PageInformationProvider
               aria-label="Page information"
               tabIndex={-1}
               data-popover-panel="true"
-              className="app-guidance-popover fixed z-50 w-[26rem] overflow-y-auto rounded-lg border border-line bg-surface p-3 text-content-primary shadow-xl"
+              className="app-guidance-popover fixed z-50 w-[36rem] overflow-y-auto rounded-lg border border-line bg-surface p-3 text-content-primary shadow-xl"
               style={position.style}
             >
               <div className="mb-2 flex items-center justify-between gap-2">

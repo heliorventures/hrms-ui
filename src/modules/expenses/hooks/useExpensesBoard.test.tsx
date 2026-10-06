@@ -3,11 +3,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  ExpenseBoardDocument,
-  ExpenseSubmissionHintsDocument,
-  OrgChartDocument,
-} from '../../../api/graphql/graphql';
+import ExpenseBoardDocument from '../../../api/documents/expenseBoard.graphql?raw';
+import { ExpenseSubmissionHintsDocument, OrgChartDocument } from '../../../api/graphql/graphql';
 
 import { useExpensesBoard } from './useExpensesBoard';
 

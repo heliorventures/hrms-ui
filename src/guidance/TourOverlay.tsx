@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useDialogSurface } from '../components/common/useDialogSurface';
 
 import TourDialog from './TourDialog';
-import type { TourDefinition } from './tourTypes';
+import type { TourDefinition, TourStep } from './tourTypes';
 import { useReducedMotion, useTourAnchor } from './useTourAnchor';
 import { useTourDialogLayout } from './useTourDialogLayout';
 
@@ -12,13 +12,25 @@ type TourOverlayProps = {
   tour: TourDefinition;
   onClose: () => void;
   returnFocusRef: { current: HTMLElement | null };
+  navigateStep?: (step: TourStep, confirmed?: boolean) => boolean;
 };
 
-export const TourOverlay = ({ tour, onClose, returnFocusRef }: TourOverlayProps) => {
+export const TourOverlay = ({ tour, onClose, returnFocusRef, navigateStep }: TourOverlayProps) => {
   const [stepIndex, setStepIndex] = useState(0);
   const step = tour.steps[stepIndex];
+  const [navigationBlocked, setNavigationBlocked] = useState(false);
+  const stepNavigation = useRef(navigateStep);
+  stepNavigation.current = navigateStep;
+  useEffect(() => {
+    if (step?.destination && stepNavigation.current)
+      setNavigationBlocked(!stepNavigation.current(step));
+    else setNavigationBlocked(false);
+  }, [step]);
   const reducedMotion = useReducedMotion();
-  const targetRect = useTourAnchor(step?.anchor ?? null, reducedMotion);
+  const targetRect = useTourAnchor(
+    navigationBlocked ? null : (step?.anchor ?? null),
+    reducedMotion
+  );
   const { closeButtonRef, dialogPosition, dialogRef, spotlightStyle } = useTourDialogLayout(
     targetRect,
     step?.id ?? 'empty'
@@ -77,6 +89,10 @@ export const TourOverlay = ({ tour, onClose, returnFocusRef }: TourOverlayProps)
         onSkipStep={advance}
         onAdvance={advance}
         onClose={onClose}
+        navigationBlocked={navigationBlocked}
+        onConfirmNavigation={() => {
+          if (stepNavigation.current) setNavigationBlocked(!stepNavigation.current(step, true));
+        }}
       />
       <style>{`
         @media (prefers-reduced-motion: reduce) {

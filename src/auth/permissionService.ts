@@ -46,6 +46,7 @@ export type Capability =
   | 'route.expenses'
   | 'route.admin.access'
   | 'route.admin.attendancePolicy'
+  | 'route.admin.companyLocations'
   | 'route.admin.employees'
   | 'route.admin.expenseCategories'
   | 'route.admin.leaveSettings'
@@ -263,6 +264,7 @@ export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
   '/timesheet': 'route.timesheet',
   '/admin/access': 'route.admin.access',
   '/admin/attendance-policy': 'route.admin.attendancePolicy',
+  '/admin/company-locations': 'route.admin.companyLocations',
   '/admin/employees': 'route.admin.employees',
   '/admin/expense-categories': 'route.admin.expenseCategories',
   '/admin/leave-settings': 'route.admin.leaveSettings',

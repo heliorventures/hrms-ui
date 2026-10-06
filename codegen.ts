@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -52,6 +53,7 @@ const schema: CodegenConfig['schema'] = [
   join(__dirname, 'src', 'api', 'schema-extensions', 'hr-reports.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'prejoining.graphql'),
   join(__dirname, 'src', 'api', 'schema-extensions', 'hrms-guidance.graphql'),
+  join(__dirname, 'src', 'api', 'schema-extensions', 'company-working-calendar.graphql'),
 ];
 
 const config: CodegenConfig = {

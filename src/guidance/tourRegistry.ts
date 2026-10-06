@@ -1,5 +1,6 @@
 import { appearanceTour } from '../appearance/guidance/AppearanceTour';
 import { adminAttendancePolicyPageTour } from '../modules/admin/guidance/AdminAttendancePolicyPageTour';
+import { adminCompanyLocationsPageTour } from '../modules/admin/guidance/AdminCompanyLocationsPageTour';
 import { adminEmployeesPageTour } from '../modules/admin/guidance/AdminEmployeesPageTour';
 import { adminExpenseCategoriesPageTour } from '../modules/admin/guidance/AdminExpenseCategoriesPageTour';
 import { adminHrTimesheetSettingsPageTour } from '../modules/admin/guidance/AdminHrTimesheetSettingsPageTour';
@@ -47,6 +48,7 @@ import { recruitmentPageTour } from '../modules/workplace/guidance/RecruitmentPa
 import { successionPageTour } from '../modules/workplace/guidance/SuccessionPageTour';
 import { surveysPageTour } from '../modules/workplace/guidance/SurveysPageTour';
 
+import { withFeatureDestinations } from './featureDestinations';
 import type { TourContext, TourDefinition } from './tourTypes';
 
 /**
@@ -98,12 +100,13 @@ export const TOUR_REGISTRY: readonly TourDefinition[] = [
   adminExpenseCategoriesPageTour,
   adminNotificationsPageTour,
   adminAttendancePolicyPageTour,
+  adminCompanyLocationsPageTour,
   adminHrTimesheetSettingsPageTour,
   adminReportsPageTour,
   hrAccessManagementPageTour,
   adminSettingsPageTour,
   moduleHealthPageTour,
-];
+].map(withFeatureDestinations);
 
 /**
  * Finds a tour using the matched tenant route identity supplied by the shell.
@@ -120,7 +123,16 @@ export function findTourForRoute(
   if (!definition) return null;
 
   const tourContext = { ...context, routePath: matchedRoutePath };
-  const steps = definition.steps.filter((step) => step.isVisible?.(tourContext) ?? true);
+  const steps = definition.steps.filter((step) => {
+    const tabId = step.destination?.tabId;
+    if (
+      tabId &&
+      tourContext.allowedTabIds &&
+      !tourContext.allowedTabIds(matchedRoutePath)?.includes(tabId)
+    )
+      return false;
+    return step.isVisible?.({ ...tourContext, activeTab: tabId ?? tourContext.activeTab }) ?? true;
+  });
   if (steps.length === 0) return null;
 
   return steps.length === definition.steps.length ? definition : { ...definition, steps };

@@ -1,6 +1,7 @@
+// @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { adminWorkflowsPageTour } from '../modules/admin/guidance/AdminWorkflowsPageTour';
 import { assetsPageTour } from '../modules/workplace/guidance/AssetsPageTour';
@@ -41,6 +42,10 @@ const context = (
 };
 
 const ids = (steps: readonly TourStep[]) => steps.map(({ id }) => id);
+
+beforeEach(() => {
+  document.body.innerHTML = '<div id="root"></div>';
+});
 
 afterEach(() => {
   cleanup();
@@ -137,6 +142,8 @@ describe('workplace operations tours', () => {
         if (event.key === 'Enter' || event.key === ' ') businessMutation();
       });
       root.append(action);
+      const mount = document.createElement('div');
+      root.append(mount);
 
       render(
         <TourOverlay
@@ -144,7 +151,7 @@ describe('workplace operations tours', () => {
           onClose={vi.fn()}
           returnFocusRef={createRef<HTMLElement>()}
         />,
-        { container: root }
+        { container: mount }
       );
 
       const spotlight = screen.getByTestId('tour-spotlight');

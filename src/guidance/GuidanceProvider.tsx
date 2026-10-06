@@ -2,7 +2,7 @@ import { type PropsWithChildren, useCallback, useMemo } from 'react';
 
 import TourOverlay from './TourOverlay';
 import { findTourForRoute } from './tourRegistry';
-import type { TourContext, TourDefinition } from './tourTypes';
+import type { TourContext, TourDefinition, TourStep } from './tourTypes';
 import { GuidanceContext, type GuidanceContextValue } from './useGuidance';
 import { useTourController } from './useTourController';
 
@@ -15,6 +15,7 @@ type GuidanceProviderProps = PropsWithChildren<{
   onOverviewDismiss?: () => void | Promise<void>;
   onOverviewDismissError?: (error: unknown) => void;
   registeredTours?: readonly TourDefinition[];
+  navigateStep?: (step: TourStep, confirmed?: boolean) => boolean;
 }>;
 
 export const GuidanceProvider = ({
@@ -27,6 +28,7 @@ export const GuidanceProvider = ({
   onOverviewDismiss,
   onOverviewDismissError,
   registeredTours,
+  navigateStep,
 }: GuidanceProviderProps) => {
   const pageTour = useMemo(
     () =>
@@ -46,13 +48,15 @@ export const GuidanceProvider = ({
     authorizationKey,
     tourContext?.hasEmployeeProfile,
     tourContext?.activeTab,
+    tourContext?.profileAccess,
   ]);
-  const { activeTour, returnFocusRef, closeTour, startTour } = useTourController({
-    contextKey,
-    tourContext,
-    onOverviewDismiss,
-    onOverviewDismissError,
-  });
+  const { activeTour, returnFocusRef, closeTour, startTour, allowContextChange } =
+    useTourController({
+      contextKey,
+      tourContext,
+      onOverviewDismiss,
+      onOverviewDismissError,
+    });
   const startPageTour = useCallback(() => {
     if (!pageTour) return false;
     return startTour(pageTour, 'page');
@@ -84,6 +88,23 @@ export const GuidanceProvider = ({
           tour={activeTour.definition}
           onClose={closeTour}
           returnFocusRef={returnFocusRef}
+          navigateStep={
+            navigateStep
+              ? (step, confirmed) => {
+                  const nextKey = JSON.stringify([
+                    matchedRoutePath,
+                    identityKey,
+                    authorizationKey,
+                    tourContext?.hasEmployeeProfile,
+                    step.destination?.tabId ?? tourContext?.activeTab,
+                    tourContext?.profileAccess,
+                  ]);
+                  const navigated = navigateStep(step, confirmed);
+                  if (navigated) allowContextChange(nextKey);
+                  return navigated;
+                }
+              : undefined
+          }
         />
       ) : null}
     </GuidanceContext.Provider>

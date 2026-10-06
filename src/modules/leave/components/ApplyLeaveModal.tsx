@@ -1,3 +1,4 @@
+import Button from '../../../components/common/Button';
 import Modal from '../../../components/common/Modal';
 import type { useGraphClient } from '../../../hooks/useGraphClient';
 
@@ -49,7 +50,14 @@ const ApplyLeaveModalForm = ({
         <ApplyLeaveFooter
           onClose={form.handleClose}
           submitting={form.submitting}
-          canSubmit={leaveTypes.length > 0 && !upcomingHolidaysLoading && !upcomingHolidaysFailure}
+          canSubmit={
+            leaveTypes.length > 0 &&
+            !upcomingHolidaysLoading &&
+            !upcomingHolidaysFailure &&
+            form.requestedDays != null &&
+            !form.previewLoading &&
+            !form.previewError
+          }
         />
       }
     >
@@ -72,6 +80,24 @@ const ApplyLeaveModalForm = ({
           />
         ) : null}
         <ApplyLeaveFormFailure error={form.visibleFormError} />
+        {form.previewLoading ? (
+          <p role="status" className="text-sm">
+            Calculating chargeable dates...
+          </p>
+        ) : null}
+        {form.previewError ? (
+          <p role="alert" className="text-sm text-red-600">
+            {form.previewError}{' '}
+            <Button type="button" variant="outline" onClick={form.retryPreview}>
+              Retry Calculation
+            </Button>
+          </p>
+        ) : null}
+        {form.requestedDays != null ? (
+          <p className="text-sm">
+            Chargeable leave: {form.requestedDays} day(s), using your location's working calendar.
+          </p>
+        ) : null}
         <ApplyLeaveHolidayStatus
           loading={upcomingHolidaysLoading}
           failure={upcomingHolidaysFailure}

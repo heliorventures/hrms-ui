@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ExpenseBoardDocument } from '../../api/graphql/graphql';
+import ExpenseBoardDocument from '../../api/documents/expenseBoard.graphql?raw';
 
 import ExpensesPage from './ExpensesPage';
 

@@ -53,6 +53,9 @@ function collectDeclaredAnchors(source: string): Set<string> {
   }
 
   // Shared controls forward these props from owning pages to their DOM anchors.
+  for (const match of source.matchAll(/\btourAnchor\s*:\s*['"]([^'"]+)['"]/g)) {
+    anchors.add(match[1]);
+  }
   for (const propName of ['tourAnchor', 'actionAnchor']) {
     const propPattern = new RegExp(`\\b${propName}\\s*=\\s*["']([^"']+)["']`, 'g');
     for (const match of source.matchAll(propPattern)) {

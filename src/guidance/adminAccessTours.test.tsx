@@ -81,10 +81,25 @@ describe('administration access and reporting tours', () => {
       ['route.admin.reports'],
       ['employee:read:ALL']
     );
-    expect(visibleStepIds(adminReportsPageTour, employeeReportAccess)).toEqual(
-      steps.map((step) => step.id)
+    expect(visibleStepIds(adminReportsPageTour, employeeReportAccess)).toEqual([
+      'admin-reports-filters',
+      'admin-reports-output',
+    ]);
+    expect(steps.find((step) => step.id === 'admin-reports-output')?.body).toContain(
+      'Download CSV exports the same filter across all pages'
     );
-    expect(steps[1].body).toContain('does not trigger report queries or export data');
+    expect(
+      visibleStepIds(
+        adminReportsPageTour,
+        context('admin/reports', ['route.admin.reports'], ['expense:read:ALL'])
+      )
+    ).toContain('claim-expense-report');
+    expect(
+      visibleStepIds(
+        adminReportsPageTour,
+        context('admin/reports', ['route.admin.reports'], ['travel:read:ALL'])
+      )
+    ).toContain('travel-request-report');
   });
 
   it('hides role, settings, and health actions without tenant-wide role management', () => {

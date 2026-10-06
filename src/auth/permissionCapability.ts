@@ -25,6 +25,10 @@ const ALL_SCOPE: readonly ExplicitPermissionScope[] = ['ALL'];
 const SELF_SCOPE: readonly ExplicitPermissionScope[] = ['SELF'];
 
 const CAPABILITY_ANY_RULES: Partial<Record<Capability, readonly Check[]>> = {
+  'route.admin.companyLocations': [
+    check(PERMISSIONS.employeeManage, ALL_SCOPE),
+    check(PERMISSIONS.employeeWrite, ALL_SCOPE),
+  ],
   'action.people.search': [check(PERMISSIONS.employeeDirectoryRead, ALL_SCOPE)],
   'route.hr.people': [check(PERMISSIONS.employeeManage, ALL_SCOPE)],
   'route.organization.profileReviews': [check(PERMISSIONS.employeeManage, ALL_SCOPE)],

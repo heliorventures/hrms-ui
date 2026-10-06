@@ -1,6 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useDialogs } from '../../../contexts/DialogContext';
-import { useGraphClient } from '../../../hooks/useGraphClient';
+
 import {
   AdminExpenseCategoriesDocument,
   DeleteExpenseCategoryAdminDocument,
@@ -13,6 +12,8 @@ import {
   type ExpensePoliciesForAdminQuery,
   type ExpensePolicyDirectoryQuery,
 } from '../../../api/graphql/graphql';
+import { useDialogs } from '../../../contexts/DialogContext';
+import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type {
   ExpenseCategoryForm,
@@ -63,24 +64,34 @@ export function useAdminExpenseCategories() {
   const [policySaving, setPolicySaving] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [policyPickerBusy, setPolicyPickerBusy] = useState(false);
-  const [policyPickerDepartments, setPolicyPickerDepartments] = useState<ExpensePolicyDepartmentRow[]>([]);
-  const [policyPickerDesignations, setPolicyPickerDesignations] = useState<ExpensePolicyDesignationRow[]>([]);
+  const [policyPickerDepartments, setPolicyPickerDepartments] = useState<
+    ExpensePolicyDepartmentRow[]
+  >([]);
+  const [policyPickerDesignations, setPolicyPickerDesignations] = useState<
+    ExpensePolicyDesignationRow[]
+  >([]);
   const [policyPickerRoles, setPolicyPickerRoles] = useState<ExpensePolicyRoleRow[]>([]);
   const [policyPickerOrgError, setPolicyPickerOrgError] = useState<string | null>(null);
   const [policyPickerOwner, setPolicyPickerOwner] = useState<typeof client | null>(null);
 
   const loadCategories = useCallback(async () => {
-    const result = await client.request<AdminExpenseCategoriesQuery>(AdminExpenseCategoriesDocument, {
-      limit: EXPENSE_CATEGORY_LIMIT,
-    });
+    const result = await client.request<AdminExpenseCategoriesQuery>(
+      AdminExpenseCategoriesDocument,
+      {
+        limit: EXPENSE_CATEGORY_LIMIT,
+      }
+    );
     return result.expenseCategories;
   }, [client]);
 
   const loadPolicies = useCallback(
     async (categoryId: string) => {
-      const result = await client.request<ExpensePoliciesForAdminQuery>(ExpensePoliciesForAdminDocument, {
-        expenseCategoryId: categoryId,
-      });
+      const result = await client.request<ExpensePoliciesForAdminQuery>(
+        ExpensePoliciesForAdminDocument,
+        {
+          expenseCategoryId: categoryId,
+        }
+      );
       return result.expensePoliciesForAdmin;
     },
     [client]
@@ -158,9 +169,12 @@ export function useAdminExpenseCategories() {
     setPolicyPickerBusy(true);
     void (async () => {
       try {
-        const result = await client.request<ExpensePolicyDirectoryQuery>(ExpensePolicyDirectoryDocument, {
-          lim: EXPENSE_POLICY_DIRECTORY_LIMIT,
-        });
+        const result = await client.request<ExpensePolicyDirectoryQuery>(
+          ExpensePolicyDirectoryDocument,
+          {
+            lim: EXPENSE_POLICY_DIRECTORY_LIMIT,
+          }
+        );
         if (cancelled) return;
         setPolicyPickerDepartments(result.departments ?? []);
         setPolicyPickerDesignations(result.designations ?? []);
@@ -189,18 +203,14 @@ export function useAdminExpenseCategories() {
 
   const policyPickerOwnerConfirmed = policyPickerOwner === client;
   const policyFormOwnerConfirmed = ownedPolicyForm.owner === client;
-  const policyForm = policyFormOwnerConfirmed
-    ? ownedPolicyForm.value
-    : DEFAULT_EXPENSE_POLICY_FORM;
+  const policyForm = policyFormOwnerConfirmed ? ownedPolicyForm.value : DEFAULT_EXPENSE_POLICY_FORM;
   const setPolicyForm = useCallback(
     (nextForm: ExpensePolicyForm) => {
       setOwnedPolicyForm({ owner: client, value: nextForm });
     },
     [client]
   );
-  const currentPolicyPickerDepartments = policyPickerOwnerConfirmed
-    ? policyPickerDepartments
-    : [];
+  const currentPolicyPickerDepartments = policyPickerOwnerConfirmed ? policyPickerDepartments : [];
   const currentPolicyPickerDesignations = policyPickerOwnerConfirmed
     ? policyPickerDesignations
     : [];
@@ -304,7 +314,8 @@ export function useAdminExpenseCategories() {
           id: editId ?? undefined,
           name: form.name.trim(),
           code: form.code.trim(),
-          maxAmountPerClaim: form.maxAmountPerClaim.trim() === '' ? null : form.maxAmountPerClaim.trim(),
+          maxAmountPerClaim:
+            form.maxAmountPerClaim.trim() === '' ? null : form.maxAmountPerClaim.trim(),
         },
       });
       await refreshCategories();
@@ -369,9 +380,7 @@ export function useAdminExpenseCategories() {
       return;
     }
     if (!policyFormOwnerConfirmed) {
-      setPolicyError(
-        'Your organization context changed. Reopen the policy form before saving.'
-      );
+      setPolicyError('Your organization context changed. Reopen the policy form before saving.');
       return;
     }
     const directorySelectionError = currentPolicyPickerOrgError
@@ -395,14 +404,15 @@ export function useAdminExpenseCategories() {
           id: policyForm.editPolicyId ?? undefined,
           expenseCategoryId: policyCategoryId,
           applicableTo,
-          departmentId: applicableTo === 'DEPARTMENT' ? optionalString(policyForm.departmentId) : undefined,
+          departmentId:
+            applicableTo === 'DEPARTMENT' ? optionalString(policyForm.departmentId) : undefined,
           designationId:
             applicableTo === 'DESIGNATION' ? optionalString(policyForm.designationId) : undefined,
           roleId: applicableTo === 'ROLE' ? optionalString(policyForm.roleId) : undefined,
           limitPerDay: optionalString(policyForm.limitPerDay),
           limitPerMonth: optionalString(policyForm.limitPerMonth),
           maxAmountPerClaim: optionalString(policyForm.maxAmountPerClaim),
-          receiptRequired: policyForm.receiptRequired,
+          receiptRequired: true,
           approvalRequired: policyForm.approvalRequired,
         },
       });

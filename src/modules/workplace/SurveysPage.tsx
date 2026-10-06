@@ -9,6 +9,7 @@ import PageInformation from '../../components/common/PageInformation';
 import Tabs from '../../components/common/Tabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
+import { usePageTabs } from '../../hooks/usePageTabs';
 
 import SurveyAdminCatalog from './SurveyAdminCatalog';
 import { SurveyReportCatalog, SurveyRespondentCatalog } from './SurveyCatalogs';
@@ -96,7 +97,7 @@ const surveyTabs = (model: SurveyWorkspaceModel) => [
 
 const SurveyLists = ({ model }: { model: SurveyWorkspaceModel }) => {
   const tabs = surveyTabs(model);
-  const [tab, setTab] = useState(tabs[0]?.id ?? 'mine');
+  const { tab, setTab } = usePageTabs(tabs);
   const active = tabs.find((item) => item.id === tab) ?? tabs[0];
   if (tabs.length === 0) return <p>No surveys are available with your permissions.</p>;
   return (

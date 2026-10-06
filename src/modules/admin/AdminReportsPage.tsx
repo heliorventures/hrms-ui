@@ -7,6 +7,7 @@ import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import AttendanceDailyReportPanel from '../reports/AttendanceDailyReportPanel';
+import ClaimTravelReportFilters from '../reports/ClaimTravelReportFilters';
 import {
   availableReports,
   isReportDomain,
@@ -16,6 +17,10 @@ import {
 import { currentReportPeriod, reportPeriodError } from '../reports/reportPeriod';
 import ReportPeriodFields from '../reports/ReportPeriodFields';
 import ReportResult from '../reports/ReportResult';
+import {
+  isClaimTravelReport,
+  useClaimTravelReportFilters,
+} from '../reports/useClaimTravelReportFilters';
 import { useReportOwner } from '../reports/useReportOwner';
 
 const ReportWorkspace = ({
@@ -36,13 +41,16 @@ const ReportWorkspace = ({
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [searchDraft, setSearchDraft] = useState('');
   const error = reportPeriodError(period.fromDate, period.toDate);
+  const reportKind = selected === 'ATTENDANCE_DAILY' ? 'ATTENDANCE_PUNCTUALITY' : selected;
+  const claimFilters = useClaimTravelReportFilters(reportKind);
   const filter = useMemo(
     () => ({
       kind: selected === 'ATTENDANCE_DAILY' ? ('ATTENDANCE_PUNCTUALITY' as const) : selected,
       ...period,
       employeeSearch: employeeSearch.trim() || null,
+      claimTravelFilter: isClaimTravelReport(reportKind) ? claimFilters.applied : null,
     }),
-    [selected, period, employeeSearch]
+    [selected, period, employeeSearch, reportKind, claimFilters.applied]
   );
   return (
     <div className="space-y-4">
@@ -79,6 +87,7 @@ const ReportWorkspace = ({
         />
         {selected !== 'ATTENDANCE_DAILY' && (
           <form
+            data-guidance-read-only="true"
             className="flex items-end gap-2"
             onSubmit={(event) => {
               event.preventDefault();
@@ -99,6 +108,17 @@ const ReportWorkspace = ({
         )}
       </div>
       <p className="text-sm text-content-secondary">{definition.description}</p>
+      {isClaimTravelReport(reportKind) ? (
+        <ClaimTravelReportFilters
+          key={reportKind}
+          kind={reportKind}
+          filters={claimFilters}
+          onClear={() => {
+            setEmployeeSearch('');
+            setSearchDraft('');
+          }}
+        />
+      ) : null}
       {error && (
         <p role="alert" className="text-sm text-status-danger">
           {error}

@@ -20,10 +20,12 @@ import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import { useAuth } from '../../contexts/AuthContext';
+import { captureGuidanceFormSave } from '../../guidance/tourNavigation';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import AttendanceDayPolicySettings from './AttendanceDayPolicySettings';
+import WeeklyOffSettings from './WeeklyOffSettings';
 
 const DECIMAL_PATTERN = /^-?(?:\d+|\d+\.\d+|\.\d+)$/;
 
@@ -155,6 +157,7 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
 
   const onSave = async (e: FormEvent) => {
     e.preventDefault();
+    const markSaved = captureGuidanceFormSave(e.currentTarget);
     setFormError(null);
     const lat = parseOptionalDecimal(siteLatitude);
     const lng = parseOptionalDecimal(siteLongitude);
@@ -207,7 +210,10 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
       });
       if (!ownsRequest(request)) return;
       const r = await load();
-      if (ownsRequest(request)) applySettings(r);
+      if (ownsRequest(request)) {
+        applySettings(r);
+        markSaved();
+      }
     } catch (err) {
       if (ownsRequest(request)) setFormError(graphQlUserMessage(err));
     } finally {
@@ -300,6 +306,7 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
           </form>
         )}
       </Card>
+      <WeeklyOffSettings key={identity} />
       <PageInformation title="Shift reference">
         <Card title="Shifts">
           {loading ? (

@@ -63,9 +63,11 @@ function renderOverlay(
 ) {
   const root = document.getElementById('root');
   if (!root) throw new Error('Application root is unavailable');
+  const mount = document.createElement('div');
+  root.append(mount);
   return {
     ...render(<TourOverlay tour={definition} onClose={onClose} returnFocusRef={returnFocusRef} />, {
-      container: root,
+      container: mount,
     }),
     onClose,
     returnFocusRef,

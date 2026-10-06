@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { UI_A11Y_TEXT, UI_EMPTY_TEXT } from '../../constants/uiText';
+import { matchFeatures } from '../../guidance/featureRegistry';
+import { watchGuidanceForms } from '../../guidance/tourNavigation';
+import { useAccessibleFeatures } from '../../guidance/useAccessibleFeatures';
 import { NAVIGATION_SECTIONS, type NavigationDestination } from '../../navigation/navigationModel';
 import {
   activeNavigationDestination,
@@ -12,7 +15,7 @@ import { useAccessibleNavigation } from '../../navigation/useAccessibleNavigatio
 import { useDialogSurface } from '../common/useDialogSurface';
 
 import { useCommandPalette } from './CommandPaletteContext';
-import { createMainFocusHandoffState } from './routeFocus';
+import { usePaletteNavigation } from './usePaletteNavigation';
 
 interface CommandRow {
   destination: NavigationDestination;
@@ -29,11 +32,12 @@ function groupLabel(destination: NavigationDestination): string {
 
 const CommandPalette = () => {
   const { isOpen, close, openerRef } = useCommandPalette();
-  const navigate = useNavigate();
   const location = useLocation();
   const activeDestination = activeNavigationDestination(location.pathname + location.search);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
+  const { features, context, identityKey } = useAccessibleFeatures();
+  watchGuidanceForms();
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -47,13 +51,40 @@ const CommandPalette = () => {
   });
 
   const accessible = useAccessibleNavigation();
+  const navigation = usePaletteNavigation({
+    features,
+    context,
+    identityKey,
+    isOpen,
+    accessible,
+    close,
+  });
+  const { openDestination } = navigation;
   const rows = useMemo<CommandRow[]>(
     () =>
-      filterNavigationDestinations(accessible, query).map((destination) => ({
-        destination,
-        group: groupLabel(destination),
-      })),
-    [accessible, query]
+      [
+        ...filterNavigationDestinations(accessible, query).map((destination) => ({
+          destination,
+          group: groupLabel(destination),
+        })),
+        ...matchFeatures(features, query).map((feature) => ({
+          destination: {
+            path: feature.path,
+            label: feature.label,
+            keywords: feature.keywords,
+            order: 0,
+          },
+          group: feature.pageTitle,
+        })),
+      ].filter(
+        (row, index, all) =>
+          all.findIndex(
+            (item) =>
+              item.destination.path === row.destination.path &&
+              item.destination.label === row.destination.label
+          ) === index
+      ),
+    [accessible, features, query]
   );
   const selectedIndex = Math.min(activeIndex, rows.length - 1);
 
@@ -76,20 +107,6 @@ const CommandPalette = () => {
       activeRow.scrollIntoView({ block: 'nearest' });
     }
   }, [selectedIndex, isOpen, rows.length]);
-
-  const openDestination = useCallback(
-    (destination: NavigationDestination) => {
-      if (destination.path === location.pathname + location.search) {
-        close();
-        return;
-      }
-      navigate(destination.path, {
-        state: createMainFocusHandoffState(location.state),
-      });
-      close();
-    },
-    [close, location.pathname, location.search, location.state, navigate]
-  );
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (!rows.length) return;
@@ -123,6 +140,9 @@ const CommandPalette = () => {
       activePath={activeDestination?.path}
       onOpen={openDestination}
       onKeyDown={handleKeyDown}
+      notice={navigation.notice}
+      onConfirmNavigation={navigation.pending ? navigation.confirm : undefined}
+      onStay={navigation.stay}
       onDismiss={() => {
         if (isTopmost()) close();
       }}
@@ -143,6 +163,9 @@ interface CommandPalettePanelProps {
   onOpen: (destination: NavigationDestination) => void;
   onKeyDown: (event: React.KeyboardEvent) => void;
   onDismiss: () => void;
+  notice: string | null;
+  onConfirmNavigation?: () => void;
+  onStay: () => void;
 }
 
 function commandRowClasses(highlighted: boolean, selected: boolean) {
@@ -164,6 +187,9 @@ const CommandPalettePanel = ({
   onOpen,
   onKeyDown,
   onDismiss,
+  notice,
+  onConfirmNavigation,
+  onStay,
 }: CommandPalettePanelProps) => {
   let lastGroup: string | null = null;
   return (
@@ -204,6 +230,21 @@ const CommandPalettePanel = ({
         </div>
 
         <div className="p-3">
+          {notice ? (
+            <div className="mb-2 space-y-2 text-sm">
+              <p role="status">{notice}</p>
+              {onConfirmNavigation ? (
+                <div className="flex gap-3">
+                  <button type="button" onClick={onConfirmNavigation}>
+                    Leave current form and continue
+                  </button>
+                  <button type="button" onClick={onStay}>
+                    Stay here
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           <input
             ref={inputRef}
             type="search"
@@ -227,7 +268,7 @@ const CommandPalettePanel = ({
             if (showGroup) lastGroup = group;
 
             return (
-              <div key={destination.path} className="mb-0.5">
+              <div key={`${destination.path}:${destination.label}`} className="mb-0.5">
                 {showGroup ? (
                   <p className="px-2 pb-1 pt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 first:pt-1">
                     {group}

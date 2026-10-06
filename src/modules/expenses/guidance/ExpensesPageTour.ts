@@ -14,14 +14,14 @@ export const expensesPageTour: TourDefinition = {
       id: 'expense-submit-claim',
       anchor: 'expenses.submit-expense',
       title: 'Submit an expense claim',
-      body: 'Submit Expense opens a form for category, title, amount, currency, expense date, and receipt. A linked travel request is optional; some categories require a receipt. Submission creates a claim for review. This tour does not submit a claim.',
+      body: 'Submit Expense opens a form for category, title, amount, currency, expense date, and a required receipt. Attach a PDF, JPG, or PNG up to 6 MB. A linked travel request is optional. Submission creates a claim for review. If submission fails after the upload, retry uses the same uploaded file. This tour does not submit a claim.',
       isVisible: ({ canCapability }) => canCapability?.('action.expense.submit') ?? false,
     },
     {
       id: 'travel-submit-request',
       anchor: 'expenses.sections',
       title: 'Request business travel',
-      body: 'On Travel Requests, Request travel opens a form to record trip details for approval. Submitting creates a travel request in the configured workflow. This tour does not open or submit the form.',
+      body: 'On Travel Requests, Request travel opens a form for locations, dates, purpose, estimated cost, and a required supporting PDF, JPG, or PNG up to 6 MB. Submitting creates a travel request for approval. Download file retrieves evidence from an accessible request.',
       isVisible: ({ canCapability }) => canCapability?.('action.travel.submit') ?? false,
     },
     {

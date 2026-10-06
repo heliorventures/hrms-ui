@@ -1,0 +1,51 @@
+query ExpenseBoard($limit: Int! = 20, $includeExpenses: Boolean!, $includeTravel: Boolean!) {
+  expenseCategories(limit: $limit) @include(if: $includeExpenses) {
+    id
+    name
+    code
+    maxAmountPerClaim
+  }
+  expenses(limit: $limit) @include(if: $includeExpenses) {
+    id
+    employeeId
+    expenseCategoryId
+    travelRequestId
+    workflowInstanceId
+    amount
+    currency
+    expenseDate
+    title
+    status
+    pendingApprovalStage
+    pendingApprovalStepId
+    viewerMayApprove
+    submittedAt
+    approvedAmount
+    paymentStatus
+    paidAt
+    paymentReference
+    receiptFileStorageId
+    hasSupportingFile
+  }
+  travelRequests(limit: $limit) @include(if: $includeTravel) {
+    id
+    hasSupportingFile
+    employeeId
+    originLocation
+    destinationLocation
+    fromDate
+    toDate
+    purpose
+    estimatedAmount
+    currency
+    status
+    pendingApprovalStage
+    pendingApprovalStepId
+    viewerMayApprove
+    rejectionReason
+    approvedBy
+    rejectedBy
+    workflowInstanceId
+    submittedAt
+  }
+}

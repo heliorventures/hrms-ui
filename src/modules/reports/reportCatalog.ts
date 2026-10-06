@@ -13,6 +13,20 @@ export interface ReportDefinition {
 }
 export const REPORTS: ReportDefinition[] = [
   {
+    kind: 'EXPENSE_CLAIMS',
+    label: 'Expense claims',
+    description:
+      'Claims by expense date, with approval and payment status. Department and location use current employee assignments.',
+    permissions: ['expense:read'],
+  },
+  {
+    kind: 'TRAVEL_REQUESTS',
+    label: 'Travel requests',
+    description:
+      'Trips overlapping the selected period, with approval and supporting-file status. Department and location use current employee assignments.',
+    permissions: ['travel:read'],
+  },
+  {
     kind: 'ATTENDANCE_DAILY',
     label: 'Daily attendance',
     description: 'Scheduled days, absence, incomplete punches and completed hours.',
@@ -78,6 +92,7 @@ export const REPORTS: ReportDefinition[] = [
 ];
 
 export const REPORT_DOMAINS = {
+  expenses: { title: 'Expense & Travel Reports', kinds: ['EXPENSE_CLAIMS', 'TRAVEL_REQUESTS'] },
   people: { title: 'People Reports', kinds: ['EMPLOYEE_MOVEMENTS'] },
   attendance: {
     title: 'Attendance Reports',

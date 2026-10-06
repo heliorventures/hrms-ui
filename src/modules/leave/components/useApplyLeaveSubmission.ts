@@ -6,13 +6,15 @@ import { persistLeaveApplication } from './persistLeaveApplication';
 import type { useApplyLeaveFields } from './useApplyLeaveFields';
 import type { ApplyLeaveOwnership, ApplyLeaveModalProps } from './useApplyLeaveForm';
 import type { useApplyLeaveSelection } from './useApplyLeaveSelection';
-import { validateLeaveApplication } from './validateLeaveApplication';
+import type { useLeaveDatePreview } from './useLeaveDatePreview';
+import { validateLeaveApplication, validateRequiredFields } from './validateLeaveApplication';
 
 export const useApplyLeaveSubmission = (
   props: ApplyLeaveModalProps,
   fields: ReturnType<typeof useApplyLeaveFields>,
   selection: ReturnType<typeof useApplyLeaveSelection>,
-  ownership: ApplyLeaveOwnership
+  ownership: ApplyLeaveOwnership,
+  preview: ReturnType<typeof useLeaveDatePreview>
 ) => {
   const {
     upcomingHolidaysLoading,
@@ -45,11 +47,20 @@ export const useApplyLeaveSubmission = (
     setFieldErrors({});
     setFormError(null);
     if (upcomingHolidaysLoading || upcomingHolidaysFailure) return;
-    const failure = validateLeaveApplication({ ...fields, ...selection, upcomingHolidays });
+    const input = {
+      ...fields,
+      ...selection,
+      upcomingHolidays,
+      requestedDays: preview.requestedDays,
+    };
+    const failure =
+      validateRequiredFields(input) ??
+      (preview.requestedDays != null ? validateLeaveApplication(input) : null);
     if (failure) {
       showFieldError(failure.field, failure.message);
       return;
     }
+    if (preview.requestedDays == null || preview.previewLoading || preview.previewError) return;
     const isCurrentSubmission = () =>
       mountedRef.current &&
       dialogContextRef.current === submissionContext &&

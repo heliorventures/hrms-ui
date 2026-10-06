@@ -1,6 +1,7 @@
 import { CircleHelp } from 'lucide-react';
 import { useContext } from 'react';
 
+import PageHelpContent from '../../guidance/help/PageHelpContent';
 import { useGuidance } from '../../guidance/useGuidance';
 import { useAccessibleNavigation } from '../../navigation/useAccessibleNavigation';
 import ActionMenu, { type ActionMenuItem } from '../common/ActionMenu';
@@ -32,6 +33,7 @@ const PageTools = () => {
 
   return (
     <aside aria-label="Page tools" className="flex shrink-0 items-center gap-1">
+      <PageHelpContent />
       <NotificationDropdown />
       <ActionMenu label="Help" triggerIcon={<CircleHelp className="size-5" />} items={items} />
     </aside>

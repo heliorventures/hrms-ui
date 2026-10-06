@@ -5,6 +5,13 @@ export const adminAttendancePolicyPageTour: TourDefinition = {
   routePaths: ['admin/attendance-policy'],
   steps: [
     {
+      id: 'attendance-policy-weekly-offs',
+      anchor: 'attendance-policy.weekly-offs',
+      title: 'Configure weekly offs by location',
+      body: 'Activate the working calendar explicitly from today. Set the company default or choose an active company location, then select fixed weekdays and selected Saturdays such as second and fourth. Preview the month, choose an effective date and save the policy. Location inheritance uses the dated company default; a scheduled roster takes precedence. Existing leave requests retain their saved chargeable dates.',
+      isVisible: ({ canCapability }) => canCapability?.('route.admin.attendancePolicy') ?? false,
+    },
+    {
       id: 'attendance-policy-boundary',
       anchor: 'attendance-policy.boundary-preview',
       title: 'Schedule the attendance day boundary',

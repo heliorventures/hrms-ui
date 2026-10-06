@@ -69,7 +69,6 @@ describe('contextual report navigation', () => {
     await screen.findByText('LEAVE_BALANCES');
   });
   it.each([
-    '?domain=expenses',
     '?domain=unknown',
     '?domain=',
     '?domain=leave&report=PAYROLL_REGISTER',
@@ -80,6 +79,80 @@ describe('contextual report navigation', () => {
     show(search);
     expect(screen.getByRole('status').textContent).toMatch(/unavailable|invalid/i);
     expect(state.request).not.toHaveBeenCalled();
+  });
+
+  it('denies the expense domain when the user has no expense or travel ALL read scope', () => {
+    show('?domain=expenses');
+    expect(
+      screen.getByText('No company reports are available with your permissions.')
+    ).toBeTruthy();
+    expect(state.request).not.toHaveBeenCalled();
+  });
+
+  it('applies the same claim filter to the preview and CSV variables', async () => {
+    state.session = {
+      ...state.session,
+      permissions: new Set(['expense:read']),
+      permissionScopes: { 'expense:read': 'ALL' },
+    } as ParsedClientSession;
+    state.request.mockImplementation((document: string, variables: { kind: string }) =>
+      Promise.resolve(
+        document.includes('claimTravelReportOptions(')
+          ? {
+              claimTravelReportOptions: {
+                departments: [{ id: 'department-1', name: 'Finance' }],
+                locations: [],
+                expenseCategories: [{ id: 'category-1', name: 'Meals' }],
+              },
+            }
+          : document.includes('hrReportCsv(')
+            ? { hrReportCsv: { fileName: 'claims.csv', csv: 'claims', rowCount: 1 } }
+            : { hrReportRows: { columns: ['Kind'], rows: [[variables.kind]], totalRows: 1 } }
+      )
+    );
+    show('?domain=expenses');
+    await screen.findByText('EXPENSE_CLAIMS');
+    await waitFor(() =>
+      expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Department' }).disabled).toBe(
+        false
+      )
+    );
+    fireEvent.change(screen.getByRole('combobox', { name: 'Department' }), {
+      target: { value: 'department-1' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Expense category' }), {
+      target: { value: 'category-1' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Approval status' }), {
+      target: { value: 'PARTIAL_APPROVED' },
+    });
+    fireEvent.click(screen.getByText('Apply report filters'));
+    await waitFor(() =>
+      expect(state.request).toHaveBeenCalledWith(
+        expect.stringContaining('hrReportRows('),
+        expect.objectContaining({
+          claimTravelFilter: {
+            departmentId: 'department-1',
+            expenseCategoryId: 'category-1',
+            approvalStatus: 'PARTIAL_APPROVED',
+          },
+        })
+      )
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Download CSV' }));
+    await waitFor(() =>
+      expect(state.request).toHaveBeenCalledWith(
+        expect.stringContaining('hrReportCsv('),
+        expect.objectContaining({
+          claimTravelFilter: {
+            departmentId: 'department-1',
+            expenseCategoryId: 'category-1',
+            approvalStatus: 'PARTIAL_APPROVED',
+          },
+        })
+      )
+    );
+    expect(screen.queryByRole('option', { name: 'Travel requests' })).toBeNull();
   });
   it('resets employee filters and results on domain changes and follows back navigation', async () => {
     show('?domain=leave&report=LEAVE_BALANCES');

@@ -13,6 +13,7 @@ import { useMemo } from 'react';
 
 import Button from '../../../components/common/Button';
 import PageInformation from '../../../components/common/PageInformation';
+import { useRegisterProfileGuidanceAccess } from '../../../guidance/ProfileGuidanceContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { usePageTabs } from '../../../hooks/usePageTabs';
 
@@ -54,6 +55,7 @@ export function EmployeeProfileShell({ employeeId, embedded }: EmployeeProfileSh
   const client = useGraphClient('client');
   const { loading, refreshing, error, model, access, documentTypes, refreshVersion, refetch } =
     useEmployeeProfileData(client, employeeId);
+  useRegisterProfileGuidanceAccess(employeeId, access);
 
   const canManageOrganizationFields = access?.canManageOrganizationFields ?? false;
   const visibleTabs = useMemo(

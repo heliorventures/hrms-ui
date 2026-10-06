@@ -194,8 +194,10 @@ it('explains submission requirements and the results of expense approval dialogs
   const submission = expensesPageTour.steps.find((step) => step.id === 'expense-submit-claim');
   const approval = expensesPageTour.steps.find((step) => step.id === 'expense-approval-result');
 
-  expect(submission?.body).toMatch(/category, title, amount, currency, expense date, and receipt/i);
-  expect(submission?.body).toMatch(/some categories require a receipt/i);
+  expect(submission?.body).toMatch(
+    /category, title, amount, currency, expense date, and a required receipt/i
+  );
+  expect(submission?.body).toMatch(/PDF, JPG, or PNG up to 6 MB/i);
   expect(submission?.body).toMatch(/does not submit a claim/i);
   expect(approval?.body).toMatch(/approved amount cannot exceed the claim/i);
   expect(approval?.body).toMatch(/partial approval/i);

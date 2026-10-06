@@ -17,6 +17,7 @@ export function useTourController({
 }: Options) {
   const [activeTour, setActiveTour] = useState<ActiveTour | null>(null);
   const activeTourRef = useRef<ActiveTour | null>(null);
+  const allowedContext = useRef<string | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const callbacks = useRef({ onOverviewDismiss, onOverviewDismissError });
   callbacks.current = { onOverviewDismiss, onOverviewDismissError };
@@ -43,6 +44,16 @@ export function useTourController({
     )
       return;
     previousContext.current = nextContext;
+    if (
+      allowedContext.current === nextContext.contextKey &&
+      previous.canCapability === nextContext.canCapability &&
+      previous.canScopedPermission === nextContext.canScopedPermission &&
+      previous.canPermission === nextContext.canPermission
+    ) {
+      allowedContext.current = null;
+      return;
+    }
+    allowedContext.current = null;
     returnFocusRef.current = null;
     activeTourRef.current = null;
     setActiveTour(null);
@@ -80,5 +91,8 @@ export function useTourController({
     []
   );
 
-  return { activeTour, returnFocusRef, closeTour, startTour };
+  const allowContextChange = useCallback((key: string) => {
+    allowedContext.current = key;
+  }, []);
+  return { activeTour, returnFocusRef, closeTour, startTour, allowContextChange };
 }

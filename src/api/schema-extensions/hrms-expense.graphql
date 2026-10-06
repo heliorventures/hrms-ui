@@ -1,20 +1,31 @@
 # Expense configuration, policy, payment lifecycle (kabipay-expense). Merged until gateway introspection exposes them.
 
 extend type Expense {
+  hasSupportingFile: Boolean!
   approvedAmount: String
   paymentStatus: String!
   paidAt: DateTime
   paymentReference: String
   receiptFileStorageId: ID
-  """Configured workflow step title when status is PENDING and a multi-step workflow is waiting (from `workflow_step.step_name`)."""
+  """
+  Configured workflow step title when status is PENDING and a multi-step workflow is waiting (from `workflow_step.step_name`).
+  """
   pendingApprovalStage: String
-  """True when the signed-in user may approve or reject this claim at the current workflow step (or legacy permission when no workflow)."""
+  """
+  True when the signed-in user may approve or reject this claim at the current workflow step (or legacy permission when no workflow).
+  """
   viewerMayApprove: Boolean!
 }
 
 extend type TravelRequest {
+  hasSupportingFile: Boolean!
+  supportingFileStorageId: ID
   pendingApprovalStage: String
   viewerMayApprove: Boolean!
+}
+
+extend input SubmitTravelRequestInput {
+  supportingFileStorageId: ID
 }
 
 input UpsertExpenseCategoryAdminInput {
@@ -39,8 +50,16 @@ input UpsertExpensePolicyAdminInput {
 }
 
 extend type Query {
+  expenseAttachment(expenseId: ID!): RequestAttachment
+  travelRequestAttachment(travelRequestId: ID!): RequestAttachment
   expenseSubmissionHints(expenseCategoryId: ID!): ExpenseSubmissionHints!
   expensePoliciesForAdmin(expenseCategoryId: ID!): [ExpensePolicy!]!
+}
+
+type RequestAttachment {
+  fileName: String!
+  mimeType: String!
+  contentBase64: String!
 }
 
 extend type Mutation {
@@ -61,7 +80,9 @@ type ExpenseSubmissionHints {
   maxAmountPerClaim: String
   receiptRequired: Boolean!
   limitPerMonth: String
-  """Policy per-day ceiling for the matched tier (may also tighten max per claim)."""
+  """
+  Policy per-day ceiling for the matched tier (may also tighten max per claim).
+  """
   limitPerDay: String
 }
 
