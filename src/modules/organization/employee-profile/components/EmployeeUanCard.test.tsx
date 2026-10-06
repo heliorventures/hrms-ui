@@ -44,7 +44,7 @@ describe('EmployeeUanCard', () => {
     expect(request).toHaveBeenCalledTimes(1);
     await user.click(screen.getByRole('button', { name: 'Save EPF / UAN number' }));
     await screen.findByText('Not recorded');
-    expect(request.mock.calls[1]?.[1]).toEqual({
+    expect(request).toHaveBeenNthCalledWith(2, expect.anything(), {
       input: { employeeId: 'employee-1', uanNumber: '' },
     });
   });
@@ -118,7 +118,7 @@ describe('EmployeeUanCard', () => {
     await user.click(screen.getByRole('button', { name: 'Save EPF / UAN number' }));
     await screen.findByText('EPF / UAN number saved.');
     expect(screen.getByText('012345678901')).toBeTruthy();
-    expect(request.mock.calls[1]?.[1]).toEqual({
+    expect(request).toHaveBeenNthCalledWith(2, expect.anything(), {
       input: { employeeId: 'employee-1', uanNumber: '012345678901' },
     });
   });

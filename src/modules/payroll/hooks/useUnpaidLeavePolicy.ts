@@ -5,6 +5,7 @@ import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
   SaveUnpaidLeavePolicyDocument,
   UnpaidLeavePolicyDocument,
+  decodeUnpaidLeavePolicy,
   type UnpaidLeavePolicy,
 } from '../unpaidLeaveDocuments';
 
@@ -36,12 +37,12 @@ export function useUnpaidLeavePolicy(client: GraphQLClient, ownerKey: string) {
     let active = true;
     setState(initialState(owner));
     client
-      .request<{ payrollUnpaidLeavePolicy: UnpaidLeavePolicy | null }>(UnpaidLeavePolicyDocument)
+      .request(UnpaidLeavePolicyDocument)
       .then((data) => {
         if (active && currentOwner.current === owner)
           setState({
             ...initialState(owner),
-            form: data.payrollUnpaidLeavePolicy ?? emptyPolicy,
+            form: decodeUnpaidLeavePolicy(data.payrollUnpaidLeavePolicy),
             loading: false,
             loaded: true,
           });
@@ -60,14 +61,11 @@ export function useUnpaidLeavePolicy(client: GraphQLClient, ownerKey: string) {
     if (blocked) return;
     setState((previous) => ({ ...previous, busy: true, error: '', saved: false }));
     try {
-      const data = await client.request<{ savePayrollUnpaidLeavePolicy: UnpaidLeavePolicy }>(
-        SaveUnpaidLeavePolicyDocument,
-        { input: visible.form }
-      );
+      const data = await client.request(SaveUnpaidLeavePolicyDocument, { input: visible.form });
       if (currentOwner.current === owner)
         setState({
           ...initialState(owner),
-          form: data.savePayrollUnpaidLeavePolicy,
+          form: decodeUnpaidLeavePolicy(data.savePayrollUnpaidLeavePolicy),
           loading: false,
           saved: true,
           loaded: true,

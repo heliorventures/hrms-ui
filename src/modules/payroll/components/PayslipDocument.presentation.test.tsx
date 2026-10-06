@@ -67,33 +67,43 @@ describe('company-controlled payslip presentation', () => {
       true
     );
   });
-  it('prints only selected components and separates salary settlement from deductions', () => {
-    render(
-      <PayslipDocument
-        tenantName={branding.companyLine}
-        employeeName={branding.employeeName}
-        employeeCode={branding.employeeCode}
-        periodLabel={branding.periodLabel}
-        labelForLine={() => 'Hidden Basic'}
-        slip={model}
-      />
-    );
-    expect(screen.getByText('House rent allowance')).toBeTruthy();
-    expect(screen.queryByText('Hidden Basic')).toBeNull();
-    expect(screen.queryByText('PF (employee)')).toBeNull();
-    expect(screen.queryByText(/employer/i)).toBeNull();
-    expect(screen.getByText('Salary already paid as advance')).toBeTruthy();
-    expect(screen.getByText('Remaining payable')).toBeTruthy();
-    expect(screen.getByText(/Leave without pay: 1 days/)).toBeTruthy();
-  });
-  it('exports a real PDF without a hidden raw component or employer costs', () => {
-    const output = createPayslipPdf(branding, model, () => 'HIDDEN_BASIC_SENTINEL').output();
-    expect(output).toContain('House rent allowance');
-    expect(output).not.toContain('HIDDEN_BASIC_SENTINEL');
-    expect(output).not.toContain('employer');
-    expect(output).toContain('Advance already paid');
-    expect(output).toContain('Remaining payable');
-  });
+  it.each(['EXISTING', 'TABLE'])(
+    'prints only selected components and preserves settlement in %s',
+    (template) => {
+      render(
+        <PayslipDocument
+          tenantName={branding.companyLine}
+          employeeName={branding.employeeName}
+          employeeCode={branding.employeeCode}
+          periodLabel={branding.periodLabel}
+          labelForLine={() => 'Hidden Basic'}
+          slip={{ ...model, presentation: { ...model.presentation, template } }}
+        />
+      );
+      expect(screen.getByText('House rent allowance')).toBeTruthy();
+      expect(screen.queryByText('Hidden Basic')).toBeNull();
+      expect(screen.queryByText('PF (employee)')).toBeNull();
+      expect(screen.queryByText(/employer/i)).toBeNull();
+      expect(screen.getByText('Salary already paid as advance')).toBeTruthy();
+      expect(screen.getByText('Remaining payable')).toBeTruthy();
+      expect(screen.getByText(/Leave without pay: 1 days/)).toBeTruthy();
+    }
+  );
+  it.each(['EXISTING', 'TABLE'])(
+    'exports %s PDF without hidden components or employer costs',
+    (template) => {
+      const output = createPayslipPdf(
+        branding,
+        { ...model, presentation: { ...model.presentation, template } },
+        () => 'HIDDEN_BASIC_SENTINEL'
+      ).output();
+      expect(output).toContain('House rent allowance');
+      expect(output).not.toContain('HIDDEN_BASIC_SENTINEL');
+      expect(output).not.toContain('employer');
+      expect(output).toContain('Advance already paid');
+      expect(output).toContain('Remaining payable');
+    }
+  );
   it('refuses PDF creation when company display settings are missing', () => {
     expect(() =>
       createPayslipPdf(branding, { ...model, presentation: null }, () => 'Hidden Basic')

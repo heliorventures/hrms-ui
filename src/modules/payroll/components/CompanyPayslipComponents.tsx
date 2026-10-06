@@ -1,71 +1,10 @@
 import type { GraphQLClient } from 'graphql-request';
-import { useEffect, useState } from 'react';
 
 import Card from '../../../components/common/Card';
-import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-
-interface DisplayComponent {
-  id: string;
-  name: string;
-  componentType: string;
-  showOnPayslip: boolean;
-}
-const query = /* GraphQL */ `
-  query CompanyPayslipComponents {
-    salaryComponents(limit: 500) {
-      id
-      name
-      componentType
-      showOnPayslip
-    }
-  }
-`;
-const mutation = /* GraphQL */ `
-  mutation SetSalaryComponentPayslipVisibility($componentId: ID!, $visible: Boolean!) {
-    setSalaryComponentPayslipVisibility(componentId: $componentId, visible: $visible)
-  }
-`;
+import { useCompanyPayslipComponents } from '../hooks/useCompanyPayslipComponents';
 
 const CompanyPayslipComponents = ({ client }: { client: GraphQLClient }) => {
-  const [rows, setRows] = useState<DisplayComponent[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    client
-      .request<{ salaryComponents: DisplayComponent[] }>(query)
-      .then((result) => {
-        if (active) {
-          setRows(result.salaryComponents);
-          setLoading(false);
-        }
-      })
-      .catch((reason: unknown) => {
-        if (active) {
-          setError(graphQlUserMessage(reason));
-          setLoading(false);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [client]);
-  const change = async (row: DisplayComponent, visible: boolean) => {
-    setBusy(row.id);
-    setError(null);
-    try {
-      await client.request(mutation, { componentId: row.id, visible });
-      setRows((current) =>
-        current.map((item) => (item.id === row.id ? { ...item, showOnPayslip: visible } : item))
-      );
-    } catch (reason) {
-      setError(graphQlUserMessage(reason));
-    } finally {
-      setBusy(null);
-    }
-  };
+  const { rows, error, busy, loading, change } = useCompanyPayslipComponents(client);
   return (
     <Card>
       <p className="mb-3 text-sm text-slate-600">
@@ -87,7 +26,7 @@ const CompanyPayslipComponents = ({ client }: { client: GraphQLClient }) => {
             <input
               type="checkbox"
               checked={row.showOnPayslip}
-              disabled={busy !== null}
+              disabled={loading || busy !== null}
               onChange={(event) => void change(row, event.target.checked)}
             />
             <span>

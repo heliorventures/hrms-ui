@@ -29,6 +29,7 @@ const PayrollPage = () => {
   const actions = usePayrollBoardActions({
     client,
     complianceForm: board.complianceForm,
+    complianceReady: board.complianceReady,
     enabled: canManagePayroll,
     ownerKey,
     reload: board.loadData,

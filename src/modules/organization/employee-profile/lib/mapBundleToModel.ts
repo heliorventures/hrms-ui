@@ -1,4 +1,7 @@
-import type { PayrollEmploymentHistoryQuery } from '../../../../api/graphql/graphql';
+import type {
+  EmployeePrivateProfileQuery,
+  PayrollEmploymentHistoryQuery,
+} from '../../../../api/graphql/graphql';
 import { employeeStatusForDisplay } from '../../../employeeStatus';
 import type { EmployeeProfileLocationQuery } from '../profileDocuments';
 import type {

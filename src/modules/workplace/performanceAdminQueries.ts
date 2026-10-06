@@ -50,7 +50,7 @@ export const SavePerformanceProgramPolicyDocument = gql`
 
 export const ArchivePerformanceProgramDocument = gql`
   mutation ArchivePerformanceProgramWorkspace($performanceProgramId: ID!, $reason: String!) {
-    archivePerformanceProgram(performanceProgramId: $performanceProgramId) {
+    archivePerformanceProgram(performanceProgramId: $performanceProgramId, reason: $reason) {
       id
       status
     }

@@ -8,11 +8,11 @@ import {
   ClientOpsPayslipsForPayrollHubDocument,
   ClientOpsPayrollTaxBoardDocument,
   PayrollBoardDocument,
-  PayrollComplianceSettingDocument,
   PayrollShellDocument,
   TaxComputationsListDocument,
   TaxProofLinesDocument,
   TaxSectionDefinitionsDocument,
+  PayrollComplianceSettingDocument,
 } from '../../../api/graphql/graphql';
 import { tenantCalendarPeriod } from '../../../utils/tenantCalendar';
 import { ImportedSalaryPreviewDocument } from '../importSalaryPreview';

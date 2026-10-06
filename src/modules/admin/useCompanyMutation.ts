@@ -1,3 +1,4 @@
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import { useEffect, useRef, useState } from 'react';
 
 import { authorizationStateKey } from '../../auth/permissionService';
@@ -31,7 +32,10 @@ export const useCompanyMutation = () => {
       mounted.current = false;
     };
   }, []);
-  async function run<T>(document: string, variables: Record<string, unknown>): Promise<T | null> {
+  async function run<T, V extends Record<string, unknown>>(
+    document: TypedDocumentNode<T, V>,
+    variables: V
+  ): Promise<T | null> {
     if (
       !mounted.current ||
       lock.current ||
@@ -44,7 +48,7 @@ export const useCompanyMutation = () => {
     setError(null);
     const owner = current.current;
     try {
-      const data = await client.request<T>(document, variables);
+      const data = await client.request<T, Record<string, unknown>>(document, variables);
       return mounted.current && current.current === owner ? data : null;
     } catch (failure) {
       if (mounted.current && current.current === owner) setError(graphQlUserMessage(failure));

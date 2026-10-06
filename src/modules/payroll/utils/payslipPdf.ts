@@ -12,6 +12,8 @@ export type PdfPayslipLine = {
 };
 
 export type PdfPayslipPayload = {
+  uanNumber?: string | null;
+  esicNumber?: string | null;
   presentation?: PayslipPresentation | null;
   unpaidLeave?: UnpaidLeaveSnapshot | null;
   grossSalary: string;

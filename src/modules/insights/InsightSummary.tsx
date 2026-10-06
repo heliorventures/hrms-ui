@@ -2,12 +2,12 @@ import type { HrInsights } from '../reports/reportDocuments';
 
 interface MetricProps {
   label: string;
-  value: number | string | null;
+  value: number | string | null | undefined;
   prominent?: boolean;
 }
 
 const Metric = ({ label, value, prominent = false }: MetricProps) =>
-  value === null ? null : (
+  value === null || value === undefined ? null : (
     <div
       className={prominent ? 'app-card rounded-xl border border-line-subtle bg-surface' : 'min-w-0'}
     >
@@ -30,13 +30,15 @@ const InsightSummary = ({ data }: { data: HrInsights }) => {
     data.pendingRequests,
     data.incompleteDays,
   ];
-  if (values.every((value) => value === null))
+  if (values.every((value) => value === null || value === undefined))
     return (
       <p role="status" className="text-sm text-content-secondary">
         No company metrics are available with your current permissions.
       </p>
     );
-  const attention = data.pendingRequests !== null || data.incompleteDays !== null;
+  const attention =
+    (data.pendingRequests !== null && data.pendingRequests !== undefined) ||
+    (data.incompleteDays !== null && data.incompleteDays !== undefined);
   const needsAttention = (data.pendingRequests ?? 0) > 0 || (data.incompleteDays ?? 0) > 0;
   return (
     <div className="space-y-3">

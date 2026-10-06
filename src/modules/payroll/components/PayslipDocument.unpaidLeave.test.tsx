@@ -20,7 +20,7 @@ const slip = {
   status: 'GENERATED',
   generatedAt: '2026-09-30T00:00:00Z',
   lines: [],
-  presentation: { lines: [], statement: null },
+  presentation: { template: 'EXISTING', lines: [], statement: null },
   unpaidLeave: {
     basicComponentCode: 'BASIC',
     basicAmount: '10000',

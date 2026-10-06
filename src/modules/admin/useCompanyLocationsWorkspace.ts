@@ -5,7 +5,7 @@ import {
   RetireCompanyLocationDocument,
   SaveCompanyLocationDocument,
 } from './companyLocationDocuments';
-import { EMPTY_LOCATION, type CompanyLocation, type LocationPage } from './companyLocationTypes';
+import { EMPTY_LOCATION, type CompanyLocation } from './companyLocationTypes';
 import { useCompanyMutation } from './useCompanyMutation';
 import { useCompanyResource } from './useCompanyResource';
 const empty = EMPTY_LOCATION;
@@ -13,10 +13,11 @@ export const useCompanyLocationsWorkspace = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [activeOnly, setActiveOnly] = useState(true);
-  const resource = useCompanyResource<{ companyLocations: LocationPage }>(
-    CompanyLocationsDocument,
-    { page: { page, perPage: 25 }, search: search.trim() || null, activeOnly }
-  );
+  const resource = useCompanyResource(CompanyLocationsDocument, {
+    page: { page, perPage: 25 },
+    search: search.trim() || null,
+    activeOnly,
+  });
   const mutation = useCompanyMutation();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CompanyLocation | null>(null);

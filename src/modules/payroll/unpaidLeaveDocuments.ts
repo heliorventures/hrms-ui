@@ -1,3 +1,8 @@
+import type {
+  PayslipUnpaidLeaveQuery,
+  PayrollUnpaidLeavePolicyQuery,
+} from '../../api/graphql/graphql';
+
 export interface UnpaidLeavePolicy {
   enabled: boolean;
   basicComponentCode: string | null;
@@ -5,23 +10,24 @@ export interface UnpaidLeavePolicy {
   treatment: 'BEFORE_STATUTORY' | 'AFTER_STATUTORY' | null;
 }
 
-export interface UnpaidLeaveSnapshot {
-  basicComponentCode: string;
-  basicAmount: string;
-  dayDivisor: string;
-  unpaidDays: string;
-  amount: string;
-  treatment: string;
-}
+export type UnpaidLeaveSnapshot = NonNullable<PayslipUnpaidLeaveQuery['payslipUnpaidLeave']>;
 
-export const UnpaidLeavePolicyDocument = `query PayrollUnpaidLeavePolicy {
-  payrollUnpaidLeavePolicy { enabled basicComponentCode dayDivisor treatment }
-}`;
+export const decodeUnpaidLeavePolicy = (
+  value: PayrollUnpaidLeavePolicyQuery['payrollUnpaidLeavePolicy']
+): UnpaidLeavePolicy => {
+  const treatment = value?.treatment ?? null;
+  if (treatment !== null && treatment !== 'BEFORE_STATUTORY' && treatment !== 'AFTER_STATUTORY')
+    throw new Error('Unpaid leave treatment is invalid.');
+  return {
+    enabled: value?.enabled ?? false,
+    basicComponentCode: value?.basicComponentCode ?? null,
+    dayDivisor: value?.dayDivisor ?? null,
+    treatment,
+  };
+};
 
-export const SaveUnpaidLeavePolicyDocument = `mutation SavePayrollUnpaidLeavePolicy($input: SavePayrollUnpaidLeavePolicyInput!) {
-  savePayrollUnpaidLeavePolicy(input: $input) { enabled basicComponentCode dayDivisor treatment }
-}`;
-
-export const PayslipUnpaidLeaveDocument = `query PayslipUnpaidLeave($payslipId: ID!) {
-  payslipUnpaidLeave(payslipId: $payslipId) { basicComponentCode basicAmount dayDivisor unpaidDays amount treatment }
-}`;
+export {
+  PayrollUnpaidLeavePolicyDocument as UnpaidLeavePolicyDocument,
+  SavePayrollUnpaidLeavePolicyDocument as SaveUnpaidLeavePolicyDocument,
+  PayslipUnpaidLeaveDocument,
+} from '../../api/graphql/graphql';

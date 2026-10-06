@@ -6,32 +6,22 @@ import Select from '../../components/common/Select';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useRetainedQuery } from '../../hooks/useRetainedQuery';
 
-import type { HrReportKind } from './reportDocuments';
+import {
+  ClaimTravelReportOptionsDocument,
+  reportKindVariable,
+  type HrReportKind,
+} from './reportDocuments';
 import type { ClaimTravelFilterState } from './useClaimTravelReportFilters';
 import { useReportFilterOptions } from './useReportFilterOptions';
 
-interface Option {
-  id: string;
-  name: string;
-}
-interface Options {
-  departments: Option[];
-  locations: Option[];
-  expenseCategories: Option[];
-}
 interface Props {
   kind: HrReportKind;
   filters: ClaimTravelFilterState;
   onClear: () => void;
 }
-const optionsDocument = `query ClaimTravelReportOptions($kind: HrReportKind!, $search: String) {
-  claimTravelReportOptions(kind: $kind, search: $search, limit: 200) {
-    departments { id name } locations { id name } expenseCategories { id name }
-  }
-}`;
 const statuses = (values: string[]) => [
   { value: '', label: 'All' },
-  ...values.map((value) => ({ value, label: value.replaceAll('_', ' ').toLowerCase() })),
+  ...values.map((value) => ({ value, label: value.replace(/_/g, ' ').toLowerCase() })),
 ];
 
 const ClaimTravelReportFilters = ({ kind, filters, onClear }: Props) => {
@@ -39,8 +29,8 @@ const ClaimTravelReportFilters = ({ kind, filters, onClear }: Props) => {
   const [search, setSearch] = useState('');
   const load = useCallback(
     () =>
-      client.request<{ claimTravelReportOptions: Options }>(optionsDocument, {
-        kind,
+      client.request(ClaimTravelReportOptionsDocument, {
+        kind: reportKindVariable(kind),
         search: search.trim() || null,
       }),
     [client, kind, search]
@@ -112,7 +102,7 @@ const ClaimTravelReportFilters = ({ kind, filters, onClear }: Props) => {
           <Select
             label="Payment status"
             value={draft.paymentStatus ?? ''}
-            options={statuses(['NONE', 'PENDING_PAYMENT', 'PAID'])}
+            options={statuses(['NONE', 'PENDING_PAYMENT', 'PAID', 'FAILED', 'ON_HOLD'])}
             onChange={(event) => updateDraft({ paymentStatus: event.target.value })}
           />
         ) : (

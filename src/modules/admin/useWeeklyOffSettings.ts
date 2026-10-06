@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react';
 
+import { useFragment } from '../../api/graphql/fragment-masking';
+
 import {
   ActivateWorkingCalendarDocument,
   PreviewWeeklyOffMonthDocument,
   ScheduleWeeklyOffPolicyDocument,
+  WorkingCalendarFieldsFragmentDoc,
   WorkingCalendarPolicyDocument,
 } from './companyLocationDocuments';
-import type { CalendarPolicy } from './companyLocationTypes';
 import { useCompanyMutation } from './useCompanyMutation';
 import { useCompanyResource } from './useCompanyResource';
 
 export const useWeeklyOffSettings = (locationId: string) => {
-  const resource = useCompanyResource<{ workingCalendarPolicy: CalendarPolicy }>(
-    WorkingCalendarPolicyDocument,
-    { locationId: locationId || null }
-  );
+  const resource = useCompanyResource(WorkingCalendarPolicyDocument, {
+    locationId: locationId || null,
+  });
   const mutation = useCompanyMutation();
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [saturdays, setSaturdays] = useState<number[]>([]);
@@ -23,7 +24,10 @@ export const useWeeklyOffSettings = (locationId: string) => {
   const [month, setMonth] = useState('');
   const [preview, setPreview] = useState<string[]>([]);
   const [success, setSuccess] = useState<string | null>(null);
-  const policy = resource.data?.workingCalendarPolicy;
+  const policy = useFragment(
+    WorkingCalendarFieldsFragmentDoc,
+    resource.data?.workingCalendarPolicy
+  );
   const dirty =
     !!policy &&
     (effective !== policy.businessDate ||
@@ -79,10 +83,11 @@ export const useWeeklyOffSettings = (locationId: string) => {
   const requestPreview = async () => {
     if (inherits) return;
     const [year, selectedMonth] = month.split('-').map(Number);
-    const data = await mutation.run<{ previewWeeklyOffMonth: string[] }>(
-      PreviewWeeklyOffMonthDocument,
-      { rule, month: selectedMonth, year }
-    );
+    const data = await mutation.run(PreviewWeeklyOffMonthDocument, {
+      rule,
+      month: selectedMonth,
+      year,
+    });
     if (data) setPreview(data.previewWeeklyOffMonth);
   };
   return {

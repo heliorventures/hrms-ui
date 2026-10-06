@@ -2,11 +2,12 @@ import { useCallback } from 'react';
 
 import Button from '../../../components/common/Button';
 import type { PayslipPresentation } from '../payslipPresentation';
+import { PAYSLIP_TEMPLATES, resolvePayslipTemplate } from '../payslipTemplates';
 import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
 import { downloadPayslipPdf, loadLogoDataUrlForPdf } from '../utils/payslipPdf';
 
 import PayrollHelp from './PayrollHelp';
-import PayslipSheet from './PayslipSheet';
+import { PAYSLIP_SHEETS } from './payslipSheetRegistry';
 
 export type PayslipLine = {
   id: string;
@@ -64,7 +65,11 @@ const PayslipDocument = ({
   slip,
 }: PayslipDocumentProps) => {
   const headerTitle = companyHeaderName?.trim() || tenantName;
-  const detailsUnavailable = detailsPending || !slip.presentation;
+  const template = slip.presentation?.template;
+  const invalidTemplate =
+    template !== undefined && !PAYSLIP_TEMPLATES.some((item) => item.id === template);
+  const detailsUnavailable = detailsPending || !slip.presentation || invalidTemplate;
+  const Sheet = PAYSLIP_SHEETS[resolvePayslipTemplate(invalidTemplate ? null : template)];
 
   const onPrint = useCallback(() => {
     if (detailsUnavailable) return;
@@ -128,13 +133,18 @@ const PayslipDocument = ({
         </PayrollHelp>
       </div>
 
+      {invalidTemplate && (
+        <p role="alert">
+          The company payslip template is unsupported. Contact your payroll administrator.
+        </p>
+      )}
       {detailsUnavailable ? (
         <p role="status">
           Payslip details are unavailable until display settings and calculation details have
           loaded.
         </p>
       ) : (
-        <PayslipSheet
+        <Sheet
           headerTitle={headerTitle}
           payslipLogoReadUrl={payslipLogoReadUrl}
           employeeName={employeeName}

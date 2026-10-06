@@ -60,11 +60,20 @@ const config: CodegenConfig = {
   schema,
   // Ops console uses hand-written `opsGraph.ts` (operator JWT) so tenant-only codegen runs stay simple.
   // The stitched gateway schema includes ops types; ops pages validate at runtime against the gateway.
-  documents: ['src/**/*.graphql', 'src/**/*.{ts,tsx}', '!src/modules/ops/opsGraph.ts'],
+  documents: [
+    'src/**/*.graphql',
+    'src/**/*.{ts,tsx}',
+    '!src/api/schema-extensions/**',
+    '!src/api/graphql/**',
+    '!src/modules/ops/opsGraph.ts',
+  ],
   ignoreNoDocuments: true,
   generates: {
     'src/api/graphql/': {
       preset: 'client',
+      config: {
+        scalars: { NaiveDate: 'string', DateTime: 'string' },
+      },
       presetConfig: {
         gqlTagName: 'graphql',
       },

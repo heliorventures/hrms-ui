@@ -1,7 +1,9 @@
 import type { PayslipDocModel, PayslipLine } from './PayslipDocument';
+import PayslipLegacyLeave from './PayslipLegacyLeave';
 import { PayslipPeriodLeave, PayslipSettlement } from './PayslipSettlement';
 
-interface SheetProps {
+export interface SheetProps {
+  preview?: boolean;
   headerTitle: string;
   payslipLogoReadUrl?: string | null;
   employeeName: string;
@@ -66,24 +68,6 @@ const SheetHeader = ({
     )}
   </>
 );
-const LegacyLeave = ({ slip }: { slip: PayslipDocModel }) => {
-  const leave = slip.unpaidLeave;
-  if (!leave) return null;
-  return (
-    <div className="mt-4 rounded border border-slate-200 bg-slate-50 p-3 text-sm">
-      <p className="font-semibold">Unpaid leave: {leave.unpaidDays} days</p>
-      <p>
-        {leave.basicComponentCode} {fmt(leave.basicAmount)} ÷ {leave.dayDivisor} ×{' '}
-        {leave.unpaidDays} = {fmt(leave.amount)}
-      </p>
-      <p className="mt-1 text-xs text-slate-600">
-        {leave.treatment === 'BEFORE_STATUTORY'
-          ? 'Already included as a reduction in basic earnings before statutory calculation.'
-          : 'Included below as a separate deduction after statutory calculation.'}
-      </p>
-    </div>
-  );
-};
 const ComponentTable = ({ slip }: Pick<SheetProps, 'slip'>) => {
   const lines = slip.presentation?.lines ?? [];
   return (
@@ -138,11 +122,11 @@ const PayslipSheet = (props: SheetProps) => {
   const { statement } = slip.presentation;
   return (
     <div
-      id="payslip-print-sheet"
+      id={props.preview ? undefined : 'payslip-print-sheet'}
       className="mx-auto w-full max-w-[210mm] border border-slate-200/90 bg-white p-8 text-slate-900 shadow-card print:border-0 print:shadow-none sm:p-10 dark:border-slate-600 dark:bg-white dark:text-slate-900"
     >
       <SheetHeader {...props} />
-      <LegacyLeave slip={slip} />
+      <PayslipLegacyLeave slip={slip} />
       {statement && <PayslipPeriodLeave statement={statement} format={fmt} />}
       <ComponentTable slip={slip} />
       <Totals slip={slip} />

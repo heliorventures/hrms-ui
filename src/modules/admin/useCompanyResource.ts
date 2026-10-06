@@ -1,3 +1,4 @@
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { authorizationStateKey } from '../../auth/permissionService';
@@ -5,7 +6,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
-export const useCompanyResource = <T>(document: string, variables: Record<string, unknown>) => {
+export const useCompanyResource = <T, V extends Record<string, unknown>>(
+  document: TypedDocumentNode<T, V>,
+  variables: V
+) => {
   const client = useGraphClient('client');
   const auth = useAuth();
   const key = JSON.stringify([
@@ -26,7 +30,7 @@ export const useCompanyResource = <T>(document: string, variables: Record<string
     let cancelled = false;
     setState(undefined);
     void current.client
-      .request<T>(document, current.variables)
+      .request<T, Record<string, unknown>>(document, current.variables)
       .then((data) => {
         if (!cancelled && owner.current === current) setState({ owner: current, data });
       })

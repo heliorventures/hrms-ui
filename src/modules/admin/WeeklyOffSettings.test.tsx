@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 
+import { PreviewWeeklyOffMonthDocument } from '../../api/graphql/graphql';
+
 import WeeklyOffSettings from './WeeklyOffSettings';
 const client = vi.hoisted(() => ({ request: vi.fn() }));
 const request = client.request;
@@ -29,9 +31,9 @@ const policy = {
   scheduledVersions: [],
 };
 it('previews second and fourth Saturdays and prevents conflicting every-Saturday selection', async () => {
-  request.mockImplementation((document: string) =>
+  request.mockImplementation((document: unknown) =>
     Promise.resolve(
-      document.includes('query PreviewWeeklyOffMonth')
+      document === PreviewWeeklyOffMonthDocument
         ? { previewWeeklyOffMonth: ['2026-10-10', '2026-10-24'] }
         : { workingCalendarPolicy: policy }
     )
@@ -44,13 +46,11 @@ it('previews second and fourth Saturdays and prevents conflicting every-Saturday
   expect((screen.getByLabelText('Saturday') as HTMLInputElement).disabled).toBe(true);
   fireEvent.click(screen.getByText('Preview Off Dates'));
   await waitFor(() => expect(screen.getByText(/Weekly offs: 2026-10-10, 2026-10-24/)).toBeTruthy());
-  const call = request.mock.calls.find(([document]) =>
-    document.includes('query PreviewWeeklyOffMonth')
-  );
+  const call = request.mock.calls.find(([document]) => document === PreviewWeeklyOffMonthDocument);
   expect(call?.[1]).toMatchObject({
     rule: { fixedWeekdays: [7], saturdayOrdinals: [2, 4] },
     month: 10,
     year: 2026,
   });
-  expect(call?.[0]).not.toContain('fragment WorkingCalendarFields');
+  expect(call?.[0]).toBe(PreviewWeeklyOffMonthDocument);
 });

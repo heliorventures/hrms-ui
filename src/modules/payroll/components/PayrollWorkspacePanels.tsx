@@ -69,9 +69,9 @@ const PayrollWorkspacePanels = ({
     compliance: (
       <PayrollComplianceCard
         form={board.complianceForm}
-        loading={board.loading}
+        loading={!board.complianceReady}
         busy={actions.complianceSaveBusy}
-        error={actions.complianceSaveError}
+        error={board.error || actions.complianceSaveError}
         ok={actions.complianceSaveOk}
         onChange={board.setComplianceField}
         onSave={() => void actions.savePayrollCompliance()}

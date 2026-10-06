@@ -1,70 +1,26 @@
-export type HrReportKind =
-  | 'EXPENSE_CLAIMS'
-  | 'TRAVEL_REQUESTS'
-  | 'ATTENDANCE_PUNCTUALITY'
-  | 'LEAVE_REQUESTS'
-  | 'LEAVE_BALANCES'
-  | 'PAYROLL_REGISTER'
-  | 'UNPAID_LEAVE'
-  | 'EMPLOYEE_MOVEMENTS'
-  | 'TIMESHEET_HOURS'
-  | 'COMP_OFF_CREDITS'
-  | 'PENDING_REQUESTS';
-export interface ReportFilter {
-  claimTravelFilter?: ClaimTravelFilter | null;
+import type {
+  ClaimTravelReportFilterInput,
+  HrReportKind as GeneratedHrReportKind,
+  HrReportRowsQueryVariables,
+  HrReportRowsQuery,
+  HrReportCsvQuery,
+  HrInsightsQuery,
+} from '../../api/graphql/graphql';
+
+export type HrReportKind = `${GeneratedHrReportKind}`;
+export type ReportFilter = Omit<HrReportRowsQueryVariables, 'offset' | 'kind'> & {
   kind: HrReportKind;
-  fromDate: string;
-  toDate: string;
-  employeeSearch?: string | null;
-}
-export interface ClaimTravelFilter {
-  departmentId?: string | null;
-  locationId?: string | null;
-  expenseCategoryId?: string | null;
-  approvalStatus?: string | null;
-  paymentStatus?: string | null;
-  routeSearch?: string | null;
-}
-export interface ReportRows {
-  columns: string[];
-  rows: string[][];
-  totalRows: number;
-}
-export interface ReportCsv {
-  fileName: string;
-  csv: string;
-  rowCount: number;
-}
-export const HrReportRowsDocument = `
-  query HrReportRows($kind: HrReportKind!, $fromDate: NaiveDate!, $toDate: NaiveDate!, $employeeSearch: String, $offset: Int! = 0, $claimTravelFilter: ClaimTravelReportFilterInput) {
-    hrReportRows(kind: $kind, fromDate: $fromDate, toDate: $toDate, employeeSearch: $employeeSearch, offset: $offset, limit: 50, claimTravelFilter: $claimTravelFilter) { columns rows totalRows }
-  }
-`;
-export const HrReportCsvDocument = `
-  query HrReportCsv($kind: HrReportKind!, $fromDate: NaiveDate!, $toDate: NaiveDate!, $employeeSearch: String, $claimTravelFilter: ClaimTravelReportFilterInput) {
-    hrReportCsv(kind: $kind, fromDate: $fromDate, toDate: $toDate, employeeSearch: $employeeSearch, claimTravelFilter: $claimTravelFilter) { fileName csv rowCount }
-  }
-`;
-export const HrInsightsDocument = `
-  query HrInsights($fromDate: NaiveDate!, $toDate: NaiveDate!) {
-    hrInsights(fromDate: $fromDate, toDate: $toDate) {
-      onTimeDays lateDays unknownPunctualityDays incompleteDays
-      joiners exits activeHeadcount netSalaryGenerated generatedPayslips pendingRequests includedPendingDomains
-      monthlyPayroll { month netSalaryGenerated payslips }
-    }
-  }
-`;
-export interface HrInsights {
-  onTimeDays: number | null;
-  lateDays: number | null;
-  unknownPunctualityDays: number | null;
-  incompleteDays: number | null;
-  joiners: number | null;
-  exits: number | null;
-  activeHeadcount: number | null;
-  netSalaryGenerated: string | null;
-  generatedPayslips: number | null;
-  pendingRequests: number | null;
-  includedPendingDomains: string[];
-  monthlyPayroll: { month: string; netSalaryGenerated: string; payslips: number }[] | null;
-}
+};
+export type ClaimTravelFilter = ClaimTravelReportFilterInput;
+export type ReportRows = HrReportRowsQuery['hrReportRows'];
+export type ReportCsv = HrReportCsvQuery['hrReportCsv'];
+export type HrInsights = HrInsightsQuery['hrInsights'];
+export {
+  HrReportRowsDocument,
+  HrReportCsvDocument,
+  HrInsightsDocument,
+  ClaimTravelReportOptionsDocument,
+} from '../../api/graphql/graphql';
+
+export const reportKindVariable = (kind: HrReportKind): GeneratedHrReportKind =>
+  kind as GeneratedHrReportKind;

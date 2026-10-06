@@ -3,6 +3,8 @@ import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
 import type { PayrollComplianceFormState } from '../payrollTypes';
 
+import PayslipTemplateSelector from './PayslipTemplateSelector';
+
 interface PayrollComplianceCardProps {
   form: PayrollComplianceFormState;
   loading: boolean;
@@ -23,6 +25,11 @@ const PayrollComplianceCard = ({
   onSave,
 }: PayrollComplianceCardProps) => (
   <Card>
+    <PayslipTemplateSelector
+      value={form.payslipTemplateInput}
+      disabled={busy || loading}
+      onChange={(value) => onChange('payslipTemplateInput', value)}
+    />
     <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
       Employer TAN / name drive Form 24Q / Form 16 CSV columns (empty → env fallback on the payroll
       process). <strong className="font-medium">Pay run</strong> posts one line against the{' '}

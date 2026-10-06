@@ -1,35 +1,26 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
+import {
+  ManagedEmployeePayslipsDocument,
+  ManagedPayslipEmployeesDocument,
+  type ManagedEmployeePayslipsQuery,
+  type ManagedPayslipEmployeesQuery,
+} from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import { useTenant } from '../../../contexts/TenantContext';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import { usePayslipLogo } from '../hooks/usePayslipLogo';
 import { usePayslipPresentation } from '../hooks/usePayslipPresentation';
+import { usePayslipSettingsRevision } from '../hooks/usePayslipSettingsRevision';
 import { usePayslipUnpaidLeave } from '../hooks/usePayslipUnpaidLeave';
-import type { PayrollComplianceSettingRow, PayslipRow } from '../payrollTypes';
+import type { PayslipRow } from '../payrollTypes';
 
 import PayslipDocument from './PayslipDocument';
 
-interface Employee {
-  id: string;
-  employeeCode: string;
-  fullName: string;
-}
-interface Result {
-  payslips: PayslipRow[];
-  payrollComplianceSetting: PayrollComplianceSettingRow;
-  salaryComponents: { id: string; name: string }[];
-}
-const query = `query ManagedEmployeePayslips($employeeId: ID!) {
-  payslips(employeeId:$employeeId,limit:120) {
-    id payrollCycleId periodMonth periodYear grossSalary totalDeductions netSalary
-    pfEmployee pfEmployer esiEmployee esiEmployer tdsAmount professionalTax uanNumber esicNumber status generatedAt
-    lines { id salaryComponentId amount componentType }
-  }
-  payrollComplianceSetting { payslipHeaderTitle payslipLogoFileStorageId }
-  salaryComponents(limit:500) { id name }
-}`;
+type Employee = ManagedPayslipEmployeesQuery['employees'][number];
+type Result = ManagedEmployeePayslipsQuery;
 
 const ManagedPayslipDocument = ({
   client,
@@ -47,36 +38,25 @@ const ManagedPayslipDocument = ({
   const { currentTenant } = useTenant();
   const presentation = usePayslipPresentation(client, ownerKey, slip.id);
   const unpaid = usePayslipUnpaidLeave(client, ownerKey, slip.id);
-  const [logo, setLogo] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    const id = data.payrollComplianceSetting?.payslipLogoFileStorageId;
-    if (id)
-      void client
-        .request<{ payslipLogoSignedReadUrl: string }>(
-          'query ManagedPayslipLogo($fileStorageId:ID!){payslipLogoSignedReadUrl(fileStorageId:$fileStorageId)}',
-          { fileStorageId: id }
-        )
-        .then((value) => {
-          if (active) setLogo(value.payslipLogoSignedReadUrl);
-        })
-        .catch(() => {
-          if (active) setLogo(null);
-        });
-    return () => {
-      active = false;
-    };
-  }, [client, data.payrollComplianceSetting?.payslipLogoFileStorageId]);
+  const logo = usePayslipLogo(
+    client,
+    ownerKey,
+    data.payrollComplianceSetting?.payslipLogoFileStorageId,
+    true
+  );
+  const details = [presentation, unpaid, logo];
+  const error = details.find((item) => item.error)?.error;
   return (
     <>
-      {(presentation.error || unpaid.error) && (
+      {error && (
         <p role="alert">
-          Payslip details could not be loaded. {presentation.error ?? unpaid.error}
+          Payslip details could not be loaded. {error}
           <Button
             variant="outline"
             onClick={() => {
               presentation.retry();
               unpaid.retry();
+              logo.retry();
             }}
           >
             Retry payslip details
@@ -86,7 +66,7 @@ const ManagedPayslipDocument = ({
       <PayslipDocument
         tenantName={currentTenant.name}
         companyHeaderName={data.payrollComplianceSetting?.payslipHeaderTitle}
-        payslipLogoReadUrl={logo}
+        payslipLogoReadUrl={logo.url}
         employeeCode={employee.employeeCode}
         employeeName={employee.fullName}
         periodLabel={`${slip.periodYear}-${String(slip.periodMonth).padStart(2, '0')}`}
@@ -95,15 +75,14 @@ const ManagedPayslipDocument = ({
           'Salary component'
         }
         slip={{ ...slip, presentation: presentation.data, unpaidLeave: unpaid.data }}
-        detailsPending={
-          presentation.loading || unpaid.loading || !!presentation.error || !!unpaid.error
-        }
+        detailsPending={details.some((item) => item.loading || Boolean(item.error))}
       />
     </>
   );
 };
 
 const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey: string }) => {
+  const settingsRevision = usePayslipSettingsRevision();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeId, setEmployeeId] = useState('');
   const [data, setData] = useState<{ employeeId: string; result: Result } | null>(null);
@@ -113,9 +92,7 @@ const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey
   useEffect(() => {
     let active = true;
     void client
-      .request<{ employees: Employee[] }>(
-        'query ManagedPayslipEmployees { employees(limit:500) { id employeeCode fullName } }'
-      )
+      .request(ManagedPayslipEmployeesDocument)
       .then((value) => {
         if (active) setEmployees(value.employees);
       })
@@ -129,17 +106,20 @@ const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey
   useEffect(() => {
     let active = true;
     setData(null);
-    setSlipId('');
     setError('');
     setBusy(false);
     if (!employeeId) return;
     setBusy(true);
     void client
-      .request<Result>(query, { employeeId })
+      .request(ManagedEmployeePayslipsDocument, { employeeId })
       .then((result) => {
         if (active) {
           setData({ employeeId, result });
-          setSlipId(result.payslips[0]?.id ?? '');
+          setSlipId((current) =>
+            result.payslips.some((item) => item.id === current)
+              ? current
+              : (result.payslips[0]?.id ?? '')
+          );
         }
       })
       .catch((cause: unknown) => {
@@ -151,7 +131,7 @@ const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey
     return () => {
       active = false;
     };
-  }, [client, employeeId]);
+  }, [client, employeeId, settingsRevision]);
   const selected = employees.find((employee) => employee.id === employeeId);
   const result = data?.employeeId === employeeId ? data.result : null;
   const slip = result?.payslips.find((item) => item.id === slipId);

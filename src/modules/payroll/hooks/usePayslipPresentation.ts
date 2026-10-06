@@ -1,8 +1,11 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useMemo, useState } from 'react';
 
+import { PayslipPresentationDocument } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-import { PayslipPresentationDocument, type PayslipPresentation } from '../payslipPresentation';
+import { decodePayslipPresentation, type PayslipPresentation } from '../payslipPresentation';
+
+import { usePayslipSettingsRevision } from './usePayslipSettingsRevision';
 
 export const usePayslipPresentation = (
   client: GraphQLClient,
@@ -11,6 +14,7 @@ export const usePayslipPresentation = (
 ) => {
   const owner = useMemo(() => ({ client, ownerKey, payslipId }), [client, ownerKey, payslipId]);
   const [attempt, setAttempt] = useState(0);
+  const settingsRevision = usePayslipSettingsRevision();
   const [state, setState] = useState<{
     owner: object;
     data: PayslipPresentation | null;
@@ -22,16 +26,17 @@ export const usePayslipPresentation = (
     setState({ owner, data: null, loading: !!payslipId, error: null });
     if (payslipId) {
       client
-        .request<{ payslipPresentation: PayslipPresentation | null }>(PayslipPresentationDocument, {
+        .request(PayslipPresentationDocument, {
           payslipId,
         })
         .then(({ payslipPresentation }) => {
+          const data = decodePayslipPresentation(payslipPresentation);
           if (active)
             setState({
               owner,
-              data: payslipPresentation,
+              data,
               loading: false,
-              error: payslipPresentation ? null : 'Payslip details are unavailable.',
+              error: data ? null : 'Payslip details are unavailable.',
             });
         })
         .catch((error: unknown) => {
@@ -42,7 +47,7 @@ export const usePayslipPresentation = (
     return () => {
       active = false;
     };
-  }, [client, owner, payslipId, attempt]);
+  }, [client, owner, payslipId, attempt, settingsRevision]);
   return {
     ...(state.owner === owner ? state : { data: null, loading: !!payslipId, error: null }),
     retry: () => setAttempt((value) => value + 1),

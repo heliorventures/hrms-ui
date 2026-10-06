@@ -9,7 +9,6 @@ import {
   EmployeeLocationAssignmentDocument,
 } from '../../../admin/companyLocationDocuments';
 import CompanyLocationPicker from '../../../admin/CompanyLocationPicker';
-import type { LocationAssignment } from '../../../admin/companyLocationTypes';
 import { useCompanyMutation } from '../../../admin/useCompanyMutation';
 import { useCompanyResource } from '../../../admin/useCompanyResource';
 
@@ -20,10 +19,7 @@ const LocationEditor = ({
   employeeId: string;
   onChanged?: () => void;
 }) => {
-  const resource = useCompanyResource<{ employeeLocationAssignment: LocationAssignment }>(
-    EmployeeLocationAssignmentDocument,
-    { employeeId }
-  );
+  const resource = useCompanyResource(EmployeeLocationAssignmentDocument, { employeeId });
   const mutation = useCompanyMutation();
   const [value, setValue] = useState('');
   const [saved, setSaved] = useState(false);

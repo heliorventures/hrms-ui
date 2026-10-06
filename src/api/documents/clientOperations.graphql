@@ -271,12 +271,13 @@ query IndiaForm16PartBFyPrepStubCsv($fyStartYear: Int!) {
 
 # Form 24Q salary payment month stub (not TRACES upload). Same month/year as TDS section.
 query IndiaForm24qSalaryPaymentMonthlyStubCsv($month: Int!, $year: Int!) {
-  indiaForm24qSalaryPaymentMonthlyStubCsv(month: $month, year: $year)
+  indiaForm24QSalaryPaymentMonthlyStubCsv(month: $month, year: $year)
 }
 
 # Employer TAN / legal name + pay-run component codes + payslip header/logo (stored per tenant; env fallback).
 query PayrollComplianceSetting {
   payrollComplianceSetting {
+    payslipTemplate
     employerTan
     employerLegalName
     baseSalaryComponentCode
@@ -293,6 +294,7 @@ query PayslipLogoSignedReadUrl($fileStorageId: ID!, $ttlSeconds: Int = 600) {
 
 mutation UpsertPayrollComplianceSetting($input: UpsertPayrollComplianceSettingInput!) {
   upsertPayrollComplianceSetting(input: $input) {
+    payslipTemplate
     employerTan
     employerLegalName
     baseSalaryComponentCode

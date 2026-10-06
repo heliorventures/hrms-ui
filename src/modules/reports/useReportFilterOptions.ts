@@ -1,15 +1,8 @@
 import { useRef } from 'react';
 
-interface Option {
-  id: string;
-  name: string;
-}
-interface Options {
-  departments: Option[];
-  locations: Option[];
-  expenseCategories: Option[];
-}
-type Group = keyof Options;
+import type { ClaimTravelReportOptionsQuery } from '../../api/graphql/graphql';
+type Options = ClaimTravelReportOptionsQuery['claimTravelReportOptions'];
+type Group = keyof Omit<Options, '__typename'>;
 
 /** Preserve a selected name while the user searches other available options. */
 export const useReportFilterOptions = (options: Options | undefined) => {

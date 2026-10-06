@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { PayrollArrearsListDocument, PayrollBoardDocument } from '../../../api/graphql/graphql';
 import {
-  PayrollArrearsListDocument,
-  PayrollBoardDocument,
   PayrollComplianceSettingDocument,
   type PayrollComplianceSettingQuery,
 } from '../../../api/graphql/graphql';
@@ -12,8 +12,10 @@ import type {
   PayrollBoardData,
   PayrollComplianceFormState,
 } from '../payrollTypes';
+import { resolvePayslipTemplate } from '../payslipTemplates';
 
 const DEFAULT_COMPLIANCE_FORM: PayrollComplianceFormState = {
+  payslipTemplateInput: 'EXISTING',
   employerTanInput: '',
   employerLegalNameInput: '',
   baseComponentInput: 'BASIC',
@@ -26,10 +28,11 @@ function complianceFormFromQuery(
   row: PayrollComplianceSettingQuery['payrollComplianceSetting']
 ): PayrollComplianceFormState {
   return {
+    payslipTemplateInput: resolvePayslipTemplate(row?.payslipTemplate),
     employerTanInput: row?.employerTan?.trim() ?? '',
     employerLegalNameInput: row?.employerLegalName?.trim() ?? '',
-    baseComponentInput: row?.baseSalaryComponentCode?.trim() || 'BASIC',
-    arrearComponentInput: row?.arrearSalaryComponentCode?.trim() || 'ARREAR',
+    baseComponentInput: row?.baseSalaryComponentCode.trim() || 'BASIC',
+    arrearComponentInput: row?.arrearSalaryComponentCode.trim() || 'ARREAR',
     payslipHeaderInput: row?.payslipHeaderTitle?.trim() ?? '',
     payslipLogoIdInput: row?.payslipLogoFileStorageId?.trim() ?? '',
   };
@@ -50,6 +53,10 @@ export function usePayrollBoard(
   const [complianceForm, setComplianceForm] =
     useState<PayrollComplianceFormState>(DEFAULT_COMPLIANCE_FORM);
   const requestGeneration = useRef(0);
+  const [loadedOwner, setLoadedOwner] = useState<{
+    client: GraphQLClient;
+    ownerKey: string;
+  } | null>(null);
 
   const loadData = useCallback(async () => {
     const generation = ++requestGeneration.current;
@@ -71,17 +78,13 @@ export function usePayrollBoard(
             limit: 100,
           })
           .catch(() => ({ payrollArrears: [] })),
-        client
-          .request<PayrollComplianceSettingQuery>(PayrollComplianceSettingDocument)
-          .catch(() => null),
+        client.request(PayrollComplianceSettingDocument),
       ]);
       if (generation !== requestGeneration.current) return;
+      const form = complianceFormFromQuery(settings.payrollComplianceSetting);
       setData({ ...result, payrollArrears: arrears.payrollArrears });
-      setComplianceForm(
-        settings
-          ? complianceFormFromQuery(settings.payrollComplianceSetting)
-          : DEFAULT_COMPLIANCE_FORM
-      );
+      setComplianceForm(form);
+      setLoadedOwner({ client, ownerKey });
     } catch (err) {
       if (generation !== requestGeneration.current) return;
       setData(null);
@@ -100,16 +103,23 @@ export function usePayrollBoard(
 
   const setComplianceField = useCallback(
     (field: keyof PayrollComplianceFormState, value: string) => {
+      if (field === 'payslipTemplateInput') {
+        const template = resolvePayslipTemplate(value);
+        setComplianceForm((current) => ({ ...current, payslipTemplateInput: template }));
+        return;
+      }
       setComplianceForm((current) => ({ ...current, [field]: value }));
     },
     []
   );
 
+  const sameOwner = loadedOwner?.client === client && loadedOwner.ownerKey === ownerKey;
   return {
-    data,
+    data: sameOwner ? data : null,
     loading,
     error,
-    complianceForm,
+    complianceForm: sameOwner ? complianceForm : DEFAULT_COMPLIANCE_FORM,
+    complianceReady: enabled && sameOwner && !loading && !error,
     setComplianceField,
     loadData,
   };

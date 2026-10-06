@@ -7,7 +7,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useRetainedQuery } from '../../hooks/useRetainedQuery';
 import { REPORTS } from '../reports/reportCatalog';
-import { HrInsightsDocument, type HrInsights, type HrReportKind } from '../reports/reportDocuments';
+import { HrInsightsDocument, type HrReportKind } from '../reports/reportDocuments';
 import { currentReportPeriod, reportPeriodError } from '../reports/reportPeriod';
 import ReportPeriodFields from '../reports/ReportPeriodFields';
 import ReportResult from '../reports/ReportResult';
@@ -18,10 +18,7 @@ import InsightSummary from './InsightSummary';
 const InsightsData = ({ period }: { period: { fromDate: string; toDate: string } }) => {
   const client = useGraphClient('client');
   const [report, setReport] = useState<HrReportKind | null>(null);
-  const load = useCallback(
-    () => client.request<{ hrInsights: HrInsights }>(HrInsightsDocument, period),
-    [client, period]
-  );
+  const load = useCallback(() => client.request(HrInsightsDocument, period), [client, period]);
   const query = useRetainedQuery(load);
   const data = query.data?.hrInsights;
   const busy = query.phase === 'initial-loading' || query.phase === 'refreshing';
@@ -71,7 +68,7 @@ const InsightsData = ({ period }: { period: { fromDate: string; toDate: string }
         <>
           <InsightSummary data={data} />
           <HrInsightCharts data={data} open={setReport} />
-          {data.pendingRequests !== null && (
+          {data.pendingRequests !== null && data.pendingRequests !== undefined && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line p-3">
               <p className="text-sm">
                 Pending workload:{' '}

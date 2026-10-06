@@ -1,6 +1,9 @@
 import { jsPDF } from 'jspdf';
 
+import { resolvePayslipTemplate } from '../payslipTemplates';
+
 import type { PdfPayslipLine, PdfPayslipPayload, PayslipPdfBranding } from './payslipPdf';
+import { createTablePayslipPdf } from './payslipTablePdf';
 
 const money = (value: string) => {
   const amount = Number(value);
@@ -87,6 +90,8 @@ export const createPayslipPdf = (
   _label: (line: PdfPayslipLine) => string
 ) => {
   if (!slip.presentation) throw new Error('Payslip display settings must be loaded before export.');
+  if (resolvePayslipTemplate(slip.presentation.template) === 'TABLE')
+    return createTablePayslipPdf(branding, slip);
   const writer = new PdfWriter();
   header(writer, branding, slip);
   legacyLeave(writer, slip);

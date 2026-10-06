@@ -1,18 +1,14 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-  ClientOpsPayslipsForPayrollHubDocument,
-  PayrollComplianceSettingDocument,
-  type PayrollComplianceSettingQuery,
-} from '../../../api/graphql/graphql';
+import { ClientOpsPayslipsForPayrollHubDocument } from '../../../api/graphql/graphql';
 import type { TenantCalendarPeriod } from '../../../utils/tenantCalendar';
-import { PayslipLogoSignedReadUrlDocument } from '../documents';
 import { ImportedSalaryPreviewDocument } from '../importSalaryPreview';
 import { isMissingPayrollCoreError } from '../payrollFormatters';
 import type { EmployeeSalaryPreview, PayslipPeriodOption, PayslipRow } from '../payrollTypes';
 
 import { useOwnerQuery } from './useOwnerQuery';
+import { usePayslipBranding } from './usePayslipBranding';
 
 export function useEmployeeSalary(client: GraphQLClient, ownerKey: string, enabled: boolean) {
   const load = useCallback(
@@ -72,25 +68,7 @@ export function useEmployeePayslips(
   );
   const query = useOwnerQuery(ownerKey, enabled, load);
   const payslips = query.value?.payslips ?? null;
-  const loadBranding = useCallback(
-    () => client.request<PayrollComplianceSettingQuery>(PayrollComplianceSettingDocument),
-    [client]
-  );
-  const branding = useOwnerQuery(ownerKey, enabled && showBranding, loadBranding);
-  const payslipBranding = branding.value?.payrollComplianceSetting ?? null;
-  const logoId = payslipBranding?.payslipLogoFileStorageId?.trim() ?? '';
-  const loadLogo = useCallback(
-    () =>
-      client.request<{ payslipLogoSignedReadUrl: string }>(PayslipLogoSignedReadUrlDocument, {
-        fileStorageId: logoId,
-      }),
-    [client, logoId]
-  );
-  const logo = useOwnerQuery(
-    `${ownerKey}:${logoId}`,
-    enabled && showBranding && Boolean(logoId),
-    loadLogo
-  );
+  const branding = usePayslipBranding(client, ownerKey, enabled && showBranding);
   const [selected, setSelected] = useState<{ owner: string; key: string | null }>({
     owner: ownerKey,
     key: null,
@@ -113,8 +91,7 @@ export function useEmployeePayslips(
     payslipsLoading: query.loading,
     selectedPeriodKey,
     setSelectedPeriodKey,
-    payslipBranding,
-    payslipLogoReadUrl: logo.value?.payslipLogoSignedReadUrl ?? null,
+    ...branding,
     payslipPeriodOptions: options,
     activePayslip:
       options.find((option) => option.periodKey === selectedPeriodKey)?.payslip ?? null,

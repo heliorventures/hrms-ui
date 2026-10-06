@@ -78,7 +78,7 @@ describe('HR insights', () => {
     expect(await screen.findByText('Asha')).toBeTruthy();
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(state.client.request).toHaveBeenLastCalledWith(
-      expect.any(String),
+      expect.objectContaining({ kind: 'Document' }),
       expect.objectContaining({ kind: 'ATTENDANCE_PUNCTUALITY', offset: 0 })
     );
   });

@@ -8,8 +8,8 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { downloadReportCsv } from './downloadReportCsv';
 import {
   HrReportCsvDocument,
+  reportKindVariable,
   HrReportRowsDocument,
-  type ReportCsv,
   type ReportFilter,
   type ReportRows,
 } from './reportDocuments';
@@ -91,8 +91,9 @@ const useReportExport = (filter: ReportFilter) => {
       current.current.filter === filter &&
       exportRequest.current === request;
     try {
-      const result = await client.request<{ hrReportCsv: ReportCsv }>(HrReportCsvDocument, {
+      const result = await client.request(HrReportCsvDocument, {
         ...filter,
+        kind: reportKindVariable(filter.kind),
       });
       if (!owns()) return;
       downloadReportCsv(result.hrReportCsv.fileName, result.hrReportCsv.csv);
@@ -147,8 +148,9 @@ const ReportResult = ({ filter }: { filter: ReportFilter }) => {
   const { exporting, exportError, exported, exportCsv } = useReportExport(filter);
   const load = useCallback(
     () =>
-      client.request<{ hrReportRows: ReportRows }>(HrReportRowsDocument, {
+      client.request(HrReportRowsDocument, {
         ...filter,
+        kind: reportKindVariable(filter.kind),
         offset: page * 50,
       }),
     [client, filter, page]

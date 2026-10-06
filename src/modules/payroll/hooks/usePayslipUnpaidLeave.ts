@@ -1,8 +1,9 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useMemo, useState } from 'react';
 
+import { PayslipUnpaidLeaveDocument } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-import { PayslipUnpaidLeaveDocument, type UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
+import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
 
 export function usePayslipUnpaidLeave(
   client: GraphQLClient,
@@ -22,12 +23,17 @@ export function usePayslipUnpaidLeave(
     setState({ owner, data: null, loading: !!payslipId, error: null });
     if (payslipId) {
       client
-        .request<{ payslipUnpaidLeave: UnpaidLeaveSnapshot | null }>(PayslipUnpaidLeaveDocument, {
+        .request(PayslipUnpaidLeaveDocument, {
           payslipId,
         })
         .then((result) => {
           if (active)
-            setState({ owner, data: result.payslipUnpaidLeave, loading: false, error: null });
+            setState({
+              owner,
+              data: result.payslipUnpaidLeave ?? null,
+              loading: false,
+              error: null,
+            });
         })
         .catch((error: unknown) => {
           if (active)

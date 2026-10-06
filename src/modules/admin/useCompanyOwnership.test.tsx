@@ -2,6 +2,10 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 
+import {
+  CompanyLocationOptionsDocument,
+  SaveCompanyLocationDocument,
+} from './companyLocationDocuments';
 import { useCompanyMutation } from './useCompanyMutation';
 import { useCompanyResource } from './useCompanyResource';
 
@@ -30,11 +34,11 @@ it('rejects an old mutation owner before starting a write and suppresses its lat
   const oldRun = view.result.current.run;
   let pending: Promise<unknown> | undefined;
   act(() => {
-    pending = oldRun('mutation Save', {});
+    pending = oldRun(SaveCompanyLocationDocument, { input: { name: 'Office' } });
   });
   state.tenantId = 'b';
   view.rerender();
-  expect(await oldRun('mutation Save', {})).toBeNull();
+  expect(await oldRun(SaveCompanyLocationDocument, { input: { name: 'Office' } })).toBeNull();
   expect(state.client.request).toHaveBeenCalledOnce();
   await act(async () => {
     finish?.({ saved: true });
@@ -51,15 +55,19 @@ it('hides an old location response while a new owner loads', async () => {
         oldFinish = resolve;
       })
   );
-  const view = renderHook(() => useCompanyResource<{ name: string }>('query Locations', {}));
+  const view = renderHook(() => useCompanyResource(CompanyLocationOptionsDocument, {}));
   await waitFor(() => expect(state.client.request).toHaveBeenCalledOnce());
-  state.client.request.mockResolvedValueOnce({ name: 'new location' });
+  state.client.request.mockResolvedValueOnce({
+    companyLocationOptions: [{ id: 'new', name: 'new location' }],
+  });
   state.tenantId = 'b';
   view.rerender();
-  await waitFor(() => expect(view.result.current.data?.name).toBe('new location'));
+  await waitFor(() =>
+    expect(view.result.current.data?.companyLocationOptions[0]?.name).toBe('new location')
+  );
   await act(async () => {
-    oldFinish?.({ name: 'old tenant location' });
+    oldFinish?.({ companyLocationOptions: [{ id: 'old', name: 'old tenant location' }] });
     await Promise.resolve();
   });
-  expect(view.result.current.data?.name).toBe('new location');
+  expect(view.result.current.data?.companyLocationOptions[0]?.name).toBe('new location');
 });

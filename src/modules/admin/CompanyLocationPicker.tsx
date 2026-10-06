@@ -22,10 +22,9 @@ const CompanyLocationPicker = ({
   selectedName,
 }: Props) => {
   const [search, setSearch] = useState('');
-  const result = useCompanyResource<{ companyLocationOptions: { id: string; name: string }[] }>(
-    CompanyLocationOptionsDocument,
-    { search: search.trim() || null }
-  );
+  const result = useCompanyResource(CompanyLocationOptionsDocument, {
+    search: search.trim() || null,
+  });
   const options = result.data?.companyLocationOptions ?? [];
   const auth = useAuth();
   const identity = JSON.stringify([
