@@ -14,9 +14,7 @@ const Card = ({ children, title, className = '', id }: CardProps) => {
       className={`app-card rounded-xl border border-line-subtle bg-surface p-4 text-content-primary shadow-card ${className}`}
     >
       {title !== null && title !== undefined && title !== '' && (
-        <h3 className="mb-3 text-base font-semibold tracking-tight text-content-primary">
-          {title}
-        </h3>
+        <h3 className="mb-2 text-sm font-semibold tracking-tight text-content-primary">{title}</h3>
       )}
       {children}
     </div>

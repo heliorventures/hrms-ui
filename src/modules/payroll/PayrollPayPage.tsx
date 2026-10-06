@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { PERMISSIONS } from '../../auth/permissions';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { usePageTabs } from '../../hooks/usePageTabs';
 
 import EmployeePayslipPanel from './components/EmployeePayslipPanel';
 import EmployeeTaxFormsPanel from './components/EmployeeTaxFormsPanel';
@@ -25,7 +27,13 @@ const PayrollPayPage = () => {
   const canReadPayroll = permissions.canScopedPermission(PERMISSIONS.payrollRead);
   const canReadTax = permissions.canScopedPermission(PERMISSIONS.taxRead);
   const canSubmitTax = permissions.canCapability('action.tax.submit');
-  const [activeTab, setActiveTab] = useState<PayrollTabId>('salary');
+  const tabs = [
+    { id: 'salary', label: 'Salary' },
+    { id: 'payslip', label: 'Payslips' },
+    ...(canReadTax ? [{ id: 'incometax', label: 'Income tax' }] : []),
+  ];
+  const { tab, setTab: setActiveTab } = usePageTabs(tabs);
+  const activeTab: PayrollTabId = tab === 'payslip' || tab === 'incometax' ? tab : 'salary';
   const pay = usePayrollPayData(client, activeTab, {
     canReadPayroll,
     canReadTax,
@@ -34,15 +42,14 @@ const PayrollPayPage = () => {
     tenantTimezone: currentTenant.timezone,
   });
 
-  useEffect(() => {
-    if (activeTab === 'incometax' && !canReadTax) setActiveTab('salary');
-  }, [activeTab, canReadTax]);
-
   if (!canReadPayroll) return null;
 
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">Pay</h1>
+      <PageHeader
+        title={`My pay — ${tabs.find((item) => item.id === activeTab)?.label ?? 'Salary'}`}
+        retainTitle
+      />
 
       {pay.showMigrationHint && <PayrollMigrationHint tenantId={currentTenant.id} />}
 

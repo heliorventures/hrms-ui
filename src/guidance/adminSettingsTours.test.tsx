@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+// @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEventLibrary from '@testing-library/user-event';
 import { createRef } from 'react';
@@ -192,7 +193,7 @@ it('selects the shared employee directory tour through either route permission',
 });
 
 it.each([
-  [adminLeaveSettingsPageTour, 'leave-settings-policies', 'leave-settings.tab.policies'],
+  [adminLeaveSettingsPageTour, 'leave-settings-policies', 'leave-settings.sections'],
   [adminExpenseCategoriesPageTour, 'expense-policy-matching', 'expense-categories.tabs'],
   [adminNotificationsPageTour, 'admin-notifications-direct', 'admin-notifications.tabs'],
   [

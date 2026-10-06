@@ -56,7 +56,7 @@ const FormField = ({
   const describedBy = mergeDescribedBy(descriptionId, errorId);
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <div className="flex items-baseline gap-1">
         <label htmlFor={inputId} className="block text-sm font-medium text-content-secondary">
           {label}

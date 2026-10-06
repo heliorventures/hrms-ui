@@ -4,7 +4,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
-import PageActions from '../../components/common/PageActions';
+import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -78,19 +78,21 @@ const MyWorkPage = () => {
   const visible = tasks.filter((task) => task.completed === completed);
   return (
     <div className="space-y-4">
-      <PageActions>
-        <h1 className="sr-only">
-          {completed ? 'Completed / Archive' : 'My Tasks'}
-        </h1>
-        <Button
-          variant="outline"
-          busy={loading}
-          onClick={() => setRevision((value) => value + 1)}
-          data-tour-anchor="my-work-refresh"
-        >
-          Refresh
-        </Button>
-      </PageActions>
+      <PageHeader
+        title={completed ? 'Completed / Archive' : 'My Tasks'}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              busy={loading}
+              onClick={() => setRevision((value) => value + 1)}
+              data-tour-anchor="my-work-refresh"
+            >
+              Refresh
+            </Button>
+          </div>
+        }
+      />
       {errors.length > 0 && (
         <p role="alert" className="text-status-danger">
           Some tasks could not load. {errors.join(' ')}
@@ -119,41 +121,43 @@ const MyWorkList = ({
 }) => (
   <Card>
     <div data-tour-anchor={completed ? 'my-work-completed-list' : 'my-work-task-list'}>
-    {loading && <p role="status">Loading your work…</p>}
-    {!loading && visible.length > 0 && (
-      <ul className="divide-y divide-line">
-        {visible.map((task) => (
-          <li key={task.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-            <div>
-              <p className="font-medium">{task.title}</p>
-              <p className="text-sm text-content-secondary">
-                {task.kind}
-                {task.date ? ` · ${completed ? 'Completed' : 'Due'} ${task.date.slice(0, 10)}` : ''}
-                {task.completed && task.kind === 'Survey / Feedback'
-                  ? ' · Submitted anonymously'
-                  : ''}
-              </p>
-            </div>
-            {task.href ? (
-              <Link
-                className="rounded-md border border-line px-3 py-2 text-sm text-accent"
-                to={task.href}
-                data-tour-anchor={completed ? 'my-work-view-review' : 'my-work-open-task'}
-              >
-                {completed ? 'View review' : 'Open task'}
-              </Link>
-            ) : (
-              <span className="text-sm text-content-secondary">Completed</span>
-            )}
-          </li>
-        ))}
-      </ul>
-    )}
-    {!loading && visible.length === 0 && !hasErrors && (
-      <p className="text-content-secondary">
-        {completed ? 'No completed tasks yet.' : 'You have no pending tasks.'}
-      </p>
-    )}
+      {loading && <p role="status">Loading your work…</p>}
+      {!loading && visible.length > 0 && (
+        <ul className="divide-y divide-line">
+          {visible.map((task) => (
+            <li key={task.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div>
+                <p className="font-medium">{task.title}</p>
+                <p className="text-sm text-content-secondary">
+                  {task.kind}
+                  {task.date
+                    ? ` · ${completed ? 'Completed' : 'Due'} ${task.date.slice(0, 10)}`
+                    : ''}
+                  {task.completed && task.kind === 'Survey / Feedback'
+                    ? ' · Submitted anonymously'
+                    : ''}
+                </p>
+              </div>
+              {task.href ? (
+                <Link
+                  className="rounded-md border border-line px-3 py-2 text-sm text-accent"
+                  to={task.href}
+                  data-tour-anchor={completed ? 'my-work-view-review' : 'my-work-open-task'}
+                >
+                  {completed ? 'View review' : 'Open task'}
+                </Link>
+              ) : (
+                <span className="text-sm text-content-secondary">Completed</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {!loading && visible.length === 0 && !hasErrors && (
+        <p className="text-content-secondary">
+          {completed ? 'No completed tasks yet.' : 'You have no pending tasks.'}
+        </p>
+      )}
     </div>
   </Card>
 );

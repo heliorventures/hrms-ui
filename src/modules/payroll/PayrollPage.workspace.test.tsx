@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, expect, it, vi } from 'vitest';
 
+import { PageWorkspaceContext } from '../../navigation/pageWorkspaceContext';
+
 import PayrollPage from './PayrollPage';
 
 const state = vi.hoisted(() => ({ allPayslips: true, exports: true, owner: 'first' }));
@@ -78,7 +80,10 @@ it('opens a bookmarked employee-settings task inside the setup workspace', () =>
     'page'
   );
   expect(screen.getByText('Eligibility editor')).toBeTruthy();
-  expect(screen.getByRole('tablist').getAttribute('aria-orientation')).toBe('vertical');
+  expect(screen.getByRole('combobox', { name: 'Payroll section' })).toHaveProperty(
+    'value',
+    'employee-settings'
+  );
 });
 
 it('preserves exception entries while switching workspaces', () => {
@@ -112,4 +117,35 @@ it('clears retained exception entries when the authorization owner changes', () 
     </MemoryRouter>
   );
   expect(screen.getByLabelText('Exception reason')).toHaveProperty('value', '');
+});
+
+it('retains the payroll reports route selector alongside the local payroll sections', () => {
+  const select = vi.fn();
+  render(
+    <MemoryRouter initialEntries={['/payroll/pay?tab=monthly-inputs']}>
+      <PageWorkspaceContext.Provider
+        value={{
+          title: 'Pay & Benefits — Payroll',
+          activePath: '/payroll/pay',
+          tasks: [
+            { path: '/payroll/pay', label: 'Payroll processing', keywords: [], order: 1 },
+            {
+              path: '/admin/reports?domain=payroll',
+              label: 'Payroll reports',
+              keywords: [],
+              order: 2,
+            },
+          ],
+          select,
+        }}
+      >
+        <PayrollPage />
+      </PageWorkspaceContext.Provider>
+    </MemoryRouter>
+  );
+  expect(screen.getByRole('combobox', { name: 'Payroll section' })).toBeTruthy();
+  fireEvent.change(screen.getByRole('combobox', { name: 'Workspace task' }), {
+    target: { value: '/admin/reports?domain=payroll' },
+  });
+  expect(select).toHaveBeenCalledWith('/admin/reports?domain=payroll');
 });

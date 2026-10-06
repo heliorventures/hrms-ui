@@ -160,7 +160,7 @@ const ManagedAttendanceTable = ({
     : (errorMessage ?? 'No attendance records match these filters.');
 
   return (
-    <Card title="Attendance records">
+    <Card>
       <div data-tour-anchor="hr-attendance.records">
         <DataTable
           ariaLabel="Managed attendance records"

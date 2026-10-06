@@ -14,6 +14,7 @@ import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import Select from '../../components/common/Select';
 import { useAuth } from '../../contexts/AuthContext';
@@ -197,7 +198,7 @@ const AdminHrTimesheetSettingsPage = () => {
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
       <div>
-        <h1 className="sr-only">Timesheet & attendance rules</h1>
+        <PageHeader title="Timesheet & attendance rules" />
       </div>
 
       {(message || error) && (

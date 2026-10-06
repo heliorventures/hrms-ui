@@ -23,12 +23,14 @@ const Dashboard = () => {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0" data-tour-anchor="dashboard-welcome">
-          <h1 className="sr-only">Home</h1>
-          <p className="break-words text-2xl font-semibold tracking-tight text-content-primary sm:text-3xl">
+        <div
+          className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2"
+          data-tour-anchor="dashboard-welcome"
+        >
+          <h1 className="break-words text-xl font-semibold tracking-tight text-content-primary sm:text-2xl">
             Welcome back, {displayName || 'there'}.
-          </p>
-          <p className="mt-1 text-xs text-content-muted">
+          </h1>
+          <p className="text-xs text-content-muted">
             {new Intl.DateTimeFormat(undefined, {
               timeZone: currentTenant.timezone,
               weekday: 'long',
@@ -42,7 +44,7 @@ const Dashboard = () => {
         <section
           aria-label="Your day"
           data-tour-anchor="dashboard-your-day"
-          className={`grid items-start gap-4 ${canReadAttendance && canReadLeave ? 'md:grid-cols-2' : ''}`}
+          className={`grid items-start gap-4 ${canReadAttendance && canReadLeave ? 'lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]' : ''}`}
         >
           <h2 className="sr-only">Your day</h2>
           {canReadAttendance ? <PunchInOut key={`attendance:${authorizationKey}`} /> : null}

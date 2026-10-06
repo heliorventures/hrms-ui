@@ -4,7 +4,7 @@ import { ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
-import PageActions from '../../components/common/PageActions';
+import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -12,7 +12,6 @@ import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import CreateEmployeeModal from './components/CreateEmployeeModal';
 import EditEmployeeModal, { type EditEmployeeRow } from './components/EditEmployeeModal';
-
 
 interface EmployeeRow {
   id: string;
@@ -205,12 +204,16 @@ const AdminEmployeesPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageActions>
-        <h1 className="sr-only">Employee Management</h1>
-        <Button data-tour-anchor="employees.add-trigger" onClick={() => setCreateOpen(true)}>
-          Add Employee
-        </Button>
-      </PageActions>
+      <PageHeader
+        title="Employee Management"
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button data-tour-anchor="employees.add-trigger" onClick={() => setCreateOpen(true)}>
+              Add Employee
+            </Button>
+          </div>
+        }
+      />
 
       {error && (
         <Card>
@@ -218,7 +221,7 @@ const AdminEmployeesPage = () => {
         </Card>
       )}
 
-      <Card title="Employee List">
+      <Card>
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading Employees...</p>
         ) : employees.length > 0 ? (

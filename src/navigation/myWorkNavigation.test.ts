@@ -8,12 +8,12 @@ it('groups personal work and keeps performance outside Workplace', () => {
     (group) => group.section.key === 'myWork'
   );
   expect(work?.destinations.map((item) => item.label)).toEqual([
-    'My Tasks',
+    'My tasks',
     'Notifications',
-    'Completed / Archive',
+    'Archive',
   ]);
-  expect(NAVIGATION_DESTINATIONS.find((item) => item.path === '/performance')?.sidebar).toBe(
-    'primary'
+  expect(NAVIGATION_DESTINATIONS.find((item) => item.path === '/performance?tab=my')?.sidebar).toBe(
+    'section'
   );
   expect(NAVIGATION_DESTINATIONS.some((item) => item.path === '/workplace/performance')).toBe(
     false

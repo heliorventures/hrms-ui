@@ -16,7 +16,7 @@ const PageTools = () => {
   );
   const items: ActionMenuItem[] = [];
   if (information?.hasInformation) {
-    items.push({ id: 'guide', label: 'About this page', onSelect: information.open });
+    items.push({ id: 'guide', label: 'About this page', onSelect: () => information.open() });
   }
   items.push({
     id: 'overview',

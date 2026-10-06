@@ -11,7 +11,7 @@ interface LeaveTypesSectionProps {
 }
 
 const LeaveTypesSection = ({ model }: LeaveTypesSectionProps) => (
-  <Card title="Leave Types">
+  <Card>
     <div className="mb-4">
       <Button type="button" variant="primary" className="!text-sm" onClick={model.openNewType}>
         Add Leave Type

@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { createPermissionService } from '../../auth/permissionService';
-import { TAB_LIST_CLASS, tabClassName } from '../../components/common/tabStyles';
+import PageHeader from '../../components/common/PageHeader';
+import Select from '../../components/common/Select';
 import { useAuth } from '../../contexts/AuthContext';
+import { PageWorkspaceContext } from '../../navigation/pageWorkspaceContext';
 
 import LegacyPerformanceCatalog from './LegacyPerformanceCatalog';
 import PerformanceLifecyclePanel from './PerformanceLifecyclePanel';
@@ -16,8 +18,9 @@ const PerformancePage = () => {
   const canSelf = permissions.canScopedPermission('performance:self', ['SELF']);
   const [params, setParams] = useSearchParams();
   const [showLegacy, setShowLegacy] = useState(false);
+  const pageWorkspace = useContext(PageWorkspaceContext);
   const tabs = [
-    ...(canSelf ? [{ id: 'my', label: 'My Performance' }] : []),
+    ...(canSelf ? [{ id: 'my', label: 'My Review' }] : []),
     ...(canEvaluate ? [{ id: 'team', label: 'Team Reviews' }] : []),
     ...(canManage
       ? [
@@ -29,46 +32,33 @@ const PerformancePage = () => {
       : []),
   ];
   const tab = tabs.find((item) => item.id === params.get('tab'))?.id ?? tabs[0]?.id;
-  const selectTab = (id: string) => setParams({ tab: id });
+  const selectTab = (id: string) =>
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      next.set('tab', id);
+      next.delete('review');
+      return next;
+    });
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">Performance</h1>
-      <div
-        role="tablist"
-        aria-label="Performance workflow"
-        className={TAB_LIST_CLASS}
-        data-tour-anchor="performance.workflow.tabs"
-      >
-        {tabs.map((item, index) => (
-          <button
-            key={item.id}
-            id={`performance-tab-${item.id}`}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.id}
-            aria-controls="performance-panel"
-            tabIndex={tab === item.id ? 0 : -1}
-            className={tabClassName(tab === item.id)}
-            onClick={() => selectTab(item.id)}
-            onKeyDown={(event) => {
-              let next: number | undefined;
-              if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
-              if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
-              if (event.key === 'Home') next = 0;
-              if (event.key === 'End') next = tabs.length - 1;
-              if (next !== undefined) {
-                event.preventDefault();
-                selectTab(tabs[next].id);
-                document.getElementById(`performance-tab-${tabs[next].id}`)?.focus();
-              }
-            }}
-          >
-            {item.label}
-          </button>
-        ))}
+      <div data-tour-anchor="performance.workflow.tabs">
+        <PageHeader
+          title={`Performance — ${tabs.find((item) => item.id === tab)?.label ?? 'Reviews'}`}
+          description="Open an assigned review or manage the performance cycle using your available tasks."
+          selector={
+            !pageWorkspace && tabs.length > 1 ? (
+              <Select
+                aria-label="Performance task"
+                value={tab ?? ''}
+                onChange={(event) => selectTab(event.target.value)}
+                options={tabs.map((item) => ({ value: item.id, label: item.label }))}
+              />
+            ) : undefined
+          }
+        />
       </div>
       {tab ? (
-        <div id="performance-panel" role="tabpanel" aria-labelledby={`performance-tab-${tab}`}>
+        <section id="performance-panel" aria-label={tabs.find((item) => item.id === tab)?.label}>
           <PerformanceLifecyclePanel
             key={clientSession?.employeeId ?? 'admin'}
             canManage={canManage}
@@ -91,7 +81,7 @@ const PerformancePage = () => {
               {showLegacy && <LegacyPerformanceCatalog />}
             </details>
           )}
-        </div>
+        </section>
       ) : (
         <p>No performance access is assigned to your account.</p>
       )}

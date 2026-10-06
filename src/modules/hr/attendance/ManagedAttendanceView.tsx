@@ -1,6 +1,6 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
-import PageActions from '../../../components/common/PageActions';
+import PageHeader from '../../../components/common/PageHeader';
 
 import AttendanceRegularizationModal from './AttendanceRegularizationModal';
 import ManagedAttendanceFilters from './ManagedAttendanceFilters';
@@ -51,21 +51,23 @@ const HrAttendanceManagementView = ({
 
   return (
     <div className="space-y-4">
-      <PageActions>
-        <div>
-          <h1 className="sr-only">Attendance management</h1>
-        </div>
-        <Button
-          data-tour-anchor="hr-attendance.refresh"
-          type="button"
-          variant="outline"
-          aria-label="Refresh attendance"
-          disabled={tableLoading}
-          onClick={refresh}
-        >
-          Refresh
-        </Button>
-      </PageActions>
+      <PageHeader
+        title="Attendance management"
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              data-tour-anchor="hr-attendance.refresh"
+              type="button"
+              variant="outline"
+              aria-label="Refresh attendance"
+              disabled={tableLoading}
+              onClick={refresh}
+            >
+              Refresh
+            </Button>
+          </div>
+        }
+      />
 
       <Card>
         <div data-tour-anchor="hr-attendance.filters">

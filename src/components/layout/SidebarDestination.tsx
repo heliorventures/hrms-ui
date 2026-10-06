@@ -1,7 +1,9 @@
+import { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import type { NavigationDestination } from '../../navigation/navigationModel';
 import { activeNavigationDestination } from '../../navigation/navigationSelectors';
+import { PageWorkspaceContext } from '../../navigation/pageWorkspaceContext';
 
 interface SidebarDestinationProps {
   destination: NavigationDestination;
@@ -10,8 +12,7 @@ interface SidebarDestinationProps {
   onNavigate: () => void;
 }
 
-const activeClasses =
-  'bg-surface-selected text-content-primary';
+const activeClasses = 'bg-surface-selected text-content-primary';
 const inactiveClasses =
   'text-content-secondary hover:bg-surface-selected hover:text-content-primary';
 
@@ -23,8 +24,12 @@ const SidebarDestination = ({
 }: SidebarDestinationProps) => {
   const Icon = destination.icon;
   const location = useLocation();
-  const isActive =
-    activeNavigationDestination(location.pathname + location.search)?.path === destination.path;
+  const workspace = useContext(PageWorkspaceContext);
+  const activePath =
+    workspace?.activePath ?? activeNavigationDestination(location.pathname + location.search)?.path;
+  const isActive = destination.members
+    ? destination.members.some((member) => member.path === activePath)
+    : activePath === destination.path;
 
   return (
     <Link

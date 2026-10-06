@@ -1,6 +1,7 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Table from '../../../components/common/Table';
+
 import AssetPager from './AssetPager';
 import AssetSectionToolbar from './AssetSectionToolbar';
 import AssetStatusBadge from './AssetStatusBadge';
@@ -43,7 +44,9 @@ export default function AssetAllocationsSection(props: AssetAllocationsSectionPr
             render: (row: AssetAssignmentRow) => (
               <div>
                 <p>{row.employeeName || 'Unknown employee'}</p>
-                {row.employeeCode ? <p className="text-xs text-slate-500">{row.employeeCode}</p> : null}
+                {row.employeeCode ? (
+                  <p className="text-xs text-slate-500">{row.employeeCode}</p>
+                ) : null}
               </div>
             ),
           },
@@ -75,7 +78,7 @@ export default function AssetAllocationsSection(props: AssetAllocationsSectionPr
       : []),
   ];
   return (
-    <Card title={props.canReadInventory ? 'Active Assignments' : 'My Assigned Assets'}>
+    <Card>
       <AssetSectionToolbar
         search={props.filter.search}
         placeholder="Asset, tag, serial, or employee"

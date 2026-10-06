@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import Table from '../../components/common/Table';
-import Modal from '../../components/common/Modal';
-import Input from '../../components/common/Input';
-import Badge from '../../components/common/Badge';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   ApproveTimesheetWeekBatchDocument,
   RejectTimesheetWeekBatchDocument,
   ViewerEmployeeIdDocument,
   type ViewerEmployeeIdQuery,
 } from '../../api/graphql/graphql';
+import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import Input from '../../components/common/Input';
+import Modal from '../../components/common/Modal';
+import PageHeader from '../../components/common/PageHeader';
+import Table from '../../components/common/Table';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   TIMESHEET_APPROVAL_REFRESH_MESSAGE,
   timesheetApprovalTarget,
 } from '../timesheet/timesheetApproval';
+
 import TimesheetBatchPreviewModal from './components/TimesheetBatchPreviewModal';
 
 const TIMESHEET_WEEK_BATCHES_DOCUMENT = `
@@ -65,10 +68,13 @@ const HrTimesheetsPage = () => {
   const [infoNotice, setInfoNotice] = useState<string | null>(null);
 
   const loadBatches = useCallback(async () => {
-    const r = await client.request<{ timesheetWeekBatches: BatchRow[] }>(TIMESHEET_WEEK_BATCHES_DOCUMENT, {
-      ...(filter === 'pending' ? { status: 'PENDING' } : {}),
-      limit: 80,
-    });
+    const r = await client.request<{ timesheetWeekBatches: BatchRow[] }>(
+      TIMESHEET_WEEK_BATCHES_DOCUMENT,
+      {
+        ...(filter === 'pending' ? { status: 'PENDING' } : {}),
+        limit: 80,
+      }
+    );
     setBatches(r.timesheetWeekBatches ?? []);
   }, [client, filter]);
 
@@ -132,7 +138,7 @@ const HrTimesheetsPage = () => {
       const st = exp?.status?.trim().toUpperCase() ?? '';
       if (st === 'PENDING' && exp?.workflowInstanceId) {
         setInfoNotice(
-          'Your approval was recorded. The submission stays open until every workflow step is finished - continue with HR or the next approver.',
+          'Your approval was recorded. The submission stays open until every workflow step is finished - continue with HR or the next approver.'
         );
       } else {
         setInfoNotice('Timesheet approved.');
@@ -201,10 +207,10 @@ const HrTimesheetsPage = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="sr-only">Timesheet Approvals</h1>
+        <PageHeader title="Timesheet Approvals" />
       </div>
 
-      <Card title="Queue">
+      <Card>
         <div
           className="mb-4 flex flex-wrap items-center gap-2"
           data-tour-anchor="hr-timesheets.filters"
@@ -254,7 +260,8 @@ const HrTimesheetsPage = () => {
                 label: '',
                 render: (row: BatchRow) => {
                   const pending = row.status?.toUpperCase() === 'PENDING';
-                  const ownSubmission = viewerEmployeeId != null && row.employeeId === viewerEmployeeId;
+                  const ownSubmission =
+                    viewerEmployeeId != null && row.employeeId === viewerEmployeeId;
                   const approvalTarget = timesheetApprovalTarget(row.id, row.pendingApprovalStepId);
                   const staleApproval =
                     pending && row.viewerMayApprove === true && !ownSubmission && !approvalTarget;

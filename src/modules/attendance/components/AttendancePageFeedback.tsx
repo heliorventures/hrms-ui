@@ -1,5 +1,5 @@
 import Button from '../../../components/common/Button';
-import PageActions from '../../../components/common/PageActions';
+import PageHeader from '../../../components/common/PageHeader';
 import PageNotice from '../../../components/common/PageNotice';
 import type { AttendancePageModel } from '../hooks/useAttendancePageModel';
 
@@ -8,21 +8,25 @@ import ManualAttendanceModal from './ManualAttendanceModal';
 export const AttendancePageToolbar = ({ model }: { model: AttendancePageModel }) => {
   const { canPunchAttendance, policyReady, openAdjust, currentWorkDate } = model;
   return (
-    <PageActions>
-      <h1 className="sr-only">Attendance</h1>
-      {canPunchAttendance ? (
-        <Button
-          data-tour-anchor="attendance.adjust-trigger"
-          variant="primary"
-          type="button"
-          disabled={!policyReady}
-          title={policyReady ? undefined : 'Loading adjustment policy'}
-          onClick={() => currentWorkDate && openAdjust(currentWorkDate)}
-        >
-          {policyReady ? 'Add Missed Punches' : 'Loading adjustment policy…'}
-        </Button>
-      ) : null}
-    </PageActions>
+    <PageHeader
+      title="Attendance"
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          {canPunchAttendance ? (
+            <Button
+              data-tour-anchor="attendance.adjust-trigger"
+              variant="primary"
+              type="button"
+              disabled={!policyReady}
+              title={policyReady ? undefined : 'Loading adjustment policy'}
+              onClick={() => currentWorkDate && openAdjust(currentWorkDate)}
+            >
+              {policyReady ? 'Add Missed Punches' : 'Loading adjustment policy…'}
+            </Button>
+          ) : null}
+        </div>
+      }
+    />
   );
 };
 export const AttendancePageNotices = ({ model }: { model: AttendancePageModel }) => {

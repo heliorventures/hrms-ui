@@ -67,7 +67,7 @@ const CompanyPayslipComponents = ({ client }: { client: GraphQLClient }) => {
     }
   };
   return (
-    <Card title="Company payslip display">
+    <Card>
       <p className="mb-3 text-sm text-slate-600">
         Choose the components shown on payslips for every employee in this company. Gross,
         deductions and net earnings keep their calculated values.

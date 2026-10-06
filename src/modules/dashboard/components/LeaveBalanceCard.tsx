@@ -47,7 +47,7 @@ interface LeaveBalanceFooterProps {
 }
 
 const LeaveBalanceFooter = ({ hasData, onRefresh, phase }: LeaveBalanceFooterProps) => (
-  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 pt-2 dark:border-gray-700">
     {hasData ? (
       <Button
         variant="quiet"
@@ -60,10 +60,10 @@ const LeaveBalanceFooter = ({ hasData, onRefresh, phase }: LeaveBalanceFooterPro
       </Button>
     ) : null}
     <Link
-      to="/leave"
+      to="/leave/team-calendar"
       className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
     >
-      Open Leave Center →
+      Open leave calendar →
     </Link>
   </div>
 );

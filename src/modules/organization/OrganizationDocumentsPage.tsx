@@ -7,12 +7,13 @@ import {
   OrgDocumentsListDocument,
   type OrgDocumentsListQuery,
 } from '../../api/graphql/graphql';
-import { authorizationStateKey } from '../../auth/permissionService';
 import { PERMISSIONS } from '../../auth/permissions';
+import { authorizationStateKey } from '../../auth/permissionService';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import Select from '../../components/common/Select';
 import Table from '../../components/common/Table';
@@ -207,10 +208,10 @@ const DocumentsContent = () => {
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Documents</h1>
-        <p className="mt-1 text-sm text-content-secondary">
-          Find policies and employee resources. Read them here.
-        </p>
+        <PageHeader
+          title="Documents"
+          description="Find policies and employee resources. Read them here."
+        />
       </div>
 
       {loadError ? (

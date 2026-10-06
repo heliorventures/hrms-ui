@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
-import { TAB_LIST_CLASS, tabClassName } from '../../../../components/common/tabStyles';
+import Select from '../../../../components/common/Select';
 
 export interface ProfileTabDef {
   id: string;
@@ -18,30 +18,15 @@ interface TabNavigationProps {
 export const TabNavigation = ({ tabs, activeId, onChange }: TabNavigationProps) => {
   return (
     <div className="min-w-0">
-      <div
-        className={TAB_LIST_CLASS}
-        role="tablist"
-        aria-label="Employee Profile Sections"
-        data-tour-anchor="profile-section-navigation"
-      >
-        {tabs.map((t) => {
-          const Icon = t.icon;
-          const active = t.id === activeId;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => onChange(t.id)}
-              data-tour-anchor={`profile-section-${t.id}`}
-              className={tabClassName(active)}
-            >
-              <Icon className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
-              {t.label}
-            </button>
-          );
-        })}
+      <div data-tour-anchor="profile-section-navigation" data-active-profile-section={activeId}>
+        <Select
+          data-tour-anchor={`profile-section-${activeId}`}
+          aria-label="Employee Profile Sections"
+          value={activeId}
+          onChange={(event) => onChange(event.target.value)}
+          options={tabs.map((tab) => ({ value: tab.id, label: tab.label }))}
+          className="max-w-full sm:w-60"
+        />
       </div>
     </div>
   );

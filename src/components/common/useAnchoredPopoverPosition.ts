@@ -117,18 +117,22 @@ export function useAnchoredPopoverPosition({
   useLayoutEffect(() => {
     if (!open) return undefined;
     updatePosition();
+    const observer =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updatePosition);
+    if (panelRef.current) observer?.observe(panelRef.current);
     const visualViewport = window.visualViewport;
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition, { capture: true, passive: true });
     visualViewport?.addEventListener('resize', updatePosition);
     visualViewport?.addEventListener('scroll', updatePosition);
     return () => {
+      observer?.disconnect();
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
       visualViewport?.removeEventListener('resize', updatePosition);
       visualViewport?.removeEventListener('scroll', updatePosition);
     };
-  }, [open, updatePosition]);
+  }, [open, updatePosition, panelRef]);
 
   return position;
 }

@@ -2,6 +2,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type KeyboardEventHandler,
   type RefObject,
+  type MutableRefObject,
   useCallback,
   useId,
   useLayoutEffect,
@@ -43,7 +44,7 @@ function initialFocusElement(panel: HTMLElement): HTMLElement | null {
 }
 
 interface PopoverResult<T extends HTMLElement> {
-  triggerRef: RefObject<T>;
+  triggerRef: MutableRefObject<T | null>;
   panelRef: RefObject<HTMLDivElement>;
   triggerProps: {
     'aria-expanded': boolean;
@@ -62,7 +63,7 @@ export function usePopover<T extends HTMLElement = HTMLButtonElement>(options: {
   const panelId = useId();
   const focusOnOpen = options.focusOnOpen !== false;
   const popoverIdRef = useRef(Symbol('popover'));
-  const triggerRef = useRef<T>(null);
+  const triggerRef = useRef<T | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(options.onClose);
   const closingRef = useRef(false);

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 
 import Card from '../components/common/Card';
+import PageHeader from '../components/common/PageHeader';
+import Select from '../components/common/Select';
 
 import { useAppearance } from './appearanceContext';
 import AppearanceNavigation from './AppearanceNavigation';
@@ -9,6 +11,7 @@ import PalettePicker from './PalettePicker';
 import PreferenceActions from './PreferenceActions';
 import PreferenceControl from './PreferenceControl';
 import { DEFAULT_APPEARANCE, parseAppearance, type AppearancePreferences } from './preferences';
+import { appearanceWorkspace } from './sectionWorkspaces';
 import { APPEARANCE_SETTINGS, type AppearanceSection } from './settings';
 
 const AppearancePage = () => {
@@ -18,6 +21,7 @@ const AppearancePage = () => {
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
   const dirty = JSON.stringify(draft) !== JSON.stringify(preferences);
+  const workspace = appearanceWorkspace(section);
   const change = (key: keyof AppearancePreferences, value: string | boolean) => {
     setDraft((current) => parseAppearance({ ...current, [key]: value }));
     setMessage('');
@@ -33,10 +37,23 @@ const AppearancePage = () => {
   };
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="page-heading">Appearance</h1>
-        <p className="mt-1 text-xs text-content-muted">Personal preferences for your workspace.</p>
-      </header>
+      <PageHeader
+        title="Appearance"
+        description="Personal preferences for your workspace. Preview changes before saving them in this browser."
+        selector={
+          workspace.sections.length > 1 ? (
+            <Select
+              aria-label="Appearance section"
+              value={section}
+              options={workspace.sections.map((label) => ({ value: label, label }))}
+              onChange={(event) => {
+                const selected = workspace.sections.find((label) => label === event.target.value);
+                if (selected) setSection(selected);
+              }}
+            />
+          ) : null
+        }
+      />
       <div className="grid items-start gap-4 lg:grid-cols-[10.5rem_minmax(0,1fr)] xl:grid-cols-[10.5rem_minmax(0,1fr)_17rem]">
         <AppearanceNavigation
           preferences={draft}
@@ -45,7 +62,9 @@ const AppearancePage = () => {
           onSectionChange={setSection}
         />
         <Card>
-          <h2 className="mb-3 text-base font-semibold">{section}</h2>
+          {section === 'Layout & Spacing' ? (
+            <h2 className="mb-2 text-sm font-semibold">{section}</h2>
+          ) : null}
           <div className="space-y-3">
             {APPEARANCE_SETTINGS[section].map((setting) => (
               <PreferenceControl

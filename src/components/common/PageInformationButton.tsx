@@ -22,7 +22,9 @@ const PageInformationButton = ({
         title="Open page information"
         aria-haspopup="dialog"
         aria-expanded={information.isOpen}
-        onClick={information.open}
+        aria-controls={information.isOpen ? information.panelId : undefined}
+        data-page-information-trigger
+        onClick={(event) => information.open(event.currentTarget)}
         className="flex min-h-11 w-11 flex-col items-center justify-center gap-1 rounded-lg py-2 text-content-secondary hover:bg-surface-selected hover:text-content-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:w-16"
       >
         <Info className="h-5 w-5" aria-hidden="true" />
@@ -37,7 +39,9 @@ const PageInformationButton = ({
       icon={<Info className="h-5 w-5" />}
       aria-haspopup="dialog"
       aria-expanded={information.isOpen}
-      onClick={information.open}
+      aria-controls={information.isOpen ? information.panelId : undefined}
+      data-page-information-trigger
+      onClick={(event) => information.open(event.currentTarget)}
     />
   );
 };

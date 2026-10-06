@@ -1,11 +1,4 @@
-import {
-  CalendarDays,
-  CalendarPlus,
-  ClipboardList,
-  Files,
-  ReceiptText,
-  type LucideIcon,
-} from 'lucide-react';
+import { CalendarPlus, Files, ReceiptText, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { createPermissionService, type Capability } from '../../../auth/permissionService';
@@ -29,7 +22,6 @@ const destinations: QuickAccessDestination[] = [
     capability: 'action.leave.submit',
     tourAnchor: 'dashboard-request-leave',
   },
-  { path: '/my-work/tasks', label: 'My tasks', icon: ClipboardList },
   {
     path: '/payroll/payslips',
     to: '/payroll/payslips?tab=payslip',
@@ -37,7 +29,6 @@ const destinations: QuickAccessDestination[] = [
     icon: ReceiptText,
   },
   { path: '/organization/documents', label: 'Documents', icon: Files },
-  { path: '/leave', label: 'My leave', icon: CalendarDays },
 ];
 
 const HomeQuickAccess = () => {
@@ -49,17 +40,17 @@ const HomeQuickAccess = () => {
   );
   if (!available.length) return null;
   return (
-    <nav aria-label="Quick access" className="space-y-3" data-tour-anchor="dashboard-quick-access">
-      <h2 className="text-base font-semibold">Quick access</h2>
-      <div className="flex flex-wrap gap-3">
+    <nav aria-label="Quick access" className="space-y-2" data-tour-anchor="dashboard-quick-access">
+      <h2 className="text-sm font-semibold">Quick access</h2>
+      <div className="flex flex-wrap gap-2">
         {available.map(({ path, to, label, icon: Icon, tourAnchor }) => (
           <Link
             key={to ?? path}
             to={to ?? path}
             data-tour-anchor={tourAnchor}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-content-secondary transition-colors duration-150 hover:border-accent hover:text-accent focus-visible:ring-2 focus-visible:ring-focus motion-reduce:transition-none"
+            className={`app-button inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus motion-reduce:transition-none ${label === 'Request leave' ? 'border-accent bg-accent text-content-inverse hover:bg-accent-hover' : 'border-line bg-surface text-content-secondary hover:border-accent hover:text-accent'}`}
           >
-            <Icon className="size-5 text-accent" aria-hidden="true" />
+            <Icon className="size-4" aria-hidden="true" />
             {label}
           </Link>
         ))}

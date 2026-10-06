@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+// @vitest-environment jsdom
+// @vitest-environment jsdom
+// @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -57,7 +60,7 @@ afterEach(() => {
 });
 
 describe('ProfileDropdown', () => {
-  it('uses ActionMenu semantics and preserves the employee profile route', async () => {
+  it('uses ActionMenu semantics and opens the personal profile workspace', async () => {
     renderProfile();
     const trigger = screen.getByRole('button', { name: 'User menu' });
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
@@ -66,8 +69,8 @@ describe('ProfileDropdown', () => {
 
     const menu = screen.getByRole('menu', { name: 'User menu' });
     expect(trigger.getAttribute('aria-controls')).toBe(menu.id);
-    const profile = screen.getByRole('menuitem', { name: 'Profile settings' });
-    expect(profile.getAttribute('href')).toBe('/organization/employees/employee-42');
+    const profile = screen.getByRole('menuitem', { name: 'My profile' });
+    expect(profile.getAttribute('href')).toBe('/profile/settings');
     await waitFor(() => expect(document.activeElement).toBe(profile));
 
     fireEvent.keyDown(profile, { key: 'Escape' });
@@ -80,20 +83,22 @@ describe('ProfileDropdown', () => {
     renderProfile();
     fireEvent.click(screen.getByRole('button', { name: 'User menu' }));
 
-    expect(screen.getByRole('menuitem', { name: 'Profile settings' }).getAttribute('href')).toBe(
+    expect(screen.getByRole('menuitem', { name: 'My profile' }).getAttribute('href')).toBe(
       '/profile/settings'
     );
   });
 
-  it('preserves theme and logout actions including replace navigation', async () => {
+  it('offers Documents and Security, and preserves logout replace navigation', async () => {
     mocks.logout.mockResolvedValue(undefined);
     renderProfile();
     const trigger = screen.getByRole('button', { name: 'User menu' });
     fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Theme: Dark mode' }));
-    expect(mocks.toggleTheme).toHaveBeenCalledOnce();
-
-    fireEvent.click(trigger);
+    expect(screen.getByRole('menuitem', { name: 'Documents' }).getAttribute('href')).toBe(
+      '/profile/settings?tab=documents'
+    );
+    expect(screen.getByRole('menuitem', { name: 'Security' }).getAttribute('href')).toBe(
+      '/profile/settings?tab=security'
+    );
     fireEvent.click(screen.getByRole('menuitem', { name: 'Log out' }));
 
     await waitFor(() => expect(mocks.logout).toHaveBeenCalledOnce());

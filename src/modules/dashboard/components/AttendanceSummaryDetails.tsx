@@ -17,7 +17,7 @@ interface AttendanceSegmentsProps {
 const AttendanceSegments = ({ segments, startIndex = 0 }: AttendanceSegmentsProps) => (
   <ol
     aria-label="Recorded attendance sessions"
-    className="ml-1 space-y-3 border-l-2 border-accent/25 pl-4 text-content-secondary"
+    className="ml-1 space-y-2 border-l-2 border-accent/25 pl-4 text-content-secondary"
   >
     {segments.map((segment, index) => {
       const checkInCoords = formatCoord(segment.checkInLat, segment.checkInLng);
@@ -69,11 +69,11 @@ const AttendanceSummaryDetails = ({ summary, actions }: AttendanceSummaryDetails
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex flex-col gap-1">
         <span className="text-xs text-content-muted">Worked today (completed)</span>
-        <span className="text-5xl font-semibold tabular-nums tracking-tight text-content-primary">
+        <span className="text-4xl font-semibold tabular-nums tracking-tight text-content-primary">
           {Math.floor(summary.totalWorkedMinutes / 60)}h {summary.totalWorkedMinutes % 60}m
         </span>
       </div>
-      {actions ? <div className="min-w-0 flex-1 basis-56">{actions}</div> : null}
+      {actions ? <div className="min-w-0 shrink-0">{actions}</div> : null}
     </div>
     {summary.openSegment ? (
       <p className="text-sm text-content-secondary">
@@ -86,7 +86,7 @@ const AttendanceSummaryDetails = ({ summary, actions }: AttendanceSummaryDetails
       </p>
     ) : null}
     {summary.segments.length > 0 ? (
-      <details className="rounded-lg bg-surface-selected p-3">
+      <details open className="rounded-lg bg-surface-selected p-3">
         <summary className="cursor-pointer text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           View attendance sessions ({summary.segments.length})
         </summary>

@@ -1,5 +1,6 @@
 import Card from '../../../components/common/Card';
 import Table from '../../../components/common/Table';
+
 import AssetPager from './AssetPager';
 import AssetSectionToolbar from './AssetSectionToolbar';
 import type { AssetAssignmentRow, AssetPageInfo, PageFilter } from './assetTypes';
@@ -45,7 +46,7 @@ export default function AssetHistorySection(props: AssetHistorySectionProps) {
     },
   ];
   return (
-    <Card title={props.canReadInventory ? 'Assignment History' : 'My Asset History'}>
+    <Card>
       <AssetSectionToolbar
         search={props.filter.search}
         placeholder="Asset, tag, serial, or employee"

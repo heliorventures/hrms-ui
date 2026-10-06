@@ -1,5 +1,6 @@
 import PreferenceControl, { type PreferenceControlProps } from './PreferenceControl';
-import { APPEARANCE_SECTIONS, MODE_SETTING, type AppearanceSection } from './settings';
+import { APPEARANCE_WORKSPACES } from './sectionWorkspaces';
+import { MODE_SETTING, type AppearanceSection } from './settings';
 
 interface Props extends Omit<PreferenceControlProps, 'setting'> {
   section: AppearanceSection;
@@ -13,13 +14,13 @@ const AppearanceNavigation = ({ preferences, onChange, section, onSectionChange 
       className="flex flex-wrap gap-1 lg:flex-col"
       data-tour-anchor="appearance-sections"
     >
-      {APPEARANCE_SECTIONS.map((label) => (
+      {APPEARANCE_WORKSPACES.map(({ label, sections }) => (
         <button
           key={label}
           type="button"
-          aria-pressed={section === label}
-          onClick={() => onSectionChange(label)}
-          className={`rounded-lg px-3 py-2 text-left text-sm ${section === label ? 'bg-surface-selected font-semibold text-accent' : 'text-content-secondary hover:bg-surface-selected'}`}
+          aria-pressed={sections.includes(section)}
+          onClick={() => onSectionChange(sections.includes(section) ? section : sections[0])}
+          className={`app-button min-h-11 rounded-lg px-3 py-2 text-left text-sm ${sections.includes(section) ? 'bg-surface-selected font-semibold text-accent' : 'text-content-secondary hover:bg-surface-selected'}`}
         >
           {label}
         </button>

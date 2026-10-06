@@ -8,7 +8,7 @@ export const hrLeavesPageTour: TourDefinition = {
       id: 'hr-leaves-queue',
       anchor: 'hr-leaves.queue',
       title: 'Review leave requests',
-      body: 'Review and table views show request dates, leave type, duration, status, and workflow history. Filters and paging help narrow the queue. The team calendar summarizes scheduled leave.',
+      body: 'Review and table views show request dates, leave type, duration, status, and workflow history. Filters and paging help narrow the queue. Open leave calendar in the request review to view scheduled leave and holidays together.',
     },
     {
       id: 'hr-leaves-application',
@@ -50,12 +50,6 @@ export const hrLeavesPageTour: TourDefinition = {
       title: 'Open leave and holiday setup',
       body: 'Leave & holidays setup opens the policy and company-holiday administration page when your role can manage leave settings.',
       isVisible: ({ canCapability }) => canCapability?.('action.leave.manage') ?? false,
-    },
-    {
-      id: 'hr-leaves-calendar',
-      anchor: 'leave.team-calendar-grid',
-      title: 'Read the team leave calendar',
-      body: 'The calendar places team requests on their date range. Its controls let you move between periods and filter the displayed team leave.',
     },
   ],
 };

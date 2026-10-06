@@ -2,6 +2,7 @@ import { useRef } from 'react';
 
 import { authorizationStateKey } from '../../../auth/permissionService';
 import Card from '../../../components/common/Card';
+import PageHeader from '../../../components/common/PageHeader';
 import PageInformation from '../../../components/common/PageInformation';
 import Tabs from '../../../components/common/Tabs';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -29,7 +30,7 @@ const PrejoiningAdminWorkspace = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="sr-only">Pre-joining</h1>
+        <PageHeader title="Pre-joining" />
         <PageInformation title="Pre-joining">
           <p className="text-sm text-content-secondary">
             Configure private candidate forms, review submissions, and confirm joined employees.

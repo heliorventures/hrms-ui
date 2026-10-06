@@ -106,16 +106,7 @@ const PayrollWorkspacePanels = ({
       {tasks.map((task) => {
         const shouldMountPanel = task.id === activeTask || visited.includes(task.id);
         return (
-          <PageTabPanel
-            key={task.id}
-            id={task.id}
-            activeTab={activeTask}
-            label={
-              tasks.filter((item) => item.workspace === task.workspace).length === 1
-                ? task.label
-                : undefined
-            }
-          >
+          <PageTabPanel key={task.id} id={task.id} activeTab={activeTask} label={task.label}>
             {shouldMountPanel ? panels[task.id as keyof typeof panels] : null}
           </PageTabPanel>
         );

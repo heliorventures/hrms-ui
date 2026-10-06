@@ -1,7 +1,11 @@
+import { X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
-import Drawer from './Drawer';
+import IconButton from './IconButton';
 import { PageInformationContext } from './pageInformationContext';
+import { useAnchoredPopoverPosition } from './useAnchoredPopoverPosition';
+import { usePopover } from './usePopover';
 
 interface PageInformationProviderProps {
   children: ReactNode;
@@ -34,19 +38,65 @@ const PageInformationProvider = ({ children, scopeKey }: PageInformationProvider
     },
     [scopeKey]
   );
-  const open = useCallback(() => setOpenScope(scopeKey), [scopeKey]);
   const close = useCallback(() => setOpenScope(null), []);
+  const popover = usePopover<HTMLElement>({ open: isOpen, onClose: close });
+  const { triggerRef } = popover;
+  const open = useCallback(
+    (trigger?: HTMLElement) => {
+      triggerRef.current =
+        trigger ??
+        document.querySelector<HTMLElement>('[data-page-information-trigger]') ??
+        (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+      setOpenScope(scopeKey);
+    },
+    [scopeKey, triggerRef]
+  );
+  const position = useAnchoredPopoverPosition({
+    align: 'start',
+    open: isOpen,
+    panelRef: popover.panelRef,
+    triggerRef,
+  });
   const value = useMemo(
-    () => ({ register, target: isOpen ? target : null, hasInformation, isOpen, open }),
-    [register, target, hasInformation, isOpen, open]
+    () => ({
+      register,
+      target: isOpen ? target : null,
+      hasInformation,
+      isOpen,
+      open,
+      panelId: popover.panelProps.id,
+    }),
+    [register, target, hasInformation, isOpen, open, popover.panelProps.id]
   );
 
   return (
     <PageInformationContext.Provider value={value}>
       {children}
-      <Drawer title="Page information" isOpen={isOpen} onClose={close} side="right">
-        <div ref={setTarget} className="space-y-5 break-words" />
-      </Drawer>
+      {isOpen
+        ? createPortal(
+            <div
+              {...popover.panelProps}
+              ref={popover.panelRef}
+              role="dialog"
+              aria-label="Page information"
+              tabIndex={-1}
+              data-popover-panel="true"
+              className="app-guidance-popover fixed z-50 w-[26rem] overflow-y-auto rounded-lg border border-line bg-surface p-3 text-content-primary shadow-xl"
+              style={position.style}
+            >
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold">Page information</p>
+                <IconButton
+                  label="Close page information"
+                  icon={<X className="size-4" />}
+                  onClick={() => popover.close()}
+                />
+              </div>
+              <div ref={setTarget} className="space-y-3 break-words" />
+            </div>,
+            document.body
+          )
+        : null}
     </PageInformationContext.Provider>
   );
 };

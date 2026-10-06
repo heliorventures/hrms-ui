@@ -94,7 +94,7 @@ const PayrollSalaryTab = ({ preview, loading, error }: PayrollSalaryTabProps) =>
         salary assignment should already be active.
       </p>
     );
-  return <Card title="Your Salary">{content}</Card>;
+  return <Card>{content}</Card>;
 };
 
 export default PayrollSalaryTab;

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
-import Tabs from '../../../components/common/Tabs';
+import Select from '../../../components/common/Select';
+import { TAB_LIST_CLASS, tabClassName } from '../../../components/common/tabStyles';
 import type { usePayrollWorkspace } from '../hooks/usePayrollWorkspace';
 
 const PayrollWorkspaceNavigation = ({
@@ -9,14 +10,14 @@ const PayrollWorkspaceNavigation = ({
   state: ReturnType<typeof usePayrollWorkspace>;
 }) => (
   <div data-tour-anchor="payroll.process.sections" className="space-y-3">
-    <nav aria-label="Payroll workspaces" className="flex flex-wrap gap-2 border-b border-line pb-3">
+    <nav aria-label="Payroll workspaces" className={TAB_LIST_CLASS}>
       {state.workspaces.map((item) => (
         <Link
           key={item.id}
           to={state.taskUrl(state.tasks.find((task) => task.workspace === item.id)?.id ?? 'runs')}
           preventScrollReset
           aria-current={state.workspace.id === item.id ? 'page' : undefined}
-          className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${state.workspace.id === item.id ? 'bg-indigo-600 text-white' : 'text-content-secondary hover:bg-surface-raised'}`}
+          className={tabClassName(state.workspace.id === item.id)}
         >
           {item.label}
         </Link>
@@ -30,11 +31,12 @@ export const PayrollWorkspaceTaskMenu = ({
   state: ReturnType<typeof usePayrollWorkspace>;
 }) =>
   state.visibleTasks.length > 1 ? (
-    <Tabs
-      orientation="vertical"
+    <Select
+      aria-label="Payroll section"
       value={state.task.id}
-      onValueChange={state.setTask}
-      tabs={state.visibleTasks.map((task) => ({ ...task, panelId: `page-feature-${task.id}` }))}
+      onChange={(event) => state.setTask(event.target.value)}
+      options={state.visibleTasks.map((task) => ({ value: task.id, label: task.label }))}
+      className="max-w-full sm:w-60"
     />
   ) : null;
 export default PayrollWorkspaceNavigation;

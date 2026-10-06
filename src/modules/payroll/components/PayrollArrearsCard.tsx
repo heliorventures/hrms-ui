@@ -25,7 +25,7 @@ const PayrollArrearsCard = ({
   onChange,
   onCreate,
 }: PayrollArrearsCardProps) => (
-  <Card title="PENDING Payroll Arrears (Back-Pay)">
+  <Card>
     <PageInformation title="Arrear calculation">
       <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
         Pending accruals appear as a separate <span className="font-mono">ARREAR</span> earning in

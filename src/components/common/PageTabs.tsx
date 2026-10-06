@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { PageTab } from '../../hooks/usePageTabs';
 
 import { PageTabVisibilityContext } from './pageTabVisibilityContext';
+import Select from './Select';
 import Tabs from './Tabs';
 
 interface PageTabsProps {
@@ -13,13 +14,27 @@ interface PageTabsProps {
 
 const panelId = (id: string) => `page-feature-${id}`;
 
-const PageTabs = ({ tabs, value, onValueChange }: PageTabsProps) => (
-  <Tabs
-    tabs={tabs.map((tab) => ({ ...tab, panelId: panelId(tab.id) }))}
-    value={value}
-    onValueChange={onValueChange}
-  />
-);
+const PageTabs = ({ tabs, value, onValueChange }: PageTabsProps) =>
+  tabs.length > 4 ? (
+    <Select
+      aria-label="Page section"
+      aria-controls={panelId(value)}
+      value={value}
+      onChange={(event) => onValueChange(event.target.value)}
+      options={tabs.map((tab) => ({
+        value: tab.id,
+        label: tab.label,
+        id: `${panelId(tab.id)}-tab`,
+      }))}
+      className="max-w-full sm:w-60"
+    />
+  ) : (
+    <Tabs
+      tabs={tabs.map((tab) => ({ ...tab, panelId: panelId(tab.id) }))}
+      value={value}
+      onValueChange={onValueChange}
+    />
+  );
 export default PageTabs;
 
 /** Keep inputs mounted so switching tasks does not discard filters or drafts.

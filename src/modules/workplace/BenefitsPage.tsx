@@ -5,6 +5,7 @@ import { EnrollInBenefitPlanDocument } from '../../api/graphql/graphql';
 import { scopeForPermission } from '../../auth/approvalScope';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -255,7 +256,7 @@ const BenefitsPage = () => {
       <div data-tour-anchor="benefits.sections">
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
-      <h1 className="sr-only">Benefits</h1>
+      <PageHeader title="Benefits" />
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

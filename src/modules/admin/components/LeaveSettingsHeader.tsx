@@ -1,7 +1,7 @@
 import Button from '../../../components/common/Button';
-import PageActions from '../../../components/common/PageActions';
+import PageHeader from '../../../components/common/PageHeader';
 import PageInformation from '../../../components/common/PageInformation';
-import { TAB_LIST_CLASS, tabClassName } from '../../../components/common/tabStyles';
+import Select from '../../../components/common/Select';
 import type { AdminLeaveSettingsModel } from '../hooks/useAdminLeaveSettings';
 import type { LeaveSettingsTabKey } from '../leaveSettingsTypes';
 import { LEAVE_SETTINGS_TABS } from '../leaveSettingsUtils';
@@ -20,41 +20,38 @@ const LeaveSettingsHeader = ({
   onRefresh,
 }: LeaveSettingsHeaderProps) => (
   <>
-    <PageActions>
-      <div>
-        <h1 className="sr-only">Leave configuration</h1>
-        <PageInformation title="Leave configuration">
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage master leave types, per-type policies, employee balances, and public holiday
-            calendars. Requires <span className="font-mono text-xs">leave:manage</span>.
-          </p>
-        </PageInformation>
-      </div>
-      <Button
-        data-tour-anchor="leave-settings.refresh"
-        variant="outline"
-        type="button"
-        onClick={onRefresh}
-        disabled={loading}
-      >
-        Refresh
-      </Button>
-    </PageActions>
-
-    <div className={TAB_LIST_CLASS}>
-      {LEAVE_SETTINGS_TABS.map((item) => (
-        <button
-          key={item.key}
-          type="button"
-          data-tour-anchor={`leave-settings.tab.${item.key}`}
-          aria-pressed={tab === item.key}
-          className={tabClassName(tab === item.key)}
-          onClick={() => onTabChange(item.key)}
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
+    <PageHeader
+      title="Leave configuration"
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            aria-label="Leave configuration section"
+            data-tour-anchor="leave-settings.sections"
+            value={tab}
+            options={LEAVE_SETTINGS_TABS.map((item) => ({ value: item.key, label: item.label }))}
+            onChange={(event) => {
+              const selected = LEAVE_SETTINGS_TABS.find((item) => item.key === event.target.value);
+              if (selected) onTabChange(selected.key);
+            }}
+          />
+          <Button
+            data-tour-anchor="leave-settings.refresh"
+            variant="outline"
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+          >
+            Refresh
+          </Button>
+        </div>
+      }
+    />
+    <PageInformation title="Leave configuration">
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        Manage master leave types, per-type policies, employee balances, and public holiday
+        calendars. Requires <span className="font-mono text-xs">leave:manage</span>.
+      </p>
+    </PageInformation>
   </>
 );
 

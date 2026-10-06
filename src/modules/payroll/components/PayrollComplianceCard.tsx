@@ -22,16 +22,15 @@ const PayrollComplianceCard = ({
   onChange,
   onSave,
 }: PayrollComplianceCardProps) => (
-  <Card title="Employer Branding & Statutory (India)">
+  <Card>
     <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-      Employer TAN / name drive Form 24Q / Form 16 CSV columns (empty → env fallback on the
-      payroll process). <strong className="font-medium">Pay run</strong> posts one line against
-      the <span className="font-mono">baseSalaryComponentCode</span> earning component
-      (employment salary); arrear payouts use{' '}
-      <span className="font-mono">arrearSalaryComponentCode</span>. Payslip PDF supports raster
-      logos (<strong>PNG</strong>/<strong>JPEG</strong> directly; <strong>WebP</strong>/
-      <strong>SVG</strong> are rasterized in-browser for PDF). Requires payroll statutory export
-      role.
+      Employer TAN / name drive Form 24Q / Form 16 CSV columns (empty → env fallback on the payroll
+      process). <strong className="font-medium">Pay run</strong> posts one line against the{' '}
+      <span className="font-mono">baseSalaryComponentCode</span> earning component (employment
+      salary); arrear payouts use <span className="font-mono">arrearSalaryComponentCode</span>.
+      Payslip PDF supports raster logos (<strong>PNG</strong>/<strong>JPEG</strong> directly;{' '}
+      <strong>WebP</strong>/<strong>SVG</strong> are rasterized in-browser for PDF). Requires
+      payroll statutory export role.
     </p>
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <Input

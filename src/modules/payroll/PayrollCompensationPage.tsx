@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageTabs } from '../../hooks/usePageTabs';
@@ -60,12 +61,11 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
 
   return (
     <div className="space-y-4">
+      <PageHeader title="Salary Setup" />
       <div data-tour-anchor="payroll.compensation.sections">
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
-      <div>
-        <h1 className="sr-only">Salary Setup</h1>
-      </div>
+      <div></div>
 
       {error ? (
         <Card>

@@ -1,10 +1,9 @@
-import { LogOut, Moon, RefreshCw, SlidersHorizontal, Sun, UserRound } from 'lucide-react';
+import { FileText, LogOut, RefreshCw, Shield, UserRound } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useEmployeeDisplayName } from '../../contexts/employeeDisplayNameContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import ActionMenu, { type ActionMenuItem } from '../common/ActionMenu';
 
 function devRoleSwitchEnabled(): boolean {
@@ -21,8 +20,7 @@ const ProfileDropdown = ({
   companyName?: string;
 }) => {
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
-  const { clientSession, role, switchRole, logout } = useAuth();
+  const { role, switchRole, logout } = useAuth();
   const displayName = useEmployeeDisplayName();
 
   const initials =
@@ -32,9 +30,7 @@ const ProfileDropdown = ({
       .join('')
       .toUpperCase()
       .slice(0, 2) || 'U';
-  const profilePath = clientSession?.employeeId
-    ? `/organization/employees/${clientSession.employeeId}`
-    : '/profile/settings';
+  const profilePath = '/profile/settings';
 
   const handleLogout = useCallback(() => {
     void logout().finally(() => navigate('/login', { replace: true }));
@@ -48,21 +44,21 @@ const ProfileDropdown = ({
     const profileItems: ActionMenuItem[] = [
       {
         id: 'profile',
-        label: 'Profile settings',
+        label: 'My profile',
         href: profilePath,
         icon: <UserRound className="h-5 w-5" />,
       },
       {
-        id: 'appearance',
-        label: 'Appearance',
-        href: '/appearance',
-        icon: <SlidersHorizontal className="h-5 w-5" />,
+        id: 'documents',
+        label: 'Documents',
+        href: '/profile/settings?tab=documents',
+        icon: <FileText className="h-5 w-5" />,
       },
       {
-        id: 'theme',
-        label: `Theme: ${theme === 'light' ? 'Dark' : 'Light'} mode`,
-        onSelect: toggleTheme,
-        icon: theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />,
+        id: 'security',
+        label: 'Security',
+        href: '/profile/settings?tab=security',
+        icon: <Shield className="h-5 w-5" />,
       },
     ];
 
@@ -83,7 +79,7 @@ const ProfileDropdown = ({
       tone: 'danger',
     });
     return profileItems;
-  }, [handleLogout, handleRoleSwitch, profilePath, role, theme, toggleTheme]);
+  }, [handleLogout, handleRoleSwitch, profilePath, role]);
 
   const avatar = (
     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface-selected text-sm font-semibold text-content-primary">

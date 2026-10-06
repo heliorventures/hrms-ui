@@ -1,8 +1,8 @@
 import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes } from 'react';
 
-import FormField, { mergeDescribedBy } from './FormField';
 import { requireAccessibleName } from './accessibleName';
+import FormField, { mergeDescribedBy } from './FormField';
 
 type AccessibleNameProps =
   | {
@@ -90,7 +90,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       return (
         <div
           data-search-field={props.type === 'search' || undefined}
-          className={`space-y-1.5 ${when(fullWidth, 'w-full')}`}
+          className={`space-y-1 ${when(fullWidth, 'w-full')}`}
         >
           {renderInput(mergeDescribedBy(descriptionId, errorId), Boolean(error))}
           {description ? (

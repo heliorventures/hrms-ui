@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ClientOpsAdminSettingsEmployeesDocument } from '../../api/graphql/graphql';
 import Badge from '../../components/common/Badge';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -55,7 +56,7 @@ const AdminSettingsPage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">Admin Settings</h1>
+      <PageHeader title="Admin Settings" />
 
       {error && (
         <Card>

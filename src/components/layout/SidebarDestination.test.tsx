@@ -13,7 +13,7 @@ it('marks only the selected calendar, not the personal Leave overview', () => {
   render(
     <MemoryRouter initialEntries={['/leave/holidays']}>
       {NAVIGATION_DESTINATIONS.filter(
-        (item) => item.path === '/leave' || item.path === '/leave/holidays'
+        (item) => item.path === '/leave' || item.path === '/leave/team-calendar'
       ).map((destination) => (
         <SidebarDestination
           key={destination.path}
@@ -24,9 +24,9 @@ it('marks only the selected calendar, not the personal Leave overview', () => {
     </MemoryRouter>
   );
   expect(screen.getByRole('link', { name: 'My Leave' }).getAttribute('aria-current')).toBeNull();
-  expect(screen.getByRole('link', { name: 'Company Holidays' }).getAttribute('aria-current')).toBe(
-    'page'
-  );
+  expect(
+    screen.getByRole('link', { name: 'Calendar & holidays' }).getAttribute('aria-current')
+  ).toBe('page');
 });
 
 it('marks only the domain report and keeps extra report selection parameters', () => {

@@ -56,7 +56,7 @@ const CompanyContributionRules = ({ client }: { client: GraphQLClient }) => {
     }
   };
   return (
-    <Card title="Company contribution rules">
+    <Card>
       {error && <p role="alert">{error}</p>}
       {busy ? (
         <p role="status">Loading or saving rules…</p>

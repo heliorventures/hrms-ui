@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useContext } from 'react';
 
-import Tabs from '../../../components/common/Tabs';
+import Select from '../../../components/common/Select';
+import { usePageTabs } from '../../../hooks/usePageTabs';
+import { PageWorkspaceContext } from '../../../navigation/pageWorkspaceContext';
 
 import AssetAllocationsSection from './AssetAllocationsSection';
 import AssetCategorySection from './AssetCategorySection';
@@ -31,7 +33,7 @@ const InventoryPanels = (props: WorkspaceSectionsProps & { activeTab: string }) 
       <div
         role="tabpanel"
         id="asset-inventory"
-        aria-labelledby="asset-inventory-tab"
+        aria-label="inventory"
         hidden={activeTab !== 'inventory'}
         tabIndex={0}
       >
@@ -57,7 +59,7 @@ const InventoryPanels = (props: WorkspaceSectionsProps & { activeTab: string }) 
       <div
         role="tabpanel"
         id="asset-categories"
-        aria-labelledby="asset-categories-tab"
+        aria-label="categories"
         hidden={activeTab !== 'categories'}
         tabIndex={0}
       >
@@ -80,7 +82,7 @@ const InventoryPanels = (props: WorkspaceSectionsProps & { activeTab: string }) 
 
 const AssetsWorkspaceSections = (props: WorkspaceSectionsProps) => {
   const { model, canManageAssets, canReadInventory } = props;
-  const [selectedTab, setSelectedTab] = useState('inventory');
+  const workspace = useContext(PageWorkspaceContext);
   const tabs = [
     ...(canReadInventory
       ? [{ id: 'inventory', label: 'Inventory', panelId: 'asset-inventory' }]
@@ -95,11 +97,18 @@ const AssetsWorkspaceSections = (props: WorkspaceSectionsProps) => {
       ? [{ id: 'categories', label: 'Categories', panelId: 'asset-categories' }]
       : []),
   ];
-  const activeTab = tabs.some((tab) => tab.id === selectedTab) ? selectedTab : 'assignments';
+  const { tab: activeTab, setTab: setSelectedTab } = usePageTabs(tabs);
   return (
     <>
       <div data-tour-anchor="assets.sections">
-        <Tabs tabs={tabs} value={activeTab} onValueChange={setSelectedTab} />
+        {!workspace && (
+          <Select
+            aria-label="Asset section"
+            value={activeTab}
+            onChange={(event) => setSelectedTab(event.target.value)}
+            options={tabs.map((tab) => ({ value: tab.id, label: tab.label }))}
+          />
+        )}
       </div>
 
       <InventoryPanels {...props} activeTab={activeTab} />
@@ -107,7 +116,7 @@ const AssetsWorkspaceSections = (props: WorkspaceSectionsProps) => {
       <div
         role="tabpanel"
         id="asset-assignments"
-        aria-labelledby="asset-assignments-tab"
+        aria-label="assignments"
         hidden={activeTab !== 'assignments'}
         tabIndex={0}
       >
@@ -127,7 +136,7 @@ const AssetsWorkspaceSections = (props: WorkspaceSectionsProps) => {
       <div
         role="tabpanel"
         id="asset-history"
-        aria-labelledby="asset-history-tab"
+        aria-label="history"
         hidden={activeTab !== 'history'}
         tabIndex={0}
       >

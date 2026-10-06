@@ -13,6 +13,7 @@ import {
   type RoleIdsForUserQuery,
 } from '../../api/graphql/graphql';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import { useDialogs } from '../../contexts/DialogContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -315,7 +316,9 @@ const HrAccessManagementPage = () => {
   };
 
   const updateScopeRow = (index: number, patch: Partial<RbacScopeRow>) => {
-    setScopeRows((rows) => rows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)));
+    setScopeRows((rows) =>
+      rows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row))
+    );
   };
 
   const roles = board?.tenantDirectoryRoles ?? [];
@@ -323,7 +326,7 @@ const HrAccessManagementPage = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="sr-only">Roles & Permissions</h1>
+        <PageHeader title="Roles & Permissions" />
         <PageInformation title="Roles and permissions">
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Manage tenant RBAC. Changes to roles or permissions require users to obtain a fresh
@@ -383,7 +386,9 @@ const HrAccessManagementPage = () => {
           rows={scopeRows}
           selectedRoleId={scopeRoleId}
           onAddRow={() => setScopeRows((rows) => [...rows, DEFAULT_SCOPE_ROW])}
-          onRemoveRow={(index) => setScopeRows((rows) => rows.filter((_, rowIndex) => rowIndex !== index))}
+          onRemoveRow={(index) =>
+            setScopeRows((rows) => rows.filter((_, rowIndex) => rowIndex !== index))
+          }
           onRoleChange={setScopeRoleId}
           onSave={() => void saveScopes()}
           onUpdateRow={updateScopeRow}

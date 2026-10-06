@@ -6,6 +6,7 @@ import { scopeForPermission } from '../../auth/approvalScope';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -159,7 +160,7 @@ const RecruitmentPage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">Hiring</h1>
+      <PageHeader title="Hiring" />
       <div data-tour-anchor="recruitment.sections">
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>

@@ -23,7 +23,6 @@ import {
   HrLeaveWorkflowDialog,
 } from './components/HrLeavePageSections';
 import HrLeaveQueueSection from './components/HrLeaveQueueSection';
-import LeaveTeamCalendar from './components/LeaveTeamCalendar';
 import { useHrLeaveApplicationHolidays } from './hooks/useHrLeaveApplicationHolidays';
 import { HR_LEAVE_LIMIT, useHrLeaveApprovalBoard } from './hooks/useHrLeaveApprovalBoard';
 import { useHrLeaveMutations } from './hooks/useHrLeaveMutations';
@@ -263,15 +262,6 @@ const HrLeavePageBottom = ({ model: m }: { model: PageModel }) => (
     />
 
     <CompOffApprovalPanel key={authorizationStateKey(m.clientSession)} />
-    <section
-      id="approval-team-calendar"
-      aria-label="Team leave calendar"
-      tabIndex={-1}
-      className="scroll-mt-4"
-    >
-      <LeaveTeamCalendar />
-    </section>
-
     <HrLeaveWorkflowDialog
       trail={{
         employeeLabel: m.employeeLabel,

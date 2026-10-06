@@ -4,6 +4,7 @@ import { WorkplaceGrievanceDocument, SubmitGrievanceCaseDocument } from '../../a
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
+import PageHeader from '../../components/common/PageHeader';
 import Select from '../../components/common/Select';
 import Textarea from '../../components/common/Textarea';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -89,7 +90,7 @@ const GrievancePage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">Grievance</h1>
+      <PageHeader title="Grievance" />
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

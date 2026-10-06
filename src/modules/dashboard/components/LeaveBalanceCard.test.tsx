@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+// @vitest-environment jsdom
+// @vitest-environment jsdom
+// @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -238,6 +241,6 @@ describe('LeaveBalanceCard access and query states', () => {
     const typeName = await screen.findByText(longTypeName);
     expect(typeName.className).toContain('min-w-0');
     expect(typeName.className).toContain('break-words');
-    expect(screen.getByRole('link', { name: 'Open Leave Center →' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Open leave calendar →' })).toBeTruthy();
   });
 });

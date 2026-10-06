@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+// @vitest-environment jsdom
+// @vitest-environment jsdom
+// @vitest-environment jsdom
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -33,10 +36,11 @@ describe('HomeQuickAccess', () => {
     expect(request.getAttribute('href')).toBe('/leave?apply=1');
     expect(request.getAttribute('data-tour-anchor')).toBe('dashboard-request-leave');
     expect(screen.getAllByRole('link', { name: 'Request leave' })).toHaveLength(1);
-    expect(links.getByRole('link', { name: 'My leave' }).getAttribute('href')).toBe('/leave');
+    expect(links.queryByRole('link', { name: 'My leave' })).toBeNull();
+    expect(links.queryByRole('link', { name: 'My tasks' })).toBeNull();
   });
 
-  it('keeps My leave but hides Request leave without submission permission', () => {
+  it('hides Request leave without submission permission and omits duplicate shortcuts', () => {
     authState.clientSession.permissions = new Set(['leave:read']);
     render(
       <MemoryRouter>
@@ -44,6 +48,6 @@ describe('HomeQuickAccess', () => {
       </MemoryRouter>
     );
     expect(screen.queryByRole('link', { name: 'Request leave' })).toBeNull();
-    expect(screen.getByRole('link', { name: 'My leave' })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'My leave' })).toBeNull();
   });
 });

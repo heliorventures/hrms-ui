@@ -1,6 +1,6 @@
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
-import PageActions from '../../components/common/PageActions';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { usePageTabs } from '../../hooks/usePageTabs';
 
@@ -24,16 +24,21 @@ const AdminExpenseCategoriesPage = () => {
       <div data-tour-anchor="expense-categories.tabs">
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
-      <PageActions>
-        <div>
-          <h1 className="sr-only">Expense Categories</h1>
-        </div>
-        {tab === 'categories' ? (
-          <Button data-tour-anchor="expense-categories.add-category" onClick={model.openNewCategory}>
-            Add Category
-          </Button>
-        ) : null}
-      </PageActions>
+      <PageHeader
+        title="Expense Categories"
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {tab === 'categories' ? (
+              <Button
+                data-tour-anchor="expense-categories.add-category"
+                onClick={model.openNewCategory}
+              >
+                Add Category
+              </Button>
+            ) : null}
+          </div>
+        }
+      />
 
       {model.error ? (
         <Card>
@@ -42,7 +47,7 @@ const AdminExpenseCategoriesPage = () => {
       ) : null}
 
       <PageTabPanel id="categories" activeTab={tab}>
-        <Card title="Configured Categories">
+        <Card>
           <ExpenseCategoriesTable
             rows={model.rows}
             loading={model.loading}

@@ -6,6 +6,7 @@ import {
 } from '../../api/graphql/graphql';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
+import PageHeader from '../../components/common/PageHeader';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -91,9 +92,7 @@ const OrganizationEmployeesPage = () => {
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 data-optional-heading="true" className="page-heading">
-            Employee Directory
-          </h1>
+          <PageHeader title="Employee Directory" />
         </div>
         <div className="app-search-slot w-full sm:w-80">
           <Input

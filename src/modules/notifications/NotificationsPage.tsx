@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { canManageNotifications } from '../../auth/navAccess';
 import Button from '../../components/common/Button';
 import PageActions from '../../components/common/PageActions';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePageTabs } from '../../hooks/usePageTabs';
@@ -32,7 +33,7 @@ const NotificationsPage = () => {
       </div>
       <PageActions>
         <div>
-          <h1 className="sr-only">Notifications</h1>
+          <PageHeader title="Notifications" />
           <p className="mt-1 text-sm">
             <Link
               to="/profile/settings"

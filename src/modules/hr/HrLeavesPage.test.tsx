@@ -39,7 +39,6 @@ vi.mock('../leave/hooks/useLeaveWorkflowTrail', () => ({
 vi.mock('../leave/components/ApplyLeaveModal', () => ({ default: () => null }));
 vi.mock('../leave/components/LeaveRejectModal', () => ({ default: () => null }));
 vi.mock('../leave/components/LeaveWorkflowTrailModal', () => ({ default: () => null }));
-vi.mock('./components/LeaveTeamCalendar', () => ({ default: () => <p>Team calendar</p> }));
 vi.mock('../leave/components/CompOffApprovalPanel', () => ({ default: () => null }));
 vi.mock('../../utils/graphqlUserMessage', () => ({
   graphQlUserMessage: (error: Error) => error.message,

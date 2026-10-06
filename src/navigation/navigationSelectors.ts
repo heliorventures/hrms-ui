@@ -4,6 +4,7 @@ import type {
   NavigationSectionKey,
 } from './navigationModel';
 import { NAVIGATION_DESTINATIONS, NAVIGATION_SECTIONS } from './navigationModel';
+import { workspaceDestinations } from './navigationWorkspaces';
 
 const byOrder = <T extends { order: number }>(left: T, right: T) => left.order - right.order;
 
@@ -49,6 +50,7 @@ export function filterNavigationDestinations(
 }
 
 const LEGACY_DESTINATIONS: Readonly<Record<string, string>> = {
+  '/leave/holidays': '/leave/team-calendar',
   '/hr/people': '/admin/employees',
   '/hr/leave-settings': '/admin/leave-settings',
   '/hr/access': '/admin/access',
@@ -62,6 +64,21 @@ export function activeNavigationDestination(
 ): NavigationDestination | null {
   const current = new URL(location, 'https://navigation.local');
   current.pathname = LEGACY_DESTINATIONS[current.pathname] ?? current.pathname;
+  if (current.pathname === '/performance') {
+    const tasks = destinations.filter((destination) => destination.section === 'performance');
+    const requested = current.searchParams.get('tab');
+    const allowed = tasks.some(
+      (task) => new URL(task.path, current.origin).searchParams.get('tab') === requested
+    );
+    const first = tasks[0];
+    const tab = first ? new URL(first.path, current.origin).searchParams.get('tab') : null;
+    if (!allowed && tab) current.searchParams.set('tab', tab);
+  }
+  if (current.pathname === '/workplace/assets' && !current.searchParams.has('tab')) {
+    const first = destinations.find((destination) => destination.section === 'assets');
+    const tab = first ? new URL(first.path, current.origin).searchParams.get('tab') : null;
+    if (tab) current.searchParams.set('tab', tab);
+  }
   if (current.pathname === '/workplace/workflows' && !current.searchParams.has('domain')) {
     current.searchParams.set('domain', 'leave');
   }
@@ -110,11 +127,15 @@ export function groupNavigationDestinations(
     .sort(byOrder)
     .map((section) => ({
       section,
-      destinations: destinations
-        .filter(
-          (destination) => destination.section === section.key && destination.sidebar === 'section'
-        )
-        .sort(byOrder),
+      destinations: workspaceDestinations(
+        section.key,
+        destinations
+          .filter(
+            (destination) =>
+              destination.section === section.key && destination.sidebar === 'section'
+          )
+          .sort(byOrder)
+      ),
     }))
     .filter((group) => group.destinations.length > 0);
 }

@@ -1,14 +1,34 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
-import PageTabs, { PageTabPanel } from './PageTabs';
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { usePageTabs } from '../../hooks/usePageTabs';
+
 import PageInformation from './PageInformation';
 import PageInformationButton from './PageInformationButton';
 import PageInformationProvider from './PageInformationProvider';
-import { usePageTabs } from '../../hooks/usePageTabs';
+import PageTabs, { PageTabPanel } from './PageTabs';
 
 afterEach(cleanup);
+it('uses a compact selector for longer task lists and names their panels', () => {
+  const tabs = Array.from({ length: 5 }, (_, index) => ({
+    id: `task-${index}`,
+    label: `Task ${index + 1}`,
+  }));
+  const workspace = () => (
+    <>
+      <PageTabs tabs={tabs} value="task-2" onValueChange={() => undefined} />
+      <PageTabPanel id="task-2" activeTab="task-2">
+        Selected content
+      </PageTabPanel>
+    </>
+  );
+  render(workspace());
+  expect(screen.queryByRole('tablist')).toBeNull();
+  expect(screen.getByRole('combobox', { name: 'Page section' })).toHaveProperty('value', 'task-2');
+  expect(screen.getByRole('tabpanel', { name: 'Task 3' })).toBeTruthy();
+});
 const allTabs = [
   { id: 'claims', label: 'Claims' },
   { id: 'travel', label: 'Travel' },

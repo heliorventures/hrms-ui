@@ -12,6 +12,7 @@ import {
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import Select from '../../components/common/Select';
 import { useAuth } from '../../contexts/AuthContext';
@@ -113,7 +114,8 @@ const HrTimesheetProjectAssignmentsPage = () => {
           employeeId: employeeId.trim(),
         });
         const codes = r.employeeTimesheetProjectCodes ?? [];
-        if (!cancelled) setSelected(new Set(codes.map((c) => c.trim().toUpperCase()).filter(Boolean)));
+        if (!cancelled)
+          setSelected(new Set(codes.map((c) => c.trim().toUpperCase()).filter(Boolean)));
       } catch (e) {
         if (!cancelled) {
           setSelected(new Set());
@@ -173,11 +175,14 @@ const HrTimesheetProjectAssignmentsPage = () => {
 
   return (
     <div className="space-y-4">
-      <Card title="Timesheet Project Assignments">
-        <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-          Restrict which projects an employee can log hours against. Leave none selected and save to allow{' '}
-          <strong>all</strong> active catalog projects.
-        </p>
+      <PageHeader title="Timesheets — Project access" />
+      <Card>
+        <PageInformation title="Project access">
+          <p>
+            Restrict which projects an employee can log hours against. Leave none selected and save
+            to allow <strong>all</strong> active catalog projects.
+          </p>
+        </PageInformation>
         {!seesCompanyWideEmployeeDirectory && (
           <PageInformation title="Employee visibility">
             <p className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
@@ -227,7 +232,8 @@ const HrTimesheetProjectAssignmentsPage = () => {
                   <>
                     {unrestricted && (
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Currently <strong>unrestricted</strong> — this employee may use any active project.
+                        Currently <strong>unrestricted</strong> — this employee may use any active
+                        project.
                       </p>
                     )}
                     <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3 dark:border-gray-700">

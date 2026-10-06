@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import PageHeader from '../../../components/common/PageHeader';
 import PageInformation from '../../../components/common/PageInformation';
 import type { PeriodMode } from '../timesheetTypes';
 
@@ -63,7 +64,7 @@ const TimesheetControlsCard = ({
   <>
     <div className="flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h1 className="sr-only">Timesheet</h1>
+        <PageHeader title="Timesheet" />
         <PageInformation title="Timesheet">
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Record work here. Attendance punches stay on the{' '}

@@ -5,6 +5,7 @@ import type { WorkplaceLearningQuery } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -95,7 +96,7 @@ const LearningPage = () => {
       <div data-tour-anchor="learning.sections">
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
-      <h1 className="sr-only">Learning</h1>
+      <PageHeader title="Learning" />
       {notice && (
         <p role="status" className="text-sm text-content-secondary">
           {notice}

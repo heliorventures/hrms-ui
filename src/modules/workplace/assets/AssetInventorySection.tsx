@@ -122,7 +122,7 @@ const AssetInventorySection = (props: AssetInventorySectionProps) => {
       : []),
   ];
   return (
-    <Card title="Asset Inventory">
+    <Card>
       <AssetSectionToolbar
         search={props.filter.search}
         placeholder="Name, tag, or serial number"

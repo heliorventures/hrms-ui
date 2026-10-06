@@ -7,12 +7,16 @@ import {
   Clock3,
   GraduationCap,
   House,
+  Laptop,
   Megaphone,
   ReceiptText,
   Settings,
   WalletCards,
   type LucideIcon,
 } from 'lucide-react';
+
+import type { PermissionCode } from '../auth/permissions';
+import type { ExplicitPermissionScope } from '../auth/permissionService';
 
 import { WORKPLACE_DESTINATIONS } from './workplaceDestinations';
 
@@ -25,6 +29,8 @@ export type NavigationSectionKey =
   | 'expenses'
   | 'payroll'
   | 'hiring'
+  | 'performance'
+  | 'assets'
   | 'talent'
   | 'engagement'
   | 'reports'
@@ -44,6 +50,11 @@ export interface NavigationDestination {
   accessPath?: string;
   /** Contextual reports also require a permitted report in this domain. */
   reportDomain?: string;
+  /** Sidebar workspaces contain only destinations already filtered by authorization. */
+  members?: readonly NavigationDestination[];
+  permission?: PermissionCode;
+  anyPermissions?: readonly PermissionCode[];
+  scopes?: readonly ExplicitPermissionScope[];
 }
 
 export interface NavigationSection {
@@ -62,8 +73,10 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
   { key: 'expenses', label: 'Expenses & Travel', icon: ReceiptText, order: 60 },
   { key: 'payroll', label: 'Pay & Benefits', icon: WalletCards, order: 70 },
   { key: 'hiring', label: 'Hiring & Exit', icon: BriefcaseBusiness, order: 80 },
+  { key: 'performance', label: 'Performance', icon: BarChart3, order: 85 },
   { key: 'talent', label: 'Talent & Development', icon: GraduationCap, order: 90 },
   { key: 'engagement', label: 'Engagement', icon: Megaphone, order: 100 },
+  { key: 'assets', label: 'Assets', icon: Laptop, order: 110 },
   { key: 'reports', label: 'Reports & Insights', icon: BarChart3, order: 130 },
   { key: 'settings', label: 'Settings', icon: Settings, order: 140 },
 ];
@@ -207,13 +220,11 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
     'reject',
     'queue',
   ]),
-  page('leave', '/leave/team-calendar', 'Team Calendar', 53, [
+  page('leave', '/leave/team-calendar', 'Calendar & holidays', 53, [
     'who is off',
     'leave grid',
     'team absence',
     'month view',
-  ]),
-  page('leave', '/leave/holidays', 'Company Holidays', 54, [
     'public holiday',
     'bank holiday',
     'calendar year',
@@ -300,6 +311,17 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
     'api',
     'availability',
   ]),
+  {
+    ...page(
+      'settings',
+      '/workplace/workflows?workspace=settings&domain=leave',
+      'Approval rules',
+      143,
+      ['workflow', 'routing']
+    ),
+    accessPath: '/workplace/workflows',
+  },
+  page('settings', '/admin/settings', 'Administration', 144, ['company', 'settings']),
   reports('people', 'people', 26),
   reports('attendance', 'attendance', 33),
   reports('timesheets', 'timesheets', 44),
@@ -310,12 +332,40 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
   reports('payroll', 'payroll', 77),
   ...WORKPLACE_DESTINATIONS,
   {
-    path: '/performance',
-    label: 'Performance',
-    keywords: ['goals', 'appraisal', 'setup', 'process', 'review'],
-    icon: BarChart3,
-    sidebar: 'primary',
-    order: 85,
+    ...page('performance', '/performance?tab=my', 'My reviews', 851),
+    accessPath: '/performance',
+    permission: 'performance:self',
+    scopes: ['SELF'],
+  },
+  {
+    ...page('performance', '/performance?tab=team', 'Team reviews', 852),
+    accessPath: '/performance',
+    permission: 'performance:evaluate',
+    scopes: ['TEAM'],
+  },
+  ...['setup', 'process', 'review', 'administration'].map((tab, index) => ({
+    ...page(
+      'performance',
+      `/performance?tab=${tab}`,
+      tab[0].toUpperCase() + tab.slice(1),
+      853 + index
+    ),
+    accessPath: '/performance',
+    permission: 'performance:manage' as const,
+    scopes: ['ALL'] as const,
+  })),
+  {
+    ...page('assets', '/workplace/assets?tab=assignments', 'Assignments', 112),
+    accessPath: '/workplace/assets',
+  },
+  {
+    ...page('assets', '/workplace/assets?tab=history', 'History', 113),
+    accessPath: '/workplace/assets',
+  },
+  {
+    ...page('assets', '/workplace/assets?tab=categories', 'Categories', 114),
+    accessPath: '/workplace/assets',
+    anyPermissions: ['assets:read', 'assets:manage'],
   },
   {
     path: '/profile/settings',

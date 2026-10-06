@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 import Button from '../../../components/common/Button';
 import {
   ApprovalActions,
@@ -39,12 +41,12 @@ const LeaveRequestReviewDetails = (props: Props) => {
         <Button variant="outline" onClick={() => onOpenTrail(row)}>
           View history
         </Button>
-        <a
-          href="#approval-team-calendar"
+        <Link
+          to="/leave/team-calendar"
           className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-accent focus-visible:ring-2 focus-visible:ring-focus"
         >
-          Team calendar ↓
-        </a>
+          Open leave calendar
+        </Link>
       </div>
       {props.showApprovalColumn ? <ApprovalActions {...props} row={row} /> : null}
       <OwnRequestAction {...props} row={row} />

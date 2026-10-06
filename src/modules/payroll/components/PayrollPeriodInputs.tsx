@@ -2,6 +2,7 @@ import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
 import Card from '../../../components/common/Card';
+import PageInformation from '../../../components/common/PageInformation';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 import PeriodEditor from './PeriodEditor';
@@ -41,12 +42,15 @@ const PayrollPeriodInputs = ({ client }: { client: GraphQLClient }) => {
     };
   }, [client]);
   return (
-    <Card title="Monthly exceptions and reviewed inputs">
-      <p className="mb-3 text-sm text-slate-600">
-        Routine payroll is prepared automatically from effective salary, company rules and approved
-        unpaid leave. Use this page for monthly exceptions or reviewed imported amounts. Finalized
-        periods cannot be changed.
-      </p>
+    <Card>
+      <PageInformation title="Monthly exceptions">
+        <p>
+          Routine payroll is prepared automatically from effective salary, company rules and
+          approved unpaid leave. Use this page for monthly exceptions or reviewed imported amounts.
+          Finalized periods cannot be changed.
+        </p>
+      </PageInformation>
+      <p className="mb-2 text-xs text-content-secondary">Finalized periods cannot be changed.</p>
       {error && (
         <p role="alert" className="text-sm text-red-600">
           {error}

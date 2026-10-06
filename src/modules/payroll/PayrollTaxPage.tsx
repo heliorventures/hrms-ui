@@ -12,6 +12,7 @@ import {
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -357,10 +358,10 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
 
   return (
     <div className="space-y-4">
+      <PageHeader title="Tax Settings" />
       <div data-tour-anchor="payroll.tax.sections">
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
-      <h1 className="sr-only">Tax Settings</h1>
 
       {error && (
         <Card>

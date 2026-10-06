@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import { groupNavigationDestinations } from '../../navigation/navigationSelectors';
 import { useAccessibleNavigation } from '../../navigation/useAccessibleNavigation';
 
@@ -11,7 +12,7 @@ const HrHomePage = () => {
   );
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">Quick Links</h1>
+      <PageHeader title="Quick Links" />
       <div className="grid gap-4 md:grid-cols-2" data-tour-anchor="hr.workbench-links">
         {groups.map(({ section, destinations }) => (
           <Card key={section.key} title={section.label}>

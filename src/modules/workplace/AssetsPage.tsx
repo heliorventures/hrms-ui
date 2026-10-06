@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { PERMISSIONS } from '../../auth/permissions';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 
 import AssetAssignmentModal from './assets/AssetAssignmentModal';
@@ -155,7 +156,7 @@ const AssetsPage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">Asset Management</h1>
+      <PageHeader title="Asset Management" />
 
       <AssetFeedback model={model} />
 

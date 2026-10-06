@@ -16,7 +16,7 @@ interface LeavePoliciesSectionProps {
 }
 
 const LeavePoliciesSection = ({ model }: LeavePoliciesSectionProps) => (
-  <Card title="Leave Policies">
+  <Card>
     <div className="mb-4">
       <Button type="button" variant="primary" className="!text-sm" onClick={model.openNewPolicy}>
         Add Policy

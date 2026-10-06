@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+// @vitest-environment jsdom
+// @vitest-environment jsdom
+// @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEventLibrary from '@testing-library/user-event';
 import { StrictMode } from 'react';
@@ -31,7 +34,7 @@ const View = ({ scope = 'leave', show = true, days = 14 }) => (
   </StrictMode>
 );
 
-it('collects sections into one drawer while keeping actions and alerts on the page', async () => {
+it('collects sections into one popover while keeping actions and alerts on the page', async () => {
   const user = userEventLibrary.setup();
   const { rerender } = render(<View />);
   const button = screen.getByRole('button', { name: 'Page information' });
@@ -40,11 +43,11 @@ it('collects sections into one drawer while keeping actions and alerts on the pa
   expect(screen.getByRole('alert').textContent).toContain('required document');
   expect(screen.getByRole('button', { name: 'Apply for leave' })).toBeTruthy();
   await user.click(button);
-  const drawer = screen.getByRole('dialog', { name: 'Page information' });
-  expect(within(drawer).getByText('Company holiday')).toBeTruthy();
-  expect(within(drawer).getByText('Editable for 14 days')).toBeTruthy();
+  const popover = screen.getByRole('dialog', { name: 'Page information' });
+  expect(within(popover).getByText('Company holiday')).toBeTruthy();
+  expect(within(popover).getByText('Editable for 14 days')).toBeTruthy();
   rerender(<View days={7} />);
-  expect(within(drawer).getByText('Editable for 7 days')).toBeTruthy();
+  expect(within(popover).getByText('Editable for 7 days')).toBeTruthy();
   await user.keyboard('{Escape}');
   expect(screen.queryByRole('dialog')).toBeNull();
   await waitFor(() => expect(document.activeElement).toBe(button));
@@ -62,7 +65,7 @@ it('removes information when its authorized section disappears', () => {
   expect(screen.queryByRole('dialog')).toBeNull();
 });
 
-it('dismisses the drawer on navigation and does not reopen it on return', () => {
+it('dismisses the popover on navigation and does not reopen it on return', () => {
   const { rerender } = render(<View />);
   fireEvent.click(screen.getByRole('button', { name: 'Page information' }));
   rerender(<View scope="attendance" />);

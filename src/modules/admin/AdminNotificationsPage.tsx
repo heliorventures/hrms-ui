@@ -1,4 +1,5 @@
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { usePageTabs } from '../../hooks/usePageTabs';
 
@@ -19,7 +20,7 @@ const AdminNotificationsPage = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="sr-only">Communications</h1>
+      <PageHeader title="Communications" />
       <div data-tour-anchor="admin-notifications.tabs">
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>

@@ -134,7 +134,7 @@ const EmployeePayrollSettings = ({ client }: { client: GraphQLClient }) => {
     };
   }, [client]);
   return (
-    <Card title="Employee payroll settings">
+    <Card>
       <div data-tour-anchor="payroll.employee-settings" className="space-y-3">
         <p>
           Confirm contribution eligibility once, effective from a payroll month. It carries forward

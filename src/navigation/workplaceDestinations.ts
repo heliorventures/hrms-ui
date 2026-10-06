@@ -80,7 +80,9 @@ export const WORKPLACE_DESTINATIONS: readonly NavigationDestination[] = [
   {
     path: '/workplace/assets',
     label: 'Assets',
-    sidebar: 'primary',
+    section: 'assets',
+    sidebar: 'section',
+    anyPermissions: ['assets:read', 'assets:manage'],
     icon: Laptop,
     order: 110,
     keywords: ['laptop', 'equipment', 'inventory', 'it'],

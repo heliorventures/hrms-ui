@@ -113,9 +113,14 @@ describe('navigation selectors', () => {
   });
 
   it('groups accessible destinations in configured section order', () => {
-    expect(groupNavigationDestinations(destinations, sections)).toEqual([
-      { section: sections[0], destinations: [destinations[1], destinations[2]] },
-      { section: sections[1], destinations: [destinations[3]] },
+    expect(
+      groupNavigationDestinations(destinations, sections).map((group) => ({
+        key: group.section.key,
+        paths: group.destinations.map((destination) => destination.path),
+      }))
+    ).toEqual([
+      { key: 'leave', paths: ['/hr/leaves', '/hr/attendance'] },
+      { key: 'settings', paths: ['/admin/access'] },
     ]);
   });
 });

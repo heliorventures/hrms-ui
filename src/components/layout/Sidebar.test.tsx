@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+// @vitest-environment jsdom
+// @vitest-environment jsdom
+// @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createRef, useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -338,7 +341,7 @@ describe('Sidebar mobile focus and interaction', () => {
     fireEvent.pointerEnter(organization, { pointerType: 'mouse' });
 
     expect(organization.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByRole('link', { name: 'Employee Directory' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Employees' })).toBeTruthy();
   });
 
   it('keeps the desktop icon rail interactive when collapsed', () => {

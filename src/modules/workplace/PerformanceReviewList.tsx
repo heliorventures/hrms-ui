@@ -33,13 +33,11 @@ const PerformanceReviewList = ({
   onOpen,
   reviews,
   showProcess,
-  showSelf,
   tab,
 }: Props) => {
-  const title = showSelf ? 'My Performance' : showProcess ? 'Cycle progress' : 'Team reviews';
   const isLoading = isBusy(`reviews:${tab}`);
   return (
-    <Card title={title}>
+    <Card title={showProcess ? 'Cycle progress' : undefined}>
       {isLoading && <p role="status">Loading reviewsâ€¦</p>}
       {!isLoading && reviews.length === 0 && (
         <p className="text-sm text-content-secondary">No assigned performance reviews.</p>
@@ -47,9 +45,11 @@ const PerformanceReviewList = ({
       {!isLoading && reviews.length > 0 && (
         <ul className="divide-y divide-line">
           {reviews.map(({ row, lane }) => (
-            <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
               <div>
-                <p className="font-medium">{row.employeeName} Â· {row.cycleName}</p>
+                <p className="font-medium">
+                  {row.employeeName} Â· {row.cycleName}
+                </p>
                 <p className="text-xs text-content-secondary">
                   {row.cycleStage.replace(/_/g, ' ')} Â· {row.status}
                 </p>
@@ -73,18 +73,16 @@ const PerformanceReviewList = ({
                     Open {lane === 'self' ? 'my review' : 'evaluation'}
                   </Button>
                 )}
-                {canManage &&
-                  (showProcess || tab === 'review') &&
-                  row.cycleStage !== 'CLOSED' && (
-                    <Button
-                      busy={isBusy(`advance:${row.reviewCycleId}`)}
-                      size="sm"
-                      variant="quiet"
-                      onClick={() => onAdvance(row)}
-                    >
-                      {advanceLabel(row.cycleStage)}
-                    </Button>
-                  )}
+                {canManage && (showProcess || tab === 'review') && row.cycleStage !== 'CLOSED' && (
+                  <Button
+                    busy={isBusy(`advance:${row.reviewCycleId}`)}
+                    size="sm"
+                    variant="quiet"
+                    onClick={() => onAdvance(row)}
+                  >
+                    {advanceLabel(row.cycleStage)}
+                  </Button>
+                )}
               </div>
             </li>
           ))}

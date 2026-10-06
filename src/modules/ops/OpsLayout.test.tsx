@@ -18,10 +18,8 @@ vi.mock('@/contexts/AuthContext', () => ({
 
 const NAVIGATION_ITEMS = [
   ['Tenants', '/ops/tenants'],
-  ['Modules & subscriptions', '/ops/modules'],
-  ['Billing', '/ops/billing'],
-  ['Operator users', '/ops/operators'],
-  ['Feature flags', '/ops/feature-flags'],
+  ['Billing & subscriptions', '/ops/modules'],
+  ['Operators', '/ops/operators'],
 ] as const;
 
 const LocationProbe = () => {
@@ -104,7 +102,7 @@ describe('OpsLayout', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open operator navigation' }));
     const drawer = screen.getByRole('dialog', { name: 'Operator navigation' });
-    await user.click(within(drawer).getByRole('link', { name: 'Modules & subscriptions' }));
+    await user.click(within(drawer).getByRole('link', { name: 'Billing & subscriptions' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(screen.getByTestId('location').textContent).toBe('/ops/modules');
@@ -122,11 +120,13 @@ describe('OpsLayout', () => {
       ).toBe(path);
     }
     expect(
-      within(desktopNavigation).getByRole('link', { name: 'Billing' }).getAttribute('aria-current')
+      within(desktopNavigation)
+        .getByRole('link', { name: 'Billing & subscriptions' })
+        .getAttribute('aria-current')
     ).toBe('page');
   });
 
-  it('uses dynamic viewport, safe-area, and responsive content layout tokens', () => {
+  it('uses dynamic viewport and shared responsive content layout tokens', () => {
     renderLayout();
     const shell = document.getElementById('ops-shell');
     const desktopNavigation = screen.getByRole('navigation', {
@@ -139,11 +139,7 @@ describe('OpsLayout', () => {
     expect(desktopNavigation.closest('aside')?.className).toContain('hidden');
     expect(desktopNavigation.closest('aside')?.className).toContain('md:flex');
     expect(main.className).toContain('min-w-0');
-    expect(main.className).toContain('p-4');
-    expect(main.className).toContain('md:p-6');
-    expect(main.className).toContain('safe-area-inset-bottom');
-    expect(main.className).toContain('safe-area-inset-left');
-    expect(main.className).toContain('safe-area-inset-right');
+    expect(main.className).toContain('app-page-content');
   });
 
   it('signs out with the keyboard and replaces the route with operator login', async () => {

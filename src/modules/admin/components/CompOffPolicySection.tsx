@@ -81,7 +81,7 @@ const PolicySettings = () => {
   const board = useCompOffResource<CompOffSettings>(CompOffSettingsDocument, {});
   const [form, setForm] = useState<CompOffPolicyForm | null>(null);
   return (
-    <Card title="Comp-off policies">
+    <Card>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <PageInformation title="Comp-off policy">
           <p className="max-w-2xl text-sm text-content-secondary">

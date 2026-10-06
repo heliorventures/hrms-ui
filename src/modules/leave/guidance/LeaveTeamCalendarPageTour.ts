@@ -7,20 +7,20 @@ export const leaveTeamCalendarPageTour: TourDefinition = {
     {
       id: 'leave-team-calendar-navigation',
       anchor: 'leave.team-calendar-navigation',
-      title: 'Navigate leave pages',
-      body: 'Home opens the dashboard and Leave home returns to balances and requests.',
+      title: 'Leave calendar and holidays',
+      body: 'Review team leave and holiday details together. Use the Leave menu to open personal requests or management tasks.',
     },
     {
       id: 'leave-team-calendar-controls',
       anchor: 'leave.team-calendar-controls',
       title: 'Choose a calendar month',
-      body: 'Move between months or select a month and year. Refresh reloads the team calendar.',
+      body: 'Move between months or select a month and year. Choose the compact leave list or the monthly calendar. Refresh reloads this period.',
     },
     {
       id: 'leave-team-calendar-grid',
       anchor: 'leave.team-calendar-grid',
       title: 'Read the team calendar',
-      body: 'The calendar displays approved leave by employee and day. Holiday shading and leave-type colors are explained in the legend.',
+      body: 'The list shows ten requests at a time, with search, status filters and pagination. The monthly calendar shows approved leave by employee and day.',
     },
   ],
 };

@@ -122,7 +122,7 @@ it('separates personal work from setup and keeps loading on the clicked action',
       <PerformancePage />
     </MemoryRouter>
   );
-  expect(await screen.findByRole('tab', { name: 'My Performance' })).toBeTruthy();
+  expect(await screen.findByRole('option', { name: 'My Review' })).toBeTruthy();
   const activate = await screen.findByRole('button', { name: 'Activate process' });
   state.request.mockImplementationOnce(() => new Promise(() => {}));
   fireEvent.click(activate);
@@ -160,9 +160,9 @@ it('does not expose administrator tabs to employees even with a setup URL', asyn
       <PerformancePage />
     </MemoryRouter>
   );
-  expect(await screen.findByRole('tab', { name: 'My Performance' })).toBeTruthy();
-  expect(screen.queryByRole('tab', { name: 'Setup' })).toBeNull();
-  expect(screen.queryByRole('tab', { name: 'Administration' })).toBeNull();
+  expect(await screen.findByRole('heading', { name: 'Performance — My Review' })).toBeTruthy();
+  expect(screen.queryByRole('option', { name: 'Setup' })).toBeNull();
+  expect(screen.queryByRole('option', { name: 'Administration' })).toBeNull();
 });
 
 it('does not request administration data for an unauthorized administration URL', async () => {
@@ -193,8 +193,12 @@ it('preserves the setup draft when switching workflow tabs', async () => {
   fireEvent.change(await screen.findByLabelText('Process name'), {
     target: { value: 'Quarterly growth' },
   });
-  fireEvent.click(screen.getByRole('tab', { name: 'Process' }));
+  fireEvent.change(screen.getByRole('combobox', { name: 'Performance task' }), {
+    target: { value: 'process' },
+  });
   expect(screen.queryByLabelText('Process name')).toBeNull();
-  fireEvent.click(screen.getByRole('tab', { name: 'Setup' }));
+  fireEvent.change(screen.getByRole('combobox', { name: 'Performance task' }), {
+    target: { value: 'setup' },
+  });
   expect(screen.getByLabelText('Process name')).toHaveProperty('value', 'Quarterly growth');
 });

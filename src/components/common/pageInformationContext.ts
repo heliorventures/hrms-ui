@@ -5,7 +5,8 @@ export interface PageInformationContextValue {
   target: HTMLDivElement | null;
   hasInformation: boolean;
   isOpen: boolean;
-  open: () => void;
+  panelId?: string;
+  open: (trigger?: HTMLElement) => void;
 }
 
 export const PageInformationContext = createContext<PageInformationContextValue | null>(null);

@@ -8,6 +8,7 @@ import EmployeeDisplayNameProvider from '../../contexts/EmployeeDisplayNameProvi
 import { useTenant } from '../../contexts/TenantContext';
 import TenantGuidanceProvider from '../../guidance/TenantGuidanceProvider';
 import { useIdleLogout } from '../../hooks/useIdleLogout';
+import PageWorkspaceProvider from '../../navigation/PageWorkspaceProvider';
 import { CompactPageContext } from '../common/compactPageContext';
 import PageInformationProvider from '../common/PageInformationProvider';
 
@@ -178,7 +179,9 @@ const AppLayoutWithInformation = () => {
     >
       <EmployeeDisplayNameProvider>
         <TenantGuidanceProvider>
-          <AppLayout />
+          <PageWorkspaceProvider>
+            <AppLayout />
+          </PageWorkspaceProvider>
         </TenantGuidanceProvider>
       </EmployeeDisplayNameProvider>
     </PageInformationProvider>

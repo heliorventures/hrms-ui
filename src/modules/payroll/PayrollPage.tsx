@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { PERMISSIONS } from '../../auth/permissions';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 
@@ -48,10 +49,12 @@ const PayrollPage = () => {
   if (!canManagePayroll) return null;
   return (
     <div className="space-y-3">
-      <h1 className="text-xl font-semibold">{workspace.workspace.label}</h1>
-      <p className="text-sm text-content-secondary">
-        Salary and payroll settings carry forward. Monthly adjustments are for exceptions only.
-      </p>
+      <PageHeader
+        title={workspace.workspace.label}
+        retainTitle
+        description="Salary and payroll settings carry forward. Monthly adjustments are for exceptions only."
+        actions={<PayrollWorkspaceTaskMenu state={workspace} />}
+      />
       <PayrollWorkspaceNavigation state={workspace} />
       {board.error && (
         <Card>
@@ -60,14 +63,7 @@ const PayrollPage = () => {
           </p>
         </Card>
       )}
-      <div
-        className={
-          workspace.visibleTasks.length > 1
-            ? 'grid items-start gap-4 lg:grid-cols-[13rem_minmax(0,1fr)]'
-            : ''
-        }
-      >
-        <PayrollWorkspaceTaskMenu state={workspace} />
+      <div className="space-y-2">
         <PayrollWorkspacePanels
           key={ownerKey}
           activeTask={workspace.task.id}

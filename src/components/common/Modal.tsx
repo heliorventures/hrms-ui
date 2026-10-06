@@ -82,7 +82,7 @@ const Modal = ({
       />
       <div className="relative flex min-h-0 w-full justify-center sm:w-auto">
         <div
-          className={contentClass}
+          className={`app-modal ${contentClass}`}
           style={{
             maxHeight:
               'calc(100dvh - max(1rem, env(safe-area-inset-top)) - max(1rem, env(safe-area-inset-bottom)))',

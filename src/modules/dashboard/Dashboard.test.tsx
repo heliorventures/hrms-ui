@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+// @vitest-environment jsdom
+// @vitest-environment jsdom
+// @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -143,7 +146,7 @@ describe('Dashboard', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('heading', { name: 'Home' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Welcome back/ })).toBeTruthy();
     expect(screen.queryByText(/f32759cb-7e53-4f10-83d5-90c85181a66f/i)).toBeNull();
   });
 });

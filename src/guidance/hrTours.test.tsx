@@ -126,17 +126,13 @@ it('selects leave actions using submit, approval, and management capabilities', 
   const approver = context('hr/leaves', ['action.leave.approve']);
   const manager = context('hr/leaves', ['action.leave.manage']);
 
-  expect(ids(visibleSteps(hrLeavesPageTour, readOnly))).toEqual([
-    'hr-leaves-queue',
-    'hr-leaves-calendar',
-  ]);
+  expect(ids(visibleSteps(hrLeavesPageTour, readOnly))).toEqual(['hr-leaves-queue']);
   expect(ids(visibleSteps(hrLeavesPageTour, submitter))).toContain('hr-leaves-application');
   expect(ids(visibleSteps(hrLeavesPageTour, approver))).toEqual([
     'hr-leaves-queue',
     'hr-leaves-approval',
     'hr-leaves-rejection',
     'hr-leaves-comp-off',
-    'hr-leaves-calendar',
   ]);
   expect(ids(visibleSteps(hrLeavesPageTour, manager))).toContain('hr-leaves-settings');
 });

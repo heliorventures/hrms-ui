@@ -46,7 +46,7 @@ const PayrollLwpRules = ({ client }: { client: GraphQLClient }) => {
       ? latestStart
       : undefined;
   return (
-    <Card title="Unpaid leave calculation">
+    <Card>
       <div className="space-y-3" data-tour-anchor="payroll.unpaid-leave-policy">
         <Input
           label="Payroll month"

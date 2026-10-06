@@ -297,7 +297,7 @@ const PunchActionArea = ({
         {mutationError}
       </PageNotice>
     ) : null}
-    <label className="flex min-h-11 cursor-pointer items-start gap-2 text-sm text-content-secondary">
+    <label className="app-touch-choice flex cursor-pointer items-center gap-2 py-1 text-xs text-content-secondary">
       <input
         type="checkbox"
         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"

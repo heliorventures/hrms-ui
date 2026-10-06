@@ -101,7 +101,7 @@ const Sidebar = ({
         className={[
           'fixed inset-y-0 left-0 z-30 h-[100dvh] min-h-0 w-72 transform overscroll-contain border-r border-line-subtle/60 bg-surface pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pt-[env(safe-area-inset-top)] transition-[transform,width] duration-200 ease-out motion-reduce:transition-none',
           'shrink-0 lg:static lg:h-auto lg:transform-none lg:pb-0 lg:pl-0 lg:pt-0',
-          desktopCollapsed ? 'lg:w-[72px]' : 'lg:w-[216px]',
+          desktopCollapsed ? 'lg:w-[72px]' : 'lg:w-[208px]',
           mobileDialogOpen
             ? 'visible transform-none pointer-events-auto'
             : 'invisible -translate-x-full pointer-events-none lg:visible lg:pointer-events-auto',
