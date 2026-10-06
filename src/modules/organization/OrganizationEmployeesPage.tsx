@@ -1,144 +1,87 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import {
-  ClientOpsEmployeesDirectoryDocument,
-  type ClientOpsEmployeesDirectoryQuery,
-} from '../../api/graphql/graphql';
-import Card from '../../components/common/Card';
+import { authorizationStateKey } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
+import PageNotice from '../../components/common/PageNotice';
+import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
-import EmployeeDirectoryTable from './EmployeeDirectoryTable';
+import EmployeeDirectoryBrowser from './employee-directory/EmployeeDirectoryBrowser';
+import { matchesDirectorySearch } from './employee-directory/employeeDirectoryModel';
+import { useEmployeeDirectory } from './employee-directory/useEmployeeDirectory';
 
-type EmployeeRow = ClientOpsEmployeesDirectoryQuery['employeeDirectoryPage']['rows'][number];
-
-const matchSearch = (employee: EmployeeRow, query: string): boolean => {
-  if (!query.trim()) return true;
-  const q = query.trim().toLowerCase();
-  const fields = [
-    employee.fullName,
-    employee.employeeCode,
-    employee.status,
-    employee.employmentType ?? '',
-    employee.departmentName ?? '',
-    employee.designationTitle ?? '',
-    employee.reportingManagerName ?? '',
-  ].filter(Boolean);
-  return fields.some((f) => f.toLowerCase().includes(q));
-};
-
-const OrganizationEmployeesPage = () => {
+const EmployeeDirectoryView = ({ ownerKey }: { ownerKey: string }) => {
   const client = useGraphClient('client');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const allRows = new Map<string, EmployeeRow>();
-        const seenCursors = new Set<string>();
-        let after: string | undefined;
-        do {
-          let result: ClientOpsEmployeesDirectoryQuery;
-          try {
-            result = await client.request(ClientOpsEmployeesDirectoryDocument, {
-              limit: 100,
-              after,
-            });
-          } catch (cause) {
-            if (!cancelled && allRows.size > 0) {
-              setEmployees([...allRows.values()]);
-              setError(
-                `Loaded ${allRows.size} employees, but a later directory page failed: ${graphQlUserMessage(cause)}`
-              );
-              return;
-            }
-            throw cause;
-          }
-          for (const row of result.employeeDirectoryPage.rows) {
-            allRows.set(row.employeeId, row);
-          }
-          const next = result.employeeDirectoryPage.nextCursor ?? undefined;
-          if (!next || seenCursors.has(next)) break;
-          seenCursors.add(next);
-          after = next;
-        } while (!cancelled);
-        if (!cancelled) setEmployees([...allRows.values()]);
-      } catch (e) {
-        if (!cancelled) {
-          setError(graphQlUserMessage(e));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [client]);
-
-  const filteredEmployees = useMemo(() => {
-    return employees.filter((e) => matchSearch(e, searchQuery));
-  }, [employees, searchQuery]);
-
+  const query = useEmployeeDirectory(client, ownerKey);
+  const [search, setSearch] = useState('');
+  const rows = useMemo(
+    () => query.data?.rows.filter((employee) => matchesDirectorySearch(employee, search)) ?? [],
+    [query.data, search]
+  );
+  const loading = query.phase === 'initial-loading';
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <PageHeader title="Employee Directory" />
-        </div>
-        <div className="app-search-slot w-full sm:w-80">
-          <Input
-            aria-label="Search employees"
-            data-tour-anchor="organization-employees-search"
-            type="search"
-            placeholder="Search by name, employee code, status..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            fullWidth
-            className="rounded-lg border-gray-300 dark:border-gray-600"
-          />
-        </div>
-      </div>
-
-      {error && (
-        <Card>
-          <p className="py-4 text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+    <div className="space-y-3">
+      <PageHeader
+        title="Employee Directory"
+        description="Search work identities, choose a card to see work details, or open the employee profile. Use arrow keys to move between cards and Enter or Space to select."
+        actions={
+          <>
+            <Input
+              aria-label="Search employees"
+              data-tour-anchor="organization-employees-search"
+              type="search"
+              placeholder="Name, employee code, role or department…"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="w-full sm:w-72"
+            />
+            <span className="text-xs tabular-nums text-content-muted">{rows.length} employees</span>
+            <Button
+              size="sm"
+              variant="quiet"
+              busy={query.phase === 'refreshing'}
+              onClick={() => void query.refresh()}
+            >
+              Refresh
+            </Button>
+          </>
+        }
+      />
+      {query.error && (
+        <PageNotice
+          variant="error"
+          title={query.data ? 'Directory refresh failed' : 'Employee directory could not be loaded'}
+        >
+          {query.error}
+        </PageNotice>
       )}
-
+      {query.data?.warning && (
+        <PageNotice variant="warning" title="Directory is incomplete">
+          {query.data.warning}
+        </PageNotice>
+      )}
       {loading && (
-        <Card>
-          <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            Loading Employees...
-          </p>
-        </Card>
+        <p role="status" className="py-4 text-sm text-content-muted">
+          Loading employees…
+        </p>
       )}
-
-      {!loading && filteredEmployees.length > 0 && (
-        <div data-tour-anchor="organization-employees-results">
-          <EmployeeDirectoryTable rows={filteredEmployees} />
-        </div>
-      )}
-
-      {!loading && filteredEmployees.length === 0 && (
-        <Card>
-          <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            {searchQuery.trim()
-              ? 'No employees match your search. Try a different term.'
-              : 'No Employees Found.'}
-          </p>
-        </Card>
+      {!loading && rows.length > 0 && <EmployeeDirectoryBrowser key={ownerKey} rows={rows} />}
+      {!loading && !query.error && rows.length === 0 && (
+        <p role="status" className="py-4 text-sm text-content-muted">
+          {search.trim()
+            ? 'No employees match your search. Try a different term.'
+            : 'No employees found.'}
+        </p>
       )}
     </div>
   );
 };
 
+const OrganizationEmployeesPage = () => {
+  const { clientSession } = useAuth();
+  const ownerKey = authorizationStateKey(clientSession);
+  return <EmployeeDirectoryView key={ownerKey} ownerKey={ownerKey} />;
+};
 export default OrganizationEmployeesPage;

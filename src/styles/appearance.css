@@ -126,6 +126,29 @@ html body,
     transform: translateY(0);
   }
 }
+.app-employee-browse-card {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+.app-employee-card-name {
+  font-family: var(--font-heading);
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion='standard'] .app-employee-work-details {
+    animation: employee-details-reveal 240ms ease-out;
+  }
+}
+@keyframes employee-details-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 [data-content-width='centered'] .app-page-content {
   max-width: 1536px;
 }

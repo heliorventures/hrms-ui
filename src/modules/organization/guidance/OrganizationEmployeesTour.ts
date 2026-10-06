@@ -14,7 +14,7 @@ export const organizationEmployeesTour: TourDefinition = {
       id: 'organization-employees-results',
       anchor: 'organization-employees-results',
       title: 'Open an employee profile',
-      body: 'The directory shows work details and reporting information. Choose View details to open the employee profile, where private sections depend on your access.',
+      body: 'Choose an employee card to show work details and reporting information. Scroll or use the previous and next controls to browse; arrow keys move focus between cards. Choose Open profile for the selected employee, where private sections depend on your access.',
     },
   ],
 };
