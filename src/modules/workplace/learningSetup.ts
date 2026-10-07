@@ -1,3 +1,5 @@
+import type { SaveCourseInput, SaveSkillInput } from '../../api/graphql/graphql';
+
 import type { SetupField } from './performanceSetupEditor';
 
 export { SaveSkillDocument, SaveCourseDocument } from '../../api/graphql/graphql';
@@ -16,16 +18,25 @@ export const courseFields: SetupField[] = [
 ];
 
 const optionalText = (value: string | boolean) => String(value).trim() || null;
-export function learningInput(
-  kind: 'skill' | 'course',
+export function skillInput(
   id: string | undefined,
   values: Record<string, string | boolean>
-) {
-  const identity = { id: id ?? null, category: optionalText(values.category) };
-  if (kind === 'skill')
-    return { ...identity, name: String(values.name).trim(), level: optionalText(values.level) };
+): SaveSkillInput {
   return {
-    ...identity,
+    id: id ?? null,
+    category: optionalText(values.category),
+    name: String(values.name).trim(),
+    level: optionalText(values.level),
+  };
+}
+
+export function courseInput(
+  id: string | undefined,
+  values: Record<string, string | boolean>
+): SaveCourseInput {
+  return {
+    id: id ?? null,
+    category: optionalText(values.category),
     title: String(values.title).trim(),
     deliveryMode: optionalText(values.deliveryMode),
     durationMinutes: values.durationMinutes ? Number(values.durationMinutes) : null,

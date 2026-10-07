@@ -163,8 +163,8 @@ const LegacyPerformanceCatalog = () => {
               input: {
                 id: editor.id ?? null,
                 name: String(values.name).trim(),
-                startDate: values.startDate,
-                endDate: values.endDate,
+                startDate: String(values.startDate).trim(),
+                endDate: String(values.endDate).trim(),
                 reviewType: String(values.reviewType).trim() || null,
               },
             });

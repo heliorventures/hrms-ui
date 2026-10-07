@@ -16,7 +16,8 @@ import {
   courseFields,
   SaveSkillDocument,
   SaveCourseDocument,
-  learningInput,
+  skillInput,
+  courseInput,
 } from './learningSetup';
 import { SetupEditor } from './performanceSetupEditor';
 
@@ -235,10 +236,11 @@ const LearningPage = () => {
           initial={editor.values}
           onClose={() => setEditor(null)}
           onSave={async (values) => {
-            const input = learningInput(editor.kind, editor.id, values);
-            await client.request(editor.kind === 'skill' ? SaveSkillDocument : SaveCourseDocument, {
-              input,
-            });
+            if (editor.kind === 'skill') {
+              await client.request(SaveSkillDocument, { input: skillInput(editor.id, values) });
+            } else {
+              await client.request(SaveCourseDocument, { input: courseInput(editor.id, values) });
+            }
             setNotice('Saved. Use Previous and Next to browse the catalog.');
             try {
               setData(await load());

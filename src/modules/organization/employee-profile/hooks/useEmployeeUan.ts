@@ -68,7 +68,7 @@ export const useEmployeeUan = (
     try {
       const result = await saveEmployeeUan(client, employeeId, normalizedDraft);
       if (generation.current !== owner) return;
-      setSaved({ owner: loadOwner.current, number: result.setEmployeeUanNumber });
+      setSaved({ owner: loadOwner.current, number: result.setEmployeeUanNumber ?? null });
       setEditing(false);
       setDraft('');
       setSuccess(true);
