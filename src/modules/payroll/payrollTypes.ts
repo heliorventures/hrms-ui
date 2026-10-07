@@ -55,6 +55,7 @@ export interface PayrollBoardData {
 
 export interface PayrollComplianceFormState {
   payslipTemplateInput: PayslipTemplateId;
+  payslipEmployeeFieldsInput: string[];
   employerTanInput: string;
   employerLegalNameInput: string;
   baseComponentInput: string;

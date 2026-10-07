@@ -106,7 +106,8 @@ const SidebarSection = ({
         data-tour-anchor={`navigation-section-${section.key}`}
         {...(flyout ? { 'aria-expanded': open, 'aria-controls': popover.panelProps.id } : {})}
         data-active={active || undefined}
-        className={`mx-1 flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus motion-reduce:transition-none ${open || active ? 'bg-surface-selected text-content-primary' : 'text-content-secondary hover:bg-surface-selected'}`}
+        aria-current={active ? 'true' : undefined}
+        className={`app-sidebar-link mx-1 flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus motion-reduce:transition-none ${open || active ? 'bg-surface-selected text-content-primary' : 'text-content-secondary hover:bg-surface-selected'}`}
         onPointerEnter={(event) => {
           if (flyout && event.pointerType !== 'touch') {
             cancelClose();

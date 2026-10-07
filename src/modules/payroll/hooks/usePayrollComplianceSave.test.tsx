@@ -10,6 +10,7 @@ import { usePayrollComplianceSave } from './usePayrollComplianceSave';
 afterEach(cleanup);
 const form = {
   payslipTemplateInput: 'TABLE' as const,
+  payslipEmployeeFieldsInput: ['EMPLOYEE_NAME', 'EMPLOYEE_CODE', 'UAN', 'ESIC'],
   employerTanInput: '',
   employerLegalNameInput: '',
   baseComponentInput: 'BASIC',

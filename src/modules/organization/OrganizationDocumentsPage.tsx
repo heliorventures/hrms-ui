@@ -41,7 +41,7 @@ interface UploadFormState {
 }
 
 const initialForm: UploadFormState = {
-  category: 'COMPANY_POLICY',
+  category: '',
   title: '',
   description: '',
   visibleToEmployees: true,
@@ -111,6 +111,10 @@ const DocumentsContent = () => {
     const title = form.title.trim();
     if (!title) {
       setError('Document title is required.');
+      return;
+    }
+    if (!COMPANY_DOCUMENT_CATEGORIES.some((category) => category.value === form.category)) {
+      setError('Select a document category.');
       return;
     }
     if (!form.file) {
@@ -255,7 +259,13 @@ const DocumentsContent = () => {
                   <Select
                     fullWidth
                     label="Document Category"
-                    options={COMPANY_DOCUMENT_CATEGORIES.map((option) => ({ ...option }))}
+                    description="Choose where employees will find this document in the library."
+                    required
+                    disabled={busy}
+                    options={[
+                      { value: '', label: 'Choose a category' },
+                      ...COMPANY_DOCUMENT_CATEGORIES,
+                    ]}
                     value={form.category}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, category: event.target.value }))

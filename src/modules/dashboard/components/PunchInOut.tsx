@@ -381,6 +381,17 @@ const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps)
           </Button>
         ) : null}
       </div>
+      <div className="mb-3 flex flex-wrap items-baseline gap-x-2 text-xs text-content-muted">
+        <span>Current time</span>
+        <time
+          aria-label="Current company time"
+          dateTime={currentTime.toISOString()}
+          className="text-base font-semibold tabular-nums text-content-primary"
+        >
+          {formatTime(currentTime, summaryTimezone)}
+        </time>
+        <span>{summaryTimezone}</span>
+      </div>
       <div className="space-y-4" data-tour-anchor="dashboard-attendance-summary">
         <PunchSummaryContent
           error={summaryError}

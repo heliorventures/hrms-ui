@@ -29,6 +29,7 @@ describe('company payslip settings', () => {
           ? {
               payrollComplianceSetting: {
                 payslipTemplate: 'TABLE',
+                payslipEmployeeFields: ['EMPLOYEE_NAME', 'EMPLOYEE_CODE', 'UAN', 'ESIC'],
                 baseSalaryComponentCode: 'BASIC',
                 arrearSalaryComponentCode: 'ARREAR',
               },
@@ -69,6 +70,7 @@ describe('company payslip settings', () => {
     const reload = vi.fn().mockResolvedValue(undefined);
     const form = {
       payslipTemplateInput: 'TABLE' as const,
+      payslipEmployeeFieldsInput: ['EMPLOYEE_NAME', 'EMPLOYEE_CODE', 'UAN', 'ESIC'],
       employerTanInput: '',
       employerLegalNameInput: '',
       baseComponentInput: 'BASIC',
@@ -92,6 +94,7 @@ describe('company payslip settings', () => {
     expect(request).toHaveBeenCalledWith(UpsertPayrollComplianceSettingDocument, {
       input: {
         payslipTemplate: 'TABLE',
+        payslipEmployeeFields: ['EMPLOYEE_NAME', 'EMPLOYEE_CODE', 'UAN', 'ESIC'],
         employerTan: null,
         employerLegalName: null,
         baseSalaryComponentCode: 'BASIC',

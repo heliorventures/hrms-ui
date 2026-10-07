@@ -5,6 +5,7 @@
 
 type PayrollComplianceSetting {
   payslipTemplate: String!
+  payslipEmployeeFields: JSON!
   employerTan: String
   employerLegalName: String
   baseSalaryComponentCode: String!
@@ -15,6 +16,7 @@ type PayrollComplianceSetting {
 
 input UpsertPayrollComplianceSettingInput {
   payslipTemplate: String
+  payslipEmployeeFields: [String!]
   employerTan: String
   employerLegalName: String
   baseSalaryComponentCode: String
@@ -42,7 +44,12 @@ extend type Query {
 extend type Mutation {
   saveEmployeePayrollEligibility(employeeId: ID!, input: JSON!): JSON!
   calculatePayrollCycle(cycleId: ID!, expectedRevision: Int): JSON!
-  finalizePayrollCycle(cycleId: ID!, draftRevision: Int!, fingerprint: String!, acknowledgement: JSON!): JSON!
+  finalizePayrollCycle(
+    cycleId: ID!
+    draftRevision: Int!
+    fingerprint: String!
+    acknowledgement: JSON!
+  ): JSON!
   saveCompanyPayrollPolicy(input: JSON!, expectedRevision: Int): JSON!
   upsertPayrollComplianceSetting(
     input: UpsertPayrollComplianceSettingInput!

@@ -90,6 +90,7 @@ export function mapBundleToEmployeeProfileModel(
     phone: emp.personalPhone ?? '',
     dateOfBirth: dobIso ? dobIso.slice(0, 10) : '',
     gender: emp.gender ?? '',
+    maritalStatus: emp.maritalStatus ?? '',
     nationality: emp.nationality ?? '',
     permanentAddress: emp.permanentAddress ?? '',
     currentAddress: emp.currentAddress ?? '',

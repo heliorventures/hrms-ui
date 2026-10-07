@@ -255,12 +255,16 @@ html body,
 }
 [data-theme-style='two-tone'] :is(#app-navigation, #ops-navigation) {
   --color-surface: 21 36 58;
-  --color-surface-selected: 53 48 111;
-  --color-content-primary: 238 243 252;
-  --color-content-secondary: 205 216 231;
+  --color-surface-selected: 55 48 107;
+  --color-content-primary: 226 232 240;
+  --color-content-secondary: 184 198 218;
   --color-content-muted: 168 182 205;
   --color-line-subtle: 53 68 93;
   --color-focus: 165 180 252;
+  --color-navigation-indicator: 141 133 255;
+  --color-navigation-active-text: 255 255 255;
+  --color-navigation-active-icon: 216 212 255;
+  --color-navigation-hover: 43 59 85;
   background: rgb(var(--color-surface));
   color: rgb(var(--color-content-primary));
 }
@@ -268,12 +272,35 @@ html body,
   background: rgb(var(--color-surface-selected));
   color: rgb(var(--color-content-primary));
 }
+#app-navigation .app-sidebar-link:is([aria-current='page'], [aria-current='true']) {
+  background: rgb(var(--color-surface-selected));
+  color: rgb(var(--color-navigation-active-text, var(--color-accent)));
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    inset 3px 0 0 rgb(var(--color-navigation-indicator, var(--color-accent))),
+    var(--tw-shadow, 0 0 #0000);
+  font-weight: 600;
+}
+#app-navigation .app-sidebar-link:is([aria-current='page'], [aria-current='true']) > svg {
+  color: rgb(var(--color-navigation-active-icon, var(--color-accent)));
+}
+[data-theme-style='two-tone']
+  #app-navigation
+  .app-sidebar-link:not([aria-current]):is(:hover, [aria-expanded='true']) {
+  background: rgb(var(--color-navigation-hover));
+}
 @media (min-width: 768px) and (pointer: fine) {
   [data-density='compact'] #app-navigation nav :is(a, button) {
-    min-height: 32px;
+    min-height: 30px;
     padding-top: 6px;
     padding-bottom: 6px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+  [data-density='compact'] #app-navigation nav a > svg {
+    width: 17px;
+    height: 17px;
   }
   #app-navigation > div > div:first-child button {
     min-width: 32px;

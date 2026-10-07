@@ -12,7 +12,7 @@ interface SidebarDestinationProps {
   onNavigate: () => void;
 }
 
-const activeClasses = 'bg-surface-selected text-content-primary';
+const activeClasses = 'bg-surface-selected font-semibold text-accent';
 const inactiveClasses =
   'text-content-secondary hover:bg-surface-selected hover:text-content-primary';
 
@@ -39,8 +39,8 @@ const SidebarDestination = ({
       title={compact ? destination.label : undefined}
       aria-current={isActive ? 'page' : undefined}
       className={[
-        'mx-1 flex items-center rounded-lg text-sm font-medium transition-colors motion-reduce:transition-none',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900',
+        `app-sidebar-destination ${nested ? '' : 'app-sidebar-link'} mx-1 flex items-center rounded-lg text-sm font-medium transition-colors motion-reduce:transition-none`,
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
         nested ? 'gap-2 px-2.5 py-2' : 'gap-3 px-3 py-2.5',
         compact ? 'lg:justify-center lg:px-2' : '',
         isActive ? activeClasses : inactiveClasses,

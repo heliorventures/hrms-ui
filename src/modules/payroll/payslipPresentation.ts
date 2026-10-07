@@ -1,5 +1,7 @@
 import type { PayslipPresentationQuery } from '../../api/graphql/graphql';
 
+import { decodePayslipEmployeeFields } from './payslipEmployeeFields';
+
 export interface PayslipStatement {
   gross: string;
   incentive: string;
@@ -43,6 +45,18 @@ export const decodePayslipPresentation = (
   value: PayslipPresentationQuery['payslipPresentation']
 ): PayslipPresentation | null => {
   if (!value) return null;
+  const details: unknown = Reflect.get(value, 'employeeDetails');
+  if (
+    !Array.isArray(details) ||
+    !details.every(
+      (detail: unknown) =>
+        typeof detail === 'object' &&
+        detail !== null &&
+        ['field', 'label', 'value'].every((key) => typeof Reflect.get(detail, key) === 'string')
+    )
+  )
+    throw new Error('Payslip employee details are invalid.');
+  decodePayslipEmployeeFields(value.employeeDetails.map(({ field }) => field));
   // The service publishes settlement as JSON; codegen cannot validate that scalar's shape.
   const statement: unknown = Reflect.get(value, 'statement');
   if (statement === null || statement === undefined) return { ...value, statement: null };

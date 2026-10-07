@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -105,6 +105,21 @@ afterEach(() => {
 });
 
 describe('PunchInOut truthful states', () => {
+  it('shows a live clock in the attendance timezone without opening details', async () => {
+    const day = summary(0);
+    day.punchDaySummary.timezone = 'Asia/Tokyo';
+    graphState.client.request.mockResolvedValue(day);
+    renderCard();
+    await screen.findByText('No Attendance Recorded Today.');
+    const clock = screen.getByLabelText('Current company time');
+    expect(clock.textContent).toContain('09:00:00');
+    expect(clock.closest('details')).toBeNull();
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(clock.textContent).toContain('09:00:01');
+  });
+
   it('does not render or request attendance without attendance:read', async () => {
     graphState.permissions = new Set();
     const view = renderCard();
@@ -123,15 +138,21 @@ describe('PunchInOut truthful states', () => {
     expect(graphState.client.request).toHaveBeenCalledWith(AttendancePunchDaySummaryDocument);
   });
 
-  it('renders an actionable summary failure and disables punching until summary data is ready', async () => {
+  it('withholds punching after a summary failure and enables it after a successful retry', async () => {
     graphState.client.request.mockRejectedValue(new Error('Failed to fetch'));
     renderCard();
 
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Attendance Summary Could Not Be Loaded');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Punch In' }).disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Punch In' })).toBeNull();
     expect(screen.queryByText('No Attendance Recorded Today.')).toBeNull();
+    graphState.client.request.mockResolvedValue(summary(0));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('No Attendance Recorded Today.')).toBeTruthy();
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Punch In' }).disabled).toBe(
+      false
+    );
   });
 
   it('renders intentional empty copy for a successfully loaded day without attendance', async () => {
@@ -320,7 +341,7 @@ describe('PunchInOut truthful refresh states', () => {
     await screen.findByText('Session 1');
     graphState.client.request.mockRejectedValue(new Error('Failed to fetch'));
 
-    await user.click(screen.getByRole('button', { name: 'Refresh Attendance Summary' }));
+    await user.click(screen.getByRole('button', { name: 'Refresh' }));
 
     expect(await screen.findByText('Attendance Summary May Be Out of Date')).toBeTruthy();
     expect(screen.getByText('Session 1')).toBeTruthy();

@@ -25,6 +25,7 @@ query EmployeePrivateProfile($employeeId: ID!) {
     permanentAddress
     dateOfBirth
     gender
+    maritalStatus
     nationality
     bloodGroup
     emergencyContactName

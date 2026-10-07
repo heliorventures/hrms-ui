@@ -6,6 +6,7 @@ extend type Employee {
   linkedUserUsername: String
   dateOfBirth: NaiveDate
   gender: String
+  maritalStatus: String
   nationality: String
   bloodGroup: String
   emergencyContactName: String
@@ -198,6 +199,7 @@ input UpdateEmployeePersonalProfileInput {
   lastName: String
   dateOfBirth: NaiveDate
   gender: String
+  maritalStatus: String
   nationality: String
   bloodGroup: String
   emergencyContactName: String
@@ -237,6 +239,7 @@ input UpdateEmployeeSelfServiceProfileInput {
   currentAddress: String
   permanentAddress: String
   gender: String
+  maritalStatus: String
   nationality: String
   bloodGroup: String
   emergencyContactName: String

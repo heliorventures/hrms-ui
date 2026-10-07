@@ -22,14 +22,7 @@ const fmt = (value: string) => {
       })
     : value;
 };
-const SheetHeader = ({
-  headerTitle,
-  payslipLogoReadUrl,
-  employeeName,
-  employeeCode,
-  periodLabel,
-  slip,
-}: SheetProps) => (
+const SheetHeader = ({ headerTitle, payslipLogoReadUrl, periodLabel, slip }: SheetProps) => (
   <>
     <div className="flex flex-wrap items-center gap-3 border-b-2 border-indigo-600 pb-3">
       {payslipLogoReadUrl && (
@@ -41,16 +34,13 @@ const SheetHeader = ({
       </div>
     </div>
     <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-      <p>
-        <span className="text-slate-500">Employee</span>
-        <br />
-        <span className="font-semibold">{employeeName}</span>
-      </p>
-      <p className="sm:text-right">
-        <span className="text-slate-500">Code</span>
-        <br />
-        <span className="font-mono">{employeeCode || '—'}</span>
-      </p>
+      {(slip.presentation?.employeeDetails ?? []).map((detail) => (
+        <p key={detail.field}>
+          <span className="text-slate-500">{detail.label}</span>
+          <br />
+          <span className="font-semibold">{detail.value}</span>
+        </p>
+      ))}
       <p>
         <span className="text-slate-500">Status</span> · {slip.status}
       </p>
@@ -60,12 +50,6 @@ const SheetHeader = ({
         {new Date(slip.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium' })}
       </p>
     </div>
-    {(slip.uanNumber || slip.esicNumber) && (
-      <div className="mt-2 flex flex-wrap gap-3 border-t border-slate-100 pt-2 text-xs text-slate-600">
-        {slip.uanNumber && <span>UAN: {slip.uanNumber}</span>}
-        {slip.esicNumber && <span>ESIC: {slip.esicNumber}</span>}
-      </div>
-    )}
   </>
 );
 const ComponentTable = ({ slip }: Pick<SheetProps, 'slip'>) => {

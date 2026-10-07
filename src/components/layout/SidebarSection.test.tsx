@@ -9,6 +9,32 @@ import { NAVIGATION_SECTIONS } from '../../navigation/navigationModel';
 import SidebarSection from './SidebarSection';
 
 afterEach(cleanup);
+it('marks the owning module as current when opening a former Settings approval link', () => {
+  const sections = NAVIGATION_SECTIONS.filter((item) => ['leave', 'settings'].includes(item.key));
+  render(
+    <MemoryRouter initialEntries={['/workplace/workflows?workspace=settings&domain=leave']}>
+      {sections.map((section) => (
+        <SidebarSection
+          key={section.key}
+          section={section}
+          destinations={[
+            {
+              path: section.key === 'leave' ? '/leave' : '/admin/settings',
+              label: 'Open',
+              keywords: [],
+              order: 1,
+            },
+          ]}
+          flyout
+          onNavigate={vi.fn()}
+        />
+      ))}
+    </MemoryRouter>
+  );
+  expect(screen.getByRole('link', { name: 'Leave' }).getAttribute('aria-current')).toBe('true');
+  expect(screen.getByRole('link', { name: 'Settings' }).getAttribute('aria-current')).toBeNull();
+});
+
 it('opens a desktop submenu on hover and closes with Escape', async () => {
   const user = userEvent.setup();
   const section = NAVIGATION_SECTIONS.find((item) => item.key === 'people');

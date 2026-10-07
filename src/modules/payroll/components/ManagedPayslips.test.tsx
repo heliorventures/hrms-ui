@@ -50,7 +50,7 @@ it('blocks managed output until its configured logo resolves and exposes failed 
           });
     if (query === PayslipPresentationDocument)
       return Promise.resolve({
-        payslipPresentation: { template: 'TABLE', lines: [], statement: null },
+        payslipPresentation: { template: 'TABLE', employeeDetails: [], lines: [], statement: null },
       });
     if (query === PayslipUnpaidLeaveDocument) return Promise.resolve({ payslipUnpaidLeave: null });
     if (query === ManagedPayslipEmployeesDocument)

@@ -24,10 +24,11 @@ const drawHeader = (
   writer.text(branding.companyLine, true);
   writer.text(`Payslip for ${branding.periodLabel}`, true);
   const half = writer.width / 2;
-  writer.row(
-    [`Employee: ${branding.employeeName}`, `Employee code: ${branding.employeeCode || '-'}`],
-    [half, half]
-  );
+  const details = slip.presentation?.employeeDetails ?? [];
+  for (let index = 0; index < details.length; index += 2) {
+    const pair = details.slice(index, index + 2).map(({ label, value }) => `${label}: ${value}`);
+    writer.row([pair[0], pair[1] ?? ''], [half, half]);
+  }
   writer.row(
     [
       `Status: ${slip.status}`,
@@ -35,11 +36,6 @@ const drawHeader = (
     ],
     [half, half]
   );
-  const identifiers = [
-    slip.uanNumber && `UAN: ${slip.uanNumber}`,
-    slip.esicNumber && `ESIC: ${slip.esicNumber}`,
-  ].filter(Boolean);
-  if (identifiers.length) writer.text(identifiers.join('    '));
   writer.space();
 };
 

@@ -1,6 +1,11 @@
 query PayslipPresentation($payslipId: ID!) {
   payslipPresentation(payslipId: $payslipId) {
     template
+    employeeDetails {
+      field
+      label
+      value
+    }
     lines {
       id
       code

@@ -885,7 +885,7 @@
           "id": "dashboard-attendance-summary",
           "source": {
             "file": "src/modules/dashboard/components/PunchInOut.tsx",
-            "line": 384
+            "line": 395
           }
         }
       ],
@@ -5764,21 +5764,21 @@
           "id": "organization-documents-tabs",
           "source": {
             "file": "src/modules/organization/OrganizationDocumentsPage.tsx",
-            "line": 207
+            "line": 211
           }
         },
         {
           "id": "organization-company-document-upload",
           "source": {
             "file": "src/modules/organization/OrganizationDocumentsPage.tsx",
-            "line": 241
+            "line": 245
           }
         },
         {
           "id": "organization-company-document-library",
           "source": {
             "file": "src/modules/organization/OrganizationDocumentsPage.tsx",
-            "line": 324
+            "line": 334
           }
         }
       ],
@@ -5788,7 +5788,7 @@
           "label": null,
           "source": {
             "file": "src/modules/organization/OrganizationDocumentsPage.tsx",
-            "line": 238
+            "line": 242
           },
           "requiresReview": true
         },
@@ -5797,7 +5797,7 @@
           "label": null,
           "source": {
             "file": "src/modules/organization/OrganizationDocumentsPage.tsx",
-            "line": 371
+            "line": 381
           },
           "requiresReview": true
         },
@@ -5806,7 +5806,7 @@
           "label": null,
           "source": {
             "file": "src/modules/organization/OrganizationDocumentsPage.tsx",
-            "line": 338
+            "line": 348
           },
           "requiresReview": true
         }
@@ -5818,7 +5818,7 @@
           "handler": "{() => void loadDocuments().catch(() => undefined)}",
           "source": {
             "file": "src/modules/organization/OrganizationDocumentsPage.tsx",
-            "line": 221
+            "line": 225
           },
           "operational": true,
           "requiresReview": true
@@ -5829,7 +5829,7 @@
           "handler": "{() => setUploadOpen((open) => !open)}",
           "source": {
             "file": "src/modules/organization/OrganizationDocumentsPage.tsx",
-            "line": 241
+            "line": 245
           },
           "operational": true,
           "requiresReview": true
@@ -5840,7 +5840,7 @@
           "handler": "{(event) => void submitCompanyDocument(event)}",
           "source": {
             "file": "src/modules/organization/OrganizationDocumentsPage.tsx",
-            "line": 253
+            "line": 257
           },
           "operational": true,
           "requiresReview": true

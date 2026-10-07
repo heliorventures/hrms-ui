@@ -1,8 +1,9 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { PayrollArrearsListDocument, PayrollBoardDocument } from '../../../api/graphql/graphql';
 import {
+  PayrollArrearsListDocument,
+  PayrollBoardDocument,
   PayrollComplianceSettingDocument,
   type PayrollComplianceSettingQuery,
 } from '../../../api/graphql/graphql';
@@ -12,10 +13,15 @@ import type {
   PayrollBoardData,
   PayrollComplianceFormState,
 } from '../payrollTypes';
+import {
+  decodePayslipEmployeeFields,
+  DEFAULT_PAYSLIP_EMPLOYEE_FIELDS,
+} from '../payslipEmployeeFields';
 import { resolvePayslipTemplate } from '../payslipTemplates';
 
 const DEFAULT_COMPLIANCE_FORM: PayrollComplianceFormState = {
   payslipTemplateInput: 'EXISTING',
+  payslipEmployeeFieldsInput: [...DEFAULT_PAYSLIP_EMPLOYEE_FIELDS],
   employerTanInput: '',
   employerLegalNameInput: '',
   baseComponentInput: 'BASIC',
@@ -29,6 +35,7 @@ function complianceFormFromQuery(
 ): PayrollComplianceFormState {
   return {
     payslipTemplateInput: resolvePayslipTemplate(row?.payslipTemplate),
+    payslipEmployeeFieldsInput: decodePayslipEmployeeFields(row?.payslipEmployeeFields),
     employerTanInput: row?.employerTan?.trim() ?? '',
     employerLegalNameInput: row?.employerLegalName?.trim() ?? '',
     baseComponentInput: row?.baseSalaryComponentCode.trim() || 'BASIC',
@@ -102,7 +109,13 @@ export function usePayrollBoard(
   }, [loadData]);
 
   const setComplianceField = useCallback(
-    (field: keyof PayrollComplianceFormState, value: string) => {
+    (field: keyof PayrollComplianceFormState, value: string | string[]) => {
+      if (field === 'payslipEmployeeFieldsInput') {
+        const fields = decodePayslipEmployeeFields(value);
+        setComplianceForm((current) => ({ ...current, payslipEmployeeFieldsInput: fields }));
+        return;
+      }
+      if (typeof value !== 'string') throw new Error('Invalid payroll setting value.');
       if (field === 'payslipTemplateInput') {
         const template = resolvePayslipTemplate(value);
         setComplianceForm((current) => ({ ...current, payslipTemplateInput: template }));

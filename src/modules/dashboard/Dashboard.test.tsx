@@ -1,9 +1,6 @@
 // @vitest-environment jsdom
 
-// @vitest-environment jsdom
-// @vitest-environment jsdom
-// @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -39,8 +36,11 @@ vi.mock('../../contexts/AuthContext', () => ({
 }));
 
 vi.mock('../../contexts/TenantContext', () => ({
-  useTenant: () => ({ currentTenant: { name: 'Acme Health' } }),
+  useTenant: () => ({ currentTenant: { name: 'Acme Health', timezone: 'Asia/Kolkata' } }),
 }));
+
+const graphState = vi.hoisted(() => ({ client: { request: vi.fn() } }));
+vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => graphState.client }));
 
 vi.mock('./components/PunchInOut', () => ({
   default: () => <div data-testid="punch-in-out" />,
@@ -48,10 +48,6 @@ vi.mock('./components/PunchInOut', () => ({
 
 vi.mock('./components/LeaveBalanceCard', () => ({
   default: () => <div data-testid="leave-balance" />,
-}));
-
-vi.mock('./components/NotificationsPreview', () => ({
-  default: () => <div data-testid="notifications-preview" />,
 }));
 
 vi.mock('./components/OnLeaveToday', () => ({
@@ -67,10 +63,15 @@ afterEach(cleanup);
 beforeEach(() => {
   authState.clientSession.permissions = new Set();
   authState.clientSession.permissionScopes = {};
+  graphState.client.request.mockResolvedValue({
+    viewerEmployeeId: authState.clientSession.employeeId,
+    pagedLeaveRequests: [],
+    leaveTypes: [],
+  });
 });
 
 describe('Dashboard', () => {
-  it('links Request leave directly to the authorized shared form entry point', () => {
+  it('links Request leave directly to the authorized shared form entry point', async () => {
     authState.clientSession.permissions = new Set(['leave:read', 'leave:submit']);
     authState.clientSession.permissionScopes = { 'leave:read': 'SELF', 'leave:submit': 'SELF' };
     render(
@@ -81,9 +82,10 @@ describe('Dashboard', () => {
     expect(screen.getByRole('link', { name: 'Request leave' }).getAttribute('href')).toBe(
       '/leave?apply=1'
     );
+    await waitFor(() => expect(screen.queryByText('Loading request status…')).toBeNull());
   });
 
-  it('hides Request leave without submission permission', () => {
+  it('hides Request leave without submission permission', async () => {
     authState.clientSession.permissions = new Set(['leave:read']);
     authState.clientSession.permissionScopes = { 'leave:read': 'SELF' };
     render(
@@ -92,6 +94,7 @@ describe('Dashboard', () => {
       </MemoryRouter>
     );
     expect(screen.queryByRole('link', { name: 'Request leave' })).toBeNull();
+    await waitFor(() => expect(screen.queryByText('Loading request status…')).toBeNull());
   });
 
   it('omits every protected card when its read permission is missing', () => {
@@ -105,7 +108,6 @@ describe('Dashboard', () => {
     expect(screen.queryByTestId('leave-balance')).toBeNull();
     expect(screen.queryByTestId('on-leave-today')).toBeNull();
     expect(screen.queryByTestId('upcoming-holidays')).toBeNull();
-    expect(screen.queryByTestId('notifications-preview')).toBeNull();
   });
 
   it('renders only cards backed by exact read permissions', () => {
@@ -121,13 +123,12 @@ describe('Dashboard', () => {
     );
 
     expect(screen.getByTestId('punch-in-out')).toBeTruthy();
-    expect(screen.queryByTestId('notifications-preview')).toBeNull();
     expect(screen.queryByTestId('leave-balance')).toBeNull();
     expect(screen.queryByTestId('on-leave-today')).toBeNull();
     expect(screen.queryByTestId('upcoming-holidays')).toBeNull();
   });
 
-  it('shows notifications on Home when notification read access is available', () => {
+  it('does not grant attendance or leave access from notification permission', () => {
     authState.clientSession.permissions = new Set(['notification:read']);
     authState.clientSession.permissionScopes = { 'notification:read': 'SELF' };
     render(
@@ -136,7 +137,8 @@ describe('Dashboard', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('notifications-preview')).toBeTruthy();
+    expect(screen.getByText('Use the navigation to open your available tools.')).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Your day' })).toBeNull();
   });
 
   it('does not expose the opaque employee UUID in the welcome header', () => {

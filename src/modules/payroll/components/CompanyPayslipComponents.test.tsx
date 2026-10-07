@@ -72,6 +72,7 @@ it('refreshes an already-mounted presentation after saving component visibility'
       return Promise.resolve({
         payslipPresentation: {
           template: 'TABLE',
+          employeeDetails: [],
           statement: null,
           lines: visible ? [component] : [],
         },

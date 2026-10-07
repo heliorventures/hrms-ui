@@ -3,6 +3,7 @@ import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
 import type { PayrollComplianceFormState } from '../payrollTypes';
 
+import PayslipEmployeeFieldSelector from './PayslipEmployeeFieldSelector';
 import PayslipTemplateSelector from './PayslipTemplateSelector';
 
 interface PayrollComplianceCardProps {
@@ -11,7 +12,7 @@ interface PayrollComplianceCardProps {
   busy: boolean;
   error: string | null;
   ok: string | null;
-  onChange: (field: keyof PayrollComplianceFormState, value: string) => void;
+  onChange: (field: keyof PayrollComplianceFormState, value: string | string[]) => void;
   onSave: () => void;
 }
 
@@ -27,8 +28,14 @@ const PayrollComplianceCard = ({
   <Card>
     <PayslipTemplateSelector
       value={form.payslipTemplateInput}
+      employeeFields={form.payslipEmployeeFieldsInput}
       disabled={busy || loading}
       onChange={(value) => onChange('payslipTemplateInput', value)}
+    />
+    <PayslipEmployeeFieldSelector
+      value={form.payslipEmployeeFieldsInput}
+      disabled={busy || loading}
+      onChange={(value) => onChange('payslipEmployeeFieldsInput', value)}
     />
     <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
       Employer TAN / name drive Form 24Q / Form 16 CSV columns (empty → env fallback on the payroll
@@ -37,7 +44,7 @@ const PayrollComplianceCard = ({
       salary); arrear payouts use <span className="font-mono">arrearSalaryComponentCode</span>.
       Payslip PDF supports raster logos (<strong>PNG</strong>/<strong>JPEG</strong> directly;{' '}
       <strong>WebP</strong>/<strong>SVG</strong> are rasterized in-browser for PDF). Requires
-      payroll statutory export role.
+      company-wide payroll management permission.
     </p>
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <Input

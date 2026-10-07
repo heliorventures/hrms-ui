@@ -1,6 +1,7 @@
 import type { UpsertPayrollComplianceSettingInput } from '../../api/graphql/graphql';
 
 import type { PayrollComplianceFormState } from './payrollTypes';
+import { decodePayslipEmployeeFields } from './payslipEmployeeFields';
 import { resolvePayslipTemplate } from './payslipTemplates';
 
 const componentCode = (value: string) => {
@@ -33,5 +34,6 @@ export const payrollComplianceInput = (
     payslipHeaderTitle: form.payslipHeaderInput.trim() || null,
     payslipLogoFileStorageId: form.payslipLogoIdInput.trim() || null,
     payslipTemplate: resolvePayslipTemplate(form.payslipTemplateInput),
+    payslipEmployeeFields: decodePayslipEmployeeFields(form.payslipEmployeeFieldsInput),
   };
 };

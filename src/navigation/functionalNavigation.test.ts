@@ -94,7 +94,6 @@ describe('functional navigation', () => {
       '/workplace/workflows?domain=timesheets',
       '/workplace/workflows?domain=leave',
       '/workplace/workflows?domain=expenses',
-      '/workplace/workflows?workspace=settings&domain=leave',
     ]);
     const approver = accessibleDestinations(
       NAVIGATION_DESTINATIONS,

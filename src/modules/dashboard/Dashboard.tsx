@@ -44,7 +44,7 @@ const Dashboard = () => {
         <section
           aria-label="Your day"
           data-tour-anchor="dashboard-your-day"
-          className={`grid items-start gap-4 ${canReadAttendance && canReadLeave ? 'lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]' : ''}`}
+          className={`grid items-start gap-4 ${canReadAttendance && canReadLeave ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]' : ''}`}
         >
           <h2 className="sr-only">Your day</h2>
           {canReadAttendance ? <PunchInOut key={`attendance:${authorizationKey}`} /> : null}

@@ -22,7 +22,7 @@ export const payrollPageTour: TourDefinition = {
       id: 'payroll-effective-settings',
       anchor: 'payroll.process.sections',
       title: 'Review effective contribution and unpaid leave rules',
-      body: 'After the tour, open Payroll Setup. Its vertical task menu separates Company Rules, Employee Eligibility, Unpaid Leave, Payslip Display and Employer Details. Employee eligibility and professional tax carry forward from their effective month; zero PT explicitly means no PT. Employee tax settings remain in Tax Administration. Use Monthly Adjustments only for period-specific exceptions. Historical unpaid usage is not charged again.',
+      body: 'After the tour, open Payroll Setup. Its vertical task menu separates Company Rules, Employee Eligibility, Unpaid Leave, Payslip Display and Employer Details & Payslip. Employer Details & Payslip includes the template and employee-field selection, shared by screen, print and PDF. Employee eligibility and professional tax carry forward from their effective month; zero PT explicitly means no PT. Employee tax settings remain in Tax Administration. Use Monthly Adjustments only for period-specific exceptions. Historical unpaid usage is not charged again.',
       isVisible: ({ canCapability }) => canCapability?.('action.payroll.manage') ?? false,
     },
     {

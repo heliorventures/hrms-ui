@@ -318,16 +318,6 @@ export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
     'api',
     'availability',
   ]),
-  {
-    ...page(
-      'settings',
-      '/workplace/workflows?workspace=settings&domain=leave',
-      'Approval rules',
-      143,
-      ['workflow', 'routing']
-    ),
-    accessPath: '/workplace/workflows',
-  },
   page('settings', '/admin/settings', 'Administration', 144, ['company', 'settings']),
   reports('people', 'people', 26),
   reports('attendance', 'attendance', 33),

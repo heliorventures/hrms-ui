@@ -74,10 +74,7 @@ const WORKSPACES: Partial<Record<NavigationSectionKey, readonly WorkspaceDefinit
   ],
   settings: [
     { label: 'Access', paths: ['/admin/access'] },
-    {
-      label: 'Workflows & administration',
-      paths: ['/workplace/workflows?workspace=settings&domain=leave', '/admin/settings'],
-    },
+    { label: 'Administration', paths: ['/admin/settings'] },
     { label: 'Service health', paths: ['/admin/module-health'] },
   ],
 };

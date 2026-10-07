@@ -278,6 +278,7 @@ query IndiaForm24qSalaryPaymentMonthlyStubCsv($month: Int!, $year: Int!) {
 query PayrollComplianceSetting {
   payrollComplianceSetting {
     payslipTemplate
+    payslipEmployeeFields
     employerTan
     employerLegalName
     baseSalaryComponentCode
@@ -295,6 +296,7 @@ query PayslipLogoSignedReadUrl($fileStorageId: ID!, $ttlSeconds: Int = 600) {
 mutation UpsertPayrollComplianceSetting($input: UpsertPayrollComplianceSettingInput!) {
   upsertPayrollComplianceSetting(input: $input) {
     payslipTemplate
+    payslipEmployeeFields
     employerTan
     employerLegalName
     baseSalaryComponentCode
@@ -856,6 +858,7 @@ mutation UpdateEmployeePersonalProfile($input: UpdateEmployeePersonalProfileInpu
     fullName
     dateOfBirth
     gender
+    maritalStatus
     nationality
     bloodGroup
     emergencyContactName
@@ -907,6 +910,7 @@ mutation UpdateEmployeeSelfServiceProfile($input: UpdateEmployeeSelfServiceProfi
   updateEmployeeSelfServiceProfile(input: $input) {
     id
     gender
+    maritalStatus
     nationality
     bloodGroup
     personalPhone
@@ -2479,6 +2483,7 @@ query ClientOpsEmployeeDetail($id: ID!) {
     dateOfJoining
     dateOfBirth
     gender
+    maritalStatus
     nationality
     bloodGroup
     emergencyContactName
@@ -2510,6 +2515,7 @@ query EmployeeProfileBundle($employeeId: ID!) {
     dateOfJoining
     dateOfBirth
     gender
+    maritalStatus
     nationality
     bloodGroup
     emergencyContactName

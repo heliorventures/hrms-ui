@@ -47,8 +47,8 @@ const header = (writer: PdfWriter, branding: PayslipPdfBranding, slip: PdfPaysli
   writer.text(branding.companyLine, true);
   writer.text(`Payslip - ${branding.periodLabel}`);
   writer.space();
-  writer.text(`Employee: ${branding.employeeName}`);
-  writer.text(`Code: ${branding.employeeCode || '-'}`);
+  for (const detail of slip.presentation?.employeeDetails ?? [])
+    writer.text(`${detail.label}: ${detail.value}`);
   writer.text(`Status: ${slip.status}`);
   writer.text(
     `Generated: ${new Date(slip.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium' })}`

@@ -1,18 +1,22 @@
 import { useId } from 'react';
 
 import { payslipTemplatePreview } from '../payslipTemplatePreview';
-import { PAYSLIP_TEMPLATES, resolvePayslipTemplate } from '../payslipTemplates';
-import type { PayslipTemplateId } from '../payslipTemplates';
+import {
+  PAYSLIP_TEMPLATES,
+  resolvePayslipTemplate,
+  type PayslipTemplateId,
+} from '../payslipTemplates';
 
 import { PAYSLIP_SHEETS } from './payslipSheetRegistry';
 
 interface Props {
   value: PayslipTemplateId;
+  employeeFields?: string[];
   disabled: boolean;
   onChange: (value: PayslipTemplateId) => void;
 }
 
-const PayslipTemplateSelector = ({ value, disabled, onChange }: Props) => {
+const PayslipTemplateSelector = ({ value, employeeFields, disabled, onChange }: Props) => {
   const id = useId();
   const Sheet = PAYSLIP_SHEETS[value];
   return (
@@ -49,7 +53,7 @@ const PayslipTemplateSelector = ({ value, disabled, onChange }: Props) => {
           employeeName="Example Employee"
           employeeCode="EMP001"
           periodLabel="January 2026"
-          slip={payslipTemplatePreview(value)}
+          slip={payslipTemplatePreview(value, employeeFields)}
           labelForLine={() => ''}
           preview
         />

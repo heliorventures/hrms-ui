@@ -1,7 +1,26 @@
-extend type SalaryComponent { showOnPayslip: Boolean! }
-extend type SalaryBreakupPreview { financials: JSON }
-type PayslipDisplayLine { id: String!, code: String!, name: String!, componentType: String!, amount: String! }
-type PayslipPresentation { lines: [PayslipDisplayLine!]!, statement: JSON }
+extend type SalaryComponent {
+  showOnPayslip: Boolean!
+}
+extend type SalaryBreakupPreview {
+  financials: JSON
+}
+type PayslipDisplayLine {
+  id: String!
+  code: String!
+  name: String!
+  componentType: String!
+  amount: String!
+}
+type PayslipEmployeeDetail {
+  field: String!
+  label: String!
+  value: String!
+}
+type PayslipPresentation {
+  employeeDetails: [PayslipEmployeeDetail!]!
+  lines: [PayslipDisplayLine!]!
+  statement: JSON
+}
 extend type Query {
   employeeImportedProfile(employeeId: ID!): JSON!
   payslipPresentation(payslipId: ID!): PayslipPresentation

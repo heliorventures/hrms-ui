@@ -18,6 +18,7 @@ const model = {
   pfEmployer: '1950',
   lines: [{ id: 'hidden', salaryComponentId: 'hidden', amount: '15000', componentType: 'EARNING' }],
   presentation: {
+    employeeDetails: [],
     lines: [
       {
         id: 'visible',

@@ -71,9 +71,14 @@ describe('approved navigation workspaces', () => {
     );
   });
 
-  it('selects the Settings workspace for its workflow link', () => {
+  it('keeps leave approval rules in Leave, including old Settings links', () => {
     expect(
       activeNavigationDestination('/workplace/workflows?workspace=settings&domain=leave')?.section
-    ).toBe('settings');
+    ).toBe('leave');
+    expect(
+      NAVIGATION_DESTINATIONS.filter((item) => item.section === 'settings').some((item) =>
+        item.path.startsWith('/workplace/workflows')
+      )
+    ).toBe(false);
   });
 });

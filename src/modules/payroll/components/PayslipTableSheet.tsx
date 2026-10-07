@@ -8,20 +8,15 @@ import PayslipTableComponents from './PayslipTableComponents';
 const PayslipTableSheet = ({
   headerTitle,
   payslipLogoReadUrl,
-  employeeName,
-  employeeCode,
   periodLabel,
   slip,
   preview,
 }: SheetProps) => {
   if (!slip.presentation) return null;
   const details = [
-    ['Employee', employeeName],
-    ['Employee code', employeeCode || '—'],
+    ...slip.presentation.employeeDetails.map(({ label, value }) => [label, value]),
     ['Status', slip.status],
     ['Generated', new Date(slip.generatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })],
-    ['UAN', slip.uanNumber],
-    ['ESIC', slip.esicNumber],
   ].filter(([, value]) => Boolean(value));
   const { statement } = slip.presentation;
   return (

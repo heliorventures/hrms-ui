@@ -67,6 +67,7 @@ export interface PersonalInfoFields {
   phone: string;
   dateOfBirth: string;
   gender: string;
+  maritalStatus: string;
   nationality: string;
   permanentAddress: string;
   currentAddress: string;

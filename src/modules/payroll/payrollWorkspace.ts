@@ -22,7 +22,7 @@ export function payrollWorkspaceTasks(
     { id: 'employee-settings', label: 'Employee Eligibility', workspace: 'setup' },
     { id: 'unpaid-leave', label: 'Unpaid Leave', workspace: 'setup' },
     { id: 'components', label: 'Payslip Display', workspace: 'setup' },
-    { id: 'compliance', label: 'Employer Details', workspace: 'setup' },
+    { id: 'compliance', label: 'Employer Details & Payslip', workspace: 'setup' },
     ...(readAllPayslips
       ? [{ id: 'payslips', label: 'Employee Payslips', workspace: 'documents' as const }]
       : []),

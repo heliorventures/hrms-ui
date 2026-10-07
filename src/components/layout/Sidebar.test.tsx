@@ -1,8 +1,5 @@
 // @vitest-environment jsdom
 
-// @vitest-environment jsdom
-// @vitest-environment jsdom
-// @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createRef, useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -13,19 +10,15 @@ import { PERMISSIONS } from '../../auth/permissions';
 
 import Sidebar from './Sidebar';
 
-const openSearch = vi.hoisted(() => vi.fn());
-vi.mock('./CommandPaletteContext', () => ({ useCommandPalette: () => ({ open: openSearch }) }));
 vi.mock('../../contexts/TenantContext', () => ({
   useTenant: () => ({ currentTenant: { name: 'Acme' } }),
 }));
 
-it('keeps authorized destinations, search and profile available in the collapsed rail', () => {
+it('keeps authorized destinations and profile available in the collapsed rail', () => {
   renderSidebar({ desktopCollapsed: true });
   expect(screen.getByRole('complementary', { name: 'Main navigation' })).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Search pages and tools' }));
-  expect(openSearch).toHaveBeenCalled();
   fireEvent.click(screen.getByRole('link', { name: 'People' }));
-  expect(screen.getByRole('link', { name: 'Org Chart' })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Organization' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'User menu' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Expand navigation' })).toBeTruthy();
 });
@@ -116,11 +109,11 @@ interface RenderSidebarOptions {
 it('reveals inline destinations when a touchscreen is used on a hover-capable desktop', () => {
   renderSidebar();
   const people = screen.getByRole('link', { name: 'People' });
-  expect(screen.queryByRole('link', { name: 'Org Chart' })).toBeNull();
+  expect(screen.queryByRole('link', { name: 'Organization' })).toBeNull();
   const touch = new Event('pointerdown', { bubbles: true });
   Object.defineProperty(touch, 'pointerType', { value: 'touch' });
   fireEvent(people, touch);
-  expect(screen.getByRole('link', { name: 'Org Chart' })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Organization' })).toBeTruthy();
 });
 
 function renderSidebar({
@@ -202,7 +195,7 @@ describe('Sidebar', () => {
     fireEvent.pointerEnter(screen.getByRole('link', { name: 'Timesheets' }), {
       pointerType: 'mouse',
     });
-    expect(screen.getByRole('link', { name: 'My Timesheets' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'My timesheets' })).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Attendance' })).toBeNull();
   });
 

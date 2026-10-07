@@ -23,6 +23,7 @@ const slip = {
   uanNumber: 'EXAMPLE-UAN',
   lines: [],
   presentation: {
+    employeeDetails: [{ field: 'UAN', label: 'UAN', value: 'EXAMPLE-UAN' }],
     template: 'TABLE',
     lines: [
       {
@@ -47,7 +48,11 @@ const props = {
 
 describe('company-selected payslip templates', () => {
   it('handles empty visible components and missing optional employee fields', () => {
-    const empty = { ...slip, uanNumber: null, presentation: { ...slip.presentation, lines: [] } };
+    const empty = {
+      ...slip,
+      uanNumber: null,
+      presentation: { ...slip.presentation, employeeDetails: [], lines: [] },
+    };
     render(<PayslipDocument {...props} slip={empty} />);
     expect(screen.getByText('No components selected for display.')).toBeTruthy();
     expect(screen.queryByText('UAN')).toBeNull();
