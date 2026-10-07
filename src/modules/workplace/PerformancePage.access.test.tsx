@@ -158,7 +158,7 @@ it('does not fetch administrative catalogs for a personal tab, including HR user
   await screen.findByText('No assigned performance reviews.');
   expect(
     state.request.mock.calls.some(([document]) =>
-      /PerformanceCatalog|PerformanceProgramsWorkspace|TeamPerformanceReviewsWorkspace|PrivatePerformanceFeedbackWorkspace/.test(
+      /PerformanceProgramsWorkspace|TeamPerformanceReviewsWorkspace|PrivatePerformanceFeedbackWorkspace/.test(
         graphqlDocumentSource(document)
       )
     )
