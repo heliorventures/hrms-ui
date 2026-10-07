@@ -124,7 +124,7 @@ it('retains an active B draft when an older A save completes', async () => {
   });
   fireEvent.click(screen.getByRole('button', { name: 'Add goal' }));
   await waitFor(() =>
-    expect(screen.getByRole('button', { name: 'Add goal' }).getAttribute('aria-busy')).toBe('true')
+    expect(screen.getByRole('button', { name: /^Add goal\b/ }).getAttribute('aria-busy')).toBe('true')
   );
 
   openEvaluation('Review B');
@@ -210,7 +210,9 @@ it('blocks approval while a save for the same participant is pending', async () 
     target: { value: 'Pending goal' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Add goal' }));
-  const approve = await screen.findByRole<HTMLButtonElement>('button', { name: 'Approve goals' });
+  const approve = await screen.findByRole<HTMLButtonElement>('button', {
+    name: /^Approve goals\b/,
+  });
   await waitFor(() => expect(approve.disabled).toBe(true));
   fireEvent.click(approve);
 

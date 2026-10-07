@@ -19,7 +19,7 @@ import {
   skillInput,
   courseInput,
 } from './learningSetup';
-import { SetupEditor } from './performanceSetupEditor';
+import { SetupEditor } from './learningSetupEditor';
 
 const LearningPage = () => {
   const { clientSession } = useAuth();

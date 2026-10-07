@@ -3,17 +3,19 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, expect, it, vi } from 'vitest';
 
 import { courseFields } from './learningSetup';
-import { cycleFields } from './performanceSetup';
-import { SetupEditor } from './performanceSetupEditor';
+import { SetupEditor } from './learningSetupEditor';
 
 afterEach(cleanup);
-it('rejects reversed cycle dates without saving', async () => {
+it('rejects reversed date fields without saving', async () => {
   const save = vi.fn();
   render(
     <SetupEditor
-      title="Create review cycle"
-      fields={cycleFields}
-      initial={{ name: 'Annual', startDate: '2026-12-01', endDate: '2026-01-01' }}
+      title="Date settings"
+      fields={[
+        { key: 'startDate', label: 'Start date', type: 'date', required: true },
+        { key: 'endDate', label: 'End date', type: 'date', required: true },
+      ]}
+      initial={{ startDate: '2026-12-01', endDate: '2026-01-01' }}
       onSave={save}
       onClose={vi.fn()}
     />

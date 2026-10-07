@@ -12,7 +12,6 @@ import {
 import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
 
 import LearningPage from './LearningPage';
-import PerformancePage from './PerformancePage';
 
 const renderPage = (page: ReactElement, tab = 'skills') =>
   render(<MemoryRouter initialEntries={[`/learning?tab=${tab}`]}>{page}</MemoryRouter>);
@@ -22,8 +21,8 @@ vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => state }));
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     clientSession: {
-      permissions: new Set(['performance:manage', 'learning:manage']),
-      permissionScopes: { 'performance:manage': state.scope, 'learning:manage': state.scope },
+      permissions: new Set(['learning:manage']),
+      permissionScopes: { 'learning:manage': state.scope },
       resourceScopes: {},
     },
   }),
@@ -32,18 +31,12 @@ afterEach(cleanup);
 beforeEach(() => {
   state.scope = 'ALL';
   state.request.mockReset();
-  state.request.mockResolvedValue({ reviewCycles: [], goals: [], skills: [], courses: [] });
+  state.request.mockResolvedValue({ skills: [], courses: [] });
 });
 it('hides setup actions for narrow permission scope', async () => {
   state.scope = 'TEAM';
-  renderPage(
-    <>
-      <PerformancePage />
-      <LearningPage />
-    </>
-  );
+  renderPage(<LearningPage />);
   await screen.findByText('No Skills Catalog.');
-  expect(screen.queryByRole('button', { name: 'Create review cycle' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Create skill' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Create course' })).toBeNull();
 });

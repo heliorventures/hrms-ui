@@ -1,6 +1,6 @@
 import type { SaveCourseInput, SaveSkillInput } from '../../api/graphql/graphql';
 
-import type { SetupField } from './performanceSetupEditor';
+import type { SetupField } from './learningSetupEditor';
 
 export { SaveSkillDocument, SaveCourseDocument } from '../../api/graphql/graphql';
 

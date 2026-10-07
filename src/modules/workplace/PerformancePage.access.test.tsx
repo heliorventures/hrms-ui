@@ -31,6 +31,18 @@ vi.mock('../../contexts/AuthContext', () => ({
 afterEach(cleanup);
 beforeEach(() => resetPerformanceState(state));
 
+it('offers the current setup workflow without a second legacy cycle editor', async () => {
+  render(
+    <MemoryRouter initialEntries={['/performance?tab=setup']}>
+      <PerformancePage />
+    </MemoryRouter>
+  );
+  expect(await screen.findByRole('button', { name: 'Save process' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Save template' })).toBeTruthy();
+  expect(screen.queryByText('Legacy cycles and goals')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Create review cycle' })).toBeNull();
+});
+
 it.each([
   {
     role: 'employee',

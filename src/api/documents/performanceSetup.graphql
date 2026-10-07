@@ -1,5 +1,0 @@
-mutation SaveReviewCycle($input: SaveReviewCycleInput!) {
-  saveReviewCycle(input: $input) {
-    id
-  }
-}

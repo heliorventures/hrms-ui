@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { createPermissionService } from '../../auth/permissionService';
@@ -7,7 +7,6 @@ import Select from '../../components/common/Select';
 import { useAuth } from '../../contexts/AuthContext';
 import { PageWorkspaceContext } from '../../navigation/pageWorkspaceContext';
 
-import LegacyPerformanceCatalog from './LegacyPerformanceCatalog';
 import PerformanceLifecyclePanel from './PerformanceLifecyclePanel';
 
 const PerformancePage = () => {
@@ -17,7 +16,6 @@ const PerformancePage = () => {
   const canEvaluate = permissions.canScopedPermission('performance:evaluate', ['TEAM']);
   const canSelf = permissions.canScopedPermission('performance:self', ['SELF']);
   const [params, setParams] = useSearchParams();
-  const [showLegacy, setShowLegacy] = useState(false);
   const pageWorkspace = useContext(PageWorkspaceContext);
   const tabs = [
     ...(canSelf ? [{ id: 'my', label: 'My Review' }] : []),
@@ -68,19 +66,6 @@ const PerformancePage = () => {
             tab={tab}
             initialReviewId={params.get('review')}
           />
-          {tab === 'setup' && canManage && (
-            <details
-              className="mt-4"
-              open={showLegacy}
-              onToggle={(event) => setShowLegacy(event.currentTarget.open)}
-              data-tour-anchor="performance.legacy-catalog"
-            >
-              <summary className="cursor-pointer py-2 text-sm text-content-secondary">
-                Legacy cycles and goals
-              </summary>
-              {showLegacy && <LegacyPerformanceCatalog />}
-            </details>
-          )}
         </section>
       ) : (
         <p>No performance access is assigned to your account.</p>

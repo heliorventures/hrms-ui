@@ -1492,25 +1492,6 @@ query WorkplaceLearning($slim: Int! = 80, $clim: Int! = 80) {
   }
 }
 
-query WorkplacePerformance($clim: Int! = 20, $glim: Int! = 80) {
-  reviewCycles(limit: $clim) {
-    id
-    name
-    startDate
-    endDate
-    status
-    reviewType
-  }
-  goals(limit: $glim) {
-    id
-    employeeId
-    reviewCycleId
-    title
-    status
-    weightage
-  }
-}
-
 query WorkplaceRecruitment($jlim: Int! = 30, $alim: Int! = 50) {
   jobPostings(limit: $jlim) {
     id

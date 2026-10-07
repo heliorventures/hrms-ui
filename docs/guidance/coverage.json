@@ -248,9 +248,6 @@
       "owner": "src/modules/workplace/PerformancePage.tsx",
       "declarations": [
         "src/modules/workplace/PerformancePage.tsx",
-        "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-        "src/modules/workplace/performanceSetup.ts",
-        "src/modules/workplace/performanceSetupEditor.tsx",
         "src/modules/workplace/PerformanceLifecyclePanel.tsx",
         "src/modules/workplace/PerformanceLifecyclePanelContent.tsx",
         "src/modules/workplace/PerformanceLifecycleReviews.tsx",
@@ -297,14 +294,7 @@
           "id": "performance.workflow.tabs",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 44
-          }
-        },
-        {
-          "id": "performance.legacy-catalog",
-          "source": {
-            "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 72
+            "line": 42
           }
         },
         {
@@ -328,7 +318,7 @@
           "label": "My Review",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 23
+            "line": 21
           },
           "requiresReview": true
         },
@@ -337,7 +327,7 @@
           "label": "Team Reviews",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 24
+            "line": 22
           },
           "requiresReview": true
         },
@@ -346,7 +336,7 @@
           "label": "Setup",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 27
+            "line": 25
           },
           "requiresReview": true
         },
@@ -355,7 +345,7 @@
           "label": "Process",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 28
+            "line": 26
           },
           "requiresReview": true
         },
@@ -364,7 +354,7 @@
           "label": "Review",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 29
+            "line": 27
           },
           "requiresReview": true
         },
@@ -373,78 +363,12 @@
           "label": "Administration",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 30
+            "line": 28
           },
           "requiresReview": true
         }
       ],
       "actions": [
-        {
-          "anchor": null,
-          "label": "Create review cycle",
-          "handler": "{() => setEditor({ name: '', startDate: '', endDate: '', reviewType: '' })}",
-          "source": {
-            "file": "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-            "line": 96
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "Edit review cycle",
-          "handler": "{() => setEditor({ ...c, reviewType: c.reviewType ?? '' })}",
-          "source": {
-            "file": "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-            "line": 113
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "Previous",
-          "handler": "{() => setOffset((value) => Math.max(0, value - 20))}",
-          "source": {
-            "file": "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-            "line": 160
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "Next",
-          "handler": "{() => setOffset((value) => value + 20)}",
-          "source": {
-            "file": "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-            "line": 168
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "",
-          "handler": "{(event) => void submit(event)}",
-          "source": {
-            "file": "src/modules/workplace/performanceSetupEditor.tsx",
-            "line": 54
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "Cancel",
-          "handler": "{onClose}",
-          "source": {
-            "file": "src/modules/workplace/performanceSetupEditor.tsx",
-            "line": 88
-          },
-          "operational": true,
-          "requiresReview": true
-        },
         {
           "anchor": null,
           "label": "Approve goals",
@@ -1050,7 +974,7 @@
           "handler": "{() => void refresh()}",
           "source": {
             "file": "src/modules/dashboard/components/RecentLeaveRequest.tsx",
-            "line": 51
+            "line": 44
           },
           "operational": true,
           "requiresReview": true
@@ -1123,21 +1047,21 @@
           "id": "insights-metrics-guide",
           "source": {
             "file": "src/modules/insights/HrInsightsPanel.tsx",
-            "line": 31
+            "line": 28
           }
         },
         {
           "id": "insights-refresh",
           "source": {
             "file": "src/modules/insights/HrInsightsPanel.tsx",
-            "line": 39
+            "line": 36
           }
         },
         {
           "id": "insights-pending-requests",
           "source": {
             "file": "src/modules/insights/HrInsightsPanel.tsx",
-            "line": 80
+            "line": 77
           }
         },
         {
@@ -1160,10 +1084,10 @@
         {
           "anchor": "insights-refresh",
           "label": "Refresh",
-          "handler": "{() => {\n            void query.refresh();\n          }}",
+          "handler": "{() => {\r\n            void query.refresh();\r\n          }}",
           "source": {
             "file": "src/modules/insights/HrInsightsPanel.tsx",
-            "line": 39
+            "line": 36
           },
           "operational": true,
           "requiresReview": true
@@ -1171,10 +1095,10 @@
         {
           "anchor": null,
           "label": "Retry",
-          "handler": "{() => {\n              void query.refresh();\n            }}",
+          "handler": "{() => {\r\n              void query.refresh();\r\n            }}",
           "source": {
             "file": "src/modules/insights/HrInsightsPanel.tsx",
-            "line": 59
+            "line": 56
           },
           "operational": true,
           "requiresReview": true
@@ -1185,7 +1109,7 @@
           "handler": "{() => setReport('PENDING_REQUESTS')}",
           "source": {
             "file": "src/modules/insights/HrInsightsPanel.tsx",
-            "line": 80
+            "line": 77
           },
           "operational": true,
           "requiresReview": true
@@ -1196,7 +1120,7 @@
           "handler": "{() => setReport(null)}",
           "source": {
             "file": "src/modules/insights/HrInsightsPanel.tsx",
-            "line": 99
+            "line": 96
           },
           "operational": true,
           "requiresReview": true
@@ -1207,7 +1131,7 @@
           "handler": "{() => setPage((value) => value - 1)}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 124
+            "line": 125
           },
           "operational": true,
           "requiresReview": true
@@ -1218,7 +1142,7 @@
           "handler": "{() => setPage((value) => value + 1)}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 133
+            "line": 134
           },
           "operational": true,
           "requiresReview": true
@@ -1229,7 +1153,7 @@
           "handler": "{() => {\r\n              void query.refresh();\r\n            }}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 167
+            "line": 169
           },
           "operational": true,
           "requiresReview": true
@@ -1240,7 +1164,7 @@
           "handler": "{() => {\r\n              void exportCsv();\r\n            }}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 177
+            "line": 179
           },
           "operational": true,
           "requiresReview": true
@@ -1251,7 +1175,7 @@
           "handler": "{() => {\r\n              void retry();\r\n            }}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 192
+            "line": 194
           },
           "operational": true,
           "requiresReview": true
@@ -2292,17 +2216,27 @@
         "src/modules/payroll/payrollTypes.ts",
         "src/modules/payroll/components/PayslipDocument.tsx",
         "src/modules/payroll/payslipPresentation.ts",
+        "src/modules/payroll/payslipTemplates.ts",
         "src/modules/payroll/unpaidLeaveDocuments.ts",
         "src/modules/payroll/utils/payslipPdf.ts",
         "src/modules/payroll/utils/payslipPdfLayout.ts",
+        "src/modules/payroll/utils/payslipTablePdf.ts",
+        "src/modules/payroll/payslipTableData.ts",
+        "src/modules/payroll/utils/payslipTablePdfWriter.ts",
         "src/modules/payroll/components/PayrollHelp.tsx",
+        "src/modules/payroll/components/payslipSheetRegistry.ts",
         "src/modules/payroll/components/PayslipSheet.tsx",
+        "src/modules/payroll/components/PayslipLegacyLeave.tsx",
         "src/modules/payroll/components/PayslipSettlement.tsx",
+        "src/modules/payroll/components/PayslipTableSheet.tsx",
+        "src/modules/payroll/components/PayslipTableComponents.tsx",
         "src/modules/payroll/importSalaryPreview.ts",
         "src/modules/payroll/hooks/useCurrentTenantCalendarPeriod.ts",
         "src/modules/payroll/hooks/useEmployeePayRecords.ts",
-        "src/modules/payroll/documents.ts",
         "src/modules/payroll/hooks/useOwnerQuery.ts",
+        "src/modules/payroll/hooks/usePayslipBranding.ts",
+        "src/modules/payroll/hooks/usePayslipLogo.ts",
+        "src/modules/payroll/hooks/usePayslipSettingsRevision.ts",
         "src/modules/payroll/hooks/useEmployeeTaxSelfService.ts",
         "src/modules/payroll/hooks/useTaxDeclarationForm.ts",
         "src/modules/payroll/taxSubmissionContext.ts",
@@ -2312,6 +2246,7 @@
         "src/modules/payroll/hooks/usePayslipPresentation.ts",
         "src/modules/payroll/hooks/usePayslipUnpaidLeave.ts",
         "src/modules/payroll/components/PayrollPayslipTab.tsx",
+        "src/modules/payroll/components/EmployeePayslipDetails.tsx",
         "src/modules/payroll/components/EmployeeTaxFormsPanel.tsx",
         "src/modules/payroll/components/PayrollIncomeTaxTab.tsx",
         "src/modules/payroll/components/EmployeeTaxCards.tsx",
@@ -2402,7 +2337,7 @@
           "handler": "{() => void onDownloadPdf()}",
           "source": {
             "file": "src/modules/payroll/components/PayslipDocument.tsx",
-            "line": 114
+            "line": 119
           },
           "operational": true,
           "requiresReview": true
@@ -2413,7 +2348,7 @@
           "handler": "{onPrint}",
           "source": {
             "file": "src/modules/payroll/components/PayslipDocument.tsx",
-            "line": 122
+            "line": 127
           },
           "operational": true,
           "requiresReview": true
@@ -2431,22 +2366,11 @@
         },
         {
           "anchor": null,
-          "label": "Retry",
-          "handler": "{onRetryPresentation}",
+          "label": "",
+          "handler": "{detail.retry}",
           "source": {
-            "file": "src/modules/payroll/components/PayrollPayslipTab.tsx",
-            "line": 110
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "Retry",
-          "handler": "{onRetryUnpaidLeave}",
-          "source": {
-            "file": "src/modules/payroll/components/PayrollPayslipTab.tsx",
-            "line": 112
+            "file": "src/modules/payroll/components/EmployeePayslipDetails.tsx",
+            "line": 46
           },
           "operational": true,
           "requiresReview": true
@@ -2505,16 +2429,26 @@
         "src/modules/payroll/payrollTypes.ts",
         "src/modules/payroll/components/PayslipDocument.tsx",
         "src/modules/payroll/payslipPresentation.ts",
+        "src/modules/payroll/payslipTemplates.ts",
         "src/modules/payroll/unpaidLeaveDocuments.ts",
         "src/modules/payroll/utils/payslipPdf.ts",
         "src/modules/payroll/utils/payslipPdfLayout.ts",
+        "src/modules/payroll/utils/payslipTablePdf.ts",
+        "src/modules/payroll/payslipTableData.ts",
+        "src/modules/payroll/utils/payslipTablePdfWriter.ts",
         "src/modules/payroll/components/PayrollHelp.tsx",
+        "src/modules/payroll/components/payslipSheetRegistry.ts",
         "src/modules/payroll/components/PayslipSheet.tsx",
+        "src/modules/payroll/components/PayslipLegacyLeave.tsx",
         "src/modules/payroll/components/PayslipSettlement.tsx",
+        "src/modules/payroll/components/PayslipTableSheet.tsx",
+        "src/modules/payroll/components/PayslipTableComponents.tsx",
         "src/modules/payroll/importSalaryPreview.ts",
         "src/modules/payroll/hooks/usePayrollBoardActions.ts",
         "src/modules/payroll/payrollFormatters.ts",
         "src/modules/payroll/utils/indiaFy.ts",
+        "src/modules/payroll/hooks/usePayrollComplianceSave.ts",
+        "src/modules/payroll/payrollComplianceInput.ts",
         "src/modules/payroll/hooks/usePayrollDraftActions.ts",
         "src/modules/payroll/taxProjectionTypes.ts",
         "src/modules/payroll/hooks/usePayrollExports.ts",
@@ -2525,15 +2459,21 @@
         "src/modules/payroll/components/ContributionFormulaFields.tsx",
         "src/modules/payroll/components/EsiPolicyFields.tsx",
         "src/modules/payroll/components/CompanyPayslipComponents.tsx",
+        "src/modules/payroll/hooks/useCompanyPayslipComponents.ts",
         "src/modules/payroll/components/EmployeePayrollSettings.tsx",
         "src/modules/payroll/periodInputTypes.ts",
         "src/modules/payroll/components/EmployeeEligibilityFields.tsx",
         "src/modules/payroll/components/ManagedPayslips.tsx",
+        "src/modules/payroll/hooks/usePayslipLogo.ts",
+        "src/modules/payroll/hooks/useOwnerQuery.ts",
         "src/modules/payroll/hooks/usePayslipPresentation.ts",
+        "src/modules/payroll/hooks/usePayslipSettingsRevision.ts",
         "src/modules/payroll/hooks/usePayslipUnpaidLeave.ts",
         "src/modules/payroll/components/PayrollAdminNotice.tsx",
         "src/modules/payroll/components/PayrollArrearsCard.tsx",
         "src/modules/payroll/components/PayrollComplianceCard.tsx",
+        "src/modules/payroll/components/PayslipTemplateSelector.tsx",
+        "src/modules/payroll/payslipTemplatePreview.ts",
         "src/modules/payroll/components/PayrollExportsSection.tsx",
         "src/modules/payroll/components/PayrollFinancialYearExports.tsx",
         "src/modules/payroll/components/PayrollLwpRules.tsx",
@@ -2576,21 +2516,21 @@
           "id": "payroll.employee-settings",
           "source": {
             "file": "src/modules/payroll/components/EmployeePayrollSettings.tsx",
-            "line": 138
+            "line": 141
           }
         },
         {
           "id": "payroll.employee-payslips",
           "source": {
             "file": "src/modules/payroll/components/ManagedPayslips.tsx",
-            "line": 160
+            "line": 140
           }
         },
         {
           "id": "payroll.unpaid-leave-policy",
           "source": {
             "file": "src/modules/payroll/components/PayrollLwpRules.tsx",
-            "line": 50
+            "line": 49
           }
         },
         {
@@ -2616,7 +2556,7 @@
           "handler": "{() => void onDownloadPdf()}",
           "source": {
             "file": "src/modules/payroll/components/PayslipDocument.tsx",
-            "line": 114
+            "line": 119
           },
           "operational": true,
           "requiresReview": true
@@ -2627,7 +2567,7 @@
           "handler": "{onPrint}",
           "source": {
             "file": "src/modules/payroll/components/PayslipDocument.tsx",
-            "line": 122
+            "line": 127
           },
           "operational": true,
           "requiresReview": true
@@ -2660,7 +2600,7 @@
           "handler": "{() => void save()}",
           "source": {
             "file": "src/modules/payroll/components/EmployeePayrollSettings.tsx",
-            "line": 105
+            "line": 110
           },
           "operational": true,
           "requiresReview": true
@@ -2668,10 +2608,10 @@
         {
           "anchor": null,
           "label": "Retry payslip details",
-          "handler": "{() => {\n              presentation.retry();\n              unpaid.retry();\n            }}",
+          "handler": "{() => {\r\n              presentation.retry();\r\n              unpaid.retry();\r\n              logo.retry();\r\n            }}",
           "source": {
             "file": "src/modules/payroll/components/ManagedPayslips.tsx",
-            "line": 75
+            "line": 54
           },
           "operational": true,
           "requiresReview": true
@@ -2693,7 +2633,7 @@
           "handler": "{() => onSave()}",
           "source": {
             "file": "src/modules/payroll/components/PayrollComplianceCard.tsx",
-            "line": 80
+            "line": 87
           },
           "operational": true,
           "requiresReview": true
@@ -2953,7 +2893,7 @@
           "handler": "{() => setHistoryId(row.id)}",
           "source": {
             "file": "src/modules/payroll/components/EmployeeTaxWorkspace.tsx",
-            "line": 57
+            "line": 58
           },
           "operational": true,
           "requiresReview": true
@@ -2964,7 +2904,7 @@
           "handler": "{() => setHistoryId('')}",
           "source": {
             "file": "src/modules/payroll/components/EmployeeTaxWorkspace.tsx",
-            "line": 63
+            "line": 64
           },
           "operational": true,
           "requiresReview": true
@@ -3074,6 +3014,8 @@
         "src/modules/payroll/PayrollCompensationSections.tsx",
         "src/modules/payroll/payrollCompensationTypes.ts",
         "src/modules/payroll/components/CompanyPayslipComponents.tsx",
+        "src/modules/payroll/hooks/useCompanyPayslipComponents.ts",
+        "src/modules/payroll/payslipTemplates.ts",
         "src/modules/payroll/hooks/useCompensationState.ts",
         "src/modules/payroll/payrollCompensationQueries.ts",
         "src/modules/payroll/payrollCompensationActions.ts"
@@ -3097,7 +3039,7 @@
           "id": "payroll.compensation.existing-assignment",
           "source": {
             "file": "src/modules/payroll/components/AssignedSalaryPreview.tsx",
-            "line": 76
+            "line": 53
           }
         }
       ],
@@ -3360,7 +3302,7 @@
           "handler": "{() => void download()}",
           "source": {
             "file": "src/modules/expenses/components/RequestAttachmentButton.tsx",
-            "line": 78
+            "line": 77
           },
           "operational": true,
           "requiresReview": true
@@ -3794,7 +3736,6 @@
         "src/modules/admin/companyLocationDocuments.ts",
         "src/modules/admin/CompanyLocationPicker.tsx",
         "src/modules/admin/useCompanyResource.ts",
-        "src/modules/admin/companyLocationTypes.ts",
         "src/modules/admin/useCompanyMutation.ts",
         "src/modules/organization/employee-profile/components/EmploymentActionModals.tsx",
         "src/modules/organization/employee-profile/components/ConfirmationModal.tsx",
@@ -3913,7 +3854,7 @@
           "id": "employee-profile.location",
           "source": {
             "file": "src/modules/organization/employee-profile/components/EmployeeLocationSettings.tsx",
-            "line": 53
+            "line": 49
           }
         },
         {
@@ -4465,7 +4406,7 @@
           "handler": "{() => void save()}",
           "source": {
             "file": "src/modules/organization/employee-profile/components/EmployeeLocationSettings.tsx",
-            "line": 75
+            "line": 71
           },
           "operational": true,
           "requiresReview": true
@@ -4476,7 +4417,7 @@
           "handler": "{resource.reload}",
           "source": {
             "file": "src/modules/organization/employee-profile/components/EmployeeLocationSettings.tsx",
-            "line": 88
+            "line": 84
           },
           "operational": true,
           "requiresReview": true
@@ -4487,7 +4428,7 @@
           "handler": "{result.reload}",
           "source": {
             "file": "src/modules/admin/CompanyLocationPicker.tsx",
-            "line": 74
+            "line": 73
           },
           "operational": true,
           "requiresReview": true
@@ -4879,7 +4820,6 @@
         "src/modules/admin/companyLocationDocuments.ts",
         "src/modules/admin/CompanyLocationPicker.tsx",
         "src/modules/admin/useCompanyResource.ts",
-        "src/modules/admin/companyLocationTypes.ts",
         "src/modules/admin/useCompanyMutation.ts",
         "src/modules/organization/employee-profile/components/EmploymentActionModals.tsx",
         "src/modules/organization/employee-profile/components/ConfirmationModal.tsx",
@@ -4933,7 +4873,7 @@
           "id": "employee-profile.location",
           "source": {
             "file": "src/modules/organization/employee-profile/components/EmployeeLocationSettings.tsx",
-            "line": 53
+            "line": 49
           }
         }
       ],
@@ -5434,7 +5374,7 @@
           "handler": "{() => void save()}",
           "source": {
             "file": "src/modules/organization/employee-profile/components/EmployeeLocationSettings.tsx",
-            "line": 75
+            "line": 71
           },
           "operational": true,
           "requiresReview": true
@@ -5445,7 +5385,7 @@
           "handler": "{resource.reload}",
           "source": {
             "file": "src/modules/organization/employee-profile/components/EmployeeLocationSettings.tsx",
-            "line": 88
+            "line": 84
           },
           "operational": true,
           "requiresReview": true
@@ -5456,7 +5396,7 @@
           "handler": "{result.reload}",
           "source": {
             "file": "src/modules/admin/CompanyLocationPicker.tsx",
-            "line": 74
+            "line": 73
           },
           "operational": true,
           "requiresReview": true
@@ -6203,28 +6143,28 @@
           "id": "benefits.sections",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 256
+            "line": 225
           }
         },
         {
           "id": "benefits.types.actions",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 321
+            "line": 290
           }
         },
         {
           "id": "benefits.plan.enroll",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 378
+            "line": 347
           }
         },
         {
           "id": "benefits.plans.actions",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 381
+            "line": 350
           }
         }
       ],
@@ -6234,7 +6174,7 @@
           "label": null,
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 266
+            "line": 235
           },
           "requiresReview": true
         },
@@ -6243,7 +6183,7 @@
           "label": null,
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 377
+            "line": 346
           },
           "requiresReview": true
         },
@@ -6252,7 +6192,7 @@
           "label": null,
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 318
+            "line": 287
           },
           "requiresReview": true
         }
@@ -6264,7 +6204,7 @@
           "handler": "{() => setTab('plans')}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 308
+            "line": 277
           },
           "operational": true,
           "requiresReview": true
@@ -6275,7 +6215,7 @@
           "handler": "{() => editType()}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 321
+            "line": 290
           },
           "operational": true,
           "requiresReview": true
@@ -6286,7 +6226,7 @@
           "handler": "{() => editType(t)}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 337
+            "line": 306
           },
           "operational": true,
           "requiresReview": true
@@ -6297,7 +6237,7 @@
           "handler": "{() => setTypeOffset((offset) => Math.max(0, offset - 20))}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 355
+            "line": 324
           },
           "operational": true,
           "requiresReview": true
@@ -6308,7 +6248,7 @@
           "handler": "{() => setTypeOffset((offset) => offset + 20)}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 365
+            "line": 334
           },
           "operational": true,
           "requiresReview": true
@@ -6319,7 +6259,7 @@
           "handler": "{() => void editPlan()}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 381
+            "line": 350
           },
           "operational": true,
           "requiresReview": true
@@ -6330,7 +6270,7 @@
           "handler": "{() => void editPlan(p)}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 404
+            "line": 373
           },
           "operational": true,
           "requiresReview": true
@@ -6341,7 +6281,7 @@
           "handler": "{() => void enrollIn(p.id)}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 426
+            "line": 395
           },
           "operational": true,
           "requiresReview": true
@@ -6352,7 +6292,7 @@
           "handler": "{() => setPlanOffset((offset) => Math.max(0, offset - 20))}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 443
+            "line": 412
           },
           "operational": true,
           "requiresReview": true
@@ -6363,7 +6303,7 @@
           "handler": "{() => setPlanOffset((offset) => offset + 20)}",
           "source": {
             "file": "src/modules/workplace/BenefitsPage.tsx",
-            "line": 453
+            "line": 422
           },
           "operational": true,
           "requiresReview": true
@@ -6374,7 +6314,7 @@
           "handler": "{(e) => void submit(e)}",
           "source": {
             "file": "src/modules/workplace/benefitsSetup.tsx",
-            "line": 100
+            "line": 94
           },
           "operational": true,
           "requiresReview": true
@@ -6385,7 +6325,7 @@
           "handler": "{onClose}",
           "source": {
             "file": "src/modules/workplace/benefitsSetup.tsx",
-            "line": 164
+            "line": 158
           },
           "operational": true,
           "requiresReview": true
@@ -6411,21 +6351,21 @@
           "id": "recruitment.sections",
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 164
+            "line": 141
           }
         },
         {
           "id": "recruitment.job-actions",
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 173
+            "line": 150
           }
         },
         {
           "id": "recruitment.applicant-review",
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 267
+            "line": 244
           }
         }
       ],
@@ -6435,7 +6375,7 @@
           "label": null,
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 190
+            "line": 167
           },
           "requiresReview": true
         },
@@ -6444,7 +6384,7 @@
           "label": null,
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 255
+            "line": 232
           },
           "requiresReview": true
         }
@@ -6456,7 +6396,7 @@
           "handler": "{() => editJob()}",
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 173
+            "line": 150
           },
           "operational": true,
           "requiresReview": true
@@ -6467,7 +6407,7 @@
           "handler": "{() => editJob(j)}",
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 205
+            "line": 182
           },
           "operational": true,
           "requiresReview": true
@@ -6478,7 +6418,7 @@
           "handler": "{() => showApplicants(j.id)}",
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 213
+            "line": 190
           },
           "operational": true,
           "requiresReview": true
@@ -6489,7 +6429,7 @@
           "handler": "{() => setJobOffset((offset) => Math.max(0, offset - 20))}",
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 233
+            "line": 210
           },
           "operational": true,
           "requiresReview": true
@@ -6500,7 +6440,7 @@
           "handler": "{() => setJobOffset((offset) => offset + 20)}",
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 243
+            "line": 220
           },
           "operational": true,
           "requiresReview": true
@@ -6511,7 +6451,7 @@
           "handler": "{() => showApplicants('')}",
           "source": {
             "file": "src/modules/workplace/RecruitmentPage.tsx",
-            "line": 262
+            "line": 239
           },
           "operational": true,
           "requiresReview": true
@@ -6522,7 +6462,7 @@
           "handler": "{(e) => void submit(e)}",
           "source": {
             "file": "src/modules/workplace/benefitsSetup.tsx",
-            "line": 100
+            "line": 94
           },
           "operational": true,
           "requiresReview": true
@@ -6533,7 +6473,7 @@
           "handler": "{onClose}",
           "source": {
             "file": "src/modules/workplace/benefitsSetup.tsx",
-            "line": 164
+            "line": 158
           },
           "operational": true,
           "requiresReview": true
@@ -6646,7 +6586,7 @@
           "handler": "{() => {\n          void download();\n        }}",
           "source": {
             "file": "src/modules/prejoining/PrejoiningPipelineExport.tsx",
-            "line": 70
+            "line": 69
           },
           "operational": true,
           "requiresReview": true
@@ -7034,9 +6974,6 @@
       "owner": "src/modules/workplace/PerformancePage.tsx",
       "declarations": [
         "src/modules/workplace/PerformancePage.tsx",
-        "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-        "src/modules/workplace/performanceSetup.ts",
-        "src/modules/workplace/performanceSetupEditor.tsx",
         "src/modules/workplace/PerformanceLifecyclePanel.tsx",
         "src/modules/workplace/PerformanceLifecyclePanelContent.tsx",
         "src/modules/workplace/PerformanceLifecycleReviews.tsx",
@@ -7083,14 +7020,7 @@
           "id": "performance.workflow.tabs",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 44
-          }
-        },
-        {
-          "id": "performance.legacy-catalog",
-          "source": {
-            "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 72
+            "line": 42
           }
         },
         {
@@ -7114,7 +7044,7 @@
           "label": "My Review",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 23
+            "line": 21
           },
           "requiresReview": true
         },
@@ -7123,7 +7053,7 @@
           "label": "Team Reviews",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 24
+            "line": 22
           },
           "requiresReview": true
         },
@@ -7132,7 +7062,7 @@
           "label": "Setup",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 27
+            "line": 25
           },
           "requiresReview": true
         },
@@ -7141,7 +7071,7 @@
           "label": "Process",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 28
+            "line": 26
           },
           "requiresReview": true
         },
@@ -7150,7 +7080,7 @@
           "label": "Review",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 29
+            "line": 27
           },
           "requiresReview": true
         },
@@ -7159,78 +7089,12 @@
           "label": "Administration",
           "source": {
             "file": "src/modules/workplace/PerformancePage.tsx",
-            "line": 30
+            "line": 28
           },
           "requiresReview": true
         }
       ],
       "actions": [
-        {
-          "anchor": null,
-          "label": "Create review cycle",
-          "handler": "{() => setEditor({ name: '', startDate: '', endDate: '', reviewType: '' })}",
-          "source": {
-            "file": "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-            "line": 96
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "Edit review cycle",
-          "handler": "{() => setEditor({ ...c, reviewType: c.reviewType ?? '' })}",
-          "source": {
-            "file": "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-            "line": 113
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "Previous",
-          "handler": "{() => setOffset((value) => Math.max(0, value - 20))}",
-          "source": {
-            "file": "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-            "line": 160
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "Next",
-          "handler": "{() => setOffset((value) => value + 20)}",
-          "source": {
-            "file": "src/modules/workplace/LegacyPerformanceCatalog.tsx",
-            "line": 168
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "",
-          "handler": "{(event) => void submit(event)}",
-          "source": {
-            "file": "src/modules/workplace/performanceSetupEditor.tsx",
-            "line": 54
-          },
-          "operational": true,
-          "requiresReview": true
-        },
-        {
-          "anchor": null,
-          "label": "Cancel",
-          "handler": "{onClose}",
-          "source": {
-            "file": "src/modules/workplace/performanceSetupEditor.tsx",
-            "line": 88
-          },
-          "operational": true,
-          "requiresReview": true
-        },
         {
           "anchor": null,
           "label": "Approve goals",
@@ -8396,28 +8260,28 @@
       "declarations": [
         "src/modules/workplace/LearningPage.tsx",
         "src/modules/workplace/learningSetup.ts",
-        "src/modules/workplace/performanceSetupEditor.tsx"
+        "src/modules/workplace/learningSetupEditor.tsx"
       ],
       "anchors": [
         {
           "id": "learning.sections",
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 96
+            "line": 77
           }
         },
         {
           "id": "learning.skill-actions",
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 113
+            "line": 94
           }
         },
         {
           "id": "learning.course-actions",
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 168
+            "line": 149
           }
         }
       ],
@@ -8427,7 +8291,7 @@
           "label": null,
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 165
+            "line": 146
           },
           "requiresReview": true
         },
@@ -8436,7 +8300,7 @@
           "label": null,
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 110
+            "line": 91
           },
           "requiresReview": true
         }
@@ -8448,7 +8312,7 @@
           "handler": "{() =>\r\n                setEditor({ kind: 'skill', values: { name: '', category: '', level: '' } })\r\n              }",
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 113
+            "line": 94
           },
           "operational": true,
           "requiresReview": true
@@ -8459,7 +8323,7 @@
           "handler": "{() =>\r\n                        setEditor({\r\n                          kind: 'skill',\r\n                          id: s.id,\r\n                          values: {\r\n                   ",
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 137
+            "line": 118
           },
           "operational": true,
           "requiresReview": true
@@ -8470,7 +8334,7 @@
           "handler": "{() =>\r\n                setEditor({\r\n                  kind: 'course',\r\n                  values: {\r\n                    title: '',\r\n                    category: '',\r\n            ",
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 168
+            "line": 149
           },
           "operational": true,
           "requiresReview": true
@@ -8481,7 +8345,7 @@
           "handler": "{() =>\r\n                        setEditor({\r\n                          kind: 'course',\r\n                          id: c.id,\r\n                          values: {\r\n                  ",
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 197
+            "line": 178
           },
           "operational": true,
           "requiresReview": true
@@ -8492,7 +8356,7 @@
           "handler": "{() => setOffset((value) => Math.max(0, value - 20))}",
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 232
+            "line": 213
           },
           "operational": true,
           "requiresReview": true
@@ -8503,7 +8367,7 @@
           "handler": "{() => setOffset((value) => value + 20)}",
           "source": {
             "file": "src/modules/workplace/LearningPage.tsx",
-            "line": 240
+            "line": 221
           },
           "operational": true,
           "requiresReview": true
@@ -8513,7 +8377,7 @@
           "label": "",
           "handler": "{(event) => void submit(event)}",
           "source": {
-            "file": "src/modules/workplace/performanceSetupEditor.tsx",
+            "file": "src/modules/workplace/learningSetupEditor.tsx",
             "line": 54
           },
           "operational": true,
@@ -8524,7 +8388,7 @@
           "label": "Cancel",
           "handler": "{onClose}",
           "source": {
-            "file": "src/modules/workplace/performanceSetupEditor.tsx",
+            "file": "src/modules/workplace/learningSetupEditor.tsx",
             "line": 88
           },
           "operational": true,
@@ -9102,21 +8966,21 @@
           "id": "employees.edit-trigger",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 189
+            "line": 168
           }
         },
         {
           "id": "employees.add-trigger",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 211
+            "line": 190
           }
         },
         {
           "id": "employees.list",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 228
+            "line": 207
           }
         }
       ],
@@ -9128,7 +8992,7 @@
           "handler": "{() => {\n              setEditRow(row);\n            }}",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 189
+            "line": 168
           },
           "operational": true,
           "requiresReview": true
@@ -9139,7 +9003,7 @@
           "handler": "{() => setCreateOpen(true)}",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 211
+            "line": 190
           },
           "operational": true,
           "requiresReview": true
@@ -9150,7 +9014,7 @@
           "handler": "{handleClose}",
           "source": {
             "file": "src/modules/admin/components/CreateEmployeeModal.tsx",
-            "line": 232
+            "line": 190
           },
           "operational": true,
           "requiresReview": true
@@ -9161,7 +9025,7 @@
           "handler": "{(e) => void handleSubmit(e)}",
           "source": {
             "file": "src/modules/admin/components/CreateEmployeeModal.tsx",
-            "line": 241
+            "line": 199
           },
           "operational": true,
           "requiresReview": true
@@ -9172,7 +9036,7 @@
           "handler": "{(e) => void handleSubmit(e)}",
           "source": {
             "file": "src/modules/admin/components/EditEmployeeModal.tsx",
-            "line": 316
+            "line": 252
           },
           "operational": true,
           "requiresReview": true
@@ -9180,10 +9044,10 @@
         {
           "anchor": null,
           "label": "",
-          "handler": "{() => {\n                if (employee.userId) {\n                  void handleResetPassword();\n                } else {\n                  void handleProvisionLogin();\n              ",
+          "handler": "{() => {\r\n                  if (employee.userId) {\r\n                    void handleResetPassword();\r\n                  } else {\r\n                    void handleProvisionLogin();\r\n ",
           "source": {
             "file": "src/modules/admin/components/EditEmployeeModal.tsx",
-            "line": 460
+            "line": 401
           },
           "operational": true,
           "requiresReview": true
@@ -9194,7 +9058,7 @@
           "handler": "{onClose}",
           "source": {
             "file": "src/modules/admin/components/EditEmployeeModal.tsx",
-            "line": 523
+            "line": 458
           },
           "operational": true,
           "requiresReview": true
@@ -9855,56 +9719,56 @@
           "id": "hr-timesheets.filters",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 214
+            "line": 197
           }
         },
         {
           "id": "hr-timesheets.preview-trigger",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 298
+            "line": 281
           }
         },
         {
           "id": "hr-timesheets.preview-trigger",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 313
+            "line": 296
           }
         },
         {
           "id": "hr-timesheets.approve-trigger",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 323
+            "line": 306
           }
         },
         {
           "id": "hr-timesheets.reject-trigger",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 333
+            "line": 316
           }
         },
         {
           "id": "hr-timesheets.reject-trigger",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 383
+            "line": 366
           }
         },
         {
           "id": "hr-timesheets.approve-trigger",
           "source": {
             "file": "src/modules/hr/components/TimesheetBatchPreviewModal.tsx",
-            "line": 151
+            "line": 131
           }
         },
         {
           "id": "hr-timesheets.reject-trigger",
           "source": {
             "file": "src/modules/hr/components/TimesheetBatchPreviewModal.tsx",
-            "line": 160
+            "line": 140
           }
         }
       ],
@@ -9916,7 +9780,7 @@
           "handler": "{() => setFilter(t.key)}",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 194
+            "line": 177
           },
           "operational": true,
           "requiresReview": true
@@ -9927,7 +9791,7 @@
           "handler": "{() => void silentRefresh()}",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 285
+            "line": 268
           },
           "operational": true,
           "requiresReview": true
@@ -9938,7 +9802,7 @@
           "handler": "{() => setPreviewFor(row)}",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 298
+            "line": 281
           },
           "operational": true,
           "requiresReview": true
@@ -9949,7 +9813,7 @@
           "handler": "{() => setPreviewFor(row)}",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 313
+            "line": 296
           },
           "operational": true,
           "requiresReview": true
@@ -9960,7 +9824,7 @@
           "handler": "{() => void handleApprove(row)}",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 323
+            "line": 306
           },
           "operational": true,
           "requiresReview": true
@@ -9971,7 +9835,7 @@
           "handler": "{() => {\n                            setPreviewFor(null);\n                            setRejectFor(row);\n                            setRejectReason('');\n                          ",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 333
+            "line": 316
           },
           "operational": true,
           "requiresReview": true
@@ -9982,7 +9846,7 @@
           "handler": "{() => void handleReject()}",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 383
+            "line": 366
           },
           "operational": true,
           "requiresReview": true
@@ -9993,7 +9857,7 @@
           "handler": "{() => {\n                setRejectFor(null);\n                setRejectReason('');\n              }}",
           "source": {
             "file": "src/modules/hr/HrTimesheetsPage.tsx",
-            "line": 391
+            "line": 374
           },
           "operational": true,
           "requiresReview": true
@@ -10004,7 +9868,7 @@
           "handler": "{() => onApprove(batch)}",
           "source": {
             "file": "src/modules/hr/components/TimesheetBatchPreviewModal.tsx",
-            "line": 151
+            "line": 131
           },
           "operational": true,
           "requiresReview": true
@@ -10015,7 +9879,7 @@
           "handler": "{() => onReject(batch)}",
           "source": {
             "file": "src/modules/hr/components/TimesheetBatchPreviewModal.tsx",
-            "line": 160
+            "line": 140
           },
           "operational": true,
           "requiresReview": true
@@ -10279,7 +10143,7 @@
           "handler": "{result.reload}",
           "source": {
             "file": "src/modules/admin/CompanyLocationPicker.tsx",
-            "line": 74
+            "line": 73
           },
           "operational": true,
           "requiresReview": true
@@ -10939,21 +10803,21 @@
           "id": "employees.edit-trigger",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 189
+            "line": 168
           }
         },
         {
           "id": "employees.add-trigger",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 211
+            "line": 190
           }
         },
         {
           "id": "employees.list",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 228
+            "line": 207
           }
         }
       ],
@@ -10965,7 +10829,7 @@
           "handler": "{() => {\n              setEditRow(row);\n            }}",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 189
+            "line": 168
           },
           "operational": true,
           "requiresReview": true
@@ -10976,7 +10840,7 @@
           "handler": "{() => setCreateOpen(true)}",
           "source": {
             "file": "src/modules/admin/AdminEmployeesPage.tsx",
-            "line": 211
+            "line": 190
           },
           "operational": true,
           "requiresReview": true
@@ -10987,7 +10851,7 @@
           "handler": "{handleClose}",
           "source": {
             "file": "src/modules/admin/components/CreateEmployeeModal.tsx",
-            "line": 232
+            "line": 190
           },
           "operational": true,
           "requiresReview": true
@@ -10998,7 +10862,7 @@
           "handler": "{(e) => void handleSubmit(e)}",
           "source": {
             "file": "src/modules/admin/components/CreateEmployeeModal.tsx",
-            "line": 241
+            "line": 199
           },
           "operational": true,
           "requiresReview": true
@@ -11009,7 +10873,7 @@
           "handler": "{(e) => void handleSubmit(e)}",
           "source": {
             "file": "src/modules/admin/components/EditEmployeeModal.tsx",
-            "line": 316
+            "line": 252
           },
           "operational": true,
           "requiresReview": true
@@ -11017,10 +10881,10 @@
         {
           "anchor": null,
           "label": "",
-          "handler": "{() => {\n                if (employee.userId) {\n                  void handleResetPassword();\n                } else {\n                  void handleProvisionLogin();\n              ",
+          "handler": "{() => {\r\n                  if (employee.userId) {\r\n                    void handleResetPassword();\r\n                  } else {\r\n                    void handleProvisionLogin();\r\n ",
           "source": {
             "file": "src/modules/admin/components/EditEmployeeModal.tsx",
-            "line": 460
+            "line": 401
           },
           "operational": true,
           "requiresReview": true
@@ -11031,7 +10895,7 @@
           "handler": "{onClose}",
           "source": {
             "file": "src/modules/admin/components/EditEmployeeModal.tsx",
-            "line": 523
+            "line": 458
           },
           "operational": true,
           "requiresReview": true
@@ -11056,7 +10920,6 @@
         "src/modules/admin/companyLocationDocuments.ts",
         "src/modules/admin/useCompanyResource.ts",
         "src/modules/admin/useWeeklyOffSettings.ts",
-        "src/modules/admin/companyLocationTypes.ts",
         "src/modules/admin/useCompanyMutation.ts",
         "src/modules/admin/WeeklyOffRuleFields.tsx"
       ],
@@ -11193,7 +11056,7 @@
           "handler": "{result.reload}",
           "source": {
             "file": "src/modules/admin/CompanyLocationPicker.tsx",
-            "line": 74
+            "line": 73
           },
           "operational": true,
           "requiresReview": true
@@ -11515,7 +11378,7 @@
           "id": "admin.reports.claim-travel-filters",
           "source": {
             "file": "src/modules/reports/ClaimTravelReportFilters.tsx",
-            "line": 55
+            "line": 45
           }
         },
         {
@@ -11589,7 +11452,7 @@
           "handler": "{filters.apply}",
           "source": {
             "file": "src/modules/reports/ClaimTravelReportFilters.tsx",
-            "line": 128
+            "line": 118
           },
           "operational": true,
           "requiresReview": true
@@ -11597,10 +11460,10 @@
         {
           "anchor": null,
           "label": "Clear filters",
-          "handler": "{() => {\n            filters.clear();\n            setSearch('');\n            onClear();\n          }}",
+          "handler": "{() => {\r\n            filters.clear();\r\n            setSearch('');\r\n            onClear();\r\n          }}",
           "source": {
             "file": "src/modules/reports/ClaimTravelReportFilters.tsx",
-            "line": 131
+            "line": 121
           },
           "operational": true,
           "requiresReview": true
@@ -11611,7 +11474,7 @@
           "handler": "{() => setPage((value) => value - 1)}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 124
+            "line": 125
           },
           "operational": true,
           "requiresReview": true
@@ -11622,7 +11485,7 @@
           "handler": "{() => setPage((value) => value + 1)}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 133
+            "line": 134
           },
           "operational": true,
           "requiresReview": true
@@ -11633,7 +11496,7 @@
           "handler": "{() => {\r\n              void query.refresh();\r\n            }}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 167
+            "line": 169
           },
           "operational": true,
           "requiresReview": true
@@ -11644,7 +11507,7 @@
           "handler": "{() => {\r\n              void exportCsv();\r\n            }}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 177
+            "line": 179
           },
           "operational": true,
           "requiresReview": true
@@ -11655,7 +11518,7 @@
           "handler": "{() => {\r\n              void retry();\r\n            }}",
           "source": {
             "file": "src/modules/reports/ReportResult.tsx",
-            "line": 192
+            "line": 194
           },
           "operational": true,
           "requiresReview": true

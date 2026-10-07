@@ -15,7 +15,7 @@
 - `src/modules/my-work/MyWorkPage.tsx`, `myWorkTasks.ts`: personal work, history and direct task links.
 - `src/modules/workplace/PerformancePage.tsx`: permission-scoped tabs and legacy entry point.
 - `src/modules/workplace/PerformanceLifecyclePanel.tsx`: scoped fetching, actions, review detail and draft preservation.
-- `src/modules/workplace/LegacyPerformanceCatalog.tsx`: existing legacy catalog relocated from PerformancePage.
+- The legacy catalog was initially relocated from PerformancePage. It was removed on 2026-10-07 before launch; the current performance lifecycle is the supported UI workflow.
 - `src/modules/workplace/SurveysPage.tsx`, `surveyAvailability.ts`: respondent-only task entry, submission state and response windows.
 - `src/hooks/useKeyedAction.ts`: operation loading and duplicate submission guard.
 - `src/routes/appRouteConfig.tsx`, `src/auth/permissionService.ts`, `src/navigation/*`: routes, access and menu grouping.
