@@ -1,0 +1,7 @@
+query EmployeeEsicNumber($employeeId: ID!) {
+  employeeEsicNumber(employeeId: $employeeId)
+}
+
+mutation SetEmployeeEsicNumber($input: SetEmployeeEsicNumberInput!) {
+  setEmployeeEsicNumber(input: $input)
+}

@@ -2,6 +2,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type KeyboardEventHandler,
   type RefObject,
+  type MutableRefObject,
   useCallback,
   useId,
   useLayoutEffect,
@@ -35,16 +36,15 @@ function initialFocusElement(panel: HTMLElement): HTMLElement | null {
   const focusables = focusableElements(panel);
   return (
     focusables.find(
-      (element) =>
-        element.matches('[role="menuitem"]') || element.hasAttribute('data-popover-item')
+      (element) => element.matches('[role="menuitem"]') || element.hasAttribute('data-popover-item')
     ) ??
-    focusables[0] ??
+    focusables.find((_element, index) => index === 0) ??
     null
   );
 }
 
-export function usePopover(options: { open: boolean; onClose: () => void }): {
-  triggerRef: RefObject<HTMLButtonElement>;
+interface PopoverResult<T extends HTMLElement> {
+  triggerRef: MutableRefObject<T | null>;
   panelRef: RefObject<HTMLDivElement>;
   triggerProps: {
     'aria-expanded': boolean;
@@ -52,10 +52,18 @@ export function usePopover(options: { open: boolean; onClose: () => void }): {
     onKeyDown: KeyboardEventHandler;
   };
   panelProps: { id: string; onKeyDown: KeyboardEventHandler };
-} {
+  close: (restoreFocus?: boolean) => void;
+}
+
+export function usePopover<T extends HTMLElement = HTMLButtonElement>(options: {
+  open: boolean;
+  onClose: () => void;
+  focusOnOpen?: boolean;
+}): PopoverResult<T> {
   const panelId = useId();
+  const focusOnOpen = options.focusOnOpen !== false;
   const popoverIdRef = useRef(Symbol('popover'));
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<T | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(options.onClose);
   const closingRef = useRef(false);
@@ -118,7 +126,7 @@ export function usePopover(options: { open: boolean; onClose: () => void }): {
     if (!options.open) return undefined;
 
     closingRef.current = false;
-    restoreFocusRef.current = true;
+    restoreFocusRef.current = focusOnOpen;
     const currentId = popoverIdRef.current;
     if (activePopover && activePopover.id !== currentId) {
       activePopover.closeForReplacement();
@@ -129,16 +137,17 @@ export function usePopover(options: { open: boolean; onClose: () => void }): {
     };
 
     const panel = panelRef.current;
-    const firstItem = panel ? initialFocusElement(panel) : null;
-    const initialTarget = firstItem ?? panel;
-    initialTarget?.focus();
-    const focusObserver = panel
-      ? new MutationObserver(() => {
-          if (document.activeElement !== initialTarget) return;
-          const nextItem = initialFocusElement(panel);
-          if (nextItem && nextItem !== initialTarget) nextItem.focus();
-        })
-      : null;
+    const trigger = triggerRef.current;
+    const initialTarget = (panel ? initialFocusElement(panel) : null) ?? panel;
+    if (focusOnOpen) initialTarget?.focus();
+    const focusObserver =
+      panel && focusOnOpen
+        ? new MutationObserver(() => {
+            if (document.activeElement !== initialTarget) return;
+            const nextItem = initialFocusElement(panel);
+            if (nextItem && nextItem !== initialTarget) nextItem.focus();
+          })
+        : null;
     focusObserver?.observe(panel as Node, { childList: true, subtree: true });
 
     const handleOutsidePointer = (event: PointerEvent) => {
@@ -153,13 +162,12 @@ export function usePopover(options: { open: boolean; onClose: () => void }): {
       document.removeEventListener('pointerdown', handleOutsidePointer);
       focusObserver?.disconnect();
       if (activePopover?.id === currentId) activePopover = null;
-      if (restoreFocusRef.current && triggerRef.current?.isConnected) {
-        triggerRef.current.focus();
-      }
+      if (restoreFocusRef.current && trigger?.isConnected) trigger.focus();
     };
-  }, [options.open, requestClose]);
+  }, [options.open, focusOnOpen, requestClose]);
 
   return {
+    close: requestClose,
     triggerRef,
     panelRef,
     triggerProps: {

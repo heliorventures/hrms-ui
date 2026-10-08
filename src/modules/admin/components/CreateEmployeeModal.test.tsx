@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { graphqlDocumentSource } from '../../../testUtils/graphqlDocumentSource';
+
 import CreateEmployeeModal from './CreateEmployeeModal';
 
 const graphClient = vi.hoisted(() => ({ request: vi.fn() }));
@@ -41,7 +43,7 @@ const Harness = () => {
 
 beforeEach(() => {
   graphClient.request.mockImplementation(async (document: unknown) => {
-    if (String(document).includes('ClientOpsOrgListsForEmployeeModal')) {
+    if (graphqlDocumentSource(document).includes('EmployeeModal')) {
       return directoryResponse();
     }
     throw Object.assign(new Error('email is already in use in this tenant'), {
@@ -56,6 +58,25 @@ afterEach(() => {
 });
 
 describe('CreateEmployeeModal', () => {
+  it('prevents browser history suggestions in employee identity fields', async () => {
+    render(<Harness />);
+
+    const employeeCode = await screen.findByLabelText(/employee code/i);
+    const dateOfJoining = screen.getByLabelText(/date of joining/i);
+    const firstName = screen.getByLabelText(/first name/i);
+    const lastName = screen.getByLabelText(/last name/i);
+    const form = employeeCode.closest('form');
+
+    expect(form?.getAttribute('autocomplete')).toBe('off');
+    expect(employeeCode.getAttribute('name')).toBe('new-employee-code');
+    expect(dateOfJoining.getAttribute('name')).toBe('new-employee-date-of-joining');
+    expect(firstName.getAttribute('name')).toBe('new-employee-first-name');
+    expect(lastName.getAttribute('name')).toBe('new-employee-last-name');
+    for (const field of [employeeCode, dateOfJoining, firstName, lastName]) {
+      expect(field.getAttribute('autocomplete')).toBe('off');
+    }
+  });
+
   it('opens with a clean form after a previous create error was closed', async () => {
     render(<Harness />);
 

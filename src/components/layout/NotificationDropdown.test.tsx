@@ -11,7 +11,6 @@ import {
 
 import {
   deferred,
-  installDropdownGeometry,
   notificationMocks,
   notificationRequestScenarios,
   notificationTree,
@@ -39,14 +38,15 @@ describe('NotificationDropdown', () => {
     expect(await screen.findByText('Policy update')).toBeTruthy();
   });
 
-  it('shows direct notification action URLs in the receiver preview', async () => {
+  it('shows notification content without exposing internal action URLs', async () => {
     renderNotifications();
 
     await screen.findByRole('button', { name: 'Notifications, 3 unread' });
     fireEvent.click(screen.getByRole('button', { name: 'Notifications, 3 unread' }));
 
-    expect(await screen.findByText('Action URL:', { exact: false })).toBeTruthy();
-    expect(screen.getByText('/leave')).toBeTruthy();
+    expect(screen.queryByText('Action URL:', { exact: false })).toBeNull();
+    expect(await screen.findByText('Policy update')).toBeTruthy();
+    expect(screen.queryByText('/leave')).toBeNull();
   });
 
   it('preserves successful count and preview independently and offers inline retries', async () => {
@@ -70,7 +70,7 @@ describe('NotificationDropdown', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Notifications, 12 unread' }));
     await act(async () => Promise.resolve());
     expect(screen.getByText('Policy update')).toBeTruthy();
-    fireEvent.keyDown(screen.getByRole('region', { name: 'Notifications' }), { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Notifications' }), { key: 'Escape' });
 
     countFails = true;
     previewFails = true;
@@ -144,7 +144,7 @@ describe('NotificationDropdown preview states', () => {
     fireEvent.click(trigger);
     expect(await screen.findByText('Policy update')).toBeTruthy();
 
-    fireEvent.keyDown(screen.getByRole('region', { name: 'Notifications' }), { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Notifications' }), { key: 'Escape' });
     fireEvent.click(trigger);
 
     expect(screen.getByText('Policy update')).toBeTruthy();
@@ -315,7 +315,7 @@ describe('NotificationDropdown notification actions', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Policy update/ }));
 
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/notifications'));
-    expect(screen.queryByRole('region', { name: 'Notifications' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Notifications' })).toBeNull();
   });
 
   it.each([
@@ -402,34 +402,29 @@ describe('NotificationDropdown notification actions', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Policy update/ }));
 
     expect(mocks.navigate).toHaveBeenCalledWith('/leave');
-    expect(screen.queryByRole('region', { name: 'Notifications' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Notifications' })).toBeNull();
 
     act(() => markPending.resolve({ markNotificationRead: true }));
   });
 });
 
 describe('NotificationDropdown interaction and layout', () => {
-  it('keeps list semantics, shared Arrow navigation, outside dismissal, and opener restoration', async () => {
+  it('keeps list semantics, traps focus, dismisses with Escape, and restores the opener', async () => {
     renderNotifications();
     const trigger = await screen.findByRole('button', { name: 'Notifications, 3 unread' });
+    trigger.focus();
     fireEvent.click(trigger);
-
+    const panel = await screen.findByRole('dialog', { name: 'Notifications' });
     const list = await screen.findByRole('list', { name: 'Notification previews' });
-    const notification = within(list).getByRole('button', { name: /Policy update/ });
-    await waitFor(() => expect(document.activeElement).toBe(notification));
-    fireEvent.keyDown(notification, { key: 'End' });
-    expect(document.activeElement).toBe(
-      screen.getByRole('link', { name: 'View all notifications' })
-    );
-
-    fireEvent.pointerDown(screen.getByTestId('outside'));
-    expect(screen.queryByRole('region', { name: 'Notifications' })).toBeNull();
-    expect(document.activeElement).toBe(trigger);
+    expect(within(list).getByRole('button', { name: /Policy update/ })).toBeTruthy();
+    await waitFor(() => expect(panel.contains(document.activeElement)).toBe(true));
+    fireEvent.keyDown(panel, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Notifications' })).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
 
-  it('uses truthful region semantics and visual-viewport safe-area geometry', async () => {
+  it('uses modal drawer semantics and wraps long content', async () => {
     const longToken = 'NotificationTitle'.repeat(30);
-    installDropdownGeometry();
     mocks.request.mockImplementation((document: unknown) => {
       if (document === UnreadNotificationCountDocument) {
         return Promise.resolve({ unreadNotificationCount: 0 });
@@ -451,20 +446,17 @@ describe('NotificationDropdown interaction and layout', () => {
     renderNotifications();
     const trigger = await screen.findByRole('button', { name: 'Notifications' });
     fireEvent.click(trigger);
-    const panel = await screen.findByRole('region', { name: 'Notifications' });
+    const panel = await screen.findByRole('dialog', { name: 'Notifications' });
     const heading = screen.getByRole('heading', { name: 'Notifications' });
     const title = await screen.findByText(longToken, { selector: '[data-notification-title]' });
     const message = screen.getByText(longToken, { selector: '[data-notification-message]' });
 
     expect(title.className).toContain('break-words');
     expect(message.className).toContain('break-words');
-    expect(trigger.hasAttribute('aria-haspopup')).toBe(false);
-    expect(panel.getAttribute('aria-label')).toBeNull();
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(panel.getAttribute('aria-modal')).toBe('true');
     expect(panel.getAttribute('aria-labelledby')).toBe(heading.id);
-    expect(panel.style.left).toBe('76px');
-    expect(panel.style.top).toBe('92px');
-    expect(panel.style.maxWidth).toBe('518px');
-    expect(panel.style.maxHeight).toBe('434px');
+
     expect(panel.className).toContain('overscroll-contain');
   });
 });

@@ -1,0 +1,11 @@
+query MyGuidanceState {
+  myGuidanceState {
+    overviewDismissedAt
+  }
+}
+
+mutation DismissMyApplicationOverview {
+  dismissMyApplicationOverview {
+    overviewDismissedAt
+  }
+}

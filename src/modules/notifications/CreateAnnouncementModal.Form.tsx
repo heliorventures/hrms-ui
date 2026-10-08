@@ -3,6 +3,7 @@ import type { FormEventHandler } from 'react';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 
+import AnnouncementVideoFields from './components/AnnouncementVideoFields';
 import type {
   AnnouncementFormState,
   AudienceOptionsState,
@@ -192,7 +193,13 @@ const AttachmentFields = ({ form }: { form: AnnouncementFormState }) => (
   </>
 );
 
-const SubmitLabel = ({ hrCompose, submitting }: { hrCompose: boolean; submitting: boolean }) => {
+export const SubmitLabel = ({
+  hrCompose,
+  submitting,
+}: {
+  hrCompose: boolean;
+  submitting: boolean;
+}) => {
   if (submitting) return <>Publishing...</>;
   if (hrCompose) return <>Publish Announcement</>;
   return <>Publish Team Post</>;
@@ -225,7 +232,7 @@ export const CreateAnnouncementModalForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form id="create-announcement-form" onSubmit={handleSubmit} className="space-y-3">
       {controller.submitError ? (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {controller.submitError}
@@ -243,33 +250,24 @@ export const CreateAnnouncementModalForm = ({
         </p>
       ) : null}
 
-      <AnnouncementFields form={controller.form} />
-      {controller.hrCompose ? (
-        <AudienceFields
-          audienceOptions={controller.audienceOptions}
-          disabled={controller.hrAudienceControlsDisabled}
-          form={controller.form}
-        />
-      ) : null}
-      <AttachmentFields form={controller.form} />
-
-      <div className="flex justify-end gap-2 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={controller.close}
-          disabled={controller.submitting}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={controller.submitting || controller.hrAudienceControlsDisabled}
-        >
-          <SubmitLabel hrCompose={controller.hrCompose} submitting={controller.submitting} />
-        </Button>
-      </div>
+      <fieldset disabled={controller.submitting} className="space-y-3">
+        <AnnouncementFields form={controller.form} />
+        {controller.hrCompose ? (
+          <AudienceFields
+            audienceOptions={controller.audienceOptions}
+            disabled={controller.hrAudienceControlsDisabled}
+            form={controller.form}
+          />
+        ) : null}
+        <AttachmentFields form={controller.form} />
+      </fieldset>
+      <AnnouncementVideoFields
+        value={controller.form.values}
+        disabled={controller.submitting}
+        change={(values) => controller.form.setValues((current) => ({ ...current, ...values }))}
+        progress={controller.videoProgress}
+        cancelUpload={controller.cancelVideoUpload}
+      />
     </form>
   );
 };

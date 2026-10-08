@@ -1,19 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Card from '@/components/common/Card';
-import Table from '@/components/common/Table';
-import PageHeader from '@/components/common/PageHeader';
-import Input from '@/components/common/Input';
-import Button from '@/components/common/Button';
-import { useGraphClient } from '@/hooks/useGraphClient';
-import { useDialogs } from '@/contexts/DialogContext';
+
+import PageInformation from '../../components/common/PageInformation';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   OPS_PROVISION_TENANT,
   OPS_RUN_TENANT_MIGRATIONS,
   OPS_TENANTS,
   OPS_UPDATE_TENANT,
 } from './opsGraph';
+
+import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
+import Input from '@/components/common/Input';
+import PageHeader from '@/components/common/PageHeader';
+import Table from '@/components/common/Table';
+import { useDialogs } from '@/contexts/DialogContext';
+import { useGraphClient } from '@/hooks/useGraphClient';
+
+
 
 type TenantRow = {
   id: string;
@@ -202,10 +208,13 @@ const OpsTenantsPage = () => {
       {provisionOpen && (
         <Card title="Provision New Tenant">
           <form onSubmit={onProvision} className="max-w-xl space-y-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Uses the same deterministic UUID as <code>provision-tenant.ps1</code>. Set{' '}
-              <code>KABIPAY_DATABASE_DIR</code> on the API host for Liquibase when “Run migrations” is on.
-            </p>
+            <PageInformation title="Tenant provisioning">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Uses the same deterministic UUID as <code>provision-tenant.ps1</code>. Set{' '}
+                <code>KABIPAY_DATABASE_DIR</code> on the API host for Liquibase when “Run
+                migrations” is on.
+              </p>
+            </PageInformation>
             <Input label="Display Name" value={pvName} onChange={(e) => setPvName(e.target.value)} required />
             <Input
               label="Code (Subdomain Key, 2–32 Chars)"

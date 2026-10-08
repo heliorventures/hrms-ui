@@ -108,15 +108,9 @@ const ExpensePolicyModal = ({
         fullWidth
         inputMode="decimal"
       />
-      <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
-        <input
-          type="checkbox"
-          checked={form.receiptRequired}
-          onChange={(event) => onChange({ ...form, receiptRequired: event.target.checked })}
-          className="rounded border-gray-300 dark:border-gray-600"
-        />
-        Receipt required on submit
-      </label>
+      <p className="text-sm text-gray-800 dark:text-gray-200">
+        A receipt is required for every new expense claim.
+      </p>
       <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
         <input
           type="checkbox"

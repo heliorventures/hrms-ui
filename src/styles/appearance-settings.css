@@ -1,0 +1,177 @@
+.appearance-choice {
+  border-bottom: 1px solid rgb(var(--color-line-subtle));
+  padding: 0 0 12px;
+  font-size: 0.875rem;
+}
+.appearance-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgb(var(--color-line-subtle));
+  font-size: 0.875rem;
+}
+.appearance-radio {
+  position: relative;
+  cursor: pointer;
+}
+.appearance-radio input,
+.appearance-palette input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.appearance-radio span {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid rgb(var(--color-line));
+  border-radius: 6px;
+  background: rgb(var(--color-canvas));
+  font-size: 0.8rem;
+}
+.appearance-radio input:checked + span {
+  background: rgb(var(--color-surface-selected));
+  border-color: rgb(var(--color-accent));
+  color: rgb(var(--color-accent));
+  font-weight: 600;
+}
+.appearance-radio:focus-within,
+.appearance-palette:focus-within {
+  outline: 3px solid rgb(var(--color-focus));
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+.appearance-palette {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgb(var(--color-line));
+  border-radius: 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.appearance-palette:has(input:checked) {
+  border-color: rgb(var(--color-accent));
+  background: rgb(var(--color-surface-selected));
+  box-shadow: inset 0 0 0 1px rgb(var(--color-accent));
+}
+.appearance-switch {
+  flex-shrink: 0;
+  appearance: none;
+  width: 36px;
+  height: 22px;
+  border: 1px solid rgb(var(--color-line-strong));
+  border-radius: 12px;
+  background: rgb(var(--color-line));
+  cursor: pointer;
+}
+.appearance-switch::after {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 2px;
+  border-radius: 50%;
+  background: rgb(var(--color-surface));
+}
+.appearance-switch:checked {
+  background: rgb(var(--color-accent));
+}
+.appearance-switch:checked::after {
+  transform: translateX(13px);
+}
+.appearance-preview {
+  border: 1px solid rgb(var(--color-line));
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgb(var(--color-canvas));
+  color: rgb(var(--color-content-primary));
+}
+.appearance-preview:not(.dark) {
+  --color-surface: 255 255 255;
+  --color-surface-selected: 238 242 255;
+  --color-line: 203 213 225;
+  --color-line-subtle: 231 235 240;
+  --color-content-primary: 24 34 48;
+  --color-content-secondary: 71 84 103;
+  --color-content-muted: 93 109 133;
+  --color-canvas: 246 248 251;
+}
+.preview-shell {
+  display: flex;
+  min-height: 310px;
+}
+.preview-navigation {
+  width: 54px;
+  flex-shrink: 0;
+  padding: 12px 6px;
+  background: rgb(var(--color-surface));
+  color: rgb(var(--color-content-primary));
+  font-size: 10px;
+}
+.preview-navigation span {
+  display: block;
+  margin-top: 18px;
+}
+[data-theme-style='two-tone'] > .preview-shell > .preview-navigation {
+  background: #18263d;
+  color: #d5dfed;
+}
+[data-navigation='collapsed'] > .preview-shell > .preview-navigation {
+  width: 26px;
+}
+[data-navigation='collapsed'] > .preview-shell > .preview-navigation span {
+  overflow: hidden;
+  width: 10px;
+}
+.preview-search {
+  max-width: 125px;
+  border: 1px solid rgb(var(--color-line));
+  padding: 6px;
+  border-radius: 5px;
+  background: rgb(var(--color-surface));
+  font-size: 10px;
+}
+[data-search-width='full'] > .preview-shell .preview-search {
+  max-width: none;
+}
+.appearance-preview table {
+  font-size: 10px;
+  background: rgb(var(--color-surface));
+}
+.appearance-preview table :is(th, td) {
+  padding: 7px 5px;
+}
+.appearance-preview[data-density='comfortable'] table :is(th, td) {
+  padding: 13px 5px;
+}
+.appearance-preview[data-text-size='large'] table {
+  font-size: 13px;
+}
+.appearance-preview[data-text-size='standard'] table {
+  font-size: 11px;
+}
+.appearance-preview[data-headings='hidden'] .page-heading {
+  visibility: hidden;
+}
+.appearance-preview[data-effects='subtle'] table {
+  box-shadow: 0 3px 8px #10182820;
+}
+.appearance-preview[data-high-contrast='true']:not(.dark) {
+  --color-content-muted: 51 65 85;
+  --color-content-secondary: 30 41 59;
+  --color-line: 71 85 105;
+}
+.appearance-preview.dark[data-high-contrast='true'] {
+  --color-content-muted: 226 232 240;
+  --color-content-secondary: 241 245 249;
+  --color-line: 148 163 184;
+}
+.appearance-preview[data-row-highlight='false'] table tbody tr:hover {
+  background: inherit;
+}

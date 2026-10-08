@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { EmployeeProfileShell } from '../organization/employee-profile/EmployeeProfileShell';
+
 import SecurityTab from './components/SecurityTab';
 import { MyEmployeeDocument, type MyEmployeeQuery } from './myEmployeeQuery';
 
@@ -16,9 +19,12 @@ const ProfileSettingsPage = () => {
   const client = useGraphClient('client');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [activeView, setActiveView] = useState<ProfileView>(
-    searchParams.get('tab') === 'security' ? 'security' : 'profile'
-  );
+  const activeView: ProfileView = searchParams.get('tab') === 'security' ? 'security' : 'profile';
+  const setActiveView = (view: ProfileView) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', view === 'security' ? 'security' : 'overview');
+    navigate({ search: next.toString() });
+  };
   const [employeeId, setEmployeeId] = useState<string | null | undefined>(undefined);
   const [profileError, setProfileError] = useState<string | null>(null);
   const userId = user?.id;
@@ -61,20 +67,26 @@ const ProfileSettingsPage = () => {
 
   if (activeView === 'security') {
     return (
-      <div className="space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Change your password and revoke existing sessions.
-            </p>
-          </div>
-          {!clientSession?.mustChangePassword && employeeId ? (
-            <Button type="button" variant="outline" onClick={() => setActiveView('profile')}>
-              Back to profile
-            </Button>
-          ) : null}
-        </div>
+      <div className="space-y-4">
+        <PageHeader
+          title="Profile — Security"
+          tourAnchor="profile-settings-navigation"
+          selector={null}
+          actions={
+            <div className="flex gap-2">
+              {!clientSession?.mustChangePassword && employeeId ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveView('profile')}
+                  data-tour-anchor="profile-back-to-profile"
+                >
+                  Back to profile
+                </Button>
+              ) : null}
+            </div>
+          }
+        />
         <Card>
           <SecurityTab
             forced={clientSession?.mustChangePassword === true}
@@ -99,12 +111,23 @@ const ProfileSettingsPage = () => {
   if (profileError) {
     return (
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
-          <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
-            Security settings
-          </Button>
-        </div>
+        <PageHeader
+          title="Profile — My profile"
+          tourAnchor="profile-settings-navigation"
+          selector={null}
+          actions={
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveView('security')}
+                data-tour-anchor="profile-security-settings"
+              >
+                Security settings
+              </Button>
+            </div>
+          }
+        />
         <Card>
           <p className="font-medium text-red-700 dark:text-red-300">
             We could not load your employee profile.
@@ -118,12 +141,23 @@ const ProfileSettingsPage = () => {
   if (!employeeId) {
     return (
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
-          <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
-            Security settings
-          </Button>
-        </div>
+        <PageHeader
+          title="Profile — My profile"
+          tourAnchor="profile-settings-navigation"
+          selector={null}
+          actions={
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveView('security')}
+                data-tour-anchor="profile-security-settings"
+              >
+                Security settings
+              </Button>
+            </div>
+          }
+        />
         <Card>
           <p className="font-medium text-gray-900 dark:text-white">
             No employee profile is linked to this login.
@@ -138,18 +172,26 @@ const ProfileSettingsPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Edit your personal profile, upload documents, and maintain your employment records.
-          </p>
-        </div>
-        <Button type="button" variant="outline" onClick={() => setActiveView('security')}>
-          Security settings
-        </Button>
+      <PageHeader
+        title="Profile — My profile"
+        tourAnchor="profile-settings-navigation"
+        selector={null}
+        actions={
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setActiveView('security')}
+              data-tour-anchor="profile-security-settings"
+            >
+              Security settings
+            </Button>
+          </div>
+        }
+      />
+      <div data-tour-anchor="profile-employee-record">
+        <EmployeeProfileShell embedded employeeId={employeeId} />
       </div>
-      <EmployeeProfileShell employeeId={employeeId} />
     </div>
   );
 };

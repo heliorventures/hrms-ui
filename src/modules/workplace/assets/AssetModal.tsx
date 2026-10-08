@@ -66,8 +66,22 @@ export default function AssetModal({
       onClose={onClose}
       title={editing ? 'Edit Asset' : 'New Asset'}
       size="lg"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button type="submit" form="asset-form" disabled={saving}>
+            {saving ? 'Saving...' : 'Save Asset'}
+          </Button>
+        </>
+      }
     >
-      <form className="grid gap-4 md:grid-cols-2" onSubmit={(event) => void submit(event)}>
+      <form
+        id="asset-form"
+        className="grid gap-3 md:grid-cols-2"
+        onSubmit={(event) => void submit(event)}
+      >
         <AssetOptionPicker
           label="Category"
           value={values.assetCategoryId}
@@ -86,9 +100,7 @@ export default function AssetModal({
               : undefined
           }
           required
-          onChange={(assetCategoryId) =>
-            setValues((current) => ({ ...current, assetCategoryId }))
-          }
+          onChange={(assetCategoryId) => setValues((current) => ({ ...current, assetCategoryId }))}
           onFilterChange={onCategoryFilterChange}
         />
         <Input
@@ -146,14 +158,6 @@ export default function AssetModal({
             setValues((current) => ({ ...current, locationId: event.target.value }))
           }
         />
-        <div className="flex items-end gap-3">
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Asset'}
-          </Button>
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-        </div>
       </form>
     </Modal>
   );

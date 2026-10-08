@@ -12,10 +12,20 @@ import {
 } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { matchedTenantRoute } from '../../guidance/matchedTenantRoute';
+
 import AppLayout from './AppLayout';
+
+vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => ({ request: vi.fn() }) }));
+
+vi.mock('./PageTools', () => ({ default: () => <aside aria-label="Page tools" /> }));
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ isAuthenticated: true, logout: vi.fn() }),
+}));
+
+vi.mock('../../contexts/TenantContext', () => ({
+  useTenant: () => ({ currentTenant: { id: 'tenant-1' } }),
 }));
 
 vi.mock('../../contexts/DialogContext', () => ({
@@ -36,7 +46,7 @@ vi.mock('./CommandPalette', () => ({
   default: () => null,
 }));
 
-function RouteControls() {
+const RouteControls = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [overlayOpen, setOverlayOpen] = useState(false);
@@ -47,7 +57,7 @@ function RouteControls() {
 
   useEffect(() => {
     if (deferredPathname === location.pathname) return;
-    routeContext?.onRouteContentCommit?.({
+    routeContext.onRouteContentCommit?.({
       locationKey: location.key,
       pathname: location.pathname,
     });
@@ -132,7 +142,7 @@ function RouteControls() {
       ) : null}
     </section>
   );
-}
+};
 
 function renderLayout(initialEntries = ['/dashboard']) {
   document.body.innerHTML = '<div id="root"></div>';
@@ -154,6 +164,14 @@ afterEach(() => {
 });
 
 describe('AppLayout', () => {
+  it('resolves contextual URLs to their registered tenant route identity', () => {
+    expect(matchedTenantRoute('/organization/employees/employee-7')).toBe(
+      'organization/employees/:employeeId'
+    );
+    expect(matchedTenantRoute('/dashboard')).toBe('dashboard');
+    expect(matchedTenantRoute('/not-a-tenant-page')).toBeNull();
+  });
+
   it('provides a focus-visible skip link and a labelled programmatic main target', async () => {
     renderLayout();
 
@@ -241,7 +259,9 @@ describe('AppLayout', () => {
     const queryButton = screen.getByRole('button', { name: 'Change query' });
     queryButton.focus();
     fireEvent.click(queryButton);
-    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/dashboard?status=open'));
+    await waitFor(() =>
+      expect(screen.getByTestId('location').textContent).toBe('/dashboard?status=open')
+    );
     expect(main.scrollTop).toBe(120);
     expect(document.activeElement).toBe(queryButton);
 
@@ -249,7 +269,9 @@ describe('AppLayout', () => {
     const hashButton = screen.getByRole('button', { name: 'Change hash' });
     hashButton.focus();
     fireEvent.click(hashButton);
-    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/dashboard#details'));
+    await waitFor(() =>
+      expect(screen.getByTestId('location').textContent).toBe('/dashboard#details')
+    );
     expect(main.scrollTop).toBe(200);
     expect(document.activeElement).toBe(hashButton);
 
@@ -257,7 +279,9 @@ describe('AppLayout', () => {
     const backButton = screen.getByRole('button', { name: 'Back' });
     backButton.focus();
     fireEvent.click(backButton);
-    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/dashboard?status=open'));
+    await waitFor(() =>
+      expect(screen.getByTestId('location').textContent).toBe('/dashboard?status=open')
+    );
     expect(main.scrollTop).toBe(200);
     expect(document.activeElement).toBe(backButton);
 
@@ -269,12 +293,16 @@ describe('AppLayout', () => {
     const forwardButton = screen.getByRole('button', { name: 'Forward' });
     forwardButton.focus();
     fireEvent.click(forwardButton);
-    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/dashboard?status=open'));
+    await waitFor(() =>
+      expect(screen.getByTestId('location').textContent).toBe('/dashboard?status=open')
+    );
     expect(main.scrollTop).toBe(200);
     expect(document.activeElement).toBe(forwardButton);
 
     fireEvent.click(forwardButton);
-    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/dashboard#details'));
+    await waitFor(() =>
+      expect(screen.getByTestId('location').textContent).toBe('/dashboard#details')
+    );
     expect(main.scrollTop).toBe(260);
     expect(document.activeElement).toBe(forwardButton);
 
@@ -322,7 +350,9 @@ describe('AppLayout', () => {
     const main = screen.getByRole('main', { name: 'Main content' });
     main.scrollTop = 125;
     fireEvent.click(screen.getByRole('button', { name: 'Navigate under overlay' }));
-    await waitFor(() => expect(screen.getByRole('heading', { name: '/organization' })).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: '/organization' })).toBeTruthy()
+    );
 
     expect(document.activeElement).toBe(opener);
     expect(main.scrollTop).toBe(125);
@@ -336,7 +366,6 @@ describe('AppLayout', () => {
     expect(root?.className).toContain('min-h-[100dvh]');
     expect(root?.className).not.toContain('h-screen');
     expect(main.className).toContain('safe-area-inset-bottom');
-    expect(main.firstElementChild?.className).toContain('safe-area-inset-left');
-    expect(main.firstElementChild?.className).toContain('safe-area-inset-right');
+    expect(main.firstElementChild?.className).toContain('app-page-content');
   });
 });

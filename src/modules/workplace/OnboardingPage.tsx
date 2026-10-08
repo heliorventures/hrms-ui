@@ -251,20 +251,21 @@ const OnboardingPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Onboarding & Exit"
-        description="Complete joining tasks; file exit requests, HR approval, department clearance, and FNF settlement."
       />
 
-      <Tabs
-        value={mainTab}
-        onValueChange={(id) => setMainTab(id as MainTab)}
-        tabs={[
-          { id: 'join', label: 'Joining Checklist', panelId: 'onboarding-tab-join' },
-          { id: 'exit', label: 'Exit & Separation', panelId: 'onboarding-tab-exit' },
-        ]}
-      />
+      <div data-tour-anchor="onboarding.sections">
+        <Tabs
+          value={mainTab}
+          onValueChange={(id) => setMainTab(id as MainTab)}
+          tabs={[
+            { id: 'join', label: 'Joining Checklist', panelId: 'onboarding-tab-join' },
+            { id: 'exit', label: 'Exit & Separation', panelId: 'onboarding-tab-exit' },
+          ]}
+        />
+      </div>
 
       {error && (
         <Card>

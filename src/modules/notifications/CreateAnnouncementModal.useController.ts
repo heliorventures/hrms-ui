@@ -4,10 +4,10 @@ import { OrgDepartmentsDocument, type OrgDepartmentsQuery } from '../../api/grap
 import { canManageNotifications } from '../../auth/navAccess';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { fileToBase64 } from '../../utils/fileEncoding';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
-import { buildCreateAnnouncementInput } from './createAnnouncementInput';
+import { publishAnnouncement } from './announcementSubmission';
+import { announcementVideoError, safeVideoLink } from './announcementVideoUpload';
 import type {
   AnnouncementFormState,
   AnnouncementFormValues,
@@ -15,7 +15,7 @@ import type {
   CreateAnnouncementModalController,
   CreateAnnouncementModalProps,
 } from './CreateAnnouncementModal.types';
-import { CreateAnnouncementSafeDocument } from './notificationQueries';
+import { useAnnouncementVideoUpload } from './useAnnouncementVideoUpload';
 
 const MAX_ANNOUNCEMENT_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_ANNOUNCEMENT_DOCUMENT_BYTES = 6 * 1024 * 1024;
@@ -36,12 +36,6 @@ type ValidationResult =
   | { valid: true; schedule: ValidatedSchedule }
   | { valid: false; message: string };
 
-interface OptionalEncodedFileFields {
-  contentBase64: string | null;
-  fileName: string | null;
-  mimeType: string | null;
-}
-
 const createInitialForm = (): AnnouncementFormValues => ({
   title: '',
   body: '',
@@ -54,6 +48,9 @@ const createInitialForm = (): AnnouncementFormValues => ({
   expiresAt: '',
   imageFile: null,
   documentFile: null,
+  videoMode: 'NONE',
+  videoLink: '',
+  videoFile: null,
 });
 
 const parseOptionalDateTime = (value: string) => {
@@ -93,6 +90,13 @@ const validateSchedule = (values: AnnouncementFormValues, hrCompose: boolean): V
 };
 
 const validateAttachments = (values: AnnouncementFormValues) => {
+  if (values.videoMode === 'LINK' && !safeVideoLink(values.videoLink))
+    return 'Enter a valid http or https video link.';
+  if (values.videoMode === 'UPLOAD') {
+    if (!values.videoFile) return 'Choose a video file.';
+    const videoError = announcementVideoError(values.videoFile);
+    if (videoError) return videoError;
+  }
   const imageError = validateFile(
     values.imageFile,
     ALLOWED_IMAGE_TYPES,
@@ -123,23 +127,6 @@ const validateSubmission = (
   if (attachmentError) return { valid: false, message: attachmentError };
 
   return schedule;
-};
-
-const EMPTY_ENCODED_FILE: OptionalEncodedFileFields = {
-  contentBase64: null,
-  fileName: null,
-  mimeType: null,
-};
-
-const encodeOptionalFile = async (file: File | null): Promise<OptionalEncodedFileFields> => {
-  if (!file) return EMPTY_ENCODED_FILE;
-  const encoded = await fileToBase64(file);
-  const encodedFile: OptionalEncodedFileFields = {
-    contentBase64: encoded.b64,
-    fileName: encoded.name,
-    mimeType: encoded.mime,
-  };
-  return encodedFile;
 };
 
 const useAnnouncementForm = (): AnnouncementFormState => {
@@ -213,16 +200,40 @@ export const useCreateAnnouncementModalController = ({
   const audience = useAudienceOptions(isOpen && hrCompose);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const busyRef = useRef(false);
+  const alive = useRef(true);
+  const currentClient = useRef(client);
+  currentClient.current = client;
+  const video = useAnnouncementVideoUpload(client);
+  const { resetVideo } = video;
+  const isCurrent = useCallback(() => alive.current && currentClient.current === client, [client]);
+  const ensureCurrent = useCallback(() => {
+    if (!isCurrent()) throw new DOMException('Submission cancelled.', 'AbortError');
+  }, [isCurrent]);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  useLayoutEffect(() => {
+    busyRef.current = false;
+    setSubmitting(false);
+    setSubmitError(null);
+    resetVideo();
+  }, [client, resetVideo]);
 
   const close = useCallback(() => {
     if (submitting) return;
     audience.invalidate();
     form.reset();
+    video.resetVideo();
     setSubmitError(null);
     onClose();
-  }, [audience, form, onClose, submitting]);
+  }, [audience, form, onClose, submitting, video]);
 
   const submit = useCallback(async () => {
+    if (busyRef.current) return;
     setSubmitError(null);
     if (hrCompose && audience.audienceOptions.phase !== 'loaded') return;
 
@@ -232,45 +243,45 @@ export const useCreateAnnouncementModalController = ({
       return;
     }
 
+    busyRef.current = true;
     setSubmitting(true);
     try {
-      const [image, document] = await Promise.all([
-        encodeOptionalFile(form.values.imageFile),
-        encodeOptionalFile(form.values.documentFile),
-      ]);
-      await client.request(CreateAnnouncementSafeDocument, {
-        input: buildCreateAnnouncementInput(
-          {
-            hrCompose,
-            title: form.values.title,
-            body: form.values.body,
-            targetAudience: form.values.targetAudience,
-            targetDepartmentId: form.values.departmentId,
-            targetLocationId: form.values.locationId,
-            targetRoleCode: form.values.roleCode,
-            publishAt: validation.schedule.publishAt,
-            expiresAt: validation.schedule.expiresAt,
-            employeePost: form.values.employeePost,
-          },
-          {
-            imageFileName: image.fileName,
-            imageMimeType: image.mimeType,
-            imageContentBase64: image.contentBase64,
-            documentFileName: document.fileName,
-            documentMimeType: document.mimeType,
-            documentContentBase64: document.contentBase64,
-          }
-        ),
+      await publishAnnouncement({
+        client,
+        values: form.values,
+        hrCompose,
+        schedule: validation.schedule,
+        prepareVideo: video.prepareVideo,
+        ensureCurrent,
       });
       onCreated?.();
       form.reset();
+      video.resetVideo();
       onClose();
     } catch (error) {
-      setSubmitError(graphQlUserMessage(error));
+      if (isCurrent())
+        setSubmitError(
+          error instanceof DOMException && error.name === 'AbortError'
+            ? 'Video upload cancelled. You can choose another file or retry.'
+            : graphQlUserMessage(error)
+        );
     } finally {
-      setSubmitting(false);
+      if (isCurrent()) {
+        busyRef.current = false;
+        setSubmitting(false);
+      }
     }
-  }, [audience.audienceOptions.phase, client, form, hrCompose, onClose, onCreated]);
+  }, [
+    audience.audienceOptions.phase,
+    client,
+    form,
+    hrCompose,
+    onClose,
+    onCreated,
+    video,
+    ensureCurrent,
+    isCurrent,
+  ]);
 
   return {
     audienceOptions: audience.audienceOptions,
@@ -282,5 +293,7 @@ export const useCreateAnnouncementModalController = ({
     submit,
     submitError,
     submitting,
+    videoProgress: video.progress,
+    cancelVideoUpload: video.cancelUpload,
   };
 };

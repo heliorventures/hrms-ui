@@ -1,3 +1,4 @@
+import { approverLabel } from './workflowSetup';
 import { useEffect, useMemo, useState } from 'react';
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
@@ -77,7 +78,9 @@ const SortableRow = ({
       </button>
       <span className="min-w-0 flex-1 text-slate-700 dark:text-slate-200">
         <span className="font-medium">{step.sequenceOrder}.</span> {step.stepName}
-        {step.approverType ? <span className="text-slate-500"> · {step.approverType}</span> : null}
+        {step.approverType ? (
+          <span className="text-slate-500"> · {approverLabel(step.approverType)}</span>
+        ) : null}
         {step.slaHours != null ? (
           <span className="text-slate-500"> · SLA {step.slaHours}h</span>
         ) : null}

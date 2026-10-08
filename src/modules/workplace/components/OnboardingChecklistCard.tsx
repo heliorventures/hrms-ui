@@ -30,6 +30,7 @@ const OnboardingChecklistCard = ({ busyId, items, loading, onToggle }: Onboardin
             <Button
               variant={item.isCompleted ? 'secondary' : 'primary'}
               disabled={busyId === item.id}
+              data-tour-anchor="onboarding.checklist"
               onClick={() => onToggle(item.id, !item.isCompleted)}
             >
               {busyId === item.id ? '...' : item.isCompleted ? 'Mark incomplete' : 'Mark done'}

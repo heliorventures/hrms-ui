@@ -1,0 +1,23 @@
+mutation ProposePerformanceGoalWorkspace($input: SavePerformanceGoalInput!) {
+  proposePerformanceGoal(input: $input) {
+    id
+    title
+    description
+    weightage
+    status
+  }
+}
+
+mutation UpdatePerformanceGoalWorkspace($goalId: ID!, $input: SavePerformanceGoalInput!) {
+  updatePerformanceGoal(goalId: $goalId, input: $input) {
+    id
+    title
+    description
+    weightage
+    status
+  }
+}
+
+mutation DeletePerformanceGoalWorkspace($participantId: ID!, $goalId: ID!) {
+  deletePerformanceGoal(participantId: $participantId, goalId: $goalId)
+}

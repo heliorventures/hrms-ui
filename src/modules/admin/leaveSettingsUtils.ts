@@ -19,6 +19,7 @@ export const LEAVE_SETTINGS_TABS = [
   { key: 'policies', label: 'Policies' },
   { key: 'balances', label: 'Balances' },
   { key: 'holidays', label: 'Holidays' },
+  { key: 'comp-off', label: 'Comp-off' },
 ] as const;
 
 export const ACCRUAL_FREQUENCY_OPTIONS = [

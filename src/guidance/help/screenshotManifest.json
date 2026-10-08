@@ -1,0 +1,68 @@
+[
+  {
+    "id": "leave-design",
+    "nodeId": "Nnqec",
+    "src": "/help/screenshots/design/Nnqec.webp",
+    "alt": "Leave page design illustration",
+    "caption": "Design illustration from ui-review.pen. Controls may differ from the current application; new calendar and required-file fields are described in the steps.",
+    "kind": "design-illustration",
+    "source": "designs/ui-review.pen",
+    "sha256": "ede3bf67efa8f550ee5a46be7cc19a3854e2f35f61c390d8195c5eb684ee1813",
+    "capturedAt": "2026-10-06T16:30:45.212Z"
+  },
+  {
+    "id": "claims-design",
+    "nodeId": "h19kcb",
+    "src": "/help/screenshots/design/h19kcb.webp",
+    "alt": "Expense and travel workspace design illustration",
+    "caption": "Design illustration from ui-review.pen. Controls may differ from the current application; new calendar and required-file fields are described in the steps.",
+    "kind": "design-illustration",
+    "source": "designs/ui-review.pen",
+    "sha256": "a4db500133d4e938da8e060b1ecbbf4149070384760f76bc8efd925364146320",
+    "capturedAt": "2026-10-06T16:30:45.227Z"
+  },
+  {
+    "id": "leave-settings-design",
+    "nodeId": "IkpeG",
+    "src": "/help/screenshots/design/IkpeG.webp",
+    "alt": "Leave configuration design illustration",
+    "caption": "Design illustration from ui-review.pen. Controls may differ from the current application; new calendar and required-file fields are described in the steps.",
+    "kind": "design-illustration",
+    "source": "designs/ui-review.pen",
+    "sha256": "1dd524f1ab72a927736ce3628091a6d5ea1fd09564ae72be9d828525669d5d2b",
+    "capturedAt": "2026-10-06T16:30:45.230Z"
+  },
+  {
+    "id": "holidays-design",
+    "nodeId": "NzkBx",
+    "src": "/help/screenshots/design/NzkBx.webp",
+    "alt": "Holiday calendar design illustration",
+    "caption": "Design illustration from ui-review.pen. Controls may differ from the current application; new calendar and required-file fields are described in the steps.",
+    "kind": "design-illustration",
+    "source": "designs/ui-review.pen",
+    "sha256": "b8c8f099905fc77882f0c4b2785321536e64f6c4c73ca274ee2525d43f039822",
+    "capturedAt": "2026-10-06T16:30:45.234Z"
+  },
+  {
+    "id": "expense-settings-design",
+    "nodeId": "S8GV7",
+    "src": "/help/screenshots/design/S8GV7.webp",
+    "alt": "Expense categories and policies design illustration",
+    "caption": "Design illustration from ui-review.pen. Controls may differ from the current application; new calendar and required-file fields are described in the steps.",
+    "kind": "design-illustration",
+    "source": "designs/ui-review.pen",
+    "sha256": "2c399003fe2544fbb7b94c56955c19fee2362822ae20ce1ab02ed4370714cacc",
+    "capturedAt": "2026-10-06T16:30:45.239Z"
+  },
+  {
+    "id": "attendance-design",
+    "nodeId": "W5X9B",
+    "src": "/help/screenshots/design/W5X9B.webp",
+    "alt": "Attendance policy design illustration",
+    "caption": "Design illustration from ui-review.pen. Controls may differ from the current application; new calendar and required-file fields are described in the steps.",
+    "kind": "design-illustration",
+    "source": "designs/ui-review.pen",
+    "sha256": "2008cb15215eb0923c8e8550e190519a1ce256511f9186affa887dcd19caf7c4",
+    "capturedAt": "2026-10-06T16:30:45.245Z"
+  }
+]

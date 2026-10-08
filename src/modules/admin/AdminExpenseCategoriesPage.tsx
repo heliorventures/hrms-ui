@@ -1,5 +1,9 @@
-import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
+import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
+import { usePageTabs } from '../../hooks/usePageTabs';
+
 import ExpenseCategoriesTable from './components/ExpenseCategoriesTable';
 import ExpenseCategoryModal from './components/ExpenseCategoryModal';
 import ExpensePoliciesPanel from './components/ExpensePoliciesPanel';
@@ -9,18 +13,32 @@ import { useAdminExpenseCategories } from './hooks/useAdminExpenseCategories';
 const AdminExpenseCategoriesPage = () => {
   const model = useAdminExpenseCategories();
 
+  const tabs = [
+    { id: 'categories', label: 'Expense Categories' },
+    { id: 'policies', label: 'Expense Policies' },
+  ];
+  const { tab, setTab } = usePageTabs(tabs);
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expense Categories</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Types of claims employees choose when submitting expenses. Requires{' '}
-            <span className="font-mono text-xs">expense:manage</span> (HR / admin).
-          </p>
-        </div>
-        <Button onClick={model.openNewCategory}>Add Category</Button>
+    <div className="space-y-4">
+      <div data-tour-anchor="expense-categories.tabs">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
+      <PageHeader
+        title="Expense Categories"
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {tab === 'categories' ? (
+              <Button
+                data-tour-anchor="expense-categories.add-category"
+                onClick={model.openNewCategory}
+              >
+                Add Category
+              </Button>
+            ) : null}
+          </div>
+        }
+      />
 
       {model.error ? (
         <Card>
@@ -28,30 +46,34 @@ const AdminExpenseCategoriesPage = () => {
         </Card>
       ) : null}
 
-      <Card title="Configured Categories">
-        <ExpenseCategoriesTable
-          rows={model.rows}
-          loading={model.loading}
-          onEdit={model.openEditCategory}
-          onDelete={(row) => void model.deleteCategory(row)}
-        />
-      </Card>
+      <PageTabPanel id="categories" activeTab={tab}>
+        <Card>
+          <ExpenseCategoriesTable
+            rows={model.rows}
+            loading={model.loading}
+            onEdit={model.openEditCategory}
+            onDelete={(row) => void model.deleteCategory(row)}
+          />
+        </Card>
+      </PageTabPanel>
 
-      <Card>
-        <ExpensePoliciesPanel
-          categories={model.rows}
-          selectedCategoryId={model.policyCategoryId}
-          rows={model.policyRows}
-          loading={model.policyLoading}
-          policyError={model.policyError}
-          directoryLoading={model.policyPickerBusy}
-          onCategoryChange={model.setPolicyCategoryId}
-          onAddPolicy={model.openNewPolicy}
-          onEditPolicy={model.openEditPolicy}
-          onDeletePolicy={(policy) => void model.deletePolicy(policy)}
-          summarizeScope={model.summarizePolicyScope}
-        />
-      </Card>
+      <PageTabPanel id="policies" activeTab={tab}>
+        <Card>
+          <ExpensePoliciesPanel
+            categories={model.rows}
+            selectedCategoryId={model.policyCategoryId}
+            rows={model.policyRows}
+            loading={model.policyLoading}
+            policyError={model.policyError}
+            directoryLoading={model.policyPickerBusy}
+            onCategoryChange={model.setPolicyCategoryId}
+            onAddPolicy={model.openNewPolicy}
+            onEditPolicy={model.openEditPolicy}
+            onDeletePolicy={(policy) => void model.deletePolicy(policy)}
+            summarizeScope={model.summarizePolicyScope}
+          />
+        </Card>
+      </PageTabPanel>
 
       <ExpenseCategoryModal
         open={model.modalOpen}

@@ -1,4 +1,7 @@
-import { jsPDF } from 'jspdf';
+import type { PayslipPresentation } from '../payslipPresentation';
+import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
+
+import { createPayslipPdf } from './payslipPdfLayout';
 
 /** Minimal line slip shape for PDF generation (compatible with UI `PayslipLine`; `id` optional). */
 export type PdfPayslipLine = {
@@ -9,6 +12,10 @@ export type PdfPayslipLine = {
 };
 
 export type PdfPayslipPayload = {
+  uanNumber?: string | null;
+  esicNumber?: string | null;
+  presentation?: PayslipPresentation | null;
+  unpaidLeave?: UnpaidLeaveSnapshot | null;
   grossSalary: string;
   totalDeductions: string;
   netSalary: string;
@@ -21,19 +28,9 @@ export type PdfPayslipPayload = {
   professionalTax?: string | null;
 };
 
-const fmtPdf = (n: string) => {
-  const v = Number(n);
-  if (Number.isNaN(v))
-    return n;
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 2,
-  }).format(v);
-};
-
 export type PayslipPdfBranding = {
   companyLine: string;
+  companyAddress?: string | null;
   periodLabel: string;
   employeeName: string;
   employeeCode: string;
@@ -42,7 +39,9 @@ export type PayslipPdfBranding = {
 };
 
 /** Draw WebP, SVG, or non-PNG/JPEG blobs to JPEG for jsPDF. */
-async function rasterizeImageBlobForPdf(blob: Blob): Promise<{ dataUrl: string; format: 'JPEG' } | null> {
+async function rasterizeImageBlobForPdf(
+  blob: Blob
+): Promise<{ dataUrl: string; format: 'JPEG' } | null> {
   if (typeof window === 'undefined' || typeof Image === 'undefined') return null;
   const url = URL.createObjectURL(blob);
   try {
@@ -85,6 +84,13 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
+const rasterFormat = (mime: string, dataUrl: string): 'JPEG' | 'PNG' | null => {
+  if (mime.includes('jpeg') || mime.includes('jpg') || dataUrl.startsWith('data:image/jpeg'))
+    return 'JPEG';
+  if (mime.includes('png') || dataUrl.startsWith('data:image/png')) return 'PNG';
+  return null;
+};
+
 /** Fetch tenant logo bytes via HMAC URL; returns data URL + jsPDF format. */
 export async function loadLogoDataUrlForPdf(
   signedUrl: string
@@ -93,117 +99,23 @@ export async function loadLogoDataUrlForPdf(
     const res = await fetch(signedUrl, { mode: 'cors', credentials: 'omit' });
     if (!res.ok) return null;
     const blob = await res.blob();
-    const mime = (blob.type || '').toLowerCase();
+    const mime = blob.type.toLowerCase();
     const dataUrl = await blobToDataUrl(blob);
-    if (mime.includes('jpeg') || mime.includes('jpg')) return { dataUrl, format: 'JPEG' };
-    if (mime.includes('png')) return { dataUrl, format: 'PNG' };
-    if (dataUrl.startsWith('data:image/jpeg')) return { dataUrl, format: 'JPEG' };
-    if (dataUrl.startsWith('data:image/png')) return { dataUrl, format: 'PNG' };
-    if (mime.includes('webp') || mime.includes('svg') || mime.startsWith('image/')) {
-      const raster = await rasterizeImageBlobForPdf(blob);
-      if (raster) return raster;
-    }
-    return null;
+    const format = rasterFormat(mime, dataUrl);
+    if (format) return { dataUrl, format };
+    return mime.startsWith('image/') ? await rasterizeImageBlobForPdf(blob) : null;
   } catch {
     return null;
   }
 }
 
-/** Simple A4 portrait payslip PDF (offline; complements browser Print → Save as PDF). */
-export async function downloadPayslipPdf(
+/** Export the same company-controlled component presentation used by print. */
+export function downloadPayslipPdf(
   branding: PayslipPdfBranding,
   slip: PdfPayslipPayload,
   labelForLine: (line: PdfPayslipLine) => string
 ) {
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-  const margin = 48;
-  let y = margin;
-  const lineH = 14;
-  const pageW = doc.internal.pageSize.getWidth();
-
-  const logo = branding.logoForPdf;
-  if (logo) {
-    const logoH = 40;
-    const logoW = 44;
-    try {
-      doc.addImage(logo.dataUrl, logo.format, margin, y - 4, logoW, logoH);
-    } catch {
-      /* corrupt or unsupported image */
-    }
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text(branding.companyLine, margin + logoW + 12, y + 12);
-  } else {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text(branding.companyLine, margin, y);
-  }
-  y += lineH;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text(`Payslip — ${branding.periodLabel}`, margin, y);
-  y += lineH * 1.5;
-
-  doc.text(`Employee: ${branding.employeeName}`, margin, y);
-  doc.text(`Code: ${branding.employeeCode || '—'}`, pageW - margin - 120, y, { align: 'right' });
-  y += lineH;
-  doc.text(`Status: ${slip.status}`, margin, y);
-  y += lineH;
-  doc.text(
-    `Generated: ${new Date(slip.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium' })}`,
-    margin,
-    y
-  );
-  y += lineH * 2;
-
-  doc.setFont('helvetica', 'bold');
-  doc.text('Components', margin, y);
-  y += lineH;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  for (const l of slip.lines) {
-    const row = `${labelForLine(l)}  |  ${l.componentType || '—'}  |  ${fmtPdf(l.amount)}`;
-    const lines = doc.splitTextToSize(row, pageW - 2 * margin);
-    doc.text(lines, margin, y);
-    y += lineH * Math.max(1, lines.length);
-    if (y > doc.internal.pageSize.getHeight() - margin) {
-      doc.addPage();
-      y = margin;
-    }
-  }
-
-  y += lineH;
-  if (slip.pfEmployee) {
-    doc.text(`PF (employee): ${fmtPdf(slip.pfEmployee)}`, margin, y);
-    y += lineH;
-  }
-  if (slip.esiEmployee) {
-    doc.text(`ESI (employee): ${fmtPdf(slip.esiEmployee)}`, margin, y);
-    y += lineH;
-  }
-  if (slip.professionalTax) {
-    doc.text(`Professional tax: ${fmtPdf(slip.professionalTax)}`, margin, y);
-    y += lineH;
-  }
-  if (slip.tdsAmount) {
-    doc.text(`TDS: ${fmtPdf(slip.tdsAmount)}`, margin, y);
-    y += lineH;
-  }
-
-  y += lineH;
-  doc.setFont('helvetica', 'bold');
-  doc.text(`Gross: ${fmtPdf(slip.grossSalary)}`, margin, y);
-  y += lineH;
-  doc.text(`Total deductions: ${fmtPdf(slip.totalDeductions)}`, margin, y);
-  y += lineH * 1.2;
-  doc.setFontSize(11);
-  doc.text(`Net pay: ${fmtPdf(slip.netSalary)}`, margin, y);
-  y += lineH * 2;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(120);
-  doc.text('System generated. For discrepancies, contact HR.', margin, y);
-
+  const doc = createPayslipPdf(branding, slip, labelForLine);
   const safePeriod = branding.periodLabel.replace(/\s+/g, '-').slice(0, 40);
   doc.save(`payslip-${safePeriod}.pdf`);
 }

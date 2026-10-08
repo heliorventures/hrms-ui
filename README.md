@@ -70,9 +70,21 @@ npm run lint
 
 **GraphQL codegen (optional):** with the gateway running, `npm run codegen` — `codegen.ts` reads `gatewayUrl` from `public/config.json`.
 
+The self-attendance board has a source-schema generator: `npm run codegen:attendance`.
+It exports the Rust attendance schema from the sibling `hrms-svc` checkout, validates
+`src/api/documents/attendance.graphql`, and generates `src/api/attendance/graphql.ts`.
+No running gateway or database is required; Rust and cached Cargo dependencies are needed.
+Alternatively, export with `cargo run --offline -p kabipay-attendance --example export_schema`
+in the service repo, then pass that SDL file with
+`npm run codegen:attendance -- --schema-path <file>`.
+Run this generator after changing the attendance board operation or its service schema.
+
+Monthly attendance totals require the updated attendance service and gateway before
+the new UI is released. The gateway checks for `myAttendanceSummary` at startup.
+
 ## Typical local order
 
-1. **kabipay-database** — `npm run migrate-ops`, then `provision-tenant` + optional `seed-demo-data` (see **kabipay-svc** scripts).
+1. **hrms-database** — `npm run migrate-ops`, then `scripts/reusable/provisioning/provision-tenant.ps1` + optional `seed-demo-data.ps1` from the same folder (see the database repository's root README).
 2. **kabipay-svc** — `kabipay-auth` + subgraphs (e.g. `start-subgraphs.ps1`).
 3. **kabipay-gateway** — `npm run dev`.
 4. **This UI** — set `public/config.json`, then `npm run dev`.

@@ -1,0 +1,77 @@
+query HrReportRows(
+  $kind: HrReportKind!
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeSearch: String
+  $offset: Int! = 0
+  $claimTravelFilter: ClaimTravelReportFilterInput
+) {
+  hrReportRows(
+    kind: $kind
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeSearch: $employeeSearch
+    offset: $offset
+    limit: 50
+    claimTravelFilter: $claimTravelFilter
+  ) {
+    columns
+    rows
+    totalRows
+  }
+}
+query HrReportCsv(
+  $kind: HrReportKind!
+  $fromDate: NaiveDate!
+  $toDate: NaiveDate!
+  $employeeSearch: String
+  $claimTravelFilter: ClaimTravelReportFilterInput
+) {
+  hrReportCsv(
+    kind: $kind
+    fromDate: $fromDate
+    toDate: $toDate
+    employeeSearch: $employeeSearch
+    claimTravelFilter: $claimTravelFilter
+  ) {
+    fileName
+    csv
+    rowCount
+  }
+}
+query HrInsights($fromDate: NaiveDate!, $toDate: NaiveDate!) {
+  hrInsights(fromDate: $fromDate, toDate: $toDate) {
+    onTimeDays
+    lateDays
+    unknownPunctualityDays
+    incompleteDays
+    joiners
+    exits
+    activeHeadcount
+    netSalaryGenerated
+    generatedPayslips
+    pendingRequests
+    includedPendingDomains
+    monthlyPayroll {
+      month
+      netSalaryGenerated
+      payslips
+    }
+  }
+}
+query ClaimTravelReportOptions($kind: HrReportKind!, $search: String) {
+  claimTravelReportOptions(kind: $kind, search: $search, limit: 200) {
+    departments {
+      id
+      name
+    }
+    locations {
+      id
+      name
+    }
+    expenseCategories {
+      id
+      name
+    }
+  }
+}

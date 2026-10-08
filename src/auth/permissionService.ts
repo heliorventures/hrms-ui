@@ -1,4 +1,5 @@
 import type { ParsedClientSession } from './clientSession';
+import { evaluateCapability } from './permissionCapability';
 import { PERMISSIONS, type PermissionCode } from './permissions';
 
 export type ExplicitPermissionScope = 'SELF' | 'TEAM' | 'DEPARTMENT' | 'ALL';
@@ -45,6 +46,7 @@ export type Capability =
   | 'route.expenses'
   | 'route.admin.access'
   | 'route.admin.attendancePolicy'
+  | 'route.admin.companyLocations'
   | 'route.admin.employees'
   | 'route.admin.expenseCategories'
   | 'route.admin.leaveSettings'
@@ -62,6 +64,7 @@ export type Capability =
   | 'route.insights'
   | 'route.leave'
   | 'route.notifications'
+  | 'route.myWork'
   | 'route.organization.documents'
   | 'route.organization.employees'
   | 'route.organization.orgChart'
@@ -78,7 +81,9 @@ export type Capability =
   | 'route.workplace.grievance'
   | 'route.workplace.learning'
   | 'route.workplace.onboarding'
+  | 'route.workplace.prejoining'
   | 'route.workplace.performance'
+  | 'route.workplace.surveys'
   | 'route.workplace.recruitment'
   | 'route.workplace.succession'
   | 'route.workplace.workflows';
@@ -191,10 +196,6 @@ const SCOPED_CAPABILITY_PERMISSIONS: Partial<
     scopes: ALL_SCOPE,
   },
   'route.workplace.learning': { permission: PERMISSIONS.learningManage, scopes: ALL_SCOPE },
-  'route.workplace.performance': {
-    permission: PERMISSIONS.performanceManage,
-    scopes: ALL_SCOPE,
-  },
   'route.workplace.recruitment': {
     permission: PERMISSIONS.recruitmentManage,
     scopes: ALL_SCOPE,
@@ -206,10 +207,9 @@ const SCOPED_CAPABILITY_PERMISSIONS: Partial<
   'route.workplace.workflows': { permission: PERMISSIONS.workflowManage, scopes: ALL_SCOPE },
 };
 
-export function createPermissionService(
-  session: ParsedClientSession | null
-): PermissionService {
-  const canPermission = (permission: PermissionCode) => session?.permissions.has(permission) ?? false;
+export function createPermissionService(session: ParsedClientSession | null): PermissionService {
+  const canPermission = (permission: PermissionCode) =>
+    session?.permissions.has(permission) ?? false;
 
   const canScopedPermission = (
     permission: PermissionCode,
@@ -217,90 +217,19 @@ export function createPermissionService(
   ): boolean => {
     if (!canPermission(permission)) return false;
     const rawScope = session?.permissionScopes[permission.trim().toLowerCase()];
-    const scope = String(rawScope ?? '').trim().toUpperCase() as ExplicitPermissionScope;
+    const scope = String(rawScope ?? '')
+      .trim()
+      .toUpperCase() as ExplicitPermissionScope;
     return ANY_EXPLICIT_SCOPE.includes(scope) && allowedScopes.includes(scope);
   };
 
   const canCapability = (capability: Capability): boolean => {
-    const scopedPermission = SCOPED_CAPABILITY_PERMISSIONS[capability];
-    if (scopedPermission) {
-      return canScopedPermission(scopedPermission.permission, scopedPermission.scopes);
-    }
-    switch (capability) {
-      case 'route.dashboard':
-      case 'route.organization.documents':
-        return session != null;
-      case 'route.expenses':
-        return (
-          canScopedPermission(PERMISSIONS.expenseRead) ||
-          canScopedPermission(PERMISSIONS.travelRead)
-        );
-      case 'action.onboarding.manage':
-        return (
-          canScopedPermission(PERMISSIONS.onboardingManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.employeeManage, ALL_SCOPE)
-        );
-      case 'action.people.search':
-        return canScopedPermission(PERMISSIONS.employeeDirectoryRead, ALL_SCOPE);
-      case 'route.hr.home':
-        return (
-          canScopedPermission(PERMISSIONS.employeeWrite, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.leaveManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE) ||
-          canCapability('action.leave.approve') ||
-          canCapability('action.timesheet.approve')
-        );
-      case 'route.hr.people':
-      case 'route.organization.profileReviews':
-      case 'route.admin.employees':
-        return canScopedPermission(PERMISSIONS.employeeManage, ALL_SCOPE);
-      case 'route.hr.leaves':
-        return (
-          canCapability('action.leave.approve') ||
-          canScopedPermission(PERMISSIONS.leaveManage, ALL_SCOPE)
-        );
-      case 'route.hr.timesheets':
-        return canCapability('action.timesheet.approve');
-      case 'route.hr.timesheetAssignments':
-        return canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE);
-      case 'route.admin.reports':
-        return (
-          canScopedPermission(PERMISSIONS.attendanceRead, ALL_SCOPE) &&
-          canScopedPermission(PERMISSIONS.employeeRead, ALL_SCOPE) &&
-          canScopedPermission(PERMISSIONS.leaveRead, ALL_SCOPE) &&
-          canScopedPermission(PERMISSIONS.payrollManage, ALL_SCOPE)
-        );
-      case 'route.admin.timesheetSettings':
-        return (
-          canScopedPermission(PERMISSIONS.timesheetManage, ALL_SCOPE) &&
-          canScopedPermission(PERMISSIONS.attendancePunchPolicy, ALL_SCOPE)
-        );
-      case 'route.admin.notifications':
-        return canCapability('action.notifications.manage');
-      case 'route.workplace.benefits':
-        return (
-          canScopedPermission(PERMISSIONS.benefitsManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.benefitsSelf, SELF_SCOPE)
-        );
-      case 'route.workplace.assets':
-        return (
-          canScopedPermission(PERMISSIONS.assetsManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.assetsRead, ANY_EXPLICIT_SCOPE) ||
-          canScopedPermission(PERMISSIONS.assetsSelf, SELF_SCOPE)
-        );
-      case 'route.workplace.onboarding':
-        return (
-          canScopedPermission(PERMISSIONS.onboardingManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.onboardingSelf, SELF_SCOPE)
-        );
-      case 'route.workplace.grievance':
-        return (
-          canScopedPermission(PERMISSIONS.grievanceManage, ALL_SCOPE) ||
-          canScopedPermission(PERMISSIONS.grievanceSelf, SELF_SCOPE)
-        );
-      default:
-        return false;
-    }
+    return evaluateCapability(
+      capability,
+      session,
+      canScopedPermission,
+      SCOPED_CAPABILITY_PERMISSIONS
+    );
   };
 
   const canRoute = (path: string): boolean => {
@@ -317,6 +246,9 @@ export function createPermissionService(
 }
 
 export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
+  '/my-work/tasks': 'route.myWork',
+  '/my-work/completed': 'route.myWork',
+  '/performance': 'route.workplace.performance',
   '/attendance': 'route.attendance',
   '/dashboard': 'route.dashboard',
   '/expenses': 'route.expenses',
@@ -332,6 +264,7 @@ export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
   '/timesheet': 'route.timesheet',
   '/admin/access': 'route.admin.access',
   '/admin/attendance-policy': 'route.admin.attendancePolicy',
+  '/admin/company-locations': 'route.admin.companyLocations',
   '/admin/employees': 'route.admin.employees',
   '/admin/expense-categories': 'route.admin.expenseCategories',
   '/admin/leave-settings': 'route.admin.leaveSettings',
@@ -359,7 +292,9 @@ export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
   '/workplace/grievance': 'route.workplace.grievance',
   '/workplace/learning': 'route.workplace.learning',
   '/workplace/onboarding': 'route.workplace.onboarding',
+  '/workplace/prejoining': 'route.workplace.prejoining',
   '/workplace/performance': 'route.workplace.performance',
+  '/workplace/surveys': 'route.workplace.surveys',
   '/workplace/recruitment': 'route.workplace.recruitment',
   '/workplace/succession': 'route.workplace.succession',
   '/workplace/workflows': 'route.workplace.workflows',

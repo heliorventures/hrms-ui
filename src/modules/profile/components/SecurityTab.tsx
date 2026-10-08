@@ -60,7 +60,11 @@ const SecurityTab = ({ forced = false, onPasswordChanged }: SecurityTabProps) =>
           ? 'Your temporary password must be changed before you can continue. After a successful change, sign in again with the new password.'
           : 'After a successful change, all active sessions are revoked and you will need to sign in again.'}
       </p>
-      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+      <form
+        onSubmit={(e) => void handleSubmit(e)}
+        className="space-y-4"
+        data-tour-anchor="profile-password-form"
+      >
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <Input
           type="password"

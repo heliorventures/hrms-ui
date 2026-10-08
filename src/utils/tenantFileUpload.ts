@@ -1,5 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
+
 import { UploadTenantFileDocument } from '../api/graphql/graphql';
+
 import { fileToBase64 } from './fileEncoding';
 
 const MAX_TENANT_UPLOAD_BYTES = 6 * 1024 * 1024;
@@ -14,8 +16,13 @@ export function validateTenantUploadFile(file: File, label = 'File'): string | n
   return null;
 }
 
-export async function uploadTenantFile(client: GraphQLClient, file: File): Promise<string> {
+export async function uploadTenantFile(
+  client: GraphQLClient,
+  file: File,
+  isCurrentOwner: () => boolean = () => true
+): Promise<string> {
   const encoded = await fileToBase64(file);
+  if (!isCurrentOwner()) throw new Error('File upload canceled because the form owner changed.');
   const result = await client.request(UploadTenantFileDocument, {
     input: {
       fileName: encoded.name,

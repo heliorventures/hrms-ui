@@ -1,10 +1,11 @@
 import { forwardRef, useId } from 'react';
 import type { SelectHTMLAttributes } from 'react';
 
-import FormField, { mergeDescribedBy } from './FormField';
 import { requireAccessibleName } from './accessibleName';
+import FormField, { mergeDescribedBy } from './FormField';
 
 export interface SelectOption {
+  id?: string;
   value: string;
   label: string;
 }
@@ -31,12 +32,12 @@ export type SelectProps = Omit<
   'aria-label' | 'aria-labelledby'
 > &
   AccessibleNameProps & {
-  description?: string;
-  error?: string;
-  optionalLabel?: string;
-  options: readonly SelectOption[];
-  fullWidth?: boolean;
-};
+    description?: string;
+    error?: string;
+    optionalLabel?: string;
+    options: readonly SelectOption[];
+    fullWidth?: boolean;
+  };
 
 const baseSelectClasses =
   'min-h-11 rounded-lg border border-line bg-surface px-3 py-2 text-base text-content-primary transition-colors focus-visible:border-focus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30 disabled:cursor-not-allowed disabled:bg-canvas disabled:text-content-muted disabled:opacity-70 md:min-h-9 md:text-sm';
@@ -88,7 +89,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         className={controlClassName}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.value} id={option.id} value={option.value}>
             {option.label}
           </option>
         ))}
@@ -99,7 +100,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       const descriptionId = messageId(description, selectId, 'description');
       const errorId = messageId(error, selectId, 'error');
       return (
-        <div className={`space-y-1.5 ${when(fullWidth, 'w-full')}`}>
+        <div className={`space-y-1 ${when(fullWidth, 'w-full')}`}>
           {renderSelect(mergeDescribedBy(descriptionId, errorId), Boolean(error))}
           {description ? (
             <p id={descriptionId} className="text-sm text-content-muted">

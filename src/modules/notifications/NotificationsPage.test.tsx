@@ -25,6 +25,7 @@ vi.mock('../../contexts/AuthContext', () => ({
     clientSession: {
       jwtRoles: [],
       permissions: new Set(),
+      permissionScopes: {},
       resourceScopes: {},
       persona: 'EMPLOYEE',
       mustChangePassword: false,
@@ -205,5 +206,17 @@ describe('NotificationsPage truthful states', () => {
     expect(
       screen.getAllByText('Showing up to 20 recent items. More may be available.')
     ).toHaveLength(2);
+  });
+});
+
+describe('notification feature tabs', () => {
+  it('keeps private notification actions separate from posting an announcement', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    expect(screen.getByRole('button', { name: 'Mark all private read' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'New team post' })).toBeNull();
+    await user.click(screen.getByRole('tab', { name: 'Announcements & Team Posts' }));
+    expect(screen.queryByRole('button', { name: 'Mark all private read' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'New team post' })).toBeTruthy();
   });
 });

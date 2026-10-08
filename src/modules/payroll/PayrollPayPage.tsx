@@ -1,13 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
-import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
+import { useMemo } from 'react';
+
 import { PERMISSIONS } from '../../auth/permissions';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import PayrollIncomeTaxTab from './components/PayrollIncomeTaxTab';
+import { usePageTabs } from '../../hooks/usePageTabs';
+
+import EmployeePayslipPanel from './components/EmployeePayslipPanel';
+import EmployeeTaxFormsPanel from './components/EmployeeTaxFormsPanel';
+import EmployeeTaxProjection from './components/EmployeeTaxProjection';
 import PayrollMigrationHint from './components/PayrollMigrationHint';
-import PayrollPayslipTab from './components/PayrollPayslipTab';
 import PayrollPayTabs from './components/PayrollPayTabs';
 import PayrollSalaryTab from './components/PayrollSalaryTab';
 import { usePayrollPayData } from './hooks/usePayrollPayData';
@@ -15,14 +20,20 @@ import type { PayrollTabId } from './payrollTypes';
 
 const PayrollPayPage = () => {
   const client = useGraphClient('client');
-  const { clientSession, user } = useAuth();
+  const { clientSession } = useAuth();
   const { currentTenant } = useTenant();
   const permissions = useMemo(() => createPermissionService(clientSession), [clientSession]);
   const ownerKey = authorizationStateKey(clientSession);
   const canReadPayroll = permissions.canScopedPermission(PERMISSIONS.payrollRead);
   const canReadTax = permissions.canScopedPermission(PERMISSIONS.taxRead);
   const canSubmitTax = permissions.canCapability('action.tax.submit');
-  const [activeTab, setActiveTab] = useState<PayrollTabId>('salary');
+  const tabs = [
+    { id: 'salary', label: 'Salary' },
+    { id: 'payslip', label: 'Payslips' },
+    ...(canReadTax ? [{ id: 'incometax', label: 'Income tax' }] : []),
+  ];
+  const { tab, setTab: setActiveTab } = usePageTabs(tabs);
+  const activeTab: PayrollTabId = tab === 'payslip' || tab === 'incometax' ? tab : 'salary';
   const pay = usePayrollPayData(client, activeTab, {
     canReadPayroll,
     canReadTax,
@@ -31,17 +42,16 @@ const PayrollPayPage = () => {
     tenantTimezone: currentTenant.timezone,
   });
 
-  useEffect(() => {
-    if (activeTab === 'incometax' && !canReadTax) setActiveTab('salary');
-  }, [activeTab, canReadTax]);
-
   if (!canReadPayroll) return null;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Pay</h1>
+    <div className="space-y-4">
+      <PageHeader
+        title={`My pay — ${tabs.find((item) => item.id === activeTab)?.label ?? 'Salary'}`}
+        retainTitle
+      />
 
-      {pay.showMigrationHint && <PayrollMigrationHint tenantId={currentTenant?.id} />}
+      {pay.showMigrationHint && <PayrollMigrationHint tenantId={currentTenant.id} />}
 
       {activeTab === 'incometax' && pay.errorShell && !pay.showMigrationHint && (
         <Card>
@@ -51,70 +61,35 @@ const PayrollPayPage = () => {
       <PayrollPayTabs activeTab={activeTab} canReadTax={canReadTax} onChange={setActiveTab} />
 
       {activeTab === 'salary' && (
-        <PayrollSalaryTab
-          preview={pay.salaryPreview}
-          loading={pay.loadingSalary}
-          error={pay.errorSalary}
-        />
+        <div data-tour-anchor="payroll.pay.salary-preview">
+          <PayrollSalaryTab
+            preview={pay.salaryPreview}
+            loading={pay.loadingSalary}
+            error={pay.errorSalary}
+          />
+        </div>
       )}
 
       {activeTab === 'payslip' && (
-        <PayrollPayslipTab
-          activePayslip={pay.activePayslip}
-          employeeCode={user?.employeeId ?? ''}
-          employeeName={user?.name ?? 'Employee'}
-          labelForLine={pay.labelForLine}
-          payslipBranding={pay.payslipBranding}
-          payslipError={pay.payslipError}
-          payslipLogoReadUrl={pay.payslipLogoReadUrl}
-          payslipMigrationRequired={pay.payslipMigrationRequired}
-          payslipPeriodOptions={pay.payslipPeriodOptions}
-          payslips={pay.payslips}
-          payslipsLoading={pay.payslipsLoading}
-          selectedPeriodKey={pay.selectedPeriodKey}
-          tenantId={currentTenant?.id}
-          tenantName={currentTenant?.name ?? 'Organization'}
-          onSelectedPeriodChange={pay.setSelectedPeriodKey}
-        />
+        <EmployeePayslipPanel client={client} ownerKey={ownerKey} pay={pay} />
       )}
 
       {activeTab === 'incometax' && (
-        <PayrollIncomeTaxTab
-          activeTaxConfig={pay.activeTaxConfig}
-          activeTaxSlabs={pay.activeTaxSlabs}
-          canSubmitTax={canSubmitTax}
-          declDed={pay.declDed}
-          declFy={pay.declFy}
-          declGross={pay.declGross}
-          declMsg={pay.declMsg}
-          declRegime={pay.declRegime}
-          declSubmitting={pay.declSubmitting}
-          employeeTaxError={pay.employeeTaxError}
-          loadingEmployeeTax={pay.loadingEmployeeTax}
-          loadingShell={pay.loadingShell}
-          payslipError={pay.payslipError}
-          payslipIndiaFyTotals={pay.payslipIndiaFyTotals}
-          payslipsLoading={pay.payslipsLoading}
-          proofActual={pay.proofActual}
-          proofBusy={pay.proofBusy}
-          proofDeclared={pay.proofDeclared}
-          proofFile={pay.proofFile}
-          proofMsg={pay.proofMsg}
-          proofSectionCode={pay.proofSectionCode}
-          taxComputationsSelf={pay.taxComputationsSelf}
-          taxProofLinesSelf={pay.taxProofLinesSelf}
-          taxSectionCatalog={pay.taxSectionCatalog}
-          onDeclDedChange={pay.setDeclDed}
-          onDeclFyChange={pay.setDeclFy}
-          onDeclGrossChange={pay.setDeclGross}
-          onDeclRegimeChange={pay.setDeclRegime}
-          onDeclSubmit={pay.handleDeclUpsert}
-          onProofActualChange={pay.setProofActual}
-          onProofDeclaredChange={pay.setProofDeclared}
-          onProofFileChange={pay.setProofFile}
-          onProofSectionCodeChange={pay.setProofSectionCode}
-          onProofSubmit={pay.handleProofSubmit}
-        />
+        <div data-tour-anchor="payroll.pay.income-tax-actions">
+          <EmployeeTaxProjection
+            key={ownerKey}
+            client={client}
+            ownerKey={ownerKey}
+            fiscalYear={pay.taxFiscalYear}
+            onFiscalYearChange={pay.setTaxFiscalYear}
+          />
+          <details className="mt-4 rounded-lg border border-line p-4">
+            <summary className="cursor-pointer font-semibold">
+              Declarations, proofs and recorded payslip totals
+            </summary>
+            <EmployeeTaxFormsPanel pay={pay} canSubmitTax={canSubmitTax} />
+          </details>
+        </div>
       )}
     </div>
   );

@@ -2,14 +2,13 @@ import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 
 import { ClientOpsUpcomingHolidaysDocument } from '../../../api/graphql/graphql';
-import AsyncState from '../../../components/common/AsyncState';
-import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
-import Card from '../../../components/common/Card';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
+import HolidayDateChip from './HolidayDateChip';
+import Card from './WorkplaceSection';
 
 interface HolidayRow {
   id: string;
@@ -37,7 +36,7 @@ const UpcomingHolidaysFooter = ({ hasRows, onRefresh, phase }: UpcomingHolidaysF
         busyLabel="Refreshing Upcoming Holidays…"
         onClick={onRefresh}
       >
-        Refresh Upcoming Holidays
+        Refresh
       </Button>
     ) : null}
     <Link
@@ -56,40 +55,16 @@ interface UpcomingHolidaysListProps {
 const UpcomingHolidaysList = ({ rows }: UpcomingHolidaysListProps) => {
   if (rows.length === 0) {
     return (
-      <AsyncState
-        kind="empty"
-        title="No Upcoming Holidays in Range."
-        description="Published holidays will appear here when they enter the upcoming range."
-      />
+      <p role="status" className="text-sm text-content-secondary">
+        No upcoming holidays in this period.
+      </p>
     );
   }
 
   return (
-    <ul className="space-y-2">
-      {rows.map((holiday) => (
-        <li
-          key={holiday.id}
-          className="flex flex-col gap-1 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <span className="min-w-0 flex-1 break-words font-medium text-gray-900 dark:text-white">
-              {holiday.name}
-            </span>
-            {holiday.holidayType ? (
-              <Badge variant="neutral" size="sm">
-                {holiday.holidayType}
-              </Badge>
-            ) : null}
-          </div>
-          <p className="break-words text-xs text-gray-500 dark:text-gray-400">
-            {new Date(holiday.holidayDate).toLocaleDateString('en-IN', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-            })}{' '}
-            · {holiday.calendarName}
-          </p>
-        </li>
+    <ul className="flex flex-wrap gap-2">
+      {rows.slice(0, 3).map((holiday) => (
+        <HolidayDateChip key={holiday.id} holiday={holiday} />
       ))}
     </ul>
   );
@@ -136,9 +111,9 @@ const UpcomingHolidays = () => {
         onRetry={onRefresh}
       />
       <UpcomingHolidaysList rows={holidayRows} />
-      {holidayRows.length === HOLIDAY_LIMIT ? (
+      {holidayRows.length > 3 ? (
         <p role="status" className="mt-3 text-xs text-content-secondary">
-          Showing up to {HOLIDAY_LIMIT} upcoming holidays. More may be available.
+          Showing 3 upcoming holidays. More may be available.
         </p>
       ) : null}
       <UpcomingHolidaysFooter hasRows phase={phase} onRefresh={onRefresh} />

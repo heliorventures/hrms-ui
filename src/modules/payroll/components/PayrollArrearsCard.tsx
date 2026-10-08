@@ -1,6 +1,7 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
+import PageInformation from '../../../components/common/PageInformation';
 import type { PayrollArrearFormState, PayrollArrearRow } from '../payrollTypes';
 
 interface PayrollArrearsCardProps {
@@ -24,16 +25,18 @@ const PayrollArrearsCard = ({
   onChange,
   onCreate,
 }: PayrollArrearsCardProps) => (
-  <Card title="PENDING Payroll Arrears (Back-Pay)">
-    <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-      One-off accruals (salary catch-up) are paid in the next <strong>Run pay</strong> as a
-      separate <span className="font-mono">ARREAR</span> line. The tenant must have an active
-      EARNING component with code <span className="font-mono">ARREAR</span>. India statutory
-      (EPF/ESI/PT/TDS) is computed on <strong>base + arrear</strong> in the run.
-    </p>
-    {loading ? (
-      <p className="text-sm text-gray-500 dark:text-gray-400">Loading Arrears...</p>
-    ) : arrears.length > 0 ? (
+  <Card>
+    <PageInformation title="Arrear calculation">
+      <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
+        Pending accruals appear as a separate <span className="font-mono">ARREAR</span> earning in
+        the next automatic draft. Review the amount before finalizing; recalculation does not
+        consume arrears. Finalization applies them once. Configure the active ARREAR component, tax
+        treatment and contribution basis first. Imported source months must reconcile their ARREAR
+        earnings with the pending accruals.
+      </p>
+    </PageInformation>
+    {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading Arrears...</p>}
+    {!loading && arrears.length > 0 && (
       <ul className="mb-4 divide-y divide-gray-200 dark:divide-gray-600">
         {arrears.map((arrear) => (
           <li key={arrear.id} className="py-2 text-sm">
@@ -43,7 +46,8 @@ const PayrollArrearsCard = ({
           </li>
         ))}
       </ul>
-    ) : (
+    )}
+    {!loading && arrears.length === 0 && (
       <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">No PENDING arrear accruals.</p>
     )}
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">

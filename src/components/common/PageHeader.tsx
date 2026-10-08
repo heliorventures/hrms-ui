@@ -1,31 +1,55 @@
-import type { ReactNode } from 'react';
+import { useContext, type ReactNode } from 'react';
+
+import { PageWorkspaceContext } from '../../navigation/pageWorkspaceContext';
+import WorkspaceTaskSelector from '../../navigation/WorkspaceTaskSelector';
+
+import { CompactPageContext } from './compactPageContext';
+import PageActions from './PageActions';
+import PageInformation from './PageInformation';
+import PageInformationButton from './PageInformationButton';
 
 export type PageHeaderProps = {
   title: string;
   description?: string;
   /** e.g. primary actions, filters (right side on `sm+`) */
   actions?: ReactNode;
+  /** A local task selector; omit to use the current route workspace. */
+  selector?: ReactNode;
   className?: string;
+  /** Keep record names, report periods, and other contextual titles visible. */
+  retainTitle?: boolean;
+  tourAnchor?: string;
 };
 
-/**
- * Consistent page title + subtitle used across module pages (aligns with common HRIS patterns:
- * clear hierarchy, supporting line, optional toolbar).
- */
-const PageHeader = ({ title, description, actions, className = '' }: PageHeaderProps) => {
+/** Page title and actions; supporting descriptions join the anchored information popover. */
+const PageHeader = ({
+  title,
+  description,
+  actions,
+  selector,
+  className = '',
+  retainTitle = false,
+  tourAnchor,
+}: PageHeaderProps) => {
+  const compact = useContext(CompactPageContext) && !retainTitle;
+  const workspace = useContext(PageWorkspaceContext);
+  const heading = !retainTitle && selector === undefined ? (workspace?.title ?? title) : title;
   return (
     <div
-      className={`mb-6 flex flex-col gap-3 border-b border-line-subtle pb-5 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-4 ${className}`}
+      className={`app-page-header flex min-h-8 flex-wrap items-center gap-2 ${className}`}
+      data-tour-anchor={tourAnchor}
     >
-      <div className="min-w-0 flex-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-content-primary">{title}</h1>
-        {description ? (
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-content-secondary">
-            {description}
-          </p>
-        ) : null}
+      <div data-optional-heading={compact || undefined} className="min-w-0">
+        <h1 className="page-heading">{heading}</h1>
       </div>
-      {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+      <PageInformationButton />
+      {selector === undefined ? <WorkspaceTaskSelector /> : selector}
+      {actions ? <PageActions className="sm:w-auto">{actions}</PageActions> : null}
+      {description ? (
+        <PageInformation title={title}>
+          <p>{description}</p>
+        </PageInformation>
+      ) : null}
     </div>
   );
 };

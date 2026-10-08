@@ -105,19 +105,19 @@ describe('OnLeaveToday truthful states', () => {
     expect(screen.getByText('Loading Leave Requests…')).toBeTruthy();
 
     act(() => retry.resolve(payload()));
-    expect(await screen.findByText('Employee 0 (E0)')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Employee 0' })).toBeTruthy();
   });
 
   it('retains the last loaded leave list after a refresh failure', async () => {
     const user = userEvent.setup();
     renderCard();
-    await screen.findByText('Employee 0 (E0)');
+    await screen.findByRole('button', { name: 'Employee 0' });
     graphState.client.request.mockRejectedValue(new Error('Failed to fetch'));
 
     await user.click(screen.getByRole('button', { name: 'Refresh Leave Requests' }));
 
     expect(await screen.findByText('Leave Requests May Be Out of Date')).toBeTruthy();
-    expect(screen.getByText('Employee 0 (E0)')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Employee 0' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
   });
 
@@ -125,7 +125,7 @@ describe('OnLeaveToday truthful states', () => {
     graphState.client.request.mockResolvedValue(payload(50, 50));
     renderCard();
 
-    await screen.findByText('Employee 0 (E0)');
+    await screen.findByRole('button', { name: 'Employee 0' });
     expect(
       screen.getByText('Showing up to 50 leave requests. More may be available.')
     ).toBeTruthy();
@@ -160,20 +160,35 @@ describe('OnLeaveToday truthful states', () => {
   it('uses backend employee labels and never falls back to an employee UUID', async () => {
     const longEmployeeId = `employee-${'Y'.repeat(180)}`;
     graphState.client.request.mockResolvedValue({
-      leaveRequests: [{
-        ...leaveRequest(0),
-        employeeId: longEmployeeId,
-        employeeName: 'Asha Rao',
-        employeeCode: 'EMP-0042',
-      }],
+      leaveRequests: [
+        {
+          ...leaveRequest(0),
+          employeeId: longEmployeeId,
+          employeeName: 'Asha Rao',
+          employeeCode: 'EMP-0042',
+        },
+      ],
       leaveTypes: [leaveType(0)],
     });
     renderCard();
 
-    const employeeName = await screen.findByText('Asha Rao (EMP-0042)');
-    expect(employeeName.className).toContain('break-words');
-    expect(employeeName.parentElement?.className).toContain('min-w-0');
-    expect(employeeName.parentElement?.className).toContain('flex-1');
+    const user = userEvent.setup();
+    const chip = await screen.findByRole('button', { name: 'Asha Rao' });
+    expect(chip.textContent).toBe('AR');
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(screen.queryByText('EMP-0042')).toBeNull();
+    expect(screen.queryByText('Leave Type 0 (LT0)')).toBeNull();
+    await user.hover(chip);
+    expect(screen.getByRole('tooltip').textContent).toBe('Asha Rao');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    await user.tab();
+    expect(document.activeElement).toBe(chip);
+    expect(screen.getByRole('tooltip').textContent).toBe('Asha Rao');
+    await user.tab();
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    await user.click(chip);
+    expect(screen.getByRole('tooltip').textContent).toBe('Asha Rao');
     expect(screen.queryByText(longEmployeeId)).toBeNull();
     expect(screen.getByRole('link', { name: 'Show All on Calendar →' })).toBeTruthy();
   });

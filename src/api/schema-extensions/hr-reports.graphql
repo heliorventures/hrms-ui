@@ -1,0 +1,91 @@
+type HrInsights {
+  onTimeDays: Int
+  lateDays: Int
+  unknownPunctualityDays: Int
+  incompleteDays: Int
+  joiners: Int
+  exits: Int
+  activeHeadcount: Int
+  netSalaryGenerated: String
+  generatedPayslips: Int
+  pendingRequests: Int
+  monthlyPayroll: [HrMonthlyPayroll!]
+  includedPendingDomains: [String!]!
+}
+
+type HrMonthlyPayroll {
+  month: String!
+  netSalaryGenerated: String!
+  payslips: Int!
+}
+
+type HrReportCsv {
+  fileName: String!
+  csv: String!
+  rowCount: Int!
+}
+
+enum HrReportKind {
+  EXPENSE_CLAIMS
+  TRAVEL_REQUESTS
+  ATTENDANCE_PUNCTUALITY
+  LEAVE_REQUESTS
+  LEAVE_BALANCES
+  PAYROLL_REGISTER
+  UNPAID_LEAVE
+  EMPLOYEE_MOVEMENTS
+  TIMESHEET_HOURS
+  COMP_OFF_CREDITS
+  PENDING_REQUESTS
+}
+
+type HrReportRows {
+  columns: [String!]!
+  rows: [[String!]!]!
+  totalRows: Int!
+}
+
+extend type Query {
+  hrReportRows(
+    kind: HrReportKind!
+    fromDate: NaiveDate!
+    toDate: NaiveDate!
+    employeeId: UUID
+    employeeSearch: String
+    offset: Int! = 0
+    limit: Int! = 50
+    claimTravelFilter: ClaimTravelReportFilterInput
+  ): HrReportRows!
+  hrReportCsv(
+    kind: HrReportKind!
+    fromDate: NaiveDate!
+    toDate: NaiveDate!
+    employeeId: UUID
+    employeeSearch: String
+    claimTravelFilter: ClaimTravelReportFilterInput
+  ): HrReportCsv!
+  claimTravelReportOptions(
+    kind: HrReportKind!
+    search: String
+    limit: Int = 50
+  ): ClaimTravelReportOptions!
+  hrInsights(fromDate: NaiveDate!, toDate: NaiveDate!): HrInsights!
+}
+
+input ClaimTravelReportFilterInput {
+  departmentId: ID
+  locationId: ID
+  expenseCategoryId: ID
+  approvalStatus: String
+  paymentStatus: String
+  routeSearch: String
+}
+type ClaimTravelReportOption {
+  id: ID!
+  name: String!
+}
+type ClaimTravelReportOptions {
+  departments: [ClaimTravelReportOption!]!
+  locations: [ClaimTravelReportOption!]!
+  expenseCategories: [ClaimTravelReportOption!]!
+}

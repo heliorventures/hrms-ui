@@ -3,8 +3,10 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Table from '../../../components/common/Table';
 import { EXPENSE_BUSY_PREFIX, EXPENSE_STATUS } from '../constants';
-import { expenseStatusVariant, formatCurrency, formatDate } from '../utils/formatters';
 import type { ExpenseCategoryRow, ExpenseRow } from '../types';
+import { expenseStatusVariant, formatCurrency, formatDate } from '../utils/formatters';
+
+import RequestAttachmentButton from './RequestAttachmentButton';
 
 interface ExpenseClaimsTableProps {
   busyKey: string | null;
@@ -78,7 +80,7 @@ const ExpenseClaimsTable = ({
             render: (expense) => (
               <span>
                 {expense.travelRequestId
-                  ? travelRequestLabels[expense.travelRequestId] ?? 'Linked trip not loaded'
+                  ? (travelRequestLabels[expense.travelRequestId] ?? 'Linked trip not loaded')
                   : '-'}
               </span>
             ),
@@ -92,7 +94,9 @@ const ExpenseClaimsTable = ({
             key: 'approvedAmount',
             label: 'Approved',
             render: (expense) =>
-              expense.approvedAmount ? formatCurrency(expense.approvedAmount, expense.currency) : '-',
+              expense.approvedAmount
+                ? formatCurrency(expense.approvedAmount, expense.currency)
+                : '-',
           },
           {
             key: 'paymentStatus',
@@ -117,6 +121,17 @@ const ExpenseClaimsTable = ({
             key: 'submittedAt',
             label: 'Submitted',
             render: (expense) => formatDate(expense.submittedAt),
+          },
+          {
+            key: 'hasSupportingFile',
+            label: 'Receipt',
+            render: (expense) => (
+              <RequestAttachmentButton
+                kind="expense"
+                requestId={expense.id}
+                hasFile={expense.hasSupportingFile ?? Boolean(expense.receiptFileStorageId)}
+              />
+            ),
           },
           ...(canApprove || canMarkPayment
             ? [

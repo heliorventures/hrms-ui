@@ -1,0 +1,104 @@
+query HrLeaveCalendarRange(
+  $includeEmployees: Boolean! = true
+  $includeHolidays: Boolean! = true
+  $reqLim: Int! = 400
+  $orgLim: Int! = 500
+  $typeLim: Int! = 80
+  $holidayFrom: NaiveDate!
+  $holidayLimit: Int! = 400
+  $fromDate: NaiveDate
+  $toDate: NaiveDate
+) {
+  leaveRequests(limit: $reqLim, fromDate: $fromDate, toDate: $toDate) {
+    id
+    employeeId
+    leaveTypeId
+    fromDate
+    toDate
+    status
+    isHalfDay
+    halfDaySession
+  }
+  orgChart(limit: $orgLim) @include(if: $includeEmployees) {
+    employeeId
+    fullName
+    employeeCode
+  }
+  leaveTypes(limit: $typeLim) {
+    id
+    name
+    code
+  }
+  upcomingHolidays(fromDate: $holidayFrom, limit: $holidayLimit) @include(if: $includeHolidays) {
+    id
+    holidayDate
+    name
+    calendarName
+    holidayType
+  }
+}
+
+query TimesheetBatchPreview(
+  $employeeId: ID!
+  $fromDate: NaiveDate
+  $toDate: NaiveDate
+  $limit: Int! = 100
+) {
+  timesheetEntries(employeeId: $employeeId, fromDate: $fromDate, toDate: $toDate, limit: $limit) {
+    id
+    workDate
+    hoursWorked
+    projectCode
+    description
+    status
+    batchId
+  }
+}
+
+query HrLeaveApplicationHolidays {
+  upcomingHolidays(limit: 100) {
+    id
+    calendarId
+    calendarName
+    holidayDate
+    name
+    holidayType
+  }
+}
+
+query RbacAdminBoardWithUsername($uLim: Int! = 120, $rLim: Int! = 80, $pLim: Int! = 400) {
+  tenantDirectoryUsers(limit: $uLim) {
+    id
+    username
+    email
+    isActive
+  }
+  tenantDirectoryRoles(limit: $rLim) {
+    id
+    name
+    description
+    isSystemRole
+  }
+  tenantCatalogPermissions(limit: $pLim) {
+    id
+    resource
+    action
+    description
+  }
+}
+
+query HrTimesheetWeekBatches($status: String, $limit: Int! = 80) {
+  timesheetWeekBatches(status: $status, limit: $limit) {
+    id
+    employeeId
+    employeeCode
+    employeeName
+    weekStartDate
+    status
+    submittedAt
+    workflowInstanceId
+    pendingApprovalStage
+    pendingApprovalStepId
+    viewerMayApprove
+  }
+}

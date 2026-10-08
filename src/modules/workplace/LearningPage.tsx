@@ -1,34 +1,63 @@
 import { useCallback, useEffect, useState } from 'react';
+
+import { WorkplaceLearningQuery, LearningCatalogDocument } from '../../api/graphql/graphql';
+import { createPermissionService } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
+import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
+import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import { WorkplaceLearningDocument } from '../../api/graphql/graphql';
+import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
+import {
+  skillFields,
+  courseFields,
+  SaveSkillDocument,
+  SaveCourseDocument,
+  skillInput,
+  courseInput,
+} from './learningSetup';
+import { SetupEditor } from './learningSetupEditor';
+
 const LearningPage = () => {
-  const client = useGraphClient('client');
-  const [data, setData] = useState<{
-    skills: { id: string; name: string; category?: string | null; level?: string | null }[];
-    courses: {
-      id: string;
-      title: string;
-      category?: string | null;
-      deliveryMode?: string | null;
-      durationMinutes?: number | null;
-      isMandatory: boolean;
-    }[];
+  const { clientSession } = useAuth();
+  const canManage = createPermissionService(clientSession).canScopedPermission('learning:manage', [
+    'ALL',
+  ]);
+  const [editor, setEditor] = useState<{
+    kind: 'skill' | 'course';
+    id?: string;
+    values: Record<string, string | boolean>;
   } | null>(null);
+  const client = useGraphClient('client');
+  const [data, setData] = useState<WorkplaceLearningQuery | null>(null);
   const [loading, setLoading] = useState(true);
+  const [offsets, setOffsets] = useState<Record<string, number>>({});
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const tabs = [
+    { id: 'courses', label: 'Courses' },
+    { id: 'skills', label: 'Skills' },
+  ];
+  const { tab, setTab } = usePageTabs(tabs);
+
+  const offset = offsets[tab] ?? 0;
+  const setOffset = (update: (value: number) => number) =>
+    setOffsets((current) => ({ ...current, [tab]: update(current[tab] ?? 0) }));
+
   const load = useCallback(async () => {
-    return client.request(WorkplaceLearningDocument, { slim: 80, clim: 80 });
-  }, [client]);
+    return client.request<WorkplaceLearningQuery>(LearningCatalogDocument, { offset });
+  }, [client, offset]);
 
   useEffect(() => {
     let c = false;
     void (async () => {
       try {
         setLoading(true);
+        setData(null);
         setError(null);
         const r = await load();
         if (!c) setData(r as typeof data);
@@ -44,52 +73,184 @@ const LearningPage = () => {
   }, [load]);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Learning</h1>
+    <div className="space-y-4">
+      <div data-tour-anchor="learning.sections">
+        <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
+      </div>
+      <PageHeader title="Learning" />
+      {notice && (
+        <p role="status" className="text-sm text-content-secondary">
+          {notice}
+        </p>
+      )}
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
-      <Card title="Skills">
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : data?.skills?.length ? (
-          <div className="flex flex-wrap gap-2">
-            {data.skills.map((s) => (
-              <span
-                key={s.id}
-                className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 dark:bg-gray-700 dark:text-gray-100"
-              >
-                {s.name}
-                {s.level ? ` (${s.level})` : ''}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500">No Skills Catalog.</p>
-        )}
-      </Card>
-      <Card title="Courses">
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : data?.courses?.length ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {data.courses.map((c) => (
-              <li key={c.id} className="py-3">
-                <p className="font-medium text-gray-900 dark:text-white">{c.title}</p>
-                <p className="text-xs text-gray-500">
-                  {c.deliveryMode ?? '—'}
-                  {c.durationMinutes != null ? ` · ${c.durationMinutes} min` : ''}
-                  {c.isMandatory ? ' · mandatory' : ''}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500">No Active Courses.</p>
-        )}
-      </Card>
+      <PageTabPanel id="skills" activeTab={tab}>
+        <Card title="Skills">
+          {canManage && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mb-3 text-sm font-medium text-primary-600"
+              data-tour-anchor="learning.skill-actions"
+              onClick={() =>
+                setEditor({ kind: 'skill', values: { name: '', category: '', level: '' } })
+              }
+            >
+              Create skill
+            </Button>
+          )}
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : data?.skills.length ? (
+            <div className="flex flex-wrap gap-2">
+              {data.skills.map((s) => (
+                <span
+                  key={s.id}
+                  className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 dark:bg-gray-700 dark:text-gray-100"
+                >
+                  {s.name}
+                  {s.level ? ` (${s.level})` : ''}
+                  {canManage && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ml-2 text-primary-600"
+                      aria-label={`Edit skill ${s.name}`}
+                      onClick={() =>
+                        setEditor({
+                          kind: 'skill',
+                          id: s.id,
+                          values: {
+                            name: s.name,
+                            category: s.category ?? '',
+                            level: s.level ?? '',
+                          },
+                        })
+                      }
+                    >
+                      Edit
+                    </Button>
+                  )}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No Skills Catalog.</p>
+          )}
+        </Card>
+      </PageTabPanel>
+      <PageTabPanel id="courses" activeTab={tab}>
+        <Card title="Courses">
+          {canManage && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mb-3 text-sm font-medium text-primary-600"
+              data-tour-anchor="learning.course-actions"
+              onClick={() =>
+                setEditor({
+                  kind: 'course',
+                  values: {
+                    title: '',
+                    category: '',
+                    deliveryMode: '',
+                    durationMinutes: '',
+                    isMandatory: false,
+                  },
+                })
+              }
+            >
+              Create course
+            </Button>
+          )}
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : data?.courses.length ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {data.courses.map((c) => (
+                <li key={c.id} className="py-3">
+                  <p className="font-medium text-gray-900 dark:text-white">{c.title}</p>
+                  {canManage && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-sm text-primary-600"
+                      onClick={() =>
+                        setEditor({
+                          kind: 'course',
+                          id: c.id,
+                          values: {
+                            title: c.title,
+                            category: c.category ?? '',
+                            deliveryMode: c.deliveryMode ?? '',
+                            durationMinutes: c.durationMinutes?.toString() ?? '',
+                            isMandatory: c.isMandatory,
+                          },
+                        })
+                      }
+                    >
+                      Edit course
+                    </Button>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    {c.deliveryMode ?? '—'}
+                    {c.durationMinutes != null ? ` · ${c.durationMinutes} min` : ''}
+                    {c.isMandatory ? ' · mandatory' : ''}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No Active Courses.</p>
+          )}
+        </Card>
+      </PageTabPanel>
+      <nav aria-label="Learning pagination" className="flex items-center justify-between gap-3">
+        <Button
+          variant="outline"
+          disabled={loading || offset === 0}
+          onClick={() => setOffset((value) => Math.max(0, value - 20))}
+        >
+          Previous
+        </Button>
+        <span className="text-sm text-content-secondary">Page {offset / 20 + 1}</span>
+        <Button
+          variant="outline"
+          disabled={
+            loading ||
+            !(data && (tab === 'skills' ? data.skills.length === 20 : data.courses.length === 20))
+          }
+          onClick={() => setOffset((value) => value + 20)}
+        >
+          Next
+        </Button>
+      </nav>
+      {editor && canManage && (
+        <SetupEditor
+          title={`${editor.id ? 'Edit' : 'Create'} ${editor.kind}`}
+          fields={editor.kind === 'skill' ? skillFields : courseFields}
+          initial={editor.values}
+          onClose={() => setEditor(null)}
+          onSave={async (values) => {
+            if (editor.kind === 'skill') {
+              await client.request(SaveSkillDocument, { input: skillInput(editor.id, values) });
+            } else {
+              await client.request(SaveCourseDocument, { input: courseInput(editor.id, values) });
+            }
+            setNotice('Saved. Use Previous and Next to browse the catalog.');
+            try {
+              setData(await load());
+              setError(null);
+            } catch (e) {
+              setError('Saved, but the list could not refresh. ' + graphQlUserMessage(e));
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

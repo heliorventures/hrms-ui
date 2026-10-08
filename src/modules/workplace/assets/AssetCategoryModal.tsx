@@ -36,8 +36,19 @@ export default function AssetCategoryModal({
       isDismissible={!saving}
       onClose={onClose}
       title={editing ? 'Edit Asset Category' : 'New Asset Category'}
+      size="sm"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button type="submit" form="asset-category-form" disabled={saving}>
+            {saving ? 'Saving...' : 'Save Category'}
+          </Button>
+        </>
+      }
     >
-      <form className="space-y-4" onSubmit={(event) => void submit(event)}>
+      <form id="asset-category-form" className="space-y-3" onSubmit={(event) => void submit(event)}>
         <Input
           label="Name"
           value={values.name}
@@ -57,14 +68,6 @@ export default function AssetCategoryModal({
             setValues((current) => ({ ...current, code: event.target.value.toUpperCase() }))
           }
         />
-        <div className="flex gap-3">
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Category'}
-          </Button>
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-        </div>
       </form>
     </Modal>
   );

@@ -1,0 +1,115 @@
+import type { ReactNode } from 'react';
+
+import { formatBackendTime } from '../../../utils/timeFormat';
+
+import type { AttendanceRow, Summary } from './attendanceSummaryTypes';
+
+function formatCoord(lat?: string | null, lng?: string | null) {
+  if (lat === null || lat === undefined || lng === null || lng === undefined) return null;
+  return `${lat}, ${lng}`;
+}
+
+interface AttendanceSegmentsProps {
+  startIndex?: number;
+  segments: AttendanceRow[];
+}
+
+const AttendanceSegments = ({ segments, startIndex = 0 }: AttendanceSegmentsProps) => (
+  <ol
+    aria-label="Recorded attendance sessions"
+    className="ml-1 space-y-2 border-l-2 border-accent/25 pl-4 text-content-secondary"
+  >
+    {segments.map((segment, index) => {
+      const checkInCoords = formatCoord(segment.checkInLat, segment.checkInLng);
+      const checkOutCoords = formatCoord(segment.checkOutLat, segment.checkOutLng);
+      const incomplete = segment.status?.trim().toUpperCase() === 'INCOMPLETE';
+      let checkOutTime = 'open';
+      if (incomplete) checkOutTime = 'missed punch out';
+      if (segment.checkOutTime) checkOutTime = formatBackendTime(segment.checkOutTime);
+      return (
+        <li key={segment.id} className="relative text-xs">
+          <span
+            aria-hidden="true"
+            className="absolute -left-[1.4375rem] top-1 h-3 w-3 rounded-full border-2 border-surface bg-accent"
+          />
+          <div className="flex justify-between">
+            <span>Session {index + startIndex + 1}</span>
+            <span>
+              {formatBackendTime(segment.checkInTime ?? null)} → {checkOutTime}
+            </span>
+          </div>
+          {incomplete ? (
+            <p className="mt-1 text-amber-800 dark:text-amber-200">
+              Missed punch out — correction required. No checkout time was recorded.
+            </p>
+          ) : null}
+          {checkInCoords || checkOutCoords ? (
+            <details className="mt-1">
+              <summary className="cursor-pointer rounded text-xs text-content-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+                Location details
+              </summary>
+              <p className="mt-1 break-words text-xs text-content-secondary">
+                In: {checkInCoords ?? '—'} · Out: {checkOutCoords ?? '—'}
+              </p>
+            </details>
+          ) : null}
+        </li>
+      );
+    })}
+  </ol>
+);
+
+interface AttendanceSummaryDetailsProps {
+  summary: Summary;
+  actions?: ReactNode;
+}
+
+const AttendanceSummaryDetails = ({ summary, actions }: AttendanceSummaryDetailsProps) => (
+  <div className="space-y-4 text-sm">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-content-muted">Worked today (completed)</span>
+        <span className="text-4xl font-semibold tabular-nums tracking-tight text-content-primary">
+          {Math.floor(summary.totalWorkedMinutes / 60)}h {summary.totalWorkedMinutes % 60}m
+        </span>
+      </div>
+      {actions ? <div className="min-w-0">{actions}</div> : null}
+    </div>
+    {summary.openSegment ? (
+      <p className="text-sm text-content-secondary">
+        Current session started at {formatBackendTime(summary.openSegment.checkInTime)}
+      </p>
+    ) : null}
+    {summary.segments.some((segment) => segment.status?.toUpperCase() === 'INCOMPLETE') ? (
+      <p role="status" className="text-sm text-status-warning">
+        A session has a missed punch out. Open attendance sessions to review.
+      </p>
+    ) : null}
+    {summary.segments.length > 0 ? (
+      <details open className="rounded-lg bg-surface-selected p-3">
+        <summary className="cursor-pointer text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+          View attendance sessions ({summary.segments.length})
+        </summary>
+        <div className="mt-3">
+          <AttendanceSegments segments={summary.segments} />
+        </div>
+      </details>
+    ) : null}
+    {summary.segments.length === 0 && !summary.openSegment ? (
+      <p
+        role="status"
+        className="rounded-lg bg-surface-selected px-3 py-3 text-sm text-content-secondary"
+      >
+        No Attendance Recorded Today.
+      </p>
+    ) : null}
+    {summary.openSegment ? (
+      <p className="text-xs text-amber-800 dark:text-amber-200">
+        Open: checked in at {formatBackendTime(summary.openSegment.checkInTime)} — Select “Punch
+        Out” to close this block.
+      </p>
+    ) : null}
+  </div>
+);
+
+export default AttendanceSummaryDetails;

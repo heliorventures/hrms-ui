@@ -1,4 +1,6 @@
 @import './styles/semantic-tokens.css';
+@import './styles/appearance.css';
+@import './styles/appearance-settings.css';
 
 @tailwind base;
 @tailwind components;
@@ -7,6 +9,15 @@
 @layer base {
   body {
     @apply bg-canvas text-content-primary antialiased;
+  }
+
+  /* The authenticated shell owns scrolling. Keep document overflow from adding
+     a second scrollbar alongside the main content, including at browser zoom. */
+  html:has(#app-shell),
+  body:has(#app-shell),
+  #root:has(#app-shell) {
+    height: 100%;
+    overflow: hidden;
   }
 
   button,
@@ -18,6 +29,38 @@
 }
 
 @layer utilities {
+  .scrollbar-subtle {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-content-muted) / 0.25) transparent;
+  }
+
+  .scrollbar-subtle:hover,
+  .scrollbar-subtle:focus-within {
+    scrollbar-color: rgb(var(--color-content-muted) / 0.4) transparent;
+  }
+
+  .scrollbar-subtle::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-subtle::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-subtle::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgb(var(--color-content-muted) / 0.25);
+  }
+
+  .scrollbar-subtle::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--color-content-muted) / 0.4);
+  }
+
+  .scrollbar-subtle::-webkit-scrollbar-button {
+    display: none;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -30,6 +73,12 @@
 
 /* Payslip: print / Save as PDF — hide app chrome, show only the slip */
 @media print {
+  html:has(#app-shell),
+  body:has(#app-shell),
+  #root:has(#app-shell) {
+    height: auto;
+    overflow: visible;
+  }
   html.print-payslip body * {
     visibility: hidden;
   }

@@ -1,13 +1,31 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
-import Card from '../../components/common/Card';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react';
+
+import {
+  AttendancePolicySettingsDocument,
+  type AttendancePolicySettingsQuery,
+} from '../../api/attendance/graphql';
+import { ClientOpsUpsertAttendancePunchPolicyDocument } from '../../api/graphql/graphql';
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
+import PageHeader from '../../components/common/PageHeader';
+import PageInformation from '../../components/common/PageInformation';
+import { useAuth } from '../../contexts/AuthContext';
+import { captureGuidanceFormSave } from '../../guidance/tourNavigation';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
-import {
-  ClientOpsAdminAttendancePolicyDocument,
-  ClientOpsUpsertAttendancePunchPolicyDocument,
-} from '../../api/graphql/graphql';
+
+import AttendanceDayPolicySettings from './AttendanceDayPolicySettings';
+import WeeklyOffSettings from './WeeklyOffSettings';
 
 const DECIMAL_PATTERN = /^-?(?:\d+|\d+\.\d+|\.\d+)$/;
 
@@ -35,8 +53,12 @@ const isValidIpv4CidrToken = (token: string) => {
   return mask >= 0 && mask <= 32;
 };
 
-const AdminAttendancePolicyPage = () => {
+const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
   const client = useGraphClient('client');
+  const owner = useMemo(() => ({ client, identity }), [client, identity]);
+  const mounted = useRef(false);
+  const generation = useRef(0);
+  const [loadedOwner, setLoadedOwner] = useState<typeof owner | null>(null);
   const [policy, setPolicy] = useState<{
     id?: string | null;
     isEnforced: boolean;
@@ -46,6 +68,9 @@ const AdminAttendancePolicyPage = () => {
     ipAllowlist?: string | null;
     updatedAt?: string | null;
   } | null>(null);
+  const [dayPolicy, setDayPolicy] = useState<
+    AttendancePolicySettingsQuery['attendanceDayPolicy'] | null
+  >(null);
   const [shifts, setShifts] = useState<
     {
       id: string;
@@ -68,49 +93,71 @@ const AdminAttendancePolicyPage = () => {
   const [ipAllowlist, setIpAllowlist] = useState('');
 
   const load = useCallback(async () => {
-    return client.request<{
-      attendancePunchPolicy: {
-        id?: string | null;
-        isEnforced: boolean;
-        siteLatitude?: number | null;
-        siteLongitude?: number | null;
-        maxDistanceMeters?: number | null;
-        ipAllowlist?: string | null;
-        updatedAt?: string | null;
-      };
-      shifts: typeof shifts;
-    }>(ClientOpsAdminAttendancePolicyDocument, { slim: 50 });
-  }, [client]);
+    void identity;
+    return client.request<AttendancePolicySettingsQuery>(AttendancePolicySettingsDocument);
+  }, [client, identity]);
+
+  const ownsRequest = useCallback(
+    (request: number) => mounted.current && generation.current === request,
+    []
+  );
+
+  const applySettings = useCallback(
+    (result: AttendancePolicySettingsQuery) => {
+      setPolicy(result.attendancePunchPolicy);
+      setDayPolicy(result.attendanceDayPolicy);
+      setShifts(result.shifts);
+      const punchPolicy = result.attendancePunchPolicy;
+      setIsEnforced(punchPolicy.isEnforced);
+      setSiteLatitude(punchPolicy.siteLatitude != null ? String(punchPolicy.siteLatitude) : '');
+      setSiteLongitude(punchPolicy.siteLongitude != null ? String(punchPolicy.siteLongitude) : '');
+      setMaxDistanceMeters(
+        punchPolicy.maxDistanceMeters != null ? String(punchPolicy.maxDistanceMeters) : ''
+      );
+      setIpAllowlist(punchPolicy.ipAllowlist ?? '');
+      setLoadedOwner(owner);
+    },
+    [owner]
+  );
+
+  useLayoutEffect(() => {
+    mounted.current = true;
+    generation.current += 1;
+    setLoadedOwner(null);
+    setLoading(true);
+    setError(null);
+    setSaving(false);
+    setFormError(null);
+    return () => {
+      mounted.current = false;
+      generation.current += 1;
+    };
+  }, [owner]);
 
   useEffect(() => {
-    let c = false;
+    const request = generation.current;
     void (async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const r = await load();
-        if (c) return;
-        setPolicy(r.attendancePunchPolicy);
-        setShifts(r.shifts);
-        const p = r.attendancePunchPolicy;
-        setIsEnforced(p.isEnforced);
-        setSiteLatitude(p.siteLatitude != null ? String(p.siteLatitude) : '');
-        setSiteLongitude(p.siteLongitude != null ? String(p.siteLongitude) : '');
-        setMaxDistanceMeters(p.maxDistanceMeters != null ? String(p.maxDistanceMeters) : '');
-        setIpAllowlist(p.ipAllowlist ?? '');
+        const result = await load();
+        if (!ownsRequest(request)) return;
+        applySettings(result);
       } catch (e) {
-        if (!c) setError(graphQlUserMessage(e));
+        if (ownsRequest(request)) setError(graphQlUserMessage(e));
       } finally {
-        if (!c) setLoading(false);
+        if (ownsRequest(request)) setLoading(false);
       }
     })();
-    return () => {
-      c = true;
-    };
-  }, [load]);
+  }, [applySettings, load, ownsRequest]);
+
+  const reloadPolicy = useCallback(async () => {
+    const request = generation.current;
+    const result = await load();
+    if (ownsRequest(request)) applySettings(result);
+  }, [applySettings, load, ownsRequest]);
 
   const onSave = async (e: FormEvent) => {
     e.preventDefault();
+    const markSaved = captureGuidanceFormSave(e.currentTarget);
     setFormError(null);
     const lat = parseOptionalDecimal(siteLatitude);
     const lng = parseOptionalDecimal(siteLongitude);
@@ -138,13 +185,18 @@ const AdminAttendancePolicyPage = () => {
     const hasCompleteGeoRule = lat != null && lng != null && maxM != null;
     const hasPartialGeoRule = lat != null || lng != null || maxM != null;
     if (hasPartialGeoRule && !hasCompleteGeoRule) {
-      setFormError('Latitude, longitude, and max distance are required together for geofence enforcement.');
+      setFormError(
+        'Latitude, longitude, and max distance are required together for geofence enforcement.'
+      );
       return;
     }
     if (isEnforced && !hasCompleteGeoRule && !allowlistTokens.length) {
-      setFormError('Enable enforcement only after adding a complete geofence or at least one IP rule.');
+      setFormError(
+        'Enable enforcement only after adding a complete geofence or at least one IP rule.'
+      );
       return;
     }
+    const request = generation.current;
     setSaving(true);
     try {
       await client.request(ClientOpsUpsertAttendancePunchPolicyDocument, {
@@ -156,32 +208,48 @@ const AdminAttendancePolicyPage = () => {
           ipAllowlist: ipAllowlist.trim() || null,
         },
       });
+      if (!ownsRequest(request)) return;
       const r = await load();
-      if (r.attendancePunchPolicy) setPolicy(r.attendancePunchPolicy);
+      if (ownsRequest(request)) {
+        applySettings(r);
+        markSaved();
+      }
     } catch (err) {
-      setFormError(graphQlUserMessage(err));
+      if (ownsRequest(request)) setFormError(graphQlUserMessage(err));
     } finally {
-      setSaving(false);
+      if (ownsRequest(request)) setSaving(false);
     }
   };
 
+  const ownerIsCurrent = loadedOwner === owner;
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance punch policy</h1>
-      <p className="text-sm text-gray-600 dark:text-gray-300">
-        Requires the `attendance:punch_policy` permission. Shift
-        templates are read-only here.
-      </p>
+    <div className="space-y-4">
+      <PageHeader title="Attendance punch policy" />
       {error && (
         <Card>
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </Card>
       )}
+      {ownerIsCurrent && dayPolicy ? (
+        <AttendanceDayPolicySettings
+          ownerKey={identity}
+          policy={dayPolicy}
+          onPolicyChanged={(nextPolicy) => {
+            if (loadedOwner === owner) setDayPolicy(nextPolicy);
+          }}
+          reloadPolicy={reloadPolicy}
+        />
+      ) : null}
       <Card title="Live Punch Policy">
-        {loading ? (
+        {loading || !ownerIsCurrent ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : (
-          <form onSubmit={(e) => void onSave(e)} className="space-y-4">
+          <form
+            onSubmit={(e) => void onSave(e)}
+            className="space-y-4"
+            data-tour-anchor="attendance-policy.live-punch-rules"
+          >
             {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
             <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
               <input
@@ -228,33 +296,54 @@ const AdminAttendancePolicyPage = () => {
             {policy?.updatedAt && (
               <p className="text-xs text-gray-500">Last updated: {policy.updatedAt}</p>
             )}
-            <Button type="submit" disabled={saving}>
+            <Button
+              data-tour-anchor="attendance-policy.save-punch-rules"
+              type="submit"
+              disabled={saving}
+            >
               {saving ? 'Saving...' : 'Save Policy'}
             </Button>
           </form>
         )}
       </Card>
-      <Card title="Shifts">
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : shifts.length ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {shifts.map((s) => (
-              <li key={s.id} className="py-3">
-                <p className="font-medium text-gray-900 dark:text-white">{s.name}</p>
-                <p className="text-xs text-gray-500">
-                  {s.startTime ?? '—'} – {s.endTime ?? '—'}
-                  {s.workHours != null ? ` · ${s.workHours}h` : ''}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500">No Shift Templates.</p>
-        )}
-      </Card>
+      <WeeklyOffSettings key={identity} />
+      <PageInformation title="Shift reference">
+        <Card title="Shifts">
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : ownerIsCurrent && shifts.length ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {shifts.map((s) => (
+                <li key={s.id} className="py-3">
+                  <p className="font-medium text-gray-900 dark:text-white">{s.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {s.startTime ?? '—'} – {s.endTime ?? '—'}
+                    {s.workHours != null ? ` · ${s.workHours}h` : ''}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500">No Shift Templates.</p>
+          )}
+        </Card>
+      </PageInformation>
     </div>
   );
+};
+
+const AdminAttendancePolicyPage = () => {
+  const { clientSession, tenantId, user } = useAuth();
+  const permissions = createPermissionService(clientSession);
+  if (!permissions.canRoute('/admin/attendance-policy')) {
+    return (
+      <p role="status" className="text-sm text-content-secondary">
+        You do not have access to manage attendance policy.
+      </p>
+    );
+  }
+  const identity = `${tenantId ?? ''}:${user?.id ?? ''}:${authorizationStateKey(clientSession)}`;
+  return <AuthorizedAttendancePolicyPage key={identity} identity={identity} />;
 };
 
 export default AdminAttendancePolicyPage;

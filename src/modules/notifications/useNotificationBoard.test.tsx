@@ -3,13 +3,10 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  MarkNotificationReadDocument,
-  NotificationBoardSummaryDocument,
-  OrgDepartmentsDocument,
-} from '../../api/graphql/graphql';
+import { MarkNotificationReadDocument, OrgDepartmentsDocument } from '../../api/graphql/graphql';
 
 import { useNotificationBoard } from './useNotificationBoard';
+import { NotificationVideoBoardDocument } from './videoDocuments';
 
 const graphState = vi.hoisted(() => ({
   client: { request: vi.fn() },
@@ -63,7 +60,7 @@ describe('useNotificationBoard', () => {
   it('publishes initial failure without claiming that board data loaded', async () => {
     graphState.client.request.mockImplementation((document: unknown) => {
       if (document === OrgDepartmentsDocument) return Promise.resolve({ departments: [] });
-      if (document === NotificationBoardSummaryDocument) {
+      if (document === NotificationVideoBoardDocument) {
         return Promise.reject(new Error('notifications unavailable'));
       }
       throw new Error('Unexpected document');
@@ -84,7 +81,7 @@ describe('useNotificationBoard', () => {
         expect(variables).toEqual({ limit: 100 });
         return Promise.resolve({ departments: [] });
       }
-      if (document === NotificationBoardSummaryDocument) {
+      if (document === NotificationVideoBoardDocument) {
         expect(variables).toEqual({ limit: 20 });
         return Promise.resolve(boardData(20, 20));
       }
@@ -104,7 +101,7 @@ describe('useNotificationBoard', () => {
       if (document === OrgDepartmentsDocument) {
         return Promise.reject(new Error('department labels unavailable'));
       }
-      if (document === NotificationBoardSummaryDocument) return Promise.resolve(boardData());
+      if (document === NotificationVideoBoardDocument) return Promise.resolve(boardData());
       throw new Error('Unexpected document');
     });
 
@@ -121,7 +118,7 @@ describe('useNotificationBoard', () => {
     let boardRequests = 0;
     graphState.client.request.mockImplementation((document: unknown) => {
       if (document === OrgDepartmentsDocument) return Promise.resolve({ departments: [] });
-      if (document === NotificationBoardSummaryDocument) {
+      if (document === NotificationVideoBoardDocument) {
         boardRequests += 1;
         return boardRequests === 1
           ? Promise.resolve(boardData())

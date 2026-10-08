@@ -1,4 +1,25 @@
-import { gql } from 'graphql-request';
+import {
+  LeaveHealthDocument,
+  AttendanceHealthDocument,
+  PayrollHealthDocument,
+  TaxHealthDocument,
+  BenefitsHealthDocument,
+  ExpenseHealthDocument,
+  RecruitmentHealthDocument,
+  PerformanceHealthDocument,
+  LmsHealthDocument,
+  SuccessionHealthDocument,
+  CompensationHealthDocument,
+  AssetsHealthDocument,
+  GrievanceHealthDocument,
+  WorkflowHealthDocument,
+  NotificationHealthDocument,
+  AnalyticsHealthDocument,
+  TenantsHealthDocument,
+  BillingHealthDocument,
+  OperatorHealthDocument,
+} from '../../api/graphql/graphql';
+
 import type { ProbeConfig } from './moduleHealthTypes';
 
 export const MODULE_HEALTH_PROBES: ProbeConfig[] = [
@@ -6,266 +27,133 @@ export const MODULE_HEALTH_PROBES: ProbeConfig[] = [
     key: 'leave',
     label: 'Leave',
     plane: 'client',
-    query: gql`
-      query LeaveHealth {
-        leaveTypes(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: LeaveHealthDocument,
     previewFields: ['leaveTypes'],
   },
   {
     key: 'attendance',
     label: 'Attendance',
     plane: 'client',
-    query: gql`
-      query AttendanceHealth {
-        shifts(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: AttendanceHealthDocument,
     previewFields: ['shifts'],
   },
   {
     key: 'payroll',
     label: 'Payroll',
     plane: 'client',
-    query: gql`
-      query PayrollHealth {
-        salaryComponents(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: PayrollHealthDocument,
     previewFields: ['salaryComponents'],
   },
   {
     key: 'tax',
     label: 'Tax',
     plane: 'client',
-    query: gql`
-      query TaxHealth {
-        taxConfigurations(limit: 1) {
-          id
-          fiscalYear
-          regime
-        }
-      }
-    `,
+    query: TaxHealthDocument,
     previewFields: ['taxConfigurations'],
   },
   {
     key: 'benefits',
     label: 'Benefits',
     plane: 'client',
-    query: gql`
-      query BenefitsHealth {
-        benefitTypes(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: BenefitsHealthDocument,
     previewFields: ['benefitTypes'],
   },
   {
     key: 'expense',
     label: 'Expense',
     plane: 'client',
-    query: gql`
-      query ExpenseHealth {
-        expenseCategories(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: ExpenseHealthDocument,
     previewFields: ['expenseCategories'],
   },
   {
     key: 'recruitment',
     label: 'Recruitment',
     plane: 'client',
-    query: gql`
-      query RecruitmentHealth {
-        jobPostings(limit: 1) {
-          id
-          title
-        }
-      }
-    `,
+    query: RecruitmentHealthDocument,
     previewFields: ['jobPostings'],
   },
   {
     key: 'performance',
     label: 'Performance',
     plane: 'client',
-    query: gql`
-      query PerformanceHealth {
-        reviewCycles(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: PerformanceHealthDocument,
     previewFields: ['reviewCycles'],
   },
   {
     key: 'lms',
     label: 'LMS',
     plane: 'client',
-    query: gql`
-      query LmsHealth {
-        skills(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: LmsHealthDocument,
     previewFields: ['skills'],
   },
   {
     key: 'succession',
     label: 'Succession',
     plane: 'client',
-    query: gql`
-      query SuccessionHealth {
-        competencies(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: SuccessionHealthDocument,
     previewFields: ['competencies'],
   },
   {
     key: 'compensation',
     label: 'Compensation',
     plane: 'client',
-    query: gql`
-      query CompensationHealth {
-        salaryBands(limit: 1) {
-          id
-          grade
-        }
-      }
-    `,
+    query: CompensationHealthDocument,
     previewFields: ['salaryBands'],
   },
   {
     key: 'assets',
     label: 'Assets',
     plane: 'client',
-    query: gql`
-      query AssetsHealth {
-        assetCategories(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: AssetsHealthDocument,
     previewFields: ['assetCategories'],
   },
   {
     key: 'grievance',
     label: 'Grievance',
     plane: 'client',
-    query: gql`
-      query GrievanceHealth {
-        grievanceCategories(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: GrievanceHealthDocument,
     previewFields: ['grievanceCategories'],
   },
   {
     key: 'workflow',
     label: 'Workflow',
     plane: 'client',
-    query: gql`
-      query WorkflowHealth {
-        workflows(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: WorkflowHealthDocument,
     previewFields: ['workflows'],
   },
   {
     key: 'notification',
     label: 'Notifications',
     plane: 'client',
-    query: gql`
-      query NotificationHealth {
-        announcements(limit: 1) {
-          id
-          title
-        }
-      }
-    `,
+    query: NotificationHealthDocument,
     previewFields: ['announcements'],
   },
   {
     key: 'analytics',
     label: 'Analytics',
     plane: 'client',
-    query: gql`
-      query AnalyticsHealth {
-        webhookDeliveryLogs(limit: 1) {
-          id
-        }
-      }
-    `,
+    query: AnalyticsHealthDocument,
     previewFields: ['webhookDeliveryLogs'],
   },
   {
     key: 'tenant',
     label: 'Tenants (Ops)',
     plane: 'operator',
-    query: gql`
-      query TenantsHealth {
-        tenants(limit: 1) {
-          id
-          name
-        }
-      }
-    `,
+    query: TenantsHealthDocument,
     previewFields: ['tenants'],
   },
   {
     key: 'billing',
     label: 'Billing (Ops)',
     plane: 'operator',
-    query: gql`
-      query BillingHealth {
-        invoices(limit: 1) {
-          id
-          invoiceNumber
-        }
-      }
-    `,
+    query: BillingHealthDocument,
     previewFields: ['invoices'],
   },
   {
     key: 'operator',
     label: 'Operators (Ops)',
     plane: 'operator',
-    query: gql`
-      query OperatorHealth {
-        operatorUsers(limit: 1) {
-          id
-          email
-        }
-      }
-    `,
+    query: OperatorHealthDocument,
     previewFields: ['operatorUsers'],
   },
 ];

@@ -3,8 +3,10 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Table from '../../../components/common/Table';
 import { EXPENSE_BUSY_PREFIX, EXPENSE_STATUS } from '../constants';
-import { expenseStatusVariant, formatCurrency, formatDate } from '../utils/formatters';
 import type { TravelRequestRow } from '../types';
+import { expenseStatusVariant, formatCurrency, formatDate } from '../utils/formatters';
+
+import RequestAttachmentButton from './RequestAttachmentButton';
 
 interface TravelRequestsTableProps {
   busyKey: string | null;
@@ -78,6 +80,17 @@ const TravelRequestsTable = ({
             key: 'submittedAt',
             label: 'Submitted',
             render: (row) => formatDate(row.submittedAt),
+          },
+          {
+            key: 'hasSupportingFile',
+            label: 'Supporting file',
+            render: (row) => (
+              <RequestAttachmentButton
+                kind="travel"
+                requestId={row.id}
+                hasFile={row.hasSupportingFile ?? Boolean(row.supportingFileStorageId)}
+              />
+            ),
           },
           ...(canApprove
             ? [

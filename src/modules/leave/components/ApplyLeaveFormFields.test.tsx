@@ -33,8 +33,8 @@ describe('ApplyLeaveFormFields', () => {
         reason="Family appointment"
         onReasonChange={() => undefined}
         requiresDocument
-        supportingDocumentReference="ticket-123"
-        onSupportingDocumentReferenceChange={() => undefined}
+        supportingDocumentFile={null}
+        onSupportingDocumentFileChange={() => undefined}
       />
     );
 
@@ -50,7 +50,8 @@ describe('ApplyLeaveFormFields', () => {
 
     fireEvent.change(leaveType, { target: { value: 'annual' } });
     expect(selectedLeaveType).toBe('annual');
-    expect(screen.getByLabelText('Supporting document reference')).toBeTruthy();
+    expect(screen.getByLabelText<HTMLInputElement>('Supporting document').type).toBe('file');
+    expect(screen.queryByLabelText('Supporting document reference')).toBeNull();
   });
 
   it('associates field errors with invalid leave controls', () => {
@@ -72,8 +73,8 @@ describe('ApplyLeaveFormFields', () => {
         reason=""
         onReasonChange={() => undefined}
         requiresDocument={false}
-        supportingDocumentReference=""
-        onSupportingDocumentReferenceChange={() => undefined}
+        supportingDocumentFile={null}
+        onSupportingDocumentFileChange={() => undefined}
         fieldErrors={{
           leaveTypeId: 'Choose a leave type.',
           reason: 'Enter a reason for your leave.',

@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
-import { useDialogs } from '../../../contexts/DialogContext';
+import { useCallback, useEffect, useState } from 'react';
+
 import {
   CreatePayrollArrearDocument,
   CreatePayrollCycleDocument,
-  RunPayrollForCycleDocument,
-  UpsertPayrollComplianceSettingDocument,
 } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { defaultCycleName, formatPayrollPeriod } from '../payrollFormatters';
@@ -15,10 +13,11 @@ import type {
   PayrollCycleFormState,
 } from '../payrollTypes';
 
+import { usePayrollComplianceSave } from './usePayrollComplianceSave';
+import { usePayrollDraftActions } from './usePayrollDraftActions';
+
 const now = new Date();
 const MONEY_PATTERN = /^(?:\d+|\d+\.\d{1,2}|\.\d{1,2})$/;
-const COMPONENT_CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,31}$/;
-const TAN_PATTERN = /^[A-Z]{4}\d{5}[A-Z]$/;
 
 const DEFAULT_CYCLE_FORM: PayrollCycleFormState = {
   newCycleName: defaultCycleName(),
@@ -45,6 +44,7 @@ interface PayrollBoardActionsParams {
   client: GraphQLClient;
   complianceForm: PayrollComplianceFormState;
   enabled: boolean;
+  complianceReady: boolean;
   ownerKey: string;
   reload: () => Promise<void>;
 }
@@ -52,11 +52,20 @@ interface PayrollBoardActionsParams {
 export function usePayrollBoardActions({
   client,
   complianceForm,
+  complianceReady,
   enabled,
   ownerKey,
   reload,
 }: PayrollBoardActionsParams) {
-  const { confirm } = useDialogs();
+  const compliance = usePayrollComplianceSave({
+    client,
+    enabled,
+    ownerKey,
+    complianceReady,
+    complianceForm,
+    reload,
+  });
+  const drafts = usePayrollDraftActions(client, enabled, ownerKey, reload);
   const [cycleForm, setCycleForm] = useState<PayrollCycleFormState>(DEFAULT_CYCLE_FORM);
   const [arrearForm, setArrearForm] = useState<PayrollArrearFormState>(DEFAULT_ARREAR_FORM);
   const [createBusy, setCreateBusy] = useState(false);
@@ -65,12 +74,6 @@ export function usePayrollBoardActions({
   const [arrearBusy, setArrearBusy] = useState(false);
   const [arrearError, setArrearError] = useState<string | null>(null);
   const [arrearOk, setArrearOk] = useState<string | null>(null);
-  const [runBusy, setRunBusy] = useState<string | null>(null);
-  const [runError, setRunError] = useState<string | null>(null);
-  const [runOk, setRunOk] = useState<string | null>(null);
-  const [complianceSaveBusy, setComplianceSaveBusy] = useState(false);
-  const [complianceSaveError, setComplianceSaveError] = useState<string | null>(null);
-  const [complianceSaveOk, setComplianceSaveOk] = useState<string | null>(null);
 
   useEffect(() => {
     setCreateBusy(false);
@@ -79,67 +82,18 @@ export function usePayrollBoardActions({
     setArrearBusy(false);
     setArrearError(null);
     setArrearOk(null);
-    setRunBusy(null);
-    setRunError(null);
-    setRunOk(null);
-    setComplianceSaveBusy(false);
-    setComplianceSaveError(null);
-    setComplianceSaveOk(null);
   }, [enabled, ownerKey]);
 
-  const setCycleField = useCallback((field: keyof PayrollCycleFormState, value: string | number) => {
-    setCycleForm((current) => ({ ...current, [field]: value }));
-  }, []);
+  const setCycleField = useCallback(
+    (field: keyof PayrollCycleFormState, value: string | number) => {
+      setCycleForm((current) => ({ ...current, [field]: value }));
+    },
+    []
+  );
 
   const setArrearField = useCallback((field: keyof PayrollArrearFormState, value: string) => {
     setArrearForm((current) => ({ ...current, [field]: value }));
   }, []);
-
-  const savePayrollCompliance = useCallback(async () => {
-    if (!enabled) return;
-    setComplianceSaveError(null);
-    setComplianceSaveOk(null);
-    const employerTan = complianceForm.employerTanInput.trim().toUpperCase();
-    const baseComponentCode = complianceForm.baseComponentInput.trim().toUpperCase();
-    const arrearComponentCode = complianceForm.arrearComponentInput.trim().toUpperCase();
-    if (employerTan && !TAN_PATTERN.test(employerTan)) {
-      setComplianceSaveError('Employer TAN must match the Indian TAN format, for example ABCD12345E.');
-      return;
-    }
-    if (baseComponentCode && !COMPONENT_CODE_PATTERN.test(baseComponentCode)) {
-      setComplianceSaveError('Base salary component code must start with a letter and use A-Z, 0-9, or underscore.');
-      return;
-    }
-    if (arrearComponentCode && !COMPONENT_CODE_PATTERN.test(arrearComponentCode)) {
-      setComplianceSaveError('Arrear component code must start with a letter and use A-Z, 0-9, or underscore.');
-      return;
-    }
-    if (baseComponentCode && arrearComponentCode && baseComponentCode === arrearComponentCode) {
-      setComplianceSaveError('Base and arrear component codes must be different.');
-      return;
-    }
-    setComplianceSaveBusy(true);
-    try {
-      await client.request(UpsertPayrollComplianceSettingDocument, {
-        input: {
-          employerTan: employerTan || null,
-          employerLegalName: complianceForm.employerLegalNameInput.trim() || null,
-          baseSalaryComponentCode: baseComponentCode || null,
-          arrearSalaryComponentCode: arrearComponentCode || null,
-          payslipHeaderTitle: complianceForm.payslipHeaderInput.trim() || null,
-          payslipLogoFileStorageId: complianceForm.payslipLogoIdInput.trim() || null,
-        },
-      });
-      setComplianceSaveOk(
-        'Payroll compliance settings saved (CSV placeholders, component codes, payslip header/logo).'
-      );
-      await reload();
-    } catch (err) {
-      setComplianceSaveError(graphQlUserMessage(err));
-    } finally {
-      setComplianceSaveBusy(false);
-    }
-  }, [client, complianceForm, enabled, reload]);
 
   const createCycle = useCallback(async () => {
     if (!enabled) return;
@@ -229,37 +183,8 @@ export function usePayrollBoardActions({
     }
   }, [arrearForm, client, enabled, reload]);
 
-  const runPayroll = useCallback(
-    async (payrollCycleId: string) => {
-      if (!enabled) return;
-      const confirmed = await confirm({
-        title: 'Run payroll for this cycle?',
-        message:
-          'The cycle will be processed and salary, arrears, and payslips will be calculated. Review the cycle details before you continue.',
-        confirmLabel: 'Run payroll',
-        cancelLabel: 'Keep cycle unchanged',
-        variant: 'danger',
-      });
-      if (!confirmed) return;
-      setRunBusy(payrollCycleId);
-      setRunError(null);
-      setRunOk(null);
-      try {
-        await client.request(RunPayrollForCycleDocument, { payrollCycleId });
-        setRunOk(
-          'Pay run completed — cycle is PROCESSED (v1: employment salary + arrears mapped to tenant component codes).'
-        );
-        await reload();
-      } catch (err) {
-        setRunError(graphQlUserMessage(err));
-      } finally {
-        setRunBusy(null);
-      }
-    },
-    [client, confirm, enabled, reload]
-  );
-
   return {
+    ...drafts,
     cycleForm,
     setCycleField,
     createCycle,
@@ -272,13 +197,6 @@ export function usePayrollBoardActions({
     arrearBusy,
     arrearError,
     arrearOk,
-    runPayroll,
-    runBusy,
-    runError,
-    runOk,
-    savePayrollCompliance,
-    complianceSaveBusy,
-    complianceSaveError,
-    complianceSaveOk,
+    ...compliance,
   };
 }

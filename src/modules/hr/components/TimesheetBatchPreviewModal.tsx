@@ -1,36 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import Modal from '../../../components/common/Modal';
-import Table from '../../../components/common/Table';
+
+import { TimesheetBatchPreviewDocument as TIMESHEET_BATCH_PREVIEW_DOCUMENT } from '../../../api/graphql/graphql';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
+import Modal from '../../../components/common/Modal';
+import Table from '../../../components/common/Table';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { parseIsoDate } from '../../../utils/calendarRange';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { timesheetWeekRangeIso } from '../../../utils/timesheetWeek';
-
-const TIMESHEET_BATCH_PREVIEW_DOCUMENT = `
-  query TimesheetBatchPreview(
-    $employeeId: ID!
-    $fromDate: NaiveDate
-    $toDate: NaiveDate
-    $limit: Int! = 100
-  ) {
-    timesheetEntries(
-      employeeId: $employeeId
-      fromDate: $fromDate
-      toDate: $toDate
-      limit: $limit
-    ) {
-      id
-      workDate
-      hoursWorked
-      projectCode
-      description
-      status
-      batchId
-    }
-  }
-`;
 
 export interface TimesheetBatchPreview {
   id: string;
@@ -143,7 +121,9 @@ const TimesheetBatchPreviewModal = ({
             ]}
           />
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No Entries Found For This Week.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No Entries Found For This Week.
+          </p>
         )}
 
         {batch && pending ? (
@@ -151,6 +131,7 @@ const TimesheetBatchPreviewModal = ({
             <Button
               type="button"
               variant="primary"
+              data-tour-anchor="hr-timesheets.approve-trigger"
               disabled={busy || loading || rows.length === 0}
               onClick={() => onApprove(batch)}
             >
@@ -159,6 +140,7 @@ const TimesheetBatchPreviewModal = ({
             <Button
               type="button"
               variant="outline"
+              data-tour-anchor="hr-timesheets.reject-trigger"
               disabled={busy || loading}
               onClick={() => onReject(batch)}
             >

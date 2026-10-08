@@ -1,0 +1,31 @@
+query BenefitsSetup($activeOnly: Boolean!, $typeOffset: Int!, $planOffset: Int!) {
+  benefitTypes(limit: 21, offset: $typeOffset) {
+    id
+    name
+    code
+    category
+  }
+  benefitPlans(limit: 21, offset: $planOffset, activeOnly: $activeOnly) {
+    id
+    name
+    benefitTypeId
+    employerContribution
+    employeeContribution
+    contributionType
+    isMandatory
+    isActive
+  }
+}
+
+query BenefitsSetupEnrollments($limit: Int!) {
+  myBenefitEnrollments(limit: $limit) {
+    id
+    benefitPlanId
+    benefitPlanName
+    status
+    enrolledOn
+    effectiveFrom
+    employeeContributionAmount
+    employerContributionAmount
+  }
+}

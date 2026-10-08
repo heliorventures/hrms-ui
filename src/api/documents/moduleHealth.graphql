@@ -1,0 +1,132 @@
+query LeaveHealth {
+  leaveTypes(limit: 1) {
+    id
+    name
+  }
+}
+
+query AttendanceHealth {
+  shifts(limit: 1) {
+    id
+    name
+  }
+}
+
+query PayrollHealth {
+  salaryComponents(limit: 1) {
+    id
+    name
+  }
+}
+
+query TaxHealth {
+  taxConfigurations(limit: 1) {
+    id
+    fiscalYear
+    regime
+  }
+}
+
+query BenefitsHealth {
+  benefitTypes(limit: 1) {
+    id
+    name
+  }
+}
+
+query ExpenseHealth {
+  expenseCategories(limit: 1) {
+    id
+    name
+  }
+}
+
+query RecruitmentHealth {
+  jobPostings(limit: 1) {
+    id
+    title
+  }
+}
+
+query PerformanceHealth {
+  reviewCycles(limit: 1) {
+    id
+    name
+  }
+}
+
+query LmsHealth {
+  skills(limit: 1) {
+    id
+    name
+  }
+}
+
+query SuccessionHealth {
+  competencies(limit: 1) {
+    id
+    name
+  }
+}
+
+query CompensationHealth {
+  salaryBands(limit: 1) {
+    id
+    grade
+  }
+}
+
+query AssetsHealth {
+  assetCategories(limit: 1) {
+    id
+    name
+  }
+}
+
+query GrievanceHealth {
+  grievanceCategories(limit: 1) {
+    id
+    name
+  }
+}
+
+query WorkflowHealth {
+  workflows(limit: 1) {
+    id
+    name
+  }
+}
+
+query NotificationHealth {
+  announcements(limit: 1) {
+    id
+    title
+  }
+}
+
+query AnalyticsHealth {
+  webhookDeliveryLogs(limit: 1) {
+    id
+  }
+}
+
+query TenantsHealth {
+  tenants(limit: 1) {
+    id
+    name
+  }
+}
+
+query BillingHealth {
+  invoices(limit: 1) {
+    id
+    invoiceNumber
+  }
+}
+
+query OperatorHealth {
+  operatorUsers(limit: 1) {
+    id
+    email
+  }
+}

@@ -4,16 +4,29 @@ type NavigationStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
 function browserStorage(): NavigationStorage | undefined {
   if (typeof window === 'undefined') return undefined;
-  return window.localStorage;
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
 }
 
 export function readDesktopNavigationCollapsed(
   storage: NavigationStorage | undefined = browserStorage()
 ): boolean {
+  return readRememberedNavigationCollapsed(storage) ?? false;
+}
+
+export function readRememberedNavigationCollapsed(
+  storage: NavigationStorage | undefined = browserStorage()
+): boolean | null {
   try {
-    return storage?.getItem(NAVIGATION_COLLAPSED_KEY) === 'true';
+    const value = storage?.getItem(NAVIGATION_COLLAPSED_KEY);
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return null;
   } catch {
-    return false;
+    return null;
   }
 }
 

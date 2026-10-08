@@ -2,6 +2,8 @@ import type { Dispatch, SetStateAction } from 'react';
 
 import type { OrgDepartmentsQuery } from '../../api/graphql/graphql';
 
+import type { AnnouncementVideoValue } from './components/AnnouncementVideoFields';
+
 export interface CreateAnnouncementModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,7 +15,7 @@ export type AudienceOptionsState =
   | { phase: 'loaded'; departments: OrgDepartmentsQuery['departments'] }
   | { phase: 'failed'; departments: []; message: string };
 
-export interface AnnouncementFormValues {
+export interface AnnouncementFormValues extends AnnouncementVideoValue {
   title: string;
   body: string;
   targetAudience: string;
@@ -49,4 +51,6 @@ export interface CreateAnnouncementModalController {
   submit: () => Promise<void>;
   submitError: string | null;
   submitting: boolean;
+  videoProgress: number | null;
+  cancelVideoUpload: () => void;
 }

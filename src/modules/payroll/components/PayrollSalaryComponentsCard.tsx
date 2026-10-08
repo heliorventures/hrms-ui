@@ -9,9 +9,14 @@ interface PayrollSalaryComponentsCardProps {
 
 const PayrollSalaryComponentsCard = ({ rows, loading }: PayrollSalaryComponentsCardProps) => (
   <Card title="Salary Components">
-    {loading ? (
+    <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
+      Once a component is used, its code, type and tax treatment are protected. Create a new
+      component for future financial changes. Company payslip visibility remains editable.
+    </p>
+    {loading && (
       <p className="text-sm text-gray-500 dark:text-gray-400">Loading Salary Components...</p>
-    ) : rows.length ? (
+    )}
+    {!loading && rows.length > 0 && (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {rows.map((item) => (
           <div key={item.id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
@@ -38,7 +43,8 @@ const PayrollSalaryComponentsCard = ({ rows, loading }: PayrollSalaryComponentsC
           </div>
         ))}
       </div>
-    ) : (
+    )}
+    {!loading && rows.length === 0 && (
       <p className="text-sm text-gray-500 dark:text-gray-400">No Salary Components Found.</p>
     )}
   </Card>

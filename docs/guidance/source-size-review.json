@@ -1,0 +1,56 @@
+[
+  {
+    "file": "src/guidance/adminAccessTours.test.tsx",
+    "line": 47,
+    "lines": 130,
+    "name": "callback"
+  },
+  {
+    "file": "src/modules/admin/AdminAttendancePolicyPage.tsx",
+    "line": 56,
+    "lines": 268,
+    "name": "AuthorizedAttendancePolicyPage"
+  },
+  {
+    "file": "src/modules/admin/hooks/useAdminExpenseCategories.ts",
+    "line": 46,
+    "lines": 413,
+    "name": "useAdminExpenseCategories"
+  },
+  {
+    "file": "src/modules/admin/hooks/useAdminLeaveSettings.ts",
+    "line": 42,
+    "lines": 260,
+    "name": "useAdminLeaveSettings"
+  },
+  {
+    "file": "src/modules/expenses/components/ExpenseClaimsTable.tsx",
+    "line": 39,
+    "lines": 156,
+    "name": "ExpenseClaimsTable"
+  },
+  {
+    "file": "src/modules/organization/employee-profile/EmployeeProfileShell.tsx",
+    "line": 54,
+    "lines": 213,
+    "name": "EmployeeProfileShell"
+  },
+  {
+    "file": "src/modules/organization/employee-profile/lib/mapBundleToModel.ts",
+    "line": 41,
+    "lines": 276,
+    "name": "mapBundleToEmployeeProfileModel"
+  },
+  {
+    "file": "src/modules/organization/employee-profile/tabs/EmploymentManagementTab.tsx",
+    "line": 34,
+    "lines": 399,
+    "name": "EmploymentManagementTab"
+  },
+  {
+    "file": "src/modules/reports/AdminReportsPage.test.tsx",
+    "line": 54,
+    "lines": 142,
+    "name": "callback"
+  }
+]

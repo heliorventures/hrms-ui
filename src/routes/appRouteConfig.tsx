@@ -1,11 +1,39 @@
 import type { AppChildRoute } from './routeTypes';
 
 export const TENANT_APP_ROUTES: AppChildRoute[] = [
+  {
+    kind: 'page',
+    path: 'appearance',
+    title: 'Appearance',
+    load: () => import('../appearance/AppearancePage'),
+  },
+  { kind: 'redirect', path: 'my-work', to: '/my-work/tasks' },
+  {
+    kind: 'page',
+    path: 'my-work/tasks',
+    title: 'My Tasks',
+    tenantPath: '/my-work/tasks',
+    load: () => import('../modules/my-work/MyWorkPage'),
+  },
+  {
+    kind: 'page',
+    path: 'my-work/completed',
+    title: 'Completed / Archive',
+    tenantPath: '/my-work/completed',
+    load: () => import('../modules/my-work/MyWorkPage'),
+  },
+  {
+    kind: 'page',
+    path: 'performance',
+    title: 'Performance',
+    tenantPath: '/performance',
+    load: () => import('../modules/workplace/PerformancePage'),
+  },
   { kind: 'redirect', index: true, to: '/dashboard' },
   {
     kind: 'page',
     path: 'dashboard',
-    title: 'Dashboard',
+    title: 'Home',
     tenantPath: '/dashboard',
     load: () => import('../modules/dashboard/Dashboard'),
   },
@@ -83,7 +111,7 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   {
     kind: 'page',
     path: 'expenses',
-    title: 'Expenses',
+    title: 'Expenses & Travel',
     tenantPath: '/expenses',
     load: () => import('../modules/expenses/ExpensesPage'),
   },
@@ -146,9 +174,16 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   {
     kind: 'page',
     path: 'workplace/recruitment',
-    title: 'Recruitment',
+    title: 'Hiring & Applicants',
     tenantPath: '/workplace/recruitment',
     load: () => import('../modules/workplace/RecruitmentPage'),
+  },
+  {
+    kind: 'page',
+    path: 'workplace/prejoining',
+    title: 'Pre-joining',
+    tenantPath: '/workplace/prejoining',
+    load: () => import('../modules/prejoining/admin/PrejoiningAdminPage'),
   },
   {
     kind: 'page',
@@ -163,6 +198,13 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
     title: 'Performance',
     tenantPath: '/workplace/performance',
     load: () => import('../modules/workplace/PerformancePage'),
+  },
+  {
+    kind: 'page',
+    path: 'workplace/surveys',
+    title: 'Surveys',
+    tenantPath: '/workplace/surveys',
+    load: () => import('../modules/workplace/SurveysPage'),
   },
   {
     kind: 'page',
@@ -270,14 +312,14 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
   {
     kind: 'page',
     path: 'admin/expense-categories',
-    title: 'Expense categories',
+    title: 'Expense Categories & Policies',
     tenantPath: '/admin/expense-categories',
     load: () => import('../modules/admin/AdminExpenseCategoriesPage'),
   },
   {
     kind: 'page',
     path: 'admin/notifications',
-    title: 'Notification administration',
+    title: 'Announcements & Messages',
     tenantPath: '/admin/notifications',
     load: () => import('../modules/admin/AdminNotificationsPage'),
   },
@@ -294,6 +336,13 @@ export const TENANT_APP_ROUTES: AppChildRoute[] = [
     title: 'Attendance policy',
     tenantPath: '/admin/attendance-policy',
     load: () => import('../modules/admin/AdminAttendancePolicyPage'),
+  },
+  {
+    kind: 'page',
+    path: 'admin/company-locations',
+    title: 'Company locations',
+    tenantPath: '/admin/company-locations',
+    load: () => import('../modules/admin/AdminCompanyLocationsPage'),
   },
   {
     kind: 'page',

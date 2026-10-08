@@ -47,6 +47,7 @@ const ApproveExpenseModal = ({
             onChange={(event) => onChange({ ...target, draftApprove: event.target.value })}
             fullWidth
             inputMode="decimal"
+            autoComplete="off"
             required
           />
           <div className="flex gap-3">

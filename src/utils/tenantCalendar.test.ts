@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { tenantCalendarPeriod } from './tenantCalendar';
+import { millisecondsUntilTenantDateChange, tenantCalendarPeriod } from './tenantCalendar';
 
 describe('tenantCalendarPeriod', () => {
   it('uses the tenant timezone when browser-local and tenant calendar dates differ', () => {
@@ -14,5 +14,11 @@ describe('tenantCalendarPeriod', () => {
 
   it('rejects invalid tenant timezone configuration', () => {
     expect(() => tenantCalendarPeriod(new Date(), 'Not/A-Timezone')).toThrow(RangeError);
+  });
+
+  it('finds the exact next tenant midnight independently of the browser timezone', () => {
+    expect(
+      millisecondsUntilTenantDateChange(new Date('2026-09-11T18:29:59.900Z'), 'Asia/Kolkata')
+    ).toBe(100);
   });
 });

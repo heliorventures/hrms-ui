@@ -1,0 +1,38 @@
+fragment WorkingCalendarFields on WorkingCalendarPolicy {
+  activationDate
+  revision
+  locationId
+  businessDate
+  currentVersion {
+    id
+    effectiveFrom
+    inheritsDefault
+    fixedWeekdays
+    saturdayOrdinals
+  }
+  scheduledVersions {
+    id
+    effectiveFrom
+    inheritsDefault
+    fixedWeekdays
+    saturdayOrdinals
+  }
+}
+query WorkingCalendarPolicy($locationId: ID) {
+  workingCalendarPolicy(locationId: $locationId) {
+    ...WorkingCalendarFields
+  }
+}
+query PreviewWeeklyOffMonth($rule: WeeklyOffRuleInput!, $month: Int!, $year: Int!) {
+  previewWeeklyOffMonth(rule: $rule, month: $month, year: $year)
+}
+mutation ActivateWorkingCalendar($activationDate: NaiveDate!) {
+  activateWorkingCalendar(activationDate: $activationDate) {
+    ...WorkingCalendarFields
+  }
+}
+mutation ScheduleWeeklyOffPolicy($input: ScheduleWeeklyOffPolicyInput!) {
+  scheduleWeeklyOffPolicy(input: $input) {
+    ...WorkingCalendarFields
+  }
+}

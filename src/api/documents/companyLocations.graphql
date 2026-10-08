@@ -1,0 +1,65 @@
+query CompanyLocations($page: PageInput, $search: String, $activeOnly: Boolean = true) {
+  companyLocations(page: $page, search: $search, activeOnly: $activeOnly) {
+    nodes {
+      id
+      name
+      address
+      city
+      state
+      country
+      active
+      updatedAt
+    }
+    pageInfo {
+      totalCount
+      currentPage
+      hasNextPage
+      hasPrevPage
+    }
+  }
+}
+query CompanyLocationOptions($search: String) {
+  companyLocationOptions(search: $search) {
+    id
+    name
+  }
+}
+mutation SaveCompanyLocation($input: SaveCompanyLocationInput!) {
+  saveCompanyLocation(input: $input) {
+    id
+    name
+    address
+    city
+    state
+    country
+    active
+    updatedAt
+  }
+}
+mutation RetireCompanyLocation($id: ID!, $expectedUpdatedAt: DateTime!) {
+  retireCompanyLocation(id: $id, expectedUpdatedAt: $expectedUpdatedAt) {
+    id
+    active
+    updatedAt
+  }
+}
+query EmployeeLocationAssignment($employeeId: ID!) {
+  employeeLocationAssignment(employeeId: $employeeId) {
+    employeeId
+    locationId
+    locationName
+    effectiveFrom
+    revision
+    businessDate
+  }
+}
+mutation AssignEmployeeLocation($input: AssignEmployeeLocationInput!) {
+  assignEmployeeLocation(input: $input) {
+    employeeId
+    locationId
+    locationName
+    effectiveFrom
+    revision
+    businessDate
+  }
+}

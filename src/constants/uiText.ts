@@ -71,7 +71,7 @@ export const UI_FIELD_LABELS = {
 
 export const UI_PLACEHOLDER_TEXT = {
   employeeSearch: 'Search by employee code or name…',
-  globalSearch: 'Search pages, people, tools…',
+  globalSearch: 'Search pages and tools…',
   sidebarFilter: 'Filter menu and pages…',
   uuidEntitySearch: 'Search…',
 } as const;
@@ -94,7 +94,7 @@ export const NAV_LABELS = {
   benefits: 'Benefits',
   compensation: 'Compensation',
   compensationSetup: 'Compensation Setup',
-  dashboard: 'Dashboard',
+  dashboard: 'Home',
   documents: 'Documents',
   employees: 'Employees',
   expenseCategories: 'Expense Categories',
@@ -133,6 +133,7 @@ export const NAV_LABELS = {
   payslipsAndTax: 'Payslips & Tax',
   peopleAdmin: 'People Admin',
   performance: 'Performance',
+  surveys: 'Surveys',
   profileSettings: 'Profile & Settings',
   recruitment: 'Recruitment',
   reports: 'Reports',

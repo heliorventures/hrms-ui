@@ -1,6 +1,8 @@
 import { type FormEvent } from 'react';
+
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+
 import type {
   AssignmentForm,
   BoardResult,
@@ -27,24 +29,30 @@ export function SalaryComponentsSection({
   onSubmit,
 }: SalaryComponentsSectionProps) {
   return (
-    <Card title="Salary Components">
+    <Card>
       <form className="grid gap-3 md:grid-cols-6" onSubmit={onSubmit}>
         <input
           className="rounded-md border border-slate-300 px-3 py-2 text-sm md:col-span-2"
           placeholder="Component name, e.g. Basic"
           value={componentForm.name}
-          onChange={(event) => onComponentFormChange({ ...componentForm, name: event.target.value })}
+          onChange={(event) =>
+            onComponentFormChange({ ...componentForm, name: event.target.value })
+          }
         />
         <input
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
           placeholder="Code, e.g. BASIC"
           value={componentForm.code}
-          onChange={(event) => onComponentFormChange({ ...componentForm, code: event.target.value })}
+          onChange={(event) =>
+            onComponentFormChange({ ...componentForm, code: event.target.value })
+          }
         />
         <select
           className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
           value={componentForm.componentType}
-          onChange={(event) => onComponentFormChange({ ...componentForm, componentType: event.target.value })}
+          onChange={(event) =>
+            onComponentFormChange({ ...componentForm, componentType: event.target.value })
+          }
         >
           <option value="EARNING">Earning</option>
           <option value="DEDUCTION">Deduction</option>
@@ -54,7 +62,9 @@ export function SalaryComponentsSection({
           <input
             type="checkbox"
             checked={componentForm.isTaxable}
-            onChange={(event) => onComponentFormChange({ ...componentForm, isTaxable: event.target.checked })}
+            onChange={(event) =>
+              onComponentFormChange({ ...componentForm, isTaxable: event.target.checked })
+            }
           />
           Taxable
         </label>
@@ -108,7 +118,7 @@ export function SalaryStructureSection({
   onSubmit,
 }: SalaryStructureSectionProps) {
   return (
-    <Card title="Salary Structure Template">
+    <Card>
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="grid gap-3 md:grid-cols-2">
           <input
@@ -128,7 +138,9 @@ export function SalaryStructureSection({
           <select
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm md:col-span-2"
             value={lineDraft.salaryComponentId}
-            onChange={(event) => onLineDraftChange({ ...lineDraft, salaryComponentId: event.target.value })}
+            onChange={(event) =>
+              onLineDraftChange({ ...lineDraft, salaryComponentId: event.target.value })
+            }
           >
             <option value="">Select component</option>
             {(board?.salaryComponents ?? []).map((component) => (
@@ -140,7 +152,9 @@ export function SalaryStructureSection({
           <select
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
             value={lineDraft.calculationBasis}
-            onChange={(event) => onLineDraftChange({ ...lineDraft, calculationBasis: event.target.value })}
+            onChange={(event) =>
+              onLineDraftChange({ ...lineDraft, calculationBasis: event.target.value })
+            }
           >
             <option value="PERCENT_OF_CTC">% of CTC</option>
             <option value="PERCENT_OF_BASIC">% of Basic</option>
@@ -151,7 +165,9 @@ export function SalaryStructureSection({
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             placeholder="Value"
             value={lineDraft.calculationValue}
-            onChange={(event) => onLineDraftChange({ ...lineDraft, calculationValue: event.target.value })}
+            onChange={(event) =>
+              onLineDraftChange({ ...lineDraft, calculationValue: event.target.value })
+            }
           />
           <Button type="button" variant="outline" onClick={onAddLine}>
             Add line
@@ -160,10 +176,16 @@ export function SalaryStructureSection({
         {structureLines.length > 0 ? (
           <ul className="space-y-2">
             {structureLines.map((line, index) => {
-              const component = board?.salaryComponents.find((row) => row.id === line.salaryComponentId);
+              const component = board?.salaryComponents.find(
+                (row) => row.id === line.salaryComponentId
+              );
               return (
-                <li key={`${line.salaryComponentId}-${index}`} className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                  {component?.code ?? line.salaryComponentId}: {line.calculationValue} {line.calculationBasis}
+                <li
+                  key={`${line.salaryComponentId}-${index}`}
+                  className="rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                >
+                  {component?.code ?? line.salaryComponentId}: {line.calculationValue}{' '}
+                  {line.calculationBasis}
                 </li>
               );
             })}
@@ -180,7 +202,10 @@ export function SalaryStructureSection({
             <p className="font-medium text-slate-900">{structure.name}</p>
             <p className="mt-1 text-xs text-slate-500">
               {structure.components
-                .map((line) => `${line.componentCode}: ${line.calculationValue} ${line.calculationBasis}`)
+                .map(
+                  (line) =>
+                    `${line.componentCode}: ${line.calculationValue} ${line.calculationBasis}`
+                )
                 .join(' - ')}
             </p>
           </div>
@@ -210,7 +235,7 @@ export function AssignAnnualCtcSection({
   onSubmit,
 }: AssignAnnualCtcSectionProps) {
   return (
-    <Card title="Assign Annual CTC">
+    <Card>
       <form className="grid gap-3 md:grid-cols-5" onSubmit={onSubmit}>
         <select
           className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm md:col-span-2"
@@ -235,7 +260,9 @@ export function AssignAnnualCtcSection({
         <select
           className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
           value={assignmentForm.salaryStructureId}
-          onChange={(event) => onAssignmentFormChange({ ...assignmentForm, salaryStructureId: event.target.value })}
+          onChange={(event) =>
+            onAssignmentFormChange({ ...assignmentForm, salaryStructureId: event.target.value })
+          }
         >
           <option value="">Structure</option>
           {(board?.salaryStructures ?? []).map((structure) => (
@@ -248,7 +275,9 @@ export function AssignAnnualCtcSection({
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
           placeholder="Annual CTC, e.g. 3000000"
           value={assignmentForm.annualCtc}
-          onChange={(event) => onAssignmentFormChange({ ...assignmentForm, annualCtc: event.target.value })}
+          onChange={(event) =>
+            onAssignmentFormChange({ ...assignmentForm, annualCtc: event.target.value })
+          }
         />
         <Button type="submit" disabled={busy}>
           Assign
@@ -257,10 +286,14 @@ export function AssignAnnualCtcSection({
           type="date"
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
           value={assignmentForm.effectiveFrom}
-          onChange={(event) => onAssignmentFormChange({ ...assignmentForm, effectiveFrom: event.target.value })}
+          onChange={(event) =>
+            onAssignmentFormChange({ ...assignmentForm, effectiveFrom: event.target.value })
+          }
         />
         {selectedJoiningDate ? (
-          <p className="text-xs text-slate-500 md:col-span-4">Joining date: {selectedJoiningDate}</p>
+          <p className="text-xs text-slate-500 md:col-span-4">
+            Joining date: {selectedJoiningDate}
+          </p>
         ) : null}
       </form>
     </Card>
@@ -271,11 +304,22 @@ export function SalaryBreakupPreviewSection({ preview }: { preview: SalaryBreaku
   return (
     <Card title="Salary Breakup Preview">
       <div className="grid gap-3 text-sm md:grid-cols-4">
-        <div>Annual CTC: {preview.annualCtc}</div>
+        <div>
+          Annual CTC:{' '}
+          {preview.financials
+            ? (preview.financials.annual_ctc ?? 'Pending employer PF configuration')
+            : preview.annualCtc}
+        </div>
         <div>Monthly gross: {preview.monthlyGross}</div>
         <div>Monthly deductions: {preview.monthlyDeductions}</div>
         <div>Net before statutory: {preview.monthlyNetBeforeStatutory}</div>
       </div>
+      {preview.financials && (
+        <p className="mt-3 text-sm">
+          Annual gross (monthly gross × 12): {preview.financials.annual_gross}. Annual employer PF:{' '}
+          {preview.financials.annual_employer_pf ?? 'Awaiting configuration'}.
+        </p>
+      )}
       <ul className="mt-4 divide-y divide-slate-200">
         {preview.lines.map((line) => (
           <li key={line.salaryComponentId} className="grid gap-2 py-2 text-sm md:grid-cols-5">

@@ -1,7 +1,12 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
+import Textarea from '../../../components/common/Textarea';
 import type { PayrollComplianceFormState } from '../payrollTypes';
+import { PAYSLIP_COMPANY_ADDRESS_MAX_LENGTH } from '../payslipCompanyAddress';
+
+import PayslipEmployeeFieldSelector from './PayslipEmployeeFieldSelector';
+import PayslipTemplateSelector from './PayslipTemplateSelector';
 
 interface PayrollComplianceCardProps {
   form: PayrollComplianceFormState;
@@ -9,7 +14,7 @@ interface PayrollComplianceCardProps {
   busy: boolean;
   error: string | null;
   ok: string | null;
-  onChange: (field: keyof PayrollComplianceFormState, value: string) => void;
+  onChange: (field: keyof PayrollComplianceFormState, value: string | string[]) => void;
   onSave: () => void;
 }
 
@@ -22,16 +27,28 @@ const PayrollComplianceCard = ({
   onChange,
   onSave,
 }: PayrollComplianceCardProps) => (
-  <Card title="Employer Branding & Statutory (India)">
+  <Card>
+    <PayslipTemplateSelector
+      value={form.payslipTemplateInput}
+      employeeFields={form.payslipEmployeeFieldsInput}
+      companyHeaderName={form.payslipHeaderInput}
+      companyAddress={form.payslipCompanyAddressInput}
+      disabled={busy || loading}
+      onChange={(value) => onChange('payslipTemplateInput', value)}
+    />
+    <PayslipEmployeeFieldSelector
+      value={form.payslipEmployeeFieldsInput}
+      disabled={busy || loading}
+      onChange={(value) => onChange('payslipEmployeeFieldsInput', value)}
+    />
     <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-      Employer TAN / name drive Form 24Q / Form 16 CSV columns (empty → env fallback on the
-      payroll process). <strong className="font-medium">Pay run</strong> posts one line against
-      the <span className="font-mono">baseSalaryComponentCode</span> earning component
-      (employment salary); arrear payouts use{' '}
-      <span className="font-mono">arrearSalaryComponentCode</span>. Payslip PDF supports raster
-      logos (<strong>PNG</strong>/<strong>JPEG</strong> directly; <strong>WebP</strong>/
-      <strong>SVG</strong> are rasterized in-browser for PDF). Requires payroll statutory export
-      role.
+      Employer TAN / name drive Form 24Q / Form 16 CSV columns (empty → env fallback on the payroll
+      process). <strong className="font-medium">Pay run</strong> posts one line against the{' '}
+      <span className="font-mono">baseSalaryComponentCode</span> earning component (employment
+      salary); arrear payouts use <span className="font-mono">arrearSalaryComponentCode</span>.
+      Payslip PDF supports raster logos (<strong>PNG</strong>/<strong>JPEG</strong> directly;{' '}
+      <strong>WebP</strong>/<strong>SVG</strong> are rasterized in-browser for PDF). Requires
+      company-wide payroll management permission.
     </p>
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <Input
@@ -77,6 +94,19 @@ const PayrollComplianceCard = ({
         onChange={(event) => onChange('payslipLogoIdInput', event.target.value)}
         placeholder="file_storage.id after HR upload"
         className="min-w-[16rem] font-mono text-xs"
+      />
+      <Textarea
+        label="Company Address"
+        optionalLabel="Optional"
+        description="Shown below the company name on screen, print and PDF. Leave blank to hide. Maximum 1,000 characters."
+        value={form.payslipCompanyAddressInput}
+        onChange={(event) => onChange('payslipCompanyAddressInput', event.target.value)}
+        placeholder="Office / building, street, city, state and postal code"
+        autoComplete="street-address"
+        rows={3}
+        maxLength={PAYSLIP_COMPANY_ADDRESS_MAX_LENGTH}
+        disabled={busy || loading}
+        fullWidth
       />
       <Button
         type="button"

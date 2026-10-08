@@ -1,0 +1,107 @@
+type CompOffPolicy {
+  id: ID!
+  designationId: ID
+  employeeId: ID
+  leaveTypeId: ID!
+  enabled: Boolean!
+  validityDays: Int!
+  claimDeadlineDays: Int!
+  monthlyEarningLimit: String
+  yearlyEarningLimit: String
+  maxUnusedBalance: String
+  allowApprovedLeaveCancellation: Boolean!
+}
+type CompOffClaim {
+  id: ID!
+  employeeId: ID!
+  employeeName: String
+  employeeCode: String
+  workedDate: NaiveDate!
+  units: String!
+  status: String!
+  reason: String
+  rejectionReason: String
+  approvedBy: ID
+  approvedAt: DateTime
+  createdAt: DateTime!
+}
+type CompOffBalance {
+  earnedUnits: String!
+  reservedUnits: String!
+  usedUnits: String!
+  expiredUnits: String!
+  availableUnits: String!
+}
+input SubmitCompOffClaimInput {
+  workedDate: NaiveDate!
+  units: String!
+  reason: String
+}
+input UpsertCompOffPolicyInput {
+  id: ID
+  designationId: ID
+  employeeId: ID
+  enabled: Boolean!
+  validityDays: Int!
+  claimDeadlineDays: Int!
+  monthlyEarningLimit: String
+  yearlyEarningLimit: String
+  maxUnusedBalance: String
+  allowApprovedLeaveCancellation: Boolean!
+}
+type CompOffEmployeeOption {
+  id: ID!
+  employeeCode: String!
+  fullName: String!
+}
+type CompOffDesignationOption {
+  id: ID!
+  title: String!
+}
+type CompOffPolicyTargets {
+  employees: [CompOffEmployeeOption!]!
+  designations: [CompOffDesignationOption!]!
+}
+type ApprovedCompOffLeave {
+  id: ID!
+  employeeId: ID!
+  employeeName: String!
+  employeeCode: String!
+  fromDate: NaiveDate!
+  toDate: NaiveDate!
+  daysRequested: String!
+}
+extend type Query { approvedCompOffLeaves(limit: Int! = 50, offset: Int! = 0): [ApprovedCompOffLeave!]! }
+extend type Mutation { cancelApprovedCompOffLeave(leaveRequestId: ID!): LeaveRequest! }
+type ApprovedCompOffLeave {
+  id: ID!
+  employeeId: ID!
+  employeeName: String!
+  employeeCode: String!
+  fromDate: NaiveDate!
+  toDate: NaiveDate!
+  daysRequested: String!
+}
+extend type Query {
+  compOffPolicyTargets: CompOffPolicyTargets!
+}
+extend type Query {
+  compOffPolicy: CompOffPolicy
+  compOffPolicies: [CompOffPolicy!]!
+  compOffClaims(
+    limit: Int! = 100
+    offset: Int! = 0
+    status: String
+    mine: Boolean! = false
+    forApproval: Boolean! = false
+  ): [CompOffClaim!]!
+  compOffBalance: CompOffBalance!
+  approvedCompOffLeaves(limit: Int! = 50, offset: Int! = 0): [ApprovedCompOffLeave!]!
+}
+extend type Mutation {
+  submitCompOffClaim(input: SubmitCompOffClaimInput!): CompOffClaim!
+  decideCompOffClaim(claimId: ID!, approve: Boolean!, reason: String): CompOffClaim!
+  cancelCompOffClaim(claimId: ID!): CompOffClaim!
+  upsertCompOffPolicy(input: UpsertCompOffPolicyInput!): CompOffPolicy!
+  cancelApprovedCompOffLeave(leaveRequestId: ID!): LeaveRequest!
+}

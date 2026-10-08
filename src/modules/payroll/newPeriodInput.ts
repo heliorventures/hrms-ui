@@ -1,0 +1,33 @@
+import type { PeriodInput } from './periodInputTypes';
+
+/** Unknown monthly amounts stay blank until HR supplies and reviews them. */
+export const newPeriodInput = (year: number, month: number): PeriodInput => ({
+  year,
+  month,
+  gross_rule: 'FIXED_MINUS_LWP',
+  fixed_gross: null,
+  earned_gross_override: null,
+  month_days: null,
+  paid_days: null,
+  present_days: null,
+  lwp_days: null,
+  source_lwp_days: null,
+  lwp_divisor: '31',
+  lwp_amount_override: null,
+  lwp_basis: 'GROSS',
+  lwp_handling: 'SOURCE_GROSS_INCLUDES_REDUCTION',
+  variable_allowance_ot: null,
+  incentive: null,
+  advance_already_paid: null,
+  additional_deductions: [],
+  statutory_overrides: { PF: null, ESI: null, PT: null, TDS: null },
+  expected_earned_components: { BASIC: null, HRA: null, CONVEYANCE: null, OTHER: null },
+  expected_wages: {},
+  expected_employer_contributions: { pf: null, esi: null },
+  expected_statement: {},
+  contribution_rules: null,
+  ready: false,
+  status: 'DRAFT',
+  historical_lwp_included: false,
+  approved_lwp_review_hash: null,
+});

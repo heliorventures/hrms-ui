@@ -1,14 +1,17 @@
-import type { FormEvent } from 'react';
+import { useEffect, useRef, type FormEvent } from 'react';
 
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
+import AnnouncementVideoFields, {
+  type AnnouncementVideoValue,
+} from '../../notifications/components/AnnouncementVideoFields';
 
 interface DepartmentOption {
   id: string;
   name: string;
 }
 
-interface AnnouncementEditorFormProps {
+interface AnnouncementEditorFormProps extends AnnouncementVideoValue {
   body: string;
   busy: boolean;
   clearRoleAudience: boolean;
@@ -17,6 +20,7 @@ interface AnnouncementEditorFormProps {
   documentFile: File | null;
   employeePost: boolean;
   existingRoleCode: string;
+  hasExistingVideo: boolean;
   expiresAt: string;
   imageFile: File | null;
   isEditing: boolean;
@@ -24,6 +28,7 @@ interface AnnouncementEditorFormProps {
   publishAt: string;
   roleCode: string;
   title: string;
+  videoProgress: number | null;
   onBodyChange: (value: string) => void;
   onCancelEdit: () => void;
   onClearRoleAudienceChange: (value: boolean) => void;
@@ -37,6 +42,8 @@ interface AnnouncementEditorFormProps {
   onRoleCodeChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onTitleChange: (value: string) => void;
+  onVideoChange: (value: Partial<AnnouncementVideoValue>) => void;
+  onCancelVideoUpload: () => void;
 }
 
 const EditorIdentityFields = ({ model }: { model: AnnouncementEditorFormProps }) => (
@@ -170,29 +177,39 @@ const EditorScheduleFields = ({ model }: { model: AnnouncementEditorFormProps })
   </div>
 );
 
-const EditorAttachmentFields = ({ model }: { model: AnnouncementEditorFormProps }) => (
-  <>
-    <label className="block">
-      <span className="text-sm font-medium">Image</span>
-      <input
-        name="announcementImage"
-        type="file"
-        accept="image/*"
-        onChange={(event) => model.onImageChange(event.target.files?.[0] ?? null)}
-        className="mt-1 block w-full text-sm"
-      />
-    </label>
-    <label className="block">
-      <span className="text-sm font-medium">Document</span>
-      <input
-        name="announcementDocument"
-        type="file"
-        onChange={(event) => model.onDocumentChange(event.target.files?.[0] ?? null)}
-        className="mt-1 block w-full text-sm"
-      />
-    </label>
-  </>
-);
+const EditorAttachmentFields = ({ model }: { model: AnnouncementEditorFormProps }) => {
+  const imageInput = useRef<HTMLInputElement>(null);
+  const documentInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!model.imageFile && imageInput.current) imageInput.current.value = '';
+    if (!model.documentFile && documentInput.current) documentInput.current.value = '';
+  }, [model.imageFile, model.documentFile]);
+  return (
+    <>
+      <label className="block">
+        <span className="text-sm font-medium">Image</span>
+        <input
+          name="announcementImage"
+          ref={imageInput}
+          type="file"
+          accept="image/*"
+          onChange={(event) => model.onImageChange(event.target.files?.[0] ?? null)}
+          className="mt-1 block w-full text-sm"
+        />
+      </label>
+      <label className="block">
+        <span className="text-sm font-medium">Document</span>
+        <input
+          name="announcementDocument"
+          ref={documentInput}
+          type="file"
+          onChange={(event) => model.onDocumentChange(event.target.files?.[0] ?? null)}
+          className="mt-1 block w-full text-sm"
+        />
+      </label>
+    </>
+  );
+};
 
 const submitLabel = (busy: boolean, isEditing: boolean): string => {
   if (busy) return 'Saving...';
@@ -219,6 +236,14 @@ const AnnouncementEditorForm = (model: AnnouncementEditorFormProps) => (
     <EditorAudienceFields model={model} />
     <EditorScheduleFields model={model} />
     <EditorAttachmentFields model={model} />
+    <AnnouncementVideoFields
+      value={model}
+      change={model.onVideoChange}
+      disabled={model.busy}
+      progress={model.videoProgress}
+      cancelUpload={model.onCancelVideoUpload}
+      allowKeep={model.isEditing && model.hasExistingVideo}
+    />
     <Button type="submit" variant="primary" disabled={model.busy}>
       {submitLabel(model.busy, model.isEditing)}
     </Button>

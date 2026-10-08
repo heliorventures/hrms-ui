@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+// @vitest-environment jsdom
+// @vitest-environment jsdom
+// @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -21,7 +24,7 @@ vi.mock('../../../contexts/AuthContext', () => ({
     clientSession: {
       employeeId: 'employee-1',
       permissions: graphState.permissions,
-      permissionScopes: {},
+      permissionScopes: { 'leave:read': 'SELF' },
       resourceScopes: {},
     },
   }),
@@ -57,7 +60,7 @@ const balance = (index: number) => ({
 });
 
 function responseForVariables(variables: { limit: number }) {
-  if (variables.limit === 50) return { leaveTypes: [leaveType(0)] };
+  if ((variables as { limit: number }).limit === 50) return { leaveTypes: [leaveType(0)] };
   return { leaveBalances: [balance(0)] };
 }
 
@@ -82,6 +85,52 @@ afterEach(() => {
 });
 
 describe('LeaveBalanceCard truthful states', () => {
+  it('removes trailing decimal zeros while retaining fractional leave days', async () => {
+    graphState.client.request = vi.fn((_document, variables) =>
+      Promise.resolve(
+        (variables as { limit: number }).limit === 50
+          ? { leaveTypes: [leaveType(0)] }
+          : {
+              leaveBalances: [
+                { ...balance(0), balanceDays: '5.5000', usedDays: '2.0000', pendingDays: '0.5000' },
+              ],
+            }
+      )
+    );
+    renderCard();
+    expect(await screen.findByText('5.5')).toBeTruthy();
+    expect(screen.getByText('Used 2')).toBeTruthy();
+    expect(screen.getByText('Pending 0.5')).toBeTruthy();
+    expect(screen.queryByText('5.5000')).toBeNull();
+  });
+  it('shows the remaining balance with an accessible compact meter', async () => {
+    renderCard();
+    const meter = await screen.findByRole('meter', { name: 'Leave Type 0 remaining' });
+    expect(meter.getAttribute('aria-valuenow')).toBe('10');
+    expect(meter.getAttribute('aria-valuemax')).toBe('12');
+    expect(screen.getByText('10')).toBeTruthy();
+  });
+
+  it.each(['0', '-2', 'invalid'])(
+    'does not draw a misleading progress bar for entitlement %s',
+    async (entitledDays) => {
+      graphState.client.request = vi.fn((_document, variables) =>
+        Promise.resolve(
+          (variables as { limit: number }).limit === 50
+            ? { leaveTypes: [leaveType(0)] }
+            : {
+                leaveBalances: [{ ...balance(0), entitledDays, balanceDays: '-3' }],
+              }
+        )
+      );
+      renderCard();
+      expect(await screen.findByText('-3')).toBeTruthy();
+      expect(screen.queryByRole('meter')).toBeNull();
+    }
+  );
+});
+
+describe('LeaveBalanceCard access and query states', () => {
   it('does not render or request balances without leave:read', async () => {
     graphState.permissions = new Set();
     const view = renderCard();
@@ -192,6 +241,6 @@ describe('LeaveBalanceCard truthful states', () => {
     const typeName = await screen.findByText(longTypeName);
     expect(typeName.className).toContain('min-w-0');
     expect(typeName.className).toContain('break-words');
-    expect(screen.getByRole('link', { name: 'Open Leave Center →' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Open leave calendar →' })).toBeTruthy();
   });
 });

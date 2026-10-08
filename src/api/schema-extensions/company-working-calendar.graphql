@@ -1,0 +1,108 @@
+input PageInput {
+  page: Int = 1
+  perPage: Int = 25
+}
+type PageInfo {
+  totalCount: Int!
+  totalPages: Int!
+  currentPage: Int!
+  perPage: Int!
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+}
+type CompanyLocation {
+  id: ID!
+  name: String!
+  address: String
+  city: String
+  state: String
+  country: String
+  active: Boolean!
+  updatedAt: DateTime!
+}
+type CompanyLocationPage {
+  nodes: [CompanyLocation!]!
+  pageInfo: PageInfo!
+}
+type CompanyLocationOption {
+  id: ID!
+  name: String!
+}
+type EmployeeLocationAssignment {
+  employeeId: ID!
+  locationId: ID
+  locationName: String
+  effectiveFrom: NaiveDate
+  revision: Int!
+  businessDate: NaiveDate!
+}
+input SaveCompanyLocationInput {
+  id: ID
+  expectedUpdatedAt: DateTime
+  name: String!
+  address: String
+  city: String
+  state: String
+  country: String
+}
+input AssignEmployeeLocationInput {
+  employeeId: ID!
+  locationId: ID
+  effectiveDate: NaiveDate!
+  expectedRevision: Int!
+}
+input WeeklyOffRuleInput {
+  fixedWeekdays: [Int!]!
+  saturdayOrdinals: [Int!]!
+}
+input ScheduleWeeklyOffPolicyInput {
+  locationId: ID
+  effectiveFrom: NaiveDate!
+  inheritsDefault: Boolean!
+  rule: WeeklyOffRuleInput!
+  expectedRevision: Int!
+}
+type WeeklyOffPolicyVersion {
+  id: ID!
+  effectiveFrom: NaiveDate!
+  inheritsDefault: Boolean!
+  fixedWeekdays: [Int!]!
+  saturdayOrdinals: [Int!]!
+}
+type WorkingCalendarPolicy {
+  activationDate: NaiveDate
+  revision: Int!
+  locationId: ID
+  businessDate: NaiveDate!
+  currentVersion: WeeklyOffPolicyVersion
+  scheduledVersions: [WeeklyOffPolicyVersion!]!
+}
+extend type Employee {
+  locationId: ID
+  locationName: String
+  locationAssignmentEffectiveFrom: NaiveDate
+}
+extend type Query {
+  companyLocations(
+    page: PageInput
+    search: String
+    activeOnly: Boolean = true
+  ): CompanyLocationPage!
+  companyLocationOptions(search: String, limit: Int = 50): [CompanyLocationOption!]!
+  employeeLocationAssignment(employeeId: ID!): EmployeeLocationAssignment!
+  workingCalendarPolicy(locationId: ID): WorkingCalendarPolicy!
+  previewWeeklyOffMonth(rule: WeeklyOffRuleInput!, month: Int!, year: Int!): [NaiveDate!]!
+  leaveDatePreview(
+    leaveTypeId: ID!
+    fromDate: NaiveDate!
+    toDate: NaiveDate!
+    isHalfDay: Boolean = false
+  ): JSON!
+}
+extend type Mutation {
+  saveCompanyLocation(input: SaveCompanyLocationInput!): CompanyLocation!
+  retireCompanyLocation(id: ID!, expectedUpdatedAt: DateTime!): CompanyLocation!
+  assignEmployeeLocation(input: AssignEmployeeLocationInput!): EmployeeLocationAssignment!
+  activateWorkingCalendar(activationDate: NaiveDate!): WorkingCalendarPolicy!
+  scheduleWeeklyOffPolicy(input: ScheduleWeeklyOffPolicyInput!): WorkingCalendarPolicy!
+}

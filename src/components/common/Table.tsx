@@ -1,5 +1,7 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+
 import { UI_EMPTY_TEXT, UI_STATUS_TEXT } from '../../constants/uiText';
+
 import DataTable, { type DataTableColumn } from './DataTable';
 
 interface TableColumn<T> {
@@ -17,6 +19,13 @@ interface TableProps<T> {
   loading?: boolean;
   loadingMessage?: string;
   ariaLabel?: string;
+  renderMobileRow?: (item: T) => ReactNode;
+}
+
+function resolveTableState(loading: boolean, error: string | null, rowCount: number) {
+  if (loading) return 'loading';
+  if (error) return 'error';
+  return rowCount === 0 ? 'empty' : 'ready';
 }
 
 const Table = <T,>({
@@ -28,16 +37,27 @@ const Table = <T,>({
   loading = false,
   loadingMessage = UI_STATUS_TEXT.loading,
   ariaLabel = 'Records',
+  renderMobileRow,
 }: TableProps<T>) => {
   const dataTableColumns: DataTableColumn<T>[] = columns.map((column) => ({
     id: String(column.key),
     header: column.label,
     cell: column.render ?? ((item) => String(item[column.key as keyof T])),
   }));
-  const state = loading ? 'loading' : errorMessage ? 'error' : data.length === 0 ? 'empty' : 'ready';
+  const state = resolveTableState(loading, errorMessage, data.length);
   const stateMessage = loading ? loadingMessage : errorMessage || emptyMessage;
 
-  return <DataTable ariaLabel={ariaLabel} rows={data} columns={dataTableColumns} getRowId={keyExtractor} state={state} stateMessage={stateMessage} />;
+  return (
+    <DataTable
+      ariaLabel={ariaLabel}
+      rows={data}
+      columns={dataTableColumns}
+      getRowId={keyExtractor}
+      state={state}
+      stateMessage={stateMessage}
+      renderMobileRow={renderMobileRow}
+    />
+  );
 };
 
 export default Table;

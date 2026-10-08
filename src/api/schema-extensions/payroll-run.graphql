@@ -4,24 +4,34 @@
 # (e.g. `Date` vs `NaiveDate`).
 
 type PayrollComplianceSetting {
+  payslipTemplate: String!
+  payslipEmployeeFields: JSON!
   employerTan: String
   employerLegalName: String
   baseSalaryComponentCode: String!
   arrearSalaryComponentCode: String!
   payslipHeaderTitle: String
+  payslipCompanyAddress: String
   payslipLogoFileStorageId: ID
 }
 
 input UpsertPayrollComplianceSettingInput {
+  payslipTemplate: String
+  payslipEmployeeFields: [String!]
   employerTan: String
   employerLegalName: String
   baseSalaryComponentCode: String
   arrearSalaryComponentCode: String
   payslipHeaderTitle: String
+  payslipCompanyAddress: String
   payslipLogoFileStorageId: ID
 }
 
 extend type Query {
+  employeePayrollEligibility(employeeId: ID!, asOf: NaiveDate!): JSON
+  payrollDraft(cycleId: ID!): JSON
+  payrollPeriodLocked(year: Int!, month: Int!): Boolean!
+  companyPayrollPolicies: JSON!
   payrollComplianceSetting: PayrollComplianceSetting
   payslipLogoSignedReadUrl(fileStorageId: ID!, ttlSeconds: Int = 600): String!
   payrollBankTransferCsv(month: Int!, year: Int!): String!
@@ -29,11 +39,20 @@ extend type Query {
   indiaFyPayrollEmployeeTotalsCsv(fyStartYear: Int!): String!
   indiaFyQuarterPayrollEmployeeTotalsCsv(fyStartYear: Int!, quarter: Int!): String!
   indiaForm16PartBFyPrepStubCsv(fyStartYear: Int!): String!
-  indiaForm24qSalaryPaymentMonthlyStubCsv(month: Int!, year: Int!): String!
+  indiaForm24QSalaryPaymentMonthlyStubCsv(month: Int!, year: Int!): String!
   indiaEpfMonthlyEcrPrepStubCsv(month: Int!, year: Int!): String!
 }
 
 extend type Mutation {
+  saveEmployeePayrollEligibility(employeeId: ID!, input: JSON!): JSON!
+  calculatePayrollCycle(cycleId: ID!, expectedRevision: Int): JSON!
+  finalizePayrollCycle(
+    cycleId: ID!
+    draftRevision: Int!
+    fingerprint: String!
+    acknowledgement: JSON!
+  ): JSON!
+  saveCompanyPayrollPolicy(input: JSON!, expectedRevision: Int): JSON!
   upsertPayrollComplianceSetting(
     input: UpsertPayrollComplianceSettingInput!
   ): PayrollComplianceSetting!

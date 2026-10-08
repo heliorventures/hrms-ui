@@ -1,12 +1,48 @@
 import Badge from '../../../components/common/Badge';
 import type { AnnouncementRow } from '../notificationTypes';
+
 import AnnouncementAttachmentAction from './AnnouncementAttachmentAction';
+import AnnouncementVideo from './AnnouncementVideo';
 
 interface AnnouncementListProps {
   announcements: AnnouncementRow[];
   deptNameById: Map<string, string>;
   loading: boolean;
 }
+
+const AnnouncementAudienceDetails = ({
+  announcement,
+  deptNameById,
+}: {
+  announcement: AnnouncementRow;
+  deptNameById: Map<string, string>;
+}) => (
+  <>
+    {(announcement.targetDepartmentId ||
+      announcement.targetLocationId ||
+      (announcement.targetAudience?.startsWith('ROLE:') ?? false)) && (
+      <div className="mt-2 flex flex-wrap gap-2">
+        {announcement.targetDepartmentId ? (
+          <Badge variant="neutral" size="sm">
+            {deptNameById.has(announcement.targetDepartmentId)
+              ? `Department ${deptNameById.get(announcement.targetDepartmentId)}`
+              : 'Department'}
+          </Badge>
+        ) : null}
+        {announcement.targetLocationId ? (
+          <Badge variant="neutral" size="sm">
+            Location
+          </Badge>
+        ) : null}
+        {announcement.targetAudience?.startsWith('ROLE:') ? (
+          <Badge variant="neutral" size="sm">
+            Role {announcement.targetAudience.slice('ROLE:'.length)}
+          </Badge>
+        ) : null}
+      </div>
+    )}{' '}
+  </>
+);
 
 const AnnouncementList = ({ announcements, deptNameById, loading }: AnnouncementListProps) => {
   if (loading) {
@@ -50,27 +86,12 @@ const AnnouncementList = ({ announcements, deptNameById, loading }: Announcement
               )}
             </div>
           </div>
-          {(announcement.targetDepartmentId ||
-            announcement.targetLocationId ||
-            (announcement.targetAudience?.startsWith('ROLE:') ?? false)) && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {announcement.targetDepartmentId ? (
-                <Badge variant="neutral" size="sm">
-                  {deptNameById.has(announcement.targetDepartmentId)
-                    ? `Department ${deptNameById.get(announcement.targetDepartmentId)}`
-                    : 'Department'}
-                </Badge>
-              ) : null}
-              {announcement.targetLocationId ? (
-                <Badge variant="neutral" size="sm">Location</Badge>
-              ) : null}
-              {announcement.targetAudience?.startsWith('ROLE:') ? (
-                <Badge variant="neutral" size="sm">
-                  Role {announcement.targetAudience.slice('ROLE:'.length)}
-                </Badge>
-              ) : null}
-            </div>
-          )}
+          <AnnouncementVideo
+            announcementId={announcement.id}
+            available={announcement.hasVideoAttachment}
+            link={announcement.videoLink}
+          />
+          <AnnouncementAudienceDetails announcement={announcement} deptNameById={deptNameById} />
           <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
             Publish at:{' '}
             {announcement.publishAt

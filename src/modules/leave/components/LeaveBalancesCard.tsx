@@ -1,7 +1,11 @@
-import Card from '../../../components/common/Card';
 import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
+import Card from '../../../components/common/Card';
+import type { ImportedLeaveHistory } from '../importedLeaveTypes';
+
+import LeaveBalanceRow from './LeaveBalanceRow';
 
 interface LeaveBalancesCardProps {
+  importedHistory?: ImportedLeaveHistory | null;
   balanceYear: number;
   balances: LeaveBoardQuery['leaveBalances'];
   leaveTypes: LeaveBoardQuery['leaveTypes'];
@@ -12,6 +16,7 @@ interface LeaveBalancesCardProps {
 }
 
 const LeaveBalancesCard = ({
+  importedHistory,
   balanceYear,
   balances,
   leaveTypes,
@@ -44,47 +49,46 @@ const LeaveBalancesCard = ({
   >
     {loading ? (
       <p className="text-sm text-gray-500 dark:text-gray-400">Loading Balances...</p>
-    ) : leaveTypes.length ? (
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Type</th>
-              <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Available</th>
-              <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Pending</th>
-              <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Used</th>
-              <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Entitled</th>
-              <th className="py-2 font-medium text-gray-700 dark:text-gray-300">Provisioning</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leaveTypes.map((leaveType) => {
-              const balance = balances.find((row) => row.leaveTypeId === leaveType.id);
-              return (
-                <tr
-                  key={leaveType.id}
-                  className="border-b border-gray-100 dark:border-gray-800 last:border-0"
-                >
-                  <td className="py-2 pr-4 text-gray-900 dark:text-white">
-                    {leaveTypeNameById.get(leaveType.id) ?? leaveType.name}
-                  </td>
-                  <td className="py-2 pr-4 font-mono text-xs">{balance?.balanceDays ?? '0'}</td>
-                  <td className="py-2 pr-4 font-mono text-xs">{balance?.pendingDays ?? '0'}</td>
-                  <td className="py-2 pr-4 font-mono text-xs">{balance?.usedDays ?? '0'}</td>
-                  <td className="py-2 pr-4 font-mono text-xs">{balance?.entitledDays ?? '0'}</td>
-                  <td className="py-2 text-xs text-gray-600 dark:text-gray-400">
-                    {balance ? 'Provisioned' : 'Not Provisioned'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
     ) : (
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        No Leave Balances For This Year. HR May Need To Provision Balances.
-      </p>
+      <>
+        {leaveTypes.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Type</th>
+                  <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">
+                    Available
+                  </th>
+                  <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">
+                    Pending
+                  </th>
+                  <th className="py-2 pr-4 font-medium text-gray-700 dark:text-gray-300">Used</th>
+                  <th className="py-2 font-medium text-gray-700 dark:text-gray-300">Entitled</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaveTypes.map((leaveType) => (
+                  <LeaveBalanceRow
+                    key={leaveType.id}
+                    leaveType={leaveType}
+                    balance={balances.find((row) => row.leaveTypeId === leaveType.id)}
+                    imported={
+                      importedHistory?.leave_type_id === leaveType.id ? importedHistory : null
+                    }
+                    name={leaveTypeNameById.get(leaveType.id) ?? leaveType.name}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {leaveTypes.length === 0 && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No Leave Balances For This Year. HR May Need To Provision Balances.
+          </p>
+        )}
+      </>
     )}
   </Card>
 );

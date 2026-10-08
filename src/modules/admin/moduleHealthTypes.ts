@@ -1,8 +1,10 @@
+import type { DocumentNode } from 'graphql';
+
 export interface ProbeConfig {
   key: string;
   label: string;
   plane: 'client' | 'operator';
-  query: string;
+  query: DocumentNode;
   previewFields: string[];
 }
 

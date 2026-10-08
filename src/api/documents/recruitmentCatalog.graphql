@@ -1,0 +1,20 @@
+query RecruitmentSetup($jlim: Int!, $alim: Int!, $jobOffset: Int!) {
+  jobPostings(limit: $jlim, offset: $jobOffset) {
+    id
+    title
+    description
+    status
+    vacancies
+    employmentType
+    openDate
+    closeDate
+  }
+  applications(limit: $alim) {
+    id
+    jobId
+    candidateName
+    candidateEmail
+    status
+    appliedAt
+  }
+}

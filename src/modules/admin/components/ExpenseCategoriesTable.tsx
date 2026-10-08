@@ -41,7 +41,7 @@ const ExpenseCategoriesTable = ({ rows, loading, onEdit, onDelete }: ExpenseCate
         key: 'actions',
         label: '',
         render: (row) => (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" data-tour-anchor="expense-categories.row-actions">
             <Button
               type="button"
               variant="outline"

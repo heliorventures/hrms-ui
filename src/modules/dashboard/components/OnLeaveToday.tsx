@@ -1,31 +1,23 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
 import { OnLeaveTodayDocument, type OnLeaveTodayQuery } from '../../../api/graphql/graphql';
 import AsyncState from '../../../components/common/AsyncState';
 import Button from '../../../components/common/Button';
-import Card from '../../../components/common/Card';
+import { useAnchoredPopoverPosition } from '../../../components/common/useAnchoredPopoverPosition';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 import { toIsoDate } from '../../../utils/calendarRange';
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
+import Card from './WorkplaceSection';
 
 const LEAVE_REQUEST_LIMIT = 50;
 const LEAVE_TYPE_LIMIT = 50;
 
 type LeavePerson = OnLeaveTodayQuery['leaveRequests'][number];
 type LeavePayload = OnLeaveTodayQuery;
-type LeaveTypeMap = Map<string, { code: string; name: string }>;
-
-const buildLeaveTypeMap = (payload: LeavePayload | null) => {
-  const leaveTypes: LeaveTypeMap = new Map();
-  for (const type of payload?.leaveTypes ?? []) {
-    leaveTypes.set(type.id, { name: type.name, code: type.code });
-  }
-  return leaveTypes;
-};
-
 const selectOnLeaveToday = (payload: LeavePayload | null, today: string) =>
   (payload?.leaveRequests ?? []).filter((leave) => {
     const status = leave.status.toLowerCase();
@@ -51,7 +43,7 @@ const OnLeaveTodayFooter = ({ hasData, onRefresh, phase }: OnLeaveTodayFooterPro
         busyLabel="Refreshing Leave Requests…"
         onClick={onRefresh}
       >
-        Refresh Leave Requests
+        Refresh
       </Button>
     ) : null}
     <Link
@@ -63,22 +55,88 @@ const OnLeaveTodayFooter = ({ hasData, onRefresh, phase }: OnLeaveTodayFooterPro
   </div>
 );
 
-const leaveTypeLabel = (person: LeavePerson, leaveTypeById: LeaveTypeMap) => {
-  const leaveType = leaveTypeById.get(person.leaveTypeId);
-  return leaveType ? `${leaveType.name} (${leaveType.code})` : 'Leave';
-};
+const LeaveChip = ({ name }: { name: string }) => {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const tooltipId = useId();
+  const { style } = useAnchoredPopoverPosition({ open, triggerRef, panelRef, align: 'start' });
+  const cancelClose = () => clearTimeout(closeTimer.current);
+  const show = () => {
+    cancelClose();
+    setOpen(true);
+  };
+  const hideSoon = () => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  };
 
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+  useEffect(() => {
+    if (!open) return;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    const outside = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!triggerRef.current?.contains(target) && !panelRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('keydown', dismiss);
+    document.addEventListener('pointerdown', outside);
+    return () => {
+      document.removeEventListener('keydown', dismiss);
+      document.removeEventListener('pointerdown', outside);
+    };
+  }, [open]);
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-label={name}
+        aria-describedby={open ? tooltipId : undefined}
+        onMouseEnter={show}
+        onMouseLeave={hideSoon}
+        onFocus={show}
+        onBlur={() => setOpen(false)}
+        onClick={show}
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+      >
+        {name
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((part) => part[0])
+          .join('')
+          .toUpperCase()}
+      </button>
+      {open &&
+        createPortal(
+          <div
+            ref={panelRef}
+            id={tooltipId}
+            role="tooltip"
+            style={style}
+            onMouseEnter={cancelClose}
+            onMouseLeave={hideSoon}
+            className="fixed z-50 w-max max-w-xs break-words rounded-lg border border-line bg-surface px-3 py-2 text-sm text-content-primary shadow-lg"
+          >
+            {name}
+          </div>,
+          document.body
+        )}
+    </>
+  );
+};
 interface OnLeaveTodayListProps {
   capped: boolean;
-  leaveTypeById: LeaveTypeMap;
   people: LeavePerson[];
 }
 
-const OnLeaveTodayList = ({
-  capped,
-  leaveTypeById,
-  people,
-}: OnLeaveTodayListProps) => {
+const OnLeaveTodayList = ({ capped, people }: OnLeaveTodayListProps) => {
   if (people.length === 0 && capped) {
     return (
       <AsyncState
@@ -91,47 +149,22 @@ const OnLeaveTodayList = ({
 
   if (people.length === 0) {
     return (
-      <AsyncState
-        kind="empty"
-        title="No One Is on Leave Today."
-        description="Approved leave for today will appear here."
-      />
+      <p role="status" className="text-sm text-content-secondary">
+        No one is on leave today.
+      </p>
     );
   }
 
   return (
-    <div className="space-y-2">
-      {people.map((person) => {
-        const displayName = `${person.employeeName!.trim()} (${person.employeeCode!.trim()})`;
-        const from = String(person.fromDate).slice(0, 10);
-        const to = String(person.toDate).slice(0, 10);
-        return (
-          <div
-            key={person.id}
-            className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="break-words text-sm font-medium text-gray-900 dark:text-white">
-                {displayName}
-              </p>
-              <p className="break-words text-xs text-gray-500 dark:text-gray-400">
-                {leaveTypeLabel(person, leaveTypeById)}
-                {person.isHalfDay ? ' · Half day' : ''}
-                {person.halfDaySession
-                  ? ` (${person.halfDaySession.replace('_', ' ').toLowerCase()})`
-                  : ''}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {new Date(from).toLocaleDateString('en-IN')} to{' '}
-                {new Date(to).toLocaleDateString('en-IN')}
-              </p>
-            </div>
-            <span className="shrink-0 text-xs capitalize text-gray-500 dark:text-gray-400">
-              {person.status}
-            </span>
-          </div>
-        );
-      })}
+    <div className="flex flex-wrap items-center gap-2">
+      {people.slice(0, 3).map((person) => (
+        <LeaveChip key={person.id} name={(person.employeeName ?? 'Employee').trim()} />
+      ))}
+      {people.length > 3 ? (
+        <p className="w-full text-xs text-content-muted">
+          Showing 3 people. Open the calendar for more.
+        </p>
+      ) : null}
     </div>
   );
 };
@@ -169,11 +202,8 @@ const OnLeaveToday = () => {
     [client, today]
   );
   const { data: payload, error, phase, refresh } = useRetainedQuery(loadLeaveRequests);
-  const leaveTypeById = useMemo(() => buildLeaveTypeMap(payload), [payload]);
   const onLeaveToday = useMemo(() => selectOnLeaveToday(payload, today), [payload, today]);
-  const hasMissingEmployeeLabels = onLeaveToday.some(
-    (person) => !person.employeeName?.trim() || !person.employeeCode?.trim()
-  );
+  const hasMissingEmployeeLabels = onLeaveToday.some((person) => !person.employeeName?.trim());
   const leaveRequestsMayBeCapped = payload?.leaveRequests.length === LEAVE_REQUEST_LIMIT;
   const onRefresh = () => void refresh();
 
@@ -212,11 +242,7 @@ const OnLeaveToday = () => {
           description="Refresh the leave list. If the issue continues, ask an administrator to verify employee records."
         />
       ) : (
-        <OnLeaveTodayList
-          capped={leaveRequestsMayBeCapped}
-          leaveTypeById={leaveTypeById}
-          people={onLeaveToday}
-        />
+        <OnLeaveTodayList capped={leaveRequestsMayBeCapped} people={onLeaveToday} />
       )}
       <OnLeaveTodayCaps payload={payload} requestsCapped={leaveRequestsMayBeCapped} />
       <OnLeaveTodayFooter hasData phase={phase} onRefresh={onRefresh} />

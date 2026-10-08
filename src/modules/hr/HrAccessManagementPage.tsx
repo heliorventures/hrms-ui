@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Card from '../../components/common/Card';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { useDialogs } from '../../contexts/DialogContext';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   PermissionIdsForRoleDocument,
   PermissionScopesForRoleDocument,
@@ -14,7 +11,15 @@ import {
   type PermissionScopesForRoleQuery,
   type RbacAdminBoardQuery,
   type RoleIdsForUserQuery,
+  RbacAdminBoardWithUsernameDocument,
 } from '../../api/graphql/graphql';
+import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
+import PageInformation from '../../components/common/PageInformation';
+import { useDialogs } from '../../contexts/DialogContext';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import RbacAccessTabs from './components/RbacAccessTabs';
 import RolePermissionsPanel from './components/RolePermissionsPanel';
 import RoleScopesPanel from './components/RoleScopesPanel';
@@ -35,29 +40,6 @@ type RbacAdminBoardData = Omit<RbacAdminBoardQuery, 'tenantDirectoryUsers'> & {
     isActive: boolean;
   }>;
 };
-
-const RbacAdminBoardWithUsernameDocument = `
-  query RbacAdminBoardWithUsername($uLim: Int! = 120, $rLim: Int! = 80, $pLim: Int! = 400) {
-    tenantDirectoryUsers(limit: $uLim) {
-      id
-      username
-      email
-      isActive
-    }
-    tenantDirectoryRoles(limit: $rLim) {
-      id
-      name
-      description
-      isSystemRole
-    }
-    tenantCatalogPermissions(limit: $pLim) {
-      id
-      resource
-      action
-      description
-    }
-  }
-`;
 
 const HrAccessManagementPage = () => {
   const client = useGraphClient('client');
@@ -312,18 +294,23 @@ const HrAccessManagementPage = () => {
   };
 
   const updateScopeRow = (index: number, patch: Partial<RbacScopeRow>) => {
-    setScopeRows((rows) => rows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)));
+    setScopeRows((rows) =>
+      rows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row))
+    );
   };
 
   const roles = board?.tenantDirectoryRoles ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Roles & Permissions</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage tenant RBAC. Changes to roles or permissions require users to obtain a fresh token.
-        </p>
+        <PageHeader title="Roles & Permissions" />
+        <PageInformation title="Roles and permissions">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Manage tenant RBAC. Changes to roles or permissions require users to obtain a fresh
+            token.
+          </p>
+        </PageInformation>
       </div>
 
       {error && (
@@ -377,7 +364,9 @@ const HrAccessManagementPage = () => {
           rows={scopeRows}
           selectedRoleId={scopeRoleId}
           onAddRow={() => setScopeRows((rows) => [...rows, DEFAULT_SCOPE_ROW])}
-          onRemoveRow={(index) => setScopeRows((rows) => rows.filter((_, rowIndex) => rowIndex !== index))}
+          onRemoveRow={(index) =>
+            setScopeRows((rows) => rows.filter((_, rowIndex) => rowIndex !== index))
+          }
           onRoleChange={setScopeRoleId}
           onSave={() => void saveScopes()}
           onUpdateRow={updateScopeRow}

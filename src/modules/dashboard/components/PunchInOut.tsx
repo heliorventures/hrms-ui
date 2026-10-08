@@ -1,41 +1,35 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-
-import { PunchDaySummaryDocument, PunchTodayDocument } from '../../../api/graphql/graphql';
 import {
-  authorizationStateKey,
-  createPermissionService,
-} from '../../../auth/permissionService';
-import AsyncState from '../../../components/common/AsyncState';
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type ReactNode,
+} from 'react';
+
+import { AttendancePunchTodayDocument } from '../../../api/attendance/graphql';
+import { authorizationStateKey, createPermissionService } from '../../../auth/permissionService';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import PageInformation from '../../../components/common/PageInformation';
 import PageNotice from '../../../components/common/PageNotice';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useTenant } from '../../../contexts/TenantContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
+import type { RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
+import { formatAttendanceWindow } from '../../../utils/attendanceDay';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { formatBackendTime } from '../../../utils/timeFormat';
 
+import AttendanceSummaryDetails from './AttendanceSummaryDetails';
+import type { AttendanceRow, Summary } from './attendanceSummaryTypes';
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
-
-type AttendanceRow = {
-  id: string;
-  checkInTime?: string | null;
-  checkOutTime?: string | null;
-  checkInLat?: string | null;
-  checkInLng?: string | null;
-  checkOutLat?: string | null;
-  checkOutLng?: string | null;
-  source?: string | null;
-  status?: string | null;
-};
-
-type Summary = {
-  workDate: string;
-  totalWorkedMinutes: number;
-  openSegment: AttendanceRow | null;
-  segments: AttendanceRow[];
-};
+import {
+  displayAttendanceRow,
+  usePunchDaySummary,
+  type PunchGraphClient,
+} from './usePunchDaySummary';
 
 function getCurrentPosition(): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
@@ -51,22 +45,28 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
   });
 }
 
+async function punchInput(trackLocation: boolean) {
+  if (!trackLocation) return null;
+  const position = await getCurrentPosition();
+  return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+}
+
 function formatCoord(lat?: string | null, lng?: string | null) {
   if (lat === null || lat === undefined || lng === null || lng === undefined) return null;
   return `${lat}, ${lng}`;
 }
 
-type GraphClient = ReturnType<typeof useGraphClient>;
-
-const formatTime = (date: Date) =>
+const formatTime = (date: Date, timezone: string) =>
   date.toLocaleTimeString('en-IN', {
+    timeZone: timezone,
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
   });
 
-const formatDate = (date: Date) =>
+const formatDate = (date: Date, timezone: string) =>
   date.toLocaleDateString('en-IN', {
+    timeZone: timezone,
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -85,45 +85,95 @@ const useDashboardCardClock = () => {
 };
 
 interface UsePunchMutationOptions {
-  client: GraphClient;
+  timezone: string;
+  client: PunchGraphClient;
   refreshSummary: () => Promise<void>;
   summary: Summary | null;
   summaryPhase: RetainedQueryPhase;
+  summaryOwner: string;
+}
+
+function summaryReady(summary: Summary | null, phase: RetainedQueryPhase): summary is Summary {
+  return summary !== null && phase === 'ready';
+}
+
+function summaryExpired(summary: Summary): boolean {
+  return Date.now() >= Date.parse(summary.endsAt);
+}
+
+function submissionIsOwned(
+  mounted: MutableRefObject<boolean>,
+  generationRef: MutableRefObject<number>,
+  generation: number
+): boolean {
+  return mounted.current && generationRef.current === generation;
 }
 
 const usePunchMutation = ({
+  timezone,
   client,
   refreshSummary,
   summary,
   summaryPhase,
+  summaryOwner,
 }: UsePunchMutationOptions) => {
   const [lastPunch, setLastPunch] = useState<AttendanceRow | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [trackLocation, setTrackLocation] = useState(true);
   const submittingRef = useRef(false);
+  const generationRef = useRef(0);
+  const mountedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    mountedRef.current = true;
+    generationRef.current += 1;
+    submittingRef.current = false;
+    setSubmitting(false);
+    setMutationError(null);
+    setLastPunch(null);
+    return () => {
+      mountedRef.current = false;
+      generationRef.current += 1;
+      submittingRef.current = false;
+    };
+  }, [client, summaryOwner]);
 
   const handlePunch = async () => {
-    if (submittingRef.current || !summary || summaryPhase !== 'ready') return;
+    if (submittingRef.current) return;
+    if (!summaryReady(summary, summaryPhase)) return;
+    if (summaryExpired(summary)) {
+      await refreshSummary();
+      return;
+    }
+    const generation = generationRef.current;
+    const ownsSubmission = () => submissionIsOwned(mountedRef, generationRef, generation);
     submittingRef.current = true;
     setMutationError(null);
     setSubmitting(true);
     try {
-      let input: { latitude: number; longitude: number } | null = null;
-      if (trackLocation) {
-        const position = await getCurrentPosition();
-        input = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+      const input = await punchInput(trackLocation);
+      if (!ownsSubmission()) return;
+      if (summaryExpired(summary)) {
+        await refreshSummary();
+        return;
       }
-      const result = await client.request<{ punchToday: AttendanceRow }>(PunchTodayDocument, {
-        input,
-      });
-      setLastPunch(result.punchToday);
+      const result = await client.request<{ punchToday: AttendanceRow }>(
+        AttendancePunchTodayDocument,
+        {
+          input,
+        }
+      );
+      if (!ownsSubmission()) return;
+      setLastPunch(displayAttendanceRow(result.punchToday, timezone));
       await refreshSummary();
     } catch (error) {
-      setMutationError(graphQlUserMessage(error));
+      if (ownsSubmission()) setMutationError(graphQlUserMessage(error));
     } finally {
-      submittingRef.current = false;
-      setSubmitting(false);
+      if (ownsSubmission()) {
+        submittingRef.current = false;
+        setSubmitting(false);
+      }
     }
   };
 
@@ -150,72 +200,21 @@ const getLastEventCoords = (lastPunch: AttendanceRow | null) => {
   return checkIn ? `Punch In: ${checkIn}` : null;
 };
 
-interface AttendanceSegmentsProps {
-  segments: AttendanceRow[];
-}
-
-const AttendanceSegments = ({ segments }: AttendanceSegmentsProps) => (
-  <ul className="space-y-1 border-t border-gray-100 pt-2 text-gray-600 dark:border-gray-600 dark:text-gray-300">
-    {segments.map((segment, index) => {
-      const checkInCoords = formatCoord(segment.checkInLat, segment.checkInLng);
-      const checkOutCoords = formatCoord(segment.checkOutLat, segment.checkOutLng);
-      const checkOutTime = segment.checkOutTime ? formatBackendTime(segment.checkOutTime) : 'open';
-      return (
-        <li key={segment.id} className="text-xs">
-          <div className="flex justify-between">
-            <span>Segment {index + 1}</span>
-            <span>
-              {formatBackendTime(segment.checkInTime ?? null)} → {checkOutTime}
-            </span>
-          </div>
-          {checkInCoords || checkOutCoords ? (
-            <p className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
-              In: {checkInCoords ?? '—'} · Out: {checkOutCoords ?? '—'}
-            </p>
-          ) : null}
-        </li>
-      );
-    })}
-  </ul>
-);
-
-interface AttendanceSummaryDetailsProps {
-  summary: Summary;
-}
-
-const AttendanceSummaryDetails = ({ summary }: AttendanceSummaryDetailsProps) => (
-  <div className="space-y-2 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
-    <div className="flex items-center justify-between">
-      <span className="font-medium text-gray-900 dark:text-white">Worked today (completed)</span>
-      <span className="text-primary-600 dark:text-primary-400">
-        {summary.totalWorkedMinutes} min
-      </span>
-    </div>
-    {summary.segments.length > 0 ? <AttendanceSegments segments={summary.segments} /> : null}
-    {summary.segments.length === 0 && !summary.openSegment ? (
-      <AsyncState
-        kind="empty"
-        title="No Attendance Recorded Today."
-        description="Use Punch In when you are ready to start tracking time."
-      />
-    ) : null}
-    {summary.openSegment ? (
-      <p className="text-xs text-amber-800 dark:text-amber-200">
-        Open: checked in at {formatBackendTime(summary.openSegment.checkInTime)} — Select “Punch
-        Out” to close this block.
-      </p>
-    ) : null}
-  </div>
-);
-
 interface PunchSummaryContentProps {
+  actions?: ReactNode;
   error: string | null;
   onRefresh: () => void;
   phase: RetainedQueryPhase;
   summary: Summary | null;
 }
 
-const PunchSummaryContent = ({ error, onRefresh, phase, summary }: PunchSummaryContentProps) => {
+const PunchSummaryContent = ({
+  error,
+  onRefresh,
+  phase,
+  summary,
+  actions,
+}: PunchSummaryContentProps) => {
   if (phase === 'initial-loading' || phase === 'initial-error') {
     return (
       <DashboardCardInitialState
@@ -241,7 +240,7 @@ const PunchSummaryContent = ({ error, onRefresh, phase, summary }: PunchSummaryC
         error={error}
         onRetry={onRefresh}
       />
-      <AttendanceSummaryDetails summary={summary} />
+      <AttendanceSummaryDetails summary={summary} actions={actions} />
     </>
   );
 };
@@ -298,7 +297,7 @@ const PunchActionArea = ({
         {mutationError}
       </PageNotice>
     ) : null}
-    <label className="flex cursor-pointer items-center justify-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+    <label className="app-touch-choice flex cursor-pointer items-center gap-2 py-1 text-xs text-content-secondary">
       <input
         type="checkbox"
         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
@@ -306,14 +305,18 @@ const PunchActionArea = ({
         disabled={submitting}
         onChange={(event) => onTrackLocationChange(event.target.checked)}
       />
-      Record GPS location (saved with punch in / punch out)
+      Record GPS location with this punch
     </label>
-    <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-      You can punch in and out several times a day. Total time adds up each completed in→out block.
-    </p>
+    <PageInformation title="Attendance totals">
+      <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+        You can punch in and out several times a day. Total time adds up each completed in→out
+        block.
+      </p>
+    </PageInformation>
     <Button
       variant="primary"
-      fullWidth
+      className="min-w-36"
+      data-tour-anchor="dashboard-punch-action"
       busy={submitting}
       busyLabel="Recording Attendance…"
       disabled={disabled}
@@ -326,76 +329,110 @@ const PunchActionArea = ({
 
 interface AuthorizedPunchInOutProps {
   canPunch: boolean;
+  identity: string;
 }
 
-const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
+const AuthorizedPunchInOut = ({ canPunch, identity }: AuthorizedPunchInOutProps) => {
   const client = useGraphClient('client');
   const currentTime = useDashboardCardClock();
-  const loadSummary = useCallback(async () => {
-    const result = await client.request<{ punchDaySummary: Summary }>(PunchDaySummaryDocument);
-    return result.punchDaySummary;
-  }, [client]);
+  const { currentTenant } = useTenant();
+  const { timezone } = currentTenant;
   const {
     data: summary,
     error: summaryError,
     phase: summaryPhase,
     refresh: refreshSummary,
-  } = useRetainedQuery(loadSummary);
+  } = usePunchDaySummary(client, identity);
   const onRefresh = () => void refreshSummary();
+
+  const summaryIsWithinWindow = Boolean(
+    summary &&
+    currentTime.getTime() >= Date.parse(summary.startsAt) &&
+    currentTime.getTime() < Date.parse(summary.endsAt)
+  );
+  const summaryTimezone = summary?.timezone ?? timezone;
   const { handlePunch, lastPunch, mutationError, setTrackLocation, submitting, trackLocation } =
     usePunchMutation({
+      timezone: summaryTimezone,
       client,
       refreshSummary,
-      summary,
+      summary: summaryIsWithinWindow ? summary : null,
       summaryPhase,
+      summaryOwner: identity,
     });
   const nextIsCheckIn = !summary?.openSegment;
   const buttonLabel = getButtonLabel(submitting, nextIsCheckIn);
-  const summaryIsReady = summaryPhase === 'ready' && summary !== null;
+  const summaryIsReady = summaryPhase === 'ready' && summaryIsWithinWindow;
   const lastEventCoords = getLastEventCoords(lastPunch);
 
   return (
-    <Card title="Attendance">
-      <div className="space-y-4">
-        <div className="text-center">
-          <div className="text-3xl font-bold text-gray-900 dark:text-white">
-            {formatTime(currentTime)}
-          </div>
-          <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {formatDate(currentTime)}
-          </div>
-        </div>
+    <Card>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-base font-semibold tracking-tight">Today’s attendance</h3>
+        {summary ? (
+          <Button
+            variant="quiet"
+            size="sm"
+            busy={summaryPhase === 'refreshing'}
+            busyLabel="Refreshing Attendance Summary…"
+            onClick={onRefresh}
+          >
+            Refresh
+          </Button>
+        ) : null}
+      </div>
+      <div className="mb-3 flex flex-wrap items-baseline gap-x-2 text-xs text-content-muted">
+        <span>Current time</span>
+        <time
+          aria-label="Current company time"
+          dateTime={currentTime.toISOString()}
+          className="text-base font-semibold tabular-nums text-content-primary"
+        >
+          {formatTime(currentTime, summaryTimezone)}
+        </time>
+        <span>{summaryTimezone}</span>
+      </div>
+      <div className="space-y-4" data-tour-anchor="dashboard-attendance-summary">
         <PunchSummaryContent
           error={summaryError}
           phase={summaryPhase}
           summary={summary}
           onRefresh={onRefresh}
+          actions={
+            canPunch ? (
+              <div className="flex flex-col items-start gap-2">
+                <PunchActionArea
+                  buttonLabel={buttonLabel}
+                  disabled={!summaryIsReady}
+                  mutationError={mutationError}
+                  onPunch={handlePunch}
+                  onTrackLocationChange={setTrackLocation}
+                  submitting={submitting}
+                  trackLocation={trackLocation}
+                />
+              </div>
+            ) : null
+          }
         />
-        {summary ? (
-          <Button
-            variant="quiet"
-            size="sm"
-            fullWidth
-            busy={summaryPhase === 'refreshing'}
-            busyLabel="Refreshing Attendance Summary…"
-            onClick={onRefresh}
-          >
-            Refresh Attendance Summary
-          </Button>
-        ) : null}
         {lastPunch ? (
-          <LastPunchDetails lastPunch={lastPunch} lastEventCoords={lastEventCoords} />
+          <details className="rounded-lg bg-surface-selected p-3">
+            <summary className="cursor-pointer text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+              Last punch details
+            </summary>
+            <LastPunchDetails lastPunch={lastPunch} lastEventCoords={lastEventCoords} />
+          </details>
         ) : null}
-        {canPunch ? (
-          <PunchActionArea
-            buttonLabel={buttonLabel}
-            disabled={!summaryIsReady}
-            mutationError={mutationError}
-            onPunch={handlePunch}
-            onTrackLocationChange={setTrackLocation}
-            submitting={submitting}
-            trackLocation={trackLocation}
-          />
+        {summary ? (
+          <details className="text-xs text-content-secondary">
+            <summary className="min-h-11 cursor-pointer py-3 focus-visible:ring-2 focus-visible:ring-focus">
+              Attendance work date: {summary.workDate}
+            </summary>
+            <p>{formatAttendanceWindow(summary)}</p>
+            <p>
+              {formatDate(currentTime, summaryTimezone)} ·{' '}
+              {formatTime(currentTime, summaryTimezone)}
+            </p>
+          </details>
         ) : null}
       </div>
     </Card>
@@ -403,14 +440,15 @@ const AuthorizedPunchInOut = ({ canPunch }: AuthorizedPunchInOutProps) => {
 };
 
 const PunchInOut = () => {
-  const { clientSession } = useAuth();
+  const { clientSession, tenantId, user } = useAuth();
   const permissions = createPermissionService(clientSession);
   if (!permissions.canCapability('dashboard.attendance')) return null;
 
   return (
     <AuthorizedPunchInOut
-      key={authorizationStateKey(clientSession)}
+      key={`${tenantId ?? ''}:${user?.id ?? ''}:${authorizationStateKey(clientSession)}`}
       canPunch={permissions.canCapability('action.attendance.punch')}
+      identity={`${tenantId ?? ''}:${user?.id ?? ''}:${authorizationStateKey(clientSession)}`}
     />
   );
 };

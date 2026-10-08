@@ -1,17 +1,21 @@
 import { useEffect, useMemo } from 'react';
+
+import { PERMISSIONS } from '../../auth/permissions';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
-import PayrollAdminNotice from './components/PayrollAdminNotice';
-import PayrollArrearsCard from './components/PayrollArrearsCard';
-import PayrollComplianceCard from './components/PayrollComplianceCard';
-import PayrollCyclesCard from './components/PayrollCyclesCard';
-import PayrollExportsSection from './components/PayrollExportsSection';
-import PayrollSalaryComponentsCard from './components/PayrollSalaryComponentsCard';
+
+import PayrollWorkspaceNavigation, {
+  PayrollWorkspaceTaskMenu,
+} from './components/PayrollWorkspaceNavigation';
+import PayrollWorkspacePanels from './components/PayrollWorkspacePanels';
 import { usePayrollBoard } from './hooks/usePayrollBoard';
 import { usePayrollBoardActions } from './hooks/usePayrollBoardActions';
 import { usePayrollExports } from './hooks/usePayrollExports';
+import { usePayrollWorkspace } from './hooks/usePayrollWorkspace';
+import { payrollWorkspaceTasks } from './payrollWorkspace';
 
 const PayrollPage = () => {
   const client = useGraphClient('client');
@@ -20,95 +24,59 @@ const PayrollPage = () => {
   const ownerKey = authorizationStateKey(clientSession);
   const canManagePayroll = permissions.canCapability('action.payroll.manage');
   const canExportPayroll = permissions.canCapability('action.payroll.export');
+  const canReadAllPayslips = permissions.canScopedPermission(PERMISSIONS.payrollRead, ['ALL']);
   const board = usePayrollBoard(client, { enabled: canManagePayroll, ownerKey });
   const actions = usePayrollBoardActions({
     client,
     complianceForm: board.complianceForm,
+    complianceReady: board.complianceReady,
     enabled: canManagePayroll,
     ownerKey,
     reload: board.loadData,
   });
-  const payrollExports = usePayrollExports(client, { enabled: canExportPayroll, ownerKey });
+  const payrollExports = usePayrollExports(client, {
+    enabled: canExportPayroll && canManagePayroll,
+    ownerKey,
+  });
   const { setLatestCyclePeriod } = payrollExports;
 
   useEffect(() => {
-    setLatestCyclePeriod(board.data?.payrollCycles?.[0]);
+    setLatestCyclePeriod(board.data?.payrollCycles[0]);
   }, [board.data?.payrollCycles, setLatestCyclePeriod]);
 
+  const workspace = usePayrollWorkspace(
+    payrollWorkspaceTasks(canReadAllPayslips, canExportPayroll)
+  );
   if (!canManagePayroll) return null;
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Payroll</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Live salary components and payroll cycles from the payroll subgraph.
-        </p>
-      </div>
-
-      <PayrollAdminNotice />
-
+    <div className="space-y-3">
+      <PageHeader
+        title={workspace.workspace.label}
+        retainTitle
+        description="Salary and payroll settings carry forward. Monthly adjustments are for exceptions only."
+        actions={<PayrollWorkspaceTaskMenu state={workspace} />}
+      />
+      <PayrollWorkspaceNavigation state={workspace} />
       {board.error && (
         <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{board.error}</p>
+          <p role="alert" className="text-sm text-danger">
+            {board.error}
+          </p>
         </Card>
       )}
-
-      <>
-          <PayrollComplianceCard
-            form={board.complianceForm}
-            loading={board.loading}
-            busy={actions.complianceSaveBusy}
-            error={actions.complianceSaveError}
-            ok={actions.complianceSaveOk}
-            onChange={board.setComplianceField}
-            onSave={() => void actions.savePayrollCompliance()}
-          />
-          <PayrollArrearsCard
-            arrears={board.data?.payrollArrears ?? []}
-            form={actions.arrearForm}
-            loading={board.loading}
-            busy={actions.arrearBusy}
-            error={actions.arrearError}
-            ok={actions.arrearOk}
-            onChange={actions.setArrearField}
-            onCreate={() => void actions.createArrear()}
-          />
-          <PayrollSalaryComponentsCard
-            rows={board.data?.salaryComponents ?? []}
-            loading={board.loading}
-          />
-          <PayrollCyclesCard
-            rows={board.data?.payrollCycles ?? []}
-            form={actions.cycleForm}
-            loading={board.loading}
-            createBusy={actions.createBusy}
-            createError={actions.createError}
-            createOk={actions.createOk}
-            runBusy={actions.runBusy}
-            runError={actions.runError}
-            runOk={actions.runOk}
-            onChange={actions.setCycleField}
-            onCreate={() => void actions.createCycle()}
-            onRun={(payrollCycleId) => void actions.runPayroll(payrollCycleId)}
-          />
-          {canExportPayroll ? <PayrollExportsSection
-            month={payrollExports.month}
-            year={payrollExports.year}
-            fyStartYear={payrollExports.fyStartYear}
-            fyQuarter={payrollExports.fyQuarter}
-            monthlyStatus={payrollExports.monthlyStatus}
-            fyStatus={payrollExports.fyStatus}
-            onMonthChange={payrollExports.setMonth}
-            onYearChange={payrollExports.setYear}
-            onFyStartYearChange={payrollExports.setFyStartYear}
-            onFyQuarterChange={payrollExports.setFyQuarter}
-            onMonthlyDownload={(key) => void payrollExports.downloadMonthly(key)}
-            onFyDownload={(key) => void payrollExports.downloadFy(key)}
-          /> : null}
-      </>
+      <div className="space-y-2">
+        <PayrollWorkspacePanels
+          key={ownerKey}
+          activeTask={workspace.task.id}
+          tasks={workspace.tasks}
+          ownerKey={ownerKey}
+          client={client}
+          board={board}
+          actions={actions}
+          exports={payrollExports}
+        />
+      </div>
     </div>
   );
 };
-
 export default PayrollPage;

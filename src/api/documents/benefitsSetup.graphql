@@ -1,0 +1,18 @@
+mutation SaveBenefitType($id: ID, $input: BenefitTypeInput!) {
+  saveBenefitType(id: $id, input: $input) {
+    id
+  }
+}
+
+mutation SaveBenefitPlan($id: ID, $input: BenefitPlanInput!) {
+  saveBenefitPlan(id: $id, input: $input) {
+    id
+  }
+}
+
+query BenefitTypeOptions($offset: Int!) {
+  benefitTypes(limit: 100, offset: $offset) {
+    id
+    name
+  }
+}

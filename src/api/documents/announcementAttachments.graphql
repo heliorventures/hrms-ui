@@ -12,6 +12,8 @@ query NotificationBoardSummary($limit: Int! = 20) {
     expiresAt
     hasImageAttachment
     hasDocumentAttachment
+    hasVideoAttachment
+    videoLink
   }
   notifications(limit: $limit) {
     id

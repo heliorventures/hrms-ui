@@ -1,19 +1,21 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { Check, Pencil } from 'lucide-react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 
-import type { PersonalInfoFields, ProfileChangeRequest } from '../types';
-import Input from '../../../../components/common/Input';
-import Button from '../../../../components/common/Button';
 import {
   CancelEmployeeProfileChangeDocument,
   SubmitEmployeeProfileChangeDocument,
   UpdateEmployeePersonalProfileDocument,
   UpdateEmployeeSelfServiceProfileDocument,
 } from '../../../../api/graphql/graphql';
+import Button from '../../../../components/common/Button';
+import Input from '../../../../components/common/Input';
 import { toDateInputValue } from '../../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
+import type { PersonalInfoFields, ProfileChangeRequest } from '../types';
+
+import MaritalStatusSelect from './MaritalStatusSelect';
 
 interface PersonalInfoTabProps {
   employeeId: string;
@@ -89,6 +91,7 @@ export function PersonalInfoTab({
           currentAddress: values.currentAddress,
           permanentAddress: values.permanentAddress,
           gender: values.gender,
+          maritalStatus: values.maritalStatus,
           nationality: values.nationality,
           bloodGroup: values.bloodGroup,
           emergencyContactName: values.emergencyContactName,
@@ -138,6 +141,7 @@ export function PersonalInfoTab({
         currentAddress: updated.currentAddress ?? '',
         permanentAddress: updated.permanentAddress ?? '',
         gender: updated.gender ?? '',
+        maritalStatus: updated.maritalStatus ?? '',
         nationality: updated.nationality ?? '',
         bloodGroup: updated.bloodGroup ?? '',
         emergencyContactName: updated.emergencyContactName ?? '',
@@ -290,6 +294,11 @@ export function PersonalInfoTab({
             disabled={disabled}
             fullWidth
           />
+          <MaritalStatusSelect
+            value={values.maritalStatus}
+            onChange={(value) => handleChange('maritalStatus', value)}
+            disabled={disabled}
+          />
           <Input
             label="Nationality"
             value={values.nationality}
@@ -366,7 +375,10 @@ export function PersonalInfoTab({
                 <span>{request.requestedSummary}</span>
                 <div className="flex gap-2">
                   {canManageSensitiveFields && !isSelf ? (
-                    <Link to="/organization/profile-reviews" className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                    <Link
+                      to="/organization/profile-reviews"
+                      className="text-sm font-semibold text-indigo-700 dark:text-indigo-300"
+                    >
                       Open secure review
                     </Link>
                   ) : isSelf ? (

@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DialogProvider } from '../../contexts/DialogContext';
+import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
 
 import AdminNotificationsPage from './AdminNotificationsPage';
 
@@ -14,11 +16,42 @@ const graphState = vi.hoisted(() => ({
   },
 }));
 
+const videoState = vi.hoisted(() => ({
+  ownerKey: 'tenant-one|session-one',
+  prepareVideo: vi.fn<[File | null], Promise<string | null>>(),
+  resetVideo: vi.fn(),
+  cancelUpload: vi.fn(),
+}));
+
 vi.mock('../../hooks/useGraphClient', () => ({
   useGraphClient: () => graphState.client,
 }));
 
+vi.mock('../notifications/useAnnouncementVideoUpload', () => ({
+  useAnnouncementVideoUpload: () => ({
+    prepareVideo: videoState.prepareVideo,
+    resetVideo: videoState.resetVideo,
+    cancelUpload: videoState.cancelUpload,
+    progress: null,
+  }),
+}));
+
+vi.mock('../notifications/useNotificationOwnerKey', () => ({
+  useNotificationOwnerKey: () => videoState.ownerKey,
+}));
+
 const consoleData = {
+  notificationAutomationSettings: {
+    birthdayEnabled: true,
+    workAnniversaryEnabled: true,
+    companySharingEnabled: true,
+    deliveryLocalTime: '09:00:00',
+    birthdayTitleTemplate: 'Happy birthday, {employee_name}!',
+    birthdayMessageTemplate: 'Wishing {employee_name} a wonderful birthday.',
+    anniversaryTitleTemplate: 'Work anniversary: {employee_name}',
+    anniversaryMessageTemplate:
+      "Celebrating {employee_name}'s {service_years}-year work anniversary.",
+  },
   adminAnnouncements: [
     {
       id: 'announcement-1',
@@ -31,6 +64,8 @@ const consoleData = {
       publishAt: null,
       expiresAt: null,
       createdAt: '2026-08-21T00:00:00.000Z',
+      hasVideoAttachment: true,
+      videoLink: null,
     },
   ],
   adminNotifications: [],
@@ -40,9 +75,11 @@ const consoleData = {
 
 const renderPage = () =>
   render(
-    <DialogProvider>
-      <AdminNotificationsPage />
-    </DialogProvider>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <DialogProvider>
+        <AdminNotificationsPage />
+      </DialogProvider>
+    </MemoryRouter>
   );
 
 const openStoredRoleAnnouncement = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -65,12 +102,36 @@ const updateInput = (): Record<string, unknown> => {
   return variables.input;
 };
 
+const createInput = (): Record<string, unknown> => {
+  const createCall = graphState.client.request.mock.calls.find(([, variables]) => {
+    if (!variables || typeof variables !== 'object' || !('input' in variables)) return false;
+    const { input } = variables;
+    return input !== null && typeof input === 'object' && !('id' in input) && 'title' in input;
+  });
+  const variables = createCall?.[1];
+  if (!variables || typeof variables !== 'object' || !('input' in variables)) {
+    throw new Error('Expected the announcement create request.');
+  }
+  return variables.input as Record<string, unknown>;
+};
+
 const announcementTitleInput = () =>
   screen.getAllByRole('textbox', { name: 'Title' })[0] as HTMLInputElement;
 
 beforeEach(() => {
+  videoState.ownerKey = 'tenant-one|session-one';
+  videoState.prepareVideo.mockReset().mockResolvedValue('video-stage-1');
+  videoState.resetVideo.mockReset();
+  videoState.cancelUpload.mockReset();
   graphState.client = {
-    request: vi.fn<[unknown, unknown?], Promise<unknown>>().mockResolvedValue(consoleData),
+    request: vi.fn<[unknown, unknown?], Promise<unknown>>().mockImplementation((document) => {
+      if (graphqlDocumentSource(document).includes('SaveNotificationAutomationSettings')) {
+        return Promise.resolve({
+          saveNotificationAutomationSettings: consoleData.notificationAutomationSettings,
+        });
+      }
+      return Promise.resolve(consoleData);
+    }),
   };
 });
 
@@ -205,9 +266,11 @@ describe('AdminNotificationsPage audience-change safeguards', () => {
     };
     graphState.client = refreshedClient;
     view.rerender(
-      <DialogProvider>
-        <AdminNotificationsPage />
-      </DialogProvider>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <DialogProvider>
+          <AdminNotificationsPage />
+        </DialogProvider>
+      </MemoryRouter>
     );
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull());
 
@@ -228,6 +291,7 @@ describe('AdminNotificationsPage audience-change safeguards', () => {
 
     await user.click(screen.getByRole('checkbox', { name: 'Clear role targeting' }));
     await user.click(screen.getByRole('button', { name: 'Cancel edit' }));
+    await user.click(screen.getByRole('button', { name: 'Create Announcement' }));
 
     expect(screen.queryByRole('checkbox', { name: 'Clear role targeting' })).toBeNull();
     expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Target Role Code' }).value).toBe(
@@ -235,4 +299,184 @@ describe('AdminNotificationsPage audience-change safeguards', () => {
     );
     expect(announcementTitleInput().value).toBe('');
   });
+});
+
+describe('AdminNotificationsPage announcement video editing', () => {
+  it.each([
+    ['No video', null, null],
+    ['Video link', 'https://video.example/policy', null],
+    ['Upload video', null, 'video-stage-1'],
+  ] as const)(
+    'does not send update-only removeVideo when creating with %s',
+    async (mode, expectedLink, expectedStageId) => {
+      const user = userEvent.setup();
+      renderPage();
+      await user.click(await screen.findByRole('button', { name: 'Create Announcement' }));
+      await screen.findByText('New announcement (HR)');
+      await user.type(announcementTitleInput(), 'New policy');
+      if (mode !== 'No video') await user.click(screen.getByRole('radio', { name: mode }));
+      if (mode === 'Video link') {
+        await user.type(screen.getByRole('textbox', { name: 'Video URL' }), expectedLink);
+      }
+      if (mode === 'Upload video') {
+        await user.upload(
+          screen.getByLabelText('Video file'),
+          new File(['video'], 'policy.mp4', { type: 'video/mp4' })
+        );
+      }
+
+      await user.click(screen.getByRole('button', { name: 'Create Announcement' }));
+
+      await waitFor(() => expect(createInput()).not.toHaveProperty('removeVideo'));
+      expect(createInput()).toMatchObject({
+        videoLink: expectedLink,
+        videoUploadStageId: expectedStageId,
+      });
+    }
+  );
+
+  it('keeps the existing video without sending video replacement fields', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await openStoredRoleAnnouncement(user);
+
+    expect(
+      screen.getByRole<HTMLInputElement>('radio', { name: 'Keep current video' }).checked
+    ).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'Update Announcement' }));
+
+    await waitFor(() => expect(updateInput()).not.toHaveProperty('removeVideo'));
+    expect(updateInput()).not.toHaveProperty('videoLink');
+    expect(updateInput()).not.toHaveProperty('videoUploadStageId');
+    expect(videoState.prepareVideo).not.toHaveBeenCalled();
+  });
+
+  it('explicitly removes an existing video', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await openStoredRoleAnnouncement(user);
+    await user.click(screen.getByRole('radio', { name: 'No video' }));
+    await user.click(screen.getByRole('button', { name: 'Update Announcement' }));
+
+    await waitFor(() => expect(updateInput()).toMatchObject({ removeVideo: true }));
+  });
+
+  it('replaces an existing video with a validated link', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await openStoredRoleAnnouncement(user);
+    await user.click(screen.getByRole('radio', { name: 'Video link' }));
+    await user.type(
+      screen.getByRole('textbox', { name: 'Video URL' }),
+      'https://video.example/policy'
+    );
+    await user.click(screen.getByRole('button', { name: 'Update Announcement' }));
+
+    await waitFor(() =>
+      expect(updateInput()).toMatchObject({
+        videoLink: 'https://video.example/policy',
+        videoUploadStageId: null,
+        removeVideo: false,
+      })
+    );
+  });
+
+  it('does not stage an upload until an audience change is confirmed', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await openStoredRoleAnnouncement(user);
+    await user.selectOptions(screen.getByRole('combobox'), 'department-engineering');
+    await user.click(screen.getByRole('radio', { name: 'Upload video' }));
+    const video = new File(['video'], 'policy.mp4', { type: 'video/mp4' });
+    await user.upload(screen.getByLabelText('Video file'), video);
+
+    await user.click(screen.getByRole('button', { name: 'Update Announcement' }));
+    await screen.findByRole('dialog', { name: 'Review Announcement Audience Change' });
+    expect(videoState.prepareVideo).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Update Announcement' }));
+    await waitFor(() => expect(videoState.prepareVideo).toHaveBeenCalledWith(video));
+    await waitFor(() =>
+      expect(updateInput()).toMatchObject({
+        videoUploadStageId: 'video-stage-1',
+        removeVideo: false,
+      })
+    );
+  });
+});
+
+describe('AdminNotificationsPage automated employee events', () => {
+  it('loads settings and saves the complete validated configuration', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('tab', { name: 'Automated Greetings' }));
+    expect(await screen.findByText('Automated Employee Events')).toBeTruthy();
+    const birthdayEnabled = screen.getByRole<HTMLInputElement>('checkbox', {
+      name: 'Enable birthday notifications',
+    });
+    expect(birthdayEnabled.checked).toBe(true);
+    await user.click(birthdayEnabled);
+    await user.click(screen.getByRole('button', { name: 'Save Automated Events' }));
+
+    await waitFor(() => {
+      const saveCall = graphState.client.request.mock.calls.find(([document]) =>
+        graphqlDocumentSource(document).includes('SaveNotificationAutomationSettings')
+      );
+      expect(saveCall?.[1]).toEqual({
+        input: {
+          ...consoleData.notificationAutomationSettings,
+          birthdayEnabled: false,
+        },
+      });
+    });
+  });
+
+  it('rejects unsafe template tokens before sending a mutation', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('tab', { name: 'Automated Greetings' }));
+    const birthdayMessage = await screen.findByRole('textbox', {
+      name: 'Birthday message template',
+    });
+    fireEvent.change(birthdayMessage, {
+      target: { value: 'Happy {employee_name}, age {age}' },
+    });
+    await user.click(screen.getByRole('button', { name: 'Save Automated Events' }));
+
+    expect((await screen.findByRole('alert')).textContent).toContain('unsupported token');
+    expect(
+      graphState.client.request.mock.calls.some(([document]) =>
+        graphqlDocumentSource(document).includes('SaveNotificationAutomationSettings')
+      )
+    ).toBe(false);
+  });
+});
+
+describe('communications task navigation', () => {
+  it('opens history first and preserves a draft while changing features', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    expect(await screen.findByRole('button', { name: 'Edit' })).toBeTruthy();
+    expect(screen.queryByRole('textbox', { name: 'Title' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Create Announcement' }));
+    await user.type(announcementTitleInput(), 'Draft policy');
+    await user.click(screen.getByRole('tab', { name: 'Direct Notifications' }));
+    expect(screen.queryByRole('button', { name: 'Create Announcement' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Send Notification' })).toBeTruthy();
+    await user.click(screen.getByRole('tab', { name: 'Announcements' }));
+    expect(announcementTitleInput().value).toBe('Draft policy');
+  });
+});
+
+it('retains an announcement attachment when returning to history and reopening the draft', async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(await screen.findByRole('button', { name: 'Create Announcement' }));
+  const file = new File(['policy'], 'policy.pdf', { type: 'application/pdf' });
+  await user.upload(screen.getByLabelText('Document'), file);
+  await user.click(screen.getByRole('button', { name: 'Back to announcements' }));
+  await user.click(screen.getByRole('button', { name: 'Create Announcement' }));
+  expect((screen.getByLabelText('Document') as HTMLInputElement).files?.[0]).toBe(file);
 });

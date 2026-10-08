@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
+
+import {
+  ClientOpsAdminOrgLabelsDocument,
+  ClientOpsAdminEmployeesWithLoginDocument,
+} from '../../api/graphql/graphql';
 import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
+import PageInformation from '../../components/common/PageInformation';
 import Table from '../../components/common/Table';
 import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import CreateEmployeeModal from './components/CreateEmployeeModal';
 import EditEmployeeModal, { type EditEmployeeRow } from './components/EditEmployeeModal';
-import { ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 interface EmployeeRow {
   id: string;
@@ -32,30 +39,6 @@ interface EmployeeRow {
 interface EmployeesData {
   employees: EmployeeRow[];
 }
-
-const ClientOpsAdminEmployeesWithLoginDocument = `
-  query ClientOpsAdminEmployeesWithLogin($limit: Int! = 100) {
-    employees(limit: $limit) {
-      id
-      employeeCode
-      firstName
-      lastName
-      fullName
-      status
-      employmentType
-      dateOfJoining
-      departmentId
-      designationId
-      reportingManagerId
-      userId
-      departmentName
-      designationTitle
-      linkedUserEmail
-      linkedUserUsername
-      reportingManagerName
-    }
-  }
-`;
 
 const AdminEmployeesPage = () => {
   const client = useGraphClient('client');
@@ -185,6 +168,7 @@ const AdminEmployeesPage = () => {
           <Button
             size="sm"
             variant="outline"
+            data-tour-anchor="employees.edit-trigger"
             onClick={() => {
               setEditRow(row);
             }}
@@ -198,11 +182,17 @@ const AdminEmployeesPage = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Employee Management</h1>
-        <Button onClick={() => setCreateOpen(true)}>Add Employee</Button>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Employee Management"
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button data-tour-anchor="employees.add-trigger" onClick={() => setCreateOpen(true)}>
+              Add Employee
+            </Button>
+          </div>
+        }
+      />
 
       {error && (
         <Card>
@@ -210,24 +200,26 @@ const AdminEmployeesPage = () => {
         </Card>
       )}
 
-      <Card title="Employee List">
+      <Card>
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading Employees...</p>
         ) : employees.length > 0 ? (
-          <Table data={employees} columns={columns} keyExtractor={(employee) => employee.id} />
+          <div data-tour-anchor="employees.list">
+            <Table data={employees} columns={columns} keyExtractor={(employee) => employee.id} />
+          </div>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">No Employees Found</p>
         )}
       </Card>
 
-      <Card title="Admin Notes">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          <strong>Add / Edit</strong> use <code className="text-xs">createEmployee</code> /{' '}
-          <code className="text-xs">updateEmployee</code> with org picks and optional{' '}
-          <strong>reporting manager</strong> (cycle-safe on the server). Employee code and date of
-          joining are not editable after create.
-        </p>
-      </Card>
+      <PageInformation title="Employee management">
+        <Card title="Admin Notes">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Add and edit employees with their organization assignments and reporting manager.
+            Employee code and date of joining are fixed after creation.
+          </p>
+        </Card>
+      </PageInformation>
 
       <CreateEmployeeModal
         isOpen={createOpen}

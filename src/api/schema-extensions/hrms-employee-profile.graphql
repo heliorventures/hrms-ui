@@ -6,6 +6,7 @@ extend type Employee {
   linkedUserUsername: String
   dateOfBirth: NaiveDate
   gender: String
+  maritalStatus: String
   nationality: String
   bloodGroup: String
   emergencyContactName: String
@@ -29,6 +30,8 @@ extend type EmployeeDocument {
 }
 
 extend type Query {
+  employeeUanNumber(employeeId: ID!): String
+  employeeEsicNumber(employeeId: ID!): String
   employeePrimaryBank(employeeId: ID!): EmployeeBankAccount
   employeeIdentityProfile(employeeId: ID!): EmployeeIdentityProfile!
   employeeDirectoryPage(limit: Int! = 100, after: String): EmployeeDirectoryPage!
@@ -186,12 +189,23 @@ type EmployeeIdentityProfile {
   aadhaar: EmployeeAadhaarRecord
 }
 
+input SetEmployeeUanNumberInput {
+  employeeId: ID!
+  uanNumber: String!
+}
+
+input SetEmployeeEsicNumberInput {
+  employeeId: ID!
+  esicNumber: String!
+}
+
 input UpdateEmployeePersonalProfileInput {
   employeeId: ID!
   firstName: String
   lastName: String
   dateOfBirth: NaiveDate
   gender: String
+  maritalStatus: String
   nationality: String
   bloodGroup: String
   emergencyContactName: String
@@ -231,6 +245,7 @@ input UpdateEmployeeSelfServiceProfileInput {
   currentAddress: String
   permanentAddress: String
   gender: String
+  maritalStatus: String
   nationality: String
   bloodGroup: String
   emergencyContactName: String
@@ -296,6 +311,8 @@ type UploadedTenantFile {
 }
 
 extend type Mutation {
+  setEmployeeUanNumber(input: SetEmployeeUanNumberInput!): String
+  setEmployeeEsicNumber(input: SetEmployeeEsicNumberInput!): String
   updateEmployeePersonalProfile(input: UpdateEmployeePersonalProfileInput!): Employee!
   updateEmployeeSelfServiceProfile(input: UpdateEmployeeSelfServiceProfileInput!): Employee!
   submitEmployeeProfileChange(

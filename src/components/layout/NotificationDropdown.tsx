@@ -1,5 +1,5 @@
 import { Bell } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { sessionMatchesTenant } from '../../auth/tenantSession';
@@ -7,26 +7,23 @@ import { NAV_LABELS } from '../../constants/uiText';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { authorizedNotificationActionUrl } from '../../utils/actionUrl';
+import Drawer from '../common/Drawer';
 import IconButton from '../common/IconButton';
-import { useAnchoredPopoverPosition } from '../common/useAnchoredPopoverPosition';
-import { usePopover } from '../common/usePopover';
 
 import NotificationDropdownPanel from './NotificationDropdownPanel';
 import { type BoardNotification, useNotificationDropdownData } from './useNotificationDropdownData';
 
-const NotificationDropdown = () => {
+const NotificationDropdown = ({
+  showLabel = false,
+  className = '',
+}: {
+  showLabel?: boolean;
+  className?: string;
+}) => {
   const { can, clientSession, isAuthenticated, tenantId } = useAuth();
   const { currentTenant } = useTenant();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const headingId = useId();
-  const popover = usePopover({ open: isOpen, onClose: () => setIsOpen(false) });
-  const position = useAnchoredPopoverPosition({
-    align: 'end',
-    open: isOpen,
-    panelRef: popover.panelRef,
-    triggerRef: popover.triggerRef,
-  });
   const dropdown = useNotificationDropdownData({ isAuthenticated, isOpen });
 
   if (!isAuthenticated) return null;
@@ -48,15 +45,30 @@ const NotificationDropdown = () => {
   return (
     <div className="relative inline-flex">
       <span className="relative inline-flex">
-        <IconButton
-          ref={popover.triggerRef}
-          label={triggerLabel}
-          icon={<Bell className="h-5 w-5" />}
-          aria-expanded={popover.triggerProps['aria-expanded']}
-          aria-controls={popover.triggerProps['aria-controls']}
-          onKeyDown={popover.triggerProps.onKeyDown}
-          onClick={() => setIsOpen((current) => !current)}
-        />
+        {showLabel ? (
+          <button
+            type="button"
+            aria-label={triggerLabel}
+            title="Open notifications"
+            aria-expanded={isOpen}
+            aria-haspopup="dialog"
+            onClick={() => setIsOpen((current) => !current)}
+            className="flex min-h-11 w-11 flex-col items-center justify-center gap-1 rounded-lg py-2 text-content-secondary hover:bg-surface-selected hover:text-content-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:w-16"
+          >
+            <Bell className="h-5 w-5" aria-hidden="true" />
+            <span className="hidden text-[10px] font-medium sm:block">Notifications</span>
+          </button>
+        ) : (
+          <IconButton
+            className={className}
+            title="Notifications"
+            label={triggerLabel}
+            icon={<Bell className="h-5 w-5" />}
+            aria-expanded={isOpen}
+            aria-haspopup="dialog"
+            onClick={() => setIsOpen((current) => !current)}
+          />
+        )}
         {dropdown.unreadCount > 0 ? (
           <span
             aria-hidden="true"
@@ -67,16 +79,18 @@ const NotificationDropdown = () => {
         ) : null}
       </span>
 
-      {isOpen ? (
+      <Drawer
+        title="Notifications"
+        description="Your updates, ready when you are."
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        side="right"
+      >
         <NotificationDropdownPanel
           countError={dropdown.countError}
-          headingId={headingId}
           notifications={dropdown.notifications}
           onClose={() => setIsOpen(false)}
           onNotificationOpen={openNotification}
-          panelProps={popover.panelProps}
-          panelRef={popover.panelRef}
-          position={position}
           previewError={dropdown.previewError}
           previewLoaded={dropdown.previewLoaded}
           previewLoading={dropdown.previewLoading}
@@ -85,7 +99,7 @@ const NotificationDropdown = () => {
           refreshPreview={dropdown.refreshPreview}
           unreadCount={dropdown.unreadCount}
         />
-      ) : null}
+      </Drawer>
     </div>
   );
 };

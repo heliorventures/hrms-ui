@@ -1,29 +1,42 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  EmployeePrivateProfileDocument,
   EmployeeProfileAccessDocument,
   PayrollEmploymentHistoryDocument,
   type EmployeeProfileAccessQuery,
   type PayrollEmploymentHistoryQuery,
 } from '../../../../api/graphql/graphql';
-import type { EmployeeProfileModel, TenantDocumentTypeOption } from '../types';
-import { mapBundleToEmployeeProfileModel } from '../lib/mapBundleToModel';
+import { useProfileGuidanceOwner } from '../../../../guidance/ProfileGuidanceContext';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
+import { mapBundleToEmployeeProfileModel } from '../lib/mapBundleToModel';
+import {
+  EmployeePrivateProfileLocationDocument,
+  type EmployeeProfileLocationQuery,
+} from '../profileDocuments';
+import type { EmployeeProfileModel, TenantDocumentTypeOption } from '../types';
 
-export function useEmployeeProfileData(
-  client: GraphQLClient,
-  employeeId: string | undefined
-): {
+type EmployeeProfileDataResult = {
   loading: boolean;
   refreshing: boolean;
   error: string | null;
   model: EmployeeProfileModel | null;
   access: NonNullable<EmployeeProfileAccessQuery['employeeProfileAccess']> | null;
   documentTypes: TenantDocumentTypeOption[];
+  refreshVersion: number;
   refetch: () => void;
-} {
+};
+export function useEmployeeProfileData(
+  client: GraphQLClient,
+  employeeId: string | undefined
+): EmployeeProfileDataResult {
+  const authorizationOwner = useProfileGuidanceOwner();
+  const owner = useMemo(
+    () => ({ client, employeeId, authorizationOwner }),
+    [client, employeeId, authorizationOwner]
+  );
+  const [accessOwner, setAccessOwner] = useState<typeof owner | null>(null);
+  const [modelOwner, setModelOwner] = useState<typeof owner | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +73,7 @@ export function useEmployeeProfileData(
         if (cancelled) return;
         const nextAccess = accessResult.employeeProfileAccess ?? null;
         setAccess(nextAccess);
+        setAccessOwner(owner);
         if (!nextAccess) {
           if (initialLoad) {
             setModel(null);
@@ -76,7 +90,9 @@ export function useEmployeeProfileData(
 
         const canViewPayrollSensitive = nextAccess.canViewPayrollSensitive;
         const [result, payrollResult] = await Promise.all([
-          client.request(EmployeePrivateProfileDocument, { employeeId }),
+          client.request<EmployeeProfileLocationQuery>(EmployeePrivateProfileLocationDocument, {
+            employeeId,
+          }),
           canViewPayrollSensitive
             ? client.request(PayrollEmploymentHistoryDocument, { employeeId })
             : Promise.resolve({
@@ -100,6 +116,7 @@ export function useEmployeeProfileData(
         }
 
         setModel(base);
+        setModelOwner(owner);
         setDocumentTypes(result.documentTypes ?? []);
       } catch (e) {
         if (!cancelled) {
@@ -121,7 +138,16 @@ export function useEmployeeProfileData(
     return () => {
       cancelled = true;
     };
-  }, [client, employeeId, reloadToken]);
+  }, [client, employeeId, reloadToken, owner]);
 
-  return { loading, refreshing, error, model, access, documentTypes, refetch };
+  return {
+    loading: loading || (!!employeeId && accessOwner !== owner && !error),
+    refreshing,
+    error,
+    model: modelOwner === owner ? model : null,
+    access: accessOwner === owner ? access : null,
+    documentTypes: modelOwner === owner ? documentTypes : [],
+    refreshVersion: reloadToken,
+    refetch,
+  };
 }

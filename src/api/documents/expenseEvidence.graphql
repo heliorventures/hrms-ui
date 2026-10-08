@@ -1,0 +1,15 @@
+query ExpenseEvidence($id: ID!) {
+  attachment: expenseAttachment(expenseId: $id) {
+    fileName
+    mimeType
+    contentBase64
+  }
+}
+
+query TravelEvidence($id: ID!) {
+  attachment: travelRequestAttachment(travelRequestId: $id) {
+    fileName
+    mimeType
+    contentBase64
+  }
+}

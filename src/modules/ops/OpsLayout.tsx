@@ -1,27 +1,23 @@
 import { useRef, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 
 import Drawer from '@/components/common/Drawer';
 import IconButton from '@/components/common/IconButton';
+import PageInformationProvider from '@/components/common/PageInformationProvider';
 import { APP_BRAND } from '@/constants/brand';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageWorkspaceContext } from '@/navigation/pageWorkspaceContext';
 
-const OPERATOR_NAVIGATION = [
-  { label: 'Tenants', path: '/ops/tenants' },
-  { label: 'Modules & subscriptions', path: '/ops/modules' },
-  { label: 'Billing', path: '/ops/billing' },
-  { label: 'Operator users', path: '/ops/operators' },
-  { label: 'Feature flags', path: '/ops/feature-flags' },
-] as const;
+import { OPERATOR_WORKSPACES } from './operatorNavigation';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
     'block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
     isActive
-      ? 'bg-indigo-600 text-white'
-      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
+      ? 'bg-surface-selected text-content-primary'
+      : 'text-content-secondary hover:bg-surface-selected hover:text-content-primary',
   ].join(' ');
 
 interface OperatorNavigationProps {
@@ -36,27 +32,40 @@ const OperatorNavigation = ({
   email,
   onNavigate,
   onSignOut,
-}: OperatorNavigationProps) => (
-  <div className="flex h-full min-h-0 flex-col">
-    <nav aria-label={ariaLabel} className="flex-1 space-y-1 p-3">
-      {OPERATOR_NAVIGATION.map(({ label, path }) => (
-        <NavLink key={path} to={path} className={navLinkClass} onClick={onNavigate}>
-          {label}
-        </NavLink>
-      ))}
-    </nav>
-    <div className="border-t border-slate-200 p-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-      <p className="break-words font-medium text-slate-700 dark:text-slate-200">{email}</p>
-      <button
-        type="button"
-        className="mt-2 min-h-11 rounded-md px-3 text-left font-medium text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-indigo-400 dark:hover:bg-slate-800 dark:hover:text-indigo-300 md:min-h-10"
-        onClick={onSignOut}
-      >
-        Sign out
-      </button>
+}: OperatorNavigationProps) => {
+  const location = useLocation();
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <nav aria-label={ariaLabel} className="flex-1 space-y-1 p-3">
+        {OPERATOR_WORKSPACES.map(({ label, tasks }) => (
+          <NavLink
+            key={label}
+            to={tasks[0].path}
+            className={() =>
+              navLinkClass({ isActive: tasks.some((task) => task.path === location.pathname) })
+            }
+            aria-current={
+              tasks.some((task) => task.path === location.pathname) ? 'page' : undefined
+            }
+            onClick={onNavigate}
+          >
+            {label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="border-t border-line-subtle p-3 text-xs text-content-secondary">
+        <p className="break-words font-medium text-content-primary">{email}</p>
+        <button
+          type="button"
+          className="mt-2 min-h-11 rounded-md px-3 text-left font-medium text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-indigo-400 dark:hover:bg-slate-800 dark:hover:text-indigo-300 md:min-h-10"
+          onClick={onSignOut}
+        >
+          Sign out
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const menuIcon = (
   <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -74,6 +83,10 @@ const OpsLayout = () => {
   const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
   const { opsUser, logoutOps } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const workspace = OPERATOR_WORKSPACES.find((item) =>
+    item.tasks.some((task) => task.path === location.pathname)
+  );
   const operatorEmail = opsUser?.email ?? '—';
 
   const handleSignOut = () => {
@@ -85,7 +98,7 @@ const OpsLayout = () => {
   return (
     <div
       id="ops-shell"
-      className="flex min-h-[100dvh] min-w-0 bg-slate-100 text-slate-950 dark:bg-slate-950 dark:text-white"
+      className="flex h-[100dvh] min-h-[100dvh] min-w-0 overflow-hidden bg-canvas text-content-primary"
     >
       <a
         href="#ops-main-content"
@@ -94,14 +107,15 @@ const OpsLayout = () => {
         Skip to operator content
       </a>
 
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 md:flex">
-        <div className="border-b border-slate-200 px-4 py-4 dark:border-slate-800">
-          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+      <aside
+        id="ops-navigation"
+        className="hidden w-52 shrink-0 flex-col border-r border-line-subtle bg-surface md:flex"
+      >
+        <div className="border-b border-line-subtle px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-content-secondary">
             {APP_BRAND.productName}
           </p>
-          <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-            Operator console
-          </p>
+          <p className="mt-1 text-sm font-semibold text-content-primary">Operator console</p>
         </div>
         <OperatorNavigation
           ariaLabel="Desktop operator navigation"
@@ -110,8 +124,8 @@ const OpsLayout = () => {
         />
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex min-h-16 items-center gap-3 border-b border-slate-200 bg-white pb-3 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-slate-800 dark:bg-slate-900 md:px-6 md:py-3">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="app-workspace-header flex min-h-12 items-center gap-2 border-b border-line-subtle bg-surface px-4 py-2">
           <IconButton
             ref={mobileNavigationTriggerRef}
             label="Open operator navigation"
@@ -124,21 +138,33 @@ const OpsLayout = () => {
           <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900 dark:text-white md:hidden">
             Operator console
           </p>
-          <NavLink
-            to="/dashboard"
-            className="shrink-0 rounded-md px-2 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
-          >
-            ← Back to employee app
-          </NavLink>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <NavLink
+              to="/dashboard"
+              className="shrink-0 rounded-md px-2 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
+            >
+              ← Back to employee app
+            </NavLink>
+          </div>
         </header>
 
         <main
           id="ops-main-content"
           tabIndex={-1}
           aria-label="Operator content"
-          className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 md:p-6"
+          className="app-page-content min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
         >
-          <Outlet />
+          <PageWorkspaceContext.Provider
+            value={{
+              tasks: (workspace?.tasks ?? []).map((task) => ({ ...task, keywords: [], order: 0 })),
+              activePath: location.pathname,
+              select: (path) => {
+                if (workspace?.tasks.some((task) => task.path === path)) navigate(path);
+              },
+            }}
+          >
+            <Outlet />
+          </PageWorkspaceContext.Provider>
         </main>
       </div>
 
@@ -162,4 +188,14 @@ const OpsLayout = () => {
   );
 };
 
-export default OpsLayout;
+const OpsLayoutWithInformation = () => {
+  const location = useLocation();
+  const { opsUser } = useAuth();
+  return (
+    <PageInformationProvider scopeKey={`${location.key}:${opsUser?.email ?? ''}`}>
+      <OpsLayout />
+    </PageInformationProvider>
+  );
+};
+
+export default OpsLayoutWithInformation;

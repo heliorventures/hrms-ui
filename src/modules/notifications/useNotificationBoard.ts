@@ -3,16 +3,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MarkAllNotificationsReadDocument,
   MarkNotificationReadDocument,
-  NotificationBoardSummaryDocument,
   OrgDepartmentsDocument,
-  type NotificationBoardSummaryQuery,
   type OrgDepartmentsQuery,
 } from '../../api/graphql/graphql';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useRetainedQuery } from '../../hooks/useRetainedQuery';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
-import type { NotificationFilter } from './notificationTypes';
+import type { NotificationFilter, NotificationBoardData } from './notificationTypes';
+import { NotificationVideoBoardDocument } from './videoDocuments';
 
 const NOTIFICATION_BOARD_LIMIT = 20;
 const DEPARTMENT_LOOKUP_LIMIT = 100;
@@ -30,7 +29,7 @@ export const useNotificationBoard = () => {
   const departmentRequestIdRef = useRef(0);
 
   const loadBoard = useCallback(async () => {
-    return client.request<NotificationBoardSummaryQuery>(NotificationBoardSummaryDocument, {
+    return client.request<NotificationBoardData>(NotificationVideoBoardDocument, {
       limit: NOTIFICATION_BOARD_LIMIT,
     });
   }, [client]);
@@ -40,7 +39,7 @@ export const useNotificationBoard = () => {
     error: boardError,
     phase,
     refresh,
-  } = useRetainedQuery<NotificationBoardSummaryQuery>(loadBoard);
+  } = useRetainedQuery<NotificationBoardData>(loadBoard);
 
   const refreshBoard = useCallback(async () => {
     setActionError(null);

@@ -55,8 +55,32 @@ export default function AssetAssignmentModal(props: AssetAssignmentModalProps) {
   };
 
   return (
-    <Modal isOpen isDismissible={!props.saving} onClose={props.onClose} title="Assign Asset" size="lg">
-      <form className="space-y-4" onSubmit={(event) => void submit(event)}>
+    <Modal
+      isOpen
+      isDismissible={!props.saving}
+      onClose={props.onClose}
+      title="Assign Asset"
+      size="lg"
+      footer={
+        <>
+          <Button variant="outline" onClick={props.onClose} disabled={props.saving}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="asset-assignment-form"
+            disabled={props.saving || props.loadingAssets || props.loadingEmployees}
+          >
+            {props.saving ? 'Assigning...' : 'Assign Asset'}
+          </Button>
+        </>
+      }
+    >
+      <form
+        id="asset-assignment-form"
+        className="space-y-3"
+        onSubmit={(event) => void submit(event)}
+      >
         <div className="flex items-end gap-2">
           <Input
             label="Find Available Asset"
@@ -144,14 +168,6 @@ export default function AssetAssignmentModal(props: AssetAssignmentModalProps) {
             setValues((current) => ({ ...current, conditionAtAllocation: event.target.value }))
           }
         />
-        <div className="flex gap-3">
-          <Button type="submit" disabled={props.saving || props.loadingAssets || props.loadingEmployees}>
-            {props.saving ? 'Assigning...' : 'Assign Asset'}
-          </Button>
-          <Button variant="outline" onClick={props.onClose} disabled={props.saving}>
-            Cancel
-          </Button>
-        </div>
       </form>
     </Modal>
   );

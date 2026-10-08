@@ -1,0 +1,105 @@
+query PayslipPresentation($payslipId: ID!) {
+  payslipPresentation(payslipId: $payslipId) {
+    template
+    employeeDetails {
+      field
+      label
+      value
+    }
+    lines {
+      id
+      code
+      name
+      componentType
+      amount
+    }
+    statement
+  }
+}
+
+query PayrollUnpaidLeavePolicy {
+  payrollUnpaidLeavePolicy {
+    enabled
+    basicComponentCode
+    dayDivisor
+    treatment
+  }
+}
+
+mutation SavePayrollUnpaidLeavePolicy($input: SavePayrollUnpaidLeavePolicyInput!) {
+  savePayrollUnpaidLeavePolicy(input: $input) {
+    enabled
+    basicComponentCode
+    dayDivisor
+    treatment
+  }
+}
+
+query PayslipUnpaidLeave($payslipId: ID!) {
+  payslipUnpaidLeave(payslipId: $payslipId) {
+    basicComponentCode
+    basicAmount
+    dayDivisor
+    unpaidDays
+    amount
+    treatment
+  }
+}
+
+query CompanyPayslipComponents {
+  salaryComponents(limit: 500) {
+    id
+    name
+    componentType
+    showOnPayslip
+  }
+}
+
+mutation SetSalaryComponentPayslipVisibility($componentId: ID!, $visible: Boolean!) {
+  setSalaryComponentPayslipVisibility(componentId: $componentId, visible: $visible)
+}
+
+query ManagedEmployeePayslips($employeeId: ID!) {
+  payslips(employeeId: $employeeId, limit: 120) {
+    id
+    payrollCycleId
+    periodMonth
+    periodYear
+    grossSalary
+    totalDeductions
+    netSalary
+    pfEmployee
+    pfEmployer
+    esiEmployee
+    esiEmployer
+    tdsAmount
+    professionalTax
+    uanNumber
+    esicNumber
+    status
+    generatedAt
+    lines {
+      id
+      salaryComponentId
+      amount
+      componentType
+    }
+  }
+  payrollComplianceSetting {
+    payslipHeaderTitle
+    payslipCompanyAddress
+    payslipLogoFileStorageId
+  }
+  salaryComponents(limit: 500) {
+    id
+    name
+  }
+}
+
+query ManagedPayslipEmployees {
+  employees(limit: 500) {
+    id
+    employeeCode
+    fullName
+  }
+}

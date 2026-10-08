@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
   Briefcase,
   FileText,
@@ -10,24 +9,31 @@ import {
   TrendingUp,
   User,
 } from 'lucide-react';
+import { useMemo } from 'react';
 
+import Button from '../../../components/common/Button';
+import PageInformation from '../../../components/common/PageInformation';
+import { useRegisterProfileGuidanceAccess } from '../../../guidance/ProfileGuidanceContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
-import { useEmployeeProfileData } from './hooks/useEmployeeProfileData';
+import { usePageTabs } from '../../../hooks/usePageTabs';
+
+import EmployeeEsicCard from './components/EmployeeEsicCard';
 import { EmployeeHeader } from './components/EmployeeHeader';
+import EmployeeUanCard from './components/EmployeeUanCard';
+import { ProfileSectionSkeleton, ErrorSection } from './components/SectionStates';
 import { SidebarProfile } from './components/SidebarProfile';
 import { TabNavigation, type ProfileTabDef } from './components/TabNavigation';
-import { ProfileSectionSkeleton, ErrorSection } from './components/SectionStates';
+import { useEmployeeProfileData } from './hooks/useEmployeeProfileData';
+import { canShowPayrollSensitive } from './lib/profileAccess';
+import { BankingTab } from './tabs/BankingTab';
+import { DocumentsTab } from './tabs/DocumentsTab';
+import { EducationTab } from './tabs/EducationTab';
+import { EmploymentManagementTab } from './tabs/EmploymentManagementTab';
+import { GrowthTimelineTab } from './tabs/GrowthTimelineTab';
+import { IdentityTab } from './tabs/IdentityTab';
 import { OverviewTab } from './tabs/OverviewTab';
 import { PersonalInfoTab } from './tabs/PersonalInfoTab';
-import { BankingTab } from './tabs/BankingTab';
-import { IdentityTab } from './tabs/IdentityTab';
-import { EducationTab } from './tabs/EducationTab';
 import { WorkExperienceTab } from './tabs/WorkExperienceTab';
-import { GrowthTimelineTab } from './tabs/GrowthTimelineTab';
-import { DocumentsTab } from './tabs/DocumentsTab';
-import { EmploymentManagementTab } from './tabs/EmploymentManagementTab';
-import Button from '../../../components/common/Button';
-import { canShowPayrollSensitive } from './lib/profileAccess';
 
 const TAB_DEFS: ProfileTabDef[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -43,14 +49,14 @@ const TAB_DEFS: ProfileTabDef[] = [
 
 interface EmployeeProfileShellProps {
   employeeId: string | undefined;
+  embedded?: boolean;
 }
 
-export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) {
+export function EmployeeProfileShell({ employeeId, embedded }: EmployeeProfileShellProps) {
   const client = useGraphClient('client');
-  const { loading, refreshing, error, model, access, documentTypes, refetch } = useEmployeeProfileData(
-    client,
-    employeeId
-  );
+  const { loading, refreshing, error, model, access, documentTypes, refreshVersion, refetch } =
+    useEmployeeProfileData(client, employeeId);
+  useRegisterProfileGuidanceAccess(employeeId, access);
 
   const canManageOrganizationFields = access?.canManageOrganizationFields ?? false;
   const visibleTabs = useMemo(
@@ -58,13 +64,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
     [canManageOrganizationFields]
   );
 
-  const [activeTab, setActiveTab] = useState('overview');
-
-  useEffect(() => {
-    if (!visibleTabs.some((t) => t.id === activeTab)) {
-      setActiveTab('overview');
-    }
-  }, [visibleTabs, activeTab]);
+  const { tab: activeTab, setTab: setActiveTab } = usePageTabs(visibleTabs);
 
   if (!employeeId) {
     return <ErrorSection message="Missing employee id in route." />;
@@ -73,7 +73,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
   if (loading) {
     return (
       <div className="space-y-4">
-        <EmployeeHeader employeeName="Loading..." employeeCode="—" />
+        <EmployeeHeader embedded={embedded} employeeName="Loading..." employeeCode="—" />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-3">
             <ProfileSectionSkeleton rows={6} />
@@ -90,7 +90,7 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
   if ((error && !model) || (!model && !access)) {
     return (
       <div className="space-y-4">
-        <EmployeeHeader employeeName="Employee" employeeCode="—" />
+        <EmployeeHeader embedded={embedded} employeeName="Employee" employeeCode="—" />
         <ErrorSection message={error ?? 'Employee not found.'} onRetry={refetch} />
       </div>
     );
@@ -100,15 +100,24 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
     const employee = access.directoryEntry;
     return (
       <div className="min-h-[60vh] space-y-4 pb-8">
-        <EmployeeHeader employeeName={employee.fullName} employeeCode={employee.employeeCode} />
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50">
+        <EmployeeHeader
+          embedded={embedded}
+          employeeName={employee.fullName}
+          employeeCode={employee.employeeCode}
+        />
+        <div
+          className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50"
+          data-tour-anchor="employee-profile-directory-details"
+        >
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             Employee details
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            The organization directory shows work information only. Personal, identity, banking, and
-            document details remain private.
-          </p>
+          <PageInformation title="Directory privacy">
+            <p className="mt-1 text-sm text-slate-500">
+              The organization directory shows work information only. Personal, identity, banking,
+              and document details remain private.
+            </p>
+          </PageInformation>
           <dl className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[
               ['Designation', employee.designationTitle ?? '—'],
@@ -140,15 +149,26 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
   return (
     <div className="min-h-[60vh] space-y-4 pb-8">
       {error ? (
-        <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+        >
           Refresh failed; the last loaded profile remains visible. {error}
         </div>
       ) : null}
       <EmployeeHeader
+        embedded={embedded}
         employeeName={model.core.fullName}
         employeeCode={model.core.employeeCode}
         actions={
-          <Button type="button" variant="outline" size="sm" disabled={refreshing} onClick={() => refetch()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={refreshing}
+            onClick={() => refetch()}
+            data-tour-anchor="employee-profile-refresh"
+          >
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
         }
@@ -188,14 +208,36 @@ export function EmployeeProfileShell({ employeeId }: EmployeeProfileShellProps) 
               />
             ) : null}
             {activeTab === 'identity' ? (
-              <IdentityTab
-                employeeId={model.core.id}
-                client={client}
-                model={model}
-                documentTypes={documentTypes}
-                isHr={canManageOrganizationFields}
-                onChanged={refetch}
-              />
+              <div className="space-y-4">
+                {showSalary ? (
+                  <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+                    <EmployeeUanCard
+                      key={`uan-${model.core.id}`}
+                      employeeId={model.core.id}
+                      client={client}
+                      canEdit={canManageOrganizationFields}
+                      refreshVersion={refreshVersion}
+                      onChanged={refetch}
+                    />
+                    <EmployeeEsicCard
+                      key={`esic-${model.core.id}`}
+                      employeeId={model.core.id}
+                      client={client}
+                      canEdit={canManageOrganizationFields}
+                      refreshVersion={refreshVersion}
+                      onChanged={refetch}
+                    />
+                  </div>
+                ) : null}
+                <IdentityTab
+                  employeeId={model.core.id}
+                  client={client}
+                  model={model}
+                  documentTypes={documentTypes}
+                  isHr={canManageOrganizationFields}
+                  onChanged={refetch}
+                />
+              </div>
             ) : null}
             {activeTab === 'education' ? (
               <EducationTab

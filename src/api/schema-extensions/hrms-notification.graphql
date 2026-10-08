@@ -16,6 +16,8 @@ input CreateAnnouncementInput {
   documentFileName: String
   documentMimeType: String
   documentContentBase64: String
+  videoUploadStageId: UUID
+  videoLink: String
 }
 
 input UpdateAnnouncementInput {
@@ -41,6 +43,9 @@ input UpdateAnnouncementInput {
   documentContentBase64: String
   clearImage: Boolean = false
   clearDocument: Boolean = false
+  videoUploadStageId: UUID
+  videoLink: String
+  removeVideo: Boolean = false
 }
 
 input CreateDirectNotificationsInput {
@@ -72,19 +77,57 @@ input UpdateNotificationPreferencesInput {
 }
 
 extend type Announcement {
+  hasVideoAttachment: Boolean!
+  videoLink: String
   postSource: String!
   targetDepartmentId: ID
   targetLocationId: ID
 }
 
+type NotificationAutomationSettings {
+  birthdayEnabled: Boolean!
+  workAnniversaryEnabled: Boolean!
+  companySharingEnabled: Boolean!
+  deliveryLocalTime: NaiveTime!
+  birthdayTitleTemplate: String!
+  birthdayMessageTemplate: String!
+  anniversaryTitleTemplate: String!
+  anniversaryMessageTemplate: String!
+}
+
+input SaveNotificationAutomationSettingsInput {
+  birthdayEnabled: Boolean!
+  workAnniversaryEnabled: Boolean!
+  companySharingEnabled: Boolean!
+  deliveryLocalTime: NaiveTime!
+  birthdayTitleTemplate: String!
+  birthdayMessageTemplate: String!
+  anniversaryTitleTemplate: String!
+  anniversaryMessageTemplate: String!
+}
+
+type CelebrationPreferences {
+  shareBirthday: Boolean!
+  shareWorkAnniversary: Boolean!
+}
+
+input UpdateCelebrationPreferencesInput {
+  shareBirthday: Boolean!
+  shareWorkAnniversary: Boolean!
+}
+
 extend type Query {
+  announcementVideo(announcementId: UUID!): AnnouncementVideo!
   adminAnnouncements(limit: Int = 100): [Announcement!]!
   adminNotifications(limit: Int = 100): [Notification!]!
   unreadNotificationCount: Int!
   myNotificationPreferences: NotificationPreferences!
+  notificationAutomationSettings: NotificationAutomationSettings!
+  myCelebrationPreferences: CelebrationPreferences!
 }
 
 extend type Mutation {
+  prepareAnnouncementVideoUpload(fileName: String!, mimeType: String!, fileSizeBytes: Int!): AnnouncementVideoUpload!
   createAnnouncement(input: CreateAnnouncementInput!): Announcement!
   updateAnnouncement(input: UpdateAnnouncementInput!): Announcement!
   deleteAnnouncement(id: ID!): Boolean!
@@ -92,4 +135,19 @@ extend type Mutation {
   updateNotificationAdmin(input: UpdateNotificationAdminInput!): Notification!
   deleteNotificationAdmin(id: ID!): Boolean!
   updateNotificationPreferences(input: UpdateNotificationPreferencesInput!): NotificationPreferences!
+  saveNotificationAutomationSettings(input: SaveNotificationAutomationSettingsInput!): NotificationAutomationSettings!
+  updateMyCelebrationPreferences(input: UpdateCelebrationPreferencesInput!): CelebrationPreferences!
+}
+
+type AnnouncementVideoUpload {
+  stageId: UUID!
+  uploadUrl: String!
+  expiresAt: DateTime!
+}
+
+type AnnouncementVideo {
+  playbackUrl: String!
+  mimeType: String!
+  fileName: String!
+  expiresAt: DateTime!
 }

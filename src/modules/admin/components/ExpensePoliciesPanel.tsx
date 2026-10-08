@@ -1,4 +1,5 @@
 import Button from '../../../components/common/Button';
+import PageInformation from '../../../components/common/PageInformation';
 import Table from '../../../components/common/Table';
 import type { ExpenseCategoryRow, ExpensePolicyRow } from '../expenseCategoryTypes';
 import { formatMaybeAmount, selectFieldClass } from '../expenseCategoryUtils';
@@ -37,6 +38,7 @@ const ExpensePoliciesPanel = ({
       </h3>
       {categories.length ? (
         <Button
+          data-tour-anchor="expense-categories.add-policy"
           type="button"
           variant="secondary"
           className="!px-3 !py-1 !text-xs"
@@ -50,7 +52,7 @@ const ExpensePoliciesPanel = ({
       <p className="text-sm text-gray-500 dark:text-gray-400">Create A Category First.</p>
     ) : (
       <>
-        <div className="mb-4">
+        <div className="mb-4" data-tour-anchor="expense-categories.policy-scope">
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
             Category
           </label>
@@ -65,9 +67,12 @@ const ExpensePoliciesPanel = ({
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Policies apply the most specific match: department, designation, role, then all employees.
-          </p>
+          <PageInformation title="Expense policy matching">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Policies apply the most specific match: department, designation, role, then all
+              employees.
+            </p>
+          </PageInformation>
         </div>
         {directoryLoading ? (
           <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">

@@ -4,6 +4,7 @@ import { Landmark, Pencil, Shield } from 'lucide-react';
 
 import type { EmployeeProfileModel } from '../types';
 import { InfoCard } from '../components/InfoCard';
+import ImportedProfileDetails from '../components/ImportedProfileDetails';
 import { VerificationBadge } from '../components/StatusBadge';
 import Input from '../../../../components/common/Input';
 import Button from '../../../../components/common/Button';
@@ -152,6 +153,7 @@ export function BankingTab({
             </div>
           </div>
         </InfoCard>
+        <ImportedProfileDetails client={client} employeeId={employeeId} section="banking" />
       </div>
     );
   }

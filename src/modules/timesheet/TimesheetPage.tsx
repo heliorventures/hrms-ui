@@ -386,7 +386,7 @@ const TimesheetPage = () => {
   if (!canRead) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <TimesheetControlsCard
         customEnd={customEnd}
         customStart={customStart}

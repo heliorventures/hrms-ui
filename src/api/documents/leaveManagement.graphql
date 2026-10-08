@@ -1,0 +1,115 @@
+query CancellableCompOffLeave($offset: Int!) {
+  approvedCompOffLeaves(limit: 20, offset: $offset) {
+    id
+    employeeId
+    employeeName
+    employeeCode
+    fromDate
+    toDate
+    daysRequested
+  }
+}
+
+mutation CancelApprovedCompOff($leaveRequestId: ID!) {
+  cancelApprovedCompOffLeave(leaveRequestId: $leaveRequestId) {
+    id
+    status
+  }
+}
+
+query MyCompOffSummary($offset: Int!) {
+  compOffPolicy {
+    id
+    enabled
+    validityDays
+    claimDeadlineDays
+  }
+  compOffBalance {
+    earnedUnits
+    reservedUnits
+    usedUnits
+    expiredUnits
+    availableUnits
+  }
+  compOffClaims(mine: true, limit: 20, offset: $offset) {
+    id
+    workedDate
+    units
+    status
+    reason
+    rejectionReason
+  }
+}
+
+mutation RequestCompOffCredit($input: SubmitCompOffClaimInput!) {
+  submitCompOffClaim(input: $input) {
+    id
+    status
+  }
+}
+
+mutation WithdrawCompOffCreditClaim($claimId: ID!) {
+  cancelCompOffClaim(claimId: $claimId) {
+    id
+    status
+  }
+}
+
+query PendingCompOffCredits($offset: Int!) {
+  compOffClaims(status: "PENDING", forApproval: true, limit: 20, offset: $offset) {
+    id
+    employeeId
+    employeeName
+    employeeCode
+    workedDate
+    units
+    status
+    reason
+    rejectionReason
+  }
+}
+
+mutation ReviewCompOffCredit($claimId: ID!, $approve: Boolean!, $reason: String) {
+  decideCompOffClaim(claimId: $claimId, approve: $approve, reason: $reason) {
+    id
+    status
+  }
+}
+
+query CompanyCompOffPolicies {
+  compOffPolicyTargets {
+    employees {
+      id
+      employeeCode
+      fullName
+    }
+    designations {
+      id
+      title
+    }
+  }
+  compOffPolicies {
+    id
+    designationId
+    employeeId
+    leaveTypeId
+    enabled
+    validityDays
+    claimDeadlineDays
+    monthlyEarningLimit
+    yearlyEarningLimit
+    maxUnusedBalance
+    allowApprovedLeaveCancellation
+  }
+}
+
+mutation SaveCompanyCompOffPolicy($input: UpsertCompOffPolicyInput!) {
+  upsertCompOffPolicy(input: $input) {
+    id
+    enabled
+  }
+}
+
+query LeaveImportHistory($employeeId: ID, $year: Int!) {
+  leaveImportHistory(employeeId: $employeeId, year: $year)
+}

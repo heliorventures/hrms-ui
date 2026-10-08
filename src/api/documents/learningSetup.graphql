@@ -1,0 +1,11 @@
+mutation SaveSkill($input: SaveSkillInput!) {
+  saveSkill(input: $input) {
+    id
+  }
+}
+
+mutation SaveCourse($input: SaveCourseInput!) {
+  saveCourse(input: $input) {
+    id
+  }
+}

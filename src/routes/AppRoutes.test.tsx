@@ -7,8 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResolvedTenant } from '../auth/authClient';
 import type { ParsedClientSession } from '../auth/clientSession';
 import { TenantProvider, type useTenant } from '../contexts/TenantContext';
-import AppRoutes from './AppRoutes';
+
 import { TENANT_APP_ROUTES } from './appRouteConfig';
+import AppRoutes from './AppRoutes';
 import { OPS_CHILD_ROUTES } from './opsRouteConfig';
 import type { RoutePage } from './routeTypes';
 
@@ -44,11 +45,14 @@ vi.mock('../modules/ops/OpsLoginPage', () => ({ default: () => <h1>Operator sign
 
 const originalLoads = new Map<RoutePage, RoutePage['load']>();
 
-function session(permissions: readonly string[] = []): ParsedClientSession {
+function session(
+  permissions: readonly string[] = [],
+  permissionScopes: Readonly<Record<string, string>> = {}
+): ParsedClientSession {
   return {
     jwtRoles: [],
     permissions: new Set(permissions),
-    permissionScopes: {},
+    permissionScopes,
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,
@@ -65,10 +69,10 @@ function replaceLoader(routes: readonly unknown[], path: string, load: RoutePage
   return load;
 }
 
-function LocationProbe() {
+const LocationProbe = () => {
   const location = useLocation();
   return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
-}
+};
 
 const TenantNavigationProbe = () => {
   const navigate = useNavigate();
@@ -206,6 +210,10 @@ describe('AppRoutes operations selection', () => {
 
 describe('AppRoutes tenant selection and authorization', () => {
   it('canonicalizes a tenant-prefixed path only after tenant resolution', async () => {
+    state.auth = {
+      ...state.auth,
+      clientSession: session(['leave:read'], { 'leave:read': 'SELF' }),
+    };
     const load = vi.fn(async () => ({ default: () => <h1>Leave route</h1> }));
     replaceLoader(TENANT_APP_ROUTES, 'leave', load);
 
@@ -230,7 +238,7 @@ describe('AppRoutes tenant selection and authorization', () => {
 
     expect(await screen.findByRole('heading', { name: 'Access denied' })).toBeTruthy();
     expect(deniedLoad).not.toHaveBeenCalled();
-    expect(screen.getByRole('link', { name: 'Return to dashboard' }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: 'Return to home' }).getAttribute('href')).toBe(
       '/dashboard'
     );
     expect(screen.getByTestId('location').textContent).toBe('/insights');
@@ -254,7 +262,7 @@ describe('AppRoutes tenant selection and authorization', () => {
     document.title = 'Dashboard | Helior HRMS';
     renderApp('/does-not-exist');
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Return to dashboard' }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: 'Return to home' }).getAttribute('href')).toBe(
       '/dashboard'
     );
     await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/does-not-exist'));

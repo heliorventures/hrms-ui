@@ -24,6 +24,12 @@ function codeToMessage(code: string): string | null {
       return 'Only one leave policy can be configured for each leave type.';
     case 'LEAVE_WORKFLOW_NOT_CURRENT':
       return LEAVE_WORKFLOW_REFRESH_MESSAGE;
+    case 'LEAVE_WORKFLOW_NOT_CONFIGURED':
+      return 'Leave approval is not set up. Ask HR to open Workflows and add a Leave approval workflow.';
+    case 'EXPENSE_WORKFLOW_NOT_CONFIGURED':
+      return 'Expense approval is not set up. Ask HR to open Workflows and add an Expenses approval workflow.';
+    case 'WORKFLOW_ALREADY_CONFIGURED':
+      return 'An active approval workflow already exists for this request type. Select it below to manage its steps.';
     case 'USER_EMAIL_CONFLICT':
       return 'A login account already uses this email address. Use a different email or leave it blank.';
     case 'USER_USERNAME_CONFLICT':

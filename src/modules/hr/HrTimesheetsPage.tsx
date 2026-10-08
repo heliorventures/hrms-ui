@@ -1,41 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import Table from '../../components/common/Table';
-import Modal from '../../components/common/Modal';
-import Input from '../../components/common/Input';
-import Badge from '../../components/common/Badge';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   ApproveTimesheetWeekBatchDocument,
   RejectTimesheetWeekBatchDocument,
   ViewerEmployeeIdDocument,
   type ViewerEmployeeIdQuery,
+  HrTimesheetWeekBatchesDocument as TIMESHEET_WEEK_BATCHES_DOCUMENT,
 } from '../../api/graphql/graphql';
+import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import Input from '../../components/common/Input';
+import Modal from '../../components/common/Modal';
+import PageHeader from '../../components/common/PageHeader';
+import Table from '../../components/common/Table';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   TIMESHEET_APPROVAL_REFRESH_MESSAGE,
   timesheetApprovalTarget,
 } from '../timesheet/timesheetApproval';
-import TimesheetBatchPreviewModal from './components/TimesheetBatchPreviewModal';
 
-const TIMESHEET_WEEK_BATCHES_DOCUMENT = `
-  query HrTimesheetWeekBatches($status: String, $limit: Int! = 80) {
-    timesheetWeekBatches(status: $status, limit: $limit) {
-      id
-      employeeId
-      employeeCode
-      employeeName
-      weekStartDate
-      status
-      submittedAt
-      workflowInstanceId
-      pendingApprovalStage
-      pendingApprovalStepId
-      viewerMayApprove
-    }
-  }
-`;
+import TimesheetBatchPreviewModal from './components/TimesheetBatchPreviewModal';
 
 type BatchRow = {
   id: string;
@@ -65,10 +51,13 @@ const HrTimesheetsPage = () => {
   const [infoNotice, setInfoNotice] = useState<string | null>(null);
 
   const loadBatches = useCallback(async () => {
-    const r = await client.request<{ timesheetWeekBatches: BatchRow[] }>(TIMESHEET_WEEK_BATCHES_DOCUMENT, {
-      ...(filter === 'pending' ? { status: 'PENDING' } : {}),
-      limit: 80,
-    });
+    const r = await client.request<{ timesheetWeekBatches: BatchRow[] }>(
+      TIMESHEET_WEEK_BATCHES_DOCUMENT,
+      {
+        ...(filter === 'pending' ? { status: 'PENDING' } : {}),
+        limit: 80,
+      }
+    );
     setBatches(r.timesheetWeekBatches ?? []);
   }, [client, filter]);
 
@@ -132,7 +121,7 @@ const HrTimesheetsPage = () => {
       const st = exp?.status?.trim().toUpperCase() ?? '';
       if (st === 'PENDING' && exp?.workflowInstanceId) {
         setInfoNotice(
-          'Your approval was recorded. The submission stays open until every workflow step is finished - continue with HR or the next approver.',
+          'Your approval was recorded. The submission stays open until every workflow step is finished - continue with HR or the next approver.'
         );
       } else {
         setInfoNotice('Timesheet approved.');
@@ -199,19 +188,18 @@ const HrTimesheetsPage = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timesheet Approvals</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Same inbox pattern as expenses/travel: <strong>Status</strong> stays workflow-pending until
-          all configured steps complete; approve/reject is only enabled when it is your turn (
-          <code className="font-mono text-xs">viewerMayApprove</code>). Open details before acting to
-          review the submitted rows.
-        </p>
+        <PageHeader title="Timesheet Approvals" />
       </div>
 
-      <Card title="Queue">
-        <div className="mb-4 flex flex-wrap items-center gap-2">{filterTabs}</div>
+      <Card>
+        <div
+          className="mb-4 flex flex-wrap items-center gap-2"
+          data-tour-anchor="hr-timesheets.filters"
+        >
+          {filterTabs}
+        </div>
         {infoNotice ? (
           <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
             {infoNotice}
@@ -255,7 +243,8 @@ const HrTimesheetsPage = () => {
                 label: '',
                 render: (row: BatchRow) => {
                   const pending = row.status?.toUpperCase() === 'PENDING';
-                  const ownSubmission = viewerEmployeeId != null && row.employeeId === viewerEmployeeId;
+                  const ownSubmission =
+                    viewerEmployeeId != null && row.employeeId === viewerEmployeeId;
                   const approvalTarget = timesheetApprovalTarget(row.id, row.pendingApprovalStepId);
                   const staleApproval =
                     pending && row.viewerMayApprove === true && !ownSubmission && !approvalTarget;
@@ -293,6 +282,7 @@ const HrTimesheetsPage = () => {
                         type="button"
                         variant="outline"
                         className="!py-1 !text-xs"
+                        data-tour-anchor="hr-timesheets.preview-trigger"
                         disabled={busyId === row.id}
                         onClick={() => setPreviewFor(row)}
                       >
@@ -307,6 +297,7 @@ const HrTimesheetsPage = () => {
                           type="button"
                           variant="outline"
                           className="!py-1 !text-xs"
+                          data-tour-anchor="hr-timesheets.preview-trigger"
                           disabled={busyId === row.id}
                           onClick={() => setPreviewFor(row)}
                         >
@@ -316,6 +307,7 @@ const HrTimesheetsPage = () => {
                           type="button"
                           variant="primary"
                           className="!py-1 !text-xs"
+                          data-tour-anchor="hr-timesheets.approve-trigger"
                           disabled={busyId === row.id}
                           onClick={() => void handleApprove(row)}
                         >
@@ -325,6 +317,7 @@ const HrTimesheetsPage = () => {
                           type="button"
                           variant="outline"
                           className="!py-1 !text-xs"
+                          data-tour-anchor="hr-timesheets.reject-trigger"
                           disabled={busyId === row.id}
                           onClick={() => {
                             setPreviewFor(null);
@@ -370,7 +363,12 @@ const HrTimesheetsPage = () => {
             fullWidth
           />
           <div className="flex gap-2">
-            <Button type="button" variant="primary" onClick={() => void handleReject()}>
+            <Button
+              type="button"
+              variant="primary"
+              data-tour-anchor="hr-timesheets.reject-trigger"
+              onClick={() => void handleReject()}
+            >
               Confirm Reject
             </Button>
             <Button

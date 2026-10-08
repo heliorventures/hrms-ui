@@ -1,11 +1,18 @@
 import type { FormEvent } from 'react';
+
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
-import type { TaxConfigurationRow, TaxSectionCatalogRow } from '../payrollTypes';
+import { hasTaxSubmissionSettings } from '../hooks/taxFormValidation';
+import type { TaxSectionCatalogRow } from '../payrollTypes';
+import type { TaxSubmissionContext } from '../taxSubmissionContext';
+
+function hasCatalog(catalog: TaxSectionCatalogRow[] | null): boolean {
+  return Boolean(catalog?.length);
+}
 
 export const EmployeeTaxProofFormCard = ({
-  activeTaxConfig,
+  submissionContext,
   loading,
   catalog,
   sectionCode,
@@ -20,7 +27,7 @@ export const EmployeeTaxProofFormCard = ({
   onProofFileChange,
   onSubmit,
 }: {
-  activeTaxConfig: TaxConfigurationRow | null;
+  submissionContext: TaxSubmissionContext | null;
   loading: boolean;
   catalog: TaxSectionCatalogRow[] | null;
   sectionCode: string;
@@ -36,20 +43,22 @@ export const EmployeeTaxProofFormCard = ({
   onSubmit: (event: FormEvent) => void;
 }) => (
   <Card title="Submit Deduction Proof">
-    {!activeTaxConfig ? (
-      <p className="text-sm text-slate-500">Tax configuration missing — HR must enable Manage Tax.</p>
-    ) : loading ? (
-      <p className="text-sm text-slate-500">Loading...</p>
+    {!hasTaxSubmissionSettings(submissionContext) || loading ? (
+      <p className="text-sm text-slate-500">
+        {loading
+          ? 'Loading...'
+          : 'No employee tax settings apply to this financial year. Contact HR.'}
+      </p>
     ) : (
       <form className="max-w-xl space-y-4" onSubmit={onSubmit}>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Record declared vs claimed amounts under an IT deduction section.{' '}
-          {(catalog?.length ?? 0) > 0
+          {hasCatalog(catalog)
             ? 'Pick from your tenant catalogue; HR may cap amounts.'
             : 'No HR catalogue yet — enter a section code freely.'}
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
-          {(catalog?.length ?? 0) > 0 ? (
+          {hasCatalog(catalog) ? (
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
               Section
               <select
@@ -60,7 +69,7 @@ export const EmployeeTaxProofFormCard = ({
                 {catalog?.map((row) => (
                   <option key={row.id} value={row.sectionCode}>
                     {row.sectionCode} - {row.sectionLabel}
-                    {row.maxDeductionAmount != null ? ` (cap ₹${row.maxDeductionAmount})` : ''}
+                    {row.maxDeductionAmount !== null ? ` (cap ₹${row.maxDeductionAmount})` : ''}
                   </option>
                 ))}
               </select>
@@ -121,7 +130,7 @@ export const EmployeeTaxProofFormCard = ({
 );
 
 export const EmployeeTaxDeclarationFormCard = ({
-  activeTaxConfig,
+  submissionContext,
   fiscalYear,
   regime,
   gross,
@@ -129,13 +138,11 @@ export const EmployeeTaxDeclarationFormCard = ({
   submitting,
   loading,
   message,
-  onFiscalYearChange,
-  onRegimeChange,
   onGrossChange,
   onDeductionsChange,
   onSubmit,
 }: {
-  activeTaxConfig: TaxConfigurationRow | null;
+  submissionContext: TaxSubmissionContext | null;
   fiscalYear: string;
   regime: string;
   gross: string;
@@ -143,35 +150,34 @@ export const EmployeeTaxDeclarationFormCard = ({
   submitting: boolean;
   loading: boolean;
   message: string | null;
-  onFiscalYearChange: (value: string) => void;
-  onRegimeChange: (value: string) => void;
   onGrossChange: (value: string) => void;
   onDeductionsChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
 }) => (
   <Card title="Estimated Declaration">
-    {!activeTaxConfig ? (
+    {!hasTaxSubmissionSettings(submissionContext) ? (
       <p className="text-sm text-slate-500">
-        Activate a tax configuration (HR → Manage Tax) before saving declarations.
+        No employee tax settings apply to this financial year. Contact HR.
       </p>
     ) : (
       <form className="max-w-xl space-y-4" onSubmit={onSubmit}>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Save a rough gross and deduction estimate for the selected FY — HR can reconcile with
-          slabs and proof approvals separately.
+          payroll information and proof approvals separately. This declaration does not change your
+          assigned regime.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
             label="Fiscal Year (India Anchor Year)"
             inputMode="numeric"
             value={fiscalYear}
-            onChange={(event) => onFiscalYearChange(event.target.value)}
+            readOnly
           />
           <Input
-            label="Regime (Optional)"
-            placeholder="NEW_REGIME / OLD_REGIME"
+            label="Assigned tax regime"
+            placeholder="Configured by HR"
             value={regime}
-            onChange={(event) => onRegimeChange(event.target.value)}
+            readOnly
           />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">

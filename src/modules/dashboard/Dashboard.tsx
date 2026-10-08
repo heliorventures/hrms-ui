@@ -1,55 +1,78 @@
+import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEmployeeDisplayName } from '../../contexts/employeeDisplayNameContext';
 import { useTenant } from '../../contexts/TenantContext';
-import {
-  authorizationStateKey,
-  createPermissionService,
-} from '../../auth/permissionService';
-import PunchInOut from './components/PunchInOut';
+
+import HomeQuickAccess from './components/HomeQuickAccess';
 import LeaveBalanceCard from './components/LeaveBalanceCard';
-import NotificationsPreview from './components/NotificationsPreview';
 import OnLeaveToday from './components/OnLeaveToday';
+import PunchInOut from './components/PunchInOut';
+import RecentLeaveRequest from './components/RecentLeaveRequest';
 import UpcomingHolidays from './components/UpcomingHolidays';
 
 const Dashboard = () => {
-  const { clientSession, user } = useAuth();
+  const { clientSession, tenantId, user } = useAuth();
+  const displayName = useEmployeeDisplayName();
   const { currentTenant } = useTenant();
   const permissions = createPermissionService(clientSession);
   const authorizationKey = authorizationStateKey(clientSession);
   const canReadAttendance = permissions.canCapability('dashboard.attendance');
   const canReadLeave = permissions.canCapability('dashboard.leave');
-  const canReadNotifications = permissions.canCapability('dashboard.notifications');
+  const hasSummary = canReadAttendance || canReadLeave;
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
-      <div className="min-w-0 flex-1 space-y-6">
-        <div className="flex flex-col gap-3 border-b border-slate-200/80 pb-5 dark:border-slate-700/80 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              Welcome back, {user?.name ?? 'there'}
-            </h1>
-            <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
-              {currentTenant.name} · {user?.designation ?? 'Employee'}
-            </p>
-          </div>
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2"
+          data-tour-anchor="dashboard-welcome"
+        >
+          <h1 className="break-words text-xl font-semibold tracking-tight text-content-primary sm:text-2xl">
+            Welcome back, {displayName || 'there'}.
+          </h1>
+          <p className="text-xs text-content-muted">
+            {new Intl.DateTimeFormat(undefined, {
+              timeZone: currentTenant.timezone,
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            }).format(new Date())}
+          </p>
         </div>
-
-        {canReadAttendance ? <PunchInOut key={`attendance:${authorizationKey}`} /> : null}
-
-        {canReadLeave ? (
-          <div className="space-y-6">
-            <LeaveBalanceCard key={`leave-balance:${authorizationKey}`} />
-            <OnLeaveToday key={`on-leave:${authorizationKey}`} />
-            <UpcomingHolidays key={`holidays:${authorizationKey}`} />
-          </div>
-        ) : null}
       </div>
-
-      {canReadNotifications ? (
-        <div className="lg:w-[420px] xl:w-[480px] lg:shrink-0">
-          <div className="sticky top-4 h-[calc(100vh-5rem)] min-h-[400px] lg:h-[calc(100vh-5rem)]">
-            <NotificationsPreview key={`notifications:${authorizationKey}`} fullHeight />
+      {hasSummary ? (
+        <section
+          aria-label="Your day"
+          data-tour-anchor="dashboard-your-day"
+          className={`grid items-start gap-4 ${canReadAttendance && canReadLeave ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]' : ''}`}
+        >
+          <h2 className="sr-only">Your day</h2>
+          {canReadAttendance ? <PunchInOut key={`attendance:${authorizationKey}`} /> : null}
+          <div className="min-w-0 space-y-4">
+            <HomeQuickAccess />
+            {canReadLeave ? <LeaveBalanceCard key={`leave-balance:${authorizationKey}`} /> : null}
           </div>
-        </div>
+        </section>
+      ) : (
+        <HomeQuickAccess />
+      )}
+      {canReadLeave && permissions.canRoute('/leave') ? (
+        <RecentLeaveRequest key={`${tenantId}:${user?.id}:${authorizationKey}`} />
+      ) : null}
+      {canReadLeave ? (
+        <section
+          aria-label="Around your workplace"
+          className="grid items-start gap-6 border-t border-line md:grid-cols-2"
+        >
+          <h2 className="sr-only">Around your workplace</h2>
+          <OnLeaveToday key={`on-leave:${authorizationKey}`} />
+          <UpcomingHolidays key={`holidays:${authorizationKey}`} />
+        </section>
+      ) : null}
+      {!hasSummary ? (
+        <p className="rounded-xl border border-line bg-surface p-5 text-sm text-content-secondary">
+          Use the navigation to open your available tools.
+        </p>
       ) : null}
     </div>
   );

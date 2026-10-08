@@ -1,6 +1,7 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Table from '../../../components/common/Table';
+
 import AssetPager from './AssetPager';
 import AssetSectionToolbar from './AssetSectionToolbar';
 import AssetStatusBadge from './AssetStatusBadge';
@@ -60,12 +61,13 @@ export default function AssetCategorySection(props: AssetCategorySectionProps) {
       : []),
   ];
   return (
-    <Card title="Asset Categories">
+    <Card>
       <AssetSectionToolbar
         search={props.filter.search}
         placeholder="Name or code"
         loading={props.loading}
         actionLabel={props.canManage ? 'New Category' : undefined}
+        actionAnchor="assets.category-action"
         onAction={props.onCreate}
         onSearch={(search) => props.onFilterChange({ ...props.filter, page: 1, search })}
       />

@@ -10,6 +10,23 @@ import { PERMISSIONS } from '../../auth/permissions';
 
 import Sidebar from './Sidebar';
 
+vi.mock('../../contexts/TenantContext', () => ({
+  useTenant: () => ({ currentTenant: { name: 'Acme' } }),
+}));
+
+it('keeps authorized destinations and profile available in the collapsed rail', () => {
+  renderSidebar({ desktopCollapsed: true });
+  expect(screen.getByRole('complementary', { name: 'Main navigation' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('link', { name: 'People' }));
+  expect(screen.getByRole('link', { name: 'Organization' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'User menu' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Expand navigation' })).toBeTruthy();
+});
+
+vi.mock('../../contexts/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+}));
+
 const sidebarAuth = vi.hoisted(() => ({
   clientSession: null as ParsedClientSession | null,
 }));
@@ -25,7 +42,9 @@ function session(permissions: readonly string[], jwtRoles: string[] = []): Parse
   return {
     jwtRoles,
     permissions: new Set(permissions),
-    permissionScopes: {},
+    permissionScopes: Object.fromEntries(
+      permissions.map((permission) => [permission.trim().toLowerCase(), 'ALL'])
+    ),
     resourceScopes: {},
     persona: 'EMPLOYEE',
     mustChangePassword: false,
@@ -48,21 +67,22 @@ beforeEach(() => {
   document.body.innerHTML = '<div id="root"></div>';
   vi.stubGlobal(
     'matchMedia',
-    vi.fn((query: string) =>
-      ({
-        matches: desktopViewport,
-        media: query,
-        onchange: null,
-        addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) =>
-          mediaListeners.add(listener),
-        removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) =>
-          mediaListeners.delete(listener),
-        addListener: (listener: (event: MediaQueryListEvent) => void) =>
-          mediaListeners.add(listener),
-        removeListener: (listener: (event: MediaQueryListEvent) => void) =>
-          mediaListeners.delete(listener),
-        dispatchEvent: () => true,
-      }) as MediaQueryList
+    vi.fn(
+      (query: string) =>
+        ({
+          matches: desktopViewport,
+          media: query,
+          onchange: null,
+          addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) =>
+            mediaListeners.add(listener),
+          removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) =>
+            mediaListeners.delete(listener),
+          addListener: (listener: (event: MediaQueryListEvent) => void) =>
+            mediaListeners.add(listener),
+          removeListener: (listener: (event: MediaQueryListEvent) => void) =>
+            mediaListeners.delete(listener),
+          dispatchEvent: () => true,
+        }) as MediaQueryList
     )
   );
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
@@ -85,6 +105,16 @@ interface RenderSidebarOptions {
   onCloseMobile?: () => void;
   onToggleDesktop?: () => void;
 }
+
+it('reveals inline destinations when a touchscreen is used on a hover-capable desktop', () => {
+  renderSidebar();
+  const people = screen.getByRole('link', { name: 'People' });
+  expect(screen.queryByRole('link', { name: 'Organization' })).toBeNull();
+  const touch = new Event('pointerdown', { bubbles: true });
+  Object.defineProperty(touch, 'pointerType', { value: 'touch' });
+  fireEvent(people, touch);
+  expect(screen.getByRole('link', { name: 'Organization' })).toBeTruthy();
+});
 
 function renderSidebar({
   mobileOpen = false,
@@ -114,7 +144,7 @@ function renderSidebar({
   return { ...result, mobileTriggerRef };
 }
 
-function StatefulSidebar({ initiallyOpen = true }: { initiallyOpen?: boolean }) {
+const StatefulSidebar = ({ initiallyOpen = true }: { initiallyOpen?: boolean }) => {
   const [open, setOpen] = useState(initiallyOpen);
   const mobileTriggerRef = createRef<HTMLButtonElement>();
   return (
@@ -138,7 +168,7 @@ function StatefulSidebar({ initiallyOpen = true }: { initiallyOpen?: boolean }) 
       />
     </MemoryRouter>
   );
-}
+};
 
 function renderStatefulSidebar() {
   setDesktopViewport(false);
@@ -162,7 +192,10 @@ describe('Sidebar', () => {
     sidebarAuth.clientSession = session(['timesheet:read'], ['EMPLOYEE']);
     renderSidebar();
 
-    expect(screen.getByRole('link', { name: 'Timesheet' })).toBeTruthy();
+    fireEvent.pointerEnter(screen.getByRole('link', { name: 'Timesheets' }), {
+      pointerType: 'mouse',
+    });
+    expect(screen.getByRole('link', { name: 'My timesheets' })).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Attendance' })).toBeNull();
   });
 
@@ -171,7 +204,7 @@ describe('Sidebar', () => {
 
     const navigation = screen.getByRole('complementary', { name: 'Main navigation' });
     expect(navigation.className).toContain('-translate-x-full');
-    expect(navigation.className).toContain('lg:translate-x-0');
+    expect(navigation.className).toContain('lg:transform-none');
     expect(screen.queryByRole('button', { name: 'Close navigation' })).toBeNull();
   });
 
@@ -197,7 +230,9 @@ describe('Sidebar', () => {
     expect(navigation?.hasAttribute('inert')).toBe(false);
     expect(navigation?.getAttribute('aria-hidden')).toBeNull();
   });
+});
 
+describe('Sidebar mobile focus and interaction', () => {
   it('traps Tab and Shift+Tab inside the open mobile navigation', async () => {
     renderStatefulSidebar();
     const navigation = screen.getByRole('dialog', { name: 'Main navigation' });
@@ -205,14 +240,17 @@ describe('Sidebar', () => {
     await waitFor(() => expect(document.activeElement).toBe(closeButton));
 
     const focusable = Array.from(
-      navigation.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled])')
+      navigation.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled])'
+      )
     );
     const last = focusable[focusable.length - 1];
+    const first = focusable[0];
     last.focus();
     fireEvent.keyDown(document, { key: 'Tab' });
-    expect(document.activeElement).toBe(closeButton);
+    expect(document.activeElement).toBe(first);
 
-    closeButton.focus();
+    first.focus();
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
     expect(document.activeElement).toBe(last);
   });
@@ -257,15 +295,19 @@ describe('Sidebar', () => {
     ['Escape', () => fireEvent.keyDown(document, { key: 'Escape' })],
     ['close button', () => fireEvent.click(screen.getByRole('button', { name: 'Close sidebar' }))],
     ['backdrop', () => fireEvent.click(screen.getByRole('button', { name: 'Close navigation' }))],
-    ['navigation link', () => fireEvent.click(screen.getByRole('link', { name: 'Dashboard' }))],
+    ['navigation link', () => fireEvent.click(screen.getByRole('link', { name: 'Home' }))],
   ])('restores focus after %s dismissal', async (_dismissal, dismiss) => {
     renderStatefulSidebar();
     const trigger = screen.getByTestId('mobile-navigation-trigger');
-    await waitFor(() => expect(screen.getByRole('dialog', { name: 'Main navigation' })).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByRole('dialog', { name: 'Main navigation' })).toBeTruthy()
+    );
 
     dismiss();
 
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Main navigation' })).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Main navigation' })).toBeNull()
+    );
     expect(document.activeElement).toBe(trigger);
   });
 
@@ -286,22 +328,21 @@ describe('Sidebar', () => {
   it('exposes expandable HRMS sections with their current state', () => {
     renderSidebar();
 
-    const organization = screen.getByRole('button', { name: 'Organization' });
+    const organization = screen.getByRole('link', { name: 'People' });
     expect(organization.getAttribute('aria-expanded')).toBe('false');
 
-    fireEvent.click(organization);
+    fireEvent.pointerEnter(organization, { pointerType: 'mouse' });
 
     expect(organization.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByRole('link', { name: 'Employees' })).toBeTruthy();
   });
 
-  it('keeps destinations discoverable by accessible name in the desktop icon rail', () => {
+  it('keeps the desktop icon rail interactive when collapsed', () => {
     renderSidebar({ desktopCollapsed: true });
-
-    const navigation = screen.getByRole('complementary', { name: 'Main navigation' });
-    expect(navigation.className).toContain('lg:w-20');
-    const dashboard = screen.getByRole('link', { name: 'Dashboard' });
-    expect(dashboard.getAttribute('title')).toBe('Dashboard');
-    expect(dashboard.querySelector('span')?.className).toContain('sr-only');
+    const navigation = document.getElementById('app-navigation');
+    expect(screen.getByRole('complementary', { name: 'Main navigation' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Home' })).toBeTruthy();
+    expect(navigation?.hasAttribute('inert')).toBe(false);
+    expect(navigation?.className).toContain('lg:w-[72px]');
   });
 });

@@ -1,0 +1,3 @@
+query EmployeeTaxProjection($employeeId: ID, $fiscalYear: Int!, $month: Int!) {
+  employeeTaxProjection(employeeId: $employeeId, fiscalYear: $fiscalYear, month: $month)
+}

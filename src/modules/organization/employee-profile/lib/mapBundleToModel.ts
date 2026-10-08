@@ -3,6 +3,7 @@ import type {
   PayrollEmploymentHistoryQuery,
 } from '../../../../api/graphql/graphql';
 import { employeeStatusForDisplay } from '../../../employeeStatus';
+import type { EmployeeProfileLocationQuery } from '../profileDocuments';
 import type {
   CompanyAssignment,
   CoreEmployeeRecord,
@@ -41,7 +42,7 @@ function verifyFromBool(v: boolean): VerificationStatus {
 
 /** Build full profile view model from `EmployeeProfileBundle`. */
 export function mapBundleToEmployeeProfileModel(
-  bundle: EmployeePrivateProfileQuery,
+  bundle: EmployeeProfileLocationQuery,
   employmentHistoryRecords: PayrollEmploymentHistoryQuery['employmentHistoryRecords'] = []
 ): EmployeeProfileModel | null {
   const emp = bundle.employee;
@@ -89,6 +90,7 @@ export function mapBundleToEmployeeProfileModel(
     phone: emp.personalPhone ?? '',
     dateOfBirth: dobIso ? dobIso.slice(0, 10) : '',
     gender: emp.gender ?? '',
+    maritalStatus: emp.maritalStatus ?? '',
     nationality: emp.nationality ?? '',
     permanentAddress: emp.permanentAddress ?? '',
     currentAddress: emp.currentAddress ?? '',
@@ -251,7 +253,7 @@ export function mapBundleToEmployeeProfileModel(
   const companyAssignment: CompanyAssignment = {
     leavePolicyName: '—',
     shiftName: '—',
-    locationName: '—',
+    locationName: emp.locationName ?? 'Company default',
     gradeBand: '—',
   };
 

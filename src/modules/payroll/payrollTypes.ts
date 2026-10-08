@@ -1,16 +1,23 @@
 import type {
   EmployeeSalaryBreakupPreviewQuery,
-  PayrollComplianceSettingQuery,
   TaxComputationsListQuery,
   TaxProofLinesQuery,
   TaxSectionDefinitionsQuery,
+  PayrollComplianceSettingQuery,
 } from '../../api/graphql/graphql';
+
 import type { PayslipDocModel } from './components/PayslipDocument';
+import type { ImportedSalaryFinancials } from './importSalaryPreview';
+import type { PayslipTemplateId } from './payslipTemplates';
 
 export type PayrollTabId = 'salary' | 'payslip' | 'incometax';
 
 export type EmployeeSalaryPreview =
-  EmployeeSalaryBreakupPreviewQuery['employeeSalaryBreakupPreview'];
+  | (NonNullable<EmployeeSalaryBreakupPreviewQuery['employeeSalaryBreakupPreview']> & {
+      financials?: ImportedSalaryFinancials | null;
+    })
+  | null
+  | undefined;
 
 export interface SalaryComponentRow {
   id: string;
@@ -47,11 +54,14 @@ export interface PayrollBoardData {
 }
 
 export interface PayrollComplianceFormState {
+  payslipTemplateInput: PayslipTemplateId;
+  payslipEmployeeFieldsInput: string[];
   employerTanInput: string;
   employerLegalNameInput: string;
   baseComponentInput: string;
   arrearComponentInput: string;
   payslipHeaderInput: string;
+  payslipCompanyAddressInput: string;
   payslipLogoIdInput: string;
 }
 
@@ -90,8 +100,7 @@ export interface PayslipRow extends PayslipDocModel {
   periodYear: number;
 }
 
-export type PayrollComplianceSettingRow =
-  PayrollComplianceSettingQuery['payrollComplianceSetting'];
+export type PayrollComplianceSettingRow = PayrollComplianceSettingQuery['payrollComplianceSetting'];
 
 export type TaxComputationSelfRow = TaxComputationsListQuery['taxComputations'][number];
 

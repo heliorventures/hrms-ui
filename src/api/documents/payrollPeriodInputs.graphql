@@ -1,0 +1,12 @@
+query PayrollPeriodInput($employeeId: ID!, $year: Int!, $month: Int!) {
+  payrollPeriodInput(employeeId: $employeeId, year: $year, month: $month)
+  payrollPeriodLocked(year: $year, month: $month)
+}
+
+mutation SavePayrollPeriodInput($employeeId: ID!, $input: JSON!, $expectedRevision: Int) {
+  savePayrollPeriodInput(
+    employeeId: $employeeId
+    input: $input
+    expectedRevision: $expectedRevision
+  )
+}

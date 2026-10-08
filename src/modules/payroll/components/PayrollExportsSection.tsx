@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
+
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
-import { PAYROLL_MONTHS } from '../payrollFormatters';
 import type { FyPayrollExportKey, MonthlyPayrollExportKey } from '../hooks/usePayrollExports';
+import { PAYROLL_MONTHS } from '../payrollFormatters';
+
+import PayrollFinancialYearExports from './PayrollFinancialYearExports';
 
 interface ExportStatus {
   exporting: boolean;
@@ -15,7 +18,7 @@ interface PayrollExportsSectionProps {
   fyStartYear: number;
   fyQuarter: number;
   monthlyStatus: Record<string, ExportStatus>;
-  fyStatus: Record<string, ExportStatus>;
+  fyStatus: Partial<Record<FyPayrollExportKey, ExportStatus>>;
   onMonthChange: (value: number) => void;
   onYearChange: (value: number) => void;
   onFyStartYearChange: (value: number) => void;
@@ -41,8 +44,7 @@ const monthlyExportCards: {
       <>
         Stub export for statutory prep: one row per payslip in the selected payroll cycle, using
         stored <span className="font-medium">tdsAmount</span> and primary PAN when present. Requires{' '}
-        <span className="font-mono text-xs">payroll:statutory_export</span> permission
-        role.
+        <span className="font-mono text-xs">payroll:statutory_export</span> permission role.
       </>
     ),
   },
@@ -180,79 +182,14 @@ const PayrollExportsSection = ({
       );
     })}
 
-    <Card title="India FY — Employee Payroll Totals (CSV)">
-      <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
-        Aggregates payslips in payroll cycles whose India financial year matches the selected start
-        year (April through the following March). Sums gross, deductions, net, TDS, PF/ESI
-        employee, and PT. Optional <strong>FY quarter</strong> narrows to Q1 Apr-Jun through Q4
-        Jan-Mar. Form&nbsp;16 Part&nbsp;B variant uses spreadsheet-friendly column labels.
-      </p>
-      <div className="flex flex-wrap items-end gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600 dark:text-gray-400">India FY start year</span>
-          <input
-            type="number"
-            min={2000}
-            max={2199}
-            className="w-32 rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            value={fyStartYear}
-            onChange={(event) => onFyStartYearChange(Number(event.target.value) || fyStartYear)}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-600 dark:text-gray-400">FY quarter</span>
-          <select
-            className="min-w-[12rem] rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            value={fyQuarter}
-            onChange={(event) => onFyQuarterChange(Number(event.target.value) || 1)}
-          >
-            <option value={1}>Q1 Apr-Jun</option>
-            <option value={2}>Q2 Jul-Sep</option>
-            <option value={3}>Q3 Oct-Dec</option>
-            <option value={4}>Q4 Jan-Mar</option>
-          </select>
-        </label>
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          e.g. 2025 for FY 2025-26 (Apr 2025-Mar 2026).
-        </span>
-        <Button
-          type="button"
-          onClick={() => onFyDownload('fyTotals')}
-          disabled={fyStatus.fyTotals?.exporting}
-        >
-          {fyStatus.fyTotals?.exporting ? 'Downloading…' : 'Download FY totals CSV'}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onFyDownload('fyQuarterTotals')}
-          disabled={fyStatus.fyQuarterTotals?.exporting}
-        >
-          {fyStatus.fyQuarterTotals?.exporting
-            ? 'Downloading…'
-            : 'Download FY quarter totals CSV'}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onFyDownload('form16')}
-          disabled={fyStatus.form16?.exporting}
-        >
-          {fyStatus.form16?.exporting ? 'Downloading…' : 'Form 16 Part B prep (FY stub) CSV'}
-        </Button>
-      </div>
-      {fyStatus.fyTotals?.error && (
-        <p className="mt-3 text-sm text-red-600 dark:text-red-400">{fyStatus.fyTotals.error}</p>
-      )}
-      {fyStatus.fyQuarterTotals?.error && (
-        <p className="mt-3 text-sm text-red-600 dark:text-red-400">
-          {fyStatus.fyQuarterTotals.error}
-        </p>
-      )}
-      {fyStatus.form16?.error && (
-        <p className="mt-3 text-sm text-red-600 dark:text-red-400">{fyStatus.form16.error}</p>
-      )}
-    </Card>
+    <PayrollFinancialYearExports
+      fyStartYear={fyStartYear}
+      fyQuarter={fyQuarter}
+      fyStatus={fyStatus}
+      onFyStartYearChange={onFyStartYearChange}
+      onFyQuarterChange={onFyQuarterChange}
+      onFyDownload={onFyDownload}
+    />
   </>
 );
 

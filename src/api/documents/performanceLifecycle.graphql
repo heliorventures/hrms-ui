@@ -1,0 +1,290 @@
+query PerformanceProgramsWorkspace {
+  performancePrograms {
+    id
+    name
+    description
+    cadence
+    anchorDate
+    status
+    includeCalibration
+    includeAcknowledgement
+    goalWeightRequired
+    ratingMin
+    ratingMax
+  }
+}
+
+query AppraisalTemplatesWorkspace($programId: ID!) {
+  appraisalTemplates(performanceProgramId: $programId) {
+    id
+    performanceProgramId
+    version
+    name
+    status
+    publishedAt
+    sections {
+      id
+      title
+      description
+      displayOrder
+      questions {
+        id
+        parentQuestionId
+        questionType
+        prompt
+        isRequired
+        answerer
+        selfRatingEnabled
+        managerRatingEnabled
+        displayOrder
+        options {
+          id
+          label
+          score
+          displayOrder
+        }
+      }
+    }
+  }
+}
+
+query MyPerformanceReviewsWorkspace {
+  myPerformanceReviews {
+    id
+    reviewCycleId
+    employeeId
+    employeeName
+    managerEmployeeId
+    managerName
+    appraisalTemplateId
+    cycleName
+    cycleStartDate
+    cycleEndDate
+    cycleStage
+    status
+    selfSubmittedAt
+    managerSubmittedAt
+    acknowledgedAt
+    responseRevision
+    finalRating
+    performanceBand
+  }
+}
+
+query TeamPerformanceReviewsWorkspace {
+  myTeamPerformanceReviews {
+    id
+    reviewCycleId
+    employeeId
+    employeeName
+    managerEmployeeId
+    managerName
+    appraisalTemplateId
+    cycleName
+    cycleStartDate
+    cycleEndDate
+    cycleStage
+    status
+    selfSubmittedAt
+    managerSubmittedAt
+    acknowledgedAt
+    responseRevision
+    finalRating
+    performanceBand
+  }
+}
+
+query PerformanceReviewDetailWorkspace($participantId: ID!) {
+  performanceReviewDetail(participantId: $participantId) {
+    review {
+      id
+      reviewCycleId
+      employeeId
+      employeeName
+      managerEmployeeId
+      managerName
+      appraisalTemplateId
+      cycleName
+      cycleStartDate
+      cycleEndDate
+      cycleStage
+      status
+      selfSubmittedAt
+      managerSubmittedAt
+      acknowledgedAt
+      responseRevision
+      finalRating
+      performanceBand
+    }
+    goals {
+      id
+      employeeId
+      reviewCycleId
+      title
+      description
+      weightage
+      status
+    }
+    feedback {
+      id
+      reviewCycleId
+      goalId
+      observationDate
+      comments
+      createdAt
+    }
+    template {
+      id
+      performanceProgramId
+      version
+      name
+      status
+      publishedAt
+      sections {
+        id
+        title
+        description
+        displayOrder
+        questions {
+          id
+          parentQuestionId
+          questionType
+          prompt
+          isRequired
+          answerer
+          selfRatingEnabled
+          managerRatingEnabled
+          displayOrder
+          options {
+            id
+            label
+            score
+            displayOrder
+          }
+        }
+      }
+    }
+    answers {
+      questionId
+      employeeTextAnswer
+      employeeSelectedOptionIds
+      selfRating
+      managerTextAnswer
+      managerSelectedOptionIds
+      managerRating
+    }
+  }
+}
+
+mutation SavePerformanceProgramWorkspace($input: SavePerformanceProgramInput!) {
+  savePerformanceProgram(input: $input) {
+    id
+    name
+    cadence
+    status
+    anchorDate
+  }
+}
+
+mutation SaveAppraisalTemplateWorkspace($input: SaveAppraisalTemplateInput!) {
+  saveAppraisalTemplate(input: $input) {
+    id
+    performanceProgramId
+    version
+    name
+    status
+  }
+}
+
+mutation PublishAppraisalTemplateWorkspace($id: ID!) {
+  publishAppraisalTemplate(appraisalTemplateId: $id) {
+    id
+    status
+  }
+}
+
+mutation ActivatePerformanceProgramWorkspace($id: ID!) {
+  activatePerformanceProgram(performanceProgramId: $id) {
+    id
+    status
+  }
+}
+
+mutation LaunchPerformanceCycleWorkspace($input: LaunchPerformanceCycleInput!) {
+  launchPerformanceCycle(input: $input) {
+    id
+    name
+    status
+    startDate
+    endDate
+  }
+}
+
+mutation AdvancePerformanceCycleWorkspace($id: ID!) {
+  advancePerformanceCycle(reviewCycleId: $id)
+}
+
+mutation ApprovePerformanceGoalsWorkspace($id: ID!) {
+  approvePerformanceGoals(participantId: $id) {
+    id
+    status
+  }
+}
+
+mutation AddPerformanceFeedbackWorkspace($input: AddPerformanceFeedbackInput!) {
+  addPerformanceFeedback(input: $input) {
+    id
+    comments
+    observationDate
+  }
+}
+
+mutation SubmitSelfAppraisalWorkspace(
+  $id: ID!
+  $answers: [AppraisalAnswerInput!]!
+  $expectedRevision: Int
+) {
+  submitSelfAppraisal(participantId: $id, answers: $answers, expectedRevision: $expectedRevision) {
+    review {
+      id
+      status
+      selfSubmittedAt
+    }
+  }
+}
+
+mutation SubmitManagerAppraisalWorkspace(
+  $id: ID!
+  $answers: [AppraisalAnswerInput!]!
+  $rating: String!
+  $band: String
+  $expectedRevision: Int
+) {
+  submitManagerAppraisal(
+    participantId: $id
+    answers: $answers
+    finalRating: $rating
+    performanceBand: $band
+    expectedRevision: $expectedRevision
+  ) {
+    review {
+      id
+      status
+      managerSubmittedAt
+      finalRating
+    }
+  }
+}
+
+mutation AcknowledgePerformanceReviewWorkspace($id: ID!, $comment: String, $expectedRevision: Int) {
+  acknowledgePerformanceReview(
+    participantId: $id
+    comment: $comment
+    expectedRevision: $expectedRevision
+  ) {
+    review {
+      id
+      acknowledgedAt
+    }
+  }
+}

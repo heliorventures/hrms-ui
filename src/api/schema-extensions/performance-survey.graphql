@@ -1,0 +1,296 @@
+# Performance/appraisal and anonymous survey contracts. Keep aligned with subgraphs 4021 and 4030.
+
+type PerformanceProgram {
+  id: ID!
+  name: String!
+  description: String
+  cadence: String!
+  anchorDate: NaiveDate!
+  status: String!
+  includeCalibration: Boolean!
+  includeAcknowledgement: Boolean!
+  goalWeightRequired: String!
+  ratingMin: String!
+  ratingMax: String!
+}
+
+type AppraisalQuestionOption {
+  id: ID!
+  label: String!
+  score: String
+  displayOrder: Int!
+}
+type AppraisalQuestion {
+  id: ID!
+  parentQuestionId: ID
+  questionType: String!
+  prompt: String!
+  isRequired: Boolean!
+  answerer: String!
+  selfRatingEnabled: Boolean!
+  managerRatingEnabled: Boolean!
+  displayOrder: Int!
+  options: [AppraisalQuestionOption!]!
+}
+type AppraisalSection {
+  id: ID!
+  title: String!
+  description: String
+  displayOrder: Int!
+  questions: [AppraisalQuestion!]!
+}
+type AppraisalTemplate {
+  id: ID!
+  performanceProgramId: ID!
+  version: Int!
+  name: String!
+  status: String!
+  publishedAt: DateTime
+  sections: [AppraisalSection!]!
+}
+type PerformanceReviewSummary {
+  id: ID!
+  reviewCycleId: ID!
+  employeeId: ID!
+  employeeName: String!
+  managerEmployeeId: ID
+  managerName: String
+  appraisalTemplateId: ID!
+  cycleName: String!
+  cycleStartDate: NaiveDate!
+  cycleEndDate: NaiveDate!
+  cycleStage: String!
+  status: String!
+  selfSubmittedAt: DateTime
+  managerSubmittedAt: DateTime
+  acknowledgedAt: DateTime
+  finalRating: String
+  performanceBand: String
+}
+type AppraisalAnswer {
+  questionId: ID!
+  employeeTextAnswer: String
+  employeeSelectedOptionIds: [ID!]!
+  selfRating: String
+  managerTextAnswer: String
+  managerSelectedOptionIds: [ID!]!
+  managerRating: String
+}
+type PerformanceFeedback {
+  id: ID!
+  reviewCycleId: ID
+  goalId: ID
+  observationDate: NaiveDate!
+  comments: String!
+  createdAt: DateTime!
+}
+type PerformanceReviewDetail {
+  review: PerformanceReviewSummary!
+  goals: [Goal!]!
+  feedback: [PerformanceFeedback!]!
+  template: AppraisalTemplate!
+  answers: [AppraisalAnswer!]!
+}
+
+input SavePerformanceProgramInput {
+  id: ID
+  name: String!
+  description: String
+  cadence: String!
+  anchorDate: NaiveDate!
+  includeCalibration: Boolean! = false
+  includeAcknowledgement: Boolean! = true
+  goalWeightRequired: String!
+  ratingMin: String!
+  ratingMax: String!
+}
+input AppraisalQuestionOptionInput {
+  label: String!
+  score: String
+}
+input AppraisalQuestionInput {
+  clientKey: String!
+  parentClientKey: String
+  questionType: String!
+  prompt: String!
+  isRequired: Boolean! = false
+  answerer: String!
+  selfRatingEnabled: Boolean! = false
+  managerRatingEnabled: Boolean! = false
+  options: [AppraisalQuestionOptionInput!]! = []
+}
+input AppraisalSectionInput {
+  title: String!
+  questions: [AppraisalQuestionInput!]!
+  description: String
+}
+input SaveAppraisalTemplateInput {
+  id: ID
+  performanceProgramId: ID!
+  name: String!
+  sections: [AppraisalSectionInput!]!
+}
+input LaunchPerformanceCycleInput {
+  performanceProgramId: ID!
+  appraisalTemplateId: ID!
+  periodDate: NaiveDate!
+  selfReviewDueDate: NaiveDate
+  managerReviewDueDate: NaiveDate
+}
+input SavePerformanceGoalInput {
+  participantId: ID!
+  title: String!
+  description: String
+  weightage: String!
+}
+input AddPerformanceFeedbackInput {
+  participantId: ID!
+  goalId: ID
+  observationDate: NaiveDate!
+  comments: String!
+}
+input AppraisalAnswerInput {
+  questionId: ID!
+  selectedOptionIds: [ID!]! = []
+  textAnswer: String
+  rating: String
+}
+
+type SurveySummary {
+  id: ID!
+  title: String!
+  description: String
+  status: String!
+  opensAt: DateTime
+  closesAt: DateTime
+  minimumReportGroupSize: Int!
+  completed: Boolean!
+}
+type SurveyQuestionOption {
+  id: ID!
+  label: String!
+  score: String
+  displayOrder: Int!
+}
+type SurveyQuestion {
+  id: ID!
+  dimension: String!
+  questionType: String!
+  prompt: String!
+  isRequired: Boolean!
+  ratingMin: String
+  ratingMax: String
+  displayOrder: Int!
+  options: [SurveyQuestionOption!]!
+}
+type SurveySection {
+  id: ID!
+  title: String!
+  displayOrder: Int!
+  questions: [SurveyQuestion!]!
+}
+type Survey {
+  summary: SurveySummary!
+  audienceDepartmentIds: [ID!]!
+  sections: [SurveySection!]!
+}
+type SurveyOptionAggregate {
+  optionId: ID!
+  label: String!
+  responseCount: Int!
+}
+type SurveyQuestionAggregate {
+  questionId: ID!
+  prompt: String!
+  dimension: String!
+  responseCount: Int!
+  averageScore: String
+  options: [SurveyOptionAggregate!]!
+  comments: [String!]!
+}
+type SurveyDimensionAggregate {
+  dimension: String!
+  scoredAnswerCount: Int!
+  averageScore: String
+}
+type SurveyResults {
+  surveyId: ID!
+  suppressed: Boolean!
+  respondentCount: Int
+  minimumReportGroupSize: Int!
+  dimensions: [SurveyDimensionAggregate!]!
+  questions: [SurveyQuestionAggregate!]!
+}
+input SurveyQuestionOptionInput {
+  label: String!
+  score: String
+}
+input SurveyQuestionInput {
+  dimension: String!
+  questionType: String!
+  prompt: String!
+  isRequired: Boolean! = false
+  ratingMin: String
+  ratingMax: String
+  options: [SurveyQuestionOptionInput!]! = []
+}
+input SurveySectionInput {
+  title: String!
+  questions: [SurveyQuestionInput!]!
+}
+input SaveSurveyInput {
+  id: ID
+  title: String!
+  description: String
+  opensAt: DateTime
+  closesAt: DateTime
+  minimumReportGroupSize: Int!
+  audienceDepartmentIds: [ID!]! = []
+  sections: [SurveySectionInput!]!
+}
+input SurveyAnswerInput {
+  questionId: ID!
+  selectedOptionIds: [ID!]! = []
+  numericAnswer: String
+  textAnswer: String
+}
+
+extend type Query {
+  performancePrograms: [PerformanceProgram!]!
+  appraisalTemplates(performanceProgramId: ID!): [AppraisalTemplate!]!
+  myPerformanceReviews: [PerformanceReviewSummary!]!
+  myTeamPerformanceReviews: [PerformanceReviewSummary!]!
+  performanceReviewDetail(participantId: ID!): PerformanceReviewDetail!
+  surveys: [SurveySummary!]!
+  availableSurveys: [SurveySummary!]!
+  survey(surveyId: ID!): Survey!
+  surveyResults(surveyId: ID!): SurveyResults!
+  surveyResultsCatalog: [SurveySummary!]!
+}
+
+extend type Mutation {
+  savePerformanceProgram(input: SavePerformanceProgramInput!): PerformanceProgram!
+  saveAppraisalTemplate(input: SaveAppraisalTemplateInput!): AppraisalTemplate!
+  publishAppraisalTemplate(appraisalTemplateId: ID!): AppraisalTemplate!
+  activatePerformanceProgram(performanceProgramId: ID!): PerformanceProgram!
+  launchPerformanceCycle(input: LaunchPerformanceCycleInput!): ReviewCycle!
+  proposePerformanceGoal(input: SavePerformanceGoalInput!): Goal!
+  approvePerformanceGoals(participantId: ID!): [Goal!]!
+  addPerformanceFeedback(input: AddPerformanceFeedbackInput!): PerformanceFeedback!
+  advancePerformanceCycle(reviewCycleId: ID!): String!
+  submitSelfAppraisal(
+    participantId: ID!
+    answers: [AppraisalAnswerInput!]!
+  ): PerformanceReviewDetail!
+  submitManagerAppraisal(
+    participantId: ID!
+    answers: [AppraisalAnswerInput!]!
+    finalRating: String!
+    performanceBand: String
+  ): PerformanceReviewDetail!
+  acknowledgePerformanceReview(participantId: ID!, comment: String): PerformanceReviewDetail!
+  saveSurvey(input: SaveSurveyInput!): Survey!
+  publishSurvey(surveyId: ID!): Survey!
+  closeSurvey(surveyId: ID!): Survey!
+  submitSurvey(surveyId: ID!, answers: [SurveyAnswerInput!]!): Boolean!
+}

@@ -1,0 +1,135 @@
+query AnnouncementDrawerPreview($limit: Int!) {
+  announcements(limit: $limit) {
+    id
+    title
+    body
+    hasImageAttachment
+    hasDocumentAttachment
+  }
+}
+
+query NotificationUnreadCount {
+  unreadNotificationCount
+}
+
+query NotificationPreview($limit: Int! = 15) {
+  notifications(limit: $limit) {
+    id
+    title
+    message
+    actionUrl
+    isRead
+    createdAt
+  }
+}
+
+query AdminNotificationsConsoleSafe(
+  $annLim: Int! = 100
+  $notLim: Int! = 150
+  $empLim: Int! = 200
+  $deptLim: Int! = 50
+) {
+  notificationAutomationSettings {
+    birthdayEnabled
+    workAnniversaryEnabled
+    companySharingEnabled
+    deliveryLocalTime
+    birthdayTitleTemplate
+    birthdayMessageTemplate
+    anniversaryTitleTemplate
+    anniversaryMessageTemplate
+  }
+  adminAnnouncements(limit: $annLim) {
+    id
+    title
+    body
+    targetAudience
+    targetDepartmentId
+    targetLocationId
+    postSource
+    hasVideoAttachment
+    videoLink
+    publishAt
+    expiresAt
+    createdAt
+  }
+  adminNotifications(limit: $notLim) {
+    id
+    userId
+    kind
+    title
+    message
+    actionUrl
+    isRead
+    createdAt
+  }
+  employees(limit: $empLim) {
+    id
+    fullName
+    userId
+    linkedUserEmail
+    linkedUserUsername
+  }
+  departments(limit: $deptLim) {
+    id
+    name
+  }
+}
+
+mutation CreateAnnouncementSafe($input: CreateAnnouncementInput!) {
+  createAnnouncement(input: $input) {
+    id
+    title
+    body
+    postSource
+  }
+}
+
+mutation PrepareAnnouncementVideo($fileName: String!, $mimeType: String!, $fileSizeBytes: Int!) {
+  prepareAnnouncementVideoUpload(
+    fileName: $fileName
+    mimeType: $mimeType
+    fileSizeBytes: $fileSizeBytes
+  ) {
+    stageId
+    uploadUrl
+    expiresAt
+  }
+}
+
+query AnnouncementVideo($announcementId: UUID!) {
+  announcementVideo(announcementId: $announcementId) {
+    playbackUrl
+    mimeType
+    fileName
+    expiresAt
+  }
+}
+
+query NotificationVideoBoard($limit: Int! = 20) {
+  unreadNotificationCount
+  announcements(limit: $limit) {
+    id
+    title
+    body
+    targetAudience
+    targetDepartmentId
+    targetLocationId
+    postSource
+    publishAt
+    expiresAt
+    hasImageAttachment
+    hasDocumentAttachment
+    hasVideoAttachment
+    videoLink
+  }
+  notifications(limit: $limit) {
+    id
+    kind
+    title
+    message
+    actionUrl
+    isRead
+    createdAt
+  }
+}

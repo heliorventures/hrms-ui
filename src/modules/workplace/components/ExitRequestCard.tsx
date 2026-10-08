@@ -76,7 +76,12 @@ const ExitRequestCard = ({
           placeholder="Optional context for HR"
         />
       </div>
-      <Button variant="primary" disabled={submitBusy} onClick={onSubmit}>
+      <Button
+        variant="primary"
+        disabled={submitBusy}
+        onClick={onSubmit}
+        data-tour-anchor="onboarding.exit-request"
+      >
         {submitBusy ? 'Submitting...' : 'Submit Request'}
       </Button>
     </div>

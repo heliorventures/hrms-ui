@@ -5,12 +5,7 @@ import {
   ClientOpsLeaveTypeNamesDocument,
   LeaveBalancesDocument,
 } from '../../../api/graphql/graphql';
-import {
-  authorizationStateKey,
-  createPermissionService,
-} from '../../../auth/permissionService';
-import AsyncState from '../../../components/common/AsyncState';
-import Badge from '../../../components/common/Badge';
+import { authorizationStateKey, createPermissionService } from '../../../auth/permissionService';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -18,6 +13,7 @@ import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
+import { formatLeaveDays } from './leaveBalanceFormat';
 
 interface TypeRow {
   id: string;
@@ -51,7 +47,7 @@ interface LeaveBalanceFooterProps {
 }
 
 const LeaveBalanceFooter = ({ hasData, onRefresh, phase }: LeaveBalanceFooterProps) => (
-  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 pt-2 dark:border-gray-700">
     {hasData ? (
       <Button
         variant="quiet"
@@ -60,14 +56,14 @@ const LeaveBalanceFooter = ({ hasData, onRefresh, phase }: LeaveBalanceFooterPro
         busyLabel="Refreshing Leave Balances…"
         onClick={onRefresh}
       >
-        Refresh Leave Balances
+        Refresh
       </Button>
     ) : null}
     <Link
-      to="/leave#leave-requests"
+      to="/leave/team-calendar"
       className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
     >
-      Open Leave Center →
+      Open leave calendar →
     </Link>
   </div>
 );
@@ -80,32 +76,33 @@ interface LeaveBalanceListProps {
 const LeaveBalanceList = ({ rows, typeMap }: LeaveBalanceListProps) => {
   if (rows.length === 0) {
     return (
-      <AsyncState
-        kind="empty"
-        title="No Leave Balances Yet."
-        description="Your available leave will appear here after balances are assigned."
-      />
+      <p className="py-3 text-sm text-content-secondary">
+        Your available leave will appear here after balances are assigned.
+      </p>
     );
   }
 
   return (
-    <ul className="space-y-2">
-      {rows.map((row) => (
-        <li
-          key={row.id}
-          className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2 text-sm dark:border-gray-700"
-        >
-          <span className="min-w-0 flex-1 break-words text-gray-600 dark:text-gray-300">
-            {typeMap[row.leaveTypeId] ?? row.leaveTypeId}
-          </span>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="info">{row.balanceDays} left</Badge>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              used {row.usedDays} · pending {row.pendingDays}
-            </span>
-          </div>
-        </li>
-      ))}
+    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+      {rows.slice(0, 3).map((row) => {
+        const name = typeMap[row.leaveTypeId] ?? 'Leave';
+        return (
+          <li key={row.id} className="min-w-0">
+            <p className="text-3xl font-semibold tabular-nums">
+              {formatLeaveDays(row.balanceDays)}
+            </p>
+            <p className="mt-1 text-sm font-medium text-content-secondary">{name}</p>
+            <p className="text-xs text-content-muted">
+              days available of {formatLeaveDays(row.entitledDays)}
+            </p>
+            <p className="mt-1 text-xs tabular-nums text-content-muted">
+              <span>Used {formatLeaveDays(row.usedDays)}</span>
+              {' · '}
+              <span>Pending {formatLeaveDays(row.pendingDays)}</span>
+            </p>
+          </li>
+        );
+      })}
     </ul>
   );
 };
@@ -162,6 +159,11 @@ const AuthorizedLeaveBalanceCard = () => {
         onRetry={onRefresh}
       />
       <LeaveBalanceList rows={rows} typeMap={typeMap} />
+      {rows.length > 3 ? (
+        <p className="mt-3 text-xs text-content-secondary">
+          Open My Leave to see all leave balances.
+        </p>
+      ) : null}
       {rows.length === BALANCE_LIMIT ? (
         <p role="status" className="mt-3 text-xs text-content-secondary">
           Showing up to {BALANCE_LIMIT} leave balances. More may be available.

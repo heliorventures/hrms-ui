@@ -1,0 +1,6 @@
+query EmployeeDisplayName {
+  myEmployee {
+    firstName
+    lastName
+  }
+}

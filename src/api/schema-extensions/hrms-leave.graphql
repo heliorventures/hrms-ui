@@ -1,0 +1,33 @@
+extend input SubmitLeaveRequestInput {
+  supportingDocumentFileStorageId: ID
+}
+
+extend type LeaveRequest {
+  supportingDocumentFileStorageId: ID
+  supportingDocumentFileName: String
+}
+
+extend type Query {
+  leaveApprovalQueue(
+    limit: Int! = 50
+    offset: Int! = 0
+    fromDate: NaiveDate
+    toDate: NaiveDate
+    status: String
+    needsMyAction: Boolean! = false
+  ): LeaveApprovalQueue!
+  pagedLeaveRequests(
+    limit: Int! = 50
+    offset: Int! = 0
+    fromDate: NaiveDate
+    toDate: NaiveDate
+  ): [LeaveRequest!]!
+  leaveRequestCount(fromDate: NaiveDate, toDate: NaiveDate): Int!
+}
+
+type LeaveApprovalQueue {
+  rows: [LeaveRequest!]!
+  totalCount: Int!
+  pendingCount: Int!
+  actionableCount: Int!
+}

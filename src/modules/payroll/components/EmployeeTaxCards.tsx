@@ -9,6 +9,9 @@ import type {
   TaxProofLineSelfRow,
   TaxSlabRow,
 } from '../payrollTypes';
+import type { TaxSubmissionContext } from '../taxSubmissionContext';
+
+import EmployeeTaxDeclarationCard from './EmployeeTaxDeclarationCard';
 
 function proofBadgeVariant(status: string) {
   switch (status) {
@@ -29,9 +32,8 @@ export const ActiveTaxConfigurationCard = ({
   loadingShell: boolean;
 }) => (
   <Card title="Active Tax Configuration">
-    {loadingShell ? (
-      <p className="text-sm text-slate-500">Loading...</p>
-    ) : activeTaxConfig ? (
+    {loadingShell && <p className="text-sm text-slate-500">Loading...</p>}
+    {!loadingShell && activeTaxConfig && (
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant={activeTaxConfig.isActive ? 'success' : 'neutral'}>
           {activeTaxConfig.isActive ? 'Active' : 'Inactive'}
@@ -42,7 +44,8 @@ export const ActiveTaxConfigurationCard = ({
           FY {activeTaxConfig.fiscalYear}
         </span>
       </div>
-    ) : (
+    )}
+    {!loadingShell && !activeTaxConfig && (
       <p className="text-sm text-slate-500">No Active Tax Configuration Found.</p>
     )}
   </Card>
@@ -94,11 +97,11 @@ export const PayslipFySummaryCard = ({
   payslipsLoading: boolean;
 }) => (
   <Card title={`Payslip summary (India FY ${totals.fyAnchor}-${totals.fyAnchor + 1})`}>
-    {payslipsLoading ? (
-      <p className="text-sm text-slate-500">Loading Payslip Data...</p>
-    ) : payslipError ? (
+    {payslipsLoading && <p className="text-sm text-slate-500">Loading Payslip Data...</p>}
+    {!payslipsLoading && payslipError && (
       <p className="text-sm text-amber-800 dark:text-amber-200">{payslipError}</p>
-    ) : (
+    )}
+    {!payslipsLoading && !payslipError && (
       <>
         <div className="grid gap-4 sm:grid-cols-3">
           {[
@@ -128,22 +131,29 @@ export const EmployeeTaxTables = ({
   loading,
   proofs,
   hasError,
+  submissionContext,
 }: {
   computations: TaxComputationSelfRow[] | null;
   loading: boolean;
   proofs: TaxProofLineSelfRow[] | null;
   hasError: boolean;
+  submissionContext: TaxSubmissionContext | null;
 }) => (
   <>
-    <Card title="Your Tax Declaration">
+    <EmployeeTaxDeclarationCard context={submissionContext} loading={loading && !hasError} />
+    <Card title="Recorded tax computations">
       <Table
         data={computations ?? []}
         loading={loading && !hasError}
-        loadingMessage="Loading Your Declaration..."
-        emptyMessage="No Declaration Yet - Use The Form Below Once HR Has Activated A Tax Regime."
+        loadingMessage="Loading recorded computations..."
+        emptyMessage="No recorded tax computations for this financial year."
         keyExtractor={(row) => row.id}
         columns={[
-          { key: 'fy', label: 'FY', render: (row: TaxComputationSelfRow) => `FY ${row.fiscalYear}` },
+          {
+            key: 'fy',
+            label: 'FY',
+            render: (row: TaxComputationSelfRow) => `FY ${row.fiscalYear}`,
+          },
           {
             key: 'taxRegimeChosen',
             label: 'Regime',

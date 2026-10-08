@@ -1,0 +1,42 @@
+mutation SaveCompensationReviewCycle($input: SaveCompensationReviewCycleInput!) {
+  saveCompensationReviewCycle(input: $input) {
+    id
+  }
+}
+
+mutation SaveSalaryBand($input: SaveSalaryBandInput!) {
+  saveSalaryBand(input: $input) {
+    id
+  }
+}
+
+query CompensationSetupPage($offset: Int!) {
+  salaryBands(limit: 21, offset: $offset) {
+    id
+    tenantId
+    designationId
+    grade
+    minSalary
+    midSalary
+    maxSalary
+    currency
+    effectiveYear
+  }
+  compensationReviewCycles(limit: 21, offset: $offset) {
+    id
+    tenantId
+    name
+    year
+    startDate
+    endDate
+    status
+    budgetPercentage
+  }
+}
+
+query CompensationDesignations($offset: Int!) {
+  designations(limit: 200, offset: $offset) {
+    id
+    title
+  }
+}

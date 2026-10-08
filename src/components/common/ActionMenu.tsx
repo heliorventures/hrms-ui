@@ -1,7 +1,7 @@
 import { MoreHorizontal } from 'lucide-react';
 import { Fragment, type KeyboardEventHandler, type ReactNode, useState } from 'react';
-import { Link } from 'react-router-dom';
 
+import ActionMenuEntry from './ActionMenuEntry';
 import IconButton from './IconButton';
 import { useAnchoredPopoverPosition } from './useAnchoredPopoverPosition';
 import { usePopover } from './usePopover';
@@ -27,10 +27,11 @@ export interface ActionMenuProps {
   label: string;
   items: readonly ActionMenuItem[];
   align?: 'start' | 'end';
+  onNavigate?: () => void;
+  triggerIcon?: ReactNode;
+  header?: ReactNode;
 }
 
-const itemClasses =
-  'flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus';
 const DOCUMENT_TAB_STOP_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -47,15 +48,14 @@ function adjacentTabStop(trigger: HTMLElement, reverse: boolean): HTMLElement | 
   return stops[triggerIndex + (reverse ? -1 : 1)] ?? null;
 }
 
-function ActionMenuIcon({ icon }: { icon?: ReactNode }) {
-  return icon ? (
-    <span aria-hidden="true" className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
-      {icon}
-    </span>
-  ) : null;
-}
-
-const ActionMenu = ({ label, items, align = 'end' }: ActionMenuProps) => {
+const ActionMenu = ({
+  label,
+  items,
+  align = 'end',
+  onNavigate,
+  triggerIcon,
+  header,
+}: ActionMenuProps) => {
   const [open, setOpen] = useState(false);
   const popover = usePopover({ open, onClose: () => setOpen(false) });
   const position = useAnchoredPopoverPosition({
@@ -64,9 +64,7 @@ const ActionMenu = ({ label, items, align = 'end' }: ActionMenuProps) => {
     panelRef: popover.panelRef,
     triggerRef: popover.triggerRef,
   });
-  const firstDangerIndex = items.findIndex(
-    (item) => 'onSelect' in item && item.tone === 'danger'
-  );
+  const firstDangerIndex = items.findIndex((item) => 'onSelect' in item && item.tone === 'danger');
 
   const handleTriggerKeyDown: KeyboardEventHandler<HTMLButtonElement> = (event) => {
     popover.triggerProps.onKeyDown(event);
@@ -91,7 +89,8 @@ const ActionMenu = ({ label, items, align = 'end' }: ActionMenuProps) => {
       <IconButton
         ref={popover.triggerRef}
         label={label}
-        icon={<MoreHorizontal className="h-5 w-5" />}
+        icon={triggerIcon ?? <MoreHorizontal className="h-5 w-5" />}
+        title={label}
         aria-haspopup="menu"
         aria-expanded={popover.triggerProps['aria-expanded']}
         aria-controls={popover.triggerProps['aria-controls']}
@@ -113,64 +112,17 @@ const ActionMenu = ({ label, items, align = 'end' }: ActionMenuProps) => {
           style={position.style}
           className="fixed z-50 max-h-[calc(100dvh-2rem)] w-56 max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain rounded-lg border border-line bg-surface py-1 text-content-primary shadow-xl"
         >
-          {items.map((item, index) => {
-            const disabledClasses = item.disabled
-              ? 'cursor-not-allowed text-content-disabled'
-              : 'text-content-secondary hover:bg-surface-selected hover:text-content-primary';
-            const danger = 'onSelect' in item && item.tone === 'danger';
-            const toneClasses = danger && !item.disabled ? 'text-status-danger' : disabledClasses;
-            const content = (
-              <>
-                <ActionMenuIcon icon={item.icon} />
-                <span className="min-w-0 break-words">{item.label}</span>
-              </>
-            );
-
-            return (
-              <Fragment key={item.id}>
-                {index === firstDangerIndex ? (
-                  <div role="separator" className="my-1 border-t border-line" />
-                ) : null}
-                {'href' in item ? (
-                  item.disabled ? (
-                    <span
-                      role="menuitem"
-                      aria-disabled="true"
-                      tabIndex={-1}
-                      className={`${itemClasses} ${toneClasses}`}
-                    >
-                      {content}
-                    </span>
-                  ) : (
-                    <Link
-                      role="menuitem"
-                      tabIndex={-1}
-                      to={item.href}
-                      onClick={() => setOpen(false)}
-                      className={`${itemClasses} ${toneClasses}`}
-                    >
-                      {content}
-                    </Link>
-                  )
-                ) : (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    tabIndex={-1}
-                    disabled={item.disabled}
-                    data-tone={item.tone ?? 'default'}
-                    onClick={() => {
-                      item.onSelect();
-                      setOpen(false);
-                    }}
-                    className={`${itemClasses} ${toneClasses}`}
-                  >
-                    {content}
-                  </button>
-                )}
-              </Fragment>
-            );
-          })}
+          {header ? (
+            <div className="border-b border-line-subtle px-3 py-2 text-sm">{header}</div>
+          ) : null}
+          {items.map((item, index) => (
+            <Fragment key={item.id}>
+              {index === firstDangerIndex ? (
+                <div role="separator" className="my-1 border-t border-line" />
+              ) : null}
+              <ActionMenuEntry item={item} onClose={() => setOpen(false)} onNavigate={onNavigate} />
+            </Fragment>
+          ))}
         </div>
       ) : null}
     </div>

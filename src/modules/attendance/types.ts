@@ -1,4 +1,4 @@
-import type { MyAttendanceBoardQuery } from '../../api/graphql/graphql';
+import type { MyAttendanceBoardQuery } from '../../api/attendance/graphql';
 
 export interface ShiftRow {
   id: string;
@@ -15,6 +15,8 @@ export interface AttendanceRow {
   workDate: string;
   checkInTime?: string | null;
   checkOutTime?: string | null;
+  checkInAt?: string | null;
+  checkOutAt?: string | null;
   checkInLat?: string | null;
   checkInLng?: string | null;
   checkOutLat?: string | null;
@@ -32,6 +34,7 @@ export interface AttendanceBoardData {
   shifts: ShiftRow[];
   attendance: AttendanceRow[];
   pageInfo: AttendancePageInfo;
+  summary: MyAttendanceBoardQuery['myAttendanceSummary'];
 }
 
 export interface AttendancePageInfo {
@@ -58,5 +61,6 @@ export function mapMyAttendanceBoard(
     shifts: response.shifts,
     attendance,
     pageInfo: response.myAttendance.pageInfo,
+    summary: response.myAttendanceSummary,
   };
 }

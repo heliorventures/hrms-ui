@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
+import { useCallback, useEffect, useState } from 'react';
+
 import {
   IndiaEpfMonthlyEcrPrepStubCsvDocument,
   IndiaForm16PartBFyPrepStubCsvDocument,
@@ -12,8 +13,8 @@ import {
   PayrollIndiaBulkNeftCreditCsvDocument,
 } from '../../../api/graphql/graphql';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-import { indiaFyStartYearFromDate } from '../utils/indiaFy';
 import { downloadCsv, monthToken } from '../payrollCsvDownload';
+import { indiaFyStartYearFromDate } from '../utils/indiaFy';
 
 export type MonthlyPayrollExportKey = 'tds' | 'pfEsi' | 'form24q' | 'epfEcr' | 'bank' | 'neft';
 export type FyPayrollExportKey = 'fyTotals' | 'fyQuarterTotals' | 'form16';
@@ -90,12 +91,13 @@ export function usePayrollExports(
           );
           downloadCsv(`india-pf-esi-summary-${year}-${token}.csv`, res.indiaPfEsiMonthlySummaryCsv);
         } else if (key === 'form24q') {
-          const res = await client.request<{
-            indiaForm24qSalaryPaymentMonthlyStubCsv: string;
-          }>(IndiaForm24qSalaryPaymentMonthlyStubCsvDocument, { month, year });
+          const res = await client.request(IndiaForm24qSalaryPaymentMonthlyStubCsvDocument, {
+            month,
+            year,
+          });
           downloadCsv(
             `india-form24q-salary-month-stub-${year}-${token}.csv`,
-            res.indiaForm24qSalaryPaymentMonthlyStubCsv
+            res.indiaForm24QSalaryPaymentMonthlyStubCsv
           );
         } else if (key === 'epfEcr') {
           const res = await client.request<{ indiaEpfMonthlyEcrPrepStubCsv: string }>(

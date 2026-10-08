@@ -1,7 +1,9 @@
 import AsyncState from '../../components/common/AsyncState';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import PageInformation from '../../components/common/PageInformation';
 import PageNotice from '../../components/common/PageNotice';
+import { PageTabPanel } from '../../components/common/PageTabs';
 
 import AnnouncementList from './components/AnnouncementList';
 import PrivateNotificationList from './components/PrivateNotificationList';
@@ -11,6 +13,7 @@ type NotificationBoardModel = ReturnType<typeof useNotificationBoard>;
 
 interface NotificationBoardContentProps {
   board: NotificationBoardModel;
+  activeTab?: string;
 }
 
 const CAP_MESSAGE = 'Showing up to 20 recent items. More may be available.';
@@ -72,10 +75,12 @@ const NotificationBoardNotices = ({ board }: NotificationBoardContentProps) => (
 
 const AnnouncementBoardCard = ({ board }: NotificationBoardContentProps) => (
   <Card title="Public Announcements">
-    <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-      Company updates, celebrations, and posts shared with everyone. Your personal alerts appear
-      below.
-    </p>
+    <PageInformation title="Announcements">
+      <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+        Company updates, celebrations, and posts shared with everyone. Personal alerts are listed
+        under Your Private Notifications.
+      </p>
+    </PageInformation>
     <AnnouncementList
       announcements={board.announcements}
       deptNameById={board.deptNameById}
@@ -96,11 +101,18 @@ const PrivateNotificationBoardCard = ({ board }: NotificationBoardContentProps) 
   return (
     <Card title="Your Private Notifications">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Unread filtering and read status apply only to your private notifications.
-        </p>
+        <PageInformation title="Private notifications">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Unread filtering and read status apply only to your private notifications.
+          </p>
+        </PageInformation>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => board.setFilter(nextFilter)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => board.setFilter(nextFilter)}
+            data-tour-anchor="notifications-private-filter"
+          >
             {filterLabel}
           </Button>
           <Button
@@ -108,6 +120,7 @@ const PrivateNotificationBoardCard = ({ board }: NotificationBoardContentProps) 
             size="sm"
             disabled={board.actionBusy}
             onClick={() => void board.markAllRead()}
+            data-tour-anchor="notifications-mark-all-read"
           >
             {board.actionBusy ? 'Working...' : 'Mark all private read'}
           </Button>
@@ -129,14 +142,21 @@ const PrivateNotificationBoardCard = ({ board }: NotificationBoardContentProps) 
   );
 };
 
-const NotificationBoardContent = ({ board }: NotificationBoardContentProps) => {
+const NotificationBoardContent = ({
+  board,
+  activeTab = 'private',
+}: NotificationBoardContentProps) => {
   if (!board.hasLoadedData) return <InitialNotificationBoard board={board} />;
 
   return (
     <>
       <NotificationBoardNotices board={board} />
-      <AnnouncementBoardCard board={board} />
-      <PrivateNotificationBoardCard board={board} />
+      <PageTabPanel id="announcements" activeTab={activeTab}>
+        <AnnouncementBoardCard board={board} />
+      </PageTabPanel>
+      <PageTabPanel id="private" activeTab={activeTab}>
+        <PrivateNotificationBoardCard board={board} />
+      </PageTabPanel>
     </>
   );
 };
