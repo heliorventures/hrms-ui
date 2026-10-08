@@ -1002,6 +1002,7 @@ export type Employee = {
   locationAssignmentEffectiveFrom?: Maybe<Scalars['NaiveDate']['output']>;
   locationId?: Maybe<Scalars['ID']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
+  maritalStatus?: Maybe<Scalars['String']['output']>;
   nationality?: Maybe<Scalars['String']['output']>;
   permanentAddress?: Maybe<Scalars['String']['output']>;
   personalPhone?: Maybe<Scalars['String']['output']>;
@@ -1011,7 +1012,6 @@ export type Employee = {
   tenantId: Scalars['ID']['output'];
   updatedAt: Scalars['DateTime']['output'];
   userId?: Maybe<Scalars['ID']['output']>;
-  maritalStatus?: Maybe<Scalars['String']['output']>;
 };
 
 export type EmployeeAadhaarRecord = {
@@ -1858,6 +1858,8 @@ export type Mutation = {
   setClearanceItemCleared: ClearanceChecklistItem;
   /** HR: set or update monthly salary for an employee (`employment_history`), effective from a date. */
   setEmployeeCompensation: EmploymentHistoryRecord;
+  /** Employee managers may save or explicitly clear the ESIC identifier in their data scope. */
+  setEmployeeEsicNumber?: Maybe<Scalars['String']['output']>;
   /** Replace per-employee allowed project codes (empty list clears restrictions — full catalog allowed). */
   setEmployeeTimesheetProjects: Scalars['Boolean']['output'];
   /** Employee managers may save or explicitly clear the payroll identifier in their data scope. */
@@ -1975,7 +1977,6 @@ export type Mutation = {
   upsertTimesheetLockPolicy: TimesheetLockPolicy;
   upsertTimesheetProject: Scalars['Boolean']['output'];
   upsertTimesheetTaskTypes: Scalars['Boolean']['output'];
-  setEmployeeEsicNumber?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -2702,6 +2703,11 @@ export type MutationSetEmployeeCompensationArgs = {
 };
 
 
+export type MutationSetEmployeeEsicNumberArgs = {
+  input: SetEmployeeEsicNumberInput;
+};
+
+
 export type MutationSetEmployeeTimesheetProjectsArgs = {
   employeeId: Scalars['ID']['input'];
   projectCodes: Array<Scalars['String']['input']>;
@@ -3226,15 +3232,20 @@ export type PayrollArrear = {
 /** Tenant payroll presentation + statutory CSV placeholders (India Form 16 / 24Q prep). */
 export type PayrollComplianceSetting = {
   __typename?: 'PayrollComplianceSetting';
-  payslipTemplate: Scalars['String']['output'];
-  payslipEmployeeFields: Scalars['JSON']['output'];
-  employerTan?: Maybe<Scalars['String']['output']>;
-  employerLegalName?: Maybe<Scalars['String']['output']>;
-  baseSalaryComponentCode: Scalars['String']['output'];
+  /** Salary component code used for **`ARREAR`** payout lines (`EARNING`). */
   arrearSalaryComponentCode: Scalars['String']['output'];
-  payslipHeaderTitle?: Maybe<Scalars['String']['output']>;
+  /** Salary `salary_component.code` used as the employment **base** line on pay run (`EARNING`). */
+  baseSalaryComponentCode: Scalars['String']['output'];
+  employerLegalName?: Maybe<Scalars['String']['output']>;
+  employerTan?: Maybe<Scalars['String']['output']>;
+  /** Optional address displayed immediately below the company name. */
   payslipCompanyAddress?: Maybe<Scalars['String']['output']>;
+  payslipEmployeeFields: Scalars['JSON']['output'];
+  /** Heading text on payslip when rendered (e.g. company display name). */
+  payslipHeaderTitle?: Maybe<Scalars['String']['output']>;
+  /** Uploaded logo in **`file_storage`** (tenant-scoped blob); optional. */
   payslipLogoFileStorageId?: Maybe<Scalars['ID']['output']>;
+  payslipTemplate: Scalars['String']['output'];
 };
 
 export type PayrollCycle = {
@@ -3314,10 +3325,10 @@ export type PayslipEmployeeDetail = {
 
 export type PayslipPresentation = {
   __typename?: 'PayslipPresentation';
+  employeeDetails: Array<PayslipEmployeeDetail>;
   lines: Array<PayslipDisplayLine>;
   statement?: Maybe<Scalars['JSON']['output']>;
   template: Scalars['String']['output'];
-  employeeDetails: Array<PayslipEmployeeDetail>;
 };
 
 export type PayslipUnpaidLeave = {
@@ -3746,6 +3757,8 @@ export type Query = {
   /** Uploaded employee documents. Omit `employeeId` to list the caller's own files (JWT). */
   employeeDocuments: Array<EmployeeDocument>;
   employeeEducationRecords: Array<EmployeeEducation>;
+  /** Employee ESIC is payroll-sensitive and never part of directory results. */
+  employeeEsicNumber?: Maybe<Scalars['String']['output']>;
   employeeEvidenceReviewQueue: Array<EmployeeEvidenceReviewQueueItem>;
   /** Liveness probe for this federated subgraph. Always returns `ok`. */
   employeeHealth: Scalars['String']['output'];
@@ -4087,7 +4100,6 @@ export type Query = {
   workflowsWithSteps: Array<WorkflowWithSteps>;
   workforceSnapshots: Array<WorkforceSnapshotRow>;
   workingCalendarPolicy: WorkingCalendarPolicy;
-  employeeEsicNumber?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -4358,6 +4370,11 @@ export type QueryEmployeeDocumentsArgs = {
 
 
 export type QueryEmployeeEducationRecordsArgs = {
+  employeeId: Scalars['ID']['input'];
+};
+
+
+export type QueryEmployeeEsicNumberArgs = {
   employeeId: Scalars['ID']['input'];
 };
 
@@ -5539,6 +5556,12 @@ export type SetEmployeeCompensationInput = {
   monthlySalary: Scalars['String']['input'];
 };
 
+export type SetEmployeeEsicNumberInput = {
+  employeeId: Scalars['ID']['input'];
+  /** Exactly 10 digits, or an empty string to explicitly clear the stored number. */
+  esicNumber: Scalars['String']['input'];
+};
+
 export type SetEmployeeUanNumberInput = {
   employeeId: Scalars['ID']['input'];
   /** Exactly 12 digits, or an empty string to explicitly clear the stored number. */
@@ -6163,8 +6186,8 @@ export type UpdateEmployeePersonalProfileInput = {
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
-  nationality?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<Scalars['String']['input']>;
+  nationality?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateEmployeeSelfServiceProfileInput = {
@@ -6175,10 +6198,10 @@ export type UpdateEmployeeSelfServiceProfileInput = {
   emergencyContactRelation?: InputMaybe<Scalars['String']['input']>;
   employeeId: Scalars['ID']['input'];
   gender?: InputMaybe<Scalars['String']['input']>;
+  maritalStatus?: InputMaybe<Scalars['String']['input']>;
   nationality?: InputMaybe<Scalars['String']['input']>;
   permanentAddress?: InputMaybe<Scalars['String']['input']>;
   personalPhone?: InputMaybe<Scalars['String']['input']>;
-  maritalStatus?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateManagedAttendanceSegmentInput = {
@@ -6434,15 +6457,16 @@ export type UpsertLeaveTypeInput = {
 };
 
 export type UpsertPayrollComplianceSettingInput = {
-  payslipTemplate?: InputMaybe<Scalars['String']['input']>;
-  payslipEmployeeFields?: InputMaybe<Array<Scalars['String']['input']>>;
-  employerTan?: InputMaybe<Scalars['String']['input']>;
-  employerLegalName?: InputMaybe<Scalars['String']['input']>;
-  baseSalaryComponentCode?: InputMaybe<Scalars['String']['input']>;
   arrearSalaryComponentCode?: InputMaybe<Scalars['String']['input']>;
-  payslipHeaderTitle?: InputMaybe<Scalars['String']['input']>;
+  baseSalaryComponentCode?: InputMaybe<Scalars['String']['input']>;
+  employerLegalName?: InputMaybe<Scalars['String']['input']>;
+  employerTan?: InputMaybe<Scalars['String']['input']>;
+  /** Omitted preserves the saved address; null or blank clears it. */
   payslipCompanyAddress?: InputMaybe<Scalars['String']['input']>;
+  payslipEmployeeFields?: InputMaybe<Array<Scalars['String']['input']>>;
+  payslipHeaderTitle?: InputMaybe<Scalars['String']['input']>;
   payslipLogoFileStorageId?: InputMaybe<Scalars['ID']['input']>;
+  payslipTemplate?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpsertSalaryComponentInput = {
@@ -8520,6 +8544,20 @@ export type EmployeeDisplayNameQueryVariables = Exact<{ [key: string]: never; }>
 
 export type EmployeeDisplayNameQuery = { __typename?: 'Query', myEmployee?: { __typename?: 'Employee', firstName: string, lastName: string } | null };
 
+export type EmployeeEsicNumberQueryVariables = Exact<{
+  employeeId: Scalars['ID']['input'];
+}>;
+
+
+export type EmployeeEsicNumberQuery = { __typename?: 'Query', employeeEsicNumber?: string | null };
+
+export type SetEmployeeEsicNumberMutationVariables = Exact<{
+  input: SetEmployeeEsicNumberInput;
+}>;
+
+
+export type SetEmployeeEsicNumberMutation = { __typename?: 'Mutation', setEmployeeEsicNumber?: string | null };
+
 export type EmployeePrivateProfileQueryVariables = Exact<{
   employeeId: Scalars['ID']['input'];
 }>;
@@ -10279,6 +10317,8 @@ export const CompensationSetupPageDocument = {"kind":"Document","definitions":[{
 export const CompensationDesignationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"CompensationDesignations"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"designations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"200"}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}}]}}]}}]} as unknown as DocumentNode<CompensationDesignationsQuery, CompensationDesignationsQueryVariables>;
 export const HomeRecentLeaveDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HomeRecentLeave"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"viewerEmployeeId"}},{"kind":"Field","name":{"kind":"Name","value":"pagedLeaveRequests"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"20"}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"leaveTypeId"}},{"kind":"Field","name":{"kind":"Name","value":"fromDate"}},{"kind":"Field","name":{"kind":"Name","value":"toDate"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"pendingApprovalStage"}},{"kind":"Field","name":{"kind":"Name","value":"appliedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"leaveTypes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"50"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<HomeRecentLeaveQuery, HomeRecentLeaveQueryVariables>;
 export const EmployeeDisplayNameDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeDisplayName"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myEmployee"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}}]}}]} as unknown as DocumentNode<EmployeeDisplayNameQuery, EmployeeDisplayNameQueryVariables>;
+export const EmployeeEsicNumberDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeEsicNumber"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeEsicNumber"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}]}]}}]} as unknown as DocumentNode<EmployeeEsicNumberQuery, EmployeeEsicNumberQueryVariables>;
+export const SetEmployeeEsicNumberDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetEmployeeEsicNumber"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SetEmployeeEsicNumberInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setEmployeeEsicNumber"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<SetEmployeeEsicNumberMutation, SetEmployeeEsicNumberMutationVariables>;
 export const EmployeePrivateProfileDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeePrivateProfile"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employee"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeCode"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"employmentType"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfJoining"}},{"kind":"Field","name":{"kind":"Name","value":"departmentId"}},{"kind":"Field","name":{"kind":"Name","value":"designationId"}},{"kind":"Field","name":{"kind":"Name","value":"reportingManagerId"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"locationId"}},{"kind":"Field","name":{"kind":"Name","value":"locationName"}},{"kind":"Field","name":{"kind":"Name","value":"locationAssignmentEffectiveFrom"}},{"kind":"Field","name":{"kind":"Name","value":"departmentName"}},{"kind":"Field","name":{"kind":"Name","value":"designationTitle"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserEmail"}},{"kind":"Field","name":{"kind":"Name","value":"linkedUserUsername"}},{"kind":"Field","name":{"kind":"Name","value":"reportingManagerName"}},{"kind":"Field","name":{"kind":"Name","value":"personalPhone"}},{"kind":"Field","name":{"kind":"Name","value":"currentAddress"}},{"kind":"Field","name":{"kind":"Name","value":"permanentAddress"}},{"kind":"Field","name":{"kind":"Name","value":"dateOfBirth"}},{"kind":"Field","name":{"kind":"Name","value":"gender"}},{"kind":"Field","name":{"kind":"Name","value":"maritalStatus"}},{"kind":"Field","name":{"kind":"Name","value":"nationality"}},{"kind":"Field","name":{"kind":"Name","value":"bloodGroup"}},{"kind":"Field","name":{"kind":"Name","value":"emergencyContactName"}},{"kind":"Field","name":{"kind":"Name","value":"emergencyContactPhone"}},{"kind":"Field","name":{"kind":"Name","value":"emergencyContactRelation"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"employeeDocuments"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"documentTypeId"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"uploadedAt"}},{"kind":"Field","name":{"kind":"Name","value":"originalFileName"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"uploadedByUserId"}},{"kind":"Field","name":{"kind":"Name","value":"documentTypeName"}},{"kind":"Field","name":{"kind":"Name","value":"documentTypeCategory"}}]}},{"kind":"Field","name":{"kind":"Name","value":"documentTypes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"systemKey"}}]}},{"kind":"Field","name":{"kind":"Name","value":"employeePrimaryBank"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"bankName"}},{"kind":"Field","name":{"kind":"Name","value":"accountNumberMasked"}},{"kind":"Field","name":{"kind":"Name","value":"ifscCode"}},{"kind":"Field","name":{"kind":"Name","value":"accountType"}},{"kind":"Field","name":{"kind":"Name","value":"isVerified"}}]}},{"kind":"Field","name":{"kind":"Name","value":"employeeIdentityProfile"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pan"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"maskedPan"}},{"kind":"Field","name":{"kind":"Name","value":"isVerified"}}]}},{"kind":"Field","name":{"kind":"Name","value":"aadhaar"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"maskedAadhaar"}},{"kind":"Field","name":{"kind":"Name","value":"isVerified"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"employeeProfileChangeRequests"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requestType"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"requestedSummary"}},{"kind":"Field","name":{"kind":"Name","value":"supportingDocumentId"}},{"kind":"Field","name":{"kind":"Name","value":"reviewedAt"}},{"kind":"Field","name":{"kind":"Name","value":"rejectionReason"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"employeeEducationRecords"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"educationLevel"}},{"kind":"Field","name":{"kind":"Name","value":"qualification"}},{"kind":"Field","name":{"kind":"Name","value":"fieldOfStudy"}},{"kind":"Field","name":{"kind":"Name","value":"institution"}},{"kind":"Field","name":{"kind":"Name","value":"boardUniversity"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"completionYear"}},{"kind":"Field","name":{"kind":"Name","value":"gradeScore"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"verificationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"evidenceDocumentIds"}},{"kind":"Field","name":{"kind":"Name","value":"rejectionReason"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"employeeWorkExperienceRecords"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"employeeId"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"roleTitle"}},{"kind":"Field","name":{"kind":"Name","value":"employmentType"}},{"kind":"Field","name":{"kind":"Name","value":"location"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"endDate"}},{"kind":"Field","name":{"kind":"Name","value":"isCurrent"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"verificationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"evidenceDocumentIds"}},{"kind":"Field","name":{"kind":"Name","value":"rejectionReason"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<EmployeePrivateProfileQuery, EmployeePrivateProfileQueryVariables>;
 export const EmployeeUanNumberDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeUanNumber"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeUanNumber"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}]}]}}]} as unknown as DocumentNode<EmployeeUanNumberQuery, EmployeeUanNumberQueryVariables>;
 export const SetEmployeeUanNumberDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetEmployeeUanNumber"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SetEmployeeUanNumberInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setEmployeeUanNumber"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<SetEmployeeUanNumberMutation, SetEmployeeUanNumberMutationVariables>;
@@ -10488,32 +10528,3 @@ export const WorkingCalendarPolicyDocument = {"kind":"Document","definitions":[{
 export const PreviewWeeklyOffMonthDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PreviewWeeklyOffMonth"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rule"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WeeklyOffRuleInput"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"month"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"year"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"previewWeeklyOffMonth"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"rule"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rule"}}},{"kind":"Argument","name":{"kind":"Name","value":"month"},"value":{"kind":"Variable","name":{"kind":"Name","value":"month"}}},{"kind":"Argument","name":{"kind":"Name","value":"year"},"value":{"kind":"Variable","name":{"kind":"Name","value":"year"}}}]}]}}]} as unknown as DocumentNode<PreviewWeeklyOffMonthQuery, PreviewWeeklyOffMonthQueryVariables>;
 export const ActivateWorkingCalendarDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ActivateWorkingCalendar"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"activationDate"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"NaiveDate"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activateWorkingCalendar"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"activationDate"},"value":{"kind":"Variable","name":{"kind":"Name","value":"activationDate"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"WorkingCalendarFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"WorkingCalendarFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"WorkingCalendarPolicy"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activationDate"}},{"kind":"Field","name":{"kind":"Name","value":"revision"}},{"kind":"Field","name":{"kind":"Name","value":"locationId"}},{"kind":"Field","name":{"kind":"Name","value":"businessDate"}},{"kind":"Field","name":{"kind":"Name","value":"currentVersion"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"effectiveFrom"}},{"kind":"Field","name":{"kind":"Name","value":"inheritsDefault"}},{"kind":"Field","name":{"kind":"Name","value":"fixedWeekdays"}},{"kind":"Field","name":{"kind":"Name","value":"saturdayOrdinals"}}]}},{"kind":"Field","name":{"kind":"Name","value":"scheduledVersions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"effectiveFrom"}},{"kind":"Field","name":{"kind":"Name","value":"inheritsDefault"}},{"kind":"Field","name":{"kind":"Name","value":"fixedWeekdays"}},{"kind":"Field","name":{"kind":"Name","value":"saturdayOrdinals"}}]}}]}}]} as unknown as DocumentNode<ActivateWorkingCalendarMutation, ActivateWorkingCalendarMutationVariables>;
 export const ScheduleWeeklyOffPolicyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ScheduleWeeklyOffPolicy"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ScheduleWeeklyOffPolicyInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"scheduleWeeklyOffPolicy"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"WorkingCalendarFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"WorkingCalendarFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"WorkingCalendarPolicy"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activationDate"}},{"kind":"Field","name":{"kind":"Name","value":"revision"}},{"kind":"Field","name":{"kind":"Name","value":"locationId"}},{"kind":"Field","name":{"kind":"Name","value":"businessDate"}},{"kind":"Field","name":{"kind":"Name","value":"currentVersion"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"effectiveFrom"}},{"kind":"Field","name":{"kind":"Name","value":"inheritsDefault"}},{"kind":"Field","name":{"kind":"Name","value":"fixedWeekdays"}},{"kind":"Field","name":{"kind":"Name","value":"saturdayOrdinals"}}]}},{"kind":"Field","name":{"kind":"Name","value":"scheduledVersions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"effectiveFrom"}},{"kind":"Field","name":{"kind":"Name","value":"inheritsDefault"}},{"kind":"Field","name":{"kind":"Name","value":"fixedWeekdays"}},{"kind":"Field","name":{"kind":"Name","value":"saturdayOrdinals"}}]}}]}}]} as unknown as DocumentNode<ScheduleWeeklyOffPolicyMutation, ScheduleWeeklyOffPolicyMutationVariables>;
-
-export type MutationSetEmployeeEsicNumberArgs = {
-  input: SetEmployeeEsicNumberInput;
-};
-
-export type QueryEmployeeEsicNumberArgs = {
-  employeeId: Scalars['ID']['input'];
-};
-
-export type SetEmployeeEsicNumberInput = {
-  employeeId: Scalars['ID']['input'];
-  esicNumber: Scalars['String']['input'];
-};
-
-export type EmployeeEsicNumberQueryVariables = Exact<{
-  employeeId: Scalars['ID']['input'];
-}>;
-
-export type EmployeeEsicNumberQuery = { __typename?: 'Query', employeeEsicNumber?: string | null };
-
-export type SetEmployeeEsicNumberMutationVariables = Exact<{
-  input: SetEmployeeEsicNumberInput;
-}>;
-
-export type SetEmployeeEsicNumberMutation = { __typename?: 'Mutation', setEmployeeEsicNumber?: string | null };
-
-export const EmployeeEsicNumberDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmployeeEsicNumber"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"employeeEsicNumber"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"employeeId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"employeeId"}}}]}]}}]} as unknown as DocumentNode<EmployeeEsicNumberQuery, EmployeeEsicNumberQueryVariables>;
-
-export const SetEmployeeEsicNumberDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetEmployeeEsicNumber"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SetEmployeeEsicNumberInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setEmployeeEsicNumber"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<SetEmployeeEsicNumberMutation, SetEmployeeEsicNumberMutationVariables>;
