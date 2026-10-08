@@ -61,6 +61,7 @@ export interface PayrollComplianceFormState {
   baseComponentInput: string;
   arrearComponentInput: string;
   payslipHeaderInput: string;
+  payslipCompanyAddressInput: string;
   payslipLogoIdInput: string;
 }
 

@@ -43,6 +43,31 @@ it('blocks print and download while company branding is loading', () => {
   );
 });
 
+it('uses the saved address and removes it after the company clears the field', () => {
+  const payslipBranding = {
+    payslipTemplate: 'TABLE',
+    payslipEmployeeFields: [],
+    employerTan: null,
+    employerLegalName: null,
+    baseSalaryComponentCode: 'BASIC',
+    arrearSalaryComponentCode: 'ARREAR',
+    payslipHeaderTitle: 'Company header',
+    payslipCompanyAddress: '801, Business Court\nPune - 411038',
+    payslipLogoFileStorageId: null,
+  };
+  const view = render(<PayrollPayslipTab {...props} payslipBranding={payslipBranding} />);
+  expect(screen.getByText('Company header').nextElementSibling?.textContent).toBe(
+    'Address: 801, Business Court\nPune - 411038'
+  );
+  view.rerender(
+    <PayrollPayslipTab
+      {...props}
+      payslipBranding={{ ...payslipBranding, payslipCompanyAddress: null }}
+    />
+  );
+  expect(screen.queryByText(/^Address:/)).toBeNull();
+});
+
 it('shows branding failures and offers a retry while output stays blocked', () => {
   const retry = vi.fn();
   render(

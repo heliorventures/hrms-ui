@@ -66,6 +66,7 @@ const ManagedPayslipDocument = ({
       <PayslipDocument
         tenantName={currentTenant.name}
         companyHeaderName={data.payrollComplianceSetting?.payslipHeaderTitle}
+        companyAddress={data.payrollComplianceSetting?.payslipCompanyAddress}
         payslipLogoReadUrl={logo.url}
         employeeCode={employee.employeeCode}
         employeeName={employee.fullName}

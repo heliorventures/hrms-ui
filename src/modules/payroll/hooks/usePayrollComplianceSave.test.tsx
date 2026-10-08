@@ -16,6 +16,7 @@ const form = {
   baseComponentInput: 'BASIC',
   arrearComponentInput: 'ARREAR',
   payslipHeaderInput: '',
+  payslipCompanyAddressInput: '',
   payslipLogoIdInput: '',
 };
 

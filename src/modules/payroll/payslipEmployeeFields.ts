@@ -8,6 +8,8 @@ export const PAYSLIP_EMPLOYEE_FIELDS = [
   { id: 'MARITAL_STATUS', label: 'Marital status' },
   { id: 'UAN', label: 'UAN' },
   { id: 'ESIC', label: 'ESIC' },
+  { id: 'PAYSLIP_STATUS', label: 'Status' },
+  { id: 'GENERATED_DATE', label: 'Generated date' },
 ] as const;
 
 export const DEFAULT_PAYSLIP_EMPLOYEE_FIELDS = ['EMPLOYEE_NAME', 'EMPLOYEE_CODE', 'UAN', 'ESIC'];

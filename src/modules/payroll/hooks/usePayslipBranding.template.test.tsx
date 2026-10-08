@@ -73,6 +73,7 @@ it('refreshes company branding and clears a removed logo after settings are save
       return Promise.resolve({
         payrollComplianceSetting: {
           payslipHeaderTitle: updated ? 'New company header' : 'Old company header',
+          payslipCompanyAddress: updated ? null : 'Old company address',
           payslipLogoFileStorageId: updated ? null : 'logo-one',
         },
       });
@@ -87,6 +88,7 @@ it('refreshes company branding and clears a removed logo after settings are save
   await waitFor(() =>
     expect(result.current.payslipLogoReadUrl).toBe('https://example.invalid/logo.png')
   );
+  expect(result.current.payslipBranding?.payslipCompanyAddress).toBe('Old company address');
   updated = true;
   act(() => {
     window.dispatchEvent(new Event(PAYSLIP_SETTINGS_CHANGED));
@@ -94,5 +96,6 @@ it('refreshes company branding and clears a removed logo after settings are save
   await waitFor(() =>
     expect(result.current.payslipBranding?.payslipHeaderTitle).toBe('New company header')
   );
+  expect(result.current.payslipBranding?.payslipCompanyAddress).toBeNull();
   expect(result.current.payslipLogoReadUrl).toBeNull();
 });

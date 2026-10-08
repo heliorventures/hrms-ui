@@ -18,4 +18,9 @@ describe('tenant payslip employee fields', () => {
     expect(() => decodePayslipEmployeeFields('GENDER')).toThrow();
     expect(() => decodePayslipEmployeeFields(['GENDER', 'GENDER'])).toThrow();
   });
+
+  it('accepts status and generated date as independently selected fields', () => {
+    expect(decodePayslipEmployeeFields(['PAYSLIP_STATUS'])).toEqual(['PAYSLIP_STATUS']);
+    expect(decodePayslipEmployeeFields(['GENERATED_DATE'])).toEqual(['GENERATED_DATE']);
+  });
 });

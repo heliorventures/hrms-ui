@@ -27,6 +27,7 @@ const DEFAULT_COMPLIANCE_FORM: PayrollComplianceFormState = {
   baseComponentInput: 'BASIC',
   arrearComponentInput: 'ARREAR',
   payslipHeaderInput: '',
+  payslipCompanyAddressInput: '',
   payslipLogoIdInput: '',
 };
 
@@ -41,6 +42,7 @@ function complianceFormFromQuery(
     baseComponentInput: row?.baseSalaryComponentCode.trim() || 'BASIC',
     arrearComponentInput: row?.arrearSalaryComponentCode.trim() || 'ARREAR',
     payslipHeaderInput: row?.payslipHeaderTitle?.trim() ?? '',
+    payslipCompanyAddressInput: row?.payslipCompanyAddress?.trim() ?? '',
     payslipLogoIdInput: row?.payslipLogoFileStorageId?.trim() ?? '',
   };
 }

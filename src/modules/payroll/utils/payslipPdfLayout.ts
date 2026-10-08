@@ -1,5 +1,7 @@
 import { jsPDF } from 'jspdf';
 
+import { payslipCompanyAddressText } from '../payslipCompanyAddress';
+import { payslipDetailValue } from '../payslipDetailValue';
 import { resolvePayslipTemplate } from '../payslipTemplates';
 
 import type { PdfPayslipLine, PdfPayslipPayload, PayslipPdfBranding } from './payslipPdf';
@@ -45,14 +47,12 @@ const header = (writer: PdfWriter, branding: PayslipPdfBranding, slip: PdfPaysli
     }
   }
   writer.text(branding.companyLine, true);
+  const address = payslipCompanyAddressText(branding.companyAddress);
+  if (address) writer.text(address);
   writer.text(`Payslip - ${branding.periodLabel}`);
   writer.space();
   for (const detail of slip.presentation?.employeeDetails ?? [])
-    writer.text(`${detail.label}: ${detail.value}`);
-  writer.text(`Status: ${slip.status}`);
-  writer.text(
-    `Generated: ${new Date(slip.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium' })}`
-  );
+    writer.text(`${detail.label}: ${payslipDetailValue(detail)}`);
   writer.space();
 };
 const legacyLeave = (writer: PdfWriter, slip: PdfPayslipPayload) => {

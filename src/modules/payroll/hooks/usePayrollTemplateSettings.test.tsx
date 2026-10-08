@@ -29,6 +29,7 @@ describe('company payslip settings', () => {
           ? {
               payrollComplianceSetting: {
                 payslipTemplate: 'TABLE',
+                payslipCompanyAddress: '801, Business Court\nPune - 411038',
                 payslipEmployeeFields: ['EMPLOYEE_NAME', 'EMPLOYEE_CODE', 'UAN', 'ESIC'],
                 baseSalaryComponentCode: 'BASIC',
                 arrearSalaryComponentCode: 'ARREAR',
@@ -43,6 +44,9 @@ describe('company payslip settings', () => {
     );
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.complianceForm.payslipTemplateInput).toBe('TABLE');
+    expect(result.current.complianceForm.payslipCompanyAddressInput).toBe(
+      '801, Business Court\nPune - 411038'
+    );
   });
 
   it('reports failed settings reads instead of offering the default as saved', async () => {
@@ -76,6 +80,7 @@ describe('company payslip settings', () => {
       baseComponentInput: 'BASIC',
       arrearComponentInput: 'ARREAR',
       payslipHeaderInput: '',
+      payslipCompanyAddressInput: '  801, Business Court\r\nPune - 411038  ',
       payslipLogoIdInput: '',
     };
     const { result } = renderHook(
@@ -100,6 +105,7 @@ describe('company payslip settings', () => {
         baseSalaryComponentCode: 'BASIC',
         arrearSalaryComponentCode: 'ARREAR',
         payslipHeaderTitle: null,
+        payslipCompanyAddress: '801, Business Court\nPune - 411038',
         payslipLogoFileStorageId: null,
       },
     });

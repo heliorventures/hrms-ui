@@ -21,15 +21,18 @@ vi.mock('./PayslipDocument', () => ({
   default: ({
     employeeCode,
     companyHeaderName,
+    companyAddress,
     detailsPending,
   }: {
     employeeCode: string;
     companyHeaderName?: string;
+    companyAddress?: string | null;
     detailsPending?: boolean;
   }) => (
     <div>
       Payslip for {employeeCode}
       <span>{companyHeaderName}</span>
+      <span>{companyAddress}</span>
       <button disabled={detailsPending}>Download PDF</button>
     </div>
   ),
@@ -105,6 +108,7 @@ it('refreshes managed payslip branding without changing the selected period', as
             ],
             payrollComplianceSetting: {
               payslipHeaderTitle: updated ? 'Updated header' : 'Original header',
+              payslipCompanyAddress: updated ? null : 'Original company address',
             },
             salaryComponents: [],
           }
@@ -114,12 +118,14 @@ it('refreshes managed payslip branding without changing the selected period', as
   await screen.findByText(/EMP01/);
   fireEvent.change(screen.getByLabelText('Employee payslips'), { target: { value: 'one' } });
   await screen.findByText('Original header');
+  expect(screen.getByText('Original company address')).toBeTruthy();
   fireEvent.change(screen.getByLabelText('Payslip period'), { target: { value: 'august' } });
   updated = true;
   act(() => {
     window.dispatchEvent(new Event(PAYSLIP_SETTINGS_CHANGED));
   });
   await screen.findByText('Updated header');
+  expect(screen.queryByText('Original company address')).toBeNull();
   expect(screen.getByLabelText<HTMLSelectElement>('Payslip period').value).toBe('august');
 });
 

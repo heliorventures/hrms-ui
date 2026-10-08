@@ -7,6 +7,21 @@ import PayslipTemplateSelector from './PayslipTemplateSelector';
 afterEach(cleanup);
 
 describe('company template selector', () => {
+  it('previews the company name and multiline address entered in the form', () => {
+    render(
+      <PayslipTemplateSelector
+        value="TABLE"
+        companyHeaderName="Company draft"
+        companyAddress="801, Business Court\nPune - 411038"
+        disabled={false}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Company draft').nextElementSibling?.textContent).toBe(
+      'Address: 801, Business Court\nPune - 411038'
+    );
+  });
+
   it('shows the company choice and previews the corresponding real renderer', () => {
     const change = vi.fn();
     render(<PayslipTemplateSelector value="TABLE" disabled={false} onChange={change} />);

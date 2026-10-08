@@ -1,3 +1,5 @@
+import { payslipCompanyAddressText } from '../payslipCompanyAddress';
+import { payslipDetailValue } from '../payslipDetailValue';
 import { formatPayslipAmount, groupPayslipLines, payslipLineAt } from '../payslipTableData';
 
 import type { PdfPayslipPayload, PayslipPdfBranding } from './payslipPdf';
@@ -22,20 +24,17 @@ const drawHeader = (
     }
   }
   writer.text(branding.companyLine, true);
+  const address = payslipCompanyAddressText(branding.companyAddress);
+  if (address) writer.text(address);
   writer.text(`Payslip for ${branding.periodLabel}`, true);
   const half = writer.width / 2;
   const details = slip.presentation?.employeeDetails ?? [];
   for (let index = 0; index < details.length; index += 2) {
-    const pair = details.slice(index, index + 2).map(({ label, value }) => `${label}: ${value}`);
+    const pair = details
+      .slice(index, index + 2)
+      .map((detail) => `${detail.label}: ${payslipDetailValue(detail)}`);
     writer.row([pair[0], pair[1] ?? ''], [half, half]);
   }
-  writer.row(
-    [
-      `Status: ${slip.status}`,
-      `Generated: ${new Date(slip.generatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}`,
-    ],
-    [half, half]
-  );
   writer.space();
 };
 

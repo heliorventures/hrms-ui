@@ -30,6 +30,7 @@ export type PdfPayslipPayload = {
 
 export type PayslipPdfBranding = {
   companyLine: string;
+  companyAddress?: string | null;
   periodLabel: string;
   employeeName: string;
   employeeCode: string;

@@ -17,6 +17,7 @@ import { useRegisterProfileGuidanceAccess } from '../../../guidance/ProfileGuida
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { usePageTabs } from '../../../hooks/usePageTabs';
 
+import EmployeeEsicCard from './components/EmployeeEsicCard';
 import { EmployeeHeader } from './components/EmployeeHeader';
 import EmployeeUanCard from './components/EmployeeUanCard';
 import { ProfileSectionSkeleton, ErrorSection } from './components/SectionStates';
@@ -209,14 +210,24 @@ export function EmployeeProfileShell({ employeeId, embedded }: EmployeeProfileSh
             {activeTab === 'identity' ? (
               <div className="space-y-4">
                 {showSalary ? (
-                  <EmployeeUanCard
-                    key={model.core.id}
-                    employeeId={model.core.id}
-                    client={client}
-                    canEdit={canManageOrganizationFields}
-                    refreshVersion={refreshVersion}
-                    onChanged={refetch}
-                  />
+                  <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+                    <EmployeeUanCard
+                      key={`uan-${model.core.id}`}
+                      employeeId={model.core.id}
+                      client={client}
+                      canEdit={canManageOrganizationFields}
+                      refreshVersion={refreshVersion}
+                      onChanged={refetch}
+                    />
+                    <EmployeeEsicCard
+                      key={`esic-${model.core.id}`}
+                      employeeId={model.core.id}
+                      client={client}
+                      canEdit={canManageOrganizationFields}
+                      refreshVersion={refreshVersion}
+                      onChanged={refetch}
+                    />
+                  </div>
                 ) : null}
                 <IdentityTab
                   employeeId={model.core.id}

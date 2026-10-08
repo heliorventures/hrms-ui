@@ -12,6 +12,8 @@ const SAMPLE_DETAILS: Record<string, string> = {
   MARITAL_STATUS: 'Married',
   UAN: '100000000001',
   ESIC: '1234567890',
+  PAYSLIP_STATUS: 'GENERATED',
+  GENERATED_DATE: '2026-01-31T12:00:00Z',
 };
 
 export const payslipTemplatePreview = (

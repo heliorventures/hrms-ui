@@ -8,11 +8,12 @@ interface Props {
 
 const PayslipEmployeeFieldSelector = ({ value, disabled, onChange }: Props) => (
   <fieldset disabled={disabled} className="mb-4 space-y-2">
-    <legend className="text-sm font-semibold">Employee details on payslip</legend>
+    <legend className="text-sm font-semibold">Details on payslip</legend>
     <p className="text-sm text-gray-600 dark:text-gray-300">
       Choose the fields shown for every employee in this company, in both templates, print and PDF.
       Empty fields are omitted. Profile details reflect the current employee record; saved payslip
-      UAN and ESIC values take precedence when available.
+      UAN and ESIC values take precedence when available. Status and generated date are optional and
+      hidden by default.
     </p>
     <div className="grid gap-2 sm:grid-cols-3">
       {PAYSLIP_EMPLOYEE_FIELDS.map(({ id, label }) => (

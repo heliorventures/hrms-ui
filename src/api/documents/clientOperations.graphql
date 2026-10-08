@@ -284,6 +284,7 @@ query PayrollComplianceSetting {
     baseSalaryComponentCode
     arrearSalaryComponentCode
     payslipHeaderTitle
+    payslipCompanyAddress
     payslipLogoFileStorageId
   }
 }
@@ -302,6 +303,7 @@ mutation UpsertPayrollComplianceSetting($input: UpsertPayrollComplianceSettingIn
     baseSalaryComponentCode
     arrearSalaryComponentCode
     payslipHeaderTitle
+    payslipCompanyAddress
     payslipLogoFileStorageId
   }
 }

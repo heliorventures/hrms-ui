@@ -1,5 +1,7 @@
+import { payslipDetailValue } from '../payslipDetailValue';
 import { formatPayslipMoney } from '../payslipTableData';
 
+import PayslipCompanyAddress from './PayslipCompanyAddress';
 import PayslipLegacyLeave from './PayslipLegacyLeave';
 import { PayslipPeriodLeave, PayslipSettlement } from './PayslipSettlement';
 import type { SheetProps } from './PayslipSheet';
@@ -7,17 +9,16 @@ import PayslipTableComponents from './PayslipTableComponents';
 
 const PayslipTableSheet = ({
   headerTitle,
+  companyAddress,
   payslipLogoReadUrl,
   periodLabel,
   slip,
   preview,
 }: SheetProps) => {
   if (!slip.presentation) return null;
-  const details = [
-    ...slip.presentation.employeeDetails.map(({ label, value }) => [label, value]),
-    ['Status', slip.status],
-    ['Generated', new Date(slip.generatedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })],
-  ].filter(([, value]) => Boolean(value));
+  const details = slip.presentation.employeeDetails
+    .map((detail) => [detail.label, payslipDetailValue(detail)])
+    .filter(([, value]) => Boolean(value));
   const { statement } = slip.presentation;
   return (
     <div
@@ -30,6 +31,7 @@ const PayslipTableSheet = ({
         )}
         <div className="min-w-0 flex-1 text-center [overflow-wrap:anywhere]">
           <p className="text-lg font-bold">{headerTitle}</p>
+          <PayslipCompanyAddress address={companyAddress} />
           <p className="mt-2 text-sm font-semibold">Payslip for {periodLabel}</p>
         </div>
       </div>

@@ -41,6 +41,7 @@ type PayslipDocumentProps = {
   tenantName: string;
   /** From `payroll_compliance_setting.payslipHeaderTitle` when configured. */
   companyHeaderName?: string | null;
+  companyAddress?: string | null;
   /** HMAC URL from `payslipLogoSignedReadUrl` when tenant configured a logo. */
   payslipLogoReadUrl?: string | null;
   employeeName: string;
@@ -57,6 +58,7 @@ const PayslipDocument = ({
   detailsPending = false,
   tenantName,
   companyHeaderName,
+  companyAddress,
   payslipLogoReadUrl,
   employeeName,
   employeeCode,
@@ -88,6 +90,7 @@ const PayslipDocument = ({
     downloadPayslipPdf(
       {
         companyLine: headerTitle,
+        companyAddress,
         periodLabel,
         employeeName,
         employeeCode,
@@ -103,6 +106,7 @@ const PayslipDocument = ({
         })
     );
   }, [
+    companyAddress,
     detailsUnavailable,
     employeeCode,
     employeeName,
@@ -146,6 +150,7 @@ const PayslipDocument = ({
       ) : (
         <Sheet
           headerTitle={headerTitle}
+          companyAddress={companyAddress}
           payslipLogoReadUrl={payslipLogoReadUrl}
           employeeName={employeeName}
           employeeCode={employeeCode}

@@ -11,6 +11,7 @@ type PayrollComplianceSetting {
   baseSalaryComponentCode: String!
   arrearSalaryComponentCode: String!
   payslipHeaderTitle: String
+  payslipCompanyAddress: String
   payslipLogoFileStorageId: ID
 }
 
@@ -22,6 +23,7 @@ input UpsertPayrollComplianceSettingInput {
   baseSalaryComponentCode: String
   arrearSalaryComponentCode: String
   payslipHeaderTitle: String
+  payslipCompanyAddress: String
   payslipLogoFileStorageId: ID
 }
 

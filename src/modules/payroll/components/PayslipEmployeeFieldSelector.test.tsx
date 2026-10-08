@@ -26,4 +26,19 @@ describe('employee fields on payslip', () => {
     render(<PayslipEmployeeFieldSelector value={[]} disabled onChange={vi.fn()} />);
     expect(screen.getByRole('group').hasAttribute('disabled')).toBe(true);
   });
+
+  it('keeps status and generated date unchecked until selected', () => {
+    const change = vi.fn();
+    render(
+      <PayslipEmployeeFieldSelector value={['EMPLOYEE_NAME']} disabled={false} onChange={change} />
+    );
+    const status = screen.getByRole<HTMLInputElement>('checkbox', { name: 'Status' });
+    const generated = screen.getByRole<HTMLInputElement>('checkbox', { name: 'Generated date' });
+    expect(status.checked).toBe(false);
+    expect(generated.checked).toBe(false);
+    fireEvent.click(status);
+    expect(change).toHaveBeenLastCalledWith(['EMPLOYEE_NAME', 'PAYSLIP_STATUS']);
+    fireEvent.click(generated);
+    expect(change).toHaveBeenLastCalledWith(['EMPLOYEE_NAME', 'GENERATED_DATE']);
+  });
 });

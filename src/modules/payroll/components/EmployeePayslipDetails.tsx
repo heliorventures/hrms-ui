@@ -58,6 +58,7 @@ const EmployeePayslipDetails = (props: PayrollPayslipTabProps & { activePayslip:
       <PayslipDocument
         tenantName={props.tenantName}
         companyHeaderName={props.payslipBranding?.payslipHeaderTitle}
+        companyAddress={props.payslipBranding?.payslipCompanyAddress}
         payslipLogoReadUrl={props.payslipLogoReadUrl}
         employeeName={props.employeeName}
         employeeCode={props.employeeCode}

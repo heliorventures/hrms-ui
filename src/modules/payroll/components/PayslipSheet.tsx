@@ -1,3 +1,6 @@
+import { payslipDetailValue } from '../payslipDetailValue';
+
+import PayslipCompanyAddress from './PayslipCompanyAddress';
 import type { PayslipDocModel, PayslipLine } from './PayslipDocument';
 import PayslipLegacyLeave from './PayslipLegacyLeave';
 import { PayslipPeriodLeave, PayslipSettlement } from './PayslipSettlement';
@@ -5,6 +8,7 @@ import { PayslipPeriodLeave, PayslipSettlement } from './PayslipSettlement';
 export interface SheetProps {
   preview?: boolean;
   headerTitle: string;
+  companyAddress?: string | null;
   payslipLogoReadUrl?: string | null;
   employeeName: string;
   employeeCode: string;
@@ -22,7 +26,13 @@ const fmt = (value: string) => {
       })
     : value;
 };
-const SheetHeader = ({ headerTitle, payslipLogoReadUrl, periodLabel, slip }: SheetProps) => (
+const SheetHeader = ({
+  headerTitle,
+  companyAddress,
+  payslipLogoReadUrl,
+  periodLabel,
+  slip,
+}: SheetProps) => (
   <>
     <div className="flex flex-wrap items-center gap-3 border-b-2 border-indigo-600 pb-3">
       {payslipLogoReadUrl && (
@@ -30,6 +40,7 @@ const SheetHeader = ({ headerTitle, payslipLogoReadUrl, periodLabel, slip }: She
       )}
       <div className="min-w-0 flex-1">
         <p className="text-lg font-bold tracking-tight text-indigo-800">{headerTitle}</p>
+        <PayslipCompanyAddress address={companyAddress} />
         <p className="text-sm font-medium text-slate-600">Payslip — {periodLabel}</p>
       </div>
     </div>
@@ -38,17 +49,9 @@ const SheetHeader = ({ headerTitle, payslipLogoReadUrl, periodLabel, slip }: She
         <p key={detail.field}>
           <span className="text-slate-500">{detail.label}</span>
           <br />
-          <span className="font-semibold">{detail.value}</span>
+          <span className="font-semibold">{payslipDetailValue(detail)}</span>
         </p>
       ))}
-      <p>
-        <span className="text-slate-500">Status</span> · {slip.status}
-      </p>
-      <p className="sm:text-right">
-        <span className="text-slate-500">Generated</span>
-        <br />
-        {new Date(slip.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium' })}
-      </p>
     </div>
   </>
 );

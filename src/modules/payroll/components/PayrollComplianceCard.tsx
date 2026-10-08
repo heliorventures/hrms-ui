@@ -1,7 +1,9 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import Input from '../../../components/common/Input';
+import Textarea from '../../../components/common/Textarea';
 import type { PayrollComplianceFormState } from '../payrollTypes';
+import { PAYSLIP_COMPANY_ADDRESS_MAX_LENGTH } from '../payslipCompanyAddress';
 
 import PayslipEmployeeFieldSelector from './PayslipEmployeeFieldSelector';
 import PayslipTemplateSelector from './PayslipTemplateSelector';
@@ -29,6 +31,8 @@ const PayrollComplianceCard = ({
     <PayslipTemplateSelector
       value={form.payslipTemplateInput}
       employeeFields={form.payslipEmployeeFieldsInput}
+      companyHeaderName={form.payslipHeaderInput}
+      companyAddress={form.payslipCompanyAddressInput}
       disabled={busy || loading}
       onChange={(value) => onChange('payslipTemplateInput', value)}
     />
@@ -90,6 +94,19 @@ const PayrollComplianceCard = ({
         onChange={(event) => onChange('payslipLogoIdInput', event.target.value)}
         placeholder="file_storage.id after HR upload"
         className="min-w-[16rem] font-mono text-xs"
+      />
+      <Textarea
+        label="Company Address"
+        optionalLabel="Optional"
+        description="Shown below the company name on screen, print and PDF. Leave blank to hide. Maximum 1,000 characters."
+        value={form.payslipCompanyAddressInput}
+        onChange={(event) => onChange('payslipCompanyAddressInput', event.target.value)}
+        placeholder="Office / building, street, city, state and postal code"
+        autoComplete="street-address"
+        rows={3}
+        maxLength={PAYSLIP_COMPANY_ADDRESS_MAX_LENGTH}
+        disabled={busy || loading}
+        fullWidth
       />
       <Button
         type="button"

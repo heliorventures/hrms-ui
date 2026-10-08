@@ -87,6 +87,7 @@ query ManagedEmployeePayslips($employeeId: ID!) {
   }
   payrollComplianceSetting {
     payslipHeaderTitle
+    payslipCompanyAddress
     payslipLogoFileStorageId
   }
   salaryComponents(limit: 500) {

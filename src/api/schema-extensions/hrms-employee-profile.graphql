@@ -31,6 +31,7 @@ extend type EmployeeDocument {
 
 extend type Query {
   employeeUanNumber(employeeId: ID!): String
+  employeeEsicNumber(employeeId: ID!): String
   employeePrimaryBank(employeeId: ID!): EmployeeBankAccount
   employeeIdentityProfile(employeeId: ID!): EmployeeIdentityProfile!
   employeeDirectoryPage(limit: Int! = 100, after: String): EmployeeDirectoryPage!
@@ -193,6 +194,11 @@ input SetEmployeeUanNumberInput {
   uanNumber: String!
 }
 
+input SetEmployeeEsicNumberInput {
+  employeeId: ID!
+  esicNumber: String!
+}
+
 input UpdateEmployeePersonalProfileInput {
   employeeId: ID!
   firstName: String
@@ -306,6 +312,7 @@ type UploadedTenantFile {
 
 extend type Mutation {
   setEmployeeUanNumber(input: SetEmployeeUanNumberInput!): String
+  setEmployeeEsicNumber(input: SetEmployeeEsicNumberInput!): String
   updateEmployeePersonalProfile(input: UpdateEmployeePersonalProfileInput!): Employee!
   updateEmployeeSelfServiceProfile(input: UpdateEmployeeSelfServiceProfileInput!): Employee!
   submitEmployeeProfileChange(

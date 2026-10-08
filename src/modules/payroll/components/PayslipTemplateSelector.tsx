@@ -12,11 +12,20 @@ import { PAYSLIP_SHEETS } from './payslipSheetRegistry';
 interface Props {
   value: PayslipTemplateId;
   employeeFields?: string[];
+  companyHeaderName?: string;
+  companyAddress?: string;
   disabled: boolean;
   onChange: (value: PayslipTemplateId) => void;
 }
 
-const PayslipTemplateSelector = ({ value, employeeFields, disabled, onChange }: Props) => {
+const PayslipTemplateSelector = ({
+  value,
+  employeeFields,
+  companyHeaderName,
+  companyAddress,
+  disabled,
+  onChange,
+}: Props) => {
   const id = useId();
   const Sheet = PAYSLIP_SHEETS[value];
   return (
@@ -46,10 +55,12 @@ const PayslipTemplateSelector = ({ value, employeeFields, disabled, onChange }: 
       <details className="rounded-md border border-line bg-surface p-3">
         <summary className="cursor-pointer text-sm font-medium">Preview selected template</summary>
         <p className="my-3 text-xs text-content-secondary">
-          Example data only. Your company&apos;s payslips use its saved payroll data.
+          Example employee and salary data. Company name and address reflect this form; payslips
+          use saved settings.
         </p>
         <Sheet
-          headerTitle="Example Company"
+          headerTitle={companyHeaderName?.trim() || 'Example Company'}
+          companyAddress={companyAddress}
           employeeName="Example Employee"
           employeeCode="EMP001"
           periodLabel="January 2026"
