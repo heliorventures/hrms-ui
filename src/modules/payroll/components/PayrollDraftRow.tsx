@@ -1,6 +1,8 @@
 import { sumMoney } from '../taxFormValues';
 import type { PayrollDraft } from '../taxProjectionTypes';
 
+import { PayrollLoanReview } from './PayrollLoanReview';
+
 const PayrollDraftRow = ({
   row,
   name,
@@ -11,6 +13,9 @@ const PayrollDraftRow = ({
   <tr className="border-t">
     <td className="p-2">
       {name ?? row.employee_label ?? 'Employee — recalculate to refresh'}
+      {row.prepared?.loan_recovery && row.prepared.loan_recovery.quote.lines.length > 0 && (
+        <PayrollLoanReview reviewed={row.prepared.loan_recovery} />
+      )}
       {!!row.prepared?.arrears?.length && (
         <details className="mt-2 text-xs">
           <summary className="cursor-pointer">Review included arrears</summary>

@@ -57,3 +57,8 @@ mutation SaveLoanRequest($input: SubmitLoanRequestInput!) {
 mutation RetireLoanPolicy($input: RetireLoanPolicyInput!) {
   retireLoanPolicy(input: $input) { recordId loanId employeeId version state postingIds unappliedCredit }
 }
+
+# Payroll owns the draft recovery value date in the shared service.
+mutation SetPayrollCyclePaymentDate($cycleId: ID!, $paymentDate: NaiveDate!, $expectedRevision: Int) {
+  setPayrollCyclePaymentDate(cycleId: $cycleId, paymentDate: $paymentDate, expectedRevision: $expectedRevision)
+}

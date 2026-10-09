@@ -6,15 +6,24 @@ import type { PayrollDraft } from '../taxProjectionTypes';
 
 import PayrollDraftRow from './PayrollDraftRow';
 import PayrollHelp from './PayrollHelp';
+import { PayrollPaymentDateEditor } from './PayrollPaymentDateEditor';
 
 interface Props {
   draft: PayrollDraft;
   busy: boolean;
   onFinalize: (employees: string[]) => void;
   onRecalculate: () => void;
+  onPaymentDate?: (date: string) => void;
   names?: Partial<Record<string, string>>;
 }
-const PayrollDraftReview = ({ draft, busy, onFinalize, onRecalculate, names = {} }: Props) => {
+const PayrollDraftReview = ({
+  draft,
+  busy,
+  onFinalize,
+  onRecalculate,
+  onPaymentDate,
+  names = {},
+}: Props) => {
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
   const required = draft.employees
     .filter((row) => row.prepared?.requires_tax_acknowledgement)
@@ -23,6 +32,7 @@ const PayrollDraftReview = ({ draft, busy, onFinalize, onRecalculate, names = {}
   return (
     <Card title={`Payroll review · revision ${draft.revision}`}>
       <div data-tour-anchor="payroll.draft-review" className="space-y-3">
+        {onPaymentDate && <PayrollPaymentDateEditor busy={busy} onSave={onPaymentDate} />}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p role="status" className="text-sm font-semibold">
             <span>{draft.employees.filter((row) => row.outcome === 'READY').length} ready</span>
@@ -92,7 +102,8 @@ const PayrollDraftReview = ({ draft, busy, onFinalize, onRecalculate, names = {}
         ))}
         {!draft.can_finalize && (
           <p role="status">
-            Resolve all review items and recalculate. A cycle needs at least one eligible employee.
+            {draft.finalization_block_reason ??
+              'Resolve all review items and recalculate. A cycle needs at least one eligible employee.'}
           </p>
         )}
         <div className="flex gap-3">

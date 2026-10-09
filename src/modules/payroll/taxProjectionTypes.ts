@@ -1,3 +1,5 @@
+import type { PayrollLoanReview } from './payrollLoanReview';
+
 export {
   EmployeeTaxSettingsDocument as taxSettingsQuery,
   EmployeeTaxHistoryDocument as taxHistoryQuery,
@@ -53,12 +55,14 @@ export interface PayrollDraft {
   revision: number;
   fingerprint: string;
   can_finalize: boolean;
+  finalization_block_reason?: string | null;
   employees: {
     employee_id: string;
     employee_label?: string;
     outcome: string;
     reason: string | null;
     prepared: {
+      loan_recovery?: PayrollLoanReview | null;
       calculation: DraftCalculation;
       requires_tax_acknowledgement: boolean;
       arrears?: { id: string; amount: string; reason: string | null }[];

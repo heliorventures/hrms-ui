@@ -34,6 +34,7 @@ const PayrollRunsSection = ({
         draft={actions.draft}
         busy={Boolean(actions.runBusy)}
         onFinalize={(employees) => void actions.finalize(employees)}
+        onPaymentDate={(date) => void actions.savePaymentDate(date)}
         onRecalculate={() => {
           if (actions.draft) void actions.runPayroll(actions.draft.cycle_id);
         }}
