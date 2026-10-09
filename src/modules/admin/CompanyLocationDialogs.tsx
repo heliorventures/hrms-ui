@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 
@@ -61,12 +62,19 @@ const CompanyLocationDialogs = ({
             />
           ))}
           {mutation.error ? (
-            <p role="alert">
+            <FeedbackToast
+              variant={'error'}
+              messageKey={mutation.error}
+              action={
+                <>
+                  <Button type="button" onClick={reload}>
+                    Reload list
+                  </Button>
+                </>
+              }
+            >
               {mutation.error}{' '}
-              <Button type="button" onClick={reload}>
-                Reload list
-              </Button>
-            </p>
+            </FeedbackToast>
           ) : null}
           <Button type="submit" disabled={mutation.busy}>
             {mutation.busy ? 'Saving...' : 'Save Location'}
@@ -83,7 +91,11 @@ const CompanyLocationDialogs = ({
           Retire {retiring?.name}? Assigned employees, holiday calendars, and active or scheduled
           weekly-off overrides must be moved first.
         </p>
-        {mutation.error ? <p role="alert">{mutation.error}</p> : null}
+        {mutation.error ? (
+          <FeedbackToast variant={'error'} messageKey={mutation.error}>
+            {mutation.error}
+          </FeedbackToast>
+        ) : null}
         <Button className="mt-3" disabled={mutation.busy} onClick={() => void retire()}>
           Retire Location
         </Button>

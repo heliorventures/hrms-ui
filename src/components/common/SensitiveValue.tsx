@@ -2,6 +2,9 @@ import { Clipboard, Eye, EyeOff } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { UI_FEEDBACK_TEXT } from '../../constants/uiText';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
+
+import FeedbackToast from './FeedbackToast';
 
 const REVEAL_UNAVAILABLE_TEXT = 'Unable to reveal this value. Try again.';
 
@@ -62,7 +65,7 @@ const useSensitiveReveal = ({
   remaskAfterMs,
 }: SensitiveRevealOptions) => {
   const [revealedValue, setRevealedValue] = useState<RevealedValue | null>(null);
-  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [copyFeedback, setCopyFeedback] = useFeedbackState<string | null>(null, 'info');
   const timerRef = useRef<number | undefined>();
   const operationGenerationRef = useRef(0);
   const mountedRef = useRef(true);
@@ -88,7 +91,7 @@ const useSensitiveReveal = ({
     revealedValueRef.current = null;
     setRevealedValue(null);
     setCopyFeedback(null);
-  }, [clearRemaskTimer]);
+  }, [clearRemaskTimer, setCopyFeedback]);
 
   useLayoutEffect(() => {
     invalidatePrivateState();
@@ -160,7 +163,15 @@ const useSensitiveReveal = ({
       },
       Math.max(0, remaskAfterMs)
     );
-  }, [clearRemaskTimer, invalidatePrivateState, mayReveal, remaskAfterMs, resolveValue, value]);
+  }, [
+    clearRemaskTimer,
+    invalidatePrivateState,
+    mayReveal,
+    remaskAfterMs,
+    resolveValue,
+    value,
+    setCopyFeedback,
+  ]);
 
   const copyRevealedValue = useCallback(() => {
     const revealed = revealedValueRef.current;
@@ -177,7 +188,7 @@ const useSensitiveReveal = ({
       revealedValueRef.current === revealed;
 
     return copySensitiveValueSafely(revealed.displayedValue, operationIsCurrent, setCopyFeedback);
-  }, [copyable, mayReveal, resolveValue, value]);
+  }, [copyable, mayReveal, resolveValue, value, setCopyFeedback]);
 
   return {
     copyFeedback,
@@ -233,14 +244,9 @@ const SensitiveValue = ({
         </button>
       ) : null}
       {copyFeedback ? (
-        <span
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          className="text-xs text-content-secondary"
-        >
+        <FeedbackToast variant={'info'} messageKey={copyFeedback}>
           {copyFeedback}
-        </span>
+        </FeedbackToast>
       ) : null}
     </span>
   );

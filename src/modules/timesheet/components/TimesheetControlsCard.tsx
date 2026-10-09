@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageHeader from '../../../components/common/PageHeader';
 import PageInformation from '../../../components/common/PageInformation';
 import type { PeriodMode } from '../timesheetTypes';
@@ -167,7 +168,9 @@ const TimesheetControlsCard = ({
       </div>
 
       {rangeError ? (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{rangeError}</p>
+        <FeedbackToast variant={'error'} messageKey={rangeError}>
+          {rangeError}
+        </FeedbackToast>
       ) : null}
       <PageInformation title="Entry policy">
         <p className="mt-1">

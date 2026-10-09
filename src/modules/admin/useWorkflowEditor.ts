@@ -6,6 +6,7 @@ import {
   AdminDeleteWorkflowStepDocument,
   AdminReorderWorkflowStepsDocument,
 } from '../../api/graphql/graphql';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import type { useWorkflowData } from './useWorkflowData';
@@ -28,7 +29,7 @@ export function useWorkflowCreation(
   const [wEntity, setWEntity] = useState<string>(workflowTypes[0].value);
   const [firstApprover, setFirstApprover] = useState('PERMISSION');
   const [wBusy, setWBusy] = useState(false);
-  const [wMsg, setWMsg] = useState<string | null>(null);
+  const [wMsg, setWMsg] = useFeedbackState<string | null>(null, 'info');
   const hasWorkflow = data?.workflows.some(
     (workflow) => workflow.entityType === wEntity && workflow.isActive
   );
@@ -37,7 +38,7 @@ export function useWorkflowCreation(
     e.preventDefault();
     if (!workflowBelongsToDomain(wEntity, domain)) return;
     if (!wName.trim()) {
-      setWMsg('Name is required');
+      setWMsg('Name is required', 'error');
       return;
     }
     setWMsg(null);
@@ -53,9 +54,9 @@ export function useWorkflowCreation(
       });
       setSWorkflowId(created.createWorkflow.id);
       await refresh();
-      setWMsg('Workflow ready. Its first approval step has been added.');
+      setWMsg('Workflow ready. Its first approval step has been added.', 'success');
     } catch (err) {
-      setWMsg(graphQlUserMessage(err));
+      setWMsg(graphQlUserMessage(err), 'error');
     } finally {
       setWBusy(false);
     }
@@ -83,7 +84,7 @@ export function useWorkflowSteps({ client, data, stepsData, refresh }: Workspace
   const [sApprover, setSApprover] = useState('PERMISSION');
   const [sSla, setSSla] = useState<number | null>(48);
   const [sBusy, setSBusy] = useState(false);
-  const [sMsg, setSMsg] = useState<string | null>(null);
+  const [sMsg, setSMsg] = useFeedbackState<string | null>(null, 'info');
   const [delStepBusy, setDelStepBusy] = useState<string | null>(null);
   const [reorderBusyWfId, setReorderBusyWfId] = useState<string | null>(null);
 
@@ -99,9 +100,9 @@ export function useWorkflowSteps({ client, data, stepsData, refresh }: Workspace
     try {
       await client.request(AdminDeleteWorkflowStepDocument, { stepId: stepId.trim() });
       await refresh();
-      setSMsg('Step removed.');
+      setSMsg('Step removed.', 'success');
     } catch (err) {
-      setSMsg(graphQlUserMessage(err));
+      setSMsg(graphQlUserMessage(err), 'error');
     } finally {
       setDelStepBusy(null);
     }
@@ -127,9 +128,9 @@ export function useWorkflowSteps({ client, data, stepsData, refresh }: Workspace
         stepIdsOrdered: orderedStepIds,
       });
       await refresh();
-      setSMsg('Steps reordered.');
+      setSMsg('Steps reordered.', 'success');
     } catch (err) {
-      setSMsg(graphQlUserMessage(err));
+      setSMsg(graphQlUserMessage(err), 'error');
       throw err;
     } finally {
       setReorderBusyWfId(null);
@@ -141,7 +142,8 @@ export function useWorkflowSteps({ client, data, stepsData, refresh }: Workspace
     const selectedType = selectedWorkflow && workflowType(selectedWorkflow.entityType);
     if (!selectedWorkflow || !selectedType || !sName.trim() || !stepsData) {
       setSMsg(
-        'Select a workflow and enter a step name. Reload the page if steps could not be loaded.'
+        'Select a workflow and enter a step name. Reload the page if steps could not be loaded.',
+        'error'
       );
       return;
     }
@@ -161,9 +163,9 @@ export function useWorkflowSteps({ client, data, stepsData, refresh }: Workspace
         },
       });
       await refresh();
-      setSMsg('Step created.');
+      setSMsg('Step created.', 'success');
     } catch (err) {
-      setSMsg(graphQlUserMessage(err));
+      setSMsg(graphQlUserMessage(err), 'error');
     } finally {
       setSBusy(false);
     }

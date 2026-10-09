@@ -12,6 +12,7 @@ import {
 import { useMemo } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageInformation from '../../../components/common/PageInformation';
 import { useRegisterProfileGuidanceAccess } from '../../../guidance/ProfileGuidanceContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
@@ -149,12 +150,9 @@ export function EmployeeProfileShell({ employeeId, embedded }: EmployeeProfileSh
   return (
     <div className="min-h-[60vh] space-y-4 pb-8">
       {error ? (
-        <div
-          role="alert"
-          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
-        >
+        <FeedbackToast variant={'error'} messageKey={error}>
           Refresh failed; the last loaded profile remains visible. {error}
-        </div>
+        </FeedbackToast>
       ) : null}
       <EmployeeHeader
         embedded={embedded}

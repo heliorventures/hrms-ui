@@ -22,13 +22,12 @@ const LeaveRecoveryNotice = ({
     : operation === 'mutation'
       ? 'Leave request action was not completed'
       : 'Leave requests need attention';
-  const actionLabel = isWorkflowTrailFailure
-    ? 'Retry request history'
-    : 'Refresh leave requests';
+  const actionLabel = isWorkflowTrailFailure ? 'Retry request history' : 'Refresh leave requests';
   const onRecovery = isWorkflowTrailFailure ? onRetryWorkflowTrail : onRefreshBoard;
 
   return (
     <PageNotice
+      messageKey={message}
       variant="error"
       title={title}
       focusOnMount

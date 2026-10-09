@@ -8,9 +8,12 @@ import {
 import { scopeForPermission } from '../../auth/approvalScope';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { useActionFeedback } from '../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -40,6 +43,8 @@ type BenefitsHead = {
 };
 
 const BenefitsPage = () => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const { can, clientSession } = useAuth();
   const canManage =
@@ -129,7 +134,7 @@ const BenefitsPage = () => {
     }[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [enrollBusyId, setEnrollBusyId] = useState<string | null>(null);
 
   const enrolledPlanIds = useMemo(
@@ -198,13 +203,14 @@ const BenefitsPage = () => {
     return () => {
       c = true;
     };
-  }, [load]);
+  }, [load, setError]);
 
   const enrollIn = async (benefitPlanId: string) => {
     setEnrollBusyId(benefitPlanId);
     setError(null);
     try {
       await client.request(EnrollInBenefitPlanDocument, { benefitPlanId });
+      notifyAction('updated');
       await refresh();
     } catch (e) {
       setError(graphQlUserMessage(e));
@@ -227,9 +233,11 @@ const BenefitsPage = () => {
       </div>
       <PageHeader title="Benefits" />
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
       {canEnroll && (
         <PageTabPanel id="enrollments" activeTab={tab}>

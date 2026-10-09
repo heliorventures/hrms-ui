@@ -13,6 +13,8 @@ import {
   type ExpensePolicyDirectoryQuery,
 } from '../../../api/graphql/graphql';
 import { useDialogs } from '../../../contexts/DialogContext';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type {
@@ -44,11 +46,13 @@ import {
 } from '../expensePolicyPickerOptions';
 
 export function useAdminExpenseCategories() {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const { confirm } = useDialogs();
   const [rows, setRows] = useState<ExpenseCategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -62,7 +66,7 @@ export function useAdminExpenseCategories() {
     value: DEFAULT_EXPENSE_POLICY_FORM,
   }));
   const [policySaving, setPolicySaving] = useState(false);
-  const [policyError, setPolicyError] = useState<string | null>(null);
+  const [policyError, setPolicyError] = useFeedbackState<string | null>(null, 'error');
   const [policyPickerBusy, setPolicyPickerBusy] = useState(false);
   const [policyPickerDepartments, setPolicyPickerDepartments] = useState<
     ExpensePolicyDepartmentRow[]
@@ -71,7 +75,10 @@ export function useAdminExpenseCategories() {
     ExpensePolicyDesignationRow[]
   >([]);
   const [policyPickerRoles, setPolicyPickerRoles] = useState<ExpensePolicyRoleRow[]>([]);
-  const [policyPickerOrgError, setPolicyPickerOrgError] = useState<string | null>(null);
+  const [policyPickerOrgError, setPolicyPickerOrgError] = useFeedbackState<string | null>(
+    null,
+    'error'
+  );
   const [policyPickerOwner, setPolicyPickerOwner] = useState<typeof client | null>(null);
 
   const loadCategories = useCallback(async () => {
@@ -114,7 +121,7 @@ export function useAdminExpenseCategories() {
     return () => {
       cancelled = true;
     };
-  }, [loadCategories]);
+  }, [loadCategories, setError]);
 
   useEffect(() => {
     if (!rows.length) {
@@ -151,7 +158,7 @@ export function useAdminExpenseCategories() {
     return () => {
       cancelled = true;
     };
-  }, [loadPolicies, policyCategoryId]);
+  }, [loadPolicies, policyCategoryId, setPolicyError]);
 
   useEffect(() => {
     if (!rows.length) {
@@ -195,7 +202,7 @@ export function useAdminExpenseCategories() {
     return () => {
       cancelled = true;
     };
-  }, [client, rows.length]);
+  }, [client, rows.length, setPolicyPickerOrgError]);
 
   const refreshCategories = useCallback(async () => {
     setRows(await loadCategories());
@@ -318,6 +325,7 @@ export function useAdminExpenseCategories() {
             form.maxAmountPerClaim.trim() === '' ? null : form.maxAmountPerClaim.trim(),
         },
       });
+      notifyAction('saved');
       await refreshCategories();
       closeCategoryModal();
     } catch (err) {
@@ -339,6 +347,7 @@ export function useAdminExpenseCategories() {
     try {
       setError(null);
       await client.request(DeleteExpenseCategoryAdminDocument, { expenseCategoryId: row.id });
+      notifyAction('removed');
       await refreshCategories();
     } catch (err) {
       setError(graphQlUserMessage(err));
@@ -416,6 +425,7 @@ export function useAdminExpenseCategories() {
           approvalRequired: policyForm.approvalRequired,
         },
       });
+      notifyAction('saved');
       setPolicyRows(await loadPolicies(policyCategoryId));
       closePolicyModal();
     } catch (err) {
@@ -437,6 +447,7 @@ export function useAdminExpenseCategories() {
     try {
       setPolicyError(null);
       await client.request(DeleteExpensePolicyAdminDocument, { expensePolicyId: policy.id });
+      notifyAction('removed');
       if (policyCategoryId) setPolicyRows(await loadPolicies(policyCategoryId));
     } catch (err) {
       setPolicyError(graphQlUserMessage(err));

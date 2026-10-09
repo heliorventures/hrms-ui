@@ -1,4 +1,5 @@
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import { parseIsoDate } from '../../../utils/calendarRange';
 import { decodeTimesheetDescription } from '../../../utils/timesheetDescription';
 import {
@@ -62,9 +63,9 @@ const TimesheetCalendarCard = ({
     ) : (
       <>
         {error ? (
-          <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+          <FeedbackToast variant={'error'} messageKey={error}>
             {error}
-          </p>
+          </FeedbackToast>
         ) : null}
         <ul aria-label="Timesheet agenda" className="space-y-2 md:hidden">
           {calendarWeeks

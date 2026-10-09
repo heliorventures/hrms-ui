@@ -4,9 +4,11 @@ import { type WorkplaceCompensationDataQuery } from '../../api/graphql/graphql';
 import { scopeForPermission } from '../../auth/approvalScope';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -40,9 +42,9 @@ const CompensationPage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<WorkplaceCompensationDataQuery | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
-  const [designationError, setDesignationError] = useState<string | null>(null);
+  const [designationError, setDesignationError] = useFeedbackState<string | null>(null, 'error');
   const [designations, setDesignations] = useState<WorkplaceCompensationDataQuery['designations']>(
     []
   );
@@ -68,7 +70,7 @@ const CompensationPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [client]);
+  }, [client, setDesignationError]);
 
   const tabs = [
     { id: 'reviews', label: 'Review Cycles' },
@@ -116,7 +118,7 @@ const CompensationPage = () => {
     return () => {
       c = true;
     };
-  }, [load, refresh]);
+  }, [load, refresh, setError]);
 
   const desigById = useMemo(() => {
     const m = new Map<string, string>();
@@ -131,9 +133,9 @@ const CompensationPage = () => {
       </div>
       <PageHeader title="Salary Bands & Reviews" />
       {(error || designationError) && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error || designationError}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'}>{error || designationError}</FeedbackToast>
+        </>
       )}
       <PageTabPanel id="reviews" activeTab={tab}>
         <Card

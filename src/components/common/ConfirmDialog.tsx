@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { useFeedbackState } from '../../hooks/useFeedbackState';
+
 import Button from './Button';
+import FeedbackToast from './FeedbackToast';
 import Modal from './Modal';
 
 export interface ConfirmDialogProps {
@@ -29,7 +32,7 @@ const ConfirmDialog = ({
   busyLabel,
 }: ConfirmDialogProps) => {
   const [inFlight, setInFlight] = useState(false);
-  const [failureMessage, setFailureMessage] = useState<string | null>(null);
+  const [failureMessage, setFailureMessage] = useFeedbackState<string | null>(null, 'error');
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
   const externallyBusy = Boolean(busy);
@@ -44,7 +47,7 @@ const ConfirmDialog = ({
 
   useEffect(() => {
     if (open) setFailureMessage(null);
-  }, [open]);
+  }, [open, setFailureMessage]);
 
   const requestClose = () => {
     if (inFlightRef.current || externallyBusy) return;
@@ -97,9 +100,9 @@ const ConfirmDialog = ({
       }
     >
       {failureMessage ? (
-        <p role="alert" className="text-sm font-medium text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={failureMessage}>
           {failureMessage}
-        </p>
+        </FeedbackToast>
       ) : null}
     </Modal>
   );

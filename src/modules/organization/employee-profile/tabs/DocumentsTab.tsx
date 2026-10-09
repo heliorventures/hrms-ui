@@ -1,23 +1,25 @@
-import { useEffect, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { Upload } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import type { DocumentRow, TenantDocumentTypeOption } from '../types';
-import { DocumentTable } from '../components/DocumentTable';
-import { UploadModal } from '../components/UploadModal';
-import { EmptySection } from '../components/SectionStates';
-import Modal from '../../../../components/common/Modal';
-import Button from '../../../../components/common/Button';
-import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import {
   ResolveEmployeeDocumentDocument,
   UploadEmployeeDocumentProfileDocument,
 } from '../../../../api/graphql/graphql';
+import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
+import Modal from '../../../../components/common/Modal';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
+import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import {
   EmployeeDocumentAttachmentDocument,
   employeeDocumentObjectUrl,
   type EmployeeDocumentAttachmentResponse,
 } from '../../employeeDocumentAttachment';
+import { DocumentTable } from '../components/DocumentTable';
+import { EmptySection } from '../components/SectionStates';
+import { UploadModal } from '../components/UploadModal';
+import type { DocumentRow, TenantDocumentTypeOption } from '../types';
 
 interface DocumentsTabProps {
   employeeId: string;
@@ -73,11 +75,11 @@ export function DocumentsTab({
   const [uploadOpen, setUploadOpen] = useState(false);
   const [preview, setPreview] = useState<DocumentRow | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useFeedbackState<string | null>(null, 'error');
   const [previewLoading, setPreviewLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useFeedbackState<string | null>(null, 'error');
+  const [successMessage, setSuccessMessage] = useFeedbackState<string | null>(null, 'success');
 
   useEffect(() => {
     setRows(initial);
@@ -123,7 +125,9 @@ export function DocumentsTab({
       });
       const st = res.resolveEmployeeDocument.status.toUpperCase();
       setRows((r) =>
-        r.map((x) => (x.id === id ? { ...x, status: st === 'APPROVED' ? 'APPROVED' : 'PENDING' } : x))
+        r.map((x) =>
+          x.id === id ? { ...x, status: st === 'APPROVED' ? 'APPROVED' : 'PENDING' } : x
+        )
       );
       setActionError(null);
       setSuccessMessage('Document approved.');
@@ -144,7 +148,9 @@ export function DocumentsTab({
       });
       const st = res.resolveEmployeeDocument.status.toUpperCase();
       setRows((r) =>
-        r.map((x) => (x.id === id ? { ...x, status: st === 'REJECTED' ? 'REJECTED' : 'PENDING' } : x))
+        r.map((x) =>
+          x.id === id ? { ...x, status: st === 'REJECTED' ? 'REJECTED' : 'PENDING' } : x
+        )
       );
       setActionError(null);
       setSuccessMessage('Document rejected.');
@@ -183,8 +189,16 @@ export function DocumentsTab({
   if (rows.length === 0) {
     return (
       <>
-        {actionError ? <p role="alert" className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p> : null}
-        {successMessage ? <p role="status" className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{successMessage}</p> : null}
+        {actionError ? (
+          <FeedbackToast variant={'error'} messageKey={actionError}>
+            {actionError}
+          </FeedbackToast>
+        ) : null}
+        {successMessage ? (
+          <FeedbackToast variant={'success'} messageKey={successMessage}>
+            {successMessage}
+          </FeedbackToast>
+        ) : null}
         <div data-tour-anchor="employee-profile-document-upload">
           <EmptySection
             title="No Documents Yet"
@@ -205,8 +219,16 @@ export function DocumentsTab({
 
   return (
     <div className="space-y-4">
-      {actionError ? <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p> : null}
-      {successMessage ? <p role="status" className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{successMessage}</p> : null}
+      {actionError ? (
+        <FeedbackToast variant={'error'} messageKey={actionError}>
+          {actionError}
+        </FeedbackToast>
+      ) : null}
+      {successMessage ? (
+        <FeedbackToast variant={'success'} messageKey={successMessage}>
+          {successMessage}
+        </FeedbackToast>
+      ) : null}
       <div className="flex flex-wrap justify-end gap-2">
         <Button
           type="button"
@@ -247,21 +269,43 @@ export function DocumentsTab({
               {preview.mimeType} · Uploaded {new Date(preview.uploadedAt).toLocaleString('en-IN')}
             </p>
             <div className="flex min-h-[320px] items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40">
-              {previewLoading ? <p className="text-sm text-slate-500">Creating secure preview...</p> : null}
-              {previewError ? <p role="alert" className="px-4 text-center text-sm text-red-600">{previewError}</p> : null}
+              {previewLoading ? (
+                <p className="text-sm text-slate-500">Creating secure preview...</p>
+              ) : null}
+              {previewError ? (
+                <FeedbackToast variant={'error'} messageKey={previewError}>
+                  {previewError}
+                </FeedbackToast>
+              ) : null}
               {previewUrl && preview.mimeType.startsWith('image/') ? (
-                <img src={previewUrl} alt={preview.name} className="max-h-[65vh] max-w-full object-contain" />
+                <img
+                  src={previewUrl}
+                  alt={preview.name}
+                  className="max-h-[65vh] max-w-full object-contain"
+                />
               ) : null}
               {previewUrl && preview.mimeType === 'application/pdf' ? (
                 <iframe src={previewUrl} title={preview.name} className="h-[65vh] w-full" />
               ) : null}
-              {previewUrl && preview.mimeType !== 'application/pdf' && !preview.mimeType.startsWith('image/') ? (
-                <p className="px-4 text-center text-sm text-slate-500">Preview is unavailable for this file type. Use Download.</p>
+              {previewUrl &&
+              preview.mimeType !== 'application/pdf' &&
+              !preview.mimeType.startsWith('image/') ? (
+                <p className="px-4 text-center text-sm text-slate-500">
+                  Preview is unavailable for this file type. Use Download.
+                </p>
               ) : null}
             </div>
             {previewUrl ? (
-              <a href={previewUrl} download={preview.name} target="_blank" rel="noreferrer" className="block">
-                <Button type="button" variant="secondary" fullWidth>Download</Button>
+              <a
+                href={previewUrl}
+                download={preview.name}
+                target="_blank"
+                rel="noreferrer"
+                className="block"
+              >
+                <Button type="button" variant="secondary" fullWidth>
+                  Download
+                </Button>
               </a>
             ) : null}
           </div>

@@ -10,6 +10,7 @@ import {
 import type { ReactNode } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import FormField from '../../../components/common/FormField';
 import Input from '../../../components/common/Input';
 
@@ -227,9 +228,9 @@ export const DocumentRow = ({
       </div>
     </div>
     {error ? (
-      <p role="alert" className="mt-1 text-sm font-medium text-status-danger">
+      <FeedbackToast variant={'error'} messageKey={error}>
         {error}
-      </p>
+      </FeedbackToast>
     ) : null}
   </div>
 );

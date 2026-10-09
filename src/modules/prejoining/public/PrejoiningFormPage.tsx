@@ -1,4 +1,5 @@
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 
 import {
   CandidateField,
@@ -121,12 +122,9 @@ const PrejoiningFormPage = ({ client }: { client?: PrejoiningPublicClient }) => 
           ) : null}
         </fieldset>
         {controller.message ? (
-          <p
-            role="status"
-            className="rounded-lg border border-line bg-surface px-3 py-2 text-sm text-content-secondary"
-          >
+          <FeedbackToast variant={'info'} messageKey={controller.message}>
             {controller.message}
-          </p>
+          </FeedbackToast>
         ) : null}
         <div className="flex flex-col-reverse gap-2 border-t border-line pt-4 sm:flex-row sm:justify-end">
           <Button

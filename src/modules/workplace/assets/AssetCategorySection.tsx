@@ -1,5 +1,6 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Table from '../../../components/common/Table';
 
 import AssetPager from './AssetPager';
@@ -72,7 +73,9 @@ export default function AssetCategorySection(props: AssetCategorySectionProps) {
         onSearch={(search) => props.onFilterChange({ ...props.filter, page: 1, search })}
       />
       {props.error ? (
-        <p className="mb-3 text-sm text-red-600 dark:text-red-400">{props.error}</p>
+        <FeedbackToast variant={'error'} messageKey={props.error}>
+          {props.error}
+        </FeedbackToast>
       ) : null}
       <Table
         data={props.rows}

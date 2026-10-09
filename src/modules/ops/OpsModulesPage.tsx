@@ -1,12 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import Card from '@/components/common/Card';
-import Table from '@/components/common/Table';
-import PageHeader from '@/components/common/PageHeader';
-import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
-import { useGraphClient } from '@/hooks/useGraphClient';
+import Card from '@/components/common/Card';
+import Input from '@/components/common/Input';
+import PageHeader from '@/components/common/PageHeader';
+import Table from '@/components/common/Table';
 import { useDialogs } from '@/contexts/DialogContext';
+import { useGraphClient } from '@/hooks/useGraphClient';
 import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import FeedbackToast from '../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
+
 import {
   SUBSCRIPTION_OVERAGE_OPTIONS,
   SUBSCRIPTION_STATUS_OPTIONS,
@@ -31,8 +35,8 @@ const OpsModulesPage = () => {
   const [subs, setSubs] = useState<SubRow[]>([]);
   const [tenantFilter, setTenantFilter] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [toast, setToast] = useFeedbackState<string | null>(null, 'success');
   const [modBusy, setModBusy] = useState<string | null>(null);
 
   const [subOpen, setSubOpen] = useState(false);
@@ -64,7 +68,7 @@ const OpsModulesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [client, tenantFilter]);
+  }, [client, tenantFilter, setError]);
 
   useEffect(() => {
     void load();
@@ -211,15 +215,15 @@ const OpsModulesPage = () => {
       </div>
 
       {toast && (
-        <p className="text-sm text-emerald-700 dark:text-emerald-400" role="status">
+        <FeedbackToast variant={'success'} messageKey={toast}>
           {toast}
-        </p>
+        </FeedbackToast>
       )}
       {loading && <p className="text-sm text-slate-500">Loading...</p>}
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
 
       {subOpen && (

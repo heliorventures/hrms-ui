@@ -1,13 +1,17 @@
+import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
+import Input from '@/components/common/Input';
+import PageHeader from '@/components/common/PageHeader';
+import Table from '@/components/common/Table';
+import { useGraphClient } from '@/hooks/useGraphClient';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Card from '@/components/common/Card';
-import Table from '@/components/common/Table';
-import PageHeader from '@/components/common/PageHeader';
-import Input from '@/components/common/Input';
-import Button from '@/components/common/Button';
-import { useGraphClient } from '@/hooks/useGraphClient';
-import { OPS_FEATURE_FLAGS, OPS_TENANTS, OPS_UPSERT_FEATURE_FLAG } from './opsGraph';
+
+import FeedbackToast from '../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
+import { OPS_FEATURE_FLAGS, OPS_TENANTS, OPS_UPSERT_FEATURE_FLAG } from './opsGraph';
 
 type TenantOpt = { id: string; name: string };
 
@@ -30,8 +34,8 @@ const OpsFeatureFlagsPage = () => {
   const [isEnabled, setIsEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [toast, setToast] = useFeedbackState<string | null>(null, 'success');
 
   const loadTenants = useCallback(async () => {
     try {
@@ -42,7 +46,7 @@ const OpsFeatureFlagsPage = () => {
     } catch (e) {
       setError(graphQlUserMessage(e));
     }
-  }, [client]);
+  }, [client, setError]);
 
   const loadFlags = useCallback(async () => {
     if (!tenantId) {
@@ -62,7 +66,7 @@ const OpsFeatureFlagsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [client, tenantId]);
+  }, [client, tenantId, setError]);
 
   useEffect(() => {
     void loadTenants();
@@ -153,18 +157,21 @@ const OpsFeatureFlagsPage = () => {
       </div>
 
       {toast && (
-        <p className="text-sm text-emerald-700 dark:text-emerald-400" role="status">
+        <FeedbackToast variant={'success'} messageKey={toast}>
           {toast}
-        </p>
+        </FeedbackToast>
       )}
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
 
       <Card title="Add Or Update Flag">
-        <form onSubmit={onUpsert} className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <form
+          onSubmit={onUpsert}
+          className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
+        >
           <Input
             label="Feature Key"
             value={featureName}

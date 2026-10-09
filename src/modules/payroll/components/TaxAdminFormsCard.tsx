@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 
 interface TaxAdminFormsCardProps {
@@ -98,7 +99,9 @@ export const TaxVersionFormCard = ({
           </Button>
         </form>
         {configMessage && (
-          <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">{configMessage}</p>
+          <FeedbackToast variant={'info'} messageKey={configMessage}>
+            {configMessage}
+          </FeedbackToast>
         )}
       </div>
     </Card>
@@ -181,7 +184,9 @@ export const TaxSlabFormCard = ({
           </Button>
         </form>
         {slabMessage && (
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{slabMessage}</p>
+          <FeedbackToast variant={'info'} messageKey={slabMessage}>
+            {slabMessage}
+          </FeedbackToast>
         )}
       </div>
     </Card>

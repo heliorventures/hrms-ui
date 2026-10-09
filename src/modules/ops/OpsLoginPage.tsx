@@ -1,6 +1,3 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-
 import AppLogo from '@/components/brand/AppLogo';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
@@ -8,6 +5,8 @@ import PageNotice from '@/components/common/PageNotice';
 import { APP_BRAND } from '@/constants/brand';
 import { useAuth } from '@/contexts/AuthContext';
 import { focusFirstInvalidField } from '@/modules/auth/authFocus';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const CAPTCHA_LENGTH = 5;
 const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -182,7 +181,13 @@ const OpsLoginPage = () => {
             </div>
 
             {opsError ? (
-              <PageNotice key={opsError} variant="error" title="Unable to sign in" focusOnMount>
+              <PageNotice
+                messageKey={opsError}
+                key={opsError}
+                variant="error"
+                title="Unable to sign in"
+                focusOnMount
+              >
                 {opsError}
               </PageNotice>
             ) : null}

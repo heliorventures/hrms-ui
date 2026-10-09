@@ -1,4 +1,5 @@
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageInformation from '../../../components/common/PageInformation';
 import Table from '../../../components/common/Table';
 import type { ExpenseCategoryRow, ExpensePolicyRow } from '../expenseCategoryTypes';
@@ -79,7 +80,11 @@ const ExpensePoliciesPanel = ({
             Loading Organization Directory. Names In The Grid Update When Ready.
           </p>
         ) : null}
-        {policyError ? <p className="mb-3 text-sm text-red-600 dark:text-red-400">{policyError}</p> : null}
+        {policyError ? (
+          <FeedbackToast variant={'error'} messageKey={policyError}>
+            {policyError}
+          </FeedbackToast>
+        ) : null}
         <Table
           data={rows}
           keyExtractor={(policy) => policy.id}

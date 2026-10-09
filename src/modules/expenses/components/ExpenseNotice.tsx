@@ -9,7 +9,7 @@ interface ExpenseNoticeProps {
 const ExpenseNotice = ({ notice, onDismiss }: ExpenseNoticeProps) => {
   if (!notice) return null;
   return (
-    <PageNotice variant={notice.variant}>
+    <PageNotice messageKey={notice.message} variant={notice.variant}>
       <div className="flex items-start gap-3">
         <p className="min-w-0 flex-1 leading-relaxed">{notice.message}</p>
         <button

@@ -1,0 +1,263 @@
+# Generated from the Payroll service SDL by generate-loans-client.mjs.
+input ReverseLoanPostingInput {
+  loanId: String!
+  postingId: String!
+  reason: String!
+  reconciliationReference: String!
+  reviewFingerprint: String
+  meta: LoanCommandMetaInput!
+}
+
+input LoanCommandMetaInput {
+  idempotencyKey: String!
+  expectedVersion: Int!
+}
+
+input SetLoanPeriodOverrideInput {
+  loanId: String!
+  periodStart: String!
+  amount: String
+  pauseInterest: Boolean!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+input SetLoanDeductionInput {
+  loanId: String!
+  effectiveFrom: String!
+  firstDueDate: String!
+  amount: String!
+  recovery: LoanRecoveryMode!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+enum LoanRecoveryMode {
+  PAYROLL
+  EXTERNAL
+  MIXED
+}
+
+input RecordLoanPaymentInput {
+  loanId: String!
+  amount: String!
+  valueDate: String!
+  method: String!
+  externalReference: String!
+  evidenceReference: String!
+  meta: LoanCommandMetaInput!
+}
+
+input WithdrawLoanRequestInput {
+  requestId: String!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+input DecideLoanRequestInput {
+  requestId: String!
+  stepId: String!
+  decision: LoanRequestDecision!
+  reason: String!
+  terms: JSON
+  effectiveFrom: String
+  firstDueDate: String
+  agreementReference: String
+  meta: LoanCommandMetaInput!
+}
+
+"""A scalar that can represent any JSON value."""
+scalar JSON
+
+enum LoanRequestDecision {
+  APPROVE
+  RETURN
+  REJECT
+}
+
+input PublishLoanPolicyInput {
+  key: String!
+  currency: String!
+  minorUnits: Int!
+  effectiveFrom: String!
+  effectiveTo: String
+  rules: JSON!
+  meta: LoanCommandMetaInput!
+}
+
+input SubmitLoanRequestInput {
+  requestId: String
+  employeeId: String
+  policyId: String!
+  amount: String!
+  purpose: String!
+  notes: String
+  preferences: JSON!
+  meta: LoanCommandMetaInput!
+}
+
+type LoanCommandResult {
+  recordId: String!
+  loanId: String
+  employeeId: String
+  version: Int!
+  state: String!
+  postingIds: [String!]!
+  unappliedCredit: String!
+}
+
+input RetireLoanPolicyInput {
+  policyId: String!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+type LoanPostingConnection {
+  nodes: [LoanPosting!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanPageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+type LoanPosting {
+  id: String!
+  kind: String!
+  sourceKind: String!
+  sourceId: String!
+  valueDate: String!
+  amount: String!
+  principalDelta: String!
+  interestDelta: String!
+  reversalOf: String
+}
+
+type LoanAccount {
+  id: String!
+  employeeId: String!
+  requestId: String!
+  loanNumber: String!
+  approvedPrincipal: String!
+  currency: String!
+  minorUnits: Int!
+  state: String!
+  fundingState: String!
+  version: Int!
+  principal: String!
+  interest: String!
+  terms: JSON!
+}
+
+type LoanRequestConnection {
+  nodes: [LoanRequest!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanRequest {
+  id: String!
+  employeeId: String!
+  requestedAmount: String!
+  currency: String!
+  purpose: String!
+  employeeNotes: String
+  state: String!
+  version: Int!
+  workflowInstanceId: String
+  currentStepId: String
+}
+
+type LoanAccountConnection {
+  nodes: [LoanAccount!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanScheduleConnection {
+  nodes: [LoanSchedule!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanSchedule {
+  id: String!
+  version: Int!
+  effectiveFrom: String!
+  monthlyAmount: String!
+  recoveryMode: String!
+  isProjection: Boolean!
+}
+
+type LoanPaymentConnection {
+  nodes: [LoanPayment!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanPayment {
+  id: String!
+  kind: String!
+  amount: String!
+  valueDate: String!
+  method: String!
+  externalReference: String!
+  unappliedCredit: String!
+}
+
+type LoanCorrectionPreview {
+  loanId: String!
+  postingId: String!
+  accountVersion: Int!
+  occurrenceDate: String!
+  postingDate: String!
+  currency: String!
+  currentPrincipal: String!
+  currentInterest: String!
+  correctedPrincipal: String!
+  correctedInterest: String!
+  preservedPayrollPostings: [String!]!
+  reviewFingerprint: String!
+}
+
+type LoanPolicyConnection {
+  nodes: [LoanPolicy!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanPolicy {
+  id: String!
+  key: String!
+  version: Int!
+  status: String!
+  currency: String!
+  minorUnits: Int!
+  effectiveFrom: String!
+  effectiveTo: String
+  rules: JSON!
+}
+
+extend type Query {
+  loanPolicyVersions(after: String, first: Int! = 25): LoanPolicyConnection!
+  previewLoanReversal(loanId: String!, postingId: String!): LoanCorrectionPreview!
+  loanPayments(loanId: String!, after: String, first: Int! = 25): LoanPaymentConnection!
+  loanSchedules(loanId: String!, after: String, first: Int! = 25): LoanScheduleConnection!
+  myLoans(after: String, first: Int! = 25): LoanAccountConnection!
+  loanAccounts(employeeId: String, after: String, first: Int! = 25): LoanAccountConnection!
+  myLoanRequests(after: String, first: Int! = 25): LoanRequestConnection!
+  loanRequestQueue(employeeId: String, after: String, first: Int! = 25): LoanRequestConnection!
+  loanAccount(id: String!): LoanAccount!
+  loanPolicies(after: String, first: Int! = 25): LoanPolicyConnection!
+  loanLedger(loanId: String!, after: String, first: Int! = 25): LoanPostingConnection!
+}
+
+extend type Mutation {
+  retireLoanPolicy(input: RetireLoanPolicyInput!): LoanCommandResult!
+  saveLoanRequest(input: SubmitLoanRequestInput!): LoanCommandResult!
+  publishLoanPolicy(input: PublishLoanPolicyInput!): LoanCommandResult!
+  submitLoanRequest(input: SubmitLoanRequestInput!): LoanCommandResult!
+  decideLoanRequest(input: DecideLoanRequestInput!): LoanCommandResult!
+  withdrawLoanRequest(input: WithdrawLoanRequestInput!): LoanCommandResult!
+  recordLoanDisbursement(input: RecordLoanPaymentInput!): LoanCommandResult!
+  recordLoanReceipt(input: RecordLoanPaymentInput!): LoanCommandResult!
+  setLoanDeduction(input: SetLoanDeductionInput!): LoanCommandResult!
+  setLoanPeriodOverride(input: SetLoanPeriodOverrideInput!): LoanCommandResult!
+  reverseLoanPosting(input: ReverseLoanPostingInput!): LoanCommandResult!
+}

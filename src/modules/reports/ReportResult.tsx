@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { useRetainedQuery } from '../../hooks/useRetainedQuery';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -60,7 +62,7 @@ const ReportTable = ({ data }: { data: ReportRows }) => (
 const useReportExport = (filter: ReportFilter) => {
   const client = useGraphClient('client');
   const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportError, setExportError] = useFeedbackState<string | null>(null, 'error');
   const [exported, setExported] = useState<number | null>(null);
   const alive = useRef(true);
   const exportRequest = useRef<object | null>(null);
@@ -77,7 +79,7 @@ const useReportExport = (filter: ReportFilter) => {
     setExporting(false);
     setExportError(null);
     setExported(null);
-  }, [client, filter]);
+  }, [client, filter, setExportError]);
   const exportCsv = async () => {
     if (exportRequest.current) return;
     const request = {};
@@ -189,18 +191,24 @@ const ReportResult = ({ filter }: { filter: ReportFilter }) => {
         </div>
       </div>
       {(query.error || exportError) && (
-        <div role="alert" className="flex items-center gap-3 text-sm text-status-danger">
+        <FeedbackToast
+          variant={'error'}
+          action={
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  void retry();
+                }}
+              >
+                Retry
+              </Button>
+            </>
+          }
+        >
           {exportError || query.error}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              void retry();
-            }}
-          >
-            Retry
-          </Button>
-        </div>
+        </FeedbackToast>
       )}
       {busy && (
         <p role="status" className="text-sm text-content-secondary">
@@ -208,9 +216,9 @@ const ReportResult = ({ filter }: { filter: ReportFilter }) => {
         </p>
       )}
       {exported !== null && (
-        <p role="status" className="text-sm text-content-secondary">
+        <FeedbackToast variant={'info'}>
           CSV prepared with all {exported.toLocaleString()} matching records.
-        </p>
+        </FeedbackToast>
       )}
       {data && (
         <>

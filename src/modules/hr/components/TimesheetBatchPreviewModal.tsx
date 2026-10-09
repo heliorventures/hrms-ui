@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { TimesheetBatchPreviewDocument as TIMESHEET_BATCH_PREVIEW_DOCUMENT } from '../../../api/graphql/graphql';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Modal from '../../../components/common/Modal';
 import Table from '../../../components/common/Table';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { parseIsoDate } from '../../../utils/calendarRange';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -52,7 +54,7 @@ const TimesheetBatchPreviewModal = ({
   const client = useGraphClient('client');
   const [rows, setRows] = useState<PreviewEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
   const weekRange = useMemo(
     () => (batch ? timesheetWeekRangeIso(parseIsoDate(batch.weekStartDate)) : null),
@@ -82,7 +84,7 @@ const TimesheetBatchPreviewModal = ({
     return () => {
       cancelled = true;
     };
-  }, [batch, client, weekRange]);
+  }, [batch, client, weekRange, setError]);
 
   const totalHours = rows.reduce((sum, row) => sum + Number(row.hoursWorked || 0), 0);
   const pending = batch?.status?.trim().toUpperCase() === 'PENDING';
@@ -103,7 +105,9 @@ const TimesheetBatchPreviewModal = ({
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading Entries...</p>
         ) : error ? (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
         ) : rows.length ? (
           <Table
             data={rows}

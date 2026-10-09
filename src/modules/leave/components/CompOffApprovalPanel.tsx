@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 import { createPermissionService } from '../../../auth/permissionService';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Modal from '../../../components/common/Modal';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
@@ -72,9 +73,9 @@ const RejectCredit = ({
           />
         </label>
         {error && (
-          <p role="alert" className="text-sm text-status-danger">
+          <FeedbackToast variant={'error'} messageKey={error}>
             {error}
-          </p>
+          </FeedbackToast>
         )}
       </form>
     </Modal>
@@ -154,12 +155,19 @@ const ApprovalQueue = () => {
           </p>
         )}
         {board.error && !reject && (
-          <div role="alert" className="flex items-center gap-3 text-sm text-status-danger">
+          <FeedbackToast
+            variant={'error'}
+            messageKey={board.error}
+            action={
+              <>
+                <Button size="sm" variant="outline" onClick={board.reload}>
+                  Retry
+                </Button>
+              </>
+            }
+          >
             {board.error}
-            <Button size="sm" variant="outline" onClick={board.reload}>
-              Retry
-            </Button>
-          </div>
+          </FeedbackToast>
         )}
         {board.data && (
           <>

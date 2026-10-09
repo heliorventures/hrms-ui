@@ -4,7 +4,9 @@ import { Link } from 'react-router-dom';
 
 import { PayrollLwpRulesDocument } from '../../../api/graphql/graphql';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type { PolicyVersion } from '../contributionTypes';
 
@@ -12,7 +14,7 @@ const PayrollLwpRules = ({ client }: { client: GraphQLClient }) => {
   const [versions, setVersions] = useState<PolicyVersion[]>([]);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [busy, setBusy] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   useEffect(() => {
     let active = true;
     void client
@@ -29,7 +31,7 @@ const PayrollLwpRules = ({ client }: { client: GraphQLClient }) => {
     return () => {
       active = false;
     };
-  }, [client]);
+  }, [client, setError]);
   const date = `${month}-01`;
   const candidates = [...versions]
     .filter((row) => row.policy.effective_from <= date)
@@ -54,7 +56,11 @@ const PayrollLwpRules = ({ client }: { client: GraphQLClient }) => {
           onChange={(event) => setMonth(event.target.value)}
         />
         {busy && <p role="status">Loading company rules...</p>}
-        {error && <p role="alert">{error}</p>}
+        {error && (
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        )}
         {!busy &&
           !error &&
           (policy ? (

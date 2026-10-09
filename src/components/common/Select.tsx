@@ -2,6 +2,7 @@ import { forwardRef, useId } from 'react';
 import type { SelectHTMLAttributes } from 'react';
 
 import { requireAccessibleName } from './accessibleName';
+import FeedbackToast from './FeedbackToast';
 import FormField, { mergeDescribedBy } from './FormField';
 
 export interface SelectOption {
@@ -108,9 +109,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </p>
           ) : null}
           {error ? (
-            <p id={errorId} role="alert" className="text-sm font-medium text-status-danger">
+            <FeedbackToast variant={'error'} id={errorId} messageKey={error}>
               {error}
-            </p>
+            </FeedbackToast>
           ) : null}
         </div>
       );

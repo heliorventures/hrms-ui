@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 
 import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
 import Input from '../../../../components/common/Input';
 import PageNotice from '../../../../components/common/PageNotice';
 import { useEmployeeEsic } from '../hooks/useEmployeeEsic';
@@ -53,13 +54,9 @@ const EmployeeEsicForm = ({ esic }: { esic: ReturnType<typeof useEmployeeEsic> }
 
 const EmployeeEsicNotices = ({ esic }: { esic: ReturnType<typeof useEmployeeEsic> }) => (
   <>
-    {esic.success ? (
-      <p role="status" className="text-sm text-status-success">
-        ESIC number saved.
-      </p>
-    ) : null}
+    {esic.success ? <FeedbackToast variant={'success'}>ESIC number saved.</FeedbackToast> : null}
     {esic.error ? (
-      <PageNotice variant="error" title="ESIC number could not be saved">
+      <PageNotice messageKey={esic.error} variant="error" title="ESIC number could not be saved">
         {esic.error}
       </PageNotice>
     ) : null}
@@ -84,8 +81,8 @@ const EmployeeEsicCard = ({
     <InfoCard title="ESIC number" subtitle="Employees’ State Insurance number">
       {loading ? <p role="status">Loading ESIC number…</p> : null}
       {readError ? (
-        <PageNotice variant="error" title="ESIC number could not be loaded">
-          <p>{readError}</p>
+        <PageNotice messageKey={readError} variant="error" title="ESIC number could not be loaded">
+          <>{readError}</>
           <Button size="sm" variant="quiet" onClick={() => void esic.query.refresh()}>
             Retry
           </Button>

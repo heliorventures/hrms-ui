@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Modal from '../../../components/common/Modal';
 import {
   ApprovedCompOffLeavesDocument,
@@ -56,9 +57,9 @@ const CancelConfirmation = ({
       The leave will be cancelled. Credits retain their original expiry date when restored.
     </p>
     {error && (
-      <p role="alert" className="mt-3 text-sm text-status-danger">
+      <FeedbackToast variant={'error'} messageKey={error}>
         {error}
-      </p>
+      </FeedbackToast>
     )}
   </Modal>
 );
@@ -127,12 +128,19 @@ const ApprovedCompOffLeaveSection = () => {
         </p>
       )}
       {board.error && !selected && (
-        <div role="alert" className="flex items-center gap-3 text-sm text-status-danger">
+        <FeedbackToast
+          variant={'error'}
+          messageKey={board.error}
+          action={
+            <>
+              <Button size="sm" variant="outline" onClick={board.reload}>
+                Retry
+              </Button>
+            </>
+          }
+        >
           {board.error}
-          <Button size="sm" variant="outline" onClick={board.reload}>
-            Retry
-          </Button>
-        </div>
+        </FeedbackToast>
       )}
       {board.data && (
         <>

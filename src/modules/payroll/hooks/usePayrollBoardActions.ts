@@ -5,6 +5,7 @@ import {
   CreatePayrollArrearDocument,
   CreatePayrollCycleDocument,
 } from '../../../api/graphql/graphql';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { defaultCycleName, formatPayrollPeriod } from '../payrollFormatters';
 import type {
@@ -69,10 +70,10 @@ export function usePayrollBoardActions({
   const [cycleForm, setCycleForm] = useState<PayrollCycleFormState>(DEFAULT_CYCLE_FORM);
   const [arrearForm, setArrearForm] = useState<PayrollArrearFormState>(DEFAULT_ARREAR_FORM);
   const [createBusy, setCreateBusy] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
+  const [createError, setCreateError] = useFeedbackState<string | null>(null, 'error');
   const [createOk, setCreateOk] = useState<string | null>(null);
   const [arrearBusy, setArrearBusy] = useState(false);
-  const [arrearError, setArrearError] = useState<string | null>(null);
+  const [arrearError, setArrearError] = useFeedbackState<string | null>(null, 'error');
   const [arrearOk, setArrearOk] = useState<string | null>(null);
 
   useEffect(() => {
@@ -82,7 +83,7 @@ export function usePayrollBoardActions({
     setArrearBusy(false);
     setArrearError(null);
     setArrearOk(null);
-  }, [enabled, ownerKey]);
+  }, [enabled, ownerKey, setCreateError, setArrearError]);
 
   const setCycleField = useCallback(
     (field: keyof PayrollCycleFormState, value: string | number) => {
@@ -143,7 +144,7 @@ export function usePayrollBoardActions({
     } finally {
       setCreateBusy(false);
     }
-  }, [client, cycleForm, enabled, reload]);
+  }, [client, cycleForm, enabled, reload, setCreateError]);
 
   const createArrear = useCallback(async () => {
     if (!enabled) return;
@@ -181,7 +182,7 @@ export function usePayrollBoardActions({
     } finally {
       setArrearBusy(false);
     }
-  }, [arrearForm, client, enabled, reload]);
+  }, [arrearForm, client, enabled, reload, setArrearError]);
 
   return {
     ...drafts,

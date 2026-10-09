@@ -26,31 +26,33 @@ const EmployeeDirectoryView = ({ ownerKey }: { ownerKey: string }) => {
       <PageHeader
         title="Employee Directory"
         description="Search work identities, choose a card to see work details, or open the employee profile. Use arrow keys to move between cards and Enter or Space to select."
-        actions={
-          <>
-            <Input
-              aria-label="Search employees"
-              data-tour-anchor="organization-employees-search"
-              type="search"
-              placeholder="Name, employee code, role or department…"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="w-full sm:w-72"
-            />
-            <span className="text-xs tabular-nums text-content-muted">{rows.length} employees</span>
-            <Button
-              size="sm"
-              variant="quiet"
-              busy={query.phase === 'refreshing'}
-              onClick={() => void query.refresh()}
-            >
-              Refresh
-            </Button>
-          </>
-        }
       />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="w-full sm:max-w-md sm:flex-1">
+          <Input
+            aria-label="Search employees"
+            data-tour-anchor="organization-employees-search"
+            type="search"
+            placeholder="Name, employee code, role or department…"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            fullWidth
+          />
+        </div>
+        <span className="text-xs tabular-nums text-content-muted">{rows.length} employees</span>
+        <Button
+          size="sm"
+          variant="quiet"
+          busy={query.phase === 'refreshing'}
+          onClick={() => void query.refresh()}
+          className="ml-auto"
+        >
+          Refresh
+        </Button>
+      </div>
       {query.error && (
         <PageNotice
+          messageKey={query.error}
           variant="error"
           title={query.data ? 'Directory refresh failed' : 'Employee directory could not be loaded'}
         >
@@ -58,7 +60,11 @@ const EmployeeDirectoryView = ({ ownerKey }: { ownerKey: string }) => {
         </PageNotice>
       )}
       {query.data?.warning && (
-        <PageNotice variant="warning" title="Directory is incomplete">
+        <PageNotice
+          variant="warning"
+          title="Directory is incomplete"
+          messageKey={query.data.warning}
+        >
           {query.data.warning}
         </PageNotice>
       )}

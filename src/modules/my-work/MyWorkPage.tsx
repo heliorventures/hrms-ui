@@ -4,6 +4,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -94,9 +95,9 @@ const MyWorkPage = () => {
         }
       />
       {errors.length > 0 && (
-        <p role="alert" className="text-status-danger">
+        <FeedbackToast variant={'error'}>
           Some tasks could not load. {errors.join(' ')}
-        </p>
+        </FeedbackToast>
       )}
       <MyWorkList
         visible={visible}

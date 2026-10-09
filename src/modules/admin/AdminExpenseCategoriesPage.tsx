@@ -1,5 +1,6 @@
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { usePageTabs } from '../../hooks/usePageTabs';
@@ -41,9 +42,11 @@ const AdminExpenseCategoriesPage = () => {
       />
 
       {model.error ? (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{model.error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={model.error}>
+            {model.error}
+          </FeedbackToast>
+        </>
       ) : null}
 
       <PageTabPanel id="categories" activeTab={tab}>

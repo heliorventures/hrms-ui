@@ -1,7 +1,10 @@
 import { FormEvent, useState } from 'react';
-import Modal from '../../../components/common/Modal';
+
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import Modal from '../../../components/common/Modal';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 export interface RejectReasonModalProps {
@@ -22,7 +25,7 @@ const RejectReasonModal = ({
 }: RejectReasonModalProps) => {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useFeedbackState<string | null>(null, 'error');
 
   const handleClose = () => {
     setReason('');
@@ -52,7 +55,11 @@ const RejectReasonModal = ({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={heading}>
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
-        {err && <p className="text-sm text-red-600 dark:text-red-400">{err}</p>}
+        {err && (
+          <FeedbackToast variant={'error'} messageKey={err}>
+            {err}
+          </FeedbackToast>
+        )}
         <Input
           label={reasonRequired ? 'Reason' : 'Reason (optional)'}
           value={reason}

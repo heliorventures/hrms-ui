@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { CompanyDocumentAttachmentDocument } from '../../api/graphql/graphql';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { privateFileObjectUrl } from '../../utils/privateFileAttachment';
@@ -14,7 +15,7 @@ export interface CompanyDocumentFile {
 export function useCompanyDocumentFile(documentId: string) {
   const client = useGraphClient('client');
   const [file, setFile] = useState<CompanyDocumentFile | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
@@ -39,6 +40,6 @@ export function useCompanyDocumentFile(documentId: string) {
       active = false;
       if (url) URL.revokeObjectURL(url);
     };
-  }, [client, documentId, attempt]);
+  }, [client, documentId, attempt, setError]);
   return { file, error, retry: () => setAttempt((value) => value + 1) };
 }

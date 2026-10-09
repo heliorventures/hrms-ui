@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { PERMISSIONS } from '../../auth/permissions';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
-import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
@@ -54,9 +54,11 @@ const PayrollPayPage = () => {
       {pay.showMigrationHint && <PayrollMigrationHint tenantId={currentTenant.id} />}
 
       {activeTab === 'incometax' && pay.errorShell && !pay.showMigrationHint && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{pay.errorShell}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={pay.errorShell}>
+            {pay.errorShell}
+          </FeedbackToast>
+        </>
       )}
       <PayrollPayTabs activeTab={activeTab} canReadTax={canReadTax} onChange={setActiveTab} />
 

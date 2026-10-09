@@ -16,11 +16,14 @@ import { ClientOpsUpsertAttendancePunchPolicyDocument } from '../../api/graphql/
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import { useAuth } from '../../contexts/AuthContext';
 import { captureGuidanceFormSave } from '../../guidance/tourNavigation';
+import { useActionFeedback } from '../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -54,6 +57,8 @@ const isValidIpv4CidrToken = (token: string) => {
 };
 
 const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const owner = useMemo(() => ({ client, identity }), [client, identity]);
   const mounted = useRef(false);
@@ -82,9 +87,9 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
     }[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useFeedbackState<string | null>(null, 'error');
 
   const [isEnforced, setIsEnforced] = useState(false);
   const [siteLatitude, setSiteLatitude] = useState('');
@@ -132,7 +137,7 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
       mounted.current = false;
       generation.current += 1;
     };
-  }, [owner]);
+  }, [owner, setError, setFormError]);
 
   useEffect(() => {
     const request = generation.current;
@@ -147,7 +152,7 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
         if (ownsRequest(request)) setLoading(false);
       }
     })();
-  }, [applySettings, load, ownsRequest]);
+  }, [applySettings, load, ownsRequest, setError]);
 
   const reloadPolicy = useCallback(async () => {
     const request = generation.current;
@@ -209,6 +214,7 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
         },
       });
       if (!ownsRequest(request)) return;
+      notifyAction('saved');
       const r = await load();
       if (ownsRequest(request)) {
         applySettings(r);
@@ -227,9 +233,11 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
     <div className="space-y-4">
       <PageHeader title="Attendance punch policy" />
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
       {ownerIsCurrent && dayPolicy ? (
         <AttendanceDayPolicySettings
@@ -250,7 +258,11 @@ const AuthorizedAttendancePolicyPage = ({ identity }: { identity: string }) => {
             className="space-y-4"
             data-tour-anchor="attendance-policy.live-punch-rules"
           >
-            {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+            {formError && (
+              <FeedbackToast variant={'error'} messageKey={formError}>
+                {formError}
+              </FeedbackToast>
+            )}
             <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
               <input
                 type="checkbox"

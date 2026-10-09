@@ -11,10 +11,11 @@ import {
 } from '../../api/graphql/graphql';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
-import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -68,33 +69,33 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
   const client = useGraphClient('client');
   const [data, setData] = useState<TaxBoardData | null>(null);
   const [computations, setComputations] = useState<TaxComputationRow[] | null>(null);
-  const [compError, setCompError] = useState<string | null>(null);
+  const [compError, setCompError] = useFeedbackState<string | null>(null, 'error');
   const [compLoading, setCompLoading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [selectedConfigId, setSelectedConfigId] = useState('');
   const [formYear, setFormYear] = useState(new Date().getFullYear().toString());
   const [formRegime, setFormRegime] = useState('');
   const [formGross, setFormGross] = useState('');
   const [formDed, setFormDed] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
-  const [formMsg, setFormMsg] = useState<string | null>(null);
+  const [formMsg, setFormMsg] = useFeedbackState<string | null>(null, 'info');
   const [taxSections, setTaxSections] = useState<TaxSectionDefRow[]>([]);
-  const [taxSectionsError, setTaxSectionsError] = useState<string | null>(null);
+  const [taxSectionsError, setTaxSectionsError] = useFeedbackState<string | null>(null, 'error');
   const [secCode, setSecCode] = useState('80C');
   const [secLabel, setSecLabel] = useState('Section 80C (ELSS/PPF etc.)');
   const [secRegime, setSecRegime] = useState('ALL');
   const [secMax, setSecMax] = useState('');
   const [secBusy, setSecBusy] = useState(false);
-  const [secMsg, setSecMsg] = useState<string | null>(null);
+  const [secMsg, setSecMsg] = useFeedbackState<string | null>(null, 'info');
   const [cfgUpsertBusy, setCfgUpsertBusy] = useState(false);
-  const [cfgUpsertMsg, setCfgUpsertMsg] = useState<string | null>(null);
+  const [cfgUpsertMsg, setCfgUpsertMsg] = useFeedbackState<string | null>(null, 'info');
   const [cfgFy, setCfgFy] = useState(new Date().getFullYear().toString());
   const [cfgRegime, setCfgRegime] = useState('NEW_REGIME');
   const [cfgCountry, setCfgCountry] = useState(DEFAULT_COUNTRY_CODE);
   const [cfgActive, setCfgActive] = useState(true);
   const [slabBusy, setSlabBusy] = useState(false);
-  const [slabMsg, setSlabMsg] = useState<string | null>(null);
+  const [slabMsg, setSlabMsg] = useFeedbackState<string | null>(null, 'info');
   const [slabFrom, setSlabFrom] = useState('0');
   const [slabTo, setSlabTo] = useState('');
   const [slabRate, setSlabRate] = useState('5');
@@ -123,7 +124,7 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
     } finally {
       setLoading(false);
     }
-  }, [client]);
+  }, [client, setError]);
 
   const loadTaxSections = useCallback(async () => {
     try {
@@ -137,7 +138,7 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
       setTaxSectionsError(graphQlUserMessage(err));
       setTaxSections([]);
     }
-  }, [client]);
+  }, [client, setTaxSectionsError]);
 
   const loadComputations = useCallback(async () => {
     const response = await client.request<{ taxComputations: TaxComputationRow[] }>(
@@ -172,7 +173,7 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
     return () => {
       cancelled = true;
     };
-  }, [client]);
+  }, [client, setCompError]);
 
   const selectedConfig = useMemo(
     () => data?.taxConfigurations.find((config) => config.id === selectedConfigId) ?? null,
@@ -207,10 +208,10 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
           isActive: cfgActive,
         },
       });
-      setCfgUpsertMsg('Tax configuration version saved.');
+      setCfgUpsertMsg('Tax configuration version saved.', 'success');
       await loadTaxBoard();
     } catch (err) {
-      setCfgUpsertMsg(graphQlUserMessage(err));
+      setCfgUpsertMsg(graphQlUserMessage(err), 'error');
     } finally {
       setCfgUpsertBusy(false);
     }
@@ -220,11 +221,11 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
     event.preventDefault();
     if (!canManageTax) return;
     if (!selectedConfigId) {
-      setSlabMsg('Select a tax configuration first.');
+      setSlabMsg('Select a tax configuration first.', 'error');
       return;
     }
     if (!slabFrom.trim()) {
-      setSlabMsg('Income from is required.');
+      setSlabMsg('Income from is required.', 'error');
       return;
     }
     const fromError = validateOptionalMoney(slabFrom, 'Income from');
@@ -234,13 +235,13 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
       validateOptionalRate(slabSurcharge, 'Surcharge rate') ??
       validateOptionalRate(slabCess, 'Cess rate');
     if (fromError || toError || rateError) {
-      setSlabMsg(fromError ?? toError ?? rateError);
+      setSlabMsg(fromError ?? toError ?? rateError, 'error');
       return;
     }
     const incomeFrom = Number(slabFrom.trim());
     const incomeTo = slabTo.trim() ? Number(slabTo.trim()) : null;
     if (incomeTo != null && incomeTo <= incomeFrom) {
-      setSlabMsg('Income to must be greater than income from.');
+      setSlabMsg('Income to must be greater than income from.', 'error');
       return;
     }
     setSlabBusy(true);
@@ -256,10 +257,10 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
           cessRate: slabCess.trim() || null,
         },
       });
-      setSlabMsg('Slab saved.');
+      setSlabMsg('Slab saved.', 'success');
       await loadTaxBoard();
     } catch (err) {
-      setSlabMsg(graphQlUserMessage(err));
+      setSlabMsg(graphQlUserMessage(err), 'error');
     } finally {
       setSlabBusy(false);
     }
@@ -270,16 +271,16 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
     if (!canManageTax) return;
     const sectionCode = secCode.trim().toUpperCase();
     if (!SECTION_CODE_PATTERN.test(sectionCode)) {
-      setSecMsg('Section code must use A-Z, 0-9, underscore, or hyphen.');
+      setSecMsg('Section code must use A-Z, 0-9, underscore, or hyphen.', 'error');
       return;
     }
     if (!secLabel.trim()) {
-      setSecMsg('Section label is required.');
+      setSecMsg('Section label is required.', 'error');
       return;
     }
     const maxError = validateOptionalMoney(secMax, 'Max deduction amount');
     if (maxError) {
-      setSecMsg(maxError);
+      setSecMsg(maxError, 'error');
       return;
     }
     setSecBusy(true);
@@ -297,10 +298,10 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
           maxDeductionAmount: secMax.trim() || null,
         },
       });
-      setSecMsg('Section saved.');
+      setSecMsg('Section saved.', 'success');
       await loadTaxSections();
     } catch (err) {
-      setSecMsg(graphQlUserMessage(err));
+      setSecMsg(graphQlUserMessage(err), 'error');
     } finally {
       setSecBusy(false);
     }
@@ -310,19 +311,19 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
     event.preventDefault();
     if (!canSubmitTax) return;
     if (!selectedConfigId) {
-      setFormMsg('Select a tax configuration first.');
+      setFormMsg('Select a tax configuration first.', 'error');
       return;
     }
     const fiscalYear = parseYear(formYear);
     if (Number.isNaN(fiscalYear)) {
-      setFormMsg('Fiscal year must be between 2000 and 2100.');
+      setFormMsg('Fiscal year must be between 2000 and 2100.', 'error');
       return;
     }
     const amountError =
       validateOptionalMoney(formGross, 'Gross income') ??
       validateOptionalMoney(formDed, 'Total deductions');
     if (amountError) {
-      setFormMsg(amountError);
+      setFormMsg(amountError, 'error');
       return;
     }
     setFormMsg(null);
@@ -337,10 +338,10 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
           totalDeductions: formDed.trim() || null,
         },
       });
-      setFormMsg('Saved.');
+      setFormMsg('Saved.', 'success');
       await loadComputations();
     } catch (err) {
-      setFormMsg(graphQlUserMessage(err));
+      setFormMsg(graphQlUserMessage(err), 'error');
     } finally {
       setFormSubmitting(false);
     }
@@ -364,9 +365,11 @@ const PayrollTaxPageContent = ({ canManageTax, canSubmitTax }: PayrollTaxPageCon
       </div>
 
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
 
       {tab === 'slabs' || tab === 'declaration' ? (

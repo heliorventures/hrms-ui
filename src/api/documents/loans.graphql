@@ -1,0 +1,59 @@
+fragment LoanAccountFields on LoanAccount {
+  id employeeId requestId loanNumber approvedPrincipal currency minorUnits state fundingState version principal interest terms
+}
+fragment LoanRequestFields on LoanRequest {
+  id employeeId requestedAmount currency purpose employeeNotes state version workflowInstanceId currentStepId
+}
+fragment LoanCommandFields on LoanCommandResult {
+  recordId loanId employeeId version state postingIds unappliedCredit
+}
+query MyLoans($after: String, $first: Int!) {
+  myLoans(after: $after, first: $first) { nodes { ...LoanAccountFields } pageInfo { endCursor hasNextPage } }
+}
+query LoanAccounts($employeeId: String, $after: String, $first: Int!) {
+  loanAccounts(employeeId: $employeeId, after: $after, first: $first) { nodes { ...LoanAccountFields } pageInfo { endCursor hasNextPage } }
+}
+query MyLoanRequests($after: String, $first: Int!) {
+  myLoanRequests(after: $after, first: $first) { nodes { ...LoanRequestFields } pageInfo { endCursor hasNextPage } }
+}
+query LoanRequestQueue($employeeId: String, $after: String, $first: Int!) {
+  loanRequestQueue(employeeId: $employeeId, after: $after, first: $first) { nodes { ...LoanRequestFields } pageInfo { endCursor hasNextPage } }
+}
+query LoanAccount($id: String!) { loanAccount(id: $id) { ...LoanAccountFields } }
+query LoanPolicies($after: String, $first: Int!) {
+  loanPolicies(after: $after, first: $first) { nodes { id key version currency minorUnits effectiveFrom effectiveTo rules } pageInfo { endCursor hasNextPage } }
+}
+query LoanLedger($loanId: String!, $after: String, $first: Int!) {
+  loanLedger(loanId: $loanId, after: $after, first: $first) { nodes { id kind sourceKind sourceId valueDate amount principalDelta interestDelta reversalOf } pageInfo { endCursor hasNextPage } }
+}
+query LoanPayments($loanId: String!, $after: String, $first: Int!) {
+  loanPayments(loanId: $loanId, after: $after, first: $first) { nodes { id kind amount valueDate method externalReference unappliedCredit } pageInfo { endCursor hasNextPage } }
+}
+query LoanSchedules($loanId: String!, $after: String, $first: Int!) {
+  loanSchedules(loanId: $loanId, after: $after, first: $first) { nodes { id version effectiveFrom monthlyAmount recoveryMode isProjection } pageInfo { endCursor hasNextPage } }
+}
+mutation PublishLoanPolicy($input: PublishLoanPolicyInput!) { publishLoanPolicy(input: $input) { ...LoanCommandFields } }
+mutation SubmitLoanRequest($input: SubmitLoanRequestInput!) { submitLoanRequest(input: $input) { ...LoanCommandFields } }
+mutation DecideLoanRequest($input: DecideLoanRequestInput!) { decideLoanRequest(input: $input) { ...LoanCommandFields } }
+mutation WithdrawLoanRequest($input: WithdrawLoanRequestInput!) { withdrawLoanRequest(input: $input) { ...LoanCommandFields } }
+mutation RecordLoanDisbursement($input: RecordLoanPaymentInput!) { recordLoanDisbursement(input: $input) { ...LoanCommandFields } }
+mutation RecordLoanReceipt($input: RecordLoanPaymentInput!) { recordLoanReceipt(input: $input) { ...LoanCommandFields } }
+mutation SetLoanDeduction($input: SetLoanDeductionInput!) { setLoanDeduction(input: $input) { ...LoanCommandFields } }
+mutation SetLoanPeriodOverride($input: SetLoanPeriodOverrideInput!) { setLoanPeriodOverride(input: $input) { ...LoanCommandFields } }
+mutation ReverseLoanPosting($input: ReverseLoanPostingInput!) { reverseLoanPosting(input: $input) { ...LoanCommandFields } }
+query PreviewLoanReversal($loanId: String!, $postingId: String!) {
+  previewLoanReversal(loanId: $loanId, postingId: $postingId) {
+    loanId postingId accountVersion occurrenceDate postingDate currency
+    currentPrincipal currentInterest correctedPrincipal correctedInterest
+    preservedPayrollPostings reviewFingerprint
+  }
+}
+query LoanPolicyVersions($after: String, $first: Int) {
+  loanPolicyVersions(after: $after, first: $first) { nodes { id key version status currency minorUnits effectiveFrom effectiveTo rules } pageInfo { endCursor hasNextPage } }
+}
+mutation SaveLoanRequest($input: SubmitLoanRequestInput!) {
+  saveLoanRequest(input: $input) { recordId loanId employeeId version state postingIds unappliedCredit }
+}
+mutation RetireLoanPolicy($input: RetireLoanPolicyInput!) {
+  retireLoanPolicy(input: $input) { recordId loanId employeeId version state postingIds unappliedCredit }
+}

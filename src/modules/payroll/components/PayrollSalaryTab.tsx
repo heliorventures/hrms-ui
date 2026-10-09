@@ -1,4 +1,5 @@
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Table from '../../../components/common/Table';
 import { formatAmountString } from '../payrollFormatters';
 import type { EmployeeSalaryPreview } from '../payrollTypes';
@@ -85,7 +86,12 @@ const SalaryDetails = ({ preview }: { preview: NonNullable<EmployeeSalaryPreview
 const PayrollSalaryTab = ({ preview, loading, error }: PayrollSalaryTabProps) => {
   let content;
   if (loading) content = <p className="text-sm text-content-secondary">Loading your salary...</p>;
-  else if (error) content = <p className="text-sm text-danger">{error}</p>;
+  else if (error)
+    content = (
+      <FeedbackToast variant={'error'} messageKey={error}>
+        {error}
+      </FeedbackToast>
+    );
   else if (preview) content = <SalaryDetails preview={preview} />;
   else
     content = (

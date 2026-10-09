@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { authorizationStateKey } from '../../../../auth/permissionService';
 import Button from '../../../../components/common/Button';
 import Card from '../../../../components/common/Card';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
 import { useAuth } from '../../../../contexts/AuthContext';
 import {
   AssignEmployeeLocationDocument,
@@ -79,12 +80,12 @@ const LocationEditor = ({
           </>
         ) : null}
         {mutation.error || resource.error ? (
-          <p role="alert">{mutation.error ?? resource.error}</p>
+          <FeedbackToast variant={'error'}>{mutation.error ?? resource.error}</FeedbackToast>
         ) : null}
         <Button variant="outline" disabled={mutation.busy} onClick={resource.reload}>
           Reload Assignment
         </Button>
-        {saved ? <p role="status">Location assignment saved.</p> : null}
+        {saved ? <FeedbackToast variant={'info'}>Location assignment saved.</FeedbackToast> : null}
       </div>
     </Card>
   );

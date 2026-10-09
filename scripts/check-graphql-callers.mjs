@@ -8,7 +8,7 @@ import ts from 'typescript';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = resolve(root, 'src');
 const generatedDirectories = new Set(
-  ['graphql', 'attendance', 'leave-queue'].map((directory) => resolve(sourceRoot, 'api', directory))
+  ['graphql', 'attendance', 'leave-queue', 'loans'].map((directory) => resolve(sourceRoot, 'api', directory))
 );
 const violations = [];
 let inspectedFiles = 0;

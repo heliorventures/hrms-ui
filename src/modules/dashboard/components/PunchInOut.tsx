@@ -16,6 +16,8 @@ import PageInformation from '../../../components/common/PageInformation';
 import PageNotice from '../../../components/common/PageNotice';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import type { RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 import { formatAttendanceWindow } from '../../../utils/attendanceDay';
@@ -118,7 +120,8 @@ const usePunchMutation = ({
   summaryOwner,
 }: UsePunchMutationOptions) => {
   const [lastPunch, setLastPunch] = useState<AttendanceRow | null>(null);
-  const [mutationError, setMutationError] = useState<string | null>(null);
+  const notifyAction = useActionFeedback();
+  const [mutationError, setMutationError] = useFeedbackState<string | null>(null, 'error');
   const [submitting, setSubmitting] = useState(false);
   const [trackLocation, setTrackLocation] = useState(true);
   const submittingRef = useRef(false);
@@ -137,7 +140,7 @@ const usePunchMutation = ({
       generationRef.current += 1;
       submittingRef.current = false;
     };
-  }, [client, summaryOwner]);
+  }, [client, summaryOwner, setMutationError]);
 
   const handlePunch = async () => {
     if (submittingRef.current) return;
@@ -166,6 +169,7 @@ const usePunchMutation = ({
       );
       if (!ownsSubmission()) return;
       setLastPunch(displayAttendanceRow(result.punchToday, timezone));
+      notifyAction('saved', summary.openSegment ? 'Check-out recorded.' : 'Check-in recorded.');
       await refreshSummary();
     } catch (error) {
       if (ownsSubmission()) setMutationError(graphQlUserMessage(error));
@@ -293,7 +297,7 @@ const PunchActionArea = ({
 }: PunchActionAreaProps) => (
   <>
     {mutationError ? (
-      <PageNotice variant="error" title="Punch Could Not Be Recorded">
+      <PageNotice messageKey={mutationError} variant="error" title="Punch Could Not Be Recorded">
         {mutationError}
       </PageNotice>
     ) : null}

@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import { useCompanyPayslipComponents } from '../hooks/useCompanyPayslipComponents';
 
 const CompanyPayslipComponents = ({ client }: { client: GraphQLClient }) => {
@@ -13,9 +14,9 @@ const CompanyPayslipComponents = ({ client }: { client: GraphQLClient }) => {
       </p>
       {loading && <p role="status">Loading components...</p>}
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
         {rows.map((row) => (

@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ExpenseEvidenceDocument, TravelEvidenceDocument } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
@@ -30,10 +32,10 @@ const RequestAttachmentButton = ({ kind, requestId, hasFile }: Props) => {
   currentOwner.current = owner;
   const lock = useRef(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   useEffect(() => {
     setError(null);
-  }, [owner]);
+  }, [owner, setError]);
   useEffect(
     () => () => {
       currentOwner.current = '';
@@ -78,9 +80,9 @@ const RequestAttachmentButton = ({ kind, requestId, hasFile }: Props) => {
         {loading ? 'Downloading...' : 'Download file'}
       </Button>
       {error ? (
-        <p role="alert" className="text-xs text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       ) : null}
     </div>
   );

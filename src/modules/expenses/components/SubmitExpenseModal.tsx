@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Modal from '../../../components/common/Modal';
 import { useExpenseSubmission } from '../hooks/useExpenseSubmission';
 import type {
@@ -80,9 +81,9 @@ const SubmitExpenseModal = (props: SubmitExpenseModalProps) => {
         autoComplete="off"
       >
         {form.error ? (
-          <p role="alert" className="text-sm text-status-danger">
+          <FeedbackToast variant={'error'} messageKey={form.error}>
             {form.error}
-          </p>
+          </FeedbackToast>
         ) : null}
         <ExpenseClaimFields
           form={form}

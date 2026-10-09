@@ -1,6 +1,8 @@
 import { useId } from 'react';
 import type { ReactNode } from 'react';
 
+import FeedbackToast from './FeedbackToast';
+
 export interface FormFieldProps {
   label: string;
   description?: string;
@@ -70,9 +72,9 @@ const FormField = ({
         </p>
       ) : null}
       {error ? (
-        <p id={errorId} role="alert" className="text-sm font-medium text-status-danger">
+        <FeedbackToast variant={'error'} id={errorId} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       ) : null}
     </div>
   );

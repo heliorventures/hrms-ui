@@ -2,8 +2,10 @@ import { useState } from 'react';
 
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import { guidanceNavigationBlocked } from '../../guidance/tourNavigation';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 
 import CompanyLocationPicker from './CompanyLocationPicker';
 import { useWeeklyOffSettings } from './useWeeklyOffSettings';
@@ -15,9 +17,16 @@ const PolicyEditor = ({ locationId }: { locationId: string }) => {
   if (model.loading) return <p>Loading working calendar...</p>;
   if (!policy)
     return (
-      <p role="alert">
-        {model.error ?? 'Unable to load calendar.'} <Button onClick={model.reload}>Reload</Button>
-      </p>
+      <FeedbackToast
+        variant={'error'}
+        action={
+          <>
+            <Button onClick={model.reload}>Reload</Button>
+          </>
+        }
+      >
+        {model.error ?? 'Unable to load calendar.'}
+      </FeedbackToast>
     );
   return (
     <div
@@ -106,17 +115,21 @@ const PolicyEditor = ({ locationId }: { locationId: string }) => {
         </>
       )}
       {model.error ? (
-        <p role="alert" className="text-red-600">
+        <FeedbackToast variant={'error'} messageKey={model.error}>
           {model.error}
-        </p>
+        </FeedbackToast>
       ) : null}
-      {model.success ? <p role="status">{model.success}</p> : null}
+      {model.success ? (
+        <FeedbackToast variant={'success'} messageKey={model.success}>
+          {model.success}
+        </FeedbackToast>
+      ) : null}
     </div>
   );
 };
 const WeeklyOffSettings = () => {
   const [locationId, setLocationId] = useState('');
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useFeedbackState<string | null>(null, 'info');
   return (
     <Card title="Location Working Calendars">
       <div className="space-y-4">
@@ -132,7 +145,11 @@ const WeeklyOffSettings = () => {
           }}
           label="Policy scope"
         />
-        {notice ? <p role="status">{notice}</p> : null}
+        {notice ? (
+          <FeedbackToast variant={'info'} messageKey={notice}>
+            {notice}
+          </FeedbackToast>
+        ) : null}
         <PolicyEditor key={locationId} locationId={locationId} />
       </div>
     </Card>

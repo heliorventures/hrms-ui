@@ -2,6 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 
 import AssetPager from './AssetPager';
@@ -230,9 +231,9 @@ const AssetOptionPicker = ({
         />
       ) : null}
       {error ? (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+        <FeedbackToast variant={'error'} id={`${id}-error`} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       ) : null}
     </div>
   );

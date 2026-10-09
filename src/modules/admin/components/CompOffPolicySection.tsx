@@ -4,6 +4,7 @@ import { createPermissionService } from '../../../auth/permissionService';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageInformation from '../../../components/common/PageInformation';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
@@ -103,12 +104,19 @@ const PolicySettings = () => {
         </p>
       )}
       {board.error && !form && (
-        <div role="alert" className="flex items-center gap-3 text-sm text-status-danger">
+        <FeedbackToast
+          variant={'error'}
+          messageKey={board.error}
+          action={
+            <>
+              <Button size="sm" variant="outline" onClick={board.reload}>
+                Retry
+              </Button>
+            </>
+          }
+        >
           {board.error}
-          <Button size="sm" variant="outline" onClick={board.reload}>
-            Retry
-          </Button>
-        </div>
+        </FeedbackToast>
       )}
       {board.data && (
         <PolicyTable

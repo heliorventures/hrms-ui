@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import Card from '../components/common/Card';
+import FeedbackToast from '../components/common/FeedbackToast';
 import PageHeader from '../components/common/PageHeader';
 import Select from '../components/common/Select';
 
@@ -98,12 +99,9 @@ const AppearancePage = () => {
               setFailed(false);
             }}
           />
-          <p
-            role={failed ? 'alert' : 'status'}
-            className={`mt-2 text-xs ${failed ? 'text-status-danger' : 'text-content-muted'}`}
-          >
+          <FeedbackToast variant={failed ? 'error' : 'success'} messageKey={message}>
             {message}
-          </p>
+          </FeedbackToast>
         </Card>
         <AppearancePreview preferences={draft} />
       </div>

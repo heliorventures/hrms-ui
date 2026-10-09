@@ -19,7 +19,9 @@ const FlashToastHarness = () => {
     <>
       <button
         type="button"
-        onClick={() => show('Attendance was not saved.', 'error', { recoverableWithoutAction: true })}
+        onClick={() =>
+          show('Attendance was not saved.', 'error', { recoverableWithoutAction: true })
+        }
       >
         Show error
       </button>
@@ -29,6 +31,25 @@ const FlashToastHarness = () => {
 };
 
 describe('FlashToastBar', () => {
+  it('renews the deadline for an identical new action event', () => {
+    vi.useFakeTimers();
+    const view = () => (
+      <FlashToastBar toast={{ text: 'Saved.', variant: 'success' }} onDismiss={() => undefined} />
+    );
+    const { rerender } = render(view());
+    act(() => {
+      vi.advanceTimersByTime(4_000);
+    });
+    rerender(view());
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+    expect(screen.getByRole('status').textContent).toContain('Saved.');
+    act(() => {
+      vi.advanceTimersByTime(4_000);
+    });
+    expect(screen.queryByRole('status')).toBeNull();
+  });
   it('announces successful actions politely', () => {
     render(
       <FlashToastBar
@@ -78,15 +99,18 @@ describe('FlashToastBar', () => {
     expect(dismissals).toBe(1);
   });
 
-  it('keeps an integrated error visible until explicit dismissal', () => {
+  it('expires an integrated error and allows early dismissal of its replacement', () => {
     vi.useFakeTimers();
     render(<FlashToastHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Show error' }));
     expect(screen.getByRole('alert').textContent).toContain('Attendance was not saved.');
     act(() => {
-      void vi.advanceTimersByTime(60_000);
+      void vi.advanceTimersByTime(1_000);
     });
+    expect(screen.queryByRole('alert')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show error' }));
     expect(screen.getByRole('alert').textContent).toContain('Attendance was not saved.');
 
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));

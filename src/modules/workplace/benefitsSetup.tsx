@@ -2,9 +2,11 @@ import type { RequestDocument } from 'graphql-request';
 import { useRef, useState, type FormEvent } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import Select from '../../components/common/Select';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -45,7 +47,7 @@ export function SetupModal({
   const [values, setValues] = useState(editor.values);
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [saved, setSaved] = useState(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -93,10 +95,10 @@ export function SetupModal({
     <Modal isOpen onClose={onClose} title={editor.title} isDismissible={!busy}>
       <form onSubmit={(e) => void submit(e)} className="space-y-4">
         {error && (
-          <p role="alert" className="text-sm text-red-600">
+          <FeedbackToast variant={'error'} messageKey={error}>
             {saved ? 'Saved successfully. Refresh failed: ' : ''}
             {error}
-          </p>
+          </FeedbackToast>
         )}
         <fieldset disabled={busy || saved} className="space-y-4">
           {editor.fields.map((field) => (

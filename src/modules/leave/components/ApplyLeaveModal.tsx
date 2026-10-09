@@ -1,4 +1,5 @@
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Modal from '../../../components/common/Modal';
 import type { useGraphClient } from '../../../hooks/useGraphClient';
 
@@ -86,12 +87,19 @@ const ApplyLeaveModalForm = ({
           </p>
         ) : null}
         {form.previewError ? (
-          <p role="alert" className="text-sm text-red-600">
+          <FeedbackToast
+            variant={'error'}
+            messageKey={form.previewError}
+            action={
+              <>
+                <Button type="button" variant="outline" onClick={form.retryPreview}>
+                  Retry Calculation
+                </Button>
+              </>
+            }
+          >
             {form.previewError}{' '}
-            <Button type="button" variant="outline" onClick={form.retryPreview}>
-              Retry Calculation
-            </Button>
-          </p>
+          </FeedbackToast>
         ) : null}
         {form.requestedDays != null ? (
           <p className="text-sm">

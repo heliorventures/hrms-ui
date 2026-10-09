@@ -2,9 +2,11 @@ import { useState } from 'react';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import PageInformation from '../../../components/common/PageInformation';
 import Textarea from '../../../components/common/Textarea';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
@@ -174,7 +176,7 @@ const NotificationAutomationSettingsCard = ({ initialSettings }: Props) => {
   const client = useGraphClient('client');
   const [settings, setSettings] = useState(initialSettings);
   const [errors, setErrors] = useState<NotificationAutomationValidationErrors>({});
-  const [requestError, setRequestError] = useState<string | null>(null);
+  const [requestError, setRequestError] = useFeedbackState<string | null>(null, 'error');
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -219,14 +221,12 @@ const NotificationAutomationSettingsCard = ({ initialSettings }: Props) => {
         </p>
       </PageInformation>
       {requestError ? (
-        <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">
+        <FeedbackToast variant={'error'} messageKey={requestError}>
           {requestError}
-        </p>
+        </FeedbackToast>
       ) : null}
       {saved ? (
-        <p role="status" className="mb-4 text-sm text-green-700 dark:text-green-300">
-          Automated employee events saved.
-        </p>
+        <FeedbackToast variant={'success'}>Automated employee events saved.</FeedbackToast>
       ) : null}
 
       <AutomationSettingsFields settings={settings} errors={errors} setField={setField} />

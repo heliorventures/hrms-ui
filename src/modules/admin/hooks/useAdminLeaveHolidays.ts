@@ -1,3 +1,4 @@
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import type { useDialogs } from '../../../contexts/DialogContext';
 import type { useGraphClient } from '../../../hooks/useGraphClient';
@@ -34,6 +35,8 @@ export function useAdminLeaveHolidays({
   refresh,
   setError,
 }: UseAdminLeaveHolidaysArgs) {
+const notifyAction = useActionFeedback();
+
   const [calendarModal, setCalendarModal] = useState(false);
   const [holidayModal, setHolidayModal] = useState(false);
   const [calendarForm, setCalendarForm] = useState(createCalendarForm(currentYear));
@@ -96,6 +99,7 @@ export function useAdminLeaveHolidays({
           locationId: nullableText(calendarForm.locationId),
         },
       });
+notifyAction('saved');
       setCalendarModal(false);
       setCalendarForm(createCalendarForm(currentYear));
       await refresh();
@@ -110,6 +114,7 @@ export function useAdminLeaveHolidays({
     try {
       setError(null);
       await client.request(DeleteHolidayCalendarAdminDocument, { calendarId: id });
+notifyAction('removed');
       if (selectedCalendarId === id) setSelectedCalendarId(null);
       await refresh();
     } catch (err) {
@@ -131,6 +136,7 @@ export function useAdminLeaveHolidays({
           holidayType: nullableText(holidayForm.holidayType),
         },
       });
+notifyAction('saved');
       setHolidayModal(false);
       setHolidayForm(createHolidayForm());
       await reloadHolidays(selectedCalendarId);
@@ -145,6 +151,7 @@ export function useAdminLeaveHolidays({
     try {
       setError(null);
       await client.request(DeleteHolidayDayAdminDocument, { holidayId });
+notifyAction('removed');
       if (selectedCalendarId) await reloadHolidays(selectedCalendarId);
     } catch (err) {
       setError(graphQlUserMessage(err));

@@ -2,6 +2,7 @@ import type { FormEvent } from 'react';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import { hasTaxSubmissionSettings } from '../hooks/taxFormValidation';
 import type { TaxSectionCatalogRow } from '../payrollTypes';
@@ -111,15 +112,12 @@ export const EmployeeTaxProofFormCard = ({
           </span>
         </label>
         {message && (
-          <p
-            className={`text-sm ${
-              message.startsWith('Proof line submitted')
-                ? 'text-emerald-700 dark:text-emerald-300'
-                : 'text-red-600 dark:text-red-400'
-            }`}
+          <FeedbackToast
+            variant={message.startsWith('Proof line submitted') ? 'success' : 'error'}
+            messageKey={message}
           >
             {message}
-          </p>
+          </FeedbackToast>
         )}
         <Button type="submit" disabled={busy}>
           {busy ? 'Submitting...' : 'Submit Proof Line'}
@@ -197,15 +195,12 @@ export const EmployeeTaxDeclarationFormCard = ({
           />
         </div>
         {message && (
-          <p
-            className={`text-sm ${
-              message.startsWith('Saved')
-                ? 'text-emerald-700 dark:text-emerald-300'
-                : 'text-red-600 dark:text-red-400'
-            }`}
+          <FeedbackToast
+            variant={message.startsWith('Saved') ? 'success' : 'error'}
+            messageKey={message}
           >
             {message}
-          </p>
+          </FeedbackToast>
         )}
         <Button type="submit" disabled={submitting || loading}>
           {submitting ? 'Saving...' : 'Save Declaration'}

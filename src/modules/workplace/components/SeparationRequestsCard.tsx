@@ -1,5 +1,6 @@
-import Card from '../../../components/common/Card';
 import Button from '../../../components/common/Button';
+import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type {
   ClearanceItemRow,
   FnfFormState,
@@ -123,7 +124,9 @@ const SeparationRequestsCard = ({
                 {obLoading ? (
                   <p className="text-sm text-gray-500">Loading Clearance & FNF...</p>
                 ) : obErr ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{obErr}</p>
+                  <FeedbackToast variant={'error'} messageKey={obErr}>
+                    {obErr}
+                  </FeedbackToast>
                 ) : (
                   <div className="space-y-4">
                     <div>

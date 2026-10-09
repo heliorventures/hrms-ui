@@ -5,6 +5,7 @@ import {
   type WorkplaceSuccessionDataQuery,
 } from '../../api/graphql/graphql';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import { useGraphClient } from '../../hooks/useGraphClient';
 
 type WorkplaceRequestState =
@@ -62,11 +63,11 @@ const WorkplaceInsightsPanel = () => {
         </Card>
       )}
       {visibleState.status === 'error' && (
-        <Card>
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <>
+          <FeedbackToast variant={'error'}>
             Workplace insights could not be loaded. Try again.
-          </p>
-        </Card>
+          </FeedbackToast>
+        </>
       )}
       {visibleState.status === 'success' && (
         <>

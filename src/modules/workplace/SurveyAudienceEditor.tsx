@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -15,7 +17,7 @@ const useAudienceOptions = (kind: SurveyDraft['audienceKind']) => {
   const [options, setOptions] = useState<Option[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const request = useRef(0);
   const invalidate = useCallback(() => {
     ++request.current;
@@ -47,7 +49,7 @@ const useAudienceOptions = (kind: SurveyDraft['audienceKind']) => {
         if (token === request.current) setBusy(false);
       }
     },
-    [client, kind]
+    [client, kind, setError]
   );
   useEffect(() => {
     setSearch('');
@@ -57,7 +59,7 @@ const useAudienceOptions = (kind: SurveyDraft['audienceKind']) => {
     if (kind !== 'ALL') void load('');
     else setBusy(false);
     return invalidate;
-  }, [kind, load, invalidate]);
+  }, [kind, load, invalidate, setError]);
   return { search, setSearch, activeSearch, options, cursor, busy, error, load };
 };
 
@@ -162,9 +164,9 @@ const SurveyAudienceEditor = ({
             </Button>
           </div>
           {error && (
-            <p role="alert" className="text-sm text-status-danger">
+            <FeedbackToast variant={'error'} messageKey={error}>
               {error}
-            </p>
+            </FeedbackToast>
           )}
           <AudienceSelections options={options} selected={selected} select={select} />
           {!busy && !error && options.length === 0 && (

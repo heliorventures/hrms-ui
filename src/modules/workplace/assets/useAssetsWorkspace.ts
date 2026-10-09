@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import {
   AssetAllocationsPageDocument,
   AssetCategoriesPageDocument,
@@ -21,8 +22,10 @@ import {
   type UpsertAssetCategoryInput,
   type UpsertAssetInput,
 } from '../../../api/graphql/graphql';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+
 import type {
   AssetAssignmentRow,
   AssetCategoryRow,
@@ -60,7 +63,10 @@ export function useAssetsWorkspace({
   const [locations, setLocations] = useState<AssetLocationOptionsQuery['assetLocationOptions']>([]);
   const [assignmentAssets, setAssignmentAssets] = useState<AssetRow[]>([]);
   const [assignmentAssetsLoading, setAssignmentAssetsLoading] = useState(false);
-  const [assignmentAssetsError, setAssignmentAssetsError] = useState<string | null>(null);
+  const [assignmentAssetsError, setAssignmentAssetsError] = useFeedbackState<string | null>(
+    null,
+    'error'
+  );
 
   const [categoryFilter, setCategoryFilter] = useState<PageFilter>(initialPageFilter);
   const [inventoryFilter, setInventoryFilter] = useState<InventoryFilter>(initialInventoryFilter);
@@ -87,7 +93,7 @@ export function useAssetsWorkspace({
   });
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useFeedbackState<string | null>(null, 'error');
   const [actionOk, setActionOk] = useState<string | null>(null);
   const inFlightActions = useRef(new Set<string>());
 
@@ -207,9 +213,7 @@ export function useAssetsWorkspace({
           setCategoryOptionPageInfo(result.pageInfo);
         }
       })
-      .catch(
-        (error) => !cancelled && setSectionError('categoryOptions', graphQlUserMessage(error))
-      )
+      .catch((error) => !cancelled && setSectionError('categoryOptions', graphQlUserMessage(error)))
       .finally(() => !cancelled && setSectionLoading('categoryOptions', false));
     return () => {
       cancelled = true;
@@ -264,9 +268,7 @@ export function useAssetsWorkspace({
           setEmployeeOptionPageInfo(result.pageInfo);
         }
       })
-      .catch(
-        (error) => !cancelled && setSectionError('employeeOptions', graphQlUserMessage(error))
-      )
+      .catch((error) => !cancelled && setSectionError('employeeOptions', graphQlUserMessage(error)))
       .finally(() => !cancelled && setSectionLoading('employeeOptions', false));
     return () => {
       cancelled = true;
@@ -332,7 +334,7 @@ export function useAssetsWorkspace({
         setAssignmentAssetsLoading(false);
       }
     },
-    [client]
+    [client, setAssignmentAssetsError]
   );
 
   const runAction = useCallback(
@@ -366,7 +368,7 @@ export function useAssetsWorkspace({
         setBusyAction(null);
       }
     },
-    []
+    [setActionError]
   );
 
   const saveCategory = useCallback(

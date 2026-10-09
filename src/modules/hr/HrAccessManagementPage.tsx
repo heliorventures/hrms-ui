@@ -14,9 +14,11 @@ import {
   RbacAdminBoardWithUsernameDocument,
 } from '../../api/graphql/graphql';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import { useDialogs } from '../../contexts/DialogContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -47,8 +49,8 @@ const HrAccessManagementPage = () => {
   const [tab, setTab] = useState<RbacAccessTab>('users');
   const [board, setBoard] = useState<RbacAdminBoardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [info, setInfo] = useFeedbackState<string | null>(null, 'success');
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userRoleIds, setUserRoleIds] = useState<Set<string>>(new Set());
@@ -78,7 +80,7 @@ const HrAccessManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [client]);
+  }, [client, setError]);
 
   useEffect(() => {
     void loadBoard();
@@ -106,7 +108,7 @@ const HrAccessManagementPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [client, selectedUserId]);
+  }, [client, selectedUserId, setError]);
 
   useEffect(() => {
     if (!selectedRoleId) {
@@ -130,7 +132,7 @@ const HrAccessManagementPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [client, selectedRoleId]);
+  }, [client, selectedRoleId, setError]);
 
   useEffect(() => {
     if (!scopeRoleId) {
@@ -163,7 +165,7 @@ const HrAccessManagementPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [client, scopeRoleId]);
+  }, [client, scopeRoleId, setError]);
 
   const permsByResource = useMemo(() => {
     const result = new Map<string, RbacAdminBoardData['tenantCatalogPermissions']>();
@@ -314,13 +316,15 @@ const HrAccessManagementPage = () => {
       </div>
 
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
       {info && (
         <Card>
-          <p className="text-sm text-emerald-700 dark:text-emerald-400">{info}</p>
+          <FeedbackToast variant={'success'}>{info}</FeedbackToast>
         </Card>
       )}
 

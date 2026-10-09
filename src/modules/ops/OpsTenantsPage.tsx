@@ -1,7 +1,16 @@
+import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
+import Input from '@/components/common/Input';
+import PageHeader from '@/components/common/PageHeader';
+import Table from '@/components/common/Table';
+import { useDialogs } from '@/contexts/DialogContext';
+import { useGraphClient } from '@/hooks/useGraphClient';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageInformation from '../../components/common/PageInformation';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import {
@@ -10,16 +19,6 @@ import {
   OPS_TENANTS,
   OPS_UPDATE_TENANT,
 } from './opsGraph';
-
-import Button from '@/components/common/Button';
-import Card from '@/components/common/Card';
-import Input from '@/components/common/Input';
-import PageHeader from '@/components/common/PageHeader';
-import Table from '@/components/common/Table';
-import { useDialogs } from '@/contexts/DialogContext';
-import { useGraphClient } from '@/hooks/useGraphClient';
-
-
 
 type TenantRow = {
   id: string;
@@ -37,8 +36,8 @@ const OpsTenantsPage = () => {
   const { confirm } = useDialogs();
   const [rows, setRows] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [toast, setToast] = useFeedbackState<string | null>(null, 'success');
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const [provisionOpen, setProvisionOpen] = useState(false);
@@ -67,7 +66,7 @@ const OpsTenantsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [client]);
+  }, [client, setError]);
 
   useEffect(() => {
     void load();
@@ -128,7 +127,9 @@ const OpsTenantsPage = () => {
       const res = await client.request<{
         runTenantMigrations: { tenant: { status: string }; detail?: string | null };
       }>(OPS_RUN_TENANT_MIGRATIONS, { tenantId: t.id });
-      setToast(`Migrations finished. Status: ${res.runTenantMigrations.tenant.status}.${res.runTenantMigrations.detail ? ` ${res.runTenantMigrations.detail}` : ''}`);
+      setToast(
+        `Migrations finished. Status: ${res.runTenantMigrations.tenant.status}.${res.runTenantMigrations.detail ? ` ${res.runTenantMigrations.detail}` : ''}`
+      );
       await load();
     } catch (err) {
       setError(graphQlUserMessage(err));
@@ -195,14 +196,14 @@ const OpsTenantsPage = () => {
       />
 
       {toast && (
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+        <FeedbackToast variant={'success'} messageKey={toast}>
           {toast}
-        </p>
+        </FeedbackToast>
       )}
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
 
       {provisionOpen && (
@@ -215,7 +216,12 @@ const OpsTenantsPage = () => {
                 migrations” is on.
               </p>
             </PageInformation>
-            <Input label="Display Name" value={pvName} onChange={(e) => setPvName(e.target.value)} required />
+            <Input
+              label="Display Name"
+              value={pvName}
+              onChange={(e) => setPvName(e.target.value)}
+              required
+            />
             <Input
               label="Code (Subdomain Key, 2–32 Chars)"
               value={pvCode}
@@ -224,8 +230,16 @@ const OpsTenantsPage = () => {
               required
             />
             <div className="grid gap-3 sm:grid-cols-2">
-              <Input label="Country" value={pvCountry} onChange={(e) => setPvCountry(e.target.value)} />
-              <Input label="Currency" value={pvCurrency} onChange={(e) => setPvCurrency(e.target.value)} />
+              <Input
+                label="Country"
+                value={pvCountry}
+                onChange={(e) => setPvCountry(e.target.value)}
+              />
+              <Input
+                label="Currency"
+                value={pvCurrency}
+                onChange={(e) => setPvCurrency(e.target.value)}
+              />
             </div>
             <Input
               label="Schema Override (Optional)"
@@ -278,7 +292,11 @@ const OpsTenantsPage = () => {
                 ))}
               </select>
             </div>
-            <Input label="Plan (Optional)" value={edPlan} onChange={(e) => setEdPlan(e.target.value)} />
+            <Input
+              label="Plan (Optional)"
+              value={edPlan}
+              onChange={(e) => setEdPlan(e.target.value)}
+            />
             <div className="flex gap-2">
               <Button type="submit" disabled={edSubmitting}>
                 {edSubmitting ? 'Saving...' : 'Save'}

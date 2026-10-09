@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { taxFormErrorMessage } from '../taxFormError';
 import { taxSettingsInput } from '../taxFormInputs';
 import type { TaxSettingsInput, TaxSettingsVersion } from '../taxProjectionTypes';
@@ -24,7 +26,7 @@ const EmployeeTaxSettings = ({ current, busy, onSave }: Props) => {
   const [until, setUntil] = useState('');
   const [resident, setResident] = useState(residencyValue(current?.input.resident));
   const [reason, setReason] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const override = method === 'PERCENTAGE_OVERRIDE';
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -121,7 +123,11 @@ const EmployeeTaxSettings = ({ current, busy, onSave }: Props) => {
         onChange={(e) => setReason(e.target.value)}
         maxLength={2000}
       />
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
+      )}
       <Button type="submit" disabled={busy}>
         {busy ? 'Saving…' : 'Save future settings'}
       </Button>

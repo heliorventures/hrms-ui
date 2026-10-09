@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { useFragment } from '../../api/graphql/fragment-masking';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 
 import {
   ActivateWorkingCalendarDocument,
@@ -23,7 +24,7 @@ export const useWeeklyOffSettings = (locationId: string) => {
   const [effective, setEffective] = useState('');
   const [month, setMonth] = useState('');
   const [preview, setPreview] = useState<string[]>([]);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [success, setSuccess] = useFeedbackState<string | null>(null, 'success');
   const policy = useFragment(
     WorkingCalendarFieldsFragmentDoc,
     resource.data?.workingCalendarPolicy

@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import { usePeriodInputEditor } from '../hooks/usePeriodInputEditor';
 
 import MonthlyInputForm from './MonthlyInputForm';
@@ -18,14 +19,14 @@ const PeriodEditor = ({ client, employeeId, year, month }: Props) => {
     <div className="mt-4 space-y-3">
       {state.busy && <p role="status">Loading or saving monthly input...</p>}
       {state.error && (
-        <p role="alert" className="text-sm text-red-600">
+        <FeedbackToast variant={'error'} messageKey={state.error}>
           {state.error}
-        </p>
+        </FeedbackToast>
       )}
       {state.notice && (
-        <p role="status" className="text-sm text-slate-700">
+        <FeedbackToast variant={'info'} messageKey={state.notice}>
           {state.notice}
-        </p>
+        </FeedbackToast>
       )}
       {draft && <MonthlyInputForm state={state} client={client} employeeId={employeeId} />}
       {!draft && !state.busy && !state.error && !state.locked && (

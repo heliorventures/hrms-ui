@@ -1,13 +1,14 @@
-import Card from '../../components/common/Card';
+import { authorizationStateKey } from '../../auth/permissionService';
+import FeedbackToast from '../../components/common/FeedbackToast';
+import { useAuth } from '../../contexts/AuthContext';
+
+import CompOffPolicySection from './components/CompOffPolicySection';
 import LeaveBalancesSection from './components/LeaveBalancesSection';
 import LeaveHolidaysSection from './components/LeaveHolidaysSection';
-import { LeaveSettingsHeaderFromModel } from './components/LeaveSettingsHeader';
 import LeavePoliciesSection from './components/LeavePoliciesSection';
+import { LeaveSettingsHeaderFromModel } from './components/LeaveSettingsHeader';
 import LeaveTypesSection from './components/LeaveTypesSection';
-import CompOffPolicySection from './components/CompOffPolicySection';
 import { useAdminLeaveSettings } from './hooks/useAdminLeaveSettings';
-import { authorizationStateKey } from '../../auth/permissionService';
-import { useAuth } from '../../contexts/AuthContext';
 
 const AdminLeaveSettingsPage = () => {
   const model = useAdminLeaveSettings();
@@ -16,12 +17,16 @@ const AdminLeaveSettingsPage = () => {
   return (
     <div className="space-y-4">
       <LeaveSettingsHeaderFromModel model={model} />
-      {model.tab === 'comp-off' ? <CompOffPolicySection key={authorizationStateKey(clientSession)} /> : null}
+      {model.tab === 'comp-off' ? (
+        <CompOffPolicySection key={authorizationStateKey(clientSession)} />
+      ) : null}
 
       {model.error ? (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{model.error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={model.error}>
+            {model.error}
+          </FeedbackToast>
+        </>
       ) : null}
 
       {model.tab === 'types' ? <LeaveTypesSection model={model} /> : null}

@@ -28,11 +28,15 @@ const PolicyNotices = ({
       </PageNotice>
     ) : null}
     {error ? (
-      <PageNotice variant="error" title="Attendance day change was not saved">
+      <PageNotice messageKey={error} variant="error" title="Attendance day change was not saved">
         {error}
       </PageNotice>
     ) : null}
-    {success ? <PageNotice variant="success">{success}</PageNotice> : null}
+    {success ? (
+      <PageNotice messageKey={success} variant="success">
+        {success}
+      </PageNotice>
+    ) : null}
   </>
 );
 

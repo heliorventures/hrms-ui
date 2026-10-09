@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react';
 
-import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type {
   PayslipIndiaFyTotals,
   TaxComputationSelfRow,
@@ -87,9 +87,11 @@ const PayrollIncomeTaxTab = ({
       />
     )}
     {employeeTaxError && (
-      <Card>
-        <p className="text-sm text-red-600 dark:text-red-400">{employeeTaxError}</p>
-      </Card>
+      <>
+        <FeedbackToast variant={'error'} messageKey={employeeTaxError}>
+          {employeeTaxError}
+        </FeedbackToast>
+      </>
     )}
     <EmployeeTaxTables
       submissionContext={submissionContext}

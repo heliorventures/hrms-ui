@@ -8,6 +8,7 @@ import {
   type PayrollEmploymentHistoryQuery,
 } from '../../../../api/graphql/graphql';
 import { useProfileGuidanceOwner } from '../../../../guidance/ProfileGuidanceContext';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import { mapBundleToEmployeeProfileModel } from '../lib/mapBundleToModel';
 import {
@@ -39,7 +40,7 @@ export function useEmployeeProfileData(
   const [modelOwner, setModelOwner] = useState<typeof owner | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [model, setModel] = useState<EmployeeProfileModel | null>(null);
   const [access, setAccess] = useState<NonNullable<
     EmployeeProfileAccessQuery['employeeProfileAccess']
@@ -138,7 +139,7 @@ export function useEmployeeProfileData(
     return () => {
       cancelled = true;
     };
-  }, [client, employeeId, reloadToken, owner]);
+  }, [client, employeeId, reloadToken, owner, setError]);
 
   return {
     loading: loading || (!!employeeId && accessOwner !== owner && !error),

@@ -1,7 +1,9 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import Modal from '@/components/common/Modal';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type { CycleRow, TenantRow } from '../billingTypes';
 
 export interface CreateInvoiceInput {
@@ -82,7 +84,11 @@ const CreateInvoiceModal = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Create Invoice" size="md">
       <form onSubmit={(event) => void submit(event)} className="space-y-3">
-        {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+        {error ? (
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        ) : null}
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Tenant
           <select
@@ -120,16 +126,38 @@ const CreateInvoiceModal = ({
           </select>
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input label="Subtotal" value={subtotal} onChange={(event) => setSubtotal(event.target.value)} />
-          <Input label="Total" value={total} onChange={(event) => setTotal(event.target.value)} required />
+          <Input
+            label="Subtotal"
+            value={subtotal}
+            onChange={(event) => setSubtotal(event.target.value)}
+          />
+          <Input
+            label="Total"
+            value={total}
+            onChange={(event) => setTotal(event.target.value)}
+            required
+          />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input label="Discount Total" value={discount} onChange={(event) => setDiscount(event.target.value)} />
+          <Input
+            label="Discount Total"
+            value={discount}
+            onChange={(event) => setDiscount(event.target.value)}
+          />
           <Input label="Tax Amount" value={tax} onChange={(event) => setTax(event.target.value)} />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input label="Currency" value={currency} onChange={(event) => setCurrency(event.target.value)} />
-          <Input label="Due Date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+          <Input
+            label="Currency"
+            value={currency}
+            onChange={(event) => setCurrency(event.target.value)}
+          />
+          <Input
+            label="Due Date"
+            type="date"
+            value={dueDate}
+            onChange={(event) => setDueDate(event.target.value)}
+          />
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>

@@ -2,6 +2,7 @@ import type { GraphQLClient } from 'graphql-request';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import { useUnpaidLeavePolicy } from '../hooks/useUnpaidLeavePolicy';
 import type { UnpaidLeavePolicy } from '../unpaidLeaveDocuments';
@@ -100,14 +101,12 @@ const UnpaidLeavePolicyCard = ({
           </p>
         )}
         {policy.error && (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <FeedbackToast variant={'error'} messageKey={policy.error}>
             {policy.error}
-          </p>
+          </FeedbackToast>
         )}
         {policy.saved && (
-          <p role="status" className="text-sm text-green-700 dark:text-green-400">
-            Unpaid leave policy saved.
-          </p>
+          <FeedbackToast variant={'success'}>Unpaid leave policy saved.</FeedbackToast>
         )}
         <div className="flex gap-2">
           <Button type="submit" size="sm" disabled={policy.blocked}>

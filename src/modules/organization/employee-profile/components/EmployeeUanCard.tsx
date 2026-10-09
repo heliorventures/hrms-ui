@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 
 import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
 import Input from '../../../../components/common/Input';
 import PageNotice from '../../../../components/common/PageNotice';
 import { useEmployeeUan } from '../hooks/useEmployeeUan';
@@ -35,11 +36,7 @@ const EmployeeUanForm = ({ uan }: { uan: ReturnType<typeof useEmployeeUan> }) =>
     <p className="text-xs text-content-secondary">
       Enter 12 digits. Leave blank and save to clear the recorded number.
     </p>
-    {!uan.valid ? (
-      <p role="alert" className="text-sm text-status-danger">
-        Enter exactly 12 digits.
-      </p>
-    ) : null}
+    {!uan.valid ? <FeedbackToast variant={'error'}>Enter exactly 12 digits.</FeedbackToast> : null}
     <div className="flex flex-wrap gap-2">
       <Button type="submit" size="sm" busy={uan.saving} disabled={!uan.canSave}>
         Save EPF / UAN number
@@ -60,12 +57,14 @@ const EmployeeUanForm = ({ uan }: { uan: ReturnType<typeof useEmployeeUan> }) =>
 const EmployeeUanNotices = ({ uan }: { uan: ReturnType<typeof useEmployeeUan> }) => (
   <>
     {uan.success ? (
-      <p role="status" className="text-sm text-status-success">
-        EPF / UAN number saved.
-      </p>
+      <FeedbackToast variant={'success'}>EPF / UAN number saved.</FeedbackToast>
     ) : null}
     {uan.error ? (
-      <PageNotice variant="error" title="EPF / UAN number could not be saved">
+      <PageNotice
+        messageKey={uan.error}
+        variant="error"
+        title="EPF / UAN number could not be saved"
+      >
         {uan.error}
       </PageNotice>
     ) : null}
@@ -90,8 +89,12 @@ const EmployeeUanCard = ({
     <InfoCard title="EPF / UAN number" subtitle="Universal Account Number">
       {loading ? <p role="status">Loading EPF / UAN number…</p> : null}
       {readError ? (
-        <PageNotice variant="error" title="EPF / UAN number could not be loaded">
-          <p>{readError}</p>
+        <PageNotice
+          messageKey={readError}
+          variant="error"
+          title="EPF / UAN number could not be loaded"
+        >
+          <>{readError}</>
           <Button size="sm" variant="quiet" onClick={() => void uan.query.refresh()}>
             Retry
           </Button>

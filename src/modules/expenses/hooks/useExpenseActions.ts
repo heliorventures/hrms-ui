@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
+import { useCallback, useEffect, useState } from 'react';
+
 import {
   ApproveExpenseDocument,
   ApproveTravelRequestDocument,
@@ -11,6 +12,8 @@ import {
   type ApproveTravelRequestMutation,
   type MarkExpensePaymentStatusMutation,
 } from '../../../api/graphql/graphql';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { EXPENSE_BUSY_PREFIX, EXPENSE_STATUS } from '../constants';
 import type {
@@ -49,8 +52,9 @@ export function useExpenseActions({
   refresh,
   setNotice,
 }: UseExpenseActionsArgs) {
+  const notifyAction = useActionFeedback();
   const [approveTarget, setApproveTarget] = useState<ApproveExpenseTarget | null>(null);
-  const [approveError, setApproveError] = useState<string | null>(null);
+  const [approveError, setApproveError] = useFeedbackState<string | null>(null, 'error');
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<RejectTarget | null>(null);
   const [submittingExpense, setSubmittingExpense] = useState(false);
@@ -61,27 +65,31 @@ export function useExpenseActions({
     setRejectTarget(null);
     setBusyKey(null);
     setSubmittingExpense(false);
-  }, [ownerKey]);
+  }, [ownerKey, setApproveError]);
 
-  const openApproveExpense = useCallback((row: ExpenseRow) => {
-    if (!canApproveExpense) return;
-    if (!row.pendingApprovalStepId) {
-      setNotice({
-        variant: 'warning',
-        message: 'This approval step is no longer available. Refresh the expense board and try again.',
+  const openApproveExpense = useCallback(
+    (row: ExpenseRow) => {
+      if (!canApproveExpense) return;
+      if (!row.pendingApprovalStepId) {
+        setNotice({
+          variant: 'warning',
+          message:
+            'This approval step is no longer available. Refresh the expense board and try again.',
+        });
+        return;
+      }
+      setApproveError(null);
+      const normalizedDraft = normalizeMoneyForInput(row.amount);
+      setApproveTarget({
+        id: row.id,
+        expectedWorkflowStepId: row.pendingApprovalStepId,
+        claimAmount: row.amount,
+        currency: row.currency,
+        draftApprove: normalizedDraft ?? row.amount,
       });
-      return;
-    }
-    setApproveError(null);
-    const normalizedDraft = normalizeMoneyForInput(row.amount);
-    setApproveTarget({
-      id: row.id,
-      expectedWorkflowStepId: row.pendingApprovalStepId,
-      claimAmount: row.amount,
-      currency: row.currency,
-      draftApprove: normalizedDraft ?? row.amount,
-    });
-  }, [canApproveExpense, setNotice]);
+    },
+    [canApproveExpense, setNotice, setApproveError]
+  );
 
   const approveExpense = useCallback(async () => {
     if (!canApproveExpense || !approveTarget) return;
@@ -130,7 +138,7 @@ export function useExpenseActions({
     } finally {
       setBusyKey(null);
     }
-  }, [approveTarget, canApproveExpense, client, refresh, setNotice]);
+  }, [approveTarget, canApproveExpense, client, refresh, setNotice, setApproveError]);
 
   const markExpensePaid = useCallback(
     async (expenseId: string, paymentReference: string) => {
@@ -191,6 +199,7 @@ export function useExpenseActions({
             reason,
           });
         }
+        notifyAction('updated');
         await refresh();
       } catch (err) {
         throw new Error(graphQlUserMessage(err));
@@ -198,7 +207,7 @@ export function useExpenseActions({
         setBusyKey(null);
       }
     },
-    [canApproveExpense, canApproveTravel, client, refresh, rejectTarget]
+    [canApproveExpense, canApproveTravel, client, refresh, rejectTarget, notifyAction]
   );
 
   const approveTravel = useCallback(
@@ -207,7 +216,8 @@ export function useExpenseActions({
       if (!row.pendingApprovalStepId) {
         setNotice({
           variant: 'warning',
-          message: 'This approval step is no longer available. Refresh the travel requests and try again.',
+          message:
+            'This approval step is no longer available. Refresh the travel requests and try again.',
         });
         return;
       }

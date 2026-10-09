@@ -1,18 +1,25 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import Card from '../../../components/common/Card';
-import Button from '../../../components/common/Button';
-import Input from '../../../components/common/Input';
-import Select from '../../../components/common/Select';
-import { useGraphClient } from '../../../hooks/useGraphClient';
-import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+
 import {
   CreateTimesheetEntryDocument,
   TimesheetProjectsForEmployeeDocument,
   TimesheetTaskTypesDocument,
   UpdateTimesheetEntryDocument,
 } from '../../../api/graphql/graphql';
+import Button from '../../../components/common/Button';
+import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import Input from '../../../components/common/Input';
+import Select from '../../../components/common/Select';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
+import { useGraphClient } from '../../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
+import {
+  encodeTimesheetDescription,
+  decodeTimesheetDescription,
+} from '../../../utils/timesheetDescription';
 import { clampIsoDateToRange } from '../../../utils/timesheetWeek';
-import { encodeTimesheetDescription, decodeTimesheetDescription } from '../../../utils/timesheetDescription';
 import {
   formatTimesheetHours,
   parseTimesheetHours,
@@ -62,6 +69,8 @@ const TimesheetEntryForm = ({
   editing,
   existingEntries = [],
 }: TimesheetEntryFormProps) => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const defaultWorkDate = clampIsoDateToRange(
     initialWorkDateIso ?? localTodayIso(),
@@ -80,7 +89,7 @@ const TimesheetEntryForm = ({
   const [tasks, setTasks] = useState<string[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useFeedbackState<string | null>(null, 'error');
 
   useEffect(() => {
     setWorkDate((prev) => clampIsoDateToRange(prev, allowedMinIso, allowedMaxIso));
@@ -127,12 +136,18 @@ const TimesheetEntryForm = ({
 
   const projectOptions = useMemo(() => {
     const opts = projects.map((p) => ({ value: p.code, label: `${p.code} — ${p.name}` }));
-    return [{ value: '', label: loadingCatalog ? 'Loading Projects...' : 'Select Project' }, ...opts];
+    return [
+      { value: '', label: loadingCatalog ? 'Loading Projects...' : 'Select Project' },
+      ...opts,
+    ];
   }, [projects, loadingCatalog]);
 
   const taskOptions = useMemo(() => {
     const opts = tasks.map((t) => ({ value: t, label: t }));
-    return [{ value: '', label: tasks.length ? 'Select Task Type' : 'No Tasks (Configure In Admin)' }, ...opts];
+    return [
+      { value: '', label: tasks.length ? 'Select Task Type' : 'No Tasks (Configure In Admin)' },
+      ...opts,
+    ];
   }, [tasks]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -163,7 +178,9 @@ const TimesheetEntryForm = ({
     }
     const weekStart = weekMondayOfWorkDateIso(wd);
     const existingWeekHours = existingEntries
-      .filter((entry) => weekMondayOfWorkDateIso(entry.workDate) === weekStart && entry.id !== editing?.id)
+      .filter(
+        (entry) => weekMondayOfWorkDateIso(entry.workDate) === weekStart && entry.id !== editing?.id
+      )
       .reduce((total, entry) => total + (parseTimesheetHours(entry.hoursWorked) || 0), 0);
     const weekHoursError = validateTimesheetWeekHours(existingWeekHours + enteredHours);
     if (weekHoursError) {
@@ -193,6 +210,7 @@ const TimesheetEntryForm = ({
           },
         });
       }
+      notifyAction('saved');
       onSaved();
       onClose();
     } catch (err) {
@@ -205,7 +223,11 @@ const TimesheetEntryForm = ({
   return (
     <Card title={editing ? 'Edit Timesheet Entry' : 'Add Timesheet Entry'}>
       <form onSubmit={(ev) => void handleSubmit(ev)} className="space-y-4">
-        {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+        {formError && (
+          <FeedbackToast variant={'error'} messageKey={formError}>
+            {formError}
+          </FeedbackToast>
+        )}
 
         <Input
           type="date"

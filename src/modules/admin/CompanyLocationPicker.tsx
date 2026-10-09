@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 
 import { authorizationStateKey } from '../../auth/permissionService';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -68,12 +69,19 @@ const CompanyLocationPicker = ({
       </label>
       {result.loading ? <p className="text-xs">Loading locations...</p> : null}
       {result.error ? (
-        <p role="alert" className="text-sm text-red-600">
+        <FeedbackToast
+          variant={'error'}
+          messageKey={result.error}
+          action={
+            <>
+              <button type="button" onClick={result.reload}>
+                Retry
+              </button>
+            </>
+          }
+        >
           {result.error}{' '}
-          <button type="button" onClick={result.reload}>
-            Retry
-          </button>
-        </p>
+        </FeedbackToast>
       ) : null}
     </div>
   );

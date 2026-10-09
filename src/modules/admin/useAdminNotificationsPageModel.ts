@@ -1,14 +1,13 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
-/* eslint-disable max-lines -- This existing page model owns four coordinated admin workflows. */
-
 import {
   CreateDirectNotificationsDocument,
   DeleteAnnouncementDocument,
   DeleteNotificationAdminDocument,
 } from '../../api/graphql/graphql';
 import { useDialogs, type ConfirmOptions } from '../../contexts/DialogContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { directNotificationActionUrl } from '../../utils/actionUrl';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -70,8 +69,8 @@ interface FeedbackModel {
 
 const useFeedback = (): FeedbackModel => {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [success, setSuccess] = useFeedbackState<string | null>(null, 'success');
   return { busy, error, success, setBusy, setError, setSuccess };
 };
 

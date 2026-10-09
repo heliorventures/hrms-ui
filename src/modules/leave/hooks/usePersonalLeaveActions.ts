@@ -5,6 +5,7 @@ import {
   CancelLeaveRequestDocument,
   type ApproveLeaveRequestMutationVariables,
 } from '../../../api/graphql/graphql';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import type { useFlashToast } from '../../../hooks/useFlashToast';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { LEAVE_APPROVAL_REFRESH_MESSAGE, leaveApprovalTarget } from '../leaveApproval';
@@ -31,7 +32,10 @@ export function usePersonalLeaveActions({
   const busy = useRef(false);
   const [approveBusyId, setApproveBusyId] = useState<string | null>(null);
   const [cancelBusyId, setCancelBusyId] = useState<string | null>(null);
-  const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
+  const [approveWorkflowNotice, setApproveWorkflowNotice] = useFeedbackState<string | null>(
+    null,
+    'info'
+  );
   const recordApproval = (status: string) => {
     const pending = status.toLowerCase() === 'pending';
     const pendingMessage = 'Approval was recorded, but another workflow step may still be pending.';

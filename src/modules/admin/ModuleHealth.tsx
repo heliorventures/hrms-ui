@@ -18,11 +18,11 @@
  *
  * Probes federated Helior HRMS subgraphs through the stitching gateway.
  */
-import { useEffect, useMemo, useState } from 'react';
-
 import { useGraphClient } from '@/hooks/useGraphClient';
 import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
+import { useEffect, useMemo, useState } from 'react';
 
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 
@@ -141,9 +141,9 @@ const ModuleHealth = () => {
                 </pre>
               ) : null}
               {state.status === 'error' ? (
-                <pre className="mt-2 max-h-32 overflow-auto rounded bg-rose-50 p-2 text-xs text-rose-800">
+                <FeedbackToast variant={'error'} messageKey={state.message}>
                   {state.message}
-                </pre>
+                </FeedbackToast>
               ) : null}
             </div>
           );

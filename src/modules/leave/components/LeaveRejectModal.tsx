@@ -1,12 +1,15 @@
 import { FormEvent, useState } from 'react';
-import Modal from '../../../components/common/Modal';
-import Button from '../../../components/common/Button';
-import Input from '../../../components/common/Input';
-import { useGraphClient } from '../../../hooks/useGraphClient';
+
 import {
   RejectLeaveRequestDocument,
   type RejectLeaveRequestMutationVariables,
 } from '../../../api/graphql/graphql';
+import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import Input from '../../../components/common/Input';
+import Modal from '../../../components/common/Modal';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
+import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { LEAVE_APPROVAL_REFRESH_MESSAGE, leaveApprovalTarget } from '../leaveApproval';
 
@@ -28,7 +31,7 @@ const LeaveRejectModal = ({
   const client = useGraphClient('client');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useFeedbackState<string | null>(null, 'error');
 
   const handleClose = () => {
     setReason('');
@@ -86,7 +89,11 @@ const LeaveRejectModal = ({
       }
     >
       <form id="reject-leave-form" onSubmit={(e) => void handleSubmit(e)} className="space-y-3">
-        {err && <p className="text-sm text-red-600 dark:text-red-400">{err}</p>}
+        {err && (
+          <FeedbackToast variant={'error'} messageKey={err}>
+            {err}
+          </FeedbackToast>
+        )}
         <Input
           label="Reason For Rejection"
           value={reason}

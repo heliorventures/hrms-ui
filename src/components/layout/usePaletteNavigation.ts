@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { isFeatureAccessible } from '../../guidance/featureAccess';
 import type { FeatureAccessContext, FeatureDefinition } from '../../guidance/featureTypes';
 import { focusFeatureAnchor, guidanceNavigationBlocked } from '../../guidance/tourNavigation';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import type { NavigationDestination } from '../../navigation/navigationModel';
 
 import { createMainFocusHandoffState } from './routeFocus';
@@ -29,11 +30,11 @@ export const usePaletteNavigation = ({
   const current = useRef({ identityKey, currentPath, context });
   current.current = { identityKey, currentPath, context };
   const [pending, setPending] = useState<NavigationDestination | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useFeedbackState<string | null>(null, 'info');
   useEffect(() => {
     setPending(null);
     setNotice(null);
-  }, [identityKey, isOpen]);
+  }, [identityKey, isOpen, setNotice]);
   const openDestination = useCallback(
     (destination: NavigationDestination, confirmed = false) => {
       const feature = features.find(
@@ -62,7 +63,17 @@ export const usePaletteNavigation = ({
             isFeatureAccessible(feature, current.current.context)
         );
     },
-    [accessible, close, context, currentPath, features, identityKey, location.state, navigate]
+    [
+      accessible,
+      close,
+      context,
+      currentPath,
+      features,
+      identityKey,
+      location.state,
+      navigate,
+      setNotice,
+    ]
   );
   return {
     openDestination,

@@ -1,4 +1,5 @@
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type { PayrollComplianceSettingRow, PayslipPeriodOption, PayslipRow } from '../payrollTypes';
 import type { PayslipPresentation } from '../payslipPresentation';
 import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
@@ -52,7 +53,9 @@ const PayrollPayslipTab = (props: PayrollPayslipTabProps) => {
 
       {payslipError && !payslipsLoading && payslipMigrationRequired && (
         <Card>
-          <p className="text-sm text-slate-600 dark:text-slate-300">{payslipError}</p>
+          <FeedbackToast variant={'error'} messageKey={payslipError}>
+            {payslipError}
+          </FeedbackToast>
           <p className="mt-2 text-sm text-amber-900 dark:text-amber-100">
             Run tenant migrations (same as for Salary tab) so{' '}
             <span className="font-mono">payslip</span> exists.
@@ -64,7 +67,9 @@ const PayrollPayslipTab = (props: PayrollPayslipTabProps) => {
       )}
 
       {payslipError && !payslipsLoading && !payslipMigrationRequired && (
-        <p className="text-sm text-amber-800 dark:text-amber-200">{payslipError}</p>
+        <FeedbackToast variant={'error'} messageKey={payslipError}>
+          {payslipError}
+        </FeedbackToast>
       )}
 
       {!payslipsLoading && !payslipError && payslips && payslipPeriodOptions.length > 0 && (

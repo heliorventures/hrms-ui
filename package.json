@@ -12,6 +12,7 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "codegen:attendance": "node scripts/generate-attendance-client.mjs",
     "codegen:leave-queue": "node scripts/generate-leave-queue-client.mjs",
+    "codegen:loans": "node scripts/generate-loans-client.mjs",
     "test": "vitest run"
   },
   "dependencies": {

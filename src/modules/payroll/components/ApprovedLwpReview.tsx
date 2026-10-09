@@ -2,6 +2,8 @@ import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
 import { PayrollApprovedLwpReviewDocument as query } from '../../../api/graphql/graphql';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type { PeriodInput } from '../periodInputTypes';
 
@@ -20,7 +22,7 @@ interface Props {
 
 const ApprovedLwpReview = ({ client, employeeId, draft, disabled, onChange }: Props) => {
   const [review, setReview] = useState<Review | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const { year, month } = draft;
   useEffect(() => {
     let active = true;
@@ -35,12 +37,12 @@ const ApprovedLwpReview = ({ client, employeeId, draft, disabled, onChange }: Pr
     return () => {
       active = false;
     };
-  }, [client, employeeId, year, month]);
+  }, [client, employeeId, year, month, setError]);
   if (error)
     return (
-      <p role="alert" className="text-sm text-red-600">
+      <FeedbackToast variant={'error'} messageKey={error}>
         Approved LWP review: {error}
-      </p>
+      </FeedbackToast>
     );
   if (!review)
     return (

@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 
 import { PeriodInputEmployeesDocument as employeesQuery } from '../../../api/graphql/graphql';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageInformation from '../../../components/common/PageInformation';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 import PeriodEditor from './PeriodEditor';
@@ -18,7 +20,7 @@ const PayrollPeriodInputs = ({ client }: { client: GraphQLClient }) => {
   const [employeeId, setEmployeeId] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   useEffect(() => {
     let active = true;
     client
@@ -32,7 +34,7 @@ const PayrollPeriodInputs = ({ client }: { client: GraphQLClient }) => {
     return () => {
       active = false;
     };
-  }, [client]);
+  }, [client, setError]);
   return (
     <Card>
       <PageInformation title="Monthly exceptions">
@@ -44,9 +46,9 @@ const PayrollPeriodInputs = ({ client }: { client: GraphQLClient }) => {
       </PageInformation>
       <p className="mb-2 text-xs text-content-secondary">Finalized periods cannot be changed.</p>
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="flex flex-col gap-1 text-sm">

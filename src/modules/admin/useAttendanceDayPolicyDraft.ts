@@ -7,6 +7,7 @@ import {
   type AttendancePolicySettingsQuery,
   type PreviewAttendanceDayPolicyQuery,
 } from '../../api/attendance/graphql';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { boundaryTime } from '../../utils/attendanceDay';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -100,8 +101,8 @@ export function useAttendanceDayPolicyDraft({
   const [proposal, setProposal] = useState<PolicyProposal | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState<'preview' | 'schedule' | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [success, setSuccess] = useFeedbackState<string | null>(null, 'success');
   const policyRef = useRef(policy);
   policyRef.current = policy;
   const { ownerGeneration, ownsRequest, previewGeneration, scheduleGeneration } =
@@ -117,7 +118,7 @@ export function useAttendanceDayPolicyDraft({
     setBusy(null);
     setError(null);
     setSuccess(null);
-  }, [client, ownerKey]);
+  }, [client, ownerKey, setError, setSuccess]);
 
   const changeDraft = (change: () => void) => {
     previewGeneration.current += 1;

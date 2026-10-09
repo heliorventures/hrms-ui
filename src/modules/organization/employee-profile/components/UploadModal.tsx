@@ -1,9 +1,12 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
-import Modal from '../../../../components/common/Modal';
+
 import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
+import Modal from '../../../../components/common/Modal';
 import Select from '../../../../components/common/Select';
-import type { DocumentCategory, TenantDocumentTypeOption } from '../types';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
+import type { DocumentCategory, TenantDocumentTypeOption } from '../types';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -58,7 +61,7 @@ export function UploadModal({
   const [documentTypeId, setDocumentTypeId] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
   const typeOptions = useMemo(() => {
     if (documentTypes.length === 0) return [];
@@ -185,7 +188,11 @@ export function UploadModal({
             }}
           />
         </div>
-        {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+        {error ? (
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        ) : null}
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={resetAndClose} disabled={busy}>
             Cancel

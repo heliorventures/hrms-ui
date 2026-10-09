@@ -12,6 +12,7 @@ import {
   filterNavigationDestinations,
 } from '../../navigation/navigationSelectors';
 import { useAccessibleNavigation } from '../../navigation/useAccessibleNavigation';
+import FeedbackToast from '../common/FeedbackToast';
 import { useDialogSurface } from '../common/useDialogSurface';
 
 import { useCommandPalette } from './CommandPaletteContext';
@@ -232,7 +233,9 @@ const CommandPalettePanel = ({
         <div className="p-3">
           {notice ? (
             <div className="mb-2 space-y-2 text-sm">
-              <p role="status">{notice}</p>
+              <FeedbackToast variant={'info'} messageKey={notice}>
+                {notice}
+              </FeedbackToast>
               {onConfirmNavigation ? (
                 <div className="flex gap-3">
                   <button type="button" onClick={onConfirmNavigation}>

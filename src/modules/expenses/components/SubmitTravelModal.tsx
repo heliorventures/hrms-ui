@@ -1,4 +1,5 @@
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Textarea from '../../../components/common/Textarea';
@@ -33,7 +34,11 @@ const SubmitTravelModal = (props: SubmitTravelModalProps) => {
       title="Submit Travel Request"
     >
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
-        {submitError && <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
+        {submitError && (
+          <FeedbackToast variant={'error'} messageKey={submitError}>
+            {submitError}
+          </FeedbackToast>
+        )}
 
         <TravelRouteFields form={form} />
 

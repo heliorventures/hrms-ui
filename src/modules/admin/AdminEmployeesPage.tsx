@@ -7,9 +7,11 @@ import {
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import Table from '../../components/common/Table';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -44,7 +46,7 @@ const AdminEmployeesPage = () => {
   const client = useGraphClient('client');
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [createOpen, setCreateOpen] = useState(false);
   const [editRow, setEditRow] = useState<EditEmployeeRow | null>(null);
   const [deptNames, setDeptNames] = useState<Record<string, string>>({});
@@ -63,7 +65,7 @@ const AdminEmployeesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [client]);
+  }, [client, setError]);
 
   useEffect(() => {
     void refetch();
@@ -195,9 +197,11 @@ const AdminEmployeesPage = () => {
       />
 
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
 
       <Card>

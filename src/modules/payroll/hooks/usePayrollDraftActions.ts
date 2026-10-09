@@ -2,6 +2,7 @@ import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useRef, useState } from 'react';
 
 import { useDialogs } from '../../../contexts/DialogContext';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
   draftQuery,
@@ -24,7 +25,7 @@ export const usePayrollDraftActions = (
   const draft = draftState.owner === ownerKey && enabled ? draftState.value : null;
   const setDraft = (value: PayrollDraft | null) => setDraftState({ owner: ownerKey, value });
   const [runBusy, setRunBusy] = useState<string | null>(null);
-  const [runError, setRunError] = useState<string | null>(null);
+  const [runError, setRunError] = useFeedbackState<string | null>(null, 'error');
   const [runOk, setRunOk] = useState<string | null>(null);
   const lifetime = useRef(0);
   useEffect(() => {
@@ -36,7 +37,7 @@ export const usePayrollDraftActions = (
     return () => {
       lifetime.current = generation + 1;
     };
-  }, [ownerKey, enabled]);
+  }, [ownerKey, enabled, setRunError]);
   const runPayroll = async (cycleId: string) => {
     if (!enabled || runBusy) return;
     const generation = lifetime.current;

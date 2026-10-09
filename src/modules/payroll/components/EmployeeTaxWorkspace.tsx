@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { TaxSettingsEmployeesDocument } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { useEmployeeTaxSettings } from '../hooks/useEmployeeTaxSettings';
 
@@ -30,9 +32,9 @@ const EmployeeForms = ({
   return (
     <div className="space-y-6">
       {state.error && (
-        <p role="alert" className="text-red-700">
+        <FeedbackToast variant={'error'} messageKey={state.error}>
           {state.error}
-        </p>
+        </FeedbackToast>
       )}
       {state.busy ? (
         <p role="status">Loading tax settings…</p>
@@ -82,7 +84,7 @@ const EmployeeTaxWorkspace = ({ client }: { client: GraphQLClient }) => {
   >([]);
   const [employee, setEmployee] = useState('');
   const [year, setYear] = useState(new Date().getFullYear() - (new Date().getMonth() < 3 ? 1 : 0));
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   useEffect(() => {
     let active = true;
     void client
@@ -96,10 +98,14 @@ const EmployeeTaxWorkspace = ({ client }: { client: GraphQLClient }) => {
     return () => {
       active = false;
     };
-  }, [client]);
+  }, [client, setError]);
   return (
     <Card title="Employee tax and recorded history">
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
+      )}
       <div className="mb-5 grid gap-3 sm:grid-cols-2">
         <label>
           Employee

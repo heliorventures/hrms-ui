@@ -1,20 +1,23 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { Upload } from 'lucide-react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 
-import type { EmployeeProfileModel, IdentityRecord, TenantDocumentTypeOption } from '../types';
-import { InfoCard } from '../components/InfoCard';
-import { VerificationBadge } from '../components/StatusBadge';
-import Button from '../../../../components/common/Button';
-import Input from '../../../../components/common/Input';
-import { UploadModal } from '../components/UploadModal';
-import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import {
   SubmitEmployeeProfileChangeDocument,
   UploadEmployeeDocumentProfileDocument,
   UpsertEmployeePrimaryAadhaarDocument,
   UpsertEmployeePrimaryPanDocument,
 } from '../../../../api/graphql/graphql';
+import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
+import Input from '../../../../components/common/Input';
+import { useActionFeedback } from '../../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
+import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
+import { InfoCard } from '../components/InfoCard';
+import { VerificationBadge } from '../components/StatusBadge';
+import { UploadModal } from '../components/UploadModal';
+import type { EmployeeProfileModel, IdentityRecord, TenantDocumentTypeOption } from '../types';
 
 interface IdentityTabProps {
   employeeId: string;
@@ -39,12 +42,14 @@ export function IdentityTab({
   isHr,
   onChanged,
 }: IdentityTabProps) {
+  const notifyAction = useActionFeedback();
+
   const [identities, setIdentities] = useState(model.identities);
   const [panInput, setPanInput] = useState('');
   const [aadhaarInput, setAadhaarInput] = useState('');
   const [panSaving, setPanSaving] = useState(false);
   const [aadhaarSaving, setAadhaarSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [uploadKind, setUploadKind] = useState<IdentityRecord['kind'] | null>(null);
   const [supportingDocuments, setSupportingDocuments] = useState<
     Partial<Record<IdentityRecord['kind'], string>>
@@ -84,7 +89,9 @@ export function IdentityTab({
         replaceIdentity({
           kind: 'PAN',
           maskedValue: result.upsertEmployeePrimaryPan.maskedPan,
-          verificationStatus: result.upsertEmployeePrimaryPan.isVerified ? 'VERIFIED' : 'UNVERIFIED',
+          verificationStatus: result.upsertEmployeePrimaryPan.isVerified
+            ? 'VERIFIED'
+            : 'UNVERIFIED',
         });
       } else {
         await client.request(SubmitEmployeeProfileChangeDocument, {
@@ -98,6 +105,7 @@ export function IdentityTab({
         if (pan) replaceIdentity({ ...pan, verificationStatus: 'PENDING' });
       }
       setPanInput('');
+      notifyAction(isHr ? 'saved' : 'submitted');
       onChanged?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
@@ -117,7 +125,9 @@ export function IdentityTab({
         replaceIdentity({
           kind: 'AADHAAR',
           maskedValue: result.upsertEmployeePrimaryAadhaar.maskedAadhaar,
-          verificationStatus: result.upsertEmployeePrimaryAadhaar.isVerified ? 'VERIFIED' : 'UNVERIFIED',
+          verificationStatus: result.upsertEmployeePrimaryAadhaar.isVerified
+            ? 'VERIFIED'
+            : 'UNVERIFIED',
         });
       } else {
         await client.request(SubmitEmployeeProfileChangeDocument, {
@@ -131,6 +141,7 @@ export function IdentityTab({
         if (aadhaar) replaceIdentity({ ...aadhaar, verificationStatus: 'PENDING' });
       }
       setAadhaarInput('');
+      notifyAction(isHr ? 'saved' : 'submitted');
       onChanged?.();
     } catch (e) {
       setError(graphQlUserMessage(e));
@@ -160,6 +171,7 @@ export function IdentityTab({
         [uploadKind]: result.uploadEmployeeDocument.id,
       }));
     }
+    notifyAction('saved');
     onChanged?.();
   };
 
@@ -170,9 +182,9 @@ export function IdentityTab({
   return (
     <div className="space-y-4">
       {error ? (
-        <div className="rounded-2xl border border-red-200/80 bg-red-50/90 px-4 py-2 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-100">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </div>
+        </FeedbackToast>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">

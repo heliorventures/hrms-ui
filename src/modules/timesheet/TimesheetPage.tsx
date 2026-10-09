@@ -1,27 +1,36 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createPermissionService } from '../../auth/permissionService';
-import Modal from '../../components/common/Modal';
-import FlashToastBar from '../../components/common/FlashToastBar';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDialogs } from '../../contexts/DialogContext';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { useFlashToast } from '../../hooks/useFlashToast';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
 import {
   DeleteTimesheetEntryDocument,
   SubmitTimesheetWeekDocument,
   TimesheetLockPolicyDocument,
   TimesheetRowsDocument,
 } from '../../api/graphql/graphql';
-import { decodeTimesheetDescription } from '../../utils/timesheetDescription';
-import { timesheetWeekRangeIso } from '../../utils/timesheetWeek';
-import { isoDateRangeContains, monthBoundsIso, parseIsoDate, toIsoDate } from '../../utils/calendarRange';
+import { createPermissionService } from '../../auth/permissionService';
+import FlashToastBar from '../../components/common/FlashToastBar';
+import Modal from '../../components/common/Modal';
+import { useAuth } from '../../contexts/AuthContext';
+import { useDialogs } from '../../contexts/DialogContext';
+import { useActionFeedback } from '../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
+import { useFlashToast } from '../../hooks/useFlashToast';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import {
+  isoDateRangeContains,
+  monthBoundsIso,
+  parseIsoDate,
+  toIsoDate,
+} from '../../utils/calendarRange';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
   buildCustomRangeGridCells,
   buildMonthGridCells,
   buildWeekRowCells,
 } from '../../utils/timesheetCalendarGrid';
+import { decodeTimesheetDescription } from '../../utils/timesheetDescription';
+import { timesheetWeekRangeIso } from '../../utils/timesheetWeek';
 import TimesheetEntryForm from '../attendance/components/TimesheetEntryForm';
+
 import TimesheetCalendarCard from './components/TimesheetCalendarCard';
 import TimesheetControlsCard from './components/TimesheetControlsCard';
 import {
@@ -42,6 +51,8 @@ const TIMESHEET_ROW_LIMIT = 500;
 const DEFAULT_LOCK_WEEKS = 4;
 
 const TimesheetPage = () => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const { clientSession } = useAuth();
   const permissions = createPermissionService(clientSession);
@@ -53,7 +64,7 @@ const TimesheetPage = () => {
   const [lockWeeks, setLockWeeks] = useState(DEFAULT_LOCK_WEEKS);
   const [lockApproved, setLockApproved] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [periodMode, setPeriodMode] = useState<PeriodMode>('week');
   const [cursor, setCursor] = useState(() => new Date());
   const [customStart, setCustomStart] = useState('');
@@ -149,7 +160,7 @@ const TimesheetPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [canRead, loadPolicies, loadEntries]);
+  }, [canRead, loadPolicies, loadEntries, setError]);
 
   useEffect(() => {
     if (periodMode !== 'custom' || (customStart && customEnd)) return;
@@ -164,7 +175,7 @@ const TimesheetPage = () => {
     } catch (err) {
       setError(graphQlUserMessage(err));
     }
-  }, [loadPolicies, loadEntries]);
+  }, [loadPolicies, loadEntries, setError]);
 
   useEffect(() => {
     const refreshPolicy = () => {
@@ -208,7 +219,8 @@ const TimesheetPage = () => {
     for (const entry of filtered) {
       result.set(entry.workDate, [...(result.get(entry.workDate) ?? []), entry]);
     }
-    for (const dateRows of result.values()) dateRows.sort((first, second) => first.id.localeCompare(second.id));
+    for (const dateRows of result.values())
+      dateRows.sort((first, second) => first.id.localeCompare(second.id));
     return result;
   }, [filtered]);
 
@@ -238,7 +250,8 @@ const TimesheetPage = () => {
   const submitDisabledReason = activeWeekLocked
     ? 'This week is already submitted. Ask the approver to reject it before resubmitting.'
     : null;
-  const allowedMinIsoForm = displayBounds.start >= earliestMonday ? displayBounds.start : earliestMonday;
+  const allowedMinIsoForm =
+    displayBounds.start >= earliestMonday ? displayBounds.start : earliestMonday;
   const todayIso = toIsoDate(new Date());
 
   const dateAllowsNewEntry = useCallback(
@@ -253,14 +266,23 @@ const TimesheetPage = () => {
         !dayRows.some((row) => timesheetEntryLocksDay(row.status))
       );
     },
-    [allowedMinIsoForm, customRangeError, displayBounds.end, earliestMonday, entriesByDate, lockedWeekStarts]
+    [
+      allowedMinIsoForm,
+      customRangeError,
+      displayBounds.end,
+      earliestMonday,
+      entriesByDate,
+      lockedWeekStarts,
+    ]
   );
 
   const openNewEntry = (datePreset: string | null = null) => {
     if (!canWrite) return;
     const targetDate = datePreset ?? todayIso;
     if (lockedWeekStarts.has(weekMondayOfWorkDateIso(targetDate))) {
-      setError('This week is already submitted. Ask the approver to reject it before adding entries.');
+      setError(
+        'This week is already submitted. Ask the approver to reject it before adding entries.'
+      );
       return;
     }
     setEditing(null);
@@ -282,6 +304,7 @@ const TimesheetPage = () => {
     setError(null);
     try {
       await client.request(DeleteTimesheetEntryDocument, { id: row.id });
+      notifyAction('removed');
       await refresh();
     } catch (err) {
       setError(graphQlUserMessage(err));
@@ -298,7 +321,9 @@ const TimesheetPage = () => {
       freshPolicy?.editableWeekSpan ?? DEFAULT_LOCK_WEEKS
     );
     if (weekSubmitMonday < freshEarliestMonday) {
-      setError(`Week ${weekSubmitMonday} is outside the editable window starting ${freshEarliestMonday}.`);
+      setError(
+        `Week ${weekSubmitMonday} is outside the editable window starting ${freshEarliestMonday}.`
+      );
       return;
     }
     const weekBounds = {
@@ -314,7 +339,9 @@ const TimesheetPage = () => {
       return;
     }
     if (activeWeekLocked) {
-      setError('This week is already submitted. Ask the approver to reject it before resubmitting.');
+      setError(
+        'This week is already submitted. Ask the approver to reject it before resubmitting.'
+      );
       return;
     }
     setSubmitBusy(true);
@@ -332,7 +359,9 @@ const TimesheetPage = () => {
 
   const exportCsv = () => {
     const lines = [
-      ['Work Date', 'Hours Worked', 'Project Code', 'Task', 'Notes', 'Status', 'Batch Id'].join(','),
+      ['Work Date', 'Hours Worked', 'Project Code', 'Task', 'Notes', 'Status', 'Batch Id'].join(
+        ','
+      ),
       ...sorted.map((row) => {
         const decoded = decodeTimesheetDescription(row.description ?? null);
         const escapeCsv = (value: string | null | undefined) =>
@@ -345,10 +374,15 @@ const TimesheetPage = () => {
           decoded.notes,
           row.status,
           row.batchId ?? '',
-        ].map(escapeCsv).join(',');
+        ]
+          .map(escapeCsv)
+          .join(',');
       }),
     ];
-    downloadTextFile(`timesheet-${displayBounds.start}-to-${displayBounds.end}.csv`, lines.join('\n'));
+    downloadTextFile(
+      `timesheet-${displayBounds.start}-to-${displayBounds.end}.csv`,
+      lines.join('\n')
+    );
   };
 
   const navPrev = () => {
@@ -430,12 +464,7 @@ const TimesheetPage = () => {
           canWrite && timesheetEntryCanEdit(row.status, row.workDate, earliestMonday, lockApproved)
         }
         editDisabledReason={(row) =>
-          timesheetEntryEditDisabledReason(
-            row.status,
-            row.workDate,
-            earliestMonday,
-            lockApproved
-          )
+          timesheetEntryEditDisabledReason(row.status, row.workDate, earliestMonday, lockApproved)
         }
         onAddForDate={openNewEntry}
         onDelete={(row) => void handleDelete(row)}
@@ -446,40 +475,42 @@ const TimesheetPage = () => {
         }}
       />
 
-      {canWrite ? <Modal
-        isOpen={formOpen}
-        onClose={() => {
-          setFormOpen(false);
-          setEditing(null);
-          setAddDatePreset(null);
-        }}
-        title={editing ? 'Edit Entry' : 'Add Entry'}
-      >
-        <TimesheetEntryForm
-          key={editing?.id ?? addDatePreset ?? 'new'}
-          allowedMinIso={allowedMinIsoForm}
-          allowedMaxIso={displayBounds.end}
-          initialWorkDateIso={editing?.workDate ?? addDatePreset ?? undefined}
-          editing={
-            editing
-              ? {
-                  id: editing.id,
-                  workDate: editing.workDate,
-                  hoursWorked: editing.hoursWorked,
-                  projectCode: editing.projectCode,
-                  description: editing.description,
-                }
-              : undefined
-          }
+      {canWrite ? (
+        <Modal
+          isOpen={formOpen}
           onClose={() => {
             setFormOpen(false);
             setEditing(null);
             setAddDatePreset(null);
           }}
-          onSaved={() => void refresh()}
-          existingEntries={entries}
-        />
-      </Modal> : null}
+          title={editing ? 'Edit Entry' : 'Add Entry'}
+        >
+          <TimesheetEntryForm
+            key={editing?.id ?? addDatePreset ?? 'new'}
+            allowedMinIso={allowedMinIsoForm}
+            allowedMaxIso={displayBounds.end}
+            initialWorkDateIso={editing?.workDate ?? addDatePreset ?? undefined}
+            editing={
+              editing
+                ? {
+                    id: editing.id,
+                    workDate: editing.workDate,
+                    hoursWorked: editing.hoursWorked,
+                    projectCode: editing.projectCode,
+                    description: editing.description,
+                  }
+                : undefined
+            }
+            onClose={() => {
+              setFormOpen(false);
+              setEditing(null);
+              setAddDatePreset(null);
+            }}
+            onSaved={() => void refresh()}
+            existingEntries={entries}
+          />
+        </Modal>
+      ) : null}
       <FlashToastBar toast={flash} onDismiss={clearFlash} />
     </div>
   );

@@ -1,6 +1,15 @@
+import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
+import Input from '@/components/common/Input';
+import Modal from '@/components/common/Modal';
+import PageHeader from '@/components/common/PageHeader';
+import Table from '@/components/common/Table';
+import { useGraphClient } from '@/hooks/useGraphClient';
 import { useCallback, useEffect, useState } from 'react';
 
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageInformation from '../../components/common/PageInformation';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 import {
@@ -10,16 +19,6 @@ import {
   OPS_OPERATOR_USERS,
   OPS_SET_OPERATOR_USER_ROLES,
 } from './opsGraph';
-
-import Button from '@/components/common/Button';
-import Card from '@/components/common/Card';
-import Input from '@/components/common/Input';
-import Modal from '@/components/common/Modal';
-import PageHeader from '@/components/common/PageHeader';
-import Table from '@/components/common/Table';
-import { useGraphClient } from '@/hooks/useGraphClient';
-
-
 
 type OpUserRow = {
   id: string;
@@ -43,9 +42,9 @@ const OpsOperatorsPage = () => {
   const [users, setUsers] = useState<OpUserRow[]>([]);
   const [roles, setRoles] = useState<OpRoleRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [toast, setToast] = useFeedbackState<string | null>(null, 'success');
+  const [actionError, setActionError] = useFeedbackState<string | null>(null, 'error');
 
   const [createOpen, setCreateOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -74,7 +73,7 @@ const OpsOperatorsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [client]);
+  }, [client, setError]);
 
   useEffect(() => {
     void load();
@@ -103,7 +102,9 @@ const OpsOperatorsPage = () => {
           phone: phone.trim() || undefined,
         },
       });
-      setToast('Operator user created. Use “Edit roles” on the user row to grant ADMIN / SUPPORT (or other roles).');
+      setToast(
+        'Operator user created. Use “Edit roles” on the user row to grant ADMIN / SUPPORT (or other roles).'
+      );
       setCreateOpen(false);
       setPassword('');
       await load();
@@ -122,7 +123,7 @@ const OpsOperatorsPage = () => {
     try {
       const data = await client.request<{ operatorRolesForUser: { id: string }[] }>(
         OPS_OPERATOR_ROLES_FOR_USER,
-        { operatorUserId: user.id },
+        { operatorUserId: user.id }
       );
       const assigned = new Set((data.operatorRolesForUser ?? []).map((x) => x.id));
       const next: Record<string, boolean> = {};
@@ -188,21 +189,14 @@ const OpsOperatorsPage = () => {
       />
 
       {toast && (
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+        <FeedbackToast variant={'success'} messageKey={toast} onDismiss={() => setToast(null)}>
           {toast}
-          <button
-            type="button"
-            className="ml-2 text-emerald-700 underline dark:text-emerald-300"
-            onClick={() => setToast(null)}
-          >
-            Dismiss
-          </button>
-        </p>
+        </FeedbackToast>
       )}
       {actionError && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <FeedbackToast variant={'error'} messageKey={actionError}>
           {actionError}
-        </p>
+        </FeedbackToast>
       )}
 
       <Card title="Note">
@@ -216,15 +210,29 @@ const OpsOperatorsPage = () => {
 
       {loading && <p className="text-sm text-slate-500">Loading...</p>}
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
 
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} title="New Operator User" size="md">
+      <Modal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="New Operator User"
+        size="md"
+      >
         <form onSubmit={onCreateUser} className="space-y-3">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Password must be at least 8 characters.</p>
-          <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth />
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Password must be at least 8 characters.
+          </p>
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            fullWidth
+          />
           <Input
             label="Password"
             type="password"
@@ -234,8 +242,19 @@ const OpsOperatorsPage = () => {
             fullWidth
             autoComplete="new-password"
           />
-          <Input label="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required fullWidth />
-          <Input label="Phone (Optional)" value={phone} onChange={(e) => setPhone(e.target.value)} fullWidth />
+          <Input
+            label="Full Name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            fullWidth
+          />
+          <Input
+            label="Phone (Optional)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            fullWidth
+          />
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
               Cancel
@@ -257,7 +276,8 @@ const OpsOperatorsPage = () => {
         {!rolesModalLoading && rolesSubject && (
           <form onSubmit={onSaveRoles} className="space-y-3">
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Checked roles replace all assignments for this user (you can clear every box to remove all roles).
+              Checked roles replace all assignments for this user (you can clear every box to remove
+              all roles).
             </p>
             <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-3 dark:border-slate-600">
               {roles.length === 0 ? (
@@ -326,7 +346,12 @@ const OpsOperatorsPage = () => {
                   key: 'id',
                   label: '',
                   render: (r) => (
-                    <Button type="button" variant="outline" size="sm" onClick={() => void openRolesEditor(r)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void openRolesEditor(r)}
+                    >
                       Edit roles
                     </Button>
                   ),

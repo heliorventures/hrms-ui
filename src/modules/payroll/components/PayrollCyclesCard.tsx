@@ -1,6 +1,7 @@
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Table from '../../../components/common/Table';
 import { formatPayrollPaymentDate, formatPayrollPeriod } from '../payrollFormatters';
 import type { PayrollCycleFormState, PayrollCycleRow } from '../payrollTypes';
@@ -38,9 +39,15 @@ const PayrollCyclesCard = ({
 }: PayrollCyclesCardProps) => (
   <Card title="Payroll Cycles">
     <NewPayrollCycleForm {...{ form, createBusy, createError, createOk, onChange, onCreate }} />
-    {runError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{runError}</p>}
+    {runError && (
+      <FeedbackToast variant={'error'} messageKey={runError}>
+        {runError}
+      </FeedbackToast>
+    )}
     {runOk && !runError && (
-      <p className="mb-3 text-sm text-green-700 dark:text-green-400">{runOk}</p>
+      <FeedbackToast variant={'success'} messageKey={runOk}>
+        {runOk}
+      </FeedbackToast>
     )}
     <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
       Calculate a draft, review every employee and finalize when ready. You can recalculate any

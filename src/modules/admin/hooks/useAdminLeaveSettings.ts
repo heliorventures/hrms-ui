@@ -14,6 +14,8 @@ import {
 } from '../../../api/graphql/graphql';
 import { useDialogs } from '../../../contexts/DialogContext';
 import { captureGuidanceFormSave } from '../../../guidance/tourNavigation';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { usePageTabs } from '../../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -40,8 +42,10 @@ import { LEAVE_SETTINGS_TABS } from '../leaveSettingsUtils';
 import { useAdminLeaveHolidays } from './useAdminLeaveHolidays';
 
 export function useAdminLeaveSettings() {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
-  const { confirm, alert: showAlert } = useDialogs();
+  const { confirm } = useDialogs();
   const currentYear = useMemo(() => new Date().getFullYear(), []);
   const tabs = LEAVE_SETTINGS_TABS.map((item) => ({ id: item.key, label: item.label }));
   const { tab: selectedTab, setTab } = usePageTabs(tabs);
@@ -49,7 +53,7 @@ export function useAdminLeaveSettings() {
     LEAVE_SETTINGS_TABS.find((item) => item.key === selectedTab)?.key ?? 'types';
   const [data, setData] = useState<AdminLeaveConsoleQuery | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [provisionBusy, setProvisionBusy] = useState(false);
   const [provisionYear, setProvisionYear] = useState(currentYear);
   const [typeModal, setTypeModal] = useState(false);
@@ -77,7 +81,7 @@ export function useAdminLeaveSettings() {
     } finally {
       setLoading(false);
     }
-  }, [load]);
+  }, [load, setError]);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,7 +100,7 @@ export function useAdminLeaveSettings() {
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [load, setError]);
 
   const leaveTypeCodeById = useMemo(() => {
     const codes = new Map<string, string>();
@@ -114,11 +118,10 @@ export function useAdminLeaveSettings() {
         ProvisionLeaveBalancesFromPoliciesDocument,
         { year: provisionYear }
       );
-      await showAlert({
-        title: 'Provisioning Complete',
-        message: `Updated ${result.provisionLeaveBalancesFromPolicies} employee / leave-type balance row(s).`,
-        variant: 'success',
-      });
+      notifyAction(
+        'updated',
+        `Updated ${result.provisionLeaveBalancesFromPolicies} employee / leave-type balance row(s).`
+      );
       await refresh();
     } catch (err) {
       setError(graphQlUserMessage(err));
@@ -156,6 +159,7 @@ export function useAdminLeaveSettings() {
           requiresDocument: typeForm.reqDoc,
         },
       });
+      notifyAction('saved');
       setTypeModal(false);
       await refresh();
     } catch (err) {
@@ -169,6 +173,7 @@ export function useAdminLeaveSettings() {
     try {
       setError(null);
       await client.request(DeleteLeaveTypeAdminDocument, { leaveTypeId: id });
+      notifyAction('removed');
       await refresh();
     } catch (err) {
       setError(graphQlUserMessage(err));
@@ -211,6 +216,7 @@ export function useAdminLeaveSettings() {
           minNoticeDays: numberOrNull(policyForm.minNotice),
         },
       });
+      notifyAction('saved');
       setPolicyModal(false);
       await refresh();
     } catch (err) {
@@ -224,6 +230,7 @@ export function useAdminLeaveSettings() {
     try {
       setError(null);
       await client.request(DeleteLeavePolicyAdminDocument, { leavePolicyId: id });
+      notifyAction('removed');
       await refresh();
     } catch (err) {
       setError(graphQlUserMessage(err));
@@ -246,6 +253,7 @@ export function useAdminLeaveSettings() {
           carriedForwardDays: balanceForm.carried,
         },
       });
+      notifyAction('saved');
       markSaved();
       await refresh();
     } catch (err) {
@@ -267,6 +275,7 @@ export function useAdminLeaveSettings() {
         },
       };
       await client.request(AdjustLeaveBalanceEntitlementAdminDocument, variables);
+      notifyAction('updated');
       markSaved();
       await refresh();
     } catch (err) {

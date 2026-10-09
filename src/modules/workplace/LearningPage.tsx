@@ -4,9 +4,11 @@ import { WorkplaceLearningQuery, LearningCatalogDocument } from '../../api/graph
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -35,8 +37,8 @@ const LearningPage = () => {
   const [data, setData] = useState<WorkplaceLearningQuery | null>(null);
   const [loading, setLoading] = useState(true);
   const [offsets, setOffsets] = useState<Record<string, number>>({});
-  const [notice, setNotice] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useFeedbackState<string | null>(null, 'info');
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
   const tabs = [
     { id: 'courses', label: 'Courses' },
@@ -70,7 +72,7 @@ const LearningPage = () => {
     return () => {
       c = true;
     };
-  }, [load]);
+  }, [load, setError]);
 
   return (
     <div className="space-y-4">
@@ -79,14 +81,16 @@ const LearningPage = () => {
       </div>
       <PageHeader title="Learning" />
       {notice && (
-        <p role="status" className="text-sm text-content-secondary">
+        <FeedbackToast variant={'info'} messageKey={notice}>
           {notice}
-        </p>
+        </FeedbackToast>
       )}
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
       <PageTabPanel id="skills" activeTab={tab}>
         <Card title="Skills">

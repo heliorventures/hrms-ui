@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import UuidEntitySearchSelect, {
@@ -50,7 +51,11 @@ const ExpensePolicyModal = ({
     title={form.editPolicyId ? 'Edit expense policy' : 'New expense policy'}
   >
     <form onSubmit={onSubmit} className="space-y-4">
-      {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? (
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
+      ) : null}
       <label className="block">
         <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Applicable to
@@ -73,7 +78,9 @@ const ExpensePolicyModal = ({
         </p>
       ) : null}
       {directoryError ? (
-        <p className="text-xs text-amber-700 dark:text-amber-400">{directoryError}</p>
+        <FeedbackToast variant={'error'} messageKey={directoryError}>
+          {directoryError}
+        </FeedbackToast>
       ) : null}
       <ExpensePolicyScopeFields
         form={form}

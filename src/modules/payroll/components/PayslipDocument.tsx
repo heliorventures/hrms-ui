@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type { PayslipPresentation } from '../payslipPresentation';
 import { PAYSLIP_TEMPLATES, resolvePayslipTemplate } from '../payslipTemplates';
 import type { UnpaidLeaveSnapshot } from '../unpaidLeaveDocuments';
@@ -138,9 +139,9 @@ const PayslipDocument = ({
       </div>
 
       {invalidTemplate && (
-        <p role="alert">
+        <FeedbackToast variant={'error'}>
           The company payslip template is unsupported. Contact your payroll administrator.
-        </p>
+        </FeedbackToast>
       )}
       {detailsUnavailable ? (
         <p role="status">

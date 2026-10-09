@@ -9,7 +9,9 @@ import {
 } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import { useTenant } from '../../../contexts/TenantContext';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { usePayslipLogo } from '../hooks/usePayslipLogo';
 import { usePayslipPresentation } from '../hooks/usePayslipPresentation';
@@ -49,19 +51,26 @@ const ManagedPayslipDocument = ({
   return (
     <>
       {error && (
-        <p role="alert">
+        <FeedbackToast
+          variant={'error'}
+          messageKey={error}
+          action={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  presentation.retry();
+                  unpaid.retry();
+                  logo.retry();
+                }}
+              >
+                Retry payslip details
+              </Button>
+            </>
+          }
+        >
           Payslip details could not be loaded. {error}
-          <Button
-            variant="outline"
-            onClick={() => {
-              presentation.retry();
-              unpaid.retry();
-              logo.retry();
-            }}
-          >
-            Retry payslip details
-          </Button>
-        </p>
+        </FeedbackToast>
       )}
       <PayslipDocument
         tenantName={currentTenant.name}
@@ -88,7 +97,7 @@ const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey
   const [employeeId, setEmployeeId] = useState('');
   const [data, setData] = useState<{ employeeId: string; result: Result } | null>(null);
   const [slipId, setSlipId] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     let active = true;
@@ -103,7 +112,7 @@ const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey
     return () => {
       active = false;
     };
-  }, [client]);
+  }, [client, setError]);
   useEffect(() => {
     let active = true;
     setData(null);
@@ -132,7 +141,7 @@ const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey
     return () => {
       active = false;
     };
-  }, [client, employeeId, settingsRevision]);
+  }, [client, employeeId, settingsRevision, setError]);
   const selected = employees.find((employee) => employee.id === employeeId);
   const result = data?.employeeId === employeeId ? data.result : null;
   const slip = result?.payslips.find((item) => item.id === slipId);
@@ -172,7 +181,11 @@ const ManagedPayslips = ({ client, ownerKey }: { client: GraphQLClient; ownerKey
             </label>
           )}
         </div>
-        {error && <p role="alert">{error}</p>}
+        {error && (
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        )}
         {busy && <p role="status">Loading employee payslips...</p>}
         {result && result.payslips.length === 0 && (
           <p>

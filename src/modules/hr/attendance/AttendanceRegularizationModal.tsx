@@ -23,6 +23,7 @@ const AttendanceWindowStatus = ({ windows }: { windows: RegularizationState['win
     ) : null}
     {windows.error ? (
       <PageNotice
+        messageKey={windows.error}
         variant="error"
         title="Attendance day window could not be loaded"
         action={
@@ -171,7 +172,12 @@ const AttendanceRegularizationModal = (props: AttendanceRegularizationModalProps
     >
       <form className="space-y-4" onSubmit={(event) => void submit(event)} noValidate>
         {formError ? (
-          <PageNotice variant="error" title="Attendance was not saved" focusOnMount>
+          <PageNotice
+            messageKey={formError}
+            variant="error"
+            title="Attendance was not saved"
+            focusOnMount
+          >
             {formError}
           </PageNotice>
         ) : null}

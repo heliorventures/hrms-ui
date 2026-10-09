@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
+
 import { emptyConfig, emptyConfirm } from './prejoiningAdminHelpers';
 import type {
   ConfirmJoinedDraft,
@@ -23,8 +25,8 @@ function useWorkspaceState(canManage: boolean) {
   const [loading, setLoading] = useState(false);
   const [configLoading, setConfigLoading] = useState(canManage);
   const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [notice, setNotice] = useFeedbackState<string | null>(null, 'info');
   return {
     tab,
     setTab,
@@ -78,7 +80,7 @@ function useInvitationReviewState() {
 function useJoiningState() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmDraft, setConfirmDraft] = useState<ConfirmJoinedDraft>(emptyConfirm);
-  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useFeedbackState<string | null>(null, 'error');
   const [departments, setDepartments] = useState<DirectoryOption[]>([]);
   const [designations, setDesignations] = useState<DirectoryOption[]>([]);
   const [managers, setManagers] = useState<DirectoryOption[]>([]);

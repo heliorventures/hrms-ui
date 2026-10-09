@@ -12,9 +12,11 @@ import { PERMISSIONS } from '../../auth/permissions';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import PageInformation from '../../components/common/PageInformation';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { formatMinutesAsHhMm } from '../../utils/attendanceDuration';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -103,7 +105,7 @@ const AttendanceDailyReportPanel = ({ fromDate, toDate }: AttendanceDailyReportP
   >(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [retryVersion, setRetryVersion] = useState(0);
   const mountedRef = useRef(true);
 
@@ -184,6 +186,7 @@ const AttendanceDailyReportPanel = ({ fromDate, toDate }: AttendanceDailyReportP
     ownerKey,
     retryVersion,
     toDate,
+    setError,
   ]);
 
   // eslint-disable-next-line complexity
@@ -314,7 +317,9 @@ const AttendanceDailyReportPanel = ({ fromDate, toDate }: AttendanceDailyReportP
           </Button>
         </div>
         {dateRangeError ? (
-          <p className="mt-3 text-sm text-status-danger">{dateRangeError}</p>
+          <FeedbackToast variant={'error'} messageKey={dateRangeError}>
+            {dateRangeError}
+          </FeedbackToast>
         ) : null}
         <PageInformation title="Attendance report guide">
           <p className="mt-3 text-xs text-content-muted">
@@ -327,9 +332,9 @@ const AttendanceDailyReportPanel = ({ fromDate, toDate }: AttendanceDailyReportP
       {error ? (
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p role="alert" className="text-sm text-status-danger">
+            <FeedbackToast variant={'error'} messageKey={error}>
               {error}
-            </p>
+            </FeedbackToast>
             <Button variant="secondary" onClick={() => setRetryVersion((value) => value + 1)}>
               Retry
             </Button>

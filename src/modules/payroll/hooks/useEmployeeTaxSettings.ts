@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
   taxSettingsQuery,
@@ -21,7 +22,7 @@ export const useEmployeeTaxSettings = (
   const [settings, setSettings] = useState<TaxSettingsVersion[]>([]);
   const [history, setHistory] = useState<HistoryVersion[]>([]);
   const [busy, setBusy] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const lifetime = useRef(0);
   const load = useCallback(
     async (generation: number) => {
@@ -57,7 +58,7 @@ export const useEmployeeTaxSettings = (
     return () => {
       lifetime.current = generation + 1;
     };
-  }, [load]);
+  }, [load, setError]);
   const save = async (
     kind: 'settings' | 'history',
     input: TaxSettingsInput | TaxHistory,

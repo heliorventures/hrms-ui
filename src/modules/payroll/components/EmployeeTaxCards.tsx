@@ -1,5 +1,6 @@
 import Badge from '../../../components/common/Badge';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Table from '../../../components/common/Table';
 import { formatAmountString, formatInr } from '../payrollFormatters';
 import type {
@@ -99,7 +100,9 @@ export const PayslipFySummaryCard = ({
   <Card title={`Payslip summary (India FY ${totals.fyAnchor}-${totals.fyAnchor + 1})`}>
     {payslipsLoading && <p className="text-sm text-slate-500">Loading Payslip Data...</p>}
     {!payslipsLoading && payslipError && (
-      <p className="text-sm text-amber-800 dark:text-amber-200">{payslipError}</p>
+      <FeedbackToast variant={'error'} messageKey={payslipError}>
+        {payslipError}
+      </FeedbackToast>
     )}
     {!payslipsLoading && !payslipError && (
       <>

@@ -2,6 +2,7 @@ import type { GraphQLClient } from 'graphql-request';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import { readEmployeeUan, saveEmployeeUan } from '../../../../api/employeeUan';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { useRetainedQuery } from '../../../../hooks/useRetainedQuery';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 
@@ -23,7 +24,7 @@ export const useEmployeeUan = (
   const [draft, setDraft] = useState('');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [success, setSuccess] = useState(false);
   const generation = useRef(0);
   const inFlight = useRef(false);
@@ -44,7 +45,7 @@ export const useEmployeeUan = (
     return () => {
       generation.current += 1;
     };
-  }, [client, employeeId, canEdit]);
+  }, [client, employeeId, canEdit, setError]);
 
   const startEditing = () => {
     setDraft(number ?? '');

@@ -1,16 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useDialogs } from '../../contexts/DialogContext';
-import Button from '../../components/common/Button';
-import Card from '../../components/common/Card';
-import PageHeader from '../../components/common/PageHeader';
-import Tabs from '../../components/common/Tabs';
-import { useGraphClient } from '../../hooks/useGraphClient';
-import { useAuth } from '../../contexts/AuthContext';
-import { createPermissionService } from '../../auth/permissionService';
-import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
-import ExitRequestCard from './components/ExitRequestCard';
-import OnboardingChecklistCard from './components/OnboardingChecklistCard';
-import SeparationRequestsCard from './components/SeparationRequestsCard';
+
 import {
   ApproveSeparationDocument,
   ClientOpsEnsureOffboardingDocument,
@@ -21,6 +10,21 @@ import {
   RejectSeparationDocument,
   SetOnboardingChecklistItemDocument,
 } from '../../api/graphql/graphql';
+import { createPermissionService } from '../../auth/permissionService';
+import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
+import PageHeader from '../../components/common/PageHeader';
+import Tabs from '../../components/common/Tabs';
+import { useAuth } from '../../contexts/AuthContext';
+import { useDialogs } from '../../contexts/DialogContext';
+import { useActionFeedback } from '../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
+import { useGraphClient } from '../../hooks/useGraphClient';
+import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+
+import ExitRequestCard from './components/ExitRequestCard';
+import OnboardingChecklistCard from './components/OnboardingChecklistCard';
+import SeparationRequestsCard from './components/SeparationRequestsCard';
 import type { FnfFormState } from './onboardingTypes';
 import { useOnboardingResources } from './useOnboardingResources';
 
@@ -36,14 +40,21 @@ interface RecoveryNoticeProps {
 }
 
 const RecoveryNotice = ({ busy, message, onRetry }: RecoveryNoticeProps) => (
-  <Card>
-    <div className="flex flex-wrap items-center justify-between gap-3" role="alert">
+  <>
+    <FeedbackToast
+      variant={'error'}
+      messageKey={message}
+      action={
+        <>
+          <Button variant="secondary" busy={busy} busyLabel="Trying again" onClick={onRetry}>
+            Try again
+          </Button>
+        </>
+      }
+    >
       <p className="text-sm text-red-700 dark:text-red-300">{message}</p>
-      <Button variant="secondary" busy={busy} busyLabel="Trying again" onClick={onRetry}>
-        Try again
-      </Button>
-    </div>
-  </Card>
+    </FeedbackToast>
+  </>
 );
 
 const validateOptionalMoney = (value: string, label: string): string | null => {
@@ -56,12 +67,14 @@ const validateOptionalMoney = (value: string, label: string): string | null => {
 };
 
 const OnboardingPage = () => {
+  const notifyAction = useActionFeedback();
+
   const { clientSession } = useAuth();
   const permissionService = createPermissionService(clientSession);
   const canManageOnboarding = permissionService.canCapability('action.onboarding.manage');
   const client = useGraphClient('client');
   const [mainTab, setMainTab] = useState<MainTab>('join');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [sepType, setSepType] = useState('RESIGNATION');
   const [lastDay, setLastDay] = useState('');
@@ -70,7 +83,7 @@ const OnboardingPage = () => {
   const [submitBusy, setSubmitBusy] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [openObId, setOpenObId] = useState<string | null>(null);
-  const [obErr, setObErr] = useState<string | null>(null);
+  const [obErr, setObErr] = useFeedbackState<string | null>(null, 'error');
   const [fnfForm, setFnfForm] = useState<FnfFormState>(EMPTY_FNF_FORM);
   const [fnfBusy, setFnfBusy] = useState(false);
   const [clBusy, setClBusy] = useState<string | null>(null);
@@ -102,7 +115,7 @@ const OnboardingPage = () => {
           }
         : EMPTY_FNF_FORM
     );
-  }, [offboarding.hasResolved, offboarding.version]);
+  }, [offboarding.hasResolved, offboarding.version, setObErr]);
 
   useEffect(() => {
     setActionId(null);
@@ -113,12 +126,16 @@ const OnboardingPage = () => {
     setFnfBusy(false);
     setOpenObId(null);
     setSubmitBusy(false);
-  }, [client]);
+  }, [client, setError]);
 
   const toggleChecklist = async (id: string, next: boolean) => {
     setBusyId(id);
     try {
-      await client.request(SetOnboardingChecklistItemDocument, { checklistItemId: id, isCompleted: next });
+      await client.request(SetOnboardingChecklistItemDocument, {
+        checklistItemId: id,
+        isCompleted: next,
+      });
+      notifyAction('updated');
       await refreshChecklist();
     } catch (err) {
       setError(graphQlUserMessage(err));
@@ -134,6 +151,7 @@ const OnboardingPage = () => {
       await client.request(approve ? ApproveSeparationDocument : RejectSeparationDocument, {
         separationId: id,
       });
+      notifyAction('updated');
       await refreshSeparations();
     } catch (err) {
       setError(graphQlUserMessage(err));
@@ -164,6 +182,7 @@ const OnboardingPage = () => {
           recoveryAmount: fnfForm.r.trim() || null,
         },
       });
+      notifyAction('saved');
       await refreshOffboarding(separationId);
     } catch (err) {
       setObErr(graphQlUserMessage(err));
@@ -186,6 +205,7 @@ const OnboardingPage = () => {
     setObErr(null);
     try {
       await client.request(ClientOpsFinalizeFnfDocument, { separationId });
+      notifyAction('updated');
       await refreshOffboarding(separationId);
     } catch (err) {
       setObErr(graphQlUserMessage(err));
@@ -212,6 +232,7 @@ const OnboardingPage = () => {
     setObErr(null);
     try {
       await client.request(ClientOpsSetClearanceClearedDocument, { clearanceId, isCleared: next });
+      notifyAction('updated');
       await refreshOffboarding(separationId);
     } catch (err) {
       setObErr(graphQlUserMessage(err));
@@ -240,6 +261,7 @@ const OnboardingPage = () => {
           reason: reason.trim() || null,
         },
       });
+      notifyAction('submitted');
       await refreshSeparations();
       setReason('');
       setResignDay('');
@@ -252,9 +274,7 @@ const OnboardingPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Onboarding & Exit"
-      />
+      <PageHeader title="Onboarding & Exit" />
 
       <div data-tour-anchor="onboarding.sections">
         <Tabs
@@ -268,9 +288,11 @@ const OnboardingPage = () => {
       </div>
 
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
 
       <section
@@ -322,9 +344,7 @@ const OnboardingPage = () => {
             {openObId && (offboarding.error || offboarding.refreshError) ? (
               <div className="lg:col-span-2">
                 <RecoveryNotice
-                  busy={
-                    offboarding.phase === 'loading' || offboarding.phase === 'refreshing'
-                  }
+                  busy={offboarding.phase === 'loading' || offboarding.phase === 'refreshing'}
                   message={offboarding.error ?? offboarding.refreshError ?? ''}
                   onRetry={() => void refreshOffboarding(openObId)}
                 />
@@ -376,9 +396,7 @@ const OnboardingPage = () => {
                 onToggleClearance={(separationId, clearanceId, next) =>
                   void toggleClearance(separationId, clearanceId, next)
                 }
-                onUpdateFnfForm={(patch) =>
-                  setFnfForm((current) => ({ ...current, ...patch }))
-                }
+                onUpdateFnfForm={(patch) => setFnfForm((current) => ({ ...current, ...patch }))}
               />
             )}
           </div>

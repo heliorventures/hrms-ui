@@ -1,5 +1,6 @@
 import AsyncState from '../../../components/common/AsyncState';
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageNotice from '../../../components/common/PageNotice';
 import { type RetainedQueryPhase } from '../../../hooks/useRetainedQuery';
 
@@ -66,7 +67,8 @@ export const DashboardCardRefreshNotice = ({
   if (phase !== 'stale-error') return null;
 
   return (
-    <PageNotice
+    <FeedbackToast
+      messageKey={error}
       variant="warning"
       title={staleTitle}
       action={
@@ -74,9 +76,8 @@ export const DashboardCardRefreshNotice = ({
           Retry
         </Button>
       }
-      className="mb-4"
     >
       {staleDescription} {error}
-    </PageNotice>
+    </FeedbackToast>
   );
 };

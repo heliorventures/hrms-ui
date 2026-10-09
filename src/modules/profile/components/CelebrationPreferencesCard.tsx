@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
@@ -15,7 +17,7 @@ const CelebrationPreferencesCard = () => {
   const client = useGraphClient('client');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [saved, setSaved] = useState(false);
   const [shareBirthday, setShareBirthday] = useState(false);
   const [shareWorkAnniversary, setShareWorkAnniversary] = useState(false);
@@ -43,7 +45,7 @@ const CelebrationPreferencesCard = () => {
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [load, setError]);
 
   const save = async () => {
     setSaving(true);
@@ -74,15 +76,11 @@ const CelebrationPreferencesCard = () => {
       </p>
 
       {error ? (
-        <p className="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       ) : null}
-      {saved ? (
-        <p className="mb-4 text-sm text-green-700 dark:text-green-300" role="status">
-          Celebration privacy saved.
-        </p>
-      ) : null}
+      {saved ? <FeedbackToast variant={'success'}>Celebration privacy saved.</FeedbackToast> : null}
 
       {loading ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>

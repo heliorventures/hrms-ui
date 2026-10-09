@@ -10,10 +10,12 @@ import {
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import PageHeader from '../../components/common/PageHeader';
 import Table from '../../components/common/Table';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
@@ -42,13 +44,13 @@ const HrTimesheetsPage = () => {
   const [batches, setBatches] = useState<BatchRow[]>([]);
   const [viewerEmployeeId, setViewerEmployeeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [filter, setFilter] = useState<'pending' | 'all'>('pending');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rejectFor, setRejectFor] = useState<BatchRow | null>(null);
   const [previewFor, setPreviewFor] = useState<BatchRow | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const [infoNotice, setInfoNotice] = useState<string | null>(null);
+  const [infoNotice, setInfoNotice] = useFeedbackState<string | null>(null, 'info');
 
   const loadBatches = useCallback(async () => {
     const r = await client.request<{ timesheetWeekBatches: BatchRow[] }>(
@@ -85,7 +87,7 @@ const HrTimesheetsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [loadViewer, loadBatches]);
+  }, [loadViewer, loadBatches, setError, setInfoNotice]);
 
   const employeeLabel = useCallback((row: BatchRow) => {
     const name = row.employeeName?.trim();
@@ -102,7 +104,7 @@ const HrTimesheetsPage = () => {
     } catch (e) {
       setError(graphQlUserMessage(e));
     }
-  }, [loadBatches]);
+  }, [loadBatches, setError]);
 
   const handleApprove = async (row: Pick<BatchRow, 'id' | 'pendingApprovalStepId'>) => {
     const target = timesheetApprovalTarget(row.id, row.pendingApprovalStepId);
@@ -201,14 +203,16 @@ const HrTimesheetsPage = () => {
           {filterTabs}
         </div>
         {infoNotice ? (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
+          <FeedbackToast variant={'info'} messageKey={infoNotice}>
             {infoNotice}
-          </div>
+          </FeedbackToast>
         ) : null}
         {loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         ) : error ? (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
         ) : batches.length ? (
           <Table
             data={batches}

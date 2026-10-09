@@ -8,8 +8,10 @@ import {
 } from '../../api/graphql/graphql';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import {
@@ -152,7 +154,7 @@ const OrgChartPage = () => {
   const client = useGraphClient('client');
   const [rows, setRows] = useState<OrgChartRowLite[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [search, setSearch] = useState('');
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
   const [zoom, setZoom] = useState(1);
@@ -186,7 +188,7 @@ const OrgChartPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [client]);
+  }, [client, setError]);
 
   const visibleRows = useMemo(() => (rows ? filterOrgChartRows(rows, search) : []), [rows, search]);
   const childMap = useMemo(
@@ -291,7 +293,11 @@ const OrgChartPage = () => {
         {loading && (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading Org Chart...</p>
         )}
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && (
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        )}
         {!loading && !error && roots.length === 0 && (
           <p className="text-sm text-gray-500 dark:text-gray-400">
             No current employees or reporting relationships were returned.

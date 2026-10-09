@@ -1,6 +1,8 @@
 import { AlertCircle, CircleOff, Inbox, LoaderCircle, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import FeedbackToast from './FeedbackToast';
+
 export type AsyncStateKind = 'loading' | 'empty' | 'unavailable' | 'error';
 
 export interface AsyncStateProps {
@@ -21,10 +23,18 @@ const AsyncState = ({ kind, title, description, action }: AsyncStateProps) => {
   const { icon: StateIcon, toneClassName } = STATE_PRESENTATION[kind];
   const isError = kind === 'error';
 
+  if (isError) {
+    return (
+      <FeedbackToast title={title} action={action}>
+        {description ?? title}
+      </FeedbackToast>
+    );
+  }
+
   return (
     <div
-      role={isError ? 'alert' : 'status'}
-      aria-live={isError ? undefined : 'polite'}
+      role="status"
+      aria-live="polite"
       aria-atomic="true"
       className="rounded-xl border border-line bg-surface px-5 py-8 text-center text-content-primary"
     >

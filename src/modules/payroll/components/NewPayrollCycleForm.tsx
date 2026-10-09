@@ -1,4 +1,5 @@
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import { PAYROLL_MONTHS } from '../payrollFormatters';
 import type { PayrollCycleFormState } from '../payrollTypes';
@@ -75,9 +76,15 @@ const NewPayrollCycleForm = ({
         {createBusy ? 'Creating...' : 'Create Draft Cycle'}
       </Button>
     </div>
-    {createError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{createError}</p>}
+    {createError && (
+      <FeedbackToast variant={'error'} messageKey={createError}>
+        {createError}
+      </FeedbackToast>
+    )}
     {createOk && !createError && (
-      <p className="mt-2 text-sm text-green-700 dark:text-green-400">{createOk}</p>
+      <FeedbackToast variant={'success'} messageKey={createOk}>
+        {createOk}
+      </FeedbackToast>
     )}
   </div>
 );
