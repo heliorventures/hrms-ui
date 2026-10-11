@@ -28,6 +28,7 @@ export type NavigationSectionKey =
   | 'leave'
   | 'expenses'
   | 'payroll'
+  | 'loans'
   | 'hiring'
   | 'performance'
   | 'assets'
@@ -72,6 +73,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
   { key: 'leave', label: 'Leave', icon: CalendarDays, order: 50 },
   { key: 'expenses', label: 'Expenses & Travel', icon: ReceiptText, order: 60 },
   { key: 'payroll', label: 'Pay & Benefits', icon: WalletCards, order: 70 },
+  { key: 'loans', label: 'Loans', icon: WalletCards, order: 75 },
   { key: 'hiring', label: 'Hiring & Exit', icon: BriefcaseBusiness, order: 80 },
   { key: 'performance', label: 'Performance', icon: BarChart3, order: 85 },
   { key: 'talent', label: 'Talent & Development', icon: GraduationCap, order: 90 },
@@ -119,6 +121,17 @@ function approvalRules(
 }
 
 export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
+  page('loans', '/loans/my', 'My loans', 75.1, ['loan request', 'balance', 'repayment']),
+  page('loans', '/loans/admin', 'Loan administration', 75.2, [
+    'approval',
+    'disbursement',
+    'deduction',
+  ]),
+  page('loans', '/loans/policies', 'Policies', 75.3, [
+    'loan interest',
+    'recovery',
+    'policy version',
+  ]),
   {
     path: '/dashboard',
     label: 'Home',

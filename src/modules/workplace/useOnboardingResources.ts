@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GraphQLClient } from 'graphql-request';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   ClientOpsClearanceBySeparationDocument,
-  ClientOpsFnfBySeparationDocument,
   ClientOpsSeparationsListDocument,
   OnboardingChecklistDocument,
   type ClientOpsClearanceBySeparationQuery,
 } from '../../api/graphql/graphql';
+import { LoanFnfSettlementDocument } from '../../api/loans/graphql';
+
 import type {
   ChecklistItem,
   ClearanceItemRow,
@@ -38,7 +39,7 @@ interface OffboardingState extends Omit<OwnedListState<never>, 'data' | 'owner'>
   version: number;
 }
 
-const emptyListState = <T,>(): OwnedListState<T> => ({
+const emptyListState = <T>(): OwnedListState<T> => ({
   data: [],
   error: null,
   hasResolved: false,
@@ -60,10 +61,7 @@ const emptyOffboardingState = (): OffboardingState => ({
   version: 0,
 });
 
-const beginListLoad = <T,>(
-  current: OwnedListState<T>,
-  owner: GraphQLClient
-): OwnedListState<T> => {
+const beginListLoad = <T>(current: OwnedListState<T>, owner: GraphQLClient): OwnedListState<T> => {
   const ownsReadyData = current.owner === owner && current.hasResolved;
   return {
     data: ownsReadyData ? current.data : [],
@@ -75,7 +73,7 @@ const beginListLoad = <T,>(
   };
 };
 
-const failListLoad = <T,>(
+const failListLoad = <T>(
   current: OwnedListState<T>,
   owner: GraphQLClient,
   initialMessage: string,
@@ -105,14 +103,11 @@ export function useOnboardingResources(
   const checklistGeneration = useRef(0);
   const separationsGeneration = useRef(0);
   const offboardingGeneration = useRef(0);
-  const [checklistState, setChecklistState] = useState<OwnedListState<ChecklistItem>>(
-    emptyListState
-  );
-  const [separationsState, setSeparationsState] = useState<OwnedListState<SeparationRow>>(
-    emptyListState
-  );
-  const [offboardingState, setOffboardingState] =
-    useState<OffboardingState>(emptyOffboardingState);
+  const [checklistState, setChecklistState] =
+    useState<OwnedListState<ChecklistItem>>(emptyListState);
+  const [separationsState, setSeparationsState] =
+    useState<OwnedListState<SeparationRow>>(emptyListState);
+  const [offboardingState, setOffboardingState] = useState<OffboardingState>(emptyOffboardingState);
 
   if (clientRef.current !== client) {
     clientRef.current = client;
@@ -238,10 +233,7 @@ export function useOnboardingResources(
   const refreshOffboarding = useCallback(
     async (separationId: string) => {
       const owner = client;
-      if (
-        clientRef.current !== owner ||
-        selectedSeparationRef.current !== separationId
-      ) {
+      if (clientRef.current !== owner || selectedSeparationRef.current !== separationId) {
         return false;
       }
       const generation = offboardingGeneration.current + 1;
@@ -264,7 +256,7 @@ export function useOnboardingResources(
       });
       try {
         const [fnfResponse, clearanceResponse] = await Promise.all([
-          owner.request(ClientOpsFnfBySeparationDocument, { separationId }),
+          owner.request(LoanFnfSettlementDocument, { separationId }),
           owner.request<ClientOpsClearanceBySeparationQuery>(
             ClientOpsClearanceBySeparationDocument,
             { separationId }
@@ -364,7 +356,10 @@ export function useOnboardingResources(
     offboardingState.ownerClient === client &&
     offboardingState.ownerSeparationId === selectedSeparationId
       ? offboardingState
-      : { ...emptyOffboardingState(), phase: selectedSeparationId ? 'loading' : 'ready' as const };
+      : {
+          ...emptyOffboardingState(),
+          phase: selectedSeparationId ? 'loading' : ('ready' as const),
+        };
 
   return {
     checklist,

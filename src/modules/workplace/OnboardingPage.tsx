@@ -3,35 +3,31 @@ import { useEffect, useState } from 'react';
 import {
   ApproveSeparationDocument,
   ClientOpsEnsureOffboardingDocument,
-  ClientOpsFinalizeFnfDocument,
   ClientOpsSetClearanceClearedDocument,
   ClientOpsSubmitSeparationDocument,
-  ClientOpsUpsertFnfDocument,
   RejectSeparationDocument,
   SetOnboardingChecklistItemDocument,
 } from '../../api/graphql/graphql';
+import { PERMISSIONS } from '../../auth/permissions';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import Tabs from '../../components/common/Tabs';
 import { useAuth } from '../../contexts/AuthContext';
-import { useDialogs } from '../../contexts/DialogContext';
 import { useActionFeedback } from '../../hooks/useActionFeedback';
 import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import ExitFinanceReview from '../loans/ExitFinanceReview';
+import FnfFinanceReview from '../loans/FnfFinanceReview';
 
 import ExitRequestCard from './components/ExitRequestCard';
 import OnboardingChecklistCard from './components/OnboardingChecklistCard';
 import SeparationRequestsCard from './components/SeparationRequestsCard';
-import type { FnfFormState } from './onboardingTypes';
 import { useOnboardingResources } from './useOnboardingResources';
 
 type MainTab = 'join' | 'exit';
-
-const EMPTY_FNF_FORM: FnfFormState = { le: '', g: '', b: '', r: '' };
-const MONEY_PATTERN = /^(?:\d+|\d+\.\d{1,2}|\.\d{1,2})$/;
 
 interface RecoveryNoticeProps {
   busy: boolean;
@@ -40,31 +36,18 @@ interface RecoveryNoticeProps {
 }
 
 const RecoveryNotice = ({ busy, message, onRetry }: RecoveryNoticeProps) => (
-  <>
-    <FeedbackToast
-      variant={'error'}
-      messageKey={message}
-      action={
-        <>
-          <Button variant="secondary" busy={busy} busyLabel="Trying again" onClick={onRetry}>
-            Try again
-          </Button>
-        </>
-      }
-    >
-      <p className="text-sm text-red-700 dark:text-red-300">{message}</p>
-    </FeedbackToast>
-  </>
+  <FeedbackToast
+    variant={'error'}
+    messageKey={message}
+    action={
+      <Button variant="secondary" busy={busy} busyLabel="Trying again" onClick={onRetry}>
+        Try again
+      </Button>
+    }
+  >
+    <p className="text-sm text-red-700 dark:text-red-300">{message}</p>
+  </FeedbackToast>
 );
-
-const validateOptionalMoney = (value: string, label: string): string | null => {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (!MONEY_PATTERN.test(trimmed) || Number(trimmed) < 0) {
-    return `${label} must be a non-negative amount with up to 2 decimal places.`;
-  }
-  return null;
-};
 
 const OnboardingPage = () => {
   const notifyAction = useActionFeedback();
@@ -84,11 +67,10 @@ const OnboardingPage = () => {
   const [actionId, setActionId] = useState<string | null>(null);
   const [openObId, setOpenObId] = useState<string | null>(null);
   const [obErr, setObErr] = useFeedbackState<string | null>(null, 'error');
-  const [fnfForm, setFnfForm] = useState<FnfFormState>(EMPTY_FNF_FORM);
-  const [fnfBusy, setFnfBusy] = useState(false);
   const [clBusy, setClBusy] = useState<string | null>(null);
   const [ensureBusy, setEnsureBusy] = useState(false);
-  const dialogs = useDialogs();
+  const [financeExit, setFinanceExit] = useState<string | null>(null);
+  const [financeFnf, setFinanceFnf] = useState<string | null>(null);
   const {
     checklist,
     offboarding,
@@ -99,31 +81,13 @@ const OnboardingPage = () => {
   } = useOnboardingResources(client, mainTab, openObId);
 
   useEffect(() => {
-    setObErr(null);
-    if (!offboarding.hasResolved) {
-      setFnfForm(EMPTY_FNF_FORM);
-      return;
-    }
-    const settlement = offboarding.data.fnf;
-    setFnfForm(
-      settlement
-        ? {
-            le: settlement.leaveEncashment ?? '',
-            g: settlement.gratuityAmount ?? '',
-            b: settlement.bonusPayable ?? '',
-            r: settlement.recoveryAmount ?? '',
-          }
-        : EMPTY_FNF_FORM
-    );
-  }, [offboarding.hasResolved, offboarding.version, setObErr]);
-
-  useEffect(() => {
     setActionId(null);
     setBusyId(null);
     setClBusy(null);
     setEnsureBusy(false);
     setError(null);
-    setFnfBusy(false);
+    setFinanceExit(null);
+    setFinanceFnf(null);
     setOpenObId(null);
     setSubmitBusy(false);
   }, [client, setError]);
@@ -145,6 +109,10 @@ const OnboardingPage = () => {
   };
 
   const hrAction = async (id: string, approve: boolean) => {
+    if (approve && permissionService.canScopedPermission(PERMISSIONS.loanExitReview, ['ALL'])) {
+      setFinanceExit(id);
+      return;
+    }
     setActionId(id);
     setError(null);
     try {
@@ -157,60 +125,6 @@ const OnboardingPage = () => {
       setError(graphQlUserMessage(err));
     } finally {
       setActionId(null);
-    }
-  };
-
-  const saveFnf = async (separationId: string) => {
-    const amountError =
-      validateOptionalMoney(fnfForm.le, 'Leave encashment') ??
-      validateOptionalMoney(fnfForm.g, 'Gratuity') ??
-      validateOptionalMoney(fnfForm.b, 'Bonus payable') ??
-      validateOptionalMoney(fnfForm.r, 'Recovery');
-    if (amountError) {
-      setObErr(amountError);
-      return;
-    }
-    setFnfBusy(true);
-    setObErr(null);
-    try {
-      await client.request(ClientOpsUpsertFnfDocument, {
-        input: {
-          separationId,
-          leaveEncashment: fnfForm.le.trim() || null,
-          gratuityAmount: fnfForm.g.trim() || null,
-          bonusPayable: fnfForm.b.trim() || null,
-          recoveryAmount: fnfForm.r.trim() || null,
-        },
-      });
-      notifyAction('saved');
-      await refreshOffboarding(separationId);
-    } catch (err) {
-      setObErr(graphQlUserMessage(err));
-    } finally {
-      setFnfBusy(false);
-    }
-  };
-
-  const finalizeFnf = async (separationId: string) => {
-    const userConfirmed = await dialogs.confirm({
-      title: 'Finalize full & final settlement',
-      message:
-        'Once finalized, the FNF settlement becomes read-only and cannot be edited. Continue only if amounts are complete and approved.',
-      confirmLabel: 'Finalize settlement',
-      cancelLabel: 'Keep editing',
-      variant: 'danger',
-    });
-    if (!userConfirmed) return;
-    setFnfBusy(true);
-    setObErr(null);
-    try {
-      await client.request(ClientOpsFinalizeFnfDocument, { separationId });
-      notifyAction('updated');
-      await refreshOffboarding(separationId);
-    } catch (err) {
-      setObErr(graphQlUserMessage(err));
-    } finally {
-      setFnfBusy(false);
     }
   };
 
@@ -288,11 +202,9 @@ const OnboardingPage = () => {
       </div>
 
       {error && (
-        <>
-          <FeedbackToast variant={'error'} messageKey={error}>
-            {error}
-          </FeedbackToast>
-        </>
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
       )}
 
       <section
@@ -374,8 +286,6 @@ const OnboardingPage = () => {
                 canManageOnboarding={canManageOnboarding}
                 clBusy={clBusy}
                 ensureBusy={ensureBusy}
-                fnfBusy={fnfBusy}
-                fnfForm={fnfForm}
                 loading={separations.phase === 'loading'}
                 obCl={offboarding.data.clearance}
                 obErr={
@@ -389,19 +299,33 @@ const OnboardingPage = () => {
                 openObId={openObId}
                 separations={separations.data}
                 onEnsureRows={(id) => void ensureOffboardingRows(id)}
-                onFinalizeFnf={(id) => void finalizeFnf(id)}
+                onReviewFnf={setFinanceFnf}
                 onHrAction={(id, approve) => void hrAction(id, approve)}
                 onOpenObIdChange={setOpenObId}
-                onSaveFnf={(id) => void saveFnf(id)}
                 onToggleClearance={(separationId, clearanceId, next) =>
                   void toggleClearance(separationId, clearanceId, next)
                 }
-                onUpdateFnfForm={(patch) => setFnfForm((current) => ({ ...current, ...patch }))}
               />
             )}
           </div>
         ) : null}
       </div>
+      {financeExit && (
+        <ExitFinanceReview
+          key={financeExit}
+          separationId={financeExit}
+          onClose={() => setFinanceExit(null)}
+          onSaved={async () => { if (!await refreshSeparations()) throw new Error('Approval recorded. The exit list could not be refreshed; retry refresh.'); }}
+        />
+      )}
+      {financeFnf && (
+        <FnfFinanceReview
+          key={financeFnf}
+          separationId={financeFnf}
+          onClose={() => setFinanceFnf(null)}
+          onSaved={async () => { if (!await refreshOffboarding(financeFnf)) throw new Error('Financial outcome recorded. The exit list could not be refreshed; retry refresh.'); }}
+        />
+      )}
     </div>
   );
 };

@@ -20,6 +20,7 @@ import { usePayslipUnpaidLeave } from '../hooks/usePayslipUnpaidLeave';
 import type { PayslipRow } from '../payrollTypes';
 
 import PayslipDocument from './PayslipDocument';
+import PayslipLoanLinks from './PayslipLoanLinks';
 
 type Employee = ManagedPayslipEmployeesQuery['employees'][number];
 type Result = ManagedEmployeePayslipsQuery;
@@ -55,22 +56,23 @@ const ManagedPayslipDocument = ({
           variant={'error'}
           messageKey={error}
           action={
-            <>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  presentation.retry();
-                  unpaid.retry();
-                  logo.retry();
-                }}
-              >
-                Retry payslip details
-              </Button>
-            </>
+            <Button
+              variant="outline"
+              onClick={() => {
+                presentation.retry();
+                unpaid.retry();
+                logo.retry();
+              }}
+            >
+              Retry payslip details
+            </Button>
           }
         >
           Payslip details could not be loaded. {error}
         </FeedbackToast>
+      )}
+      {presentation.data?.statement?.loans && (
+        <PayslipLoanLinks snapshot={presentation.data.statement.loans} />
       )}
       <PayslipDocument
         tenantName={currentTenant.name}

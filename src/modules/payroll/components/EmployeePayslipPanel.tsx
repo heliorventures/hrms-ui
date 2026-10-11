@@ -7,6 +7,7 @@ import { usePayslipPresentation } from '../hooks/usePayslipPresentation';
 import { usePayslipUnpaidLeave } from '../hooks/usePayslipUnpaidLeave';
 
 import PayrollPayslipTab from './PayrollPayslipTab';
+import PayslipLoanLinks from './PayslipLoanLinks';
 
 const EmployeePayslipPanel = ({
   client,
@@ -23,6 +24,9 @@ const EmployeePayslipPanel = ({
   const presentation = usePayslipPresentation(client, ownerKey, pay.activePayslip?.id ?? null);
   return (
     <div data-tour-anchor="payroll.pay.payslip-period">
+      {presentation.data?.statement?.loans && (
+        <PayslipLoanLinks snapshot={presentation.data.statement.loans} />
+      )}
       <PayrollPayslipTab
         activePayslip={pay.activePayslip}
         presentation={presentation.data}

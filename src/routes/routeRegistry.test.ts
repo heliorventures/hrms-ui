@@ -26,6 +26,9 @@ function routeInventory(routes: readonly Record<string, unknown>[]) {
 }
 
 const EXPECTED_TENANT_ROUTES = [
+  { kind: 'page', path: 'loans/my', title: 'My loans', tenantPath: '/loans/my' },
+  { kind: 'page', path: 'loans/admin', title: 'Loan administration', tenantPath: '/loans/admin' },
+  { kind: 'page', path: 'loans/policies', title: 'Loan policies', tenantPath: '/loans/policies' },
   { kind: 'page', path: 'appearance', title: 'Appearance' },
   { kind: 'redirect', path: 'my-work', to: '/my-work/tasks' },
   { kind: 'page', path: 'my-work/tasks', title: 'My Tasks', tenantPath: '/my-work/tasks' },
@@ -261,6 +264,12 @@ const EXPECTED_TENANT_ROUTES = [
     path: 'admin/attendance-policy',
     title: 'Attendance policy',
     tenantPath: '/admin/attendance-policy',
+  },
+  {
+    kind: 'page',
+    path: 'admin/company-locations',
+    title: 'Company locations',
+    tenantPath: '/admin/company-locations',
   },
   {
     kind: 'page',

@@ -15,6 +15,7 @@ describe('workflow domains', () => {
     }
   });
   it('maps each function to exactly its supported workflow entity types', () => {
+    expect(workflowTypesForDomain('loans').map((type) => type.value)).toEqual(['LOAN_REQUEST']);
     expect(workflowTypesForDomain('leave').map((type) => type.value)).toEqual(['LEAVE_REQUEST']);
     expect(workflowTypesForDomain('timesheets').map((type) => type.value)).toEqual([
       'TIMESHEET_WEEK_BATCH',

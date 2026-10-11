@@ -63,6 +63,9 @@ export type Capability =
   | 'route.hr.timesheets'
   | 'route.insights'
   | 'route.leave'
+  | 'route.loans.my'
+  | 'route.loans.admin'
+  | 'route.loans.policies'
   | 'route.notifications'
   | 'route.myWork'
   | 'route.organization.documents'
@@ -160,6 +163,8 @@ const SCOPED_CAPABILITY_PERMISSIONS: Partial<
     scopes: ANY_EXPLICIT_SCOPE,
   },
   'route.timesheet': { permission: PERMISSIONS.timesheetRead, scopes: ANY_EXPLICIT_SCOPE },
+  'route.loans.admin': { permission: PERMISSIONS.loanRead, scopes: APPROVAL_SCOPES },
+  'route.loans.policies': { permission: PERMISSIONS.loanPolicy, scopes: ALL_SCOPE },
   'route.hr.attendance': {
     permission: PERMISSIONS.attendanceRegularize,
     scopes: APPROVAL_SCOPES,
@@ -253,6 +258,9 @@ export const ROUTE_CAPABILITIES: Partial<Record<string, Capability>> = {
   '/dashboard': 'route.dashboard',
   '/expenses': 'route.expenses',
   '/leave': 'route.leave',
+  '/loans/my': 'route.loans.my',
+  '/loans/admin': 'route.loans.admin',
+  '/loans/policies': 'route.loans.policies',
   '/leave/holidays': 'route.leave',
   '/leave/team-calendar': 'route.leave',
   '/notifications': 'route.notifications',

@@ -1,20 +1,14 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import FeedbackToast from '../../../components/common/FeedbackToast';
-import type {
-  ClearanceItemRow,
-  FnfFormState,
-  FnfSettlementRow,
-  SeparationRow,
-} from '../onboardingTypes';
+import FnfFinancialSummary from '../../loans/FnfFinancialSummary';
+import type { ClearanceItemRow, FnfSettlementRow, SeparationRow } from '../onboardingTypes';
 
 interface SeparationRequestsCardProps {
   actionId: string | null;
   canManageOnboarding: boolean;
   clBusy: string | null;
   ensureBusy: boolean;
-  fnfBusy: boolean;
-  fnfForm: FnfFormState;
   loading: boolean;
   obCl: ClearanceItemRow[];
   obErr: string | null;
@@ -23,12 +17,10 @@ interface SeparationRequestsCardProps {
   openObId: string | null;
   separations: SeparationRow[];
   onEnsureRows: (separationId: string) => void;
-  onFinalizeFnf: (separationId: string) => void;
+  onReviewFnf: (separationId: string) => void;
   onHrAction: (id: string, approve: boolean) => void;
   onOpenObIdChange: (id: string | null) => void;
-  onSaveFnf: (separationId: string) => void;
   onToggleClearance: (separationId: string, clearanceId: string, next: boolean) => void;
-  onUpdateFnfForm: (patch: Partial<FnfFormState>) => void;
 }
 
 const statusClassName = (status: string) => {
@@ -42,8 +34,6 @@ const SeparationRequestsCard = ({
   canManageOnboarding,
   clBusy,
   ensureBusy,
-  fnfBusy,
-  fnfForm,
   loading,
   obCl,
   obErr,
@@ -52,12 +42,10 @@ const SeparationRequestsCard = ({
   openObId,
   separations,
   onEnsureRows,
-  onFinalizeFnf,
+  onReviewFnf,
   onHrAction,
   onOpenObIdChange,
-  onSaveFnf,
   onToggleClearance,
-  onUpdateFnfForm,
 }: SeparationRequestsCardProps) => (
   <Card title="Your Requests">
     {loading ? (
@@ -215,47 +203,14 @@ const SeparationRequestsCard = ({
                             {obFnf.netPayable != null ? ` - Net ${obFnf.netPayable}` : ''}
                             {obFnf.processedAt ? ` - processed ${obFnf.processedAt}` : ''}
                           </p>
-                          {canManageOnboarding && obFnf.status === 'DRAFT' ? (
-                            <div className="grid gap-2 sm:grid-cols-2">
-                              {[
-                                ['le', 'Leave encashment'],
-                                ['g', 'Gratuity'],
-                                ['b', 'Bonus payable'],
-                                ['r', 'Recovery (deduct)'],
-                              ].map(([key, label]) => (
-                                <label key={key} className="block text-xs">
-                                  <span className="text-slate-500">{label}</span>
-                                  <input
-                                    type="text"
-                                    value={fnfForm[key as keyof FnfFormState]}
-                                    onChange={(event) =>
-                                      onUpdateFnfForm({ [key]: event.target.value })
-                                    }
-                                    className="mt-0.5 w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
-                                    placeholder="0.00"
-                                  />
-                                </label>
-                              ))}
-                            </div>
-                          ) : null}
-                          {canManageOnboarding && obFnf.status === 'DRAFT' ? (
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                variant="primary"
-                                disabled={fnfBusy}
-                                onClick={() => onSaveFnf(separation.id)}
-                              >
-                                {fnfBusy ? '...' : 'Save Amounts'}
-                              </Button>
-                              <Button
-                                variant="secondary"
-                                disabled={fnfBusy}
-                                onClick={() => onFinalizeFnf(separation.id)}
-                              >
-                                Finalize FNF
-                              </Button>
-                            </div>
-                          ) : null}
+                          <FnfFinancialSummary financials={obFnf.financials} />
+                          {canManageOnboarding && (
+                            <Button variant="secondary" onClick={() => onReviewFnf(separation.id)}>
+                              {obFnf.status === 'DRAFT'
+                                ? 'Review FNF financial sources'
+                                : 'View issued FNF review'}
+                            </Button>
+                          )}
                         </div>
                       ) : null}
                     </div>

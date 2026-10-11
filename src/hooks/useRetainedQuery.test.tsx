@@ -194,6 +194,17 @@ describe('useRetainedQuery request ownership', () => {
     expect(result.current).toMatchObject({ data: 'latest result', error: null, phase: 'ready' });
   });
 
+  it('exposes a checked refresh for financial saves without discarding retained data', async () => {
+    let calls = 0;
+    const load = () => ++calls === 1 ? Promise.resolve('saved row') : Promise.reject(new Error('Reload failed'));
+    const { result } = renderHook(() => useRetainedQuery(load, (error) => (error as Error).message));
+    await waitFor(() => expect(result.current.phase).toBe('ready'));
+    await act(async () => {
+      await expect(result.current.refreshChecked()).rejects.toThrow('Reload failed');
+    });
+    expect(result.current).toMatchObject({ data: 'saved row', phase: 'stale-error', error: 'Reload failed' });
+  });
+
   it('uses the same request path for automatic and manual refreshes', async () => {
     const requests: Array<Deferred<string>> = [];
     const load = () => {

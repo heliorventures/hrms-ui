@@ -80,6 +80,7 @@ vi.mock('../../contexts/AuthContext', () => ({
 vi.mock('../../auth/permissionService', () => ({
   createPermissionService: () => ({
     canCapability: () => mocks.canManageOnboarding,
+    canScopedPermission: () => false,
   }),
 }));
 
@@ -93,7 +94,7 @@ const defaultResponse = (document: TypedDocumentNode<unknown, unknown>) => {
       return Promise.resolve({ onboardingChecklist: [] });
     case 'ClientOpsSeparationsList':
       return Promise.resolve({ separations: [] });
-    case 'ClientOpsFnfBySeparation':
+    case 'LoanFnfSettlement':
       return Promise.resolve({ fnfSettlement: null });
     case 'ClientOpsClearanceBySeparation':
       return Promise.resolve({ clearanceChecklist: [] });
@@ -221,7 +222,7 @@ describe('OnboardingPage request ownership', () => {
           separations: [separation('a', 'FIRST'), separation('b', 'SECOND')],
         });
       }
-      if (name === 'ClientOpsFnfBySeparation') {
+      if (name === 'LoanFnfSettlement') {
         return variables?.separationId === 'a'
           ? staleFnf.promise
           : Promise.resolve({ fnfSettlement: null });
@@ -258,7 +259,7 @@ describe('OnboardingPage request ownership', () => {
       if (name === 'ClientOpsSeparationsList') {
         return Promise.resolve({ separations: [separation('a', 'RESIGNATION')] });
       }
-      if (name === 'ClientOpsFnfBySeparation') {
+      if (name === 'LoanFnfSettlement') {
         fnfRequests += 1;
         return fnfRequests === 1
           ? Promise.resolve({ fnfSettlement: null })

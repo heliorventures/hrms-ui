@@ -139,6 +139,9 @@ export function evaluateCapability(
     Record<Capability, { permission: PermissionCode; scopes: readonly ExplicitPermissionScope[] }>
   >
 ): boolean {
+  if (capabilityName === 'route.loans.my') {
+    return Boolean(session?.employeeId) && canScopedPermission(PERMISSIONS.loanRead, ANY_SCOPE);
+  }
   const scoped = scopedCapabilities[capabilityName];
   if (scoped) return canScopedPermission(scoped.permission, scoped.scopes);
   if (SESSION_CAPABILITIES.has(capabilityName)) return session !== null && session !== undefined;
