@@ -74,7 +74,7 @@ export function useLoanAdministration() {
   const decide = async (request: LoanRequest, decision: LoanRequestDecision) => {
     setError(null);
     try {
-      if (decision !== LoanRequestDecision.Approve) {
+      if (decision !== LoanRequestDecision.Approve || !request.isFinalApprovalStep) {
         setEditor(approvalEditor(request, null, decision));
         return;
       }

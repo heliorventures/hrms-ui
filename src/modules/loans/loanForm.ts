@@ -10,6 +10,7 @@ export interface LoanField {
   options?: readonly { value: string; label: string }[];
   description?: string;
   readOnly?: boolean;
+  visibleWhen?: (values: LoanValues) => boolean;
 }
 export interface LoanEditorDefinition {
   title: string;
@@ -33,7 +34,7 @@ export const yesNo = [
   { value: 'no', label: 'No' },
 ];
 export function validateLoanFields(fields: readonly LoanField[], values: LoanValues) {
-  for (const field of fields) {
+  for (const field of fields.filter((candidate) => candidate.visibleWhen?.(values) ?? true)) {
     const raw: unknown = values[field.key];
     const value = typeof raw === 'string' ? raw.trim() : '';
     if (!value && !field.optional) return `Enter ${field.label.toLowerCase()}.`;

@@ -12,6 +12,7 @@ interface Props {
 const LoanFields = ({ fields, values, onChange }: Props) => (
   <div className="grid gap-3 sm:grid-cols-2">
     {fields.map((field) => {
+      if (field.visibleWhen && !field.visibleWhen(values)) return null;
       if (field.type === 'multi')
         return (
           <fieldset key={field.key} className="space-y-2 rounded-lg border border-line-subtle p-3">

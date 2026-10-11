@@ -33,7 +33,8 @@ export function approvalEditor(
   policy: LoanPolicy | null,
   decision: LoanRequestDecision
 ): LoanEditorDefinition {
-  if (decision !== LoanRequestDecision.Approve) return requestDecisionEditor(request, decision);
+  if (decision !== LoanRequestDecision.Approve || !request.isFinalApprovalStep)
+    return requestDecisionEditor(request, decision);
   if (!policy) throw new Error('The requested policy could not be loaded. Refresh the request.');
   const common = [{ key: 'reason', label: 'Decision reason', type: 'textarea' as const }];
   return {

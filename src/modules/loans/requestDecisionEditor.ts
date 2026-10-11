@@ -8,7 +8,10 @@ export function requestDecisionEditor(
   decision: LoanRequestDecision
 ): LoanEditorDefinition {
   return {
-    title: `${decision === LoanRequestDecision.Reject ? 'Reject' : 'Return'} loan request`,
+    title:
+      decision === LoanRequestDecision.Approve
+        ? 'Approve loan request step'
+        : `${decision === LoanRequestDecision.Reject ? 'Reject' : 'Return'} loan request`,
     description: `${request.employeeName} · ${request.purpose} · ${request.currency} ${request.requestedAmount}`,
     document: DecideLoanRequestDocument,
     version: request.version,

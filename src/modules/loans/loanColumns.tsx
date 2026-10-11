@@ -84,6 +84,11 @@ export function requestColumns(
     },
     { id: 'created', header: 'Created', cell: (row) => row.createdAt.slice(0, 10) },
     { id: 'status', header: 'Status', cell: (row) => row.state.replace(/_/g, ' ') },
+    {
+      id: 'decisionReason',
+      header: 'Decision reason',
+      cell: (row) => row.decisionReason || '—',
+    },
     { id: 'actions', header: 'Actions', cell: actions },
   ];
 }

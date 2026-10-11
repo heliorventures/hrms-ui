@@ -33,7 +33,7 @@ if (errors.length) throw new Error(errors.map((error) => error.message).join('\n
 const ast = parse(text);
 const names = new Set();
 const roots = [];
-const financialFields = new Set(['loanPolicy', 'previewLoanApproval', 'loanSchedulePreview', 'loanStatement',
+const financialFields = new Set(['loanPolicy', 'previewLoanApproval', 'previewLoanDeduction', 'previewLoanPeriodOverride', 'loanSchedulePreview', 'loanStatement',
   'fnfSettlement', 'fnfFinancialReview', 'previewFnfLoanExposure', 'financeFollowUpOwners',
   'upsertFnfSettlement', 'saveFnfFinancialReview', 'finalizeFnfSettlement', 'approveSeparation', 'cancelExitApproval', 'exitApprovalOperation']);
 for (const [type, name] of [[schema.getQueryType(), 'Query'], [schema.getMutationType(), 'Mutation']]) {

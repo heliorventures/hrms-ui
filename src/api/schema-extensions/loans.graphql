@@ -91,31 +91,6 @@ input LoanCommandMetaInput {
   expectedVersion: Int!
 }
 
-input SetLoanPeriodOverrideInput {
-  loanId: String!
-  periodStart: String!
-  amount: String
-  pauseInterest: Boolean!
-  reason: String!
-  meta: LoanCommandMetaInput!
-}
-
-input SetLoanDeductionInput {
-  loanId: String!
-  effectiveFrom: String!
-  firstDueDate: String!
-  amount: String!
-  recovery: LoanRecoveryMode!
-  reason: String!
-  meta: LoanCommandMetaInput!
-}
-
-enum LoanRecoveryMode {
-  PAYROLL
-  EXTERNAL
-  MIXED
-}
-
 input RecordLoanPaymentInput {
   loanId: String!
   amount: String!
@@ -322,6 +297,8 @@ type LoanRequest {
   version: Int!
   workflowInstanceId: String
   currentStepId: String
+  isFinalApprovalStep: Boolean!
+  decisionReason: String
 }
 
 type LoanAccountConnection {
@@ -418,10 +395,37 @@ type LoanPosting {
   reversalOf: String
 }
 
+input SetLoanPeriodOverrideInput {
+  loanId: String!
+  periodStart: String!
+  amount: String
+  pauseInterest: Boolean!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+input SetLoanDeductionInput {
+  loanId: String!
+  effectiveFrom: String!
+  firstDueDate: String!
+  amount: String!
+  recovery: LoanRecoveryMode!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+enum LoanRecoveryMode {
+  PAYROLL
+  EXTERNAL
+  MIXED
+}
+
 extend type Query {
+  previewLoanDeduction(input: SetLoanDeductionInput!): JSON!
+  previewLoanPeriodOverride(input: SetLoanPeriodOverrideInput!): JSON!
   loanPolicy(id: String!): LoanPolicy!
   previewLoanApproval(requestId: String!, terms: JSON!, effectiveFrom: NaiveDate!, firstDueDate: NaiveDate!): JSON!
-  loanSchedulePreview(loanId: String!, firstDueDate: NaiveDate!): JSON!
+  loanSchedulePreview(loanId: String!, firstDueDate: NaiveDate): JSON!
   loanStatement(loanId: String!, expectedVersion: Int!, after: String, first: Int! = 100): LoanPostingConnection!
   loanApprovalWorkflows(after: String, first: Int! = 25): LoanApprovalWorkflowConnection!
   loanPolicyVersions(after: String, first: Int! = 25): LoanPolicyConnection!

@@ -45,7 +45,7 @@ const MyLoansWorkspace = () => {
           Edit and submit
         </Button>
       )}
-      {submits && ['DRAFT', 'RETURNED', 'SUBMITTED'].includes(request.state) && (
+      {submits && ['DRAFT', 'RETURNED', 'SUBMITTED', 'UNDER_REVIEW'].includes(request.state) && (
         <Button variant="quiet" onClick={() => setEditor(withdrawEditor(request))}>
           Withdraw
         </Button>

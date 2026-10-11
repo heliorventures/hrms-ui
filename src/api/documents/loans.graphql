@@ -2,7 +2,7 @@ fragment LoanAccountFields on LoanAccount {
   id employeeId employeeName employeeCode requestId loanNumber purpose approvedPrincipal currency minorUnits state fundingState version principal interest outstanding disbursed repaid unappliedCredit terms
 }
 fragment LoanRequestFields on LoanRequest {
-  id employeeId employeeName employeeCode policyId preferences createdAt requestedAmount currency purpose employeeNotes state version workflowInstanceId currentStepId
+  id employeeId employeeName employeeCode policyId preferences createdAt requestedAmount currency purpose employeeNotes state version workflowInstanceId currentStepId isFinalApprovalStep decisionReason
 }
 fragment LoanCommandFields on LoanCommandResult {
   recordId loanId employeeId version state postingIds unappliedCredit
@@ -24,7 +24,7 @@ query LoanPolicy($id: String!) { loanPolicy(id: $id) { id key version currency m
 query PreviewLoanApproval($requestId: String!, $terms: JSON!, $effectiveFrom: NaiveDate!, $firstDueDate: NaiveDate!) {
   previewLoanApproval(requestId: $requestId, terms: $terms, effectiveFrom: $effectiveFrom, firstDueDate: $firstDueDate)
 }
-query LoanSchedulePreview($loanId: String!, $firstDueDate: NaiveDate!) {
+query LoanSchedulePreview($loanId: String!, $firstDueDate: NaiveDate) {
   loanSchedulePreview(loanId: $loanId, firstDueDate: $firstDueDate)
 }
 query LoanStatement($loanId: String!, $expectedVersion: Int!, $after: String, $first: Int!) {
@@ -139,4 +139,11 @@ query PreviewHistoricalLoanPayment($input: RecordLoanPaymentInput!, $kind: LoanH
 }
 mutation RecordHistoricalLoanPayment($input: RecordHistoricalLoanPaymentInput!) {
   recordHistoricalLoanPayment(input: $input) { recordId loanId employeeId version state postingIds unappliedCredit }
+}
+
+query PreviewLoanDeduction($input: SetLoanDeductionInput!) {
+  previewLoanDeduction(input: $input)
+}
+query PreviewLoanPeriodOverride($input: SetLoanPeriodOverrideInput!) {
+  previewLoanPeriodOverride(input: $input)
 }
