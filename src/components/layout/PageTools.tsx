@@ -16,6 +16,7 @@ const PageTools = () => {
     (destination) => destination.path === '/workplace/grievance'
   );
   const items: ActionMenuItem[] = [];
+  items.push({ id: 'video-guides', label: 'Video guides', href: '/hrms-demos' });
   if (information?.hasInformation) {
     items.push({ id: 'guide', label: 'About this page', onSelect: () => information.open() });
   }
