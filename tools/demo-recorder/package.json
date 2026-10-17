@@ -1,0 +1,25 @@
+{
+  "name": "helior-demo-recorder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "discover": "node src/cli.mjs discover",
+    "check": "node src/cli.mjs check",
+    "record": "node src/cli.mjs record",
+    "preview": "node src/preview.mjs",
+    "package:videos": "node src/publish.mjs",
+    "verify:browser": "node src/verify-browser.mjs",
+    "qa": "node src/qa.mjs",
+    "test": "node --test --experimental-test-isolation=none test/*.test.mjs",
+    "install:browser": "node src/install-browser.mjs"
+  },
+  "dependencies": {
+    "ffmpeg-static": "5.3.0",
+    "playwright": "1.64.1",
+    "typescript": "5.9.3"
+  }
+}
