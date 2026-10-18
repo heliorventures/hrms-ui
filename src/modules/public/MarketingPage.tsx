@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
+
+import { AppLogo } from '../../components/brand/AppLogo';
 import { APP_BRAND } from '../../constants/brand';
-import AppLogo from '../../components/brand/AppLogo';
 
 const FEATURE_LABELS = [
   'People operations',

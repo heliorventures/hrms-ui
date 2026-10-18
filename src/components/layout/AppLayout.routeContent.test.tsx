@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import RouteContent from '../../routes/RouteContent';
 
 import AppLayout from './AppLayout';
+import { CommandPaletteProvider } from './CommandPaletteContext';
 
 vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => ({ request: vi.fn() }) }));
 
@@ -63,11 +64,21 @@ describe('AppLayout route-state ownership', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <Routes>
-          <Route path="/" element={<AppLayout />}>
+          <Route
+            path="/"
+            element={
+              <CommandPaletteProvider>
+                <AppLayout />
+              </CommandPaletteProvider>
+            }
+          >
             <Route
               path="dashboard"
               element={
-                <RouteContent title="Dashboard" load={async () => ({ default: DashboardPage })} />
+                <RouteContent
+                  title="Dashboard"
+                  load={() => Promise.resolve({ default: DashboardPage })}
+                />
               }
             />
             <Route path="reports" element={<RouteContent title="Reports" load={reportsLoad} />} />

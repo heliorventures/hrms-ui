@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TimesheetLockPolicyDocument, TimesheetRowsDocument } from '../../api/graphql/graphql';
+import type * as UseFlashToastModule from '../../hooks/useFlashToast';
 
 import TimesheetPage from './TimesheetPage';
 
@@ -25,7 +26,8 @@ vi.mock('../../contexts/AuthContext', () => ({
 }));
 vi.mock('../../contexts/DialogContext', () => ({ useDialogs: () => ({ confirm: vi.fn() }) }));
 vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => state.client }));
-vi.mock('../../hooks/useFlashToast', () => ({
+vi.mock('../../hooks/useFlashToast', async (importOriginal) => ({
+  ...(await importOriginal<typeof UseFlashToastModule>()),
   useFlashToast: () => ({ clear: vi.fn(), flash: null, show: vi.fn() }),
 }));
 
@@ -50,7 +52,7 @@ describe('TimesheetPage authorization', () => {
       </MemoryRouter>
     );
 
-  it('does not request timesheet data without timesheet:read', async () => {
+  it('does not request timesheet data without timesheet:read', () => {
     const view = renderPage();
 
     expect(view.container.innerHTML).toBe('');

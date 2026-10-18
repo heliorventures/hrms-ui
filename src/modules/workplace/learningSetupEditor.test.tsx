@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
+
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
+
+import { accessibleText } from '../../testUtils/accessibleText';
 
 import { courseFields } from './learningSetup';
 import { SetupEditor } from './learningSetupEditor';
@@ -21,8 +24,7 @@ it('rejects reversed date fields without saving', async () => {
     />
   );
   fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-  expect(await screen.findByRole('alert')).toHaveProperty(
-    'textContent',
+  expect(accessibleText(await screen.findByRole('alert'))).toBe(
     'End date must be on or after start date.'
   );
   expect(save).not.toHaveBeenCalled();

@@ -23,6 +23,7 @@ import { insightsTour } from '../modules/insights/guidance/InsightsTour';
 import { leaveHolidaysPageTour } from '../modules/leave/guidance/LeaveHolidaysPageTour';
 import { leavePageTour } from '../modules/leave/guidance/LeavePageTour';
 import { leaveTeamCalendarPageTour } from '../modules/leave/guidance/LeaveTeamCalendarPageTour';
+import { loanTours } from '../modules/loans/guidance/LoanTours';
 import { myWorkCompletedTour, myWorkTasksTour } from '../modules/my-work/guidance/MyWorkTour';
 import { notificationsTour } from '../modules/notifications/guidance/NotificationsTour';
 import { employeeDetailTour } from '../modules/organization/guidance/EmployeeDetailTour';
@@ -56,6 +57,7 @@ import type { TourContext, TourDefinition } from './tourTypes';
  * beside its page owner; this table links route identities to those definitions.
  */
 export const TOUR_REGISTRY: readonly TourDefinition[] = [
+  ...loanTours,
   appearanceTour,
   dashboardTour,
   myWorkTasksTour,

@@ -84,7 +84,16 @@ describe('ApplyLeaveFormFields', () => {
 
     expect(screen.getByLabelText('Leave type').getAttribute('aria-invalid')).toBe('true');
     expect(screen.getByLabelText('Reason').getAttribute('aria-invalid')).toBe('true');
-    expect(screen.getByText('Choose a leave type.').getAttribute('role')).toBe('alert');
-    expect(screen.getByText('Enter a reason for your leave.').getAttribute('role')).toBe('alert');
+    expect(
+      document.getElementById(
+        screen.getByLabelText('Leave type').getAttribute('aria-describedby') ?? ''
+      )?.textContent
+    ).toBe('Choose a leave type.');
+    expect(
+      document.getElementById(
+        screen.getByLabelText('Reason').getAttribute('aria-describedby') ?? ''
+      )?.textContent
+    ).toBe('Enter a reason for your leave.');
+    expect(screen.getAllByRole('alert')).toHaveLength(2);
   });
 });

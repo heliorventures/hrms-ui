@@ -1,9 +1,11 @@
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
+
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import Modal from '@/components/common/Modal';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
 
 import FeedbackToast from '../../../components/common/FeedbackToast';
+import Select from '../../../components/common/Select';
 import type { CycleRow, TenantRow } from '../billingTypes';
 
 export interface CreateInvoiceInput {
@@ -89,25 +91,20 @@ const CreateInvoiceModal = ({
             {error}
           </FeedbackToast>
         ) : null}
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Tenant
-          <select
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-            value={tenantId}
-            onChange={(event) => {
-              setTenantId(event.target.value);
-              setBillingCycleId('');
-            }}
-            required
-          >
-            <option value="">Select Tenant</option>
-            {tenants.map((tenant) => (
-              <option key={tenant.id} value={tenant.id}>
-                {tenant.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label="Tenant"
+          options={[
+            { value: '', label: 'Select Tenant' },
+            ...tenants.map((tenant) => ({ value: tenant.id, label: tenant.name })),
+          ]}
+          className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+          value={tenantId}
+          onChange={(event) => {
+            setTenantId(event.target.value);
+            setBillingCycleId('');
+          }}
+          required
+        />
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Billing cycle
           <select

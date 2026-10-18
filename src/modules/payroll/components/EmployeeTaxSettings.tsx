@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import Button from '../../../components/common/Button';
 import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import Select from '../../../components/common/Select';
 import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { taxFormErrorMessage } from '../taxFormError';
 import { taxSettingsInput } from '../taxFormInputs';
@@ -50,19 +51,18 @@ const EmployeeTaxSettings = ({ current, busy, onSave }: Props) => {
         </p>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
-        <label>
-          Annual tax regime
-          <select
-            required
-            className="block w-full rounded border p-2"
-            value={regime}
-            onChange={(e) => setRegime(e.target.value)}
-          >
-            <option value="">Select regime</option>
-            <option value="NEW">New regime</option>
-            <option value="OLD">Old regime</option>
-          </select>
-        </label>
+        <Select
+          label="Annual tax regime"
+          options={[
+            { value: '', label: 'Select regime' },
+            { value: 'NEW', label: 'New regime' },
+            { value: 'OLD', label: 'Old regime' },
+          ]}
+          required
+          className="block w-full rounded border p-2"
+          value={regime}
+          onChange={(e) => setRegime(e.target.value)}
+        />
         <label>
           Withholding method
           <select

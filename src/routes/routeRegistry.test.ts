@@ -1,7 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { TENANT_APP_ROUTES } from './appRouteConfig';
 import { OPS_CHILD_ROUTES } from './opsRouteConfig';
+
+// Route ownership is independent of loading the full payroll component dependency graph.
+// Concurrent dynamic imports must observe the same component identity even if
+// Vitest evaluates a mock factory from more than one importing module.
+const payrollPages = vi.hoisted(() => ({
+  selfService: () => null,
+  processing: () => null,
+}));
+vi.mock('../modules/payroll/PayrollPayPage', () => ({ default: payrollPages.selfService }));
+vi.mock('../modules/payroll/PayrollPage', () => ({ default: payrollPages.processing }));
 
 function routeInventory(routes: readonly Record<string, unknown>[]) {
   return routes.map((route) => {

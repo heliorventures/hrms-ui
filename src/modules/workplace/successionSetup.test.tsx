@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { renderWithRouter as render } from '../../testUtils/renderWithRouter';
 
 import SuccessionPage from './SuccessionPage';
 import SuccessionSetupModal from './SuccessionSetupModal';
@@ -40,6 +43,7 @@ describe('succession setup', () => {
       })
     );
     render(<SuccessionPage />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Competencies' }));
     await screen.findByText('Competency 19');
     expect(screen.queryByText('Competency 20')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
@@ -74,7 +78,7 @@ describe('succession setup', () => {
     fireEvent.click(save);
     fireEvent.click(save);
     expect(state.request).toHaveBeenCalledTimes(1);
-    expect(state.request.mock.calls[0][1]).toEqual({
+    expect(state.request).toHaveBeenCalledWith(expect.anything(), {
       input: { id: 'pool-id', name: 'New leaders', description: 'Existing' },
     });
     resolve({ saveTalentPool: { id: 'pool-id' } });

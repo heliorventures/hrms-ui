@@ -40,6 +40,7 @@ const OnLeaveTodayFooter = ({ hasData, onRefresh, phase }: OnLeaveTodayFooterPro
         variant="quiet"
         size="sm"
         busy={phase === 'refreshing'}
+        aria-label="Refresh Leave Requests"
         busyLabel="Refreshing Leave Requests…"
         onClick={onRefresh}
       >

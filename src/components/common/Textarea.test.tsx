@@ -33,7 +33,8 @@ describe('Textarea', () => {
       'reason-description',
       'reason-error',
     ]);
-    expect(screen.getByRole('alert').id).toBe('reason-error');
+    expect(document.getElementById('reason-error')?.textContent).toBe('Reason is required.');
+    expect(screen.getByRole('alert').textContent).toContain('Reason is required.');
     expect(textarea.className).toContain('min-h-11');
     expect(textarea.className).toContain('text-base');
   });

@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import Button from '../../../components/common/Button';
 import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import Textarea from '../../../components/common/Textarea';
 import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { taxFormErrorMessage } from '../taxFormError';
 import { taxHistoryInput } from '../taxFormInputs';
@@ -92,17 +93,15 @@ const TaxHistoryEditor = ({
           onChange={(e) => setTds(e.target.value)}
         />
       </div>
-      <label className="block">
-        Actual earnings by component
-        <textarea
-          required
-          className="block w-full rounded border p-2"
-          rows={4}
-          placeholder={'BASIC=25000\nHRA=10000'}
-          value={components}
-          onChange={(e) => setComponents(e.target.value)}
-        />
-      </label>
+      <Textarea
+        label="Actual earnings by component"
+        required
+        className="block w-full rounded border p-2"
+        rows={4}
+        placeholder={'BASIC=25000\nHRA=10000'}
+        value={components}
+        onChange={(e) => setComponents(e.target.value)}
+      />
       <label className="flex items-center gap-2">
         <input type="checkbox" checked={complete} onChange={(e) => setComplete(e.target.checked)} />
         HR confirms complete deduction coverage for this period

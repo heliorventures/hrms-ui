@@ -3,6 +3,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { accessibleText } from '../../testUtils/accessibleText';
+
 import SensitiveValue from './SensitiveValue';
 
 const VALUE = '4111 1111 1111 1111';
@@ -154,7 +156,7 @@ describe('SensitiveValue clipboard handling', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Copy bank account' }));
 
       await waitFor(() => expect(writeText).toHaveBeenCalledWith(VALUE));
-      expect(screen.getByRole('status').textContent).toBe('Copied.');
+      expect(accessibleText(screen.getByRole('status'))).toBe('Copied.');
 
       fireEvent.click(screen.getByRole('button', { name: 'Hide bank account' }));
       expect(screen.queryByRole('button', { name: 'Copy bank account' })).toBeNull();
@@ -182,7 +184,7 @@ describe('SensitiveValue clipboard handling', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Copy bank account' }));
 
       await waitFor(() =>
-        expect(screen.getByRole('status').textContent).toBe(
+        expect(accessibleText(screen.getByRole('status'))).toBe(
           'Copy is unavailable. Select the value and copy it manually.'
         )
       );
@@ -214,7 +216,7 @@ describe('SensitiveValue clipboard handling', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Copy bank account' }));
 
       await waitFor(() =>
-        expect(screen.getByRole('status').textContent).toBe(
+        expect(accessibleText(screen.getByRole('status'))).toBe(
           'Copy is unavailable. Select the value and copy it manually.'
         )
       );

@@ -12,7 +12,7 @@ describe('company template selector', () => {
       <PayslipTemplateSelector
         value="TABLE"
         companyHeaderName="Company draft"
-        companyAddress="801, Business Court\nPune - 411038"
+        companyAddress={'801, Business Court\nPune - 411038'}
         disabled={false}
         onChange={vi.fn()}
       />

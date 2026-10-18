@@ -3,6 +3,8 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { accessibleText } from '../../testUtils/accessibleText';
+
 import MaskedAmount from './MaskedAmount';
 
 afterEach(() => {
@@ -89,7 +91,7 @@ describe('MaskedAmount', () => {
       expect(screen.getByText('XXXX')).not.toBeNull();
       expect(screen.queryByText('987654')).toBeNull();
       expect(document.body.textContent).not.toContain('Formatter exposed amount');
-      expect(screen.getByRole('status').textContent).toBe(
+      expect(accessibleText(screen.getByRole('status'))).toBe(
         'Unable to reveal this value. Try again.'
       );
       expect(consoleError).not.toHaveBeenCalled();

@@ -147,7 +147,9 @@ describe('LeaveBalanceCard access and query states', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Leave Balances Could Not Be Loaded');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
-    expect(screen.queryByText('No Leave Balances Yet.')).toBeNull();
+    expect(
+      screen.queryByText('Your available leave will appear here after balances are assigned.')
+    ).toBeNull();
   });
 
   it('renders intentional empty copy after both requests succeed', async () => {
@@ -158,7 +160,9 @@ describe('LeaveBalanceCard access and query states', () => {
     );
     renderCard();
 
-    expect(await screen.findByText('No Leave Balances Yet.')).toBeTruthy();
+    expect(
+      await screen.findByText('Your available leave will appear here after balances are assigned.')
+    ).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 

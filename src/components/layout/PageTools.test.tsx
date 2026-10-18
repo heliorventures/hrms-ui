@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import GuidanceProvider from '../../guidance/GuidanceProvider';
+import { GuidanceProvider } from '../../guidance/GuidanceProvider';
 import type { TourDefinition } from '../../guidance/tourTypes';
 import { PageInformationContext } from '../common/pageInformationContext';
 
@@ -12,6 +12,9 @@ import PageTools from './PageTools';
 
 vi.mock('../../navigation/useAccessibleNavigation', () => ({
   useAccessibleNavigation: () => [],
+}));
+vi.mock('../../guidance/useAccessibleFeatures', () => ({
+  useAccessibleFeatures: () => ({ features: [], context: { routePath: null } }),
 }));
 vi.mock('./NotificationDropdown', () => ({ default: () => null }));
 
@@ -23,7 +26,9 @@ const overviewTour: TourDefinition = {
 const contextualPageTour: TourDefinition = {
   id: 'employee-detail',
   routePaths: ['organization/employees/:employeeId'],
-  steps: [{ id: 'employee', anchor: null, title: 'Employee details', body: 'Review this profile.' }],
+  steps: [
+    { id: 'employee', anchor: null, title: 'Employee details', body: 'Review this profile.' },
+  ],
 };
 
 beforeEach(() => {
@@ -44,8 +49,9 @@ afterEach(() => {
 function renderPageTools({ route = 'dashboard', hasInformation = true } = {}) {
   const openInformation = vi.fn();
   const onOverviewDismiss = vi.fn();
-  const root = document.getElementById('root');
-  if (!root) throw new Error('Application root is unavailable');
+  const root =
+    document.getElementById('root') ?? document.body.appendChild(document.createElement('div'));
+  root.id = 'root';
 
   render(
     <MemoryRouter initialEntries={['/organization/employees/employee-9?tab=history']}>
@@ -94,7 +100,10 @@ describe('PageTools Help menu', () => {
   });
 
   it('offers a page tour only for the matched registered route identity', () => {
-    const matching = renderPageTools({ route: 'organization/employees/:employeeId', hasInformation: false });
+    const matching = renderPageTools({
+      route: 'organization/employees/:employeeId',
+      hasInformation: false,
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Help' }));
     expect(screen.getByRole('menuitem', { name: 'Start page tour' })).toBeTruthy();
     fireEvent.click(screen.getByRole('menuitem', { name: 'Start page tour' }));

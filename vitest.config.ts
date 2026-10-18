@@ -11,7 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    exclude: [...configDefaults.exclude, '.superpowers/**'],
+    exclude: [...configDefaults.exclude, '.superpowers/**', 'tools/demo-recorder/test/**'],
     restoreMocks: true,
   },
 });

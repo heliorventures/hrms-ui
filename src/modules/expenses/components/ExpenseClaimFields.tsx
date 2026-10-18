@@ -1,3 +1,4 @@
+import FileInput from '../../../components/common/FileInput';
 import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import { EXPENSE_DEFAULT_CURRENCY } from '../constants';
@@ -85,21 +86,16 @@ const ExpenseClaimFields = ({ form, disabled, categoryOptions, travelOptions }: 
         fullWidth
         required
       />
-      <label className="block text-sm font-medium text-content-secondary">
-        Receipt
-        <input
-          key={form.fileInputKey}
-          type="file"
-          accept="application/pdf,image/jpeg,image/png"
-          onChange={(event) => form.setReceipt(event.target.files?.[0] ?? null)}
-          className="mt-1 block w-full rounded-md border border-line bg-surface px-3 py-2 text-sm"
-          required
-          disabled={disabled}
-        />
-        <span className="mt-1 block text-xs text-content-muted">
-          Required for every claim. PDF, JPG, or PNG up to 6 MB.
-        </span>
-      </label>
+      <FileInput
+        label="Receipt"
+        description="Required for every claim. PDF, JPG, or PNG up to 6 MB."
+        key={form.fileInputKey}
+        accept="application/pdf,image/jpeg,image/png"
+        onChange={(event) => form.setReceipt(event.target.files?.[0] ?? null)}
+        className="mt-1 block w-full rounded-md border border-line bg-surface px-3 py-2 text-sm"
+        required
+        disabled={disabled}
+      />
       <Select
         label="Linked Travel Request"
         value={draft.travelRequestId}

@@ -11,8 +11,8 @@ import type { ReactNode } from 'react';
 
 import Button from '../../../components/common/Button';
 import FeedbackToast from '../../../components/common/FeedbackToast';
-import FormField from '../../../components/common/FormField';
 import Input from '../../../components/common/Input';
+import Textarea from '../../../components/common/Textarea';
 
 import { formatFileSize } from './prejoiningForm';
 import type { PrejoiningDocument, PrejoiningField, PrejoiningForm } from './types';
@@ -106,26 +106,17 @@ export const CandidateField = ({
   onChange: (value: string) => void;
 }) =>
   multilineFields.has(field.key) ? (
-    <FormField
+    <Textarea
       id={`prejoining-${field.key}`}
       label={field.label}
       required={field.required}
       error={error}
-    >
-      {({ inputId, describedBy, invalid }) => (
-        <textarea
-          id={inputId}
-          value={value}
-          disabled={disabled}
-          required={field.required}
-          aria-invalid={invalid}
-          aria-describedby={describedBy}
-          rows={3}
-          onChange={(event) => onChange(event.target.value)}
-          className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-base text-content-primary disabled:bg-canvas md:text-sm"
-        />
-      )}
-    </FormField>
+      value={value}
+      disabled={disabled}
+      rows={3}
+      onChange={(event) => onChange(event.target.value)}
+      fullWidth
+    />
   ) : (
     <Input
       id={`prejoining-${field.key}`}

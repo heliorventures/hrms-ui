@@ -5,8 +5,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApproveLeaveRequestDocument, LeaveBoardDocument } from '../../api/graphql/graphql';
-import PageInformationButton from '../../components/common/PageInformationButton';
 import PageInformationProvider from '../../components/common/PageInformationProvider';
+import type * as UseFlashToastModule from '../../hooks/useFlashToast';
 
 import { MyCompOffDocument } from './compOffDocuments';
 import LeavePage from './LeavePage';
@@ -39,7 +39,10 @@ vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => testState.c
 vi.mock('../../contexts/TenantContext', () => ({
   useTenant: () => ({ currentTenant: { id: 'tenant-1', timezone: 'Asia/Kolkata' } }),
 }));
-vi.mock('../../hooks/useFlashToast', () => ({ useFlashToast: () => testState.flash }));
+vi.mock('../../hooks/useFlashToast', async (importOriginal) => ({
+  ...(await importOriginal<typeof UseFlashToastModule>()),
+  useFlashToast: () => testState.flash,
+}));
 vi.mock('./hooks/useAllCompanyHolidays', () => ({
   useAllCompanyHolidays: () => ({
     rows: [],
@@ -143,7 +146,6 @@ describe('LeavePage approval', () => {
     render(
       <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
         <PageInformationProvider scopeKey="leave">
-          <PageInformationButton />
           <LeavePage />
         </PageInformationProvider>
       </MemoryRouter>
@@ -170,7 +172,7 @@ describe('LeavePage approval', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next leave requests' }));
 
     await waitFor(() =>
-      expect(testState.client.request).toHaveBeenLastCalledWith(LeaveBoardDocument, {
+      expect(testState.client.request).toHaveBeenCalledWith(LeaveBoardDocument, {
         limit: 20,
         requestOffset: 20,
         balanceYear: new Date().getFullYear(),

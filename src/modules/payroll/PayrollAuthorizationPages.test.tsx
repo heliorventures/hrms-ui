@@ -165,13 +165,17 @@ it('keeps tax setup actions with their feature and excludes employee submission 
       <PayrollTaxPage />
     </MemoryRouter>
   );
-  expect(
-    screen.getByRole('tab', { name: 'Employee Tax & History' }).getAttribute('aria-selected')
-  ).toBe('true');
-  fireEvent.click(screen.getByRole('tab', { name: 'Tax Versions' }));
+  expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Page section' }).value).toBe(
+    'employee-settings'
+  );
+  fireEvent.change(screen.getByRole('combobox', { name: 'Page section' }), {
+    target: { value: 'configuration' },
+  });
   expect(await screen.findByRole('button', { name: 'Add or Update Tax Version' })).toBeTruthy();
-  expect(screen.queryByRole('tab', { name: 'Submit Declaration' })).toBeNull();
-  fireEvent.click(screen.getByRole('tab', { name: 'Income Tax Slabs' }));
+  expect(screen.queryByRole('option', { name: 'Submit Declaration' })).toBeNull();
+  fireEvent.change(screen.getByRole('combobox', { name: 'Page section' }), {
+    target: { value: 'slabs' },
+  });
   expect(screen.getByRole('button', { name: 'Add or Update Slab' })).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Add or Update Tax Version' })).toBeNull();
 });
@@ -186,8 +190,18 @@ it('guides salary setup through structures to employee assignment without stacki
   );
   await waitFor(() => expect(testState.request).toHaveBeenCalled());
   fireEvent.click(screen.getByRole('button', { name: 'Next: Build Salary Structure' }));
-  expect(screen.getByRole('tabpanel').textContent).toContain('Salary Structure Template');
+  expect(
+    screen
+      .getByPlaceholderText('Structure name, e.g. India Standard CTC')
+      .closest('[role=tabpanel]')
+      ?.hasAttribute('hidden')
+  ).toBe(false);
   fireEvent.click(screen.getByRole('button', { name: 'Next: Assign Employee Salary' }));
-  expect(screen.getByRole('tabpanel').textContent).toContain('Assign Annual CTC');
+  expect(
+    screen
+      .getByPlaceholderText('Annual CTC, e.g. 3000000')
+      .closest('[role=tabpanel]')
+      ?.hasAttribute('hidden')
+  ).toBe(false);
   expect(screen.queryByRole('button', { name: 'Save structure' })).toBeNull();
 });

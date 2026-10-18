@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import AppLogo from '../../components/brand/AppLogo';
+import { AppLogo } from '../../components/brand/AppLogo';
 
 import VideoLibrary from './VideoLibrary';
 

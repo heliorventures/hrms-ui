@@ -4,6 +4,7 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import Select from '../../../components/common/Select';
 import { useUnpaidLeavePolicy } from '../hooks/useUnpaidLeavePolicy';
 import type { UnpaidLeavePolicy } from '../unpaidLeaveDocuments';
 
@@ -37,24 +38,21 @@ const FormulaFields = ({
         disabled={busy}
         onChange={(event) => change({ dayDivisor: event.target.value || null })}
       />
-      <label className="space-y-1 text-sm font-medium">
-        Apply deduction
-        <select
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
-          value={form.treatment ?? ''}
-          required
-          disabled={busy}
-          onChange={(event) =>
-            change({ treatment: event.target.value as UnpaidLeavePolicy['treatment'] })
-          }
-        >
-          <option value="" disabled>
-            Select treatment
-          </option>
-          <option value="BEFORE_STATUTORY">Before statutory calculation</option>
-          <option value="AFTER_STATUTORY">After statutory calculation</option>
-        </select>
-      </label>
+      <Select
+        label="Apply deduction"
+        options={[
+          { value: '', label: 'Select treatment' },
+          { value: 'BEFORE_STATUTORY', label: 'Before statutory calculation' },
+          { value: 'AFTER_STATUTORY', label: 'After statutory calculation' },
+        ]}
+        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
+        value={form.treatment ?? ''}
+        required
+        disabled={busy}
+        onChange={(event) =>
+          change({ treatment: event.target.value as UnpaidLeavePolicy['treatment'] })
+        }
+      />
     </div>
     <p className="text-sm text-gray-600 dark:text-gray-300">
       Deduction = monthly basic ÷ configured days × approved unpaid days. Changes apply to future

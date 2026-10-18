@@ -12,6 +12,9 @@ import type { ParsedClientSession } from '../../auth/clientSession';
 
 import AdminAttendancePolicyPage from './AdminAttendancePolicyPage';
 
+// Weekly-off editor has its own integration tests and independent GraphQL contract.
+vi.mock('./WeeklyOffSettings', () => ({ default: () => null }));
+
 const state = vi.hoisted(() => ({
   client: { request: vi.fn() },
   tenantId: 'tenant-1',

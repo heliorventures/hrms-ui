@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+
+import previewSource from '../../../api/documents/leaveDatePreview.graphql?raw';
 
 import ApplyLeaveModal from './ApplyLeaveModal';
 
@@ -99,9 +101,16 @@ it('does not promote an old upload into a leave mutation after identity replacem
       resolveUpload = resolve;
     })
   );
+  state.client.request.mockImplementation((document: unknown) => {
+    if (document === previewSource)
+      return Promise.resolve({ leaveDatePreview: { requestedDays: '2' } });
+    throw new Error('Unexpected leave mutation during the upload race');
+  });
   const originalClient = state.client;
   const view = render(<ApplyLeaveModal {...props} />);
   fillPrivateDraft();
+  await waitFor(() => expect(state.client.request).toHaveBeenCalled());
+  await act(async () => Promise.resolve());
   submitForm();
   expect(state.upload).toHaveBeenCalledOnce();
   state.user = { id: 'user-b' };
@@ -112,7 +121,8 @@ it('does not promote an old upload into a leave mutation after identity replacem
     resolveUpload('private-file-a');
     await Promise.resolve();
   });
-  expect(originalClient.request).not.toHaveBeenCalled();
+  expect(originalClient.request).toHaveBeenCalledTimes(1);
+  expect(originalClient.request).toHaveBeenCalledWith(previewSource, expect.anything());
   expect(screen.getByLabelText<HTMLTextAreaElement>('Reason').value).toBe('');
 });
 
