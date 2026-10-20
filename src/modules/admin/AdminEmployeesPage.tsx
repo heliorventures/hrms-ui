@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-  ClientOpsAdminOrgLabelsDocument,
-  ClientOpsAdminEmployeesWithLoginDocument,
-} from '../../api/graphql/graphql';
+import { ClientOpsAdminOrgLabelsDocument } from '../../api/graphql/graphql';
+import { OrganizationEmployeeAdminListDocument as ClientOpsAdminEmployeesWithLoginDocument } from '../../api/organization-employee/graphql';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -14,6 +12,7 @@ import Table from '../../components/common/Table';
 import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
+import { employeeManagerName } from '../organization/employeeManagerPresentation';
 
 import CreateEmployeeModal from './components/CreateEmployeeModal';
 import EditEmployeeModal, { type EditEmployeeRow } from './components/EditEmployeeModal';
@@ -36,6 +35,9 @@ interface EmployeeRow {
   linkedUserEmail?: string | null;
   linkedUserUsername?: string | null;
   reportingManagerName?: string | null;
+  reportingManagerOrganizationManaged: boolean;
+  reportingManagerPrincipalId?: string | null;
+  reportingManagerTenantId?: string | null;
 }
 
 interface EmployeesData {
@@ -119,10 +121,12 @@ const AdminEmployeesPage = () => {
         key: 'reportingManagerId',
         label: 'Reports To',
         render: (row: EmployeeRow) =>
-          row.reportingManagerName ||
-          (row.reportingManagerId && nameById.get(row.reportingManagerId)) ||
-          row.reportingManagerId ||
-          '—',
+          row.reportingManagerOrganizationManaged
+            ? employeeManagerName(row)
+            : row.reportingManagerName ||
+              (row.reportingManagerId && nameById.get(row.reportingManagerId)) ||
+              row.reportingManagerId ||
+              '—',
       },
       {
         key: 'userId',

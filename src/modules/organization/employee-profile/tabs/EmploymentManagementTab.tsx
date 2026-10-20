@@ -13,6 +13,11 @@ import FeedbackToast from '../../../../components/common/FeedbackToast';
 import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import type { CanonicalEmployeeStatus } from '../../../employeeStatus';
+import {
+  employeeManagerName,
+  employeeManagerOwnershipLabel,
+  localManagerUpdate,
+} from '../../employeeManagerPresentation';
 import EmployeeLocationSettings from '../components/EmployeeLocationSettings';
 import { EmploymentActionModals } from '../components/EmploymentActionModals';
 import ImportedProfileDetails from '../components/ImportedProfileDetails';
@@ -32,6 +37,22 @@ interface EmploymentManagementTabProps {
 
 const NO_MANAGER_CHANGE = '__NOCHANGE__';
 const CLEAR_MANAGER = '__CLEAR__';
+
+function selectedManagerId(choice: string): string | null | undefined {
+  if (choice === CLEAR_MANAGER) return null;
+  if (choice === NO_MANAGER_CHANGE) return undefined;
+  return choice;
+}
+
+function selectedManagerName(
+  choice: string,
+  previous: string,
+  rows: { employeeId: string; fullName: string }[]
+): string {
+  if (choice === CLEAR_MANAGER) return '—';
+  if (choice === NO_MANAGER_CHANGE) return previous;
+  return rows.find((row) => row.employeeId === choice)?.fullName ?? previous;
+}
 
 export function EmploymentManagementTab({
   employeeId,
@@ -79,7 +100,12 @@ export function EmploymentManagementTab({
     setNewSalaryAnnual(String(model.compensation.baseSalaryAnnual));
     setSalaryAnnual(model.compensation.baseSalaryAnnual);
     setRoleAssignment(model.roleAssignment);
-  }, [model.core.departmentId, model.core.designationId, model.compensation.baseSalaryAnnual]);
+  }, [
+    model.core.departmentId,
+    model.core.designationId,
+    model.compensation.baseSalaryAnnual,
+    model.roleAssignment,
+  ]);
 
   useEffect(() => {
     if (!roleOpen) return;
@@ -210,21 +236,22 @@ export function EmploymentManagementTab({
       } = { id: employeeId };
       if (departmentId) input.departmentId = departmentId;
       if (designationId) input.designationId = designationId;
-      if (managerChoice === CLEAR_MANAGER) input.reportingManagerId = null;
-      else if (managerChoice !== NO_MANAGER_CHANGE) input.reportingManagerId = managerChoice;
+      Object.assign(
+        input,
+        localManagerUpdate(
+          model.core.reportingManagerOrganizationManaged,
+          selectedManagerId(managerChoice)
+        )
+      );
       await client.request(UpdateEmployeeDocument, { input });
       setRoleAssignment((current) => ({
         ...current,
         department: departments.find((row) => row.id === departmentId)?.name ?? current.department,
         designation:
           designations.find((row) => row.id === designationId)?.title ?? current.designation,
-        reportingManagerName:
-          managerChoice === CLEAR_MANAGER
-            ? '—'
-            : managerChoice === NO_MANAGER_CHANGE
-              ? current.reportingManagerName
-              : (orgRows.find((row) => row.employeeId === managerChoice)?.fullName ??
-                current.reportingManagerName),
+        reportingManagerName: model.core.reportingManagerOrganizationManaged
+          ? employeeManagerName(model.core, '—')
+          : selectedManagerName(managerChoice, current.reportingManagerName, orgRows),
       }));
       setRoleOpen(false);
       setBanner('Role and reporting updated.');
@@ -360,11 +387,22 @@ export function EmploymentManagementTab({
           </Button>
         }
       >
+        {model.core.reportingManagerOrganizationManaged ? (
+          <p className="mb-3 text-sm text-content-secondary">
+            {employeeManagerOwnershipLabel(model.core)}. Change the manager from Organization
+            workspace; department and designation remain editable here.
+          </p>
+        ) : null}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {[
             ['Designation', roleAssignment.designation],
             ['Department', roleAssignment.department],
-            ['Manager', roleAssignment.reportingManagerName],
+            [
+              'Manager',
+              model.core.reportingManagerOrganizationManaged
+                ? employeeManagerName(model.core, '—')
+                : roleAssignment.reportingManagerName,
+            ],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl bg-slate-50/90 p-3 dark:bg-slate-800/50">
               <p className="text-[11px] font-semibold uppercase text-slate-400">{label}</p>
@@ -414,6 +452,7 @@ export function EmploymentManagementTab({
         designationId={designationId}
         designations={designations}
         managerChoice={managerChoice}
+        managerOrganizationManaged={model.core.reportingManagerOrganizationManaged}
         managerOptions={managerOptions}
         newSalaryAnnual={newSalaryAnnual}
         pctHike={pctHike}

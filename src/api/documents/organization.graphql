@@ -1,0 +1,560 @@
+fragment OrganizationPageFields on OrganizationDocumentPage {
+  schemaVersion
+  items
+  endCursor
+  hasNextPage
+  graphVersion
+}
+
+fragment OrganizationOutcomeFields on CommandOutcome {
+  commandId
+  resourceId
+  status
+  resourceVersion
+  result
+}
+
+mutation CancelPendingOrganizationCommand($commandId: UUID!) {
+  cancelPendingOrganizationCommand(commandId: $commandId) {
+    ...OrganizationOutcomeFields
+  }
+}
+
+fragment OrganizationChangeFields on ChangeResult {
+  id
+  status
+  version
+  organizationVersion
+}
+
+query OrganizationWorkspaces {
+  organizationWorkspaces {
+    id
+    name
+    version
+    canManage
+    canDelegate
+    canApprove
+    canReview
+    canReport
+    canHistory
+    canPayroll
+  }
+}
+
+query OrganizationIdentity {
+  myOrganizationIdentity {
+    principalId
+    loginLinkId
+    loginLinkVersion
+  }
+}
+
+query OrganizationAuditHistory(
+  $organizationId: UUID!
+  $from: DateTime!
+  $to: DateTime!
+  $after: UUID
+  $first: Int
+) {
+  organizationAuditHistory(
+    organizationId: $organizationId
+    from: $from
+    to: $to
+    after: $after
+    first: $first
+  )
+}
+
+query OrganizationCompanies($organizationId: UUID!) {
+  organizationCompanies(organizationId: $organizationId) {
+    membershipId
+    tenantId
+    name
+    status
+    version
+    capabilities
+    runtimeStatus
+    installedVersion
+    directorySyncStatus
+  }
+}
+
+query OrganizationInvitations {
+  organizationInvitations {
+    ...OrganizationPageFields
+  }
+}
+
+query OrganizationConfiguration(
+  $organizationId: UUID!
+  $kind: OrganizationConfigurationKind!
+  $after: UUID
+  $first: Int
+) {
+  organizationConfiguration(
+    organizationId: $organizationId
+    kind: $kind
+    after: $after
+    first: $first
+  ) {
+    schemaVersion
+    items
+    nextCursor
+    organizationVersion
+  }
+}
+
+query OrganizationCapabilityCatalog {
+  organizationCapabilityCatalog
+}
+
+query OrganizationDirectory(
+  $organizationId: UUID!
+  $membershipId: UUID!
+  $after: UUID
+  $first: Int
+) {
+  organizationDirectory(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    after: $after
+    first: $first
+  ) {
+    ...OrganizationPageFields
+  }
+}
+
+query OrganizationRelationships($organizationId: UUID!, $after: UUID, $first: Int) {
+  organizationRelationships(organizationId: $organizationId, after: $after, first: $first) {
+    ...OrganizationPageFields
+  }
+}
+
+query OrganizationApprovals(
+  $organizationId: UUID!
+  $membershipId: UUID
+  $after: UUID
+  $first: Int
+) {
+  organizationApprovals(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    after: $after
+    first: $first
+  ) {
+    ...OrganizationPageFields
+  }
+}
+
+query OrganizationTeam($organizationId: UUID!, $membershipId: UUID, $after: UUID, $first: Int) {
+  organizationTeam(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    after: $after
+    first: $first
+  ) {
+    ...OrganizationPageFields
+  }
+}
+
+query OrganizationResource(
+  $organizationId: UUID!
+  $membershipId: UUID!
+  $operation: OrganizationOperation!
+  $resourceId: UUID!
+  $expectedVersion: Int!
+  $payload: JSON
+) {
+  organizationResource(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    operation: $operation
+    resourceId: $resourceId
+    expectedVersion: $expectedVersion
+    payload: $payload
+  ) {
+    ...OrganizationOutcomeFields
+  }
+}
+
+query OrganizationCommandStatus($commandId: UUID!) {
+  organizationCommandStatus(commandId: $commandId) {
+    ...OrganizationOutcomeFields
+  }
+}
+
+query OrganizationProgress(
+  $organizationId: UUID!
+  $membershipIds: [UUID!]
+  $from: NaiveDate!
+  $to: NaiveDate!
+) {
+  organizationProgress(
+    organizationId: $organizationId
+    membershipIds: $membershipIds
+    from: $from
+    to: $to
+  )
+}
+
+query OrganizationOperationalProgress(
+  $organizationId: UUID!
+  $membershipIds: [UUID!]
+  $from: NaiveDate!
+  $to: NaiveDate!
+) {
+  organizationOperationalProgress(
+    organizationId: $organizationId
+    membershipIds: $membershipIds
+    from: $from
+    to: $to
+  )
+}
+
+mutation ExportOrganizationHistoryArchive(
+  $organizationId: UUID!
+  $membershipId: UUID!
+  $archiveId: UUID!
+  $from: DateTime!
+  $through: DateTime!
+) {
+  exportOrganizationHistoryArchive(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    archiveId: $archiveId
+    from: $from
+    through: $through
+  )
+}
+
+query OrganizationHistoryArchive($organizationId: UUID!, $membershipId: UUID!, $archiveId: UUID!) {
+  organizationHistoryArchive(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    archiveId: $archiveId
+  )
+}
+
+query OrganizationHistory(
+  $organizationId: UUID!
+  $membershipIds: [UUID!]
+  $from: DateTime!
+  $to: DateTime!
+  $after: UUID
+  $first: Int
+) {
+  organizationHistory(
+    organizationId: $organizationId
+    membershipIds: $membershipIds
+    from: $from
+    to: $to
+    after: $after
+    first: $first
+  ) {
+    ...OrganizationPageFields
+  }
+}
+
+mutation ExecuteOrganizationCommand(
+  $organizationId: UUID!
+  $membershipId: UUID!
+  $command: OrganizationCommandInput!
+) {
+  executeOrganizationCommand(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    command: $command
+  ) {
+    ...OrganizationOutcomeFields
+  }
+}
+
+mutation RegisterOrganizationIdentity {
+  registerOrganizationIdentity
+}
+
+mutation RevokeOrganizationIdentity($expectedLinkVersion: Int!) {
+  revokeMyOrganizationIdentity(expectedLinkVersion: $expectedLinkVersion)
+}
+
+mutation InviteOrganizationCompany(
+  $organizationId: UUID!
+  $expectedVersion: Int!
+  $tenantId: UUID!
+) {
+  inviteOrganizationCompany(
+    organizationId: $organizationId
+    expectedVersion: $expectedVersion
+    tenantId: $tenantId
+  ) {
+    ...OrganizationChangeFields
+  }
+}
+
+mutation AcceptOrganizationCompany(
+  $organizationId: UUID!
+  $expectedVersion: Int!
+  $membershipId: UUID!
+  $expectedMembershipVersion: Int!
+) {
+  acceptOrganizationCompany(
+    organizationId: $organizationId
+    expectedVersion: $expectedVersion
+    membershipId: $membershipId
+    expectedMembershipVersion: $expectedMembershipVersion
+  ) {
+    ...OrganizationChangeFields
+  }
+}
+
+mutation SuspendOrganizationCompany(
+  $organizationId: UUID!
+  $expectedVersion: Int!
+  $membershipId: UUID!
+  $expectedMembershipVersion: Int!
+) {
+  suspendOrganizationCompany(
+    organizationId: $organizationId
+    expectedVersion: $expectedVersion
+    membershipId: $membershipId
+    expectedMembershipVersion: $expectedMembershipVersion
+  ) {
+    ...OrganizationChangeFields
+  }
+}
+
+mutation ResumeOrganizationCompany(
+  $organizationId: UUID!
+  $expectedVersion: Int!
+  $membershipId: UUID!
+  $expectedMembershipVersion: Int!
+) {
+  resumeOrganizationCompany(
+    organizationId: $organizationId
+    expectedVersion: $expectedVersion
+    membershipId: $membershipId
+    expectedMembershipVersion: $expectedMembershipVersion
+  ) {
+    ...OrganizationChangeFields
+  }
+}
+
+mutation BeginOrganizationCompanyDetach(
+  $organizationId: UUID!
+  $expectedVersion: Int!
+  $membershipId: UUID!
+  $expectedMembershipVersion: Int!
+) {
+  beginOrganizationCompanyDetach(
+    organizationId: $organizationId
+    expectedVersion: $expectedVersion
+    membershipId: $membershipId
+    expectedMembershipVersion: $expectedMembershipVersion
+  ) {
+    ...OrganizationChangeFields
+  }
+}
+
+mutation InstallOrganizationMembership(
+  $organizationId: UUID!
+  $membershipId: UUID!
+  $expectedVersion: Int!
+  $commandId: UUID!
+) {
+  installOrganizationMembership(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    expectedVersion: $expectedVersion
+    commandId: $commandId
+  ) {
+    ...OrganizationOutcomeFields
+  }
+}
+
+mutation CreateOrganizationRole(
+  $organizationId: UUID!
+  $expectedVersion: Int!
+  $name: String!
+  $capabilities: [RoleCapability!]!
+) {
+  createOrganizationRole(
+    organizationId: $organizationId
+    expectedVersion: $expectedVersion
+    name: $name
+    capabilities: $capabilities
+  ) {
+    ...OrganizationChangeFields
+  }
+}
+
+mutation ReplaceOrganizationRole(
+  $organizationId: UUID!
+  $expectedVersion: Int!
+  $roleId: UUID!
+  $expectedRoleVersion: Int!
+  $capabilities: [RoleCapability!]!
+) {
+  replaceOrganizationRoleCapabilities(
+    organizationId: $organizationId
+    expectedVersion: $expectedVersion
+    roleId: $roleId
+    expectedRoleVersion: $expectedRoleVersion
+    capabilities: $capabilities
+  ) {
+    ...OrganizationChangeFields
+  }
+}
+
+mutation GrantOrganizationRole(
+  $organizationId: UUID!
+  $expectedVersion: Int!
+  $principalId: UUID!
+  $roleId: UUID!
+  $companyMembershipIds: [UUID!]!
+) {
+  grantOrganizationRole(
+    organizationId: $organizationId
+    expectedVersion: $expectedVersion
+    principalId: $principalId
+    roleId: $roleId
+    companyMembershipIds: $companyMembershipIds
+  ) {
+    ...OrganizationChangeFields
+  }
+}
+
+mutation RevokeOrganizationRole(
+  $organizationId: UUID!
+  $expectedVersion: Int!
+  $bindingId: UUID!
+  $expectedBindingVersion: Int!
+) {
+  revokeOrganizationRoleBinding(
+    organizationId: $organizationId
+    expectedVersion: $expectedVersion
+    bindingId: $bindingId
+    expectedBindingVersion: $expectedBindingVersion
+  ) {
+    ...OrganizationChangeFields
+  }
+}
+
+mutation InstallOrganizationGrant(
+  $organizationId: UUID!
+  $membershipId: UUID!
+  $bindingId: UUID!
+  $expectedVersion: Int!
+  $commandId: UUID!
+) {
+  installOrganizationGrant(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    bindingId: $bindingId
+    expectedVersion: $expectedVersion
+    commandId: $commandId
+  ) {
+    ...OrganizationOutcomeFields
+  }
+}
+
+mutation SyncOrganizationDirectory(
+  $organizationId: UUID!
+  $membershipId: UUID!
+  $after: UUID
+  $first: Int
+) {
+  syncOrganizationDirectory(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    after: $after
+    first: $first
+  ) {
+    ...OrganizationPageFields
+  }
+}
+
+mutation ProposeOrganizationRelationship(
+  $organizationId: UUID!
+  $expectedGraphVersion: Int!
+  $subjectEmploymentRefId: UUID!
+  $managerEmploymentRefId: UUID!
+  $relationshipType: String!
+  $effectiveFrom: DateTime!
+  $effectiveTo: DateTime
+  $capabilities: [String!]!
+) {
+  proposeOrganizationRelationship(
+    organizationId: $organizationId
+    expectedGraphVersion: $expectedGraphVersion
+    subjectEmploymentRefId: $subjectEmploymentRefId
+    managerEmploymentRefId: $managerEmploymentRefId
+    relationshipType: $relationshipType
+    effectiveFrom: $effectiveFrom
+    effectiveTo: $effectiveTo
+    capabilities: $capabilities
+  )
+}
+
+mutation EndOrganizationRelationship(
+  $organizationId: UUID!
+  $assignmentId: UUID!
+  $expectedVersion: Int!
+  $expectedGraphVersion: Int!
+) {
+  endOrganizationRelationship(
+    organizationId: $organizationId
+    assignmentId: $assignmentId
+    expectedVersion: $expectedVersion
+    expectedGraphVersion: $expectedGraphVersion
+  )
+}
+
+mutation ChangeOrganizationRelationshipManager(
+  $organizationId: UUID!
+  $assignmentId: UUID!
+  $expectedVersion: Int!
+  $expectedGraphVersion: Int!
+  $managerEmploymentRefId: UUID!
+) {
+  changeOrganizationRelationshipManager(
+    organizationId: $organizationId
+    assignmentId: $assignmentId
+    expectedVersion: $expectedVersion
+    expectedGraphVersion: $expectedGraphVersion
+    managerEmploymentRefId: $managerEmploymentRefId
+  )
+}
+
+mutation InstallOrganizationRelationship(
+  $organizationId: UUID!
+  $membershipId: UUID!
+  $assignmentId: UUID!
+  $expectedVersion: Int!
+  $commandId: UUID!
+) {
+  installOrganizationRelationship(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    assignmentId: $assignmentId
+    expectedVersion: $expectedVersion
+    commandId: $commandId
+  ) {
+    ...OrganizationOutcomeFields
+  }
+}
+query OrganizationPendingCommands(
+  $organizationId: UUID!
+  $membershipId: UUID
+  $after: UUID
+  $first: Int
+) {
+  organizationPendingCommands(
+    organizationId: $organizationId
+    membershipId: $membershipId
+    after: $after
+    first: $first
+  ) {
+    ...OrganizationPageFields
+  }
+}

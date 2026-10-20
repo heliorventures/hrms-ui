@@ -1,0 +1,209 @@
+query OrganizationEmployeeChart {
+  organizationDirectoryChart {
+    employeeId
+    employeeCode
+    fullName
+    reportingManagerId
+    reportingManagerName
+    reportingManagerPrincipalId
+    reportingManagerTenantId
+    reportingManagerOrganizationManaged
+    departmentName
+    designationTitle
+  }
+}
+
+query OrganizationEmployeeDirectory($limit: Int! = 100, $after: String) {
+  employeeDirectoryPage(limit: $limit, after: $after) {
+    rows {
+      employeeId
+      employeeCode
+      fullName
+      status
+      employmentType
+      dateOfJoining
+      departmentName
+      designationTitle
+      reportingManagerId
+      reportingManagerName
+      reportingManagerPrincipalId
+      reportingManagerTenantId
+      reportingManagerOrganizationManaged
+    }
+    nextCursor
+    hasMore
+  }
+}
+
+query OrganizationEmployeeAccess($employeeId: ID!) {
+  employeeProfileAccess(employeeId: $employeeId) {
+    isSelf
+    canViewPrivateProfile
+    canViewPayrollSensitive
+    canEditPersonalProfile
+    canManageOrganizationFields
+    canReviewProfileChanges
+    directoryEntry {
+      employeeId
+      employeeCode
+      fullName
+      status
+      employmentType
+      dateOfJoining
+      departmentName
+      designationTitle
+      reportingManagerId
+      reportingManagerName
+      reportingManagerPrincipalId
+      reportingManagerTenantId
+      reportingManagerOrganizationManaged
+    }
+  }
+}
+
+query OrganizationEmployeeAdminList($limit: Int! = 100) {
+  employees(limit: $limit) {
+    id
+    employeeCode
+    firstName
+    lastName
+    fullName
+    status
+    employmentType
+    dateOfJoining
+    departmentId
+    designationId
+    reportingManagerId
+    userId
+    departmentName
+    designationTitle
+    linkedUserEmail
+    linkedUserUsername
+    reportingManagerName
+    reportingManagerPrincipalId
+    reportingManagerTenantId
+    reportingManagerOrganizationManaged
+  }
+}
+
+query OrganizationEmployeePrivateProfile($employeeId: ID!) {
+  employee(id: $employeeId) {
+    id
+    employeeCode
+    firstName
+    lastName
+    fullName
+    status
+    employmentType
+    dateOfJoining
+    departmentId
+    designationId
+    reportingManagerId
+    userId
+    locationId
+    locationName
+    locationAssignmentEffectiveFrom
+    departmentName
+    designationTitle
+    linkedUserEmail
+    linkedUserUsername
+    reportingManagerName
+    personalPhone
+    currentAddress
+    permanentAddress
+    dateOfBirth
+    gender
+    maritalStatus
+    nationality
+    bloodGroup
+    emergencyContactName
+    emergencyContactPhone
+    emergencyContactRelation
+    createdAt
+    updatedAt
+    reportingManagerPrincipalId
+    reportingManagerTenantId
+    reportingManagerOrganizationManaged
+  }
+  employeeDocuments(employeeId: $employeeId, limit: 100) {
+    id
+    documentTypeId
+    status
+    uploadedAt
+    originalFileName
+    mimeType
+    uploadedByUserId
+    documentTypeName
+    documentTypeCategory
+  }
+  documentTypes(limit: 100) {
+    id
+    name
+    category
+    systemKey
+  }
+  employeePrimaryBank(employeeId: $employeeId) {
+    id
+    bankName
+    accountNumberMasked
+    ifscCode
+    accountType
+    isVerified
+  }
+  employeeIdentityProfile(employeeId: $employeeId) {
+    pan {
+      id
+      maskedPan
+      isVerified
+    }
+    aadhaar {
+      id
+      maskedAadhaar
+      isVerified
+    }
+  }
+  employeeProfileChangeRequests(employeeId: $employeeId) {
+    id
+    requestType
+    status
+    requestedSummary
+    supportingDocumentId
+    reviewedAt
+    rejectionReason
+    createdAt
+    updatedAt
+  }
+  employeeEducationRecords(employeeId: $employeeId) {
+    id
+    employeeId
+    educationLevel
+    qualification
+    fieldOfStudy
+    institution
+    boardUniversity
+    startDate
+    completionYear
+    gradeScore
+    description
+    verificationStatus
+    evidenceDocumentIds
+    rejectionReason
+    updatedAt
+  }
+  employeeWorkExperienceRecords(employeeId: $employeeId) {
+    id
+    employeeId
+    company
+    roleTitle
+    employmentType
+    location
+    startDate
+    endDate
+    isCurrent
+    description
+    verificationStatus
+    evidenceDocumentIds
+    rejectionReason
+    updatedAt
+  }
+}

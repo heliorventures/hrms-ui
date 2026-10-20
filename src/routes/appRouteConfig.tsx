@@ -1,8 +1,10 @@
 import { LOAN_ROUTES } from './loanRouteConfig';
+import { ORGANIZATION_ROUTES } from './organizationRouteConfig';
 import type { AppChildRoute } from './routeTypes';
 
 export const TENANT_APP_ROUTES: AppChildRoute[] = [
   ...LOAN_ROUTES,
+  ...ORGANIZATION_ROUTES,
   {
     kind: 'page',
     path: 'appearance',

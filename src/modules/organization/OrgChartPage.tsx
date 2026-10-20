@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
-  OrganizationDirectoryChartDocument,
-  type OrganizationDirectoryChartQuery,
-} from '../../api/graphql/graphql';
+  OrganizationEmployeeChartDocument as OrganizationDirectoryChartDocument,
+  type OrganizationEmployeeChartQuery as OrganizationDirectoryChartQuery,
+} from '../../api/organization-employee/graphql';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import FeedbackToast from '../../components/common/FeedbackToast';
@@ -21,6 +21,8 @@ import {
   findOrgChartRoots,
   type OrgChartRowLite,
 } from '../../utils/orgChartTree';
+
+import { employeeManagerName, employeeManagerOwnershipLabel } from './employeeManagerPresentation';
 
 function EmployeeNodeCard({
   row,
@@ -48,6 +50,12 @@ function EmployeeNodeCard({
       {meta ? (
         <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-slate-600 dark:text-slate-300">
           {meta}
+        </p>
+      ) : null}
+      {row.reportingManagerOrganizationManaged ? (
+        <p className="mt-2 text-[10px] text-content-secondary">
+          Reports to {employeeManagerName(row)}
+          <span className="block">{employeeManagerOwnershipLabel(row)}</span>
         </p>
       ) : null}
       {childCount > 0 ? (
@@ -169,7 +177,7 @@ const OrgChartPage = () => {
           OrganizationDirectoryChartDocument
         );
         if (!cancelled) {
-          const nextRows = (res.organizationDirectoryChart ?? []) as OrgChartRowLite[];
+          const nextRows = res.organizationDirectoryChart;
           setRows(nextRows);
           if (nextRows.length > 150) {
             setCollapsedIds(

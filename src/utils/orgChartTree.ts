@@ -1,7 +1,7 @@
-import type { OrgChartQuery } from '../api/graphql/graphql';
+import type { OrganizationEmployeeChartQuery } from '../api/organization-employee/graphql';
 
 /** Flat row from `orgChart` — reporting links use `reportingManagerId`. */
-export type OrgChartRowLite = NonNullable<OrgChartQuery['orgChart']>[number];
+export type OrgChartRowLite = OrganizationEmployeeChartQuery['organizationDirectoryChart'][number];
 
 /** Children grouped by manager id (manager must exist in `rows` for a link to count). */
 export function buildOrgChartChildMap(rows: OrgChartRowLite[]): Map<string, OrgChartRowLite[]> {

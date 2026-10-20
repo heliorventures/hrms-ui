@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+import { employeeManagerName, employeeManagerOwnershipLabel } from '../employeeManagerPresentation';
+
 import { directoryJoiningDate, type DirectoryEmployee } from './employeeDirectoryModel';
 
 const EmployeeWorkDetails = ({ employee, id }: { employee: DirectoryEmployee; id: string }) => (
@@ -35,7 +37,14 @@ const EmployeeWorkDetails = ({ employee, id }: { employee: DirectoryEmployee; id
         </div>
         <div className="min-w-0">
           <dt className="text-xs text-content-muted">Reports to</dt>
-          <dd className="break-words">{employee.reportingManagerName ?? 'Not recorded'}</dd>
+          <dd className="break-words">
+            {employeeManagerName(employee)}
+            {employee.reportingManagerOrganizationManaged ? (
+              <span className="mt-1 block text-xs text-content-muted">
+                {employeeManagerOwnershipLabel(employee)}
+              </span>
+            ) : null}
+          </dd>
         </div>
         <div className="min-w-0">
           <dt className="text-xs text-content-muted">Employment</dt>

@@ -2,11 +2,13 @@ import type { GraphQLClient } from 'graphql-request';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  EmployeeProfileAccessDocument,
   PayrollEmploymentHistoryDocument,
-  type EmployeeProfileAccessQuery,
   type PayrollEmploymentHistoryQuery,
 } from '../../../../api/graphql/graphql';
+import {
+  OrganizationEmployeeAccessDocument as EmployeeProfileAccessDocument,
+  type OrganizationEmployeeAccessQuery as EmployeeProfileAccessQuery,
+} from '../../../../api/organization-employee/graphql';
 import { useProfileGuidanceOwner } from '../../../../guidance/ProfileGuidanceContext';
 import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';

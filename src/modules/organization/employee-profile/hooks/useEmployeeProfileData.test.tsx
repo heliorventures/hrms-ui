@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { print } from 'graphql';
 import type { GraphQLClient } from 'graphql-request';
 import { afterEach, expect, it, vi } from 'vitest';
 
-import { EmployeeProfileAccessDocument } from '../../../../api/graphql/graphql';
+import { OrganizationEmployeeAccessDocument as EmployeeProfileAccessDocument } from '../../../../api/organization-employee/graphql';
 import { EmployeePrivateProfileLocationDocument } from '../profileDocuments';
 
 import { useEmployeeProfileData } from './useEmployeeProfileData';
@@ -49,7 +50,12 @@ it('loads location from the canonical private profile document after target acce
   );
   expect(request.mock.calls[0][0]).toBe(EmployeeProfileAccessDocument);
   expect(request.mock.calls[1][0]).toBe(EmployeePrivateProfileLocationDocument);
-  expect(EmployeePrivateProfileLocationDocument).toContain('locationAssignmentEffectiveFrom');
+  expect(print(EmployeePrivateProfileLocationDocument)).toContain(
+    'locationAssignmentEffectiveFrom'
+  );
+  expect(print(EmployeePrivateProfileLocationDocument)).toContain(
+    'reportingManagerOrganizationManaged'
+  );
 });
 it('hides private state on owner change and rejects an earlier completion', async () => {
   let finishOld: ((value: object) => void) | undefined;

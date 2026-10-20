@@ -121,6 +121,14 @@ function approvalRules(
 }
 
 export const NAVIGATION_DESTINATIONS: readonly NavigationDestination[] = [
+  {
+    path: '/organization-workspace',
+    label: 'Organization workspace',
+    keywords: ['cross company', 'manager inbox', 'organization grants', 'owner progress'],
+    icon: Building2,
+    sidebar: 'primary',
+    order: 2,
+  },
   page('loans', '/loans/my', 'My loans', 75.1, ['loan request', 'balance', 'repayment']),
   page('loans', '/loans/admin', 'Loan administration', 75.2, [
     'approval',

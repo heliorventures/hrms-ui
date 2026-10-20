@@ -17,6 +17,7 @@ import PageInformation from '../../../components/common/PageInformation';
 import { useRegisterProfileGuidanceAccess } from '../../../guidance/ProfileGuidanceContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { usePageTabs } from '../../../hooks/usePageTabs';
+import { employeeManagerName, employeeManagerOwnershipLabel } from '../employeeManagerPresentation';
 
 import EmployeeEsicCard from './components/EmployeeEsicCard';
 import { EmployeeHeader } from './components/EmployeeHeader';
@@ -123,7 +124,7 @@ export function EmployeeProfileShell({ employeeId, embedded }: EmployeeProfileSh
             {[
               ['Designation', employee.designationTitle ?? '—'],
               ['Department', employee.departmentName ?? '—'],
-              ['Reports to', employee.reportingManagerName ?? '—'],
+              ['Reports to', employeeManagerName(employee, '—')],
               ['Employment type', employee.employmentType ?? '—'],
               ['Joining date', new Date(employee.dateOfJoining).toLocaleDateString('en-IN')],
               ['Status', employee.status],
@@ -138,6 +139,11 @@ export function EmployeeProfileShell({ employeeId, embedded }: EmployeeProfileSh
               </div>
             ))}
           </dl>
+          {employee.reportingManagerOrganizationManaged ? (
+            <p className="mt-3 text-sm text-content-secondary">
+              {employeeManagerOwnershipLabel(employee)}
+            </p>
+          ) : null}
         </div>
       </div>
     );

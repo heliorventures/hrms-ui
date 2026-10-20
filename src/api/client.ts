@@ -20,7 +20,11 @@ function graphqlHttpUrl() {
  * read from the runtime-supplied tenant context. Production requests must not
  * fall back to a config tenant.
  */
-function buildHeaders(plane: HeliorGraphPlane, tenantId?: string): Record<string, string> {
+function buildHeaders(
+  plane: HeliorGraphPlane,
+  tenantId?: string,
+  loginCompanyId?: string
+): Record<string, string> {
   const headers: Record<string, string> = {};
   const token = plane === 'operator' ? getOperatorAccessToken() : getClientAccessToken();
   if (token) {
@@ -29,11 +33,16 @@ function buildHeaders(plane: HeliorGraphPlane, tenantId?: string): Record<string
   if (tenantId && plane === 'client') {
     headers[TENANT_HEADER] = tenantId;
   }
+  if (loginCompanyId && plane === 'client') {
+    headers['x-login-company-id'] = loginCompanyId;
+  }
   return headers;
 }
 
 export interface GraphClientOptions {
   tenantId?: string;
+  /** Employment-company session for organization requests; never the business target. */
+  loginCompanyId?: string;
   onUnauthenticated?: () => void;
 }
 
@@ -42,7 +51,7 @@ export function createGraphClient(
   opts: GraphClientOptions = {}
 ) {
   return new GraphQLClient(graphqlHttpUrl(), {
-    headers: () => buildHeaders(plane, opts.tenantId),
+    headers: () => buildHeaders(plane, opts.tenantId, opts.loginCompanyId),
     responseMiddleware: (response) => {
       handleGraphResponse(plane, response, opts.onUnauthenticated);
     },

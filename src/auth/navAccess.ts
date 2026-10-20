@@ -1,5 +1,7 @@
-import { createPermissionService } from './permissionService';
+import { organizationEnabled } from '../modules/organization-workspace/organizationFeature';
+
 import type { ParsedClientSession } from './clientSession';
+import { createPermissionService } from './permissionService';
 
 export type NavAccessOptions = {
   can: (permission: string) => boolean;
@@ -11,5 +13,8 @@ export function canManageNotifications(opts: NavAccessOptions): boolean {
 }
 
 export function canAccessTenantPath(path: string, opts: NavAccessOptions): boolean {
+  if (path === '/organization-workspace') {
+    return organizationEnabled() && opts.clientSession !== null;
+  }
   return createPermissionService(opts.clientSession).canRoute(path);
 }

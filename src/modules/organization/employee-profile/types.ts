@@ -53,6 +53,9 @@ export interface CoreEmployeeRecord {
   linkedUserEmail?: string | null;
   linkedUserUsername?: string | null;
   reportingManagerName?: string | null;
+  reportingManagerOrganizationManaged: boolean;
+  reportingManagerPrincipalId?: string | null;
+  reportingManagerTenantId?: string | null;
   /** From `employee.bloodGroup` when loaded from API */
   bloodGroup?: string | null;
   createdAt: string;

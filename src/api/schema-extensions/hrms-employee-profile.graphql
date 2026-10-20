@@ -3,6 +3,9 @@
 scalar JSON
 
 extend type Employee {
+  reportingManagerPrincipalId: ID
+  reportingManagerTenantId: ID
+  reportingManagerOrganizationManaged: Boolean!
   linkedUserUsername: String
   dateOfBirth: NaiveDate
   gender: String
@@ -47,6 +50,9 @@ extend type Query {
 }
 
 type EmployeeDirectoryEntry {
+  reportingManagerPrincipalId: ID
+  reportingManagerTenantId: ID
+  reportingManagerOrganizationManaged: Boolean!
   employeeId: ID!
   employeeCode: String!
   fullName: String!

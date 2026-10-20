@@ -2,9 +2,9 @@ import type { GraphQLClient } from 'graphql-request';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 
 import {
-  ClientOpsEmployeesDirectoryDocument,
-  type ClientOpsEmployeesDirectoryQuery,
-} from '../../../api/graphql/graphql';
+  OrganizationEmployeeDirectoryDocument as ClientOpsEmployeesDirectoryDocument,
+  type OrganizationEmployeeDirectoryQuery as ClientOpsEmployeesDirectoryQuery,
+} from '../../../api/organization-employee/graphql';
 import { useRetainedQuery } from '../../../hooks/useRetainedQuery';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 

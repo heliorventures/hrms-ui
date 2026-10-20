@@ -13,6 +13,8 @@
     "codegen:attendance": "node scripts/generate-attendance-client.mjs",
     "codegen:leave-queue": "node scripts/generate-leave-queue-client.mjs",
     "codegen:loans": "node scripts/generate-loans-client.mjs",
+    "codegen:organization": "node scripts/generate-organization-client.mjs",
+    "codegen:organization-employee": "node scripts/generate-organization-employee-client.mjs",
     "test:recorder": "node --test tools/demo-recorder/test/*.test.mjs",
     "test": "vitest run"
   },

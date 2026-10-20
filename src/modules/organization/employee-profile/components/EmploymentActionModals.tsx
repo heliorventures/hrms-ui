@@ -28,6 +28,7 @@ interface EmploymentActionModalsProps {
   designationId: string;
   designations: DesignationOption[];
   managerChoice: string;
+  managerOrganizationManaged: boolean;
   managerOptions: ManagerOption[];
   newSalaryAnnual: string;
   pctHike: number;
@@ -67,6 +68,7 @@ export const EmploymentActionModals = ({
   designationId,
   designations,
   managerChoice,
+  managerOrganizationManaged,
   managerOptions,
   newSalaryAnnual,
   pctHike,
@@ -118,7 +120,9 @@ export const EmploymentActionModals = ({
           label="Effective Date"
           type="date"
           value={termEffective}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => onTermEffectiveChange(event.target.value)}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            onTermEffectiveChange(event.target.value)
+          }
           fullWidth
         />
         <div>
@@ -129,7 +133,9 @@ export const EmploymentActionModals = ({
             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
             rows={3}
             value={termReason}
-            onChange={(event: ChangeEvent<HTMLTextAreaElement>) => onTermReasonChange(event.target.value)}
+            onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
+              onTermReasonChange(event.target.value)
+            }
           />
         </div>
       </div>
@@ -140,7 +146,9 @@ export const EmploymentActionModals = ({
         <Input
           label="New Annual Base"
           value={newSalaryAnnual}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => onNewSalaryAnnualChange(event.target.value)}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            onNewSalaryAnnualChange(event.target.value)
+          }
           fullWidth
         />
         <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
@@ -151,7 +159,9 @@ export const EmploymentActionModals = ({
           label="Effective Date"
           type="date"
           value={salaryEffective}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => onSalaryEffectiveChange(event.target.value)}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            onSalaryEffectiveChange(event.target.value)
+          }
           fullWidth
         />
         <div>
@@ -162,7 +172,9 @@ export const EmploymentActionModals = ({
             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
             rows={2}
             value={salaryReason}
-            onChange={(event: ChangeEvent<HTMLTextAreaElement>) => onSalaryReasonChange(event.target.value)}
+            onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
+              onSalaryReasonChange(event.target.value)
+            }
           />
         </div>
         <div className="flex justify-end gap-2">
@@ -182,7 +194,9 @@ export const EmploymentActionModals = ({
           label="Department"
           value={departmentId}
           fullWidth
-          onChange={(event: ChangeEvent<HTMLSelectElement>) => onDepartmentChange(event.target.value)}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+            onDepartmentChange(event.target.value)
+          }
           options={[
             { value: '', label: 'Keep Unchanged' },
             ...departments.map((department) => ({ value: department.id, label: department.name })),
@@ -192,7 +206,9 @@ export const EmploymentActionModals = ({
           label="Designation"
           value={designationId}
           fullWidth
-          onChange={(event: ChangeEvent<HTMLSelectElement>) => onDesignationChange(event.target.value)}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+            onDesignationChange(event.target.value)
+          }
           options={[
             { value: '', label: 'Keep Unchanged' },
             ...designations.map((designation) => ({
@@ -204,19 +220,30 @@ export const EmploymentActionModals = ({
         <Select
           label="Reporting Manager"
           value={managerChoice}
+          disabled={managerOrganizationManaged}
           fullWidth
-          onChange={(event: ChangeEvent<HTMLSelectElement>) => onManagerChoiceChange(event.target.value)}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+            onManagerChoiceChange(event.target.value)
+          }
           options={[
             { value: '__NOCHANGE__', label: 'No Change' },
             { value: '__CLEAR__', label: 'No Manager' },
             ...managerOptions,
           ]}
         />
+        {managerOrganizationManaged ? (
+          <p className="text-sm text-content-secondary">
+            Reporting manager is organization-managed. Use Organization workspace to change the
+            assignment.
+          </p>
+        ) : null}
         <Input
           label="Effective Date (Record Only)"
           type="date"
           value={roleEffective}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => onRoleEffectiveChange(event.target.value)}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            onRoleEffectiveChange(event.target.value)
+          }
           fullWidth
         />
         <div className="flex justify-end gap-2">
@@ -233,7 +260,8 @@ export const EmploymentActionModals = ({
     <Modal isOpen={assignOpen} onClose={onAssignClose} title="Company Assignments" size="md">
       <div className="space-y-3">
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Assignment entities are not exposed on this mutation yet. Use workforce admin screens when available.
+          Assignment entities are not exposed on this mutation yet. Use workforce admin screens when
+          available.
         </p>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onAssignClose} disabled={statusSaving}>

@@ -1,4 +1,4 @@
-import type { ClientOpsEmployeesDirectoryQuery } from '../../../api/graphql/graphql';
+import type { OrganizationEmployeeDirectoryQuery as ClientOpsEmployeesDirectoryQuery } from '../../../api/organization-employee/graphql';
 
 export type DirectoryEmployee =
   ClientOpsEmployeesDirectoryQuery['employeeDirectoryPage']['rows'][number];

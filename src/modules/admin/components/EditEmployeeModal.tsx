@@ -21,6 +21,10 @@ import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { parseEmployeeStatus } from '../../employeeStatus';
 import {
+  employeeManagerName,
+  localManagerUpdate,
+} from '../../organization/employeeManagerPresentation';
+import {
   buildDepartmentOptions,
   buildDesignationOptions,
   buildManagerOptions,
@@ -41,6 +45,8 @@ export interface EditEmployeeRow {
   departmentId?: string | null;
   designationId?: string | null;
   reportingManagerId?: string | null;
+  reportingManagerOrganizationManaged: boolean;
+  reportingManagerName?: string | null;
   userId?: string | null;
   linkedUserEmail?: string | null;
   linkedUserUsername?: string | null;
@@ -230,7 +236,10 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
       if (designationId) {
         input.designationId = designationId;
       }
-      input.reportingManagerId = reportingManagerId || null;
+      Object.assign(
+        input,
+        localManagerUpdate(employee.reportingManagerOrganizationManaged, reportingManagerId || null)
+      );
       if (
         canManageLoginAccounts &&
         employee.userId &&
@@ -458,6 +467,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         </div>
         <Select
           label={UI_FIELD_LABELS.reportingManager}
+          disabled={employee.reportingManagerOrganizationManaged}
           value={reportingManagerId}
           onChange={(e) => {
             setReportingManagerId(e.target.value);
@@ -465,6 +475,13 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
           options={managerOptions.length ? managerOptions : [LOADING_EMPLOYEE_FORM_OPTION]}
           fullWidth
         />
+        {employee.reportingManagerOrganizationManaged ? (
+          <p className="text-sm text-content-secondary">
+            Current manager: {employeeManagerName(employee)}. Reporting is organization-managed.
+            Change or replace the assignment in Organization workspace. Department and designation
+            can still be updated here.
+          </p>
+        ) : null}
         <div className="flex gap-2">
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? UI_STATUS_TEXT.saving : UI_ACTION_TEXT.saveChanges}
