@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+
 import { CreateCompanyDocumentDocument } from '../../api/graphql/graphql';
+
+import type * as CompanyDocumentUploadModule from './companyDocumentUpload';
 import OrganizationDocumentsPage from './OrganizationDocumentsPage';
 
 const state = vi.hoisted(() => ({
@@ -14,7 +18,7 @@ vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => state.clien
 vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ canAny: () => true }) }));
 vi.mock('../../contexts/DialogContext', () => ({ useDialogs: () => ({ confirm: vi.fn() }) }));
 vi.mock('./companyDocumentUpload', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./companyDocumentUpload')>()),
+  ...(await importOriginal<typeof CompanyDocumentUploadModule>()),
   stageCompanyDocumentFile: state.stageFile,
 }));
 beforeEach(() => {
@@ -31,6 +35,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -57,14 +62,62 @@ it('keeps the selected file visible across closing and reopening, then clears it
   await user.upload(screen.getByLabelText('Document File'), file);
   await user.click(screen.getByRole('button', { name: 'Back to document library' }));
   await user.click(screen.getByRole('button', { name: 'Add Company Document' }));
-  expect((screen.getByLabelText('Document File') as HTMLInputElement).files?.[0]).toBe(file);
-  await user.click(screen.getByRole('button', { name: 'Upload Document' }));
-  await waitFor(() =>
-    expect(screen.getByText('Company document uploaded successfully.')).toBeTruthy()
-  );
+  expect(screen.getByLabelText<HTMLInputElement>('Document File').files?.[0]).toBe(file);
+  vi.useFakeTimers();
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Upload Document' }));
+    await Promise.resolve();
+  });
+  expect(screen.getByText('Company document uploaded successfully.')).toBeTruthy();
+  expect(
+    screen.getByText('Company document uploaded successfully.').closest('[role=status]')
+  ).toBeTruthy();
+  act(() => {
+    void vi.advanceTimersByTime(5_000);
+  });
+  expect(screen.queryByText('Company document uploaded successfully.')).toBeNull();
+  vi.useRealTimers();
   await user.click(screen.getByRole('button', { name: 'Add Company Document' }));
-  expect((screen.getByLabelText('Document File') as HTMLInputElement).files?.length).toBe(0);
-  expect((screen.getByRole('textbox', { name: 'Title' }) as HTMLInputElement).value).toBe('');
+  expect(screen.getByLabelText<HTMLInputElement>('Document File').files?.length).toBe(0);
+  expect(screen.getByRole('textbox', { name: 'Title' }).value).toBe('');
+});
+
+it('expires upload failure feedback while retaining the form for retry', async () => {
+  state.client.request.mockResolvedValue({
+    companyDocuments: [],
+    documentTypes: [],
+    employeeDocuments: [],
+  });
+  state.stageFile.mockRejectedValue(new Error('Upload unavailable'));
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter>
+      <OrganizationDocumentsPage />
+    </MemoryRouter>
+  );
+  await user.click(await screen.findByRole('button', { name: 'Add Company Document' }));
+  await user.selectOptions(
+    screen.getByRole('combobox', { name: /Document Category/ }),
+    'COMPANY_POLICY'
+  );
+  await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Handbook');
+  await user.upload(
+    screen.getByLabelText('Document File'),
+    new File(['%PDF-1.4'], 'handbook.pdf', { type: 'application/pdf' })
+  );
+  vi.useFakeTimers();
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Upload Document' }));
+    await Promise.resolve();
+  });
+  expect(screen.getByRole('alert').textContent).toBeTruthy();
+  act(() => {
+    void vi.advanceTimersByTime(5_000);
+  });
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(screen.getByRole('textbox', { name: 'Title' })).toHaveProperty('value', 'Handbook');
+  expect(screen.getByLabelText<HTMLInputElement>('Document File').files?.length).toBe(1);
+  expect(screen.getByRole('button', { name: 'Upload Document' })).toBeTruthy();
 });
 
 it('requires an explicit category and saves the selected category for library filtering', async () => {

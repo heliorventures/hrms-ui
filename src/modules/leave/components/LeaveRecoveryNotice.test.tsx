@@ -23,7 +23,9 @@ describe('LeaveRecoveryNotice', () => {
     );
 
     expect(screen.getByRole('alert').textContent).toContain('Leave requests need attention');
-    expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Refresh leave requests' })).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'Refresh leave requests' }));
     expect(refreshes).toBe(1);

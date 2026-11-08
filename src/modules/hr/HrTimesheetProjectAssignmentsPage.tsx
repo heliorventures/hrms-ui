@@ -12,10 +12,12 @@ import {
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import Select from '../../components/common/Select';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -41,8 +43,8 @@ const HrTimesheetProjectAssignmentsPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useFeedbackState<string | null>(null, 'success');
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
   const assigneeRows = useMemo(() => {
     const rows = [...(orgRows ?? [])];
@@ -90,7 +92,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [reloadBase]);
+  }, [reloadBase, setError]);
 
   useEffect(() => {
     const allowed = new Set(assigneeRows.map((r) => r.employeeId));
@@ -99,7 +101,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
       setSelected(new Set());
       setMessage(null);
     }
-  }, [assigneeRows, employeeId]);
+  }, [assigneeRows, employeeId, setMessage]);
 
   useEffect(() => {
     if (!employeeId.trim()) {
@@ -128,7 +130,7 @@ const HrTimesheetProjectAssignmentsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [client, employeeId]);
+  }, [client, employeeId, setError]);
 
   const employeeOptions = useMemo(() => {
     return [
@@ -209,8 +211,16 @@ const HrTimesheetProjectAssignmentsPage = () => {
             onSubmit={(ev) => void save(ev)}
             data-tour-anchor="hr-timesheet-assignments.editor"
           >
-            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-            {message && <p className="text-sm text-green-700 dark:text-green-400">{message}</p>}
+            {error && (
+              <FeedbackToast variant={'error'} messageKey={error}>
+                {error}
+              </FeedbackToast>
+            )}
+            {message && (
+              <FeedbackToast variant={'success'} messageKey={message}>
+                {message}
+              </FeedbackToast>
+            )}
 
             <Select
               label="Employee"

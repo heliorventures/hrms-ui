@@ -36,7 +36,10 @@ describe('FileInput', () => {
       'documents-description',
       'documents-error',
     ]);
-    expect(screen.getByRole('alert').id).toBe('documents-error');
+    expect(document.getElementById('documents-error')?.textContent).toBe(
+      'Choose at least one document.'
+    );
+    expect(screen.getByRole('alert').textContent).toContain('Choose at least one document.');
     expect(input.className).toContain('min-h-11');
     expect(input.className).toContain('text-base');
   });

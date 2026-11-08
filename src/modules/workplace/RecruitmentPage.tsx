@@ -6,9 +6,11 @@ import { scopeForPermission } from '../../auth/approvalScope';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -101,7 +103,7 @@ const RecruitmentPage = () => {
     }[];
   } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
   const load = useCallback(async () => {
     return client.request<NonNullable<typeof data>>(WorkplaceRecruitmentDocument, {
@@ -128,7 +130,7 @@ const RecruitmentPage = () => {
     return () => {
       c = true;
     };
-  }, [load]);
+  }, [load, setError]);
 
   const applicants = (data?.applications ?? []).filter(
     (applicant) => !selectedJobId || applicant.jobId === selectedJobId
@@ -142,9 +144,11 @@ const RecruitmentPage = () => {
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
       {canManage && tab === 'jobs' && (
         <button

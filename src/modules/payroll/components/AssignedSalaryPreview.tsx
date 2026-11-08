@@ -2,6 +2,8 @@ import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
 import { EmployeeSalaryBreakupPreviewDocument as SALARY_BREAKUP_PREVIEW } from '../../../api/graphql/graphql';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { SalaryBreakupPreviewSection } from '../PayrollCompensationSections';
 import type { SalaryBreakupPreview } from '../payrollCompensationTypes';
@@ -19,7 +21,7 @@ const AssignedSalaryPreview = ({
   const [preview, setPreview] = useState<SalaryBreakupPreview | null>(null);
   const [previewDate, setPreviewDate] = useState(today());
   const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useFeedbackState<string | null>(null, 'error');
 
   useEffect(() => {
     let active = true;
@@ -45,7 +47,7 @@ const AssignedSalaryPreview = ({
     return () => {
       active = false;
     };
-  }, [client, employeeId, previewDate, revision]);
+  }, [client, employeeId, previewDate, revision, setPreviewError]);
 
   return (
     <div>
@@ -61,7 +63,11 @@ const AssignedSalaryPreview = ({
             />
           </label>
           {previewLoading && <p role="status">Loading assigned salary...</p>}
-          {previewError && <p role="alert">{previewError}</p>}
+          {previewError && (
+            <FeedbackToast variant={'error'} messageKey={previewError}>
+              {previewError}
+            </FeedbackToast>
+          )}
           {!previewLoading && !previewError && !preview && (
             <p>No salary assignment is effective on this date.</p>
           )}

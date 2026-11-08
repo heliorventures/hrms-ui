@@ -1,6 +1,6 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
-
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type {
   PerformanceAdminCycleRow,
   PerformanceAdminException,
@@ -156,12 +156,12 @@ const PerformanceAdministrationPanel = ({ performanceProgramId }: Props) => {
   return (
     <div className="space-y-4">
       {administration.message && (
-        <p
-          role={administration.message.kind === 'error' ? 'alert' : 'status'}
-          className="text-sm text-content-secondary"
+        <FeedbackToast
+          variant={administration.message.kind === 'error' ? 'error' : 'success'}
+          messageKey={administration.message.text}
         >
           {administration.message.text}
-        </p>
+        </FeedbackToast>
       )}
       <CycleList
         cycles={administration.cycles}

@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
+
+import { renderWithRouter as render } from '../../testUtils/renderWithRouter';
+
 import RecruitmentPage from './RecruitmentPage';
+
 const request = vi.hoisted(() => vi.fn());
 vi.mock('../../hooks/useGraphClient', () => {
   const client = { request };

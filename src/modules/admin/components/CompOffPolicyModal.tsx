@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 
 import Button from '../../../components/common/Button';
 import EmployeeSearchSelect from '../../../components/common/EmployeeSearchSelect';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import UuidEntitySearchSelect from '../../../components/common/UuidEntitySearchSelect';
@@ -204,9 +205,9 @@ const CompOffPolicyModal = ({
           </label>
         </div>
         {error && (
-          <p role="alert" className="text-sm text-status-danger">
+          <FeedbackToast variant={'error'} messageKey={error}>
             {error}
-          </p>
+          </FeedbackToast>
         )}
       </form>
     </Modal>

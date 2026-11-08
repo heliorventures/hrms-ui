@@ -1,11 +1,19 @@
 // @vitest-environment jsdom
+
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import type * as UseFlashToastModule from '../../hooks/useFlashToast';
 import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+import type * as LeaveRequestsTableSectionModule from '../leave/components/LeaveRequestsTableSection';
 
 import HrLeavesPage from './HrLeavesPage';
+
+// Queue orchestration is independent of the selected review/table presentation.
+vi.mock('./components/LeaveApprovalReview', async () => ({
+  default: (await import('../leave/components/LeaveRequestsTableSection')).default,
+}));
 
 const state = vi.hoisted(() => ({
   client: { request: vi.fn() },
@@ -25,7 +33,8 @@ vi.mock('../../contexts/AuthContext', () => ({
     },
   }),
 }));
-vi.mock('../../hooks/useFlashToast', () => ({
+vi.mock('../../hooks/useFlashToast', async (importOriginal) => ({
+  ...(await importOriginal<typeof UseFlashToastModule>()),
   useFlashToast: () => ({ show: state.show, clear: state.clear, flash: null }),
 }));
 vi.mock('../leave/hooks/useLeaveWorkflowTrail', () => ({
@@ -45,7 +54,8 @@ vi.mock('../leave/components/CompOffApprovalPanel', () => ({ default: () => null
 vi.mock('../../utils/graphqlUserMessage', () => ({
   graphQlUserMessage: (error: Error) => error.message,
 }));
-vi.mock('../leave/components/LeaveRequestsTableSection', () => ({
+vi.mock('../leave/components/LeaveRequestsTableSection', async (importOriginal) => ({
+  ...(await importOriginal<typeof LeaveRequestsTableSectionModule>()),
   default: ({
     rows,
     onApprove,

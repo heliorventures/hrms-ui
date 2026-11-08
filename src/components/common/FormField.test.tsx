@@ -32,7 +32,8 @@ describe('FormField', () => {
     expect(
       Array.from(document.querySelectorAll('[id]')).filter((node) => node.id === firstId).length
     ).toBe(1);
-    expect(screen.getByRole('alert').id).toBe(`${firstId}-error`);
+    expect(document.getElementById(`${firstId}-error`)?.textContent).toBe('Enter a valid email.');
+    expect(screen.getByRole('alert').textContent).toContain('Enter a valid email.');
 
     view.rerender(
       <FormField

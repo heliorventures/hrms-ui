@@ -231,7 +231,9 @@ it('keeps intrinsic time validation while deferring incomplete-page overlap chec
   fireEvent.change(screen.getByLabelText('Punch In'), { target: { value: '18:00' } });
   fireEvent.change(screen.getByLabelText('Punch Out'), { target: { value: '09:00' } });
   fireEvent.click(screen.getByRole('button', { name: 'Save segment' }));
-  expect(await screen.findByText('Punch In must be before Punch Out.')).toBeTruthy();
+  expect((await screen.findByRole('alert')).textContent).toContain(
+    'Punch In must be before Punch Out.'
+  );
   expect(
     graphState.client.request.mock.calls.some(
       ([document]) => document === AttendanceAddManagedSegmentDocument

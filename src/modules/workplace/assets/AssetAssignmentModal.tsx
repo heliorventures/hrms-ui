@@ -1,10 +1,12 @@
 import { type FormEvent, useEffect, useState } from 'react';
+
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Select from '../../../components/common/Select';
+
 import AssetOptionPicker from './AssetOptionPicker';
-import { hasErrors, validateAssetAssignment } from './assetValidation';
 import type {
   AssetAssignmentFormValues,
   AssetPageInfo,
@@ -14,6 +16,7 @@ import type {
   PageFilter,
 } from './assetTypes';
 import { today } from './assetTypes';
+import { hasErrors, validateAssetAssignment } from './assetValidation';
 
 interface AssetAssignmentModalProps {
   assets: AssetRow[];
@@ -98,7 +101,9 @@ export default function AssetAssignmentModal(props: AssetAssignmentModalProps) {
           </Button>
         </div>
         {props.assetError ? (
-          <p className="text-sm text-red-600 dark:text-red-400">{props.assetError}</p>
+          <FeedbackToast variant={'error'} messageKey={props.assetError}>
+            {props.assetError}
+          </FeedbackToast>
         ) : null}
         <Select
           label="Available Asset"

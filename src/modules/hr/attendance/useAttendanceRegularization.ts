@@ -11,6 +11,7 @@ import {
   AttendanceAddManagedSegmentDocument,
   AttendanceUpdateManagedSegmentDocument,
 } from '../../../api/attendance/graphql';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { localDateAt } from '../../../utils/attendanceDay';
 import {
@@ -78,7 +79,7 @@ const useAttendanceFields = ({
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useFeedbackState<string | null>(null, 'error');
   const isEditing = editingRow !== null && editingRow !== undefined;
   const windows = useAttendanceCorrectionWindows(client, isOpen, workDate);
 
@@ -109,7 +110,7 @@ const useAttendanceFields = ({
     setBusy(false);
     setFieldErrors({});
     setFormError(null);
-  }, [client, editingRow, initialWorkDate, isOpen]);
+  }, [client, editingRow, initialWorkDate, isOpen, setFormError]);
 
   useEffect(() => {
     const selected = windows.data?.selectedWindow;

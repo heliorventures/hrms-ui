@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { PERMISSIONS } from '../../auth/permissions';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -29,25 +30,25 @@ type RetireTarget = { kind: 'asset'; row: AssetRow } | { kind: 'category'; row: 
 const AssetFeedback = ({ model }: { model: AssetsWorkspaceModel }) => (
   <>
     {model.actionError ? (
-      <Card>
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+      <>
+        <FeedbackToast variant={'error'} messageKey={model.actionError}>
           {model.actionError}
-        </p>
-      </Card>
+        </FeedbackToast>
+      </>
     ) : null}
     {model.actionOk ? (
       <Card>
-        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-300">
+        <FeedbackToast variant={'success'} messageKey={model.actionOk}>
           {model.actionOk}
-        </p>
+        </FeedbackToast>
       </Card>
     ) : null}
     {model.errors.locations ? (
-      <Card>
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+      <>
+        <FeedbackToast variant={'error'} messageKey={model.errors.locations}>
           Location options could not be loaded: {model.errors.locations}
-        </p>
-      </Card>
+        </FeedbackToast>
+      </>
     ) : null}
   </>
 );

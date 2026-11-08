@@ -86,7 +86,7 @@ describe('ManualAttendanceModal', () => {
       expect(punchOut.getAttribute('aria-invalid')).toBe('true');
       expect(document.activeElement).toBe(punchOut);
     });
-    expect(screen.getByText('Punch In must be before Punch Out.')).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toContain('Punch In must be before Punch Out.');
     expect(
       request.mock.calls.some(([document]) => document === AttendanceAddManualSegmentDocument)
     ).toBe(false);

@@ -1,7 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { TENANT_APP_ROUTES } from './appRouteConfig';
 import { OPS_CHILD_ROUTES } from './opsRouteConfig';
+
+// Route ownership is independent of loading the full payroll component dependency graph.
+// Concurrent dynamic imports must observe the same component identity even if
+// Vitest evaluates a mock factory from more than one importing module.
+const payrollPages = vi.hoisted(() => ({
+  selfService: () => null,
+  processing: () => null,
+}));
+vi.mock('../modules/payroll/PayrollPayPage', () => ({ default: payrollPages.selfService }));
+vi.mock('../modules/payroll/PayrollPage', () => ({ default: payrollPages.processing }));
 
 function routeInventory(routes: readonly Record<string, unknown>[]) {
   return routes.map((route) => {
@@ -26,6 +36,9 @@ function routeInventory(routes: readonly Record<string, unknown>[]) {
 }
 
 const EXPECTED_TENANT_ROUTES = [
+  { kind: 'page', path: 'loans/my', title: 'My loans', tenantPath: '/loans/my' },
+  { kind: 'page', path: 'loans/admin', title: 'Loan administration', tenantPath: '/loans/admin' },
+  { kind: 'page', path: 'loans/policies', title: 'Loan policies', tenantPath: '/loans/policies' },
   { kind: 'page', path: 'appearance', title: 'Appearance' },
   { kind: 'redirect', path: 'my-work', to: '/my-work/tasks' },
   { kind: 'page', path: 'my-work/tasks', title: 'My Tasks', tenantPath: '/my-work/tasks' },
@@ -261,6 +274,12 @@ const EXPECTED_TENANT_ROUTES = [
     path: 'admin/attendance-policy',
     title: 'Attendance policy',
     tenantPath: '/admin/attendance-policy',
+  },
+  {
+    kind: 'page',
+    path: 'admin/company-locations',
+    title: 'Company locations',
+    tenantPath: '/admin/company-locations',
   },
   {
     kind: 'page',

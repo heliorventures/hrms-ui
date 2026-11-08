@@ -1,4 +1,5 @@
 import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
 
 export function ProfileSectionSkeleton({ rows = 4 }: { rows?: number }) {
   return (
@@ -35,24 +36,20 @@ export function EmptySection({
   );
 }
 
-export function ErrorSection({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry?: () => void;
-}) {
+export function ErrorSection({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div
-      className="rounded-2xl border border-rose-200/80 bg-rose-50/60 p-4 dark:border-rose-900/50 dark:bg-rose-950/30"
-      role="alert"
+    <FeedbackToast
+      variant="error"
+      messageKey={message}
+      action={
+        onRetry ? (
+          <Button type="button" className="mt-3" variant="outline" size="sm" onClick={onRetry}>
+            Retry
+          </Button>
+        ) : null
+      }
     >
-      <p className="text-sm text-rose-800 dark:text-rose-200">{message}</p>
-      {onRetry ? (
-        <Button type="button" className="mt-3" variant="outline" size="sm" onClick={onRetry}>
-          Retry
-        </Button>
-      ) : null}
-    </div>
+      {message}
+    </FeedbackToast>
   );
 }

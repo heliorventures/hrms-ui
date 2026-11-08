@@ -129,6 +129,9 @@ describe('RadioGroup', () => {
 
     const group = screen.getByRole('radiogroup', { name: 'Work mode' });
     expect(group.getAttribute('aria-invalid')).toBe('true');
-    expect(group.getAttribute('aria-describedby')).toBe(screen.getByRole('alert').id);
+    const errorId = group.getAttribute('aria-describedby');
+    expect(errorId).toBeTruthy();
+    expect(document.getElementById(errorId ?? '')?.textContent).toBe('Choose a work mode.');
+    expect(screen.getByRole('alert').textContent).toContain('Choose a work mode.');
   });
 });

@@ -1,8 +1,11 @@
 import { FormEvent, useState } from 'react';
-import Button from '../../../components/common/Button';
-import Input from '../../../components/common/Input';
+
 import { changeClientPassword } from '../../../auth/authClient';
 import { getClientAccessToken } from '../../../auth/tokenStore';
+import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import Input from '../../../components/common/Input';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
 interface SecurityTabProps {
@@ -17,7 +20,7 @@ const SecurityTab = ({ forced = false, onPasswordChanged }: SecurityTabProps) =>
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -65,7 +68,11 @@ const SecurityTab = ({ forced = false, onPasswordChanged }: SecurityTabProps) =>
         className="space-y-4"
         data-tour-anchor="profile-password-form"
       >
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && (
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        )}
         <Input
           type="password"
           label="Current Password"

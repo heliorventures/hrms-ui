@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -43,7 +44,7 @@ afterEach(cleanup);
 
 describe('useAdminLeaveSettings', () => {
   it('submits entitlement adjustment without the obsolete balance-credit flag', async () => {
-    const { result } = renderHook(() => useAdminLeaveSettings());
+    const { result } = renderHook(() => useAdminLeaveSettings(), { wrapper: MemoryRouter });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     act(() => {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -36,7 +37,7 @@ export const useExpenseSubmission = ({
 }: Options) => {
   const evidence = useSubmissionFile(useGraphClient('client'));
   const [draft, setDraft] = useState(initialDraft);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const lock = useRef(false);
@@ -46,7 +47,7 @@ export const useExpenseSubmission = ({
     setDraft(initialDraft());
     setError(null);
     resetFile();
-  }, [resetFile]);
+  }, [resetFile, setError]);
   useEffect(() => {
     reset();
     lock.current = false;

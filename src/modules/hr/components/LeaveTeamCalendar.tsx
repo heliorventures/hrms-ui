@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { createPermissionService } from '../../../auth/permissionService';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageInformation from '../../../components/common/PageInformation';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useGraphClient } from '../../../hooks/useGraphClient';
@@ -94,7 +95,11 @@ const LeaveTeamCalendar = ({ enabled = true }: LeaveTeamCalendarProps) => {
           holiday shading and a legend for leave types.
         </p>
       </PageInformation>
-      {error && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
+      )}
       {loading && !data ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : view === 'list' ? (

@@ -6,6 +6,9 @@ import {
 } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 
@@ -22,10 +25,12 @@ const TOPICS: { id: string; label: string; hint: string }[] = [
 ];
 
 const NotificationsTab = () => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [inAppEnabled, setInAppEnabled] = useState(true);
   const [announcementsEnabled, setAnnouncementsEnabled] = useState(true);
   const [muted, setMuted] = useState<Set<string>>(new Set());
@@ -54,7 +59,7 @@ const NotificationsTab = () => {
     return () => {
       c = true;
     };
-  }, [load]);
+  }, [load, setError]);
 
   const toggleTopic = (id: string) => {
     setMuted((prev) => {
@@ -76,6 +81,7 @@ const NotificationsTab = () => {
           mutedTopics: [...muted],
         },
       });
+      notifyAction('saved');
       await load();
     } catch (e) {
       setError(graphQlUserMessage(e));
@@ -93,9 +99,9 @@ const NotificationsTab = () => {
         </p>
 
         {error && (
-          <p className="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+          <FeedbackToast variant={'error'} messageKey={error}>
             {error}
-          </p>
+          </FeedbackToast>
         )}
 
         {loading ? (

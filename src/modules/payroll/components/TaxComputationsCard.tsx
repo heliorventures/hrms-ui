@@ -1,4 +1,5 @@
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Table from '../../../components/common/Table';
 import { formatTaxCurrency, type TaxComputationRow } from '../payrollTaxTypes';
 
@@ -11,7 +12,11 @@ interface TaxComputationsCardProps {
 const TaxComputationsCard = ({ computations, error, loading }: TaxComputationsCardProps) => (
   <Card title="Your Tax Computations">
     {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading Declarations...</p>}
-    {error && !loading && <p className="text-sm text-amber-800 dark:text-amber-200">{error}</p>}
+    {error && !loading && (
+      <FeedbackToast variant={'error'} messageKey={error}>
+        {error}
+      </FeedbackToast>
+    )}
     {!loading && !error && computations && computations.length > 0 && (
       <Table
         data={computations}

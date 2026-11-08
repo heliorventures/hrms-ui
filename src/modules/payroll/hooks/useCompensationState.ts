@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
@@ -19,10 +20,10 @@ export const useCompensationState = () => {
   const client = useGraphClient('client');
   const [board, setBoard] = useState<BoardResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [busy, setBusy] = useState(false);
   const [ok, setOk] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useFeedbackState<string | null>(null, 'error');
   const [componentForm, setComponentForm] = useState<ComponentForm>(defaultComponentForm);
   const [structureName, setStructureName] = useState('');
   const [structureDescription, setStructureDescription] = useState('');
@@ -48,7 +49,7 @@ export const useCompensationState = () => {
     } finally {
       setLoading(false);
     }
-  }, [client]);
+  }, [client, setError]);
 
   useEffect(() => {
     void load();

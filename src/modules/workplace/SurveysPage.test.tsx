@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+import { renderWithRouter as render } from '../../testUtils/renderWithRouter';
 
 import SurveysPage from './SurveysPage';
 
@@ -104,7 +105,7 @@ describe('SurveysPage', () => {
     await user.click(screen.getByRole('button', { name: 'Back to surveys' }));
     expect(screen.getByRole('dialog', { name: 'Discard changes?' })).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Keep editing' }));
-    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Unsaved pulse');
+    expect(screen.getByLabelText('Title').value).toBe('Unsaved pulse');
     await user.click(screen.getByRole('button', { name: 'Back to surveys' }));
     await user.click(screen.getByRole('button', { name: 'Discard changes' }));
     expect(screen.queryByLabelText('Title')).toBeNull();
@@ -341,17 +342,17 @@ describe('SurveysPage', () => {
     const user = userEvent.setup();
     render(<SurveysPage />);
     await user.click(await screen.findByRole('button', { name: 'Edit' }));
-    expect(((await screen.findByLabelText('Title')) as HTMLInputElement).value).toBe('Existing');
+    expect((await screen.findByLabelText('Title')).value).toBe('Existing');
     expect(
       screen.getAllByLabelText('Section title').map((e) => (e as HTMLInputElement).value)
     ).toEqual(['First', 'Second']);
-    expect(((await screen.findByLabelText('Engineering')) as HTMLInputElement).checked).toBe(true);
+    expect((await screen.findByLabelText('Engineering')).checked).toBe(true);
     expect((screen.getAllByLabelText('Rating scale')[0] as HTMLSelectElement).value).toBe(
       'existing'
     );
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await screen.findByRole('alert');
-    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Existing');
+    expect(screen.getByLabelText('Title').value).toBe('Existing');
     expect(
       state.request.mock.calls.find(([doc]) =>
         graphqlDocumentSource(doc).includes('SaveSurveyWorkspace')
@@ -375,9 +376,7 @@ describe('SurveysPage', () => {
     cleanup();
     render(<SurveysPage />);
     await user.click(await screen.findByRole('button', { name: 'Copy as new' }));
-    await waitFor(() =>
-      expect((screen.getByLabelText('Title') as HTMLInputElement).value).toContain('Existing')
-    );
+    await waitFor(() => expect(screen.getByLabelText('Title').value).toContain('Existing'));
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await waitFor(() =>
       expect(
@@ -413,7 +412,7 @@ describe('SurveysPage', () => {
     await user.click(screen.getByRole('button', { name: 'Add section' }));
     await user.type(screen.getAllByLabelText('Question')[1], 'Second');
     await user.click(screen.getAllByRole('button', { name: 'Remove section' })[0]);
-    expect((screen.getByLabelText('Question') as HTMLInputElement).value).toBe('Second');
+    expect(screen.getByLabelText('Question').value).toBe('Second');
     // Browser-independent datetime-local values are interpreted in the displayed tenant zone.
     const { fireEvent } = await import('@testing-library/react');
     fireEvent.change(screen.getByLabelText('Opens at (Asia/Kolkata)'), {

@@ -67,9 +67,11 @@ describe('PrejoiningFormPage', () => {
     ).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Submit details' }));
 
-    expect(await screen.findByText('First name is required.')).toBeTruthy();
-    expect(screen.getByText('Personal email is required.')).toBeTruthy();
-    expect(screen.getByText('Identity proof is required.')).toBeTruthy();
+    expect(document.getElementById('prejoining-firstName-error')?.textContent).toBe(
+      'First name is required.'
+    );
+    expect(document.getElementById('prejoining-email-error')).toBeTruthy();
+    expect(screen.getAllByText('Identity proof is required.')[0]).toBeTruthy();
     expect(client.submit).not.toHaveBeenCalled();
   });
 

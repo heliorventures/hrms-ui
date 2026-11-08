@@ -13,9 +13,12 @@ import {
 } from '../../api/graphql/graphql';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Modal from '../../components/common/Modal';
 import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
+import { useActionFeedback } from '../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -35,6 +38,8 @@ const asRecord = (value: unknown): Record<string, unknown> =>
     : {};
 
 const ProfileReviewPage = () => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const [status, setStatus] = useState('PENDING');
   const [rows, setRows] = useState<QueueItem[]>([]);
@@ -44,7 +49,7 @@ const ProfileReviewPage = () => {
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [rejectionOpen, setRejectionOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [evidenceUrl, setEvidenceUrl] = useState<string | null>(null);
@@ -80,7 +85,7 @@ const ProfileReviewPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [client, status]);
+  }, [client, status, setError]);
 
   useEffect(() => {
     void loadQueue();
@@ -125,7 +130,7 @@ const ProfileReviewPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [selectedId]);
+  }, [selectedId, setError]);
 
   const valueRows = useMemo(
     () =>
@@ -149,6 +154,7 @@ const ProfileReviewPage = () => {
       setRejectionReason('');
       setSelectedId(null);
       setDetail(null);
+      notifyAction('updated');
       await loadQueue();
     } catch (cause) {
       setError(graphQlUserMessage(cause));
@@ -192,6 +198,7 @@ const ProfileReviewPage = () => {
           rejectionReason: approved ? undefined : reason,
         });
       }
+      notifyAction('updated');
       setEvidenceRows((current) => current.filter((item) => item.recordId !== row.recordId));
       setEvidenceReject(null);
       setRejectionReason('');
@@ -329,12 +336,9 @@ const ProfileReviewPage = () => {
       </div>
 
       {error ? (
-        <div
-          role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
-        >
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </div>
+        </FeedbackToast>
       ) : null}
 
       <div className="flex items-center gap-3" data-tour-anchor="profile-review-status-filter">

@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 
 import Button from '../../../components/common/Button';
-import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageHeader from '../../../components/common/PageHeader';
 import ApplyLeaveModal from '../../leave/components/ApplyLeaveModal';
 import LeaveRecoveryNotice from '../../leave/components/LeaveRecoveryNotice';
@@ -83,9 +83,11 @@ export const HrLeavePageNotices = ({ approvalMessage, recovery }: NoticesProps) 
   <>
     {recovery ? <LeaveRecoveryNotice {...recovery} /> : null}
     {approvalMessage ? (
-      <Card>
-        <p className="text-sm text-sky-800 dark:text-sky-200">{approvalMessage}</p>
-      </Card>
+      <>
+        <FeedbackToast variant={'info'} messageKey={approvalMessage}>
+          {approvalMessage}
+        </FeedbackToast>
+      </>
     ) : null}
   </>
 );

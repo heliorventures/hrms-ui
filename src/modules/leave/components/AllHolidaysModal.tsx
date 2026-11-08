@@ -1,8 +1,8 @@
+import type { AllCompanyHolidaysQuery } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import Modal from '../../../components/common/Modal';
 import PageNotice from '../../../components/common/PageNotice';
 import { formatDisplayDate } from '../../../utils/dateDisplay';
-import type { AllCompanyHolidaysQuery } from '../../../api/graphql/graphql';
 
 interface AllHolidaysModalProps {
   holidays: AllCompanyHolidaysQuery['upcomingHolidays'];
@@ -25,6 +25,7 @@ const AllHolidaysModal = ({
     <div className="space-y-4">
       {failure ? (
         <PageNotice
+          messageKey={failure}
           variant="error"
           title="Company holidays could not be loaded"
           action={
@@ -41,20 +42,22 @@ const AllHolidaysModal = ({
           Loading company holidays…
         </p>
       ) : holidays.length === 0 && !failure ? (
-        <p className="text-sm text-content-secondary">No company holidays are scheduled this year.</p>
+        <p className="text-sm text-content-secondary">
+          No company holidays are scheduled this year.
+        </p>
       ) : null}
       {holidays.length > 0 ? (
-      <ul className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto text-sm dark:divide-gray-800">
-        {holidays.map((holiday) => (
-          <li key={holiday.id} className="flex flex-wrap justify-between gap-2 py-2">
-            <span className="font-medium text-gray-900 dark:text-white">{holiday.name}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {formatDisplayDate(holiday.holidayDate)} - {holiday.calendarName}
-              {holiday.holidayType ? ` - ${holiday.holidayType}` : ''}
-            </span>
-          </li>
-        ))}
-      </ul>
+        <ul className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto text-sm dark:divide-gray-800">
+          {holidays.map((holiday) => (
+            <li key={holiday.id} className="flex flex-wrap justify-between gap-2 py-2">
+              <span className="font-medium text-gray-900 dark:text-white">{holiday.name}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {formatDisplayDate(holiday.holidayDate)} - {holiday.calendarName}
+                {holiday.holidayType ? ` - ${holiday.holidayType}` : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
       ) : null}
     </div>
   </Modal>

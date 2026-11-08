@@ -1,7 +1,10 @@
 import { useState, type FormEvent } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import Textarea from '../../../components/common/Textarea';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { taxFormErrorMessage } from '../taxFormError';
 import { taxHistoryInput } from '../taxFormInputs';
 import type { TaxHistory } from '../taxProjectionTypes';
@@ -28,7 +31,7 @@ const TaxHistoryEditor = ({
   const [tds, setTds] = useState(initial?.tds ?? '');
   const [complete, setComplete] = useState(initial?.coverage === 'COMPLETE');
   const [reason, setReason] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setError('');
@@ -90,17 +93,15 @@ const TaxHistoryEditor = ({
           onChange={(e) => setTds(e.target.value)}
         />
       </div>
-      <label className="block">
-        Actual earnings by component
-        <textarea
-          required
-          className="block w-full rounded border p-2"
-          rows={4}
-          placeholder={'BASIC=25000\nHRA=10000'}
-          value={components}
-          onChange={(e) => setComponents(e.target.value)}
-        />
-      </label>
+      <Textarea
+        label="Actual earnings by component"
+        required
+        className="block w-full rounded border p-2"
+        rows={4}
+        placeholder={'BASIC=25000\nHRA=10000'}
+        value={components}
+        onChange={(e) => setComponents(e.target.value)}
+      />
       <label className="flex items-center gap-2">
         <input type="checkbox" checked={complete} onChange={(e) => setComplete(e.target.checked)} />
         HR confirms complete deduction coverage for this period
@@ -112,7 +113,11 @@ const TaxHistoryEditor = ({
         onChange={(e) => setReason(e.target.value)}
         maxLength={2000}
       />
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
+      )}
       <Button type="submit" disabled={busy}>
         Save recorded history
       </Button>

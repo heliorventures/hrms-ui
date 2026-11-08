@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 
 import {
@@ -65,13 +66,9 @@ const ManagedAttendanceFilters = ({
         fullWidth
       />
       {rangeError ? (
-        <p
-          id={rangeErrorId}
-          role="alert"
-          className="text-sm font-medium text-status-danger md:col-span-3"
-        >
+        <FeedbackToast variant={'error'} id={rangeErrorId} messageKey={rangeError}>
           {rangeError}
-        </p>
+        </FeedbackToast>
       ) : null}
     </fieldset>
   );

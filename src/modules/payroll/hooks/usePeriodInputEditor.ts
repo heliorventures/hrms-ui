@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useRef, useState } from 'react';
 
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { newPeriodInput } from '../newPeriodInput';
 import {
@@ -23,9 +24,9 @@ export const usePeriodInputEditor = (
 ) => {
   const [record, setRecord] = useState<PeriodRecord | null>(null);
   const [draft, setDraft] = useState<PeriodInput | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [busy, setBusy] = useState(true);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useFeedbackState<string | null>(null, 'info');
   const [revised, setRevised] = useState(false);
   const [locked, setLocked] = useState(false);
   const lifetime = useRef(0);
@@ -70,7 +71,7 @@ export const usePeriodInputEditor = (
     return () => {
       lifetime.current = generation + 1;
     };
-  }, [client, employeeId, year, month]);
+  }, [client, employeeId, year, month, setError, setNotice]);
   const save = async () => {
     if (!draft || locked) return;
     const generation = lifetime.current;

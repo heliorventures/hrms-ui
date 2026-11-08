@@ -1,8 +1,10 @@
 import { useRef, useState, type FormEvent } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 export type SetupField = {
@@ -28,7 +30,7 @@ export const SetupEditor = ({
   const [values, setValues] = useState(initial);
   const submitting = useRef(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (submitting.current) return;
@@ -53,9 +55,9 @@ export const SetupEditor = ({
     <Modal isOpen title={title} onClose={onClose} isDismissible={!busy}>
       <form className="space-y-4" onSubmit={(event) => void submit(event)}>
         {error && (
-          <p role="alert" className="text-sm text-red-600">
+          <FeedbackToast variant={'error'} messageKey={error}>
             {error}
-          </p>
+          </FeedbackToast>
         )}
         {fields.map((field) =>
           field.type === 'checkbox' ? (

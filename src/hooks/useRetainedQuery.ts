@@ -14,6 +14,7 @@ export interface RetainedQueryResult<T> {
   error: string | null;
   phase: RetainedQueryPhase;
   refresh: () => Promise<void>;
+  refreshChecked: () => Promise<void>;
 }
 
 interface RetainedQueryState<T> {
@@ -90,7 +91,7 @@ export function useRetainedQuery<T>(
     if (mountedRef.current) setState(next);
   }, []);
 
-  const refresh = useCallback(async () => {
+  const runRefresh = useCallback(async (checked: boolean) => {
     const requestId = ++requestIdRef.current;
     const { current: requestLoad } = loadRef;
     const { current } = stateRef;
@@ -98,15 +99,20 @@ export function useRetainedQuery<T>(
 
     try {
       const data = await requestLoad();
-      if (!mountedRef.current || requestId !== requestIdRef.current) return;
+      if (!mountedRef.current || requestId !== requestIdRef.current) {
+        if (checked) throw new Error('The active view changed. Reload current records.');
+        return;
+      }
       publish({ data, error: null, hasData: true, owner: requestLoad, phase: 'ready' });
     } catch (error) {
-      if (!mountedRef.current || requestId !== requestIdRef.current) return;
-
       const message = userMessage(toMessageRef.current, error);
-      publish(failedState(stateRef.current, requestLoad, message));
+      if (mountedRef.current && requestId === requestIdRef.current)
+        publish(failedState(stateRef.current, requestLoad, message));
+      if (checked) throw new Error(message);
     }
   }, [publish]);
+  const refresh = useCallback(() => runRefresh(false), [runRefresh]);
+  const refreshChecked = useCallback(() => runRefresh(true), [runRefresh]);
 
   useLayoutEffect(() => {
     requestIdRef.current += 1;
@@ -130,5 +136,6 @@ export function useRetainedQuery<T>(
     error: visibleState.error,
     phase: visibleState.phase,
     refresh,
+    refreshChecked,
   };
 }

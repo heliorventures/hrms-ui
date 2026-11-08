@@ -2,6 +2,7 @@ import { Expand } from 'lucide-react';
 import { useState } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Modal from '../../components/common/Modal';
 
 import { type CompanyDocumentFile, useCompanyDocumentFile } from './useCompanyDocumentFile';
@@ -45,13 +46,19 @@ const DocumentContent = ({ file, title, onRetry }: ContentProps) => {
   if (['image/png', 'image/jpeg'].includes(file.mime)) {
     if (imageFailed)
       return (
-        <div role="alert" className="space-y-3 p-6 text-sm text-content-secondary">
+        <FeedbackToast
+          variant={'error'}
+          action={
+            <>
+              <Button variant="outline" onClick={onRetry}>
+                Try again
+              </Button>
+              {download}
+            </>
+          }
+        >
           <p>This image could not be displayed.</p>
-          <Button variant="outline" onClick={onRetry}>
-            Try again
-          </Button>
-          {download}
-        </div>
+        </FeedbackToast>
       );
     return (
       <img
@@ -76,16 +83,23 @@ const CompanyDocumentReader = ({ documentId, title, onClose, presentation = 'inl
   const body = (
     <div className="space-y-4">
       {error ? (
-        <div role="alert" className="space-y-3 rounded-lg border border-line p-4 text-sm">
+        <FeedbackToast
+          variant={'error'}
+          messageKey={error}
+          action={
+            <>
+              <Button variant="outline" onClick={retry}>
+                Try again
+              </Button>
+              <Button variant="quiet" onClick={onClose}>
+                Back to documents
+              </Button>
+            </>
+          }
+        >
           <p className="font-semibold">We couldn’t open this document</p>
           <p>{error}</p>
-          <Button variant="outline" onClick={retry}>
-            Try again
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            Back to documents
-          </Button>
-        </div>
+        </FeedbackToast>
       ) : null}
       {!file && !error ? (
         <p role="status" className="min-h-80 p-6 text-sm text-content-secondary">

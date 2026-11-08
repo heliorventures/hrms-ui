@@ -3,6 +3,8 @@
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { accessibleText } from '../../testUtils/accessibleText';
+
 import WorkplaceInsightsPanel from './WorkplaceInsightsPanel';
 
 const graphState = vi.hoisted(() => ({
@@ -81,7 +83,7 @@ describe('WorkplaceInsightsPanel', () => {
     await act(() => Promise.resolve(tenantB.reject(new Error('tenant B raw transport failure'))));
 
     const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toBe('Workplace insights could not be loaded. Try again.');
+    expect(accessibleText(alert)).toBe('Workplace insights could not be loaded. Try again.');
     expect(alert.textContent).not.toContain('transport');
     expect(screen.queryByText('Tenant A capability')).toBeNull();
   });

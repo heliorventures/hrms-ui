@@ -1,5 +1,6 @@
 import { payslipCompanyAddressText } from '../payslipCompanyAddress';
 import { payslipDetailValue } from '../payslipDetailValue';
+import { payslipLoanText } from '../payslipLoans';
 import { formatPayslipAmount, groupPayslipLines, payslipLineAt } from '../payslipTableData';
 
 import type { PdfPayslipPayload, PayslipPdfBranding } from './payslipPdf';
@@ -107,6 +108,10 @@ const drawSettlement = (writer: PayslipTablePdfWriter, slip: PdfPayslipPayload) 
   }
   const statement = slip.presentation?.statement;
   if (!statement) return;
+  if (statement.loans && statement.loans.lines.length > 0) {
+    writer.space();
+    for (const line of payslipLoanText(statement.loans, amount)) writer.text(line);
+  }
   writer.space();
   writer.text(
     `Leave without pay: ${statement.lwp_days} days. Gross basis ${amount(statement.lwp_basis_amount)} / ${statement.lwp_divisor} days. LWP adjustment: ${amount(statement.lwp_amount)}. Already included in earned gross; not deducted again.`

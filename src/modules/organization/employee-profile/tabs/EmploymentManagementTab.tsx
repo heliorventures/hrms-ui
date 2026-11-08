@@ -9,6 +9,8 @@ import {
   UpdateEmployeeDocument,
 } from '../../../../api/graphql/graphql';
 import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import type { CanonicalEmployeeStatus } from '../../../employeeStatus';
 import EmployeeLocationSettings from '../components/EmployeeLocationSettings';
@@ -39,8 +41,8 @@ export function EmploymentManagementTab({
 }: EmploymentManagementTabProps) {
   const [statusUi, setStatusUi] = useState<EmploymentStatusUi>(model.statusUi);
   const [statusSaving, setStatusSaving] = useState(false);
-  const [banner, setBanner] = useState<string | null>(null);
-  const [bannerErr, setBannerErr] = useState<string | null>(null);
+  const [banner, setBanner] = useFeedbackState<string | null>(null, 'success');
+  const [bannerErr, setBannerErr] = useFeedbackState<string | null>(null, 'error');
   const [terminateOpen, setTerminateOpen] = useState(false);
   const [salaryOpen, setSalaryOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
@@ -122,7 +124,7 @@ export function EmploymentManagementTab({
     return () => {
       cancelled = true;
     };
-  }, [client]);
+  }, [client, setBannerErr]);
 
   const managerOptions = useMemo(
     () =>
@@ -153,7 +155,7 @@ export function EmploymentManagementTab({
         setStatusSaving(false);
       }
     },
-    [client, employeeId]
+    [client, employeeId, setBanner, setBannerErr]
   );
 
   const pctHike = useMemo(() => {
@@ -237,14 +239,14 @@ export function EmploymentManagementTab({
   return (
     <div className="space-y-4">
       {banner ? (
-        <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/90 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100">
+        <FeedbackToast variant={'success'} messageKey={banner}>
           {banner}
-        </div>
+        </FeedbackToast>
       ) : null}
       {bannerErr ? (
-        <div className="rounded-2xl border border-red-200/80 bg-red-50/90 px-4 py-2 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-100">
+        <FeedbackToast variant={'error'} messageKey={bannerErr}>
           {bannerErr}
-        </div>
+        </FeedbackToast>
       ) : null}
       {orgLoading ? <p className="text-xs text-slate-500">Loading Org Directory...</p> : null}
 

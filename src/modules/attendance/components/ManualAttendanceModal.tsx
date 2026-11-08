@@ -8,6 +8,7 @@ import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import PageNotice from '../../../components/common/PageNotice';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { formatAttendanceWindow, localDateAt } from '../../../utils/attendanceDay';
 import { attendancePolicyMessage } from '../../../utils/attendancePolicyMessage';
@@ -66,6 +67,8 @@ const ManualAttendanceModal = ({
   canRegularize,
   onSaved,
 }: ManualAttendanceModalProps) => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const workDateRef = useRef<HTMLInputElement>(null);
   const checkInRef = useRef<HTMLInputElement>(null);
@@ -177,6 +180,7 @@ const ManualAttendanceModal = ({
       } else {
         await client.request(AttendanceAddManualSegmentDocument, { input });
       }
+      notifyAction('saved');
       onSaved();
       onClose();
     } catch (error) {
@@ -215,6 +219,7 @@ const ManualAttendanceModal = ({
       >
         {formError ? (
           <PageNotice
+            messageKey={formError.message}
             key={`${formError.title}:${formError.message}`}
             variant="error"
             title={formError.title}
@@ -248,6 +253,7 @@ const ManualAttendanceModal = ({
         ) : null}
         {windows.error ? (
           <PageNotice
+            messageKey={windows.error}
             variant="error"
             title="Attendance day window could not be loaded"
             action={

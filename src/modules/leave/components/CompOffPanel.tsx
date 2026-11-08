@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -92,9 +93,9 @@ const ClaimForm = ({
           />
         </div>
         {error && (
-          <p role="alert" className="text-sm text-status-danger sm:col-span-2">
+          <FeedbackToast variant={'error'} messageKey={error}>
             {error}
-          </p>
+          </FeedbackToast>
         )}
       </form>
     </Modal>
@@ -223,12 +224,19 @@ const CompOffContent = ({ canSubmit }: { canSubmit: boolean }) => {
         </p>
       )}
       {board.error && !open && (
-        <div role="alert" className="flex items-center gap-3 text-sm text-status-danger">
+        <FeedbackToast
+          variant={'error'}
+          messageKey={board.error}
+          action={
+            <>
+              <Button size="sm" variant="outline" onClick={board.reload}>
+                Retry
+              </Button>
+            </>
+          }
+        >
           {board.error}
-          <Button size="sm" variant="outline" onClick={board.reload}>
-            Retry
-          </Button>
-        </div>
+        </FeedbackToast>
       )}
       {board.data && (
         <div className="space-y-3">

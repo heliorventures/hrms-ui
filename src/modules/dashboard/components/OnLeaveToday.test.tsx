@@ -82,14 +82,14 @@ describe('OnLeaveToday truthful states', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Leave Requests Could Not Be Loaded');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
-    expect(screen.queryByText('No One Is on Leave Today.')).toBeNull();
+    expect(screen.queryByText('No one is on leave today.')).toBeNull();
   });
 
   it('renders intentional empty copy after a successful empty response', async () => {
     graphState.client.request.mockResolvedValue(payload(0, 0));
     renderCard();
 
-    expect(await screen.findByText('No One Is on Leave Today.')).toBeTruthy();
+    expect(await screen.findByText('No one is on leave today.')).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -151,7 +151,7 @@ describe('OnLeaveToday truthful states', () => {
       await screen.findByText('No Approved Leave Is Shown in the Loaded Results.')
     ).toBeTruthy();
     expect(screen.getByText('More may be available.')).toBeTruthy();
-    expect(screen.queryByText('No One Is on Leave Today.')).toBeNull();
+    expect(screen.queryByText('No one is on leave today.')).toBeNull();
     expect(
       screen.getByText('Showing up to 50 leave requests. More may be available.')
     ).toBeTruthy();

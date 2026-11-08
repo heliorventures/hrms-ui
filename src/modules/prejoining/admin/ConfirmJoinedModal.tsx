@@ -1,4 +1,5 @@
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Select from '../../../components/common/Select';
@@ -52,9 +53,9 @@ export const ConfirmJoinedModal = (props: ConfirmModalProps) => {
       <fieldset disabled={props.busy} className="space-y-4">
         <p className="text-sm text-content-secondary">Candidate: {props.candidate?.email}</p>
         {props.error ? (
-          <p role="alert" className="text-sm text-status-danger">
+          <FeedbackToast variant={'error'} messageKey={props.error}>
             {props.error}
-          </p>
+          </FeedbackToast>
         ) : null}
         <div className="grid min-w-0 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
           <EmploymentFields {...props} />

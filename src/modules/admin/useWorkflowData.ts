@@ -6,6 +6,7 @@ import {
   type AdminWorkflowsDataQuery,
   type AdminWorkflowsStepsDataQuery,
 } from '../../api/graphql/graphql';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -16,7 +17,7 @@ export function useWorkflowData(domain: WorkflowDomain) {
   const [data, setData] = useState<AdminWorkflowsDataQuery | null>(null);
   const [stepsData, setStepsData] = useState<AdminWorkflowsStepsDataQuery | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const load = useCallback(async () => {
     const response = await client.request(AdminWorkflowsDataDocument, { wl: 30, il: 50 });
     const base = {
@@ -70,6 +71,6 @@ export function useWorkflowData(domain: WorkflowDomain) {
     return () => {
       lifecycle.cancelled = true;
     };
-  }, [load]);
+  }, [load, setError]);
   return { client, data, stepsData, loading, error, refresh };
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import Card from '../../components/common/Card';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import { useGraphClient } from '../../hooks/useGraphClient';
 
 import { GoalEditor, GoalList, type Goal, type GoalDraft } from './PerformanceGoalEditor';
@@ -49,12 +50,9 @@ const GoalMutationMessage = ({ message }: { message?: Props['mutationMessage'] }
   if (!message) return null;
   const isNotice = message.kind === 'notice';
   return (
-    <p
-      role={isNotice ? 'status' : 'alert'}
-      className={isNotice ? 'mb-2 text-sm text-status-success' : 'mb-2 text-sm text-status-danger'}
-    >
+    <FeedbackToast variant={isNotice ? 'success' : 'error'} messageKey={message.text}>
       {message.text}
-    </p>
+    </FeedbackToast>
   );
 };
 

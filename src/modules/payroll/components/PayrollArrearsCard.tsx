@@ -1,5 +1,6 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import PageInformation from '../../../components/common/PageInformation';
 import type { PayrollArrearFormState, PayrollArrearRow } from '../payrollTypes';
@@ -75,8 +76,16 @@ const PayrollArrearsCard = ({
         {busy ? 'Saving...' : 'Add PENDING arrear'}
       </Button>
     </div>
-    {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
-    {ok && !error && <p className="mt-2 text-sm text-green-700 dark:text-green-400">{ok}</p>}
+    {error && (
+      <FeedbackToast variant={'error'} messageKey={error}>
+        {error}
+      </FeedbackToast>
+    )}
+    {ok && !error && (
+      <FeedbackToast variant={'success'} messageKey={ok}>
+        {ok}
+      </FeedbackToast>
+    )}
   </Card>
 );
 

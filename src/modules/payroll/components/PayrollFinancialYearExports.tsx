@@ -1,5 +1,6 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageInformation from '../../../components/common/PageInformation';
 import type { FyPayrollExportKey } from '../hooks/usePayrollExports';
 
@@ -83,15 +84,19 @@ const PayrollFinancialYearExports = ({
       </Button>
     </div>
     {fyStatus.fyTotals?.error && (
-      <p className="mt-3 text-sm text-red-600 dark:text-red-400">{fyStatus.fyTotals.error}</p>
+      <FeedbackToast variant={'error'} messageKey={fyStatus.fyTotals.error}>
+        {fyStatus.fyTotals.error}
+      </FeedbackToast>
     )}
     {fyStatus.fyQuarterTotals?.error && (
-      <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+      <FeedbackToast variant={'error'} messageKey={fyStatus.fyQuarterTotals.error}>
         {fyStatus.fyQuarterTotals.error}
-      </p>
+      </FeedbackToast>
     )}
     {fyStatus.form16?.error && (
-      <p className="mt-3 text-sm text-red-600 dark:text-red-400">{fyStatus.form16.error}</p>
+      <FeedbackToast variant={'error'} messageKey={fyStatus.form16.error}>
+        {fyStatus.form16.error}
+      </FeedbackToast>
     )}
   </Card>
 );

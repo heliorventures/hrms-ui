@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 
@@ -47,12 +48,18 @@ const LibraryState = ({ loading, failed, onRetry, count, filtered, onClear }: St
       </p>
     ) : null}
     {!loading && failed ? (
-      <div role="alert">
+      <FeedbackToast
+        variant={'error'}
+        action={
+          <>
+            <Button variant="outline" onClick={onRetry}>
+              Try again
+            </Button>
+          </>
+        }
+      >
         <p>Documents could not be loaded.</p>
-        <Button variant="outline" onClick={onRetry}>
-          Try again
-        </Button>
-      </div>
+      </FeedbackToast>
     ) : null}
     {!loading && !failed && !count ? (
       <div

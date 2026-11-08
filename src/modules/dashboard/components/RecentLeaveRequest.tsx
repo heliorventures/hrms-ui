@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { HomeRecentLeaveDocument as RECENT_LEAVE } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { useRetainedQuery } from '../../../hooks/useRetainedQuery';
 
@@ -36,15 +37,18 @@ const RecentLeaveRequest = () => {
     );
   if (error)
     return (
-      <div
-        role="alert"
-        className="flex flex-wrap items-center gap-3 text-sm text-content-secondary"
+      <FeedbackToast
+        variant={'error'}
+        action={
+          <>
+            <Button variant="quiet" size="sm" onClick={() => void refresh()}>
+              Try again
+            </Button>
+          </>
+        }
       >
         <p>Request status could not be refreshed.</p>
-        <Button variant="quiet" size="sm" onClick={() => void refresh()}>
-          Try again
-        </Button>
-      </div>
+      </FeedbackToast>
     );
   if (!request) return null;
   return (

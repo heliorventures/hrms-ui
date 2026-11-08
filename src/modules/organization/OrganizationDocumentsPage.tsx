@@ -12,6 +12,8 @@ import { authorizationStateKey } from '../../auth/permissionService';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
+import FlashToastBar from '../../components/common/FlashToastBar';
 import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
@@ -19,6 +21,8 @@ import Select from '../../components/common/Select';
 import Table from '../../components/common/Table';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDialogs } from '../../contexts/DialogContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
+import { useFlashToast } from '../../hooks/useFlashToast';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -65,7 +69,7 @@ const DocumentsContent = () => {
   const uploadFileInputRef = useRef<HTMLInputElement>(null);
   const mounted = useRef(false);
   const requestSequence = useRef(0);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useFeedbackState<string | null>(null, 'error');
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -74,8 +78,8 @@ const DocumentsContent = () => {
   }, []);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const { flash, show: showFlash, clear: clearFlash } = useFlashToast();
 
   const typeName = useMemo(() => Object.fromEntries(types.map((t) => [t.id, t.name])), [types]);
 
@@ -97,7 +101,7 @@ const DocumentsContent = () => {
     } finally {
       if (mounted.current && sequence === requestSequence.current) setLoading(false);
     }
-  }, [client]);
+  }, [client, setLoadError]);
 
   useEffect(() => {
     void loadDocuments().catch(() => undefined);
@@ -107,7 +111,7 @@ const DocumentsContent = () => {
     event.preventDefault();
     if (!canManageCompanyDocuments) return;
     setError(null);
-    setSuccess(null);
+    clearFlash();
     const title = form.title.trim();
     if (!title) {
       setError('Document title is required.');
@@ -143,11 +147,12 @@ const DocumentsContent = () => {
       if (!mounted.current) return;
       setForm(initialForm);
       if (uploadFileInputRef.current) uploadFileInputRef.current.value = '';
-      setSuccess('Company document uploaded successfully.');
+      showFlash('Company document uploaded successfully.', 'success');
       setUploadOpen(false);
       await loadDocuments().catch(() => undefined);
     } catch (e) {
-      if (mounted.current) setError(graphQlUserMessage(e));
+      if (mounted.current)
+        showFlash(graphQlUserMessage(e), 'error', { recoverableWithoutAction: true });
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -156,6 +161,7 @@ const DocumentsContent = () => {
   const downloadCompanyDocument = async (document: CompanyDocumentRow) => {
     try {
       setError(null);
+      clearFlash();
       const result = await client.request(CompanyDocumentAttachmentDocument, {
         companyDocumentId: document.id,
       });
@@ -170,7 +176,8 @@ const DocumentsContent = () => {
       anchor.remove();
       deferObjectUrlRevocation(url);
     } catch (e) {
-      if (mounted.current) setError(graphQlUserMessage(e));
+      if (mounted.current)
+        showFlash(graphQlUserMessage(e), 'error', { recoverableWithoutAction: true });
     }
   };
 
@@ -186,13 +193,14 @@ const DocumentsContent = () => {
     try {
       setBusy(true);
       setError(null);
-      setSuccess(null);
+      clearFlash();
       await client.request(DeleteCompanyDocumentDocument, { companyDocumentId: document.id });
       if (!mounted.current) return;
-      setSuccess('Company document removed.');
+      showFlash('Company document removed.', 'success');
       await loadDocuments().catch(() => undefined);
     } catch (e) {
-      if (mounted.current) setError(graphQlUserMessage(e));
+      if (mounted.current)
+        showFlash(graphQlUserMessage(e), 'error', { recoverableWithoutAction: true });
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -219,25 +227,26 @@ const DocumentsContent = () => {
       </div>
 
       {loadError ? (
-        <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-status-danger">
+        <FeedbackToast
+          variant={'error'}
+          messageKey={loadError}
+          action={
+            <>
+              {tab !== 'company' ? (
+                <Button
+                  variant="outline"
+                  onClick={() => void loadDocuments().catch(() => undefined)}
+                >
+                  Try again
+                </Button>
+              ) : null}
+            </>
+          }
+        >
           <p>{loadError}</p>
-          {tab !== 'company' ? (
-            <Button variant="outline" onClick={() => void loadDocuments().catch(() => undefined)}>
-              Try again
-            </Button>
-          ) : null}
-        </div>
+        </FeedbackToast>
       ) : null}
-      {error && (
-        <Card>
-          <p className="text-sm text-amber-800 dark:text-amber-200">{error}</p>
-        </Card>
-      )}
-      {success && (
-        <Card>
-          <p className="text-sm text-emerald-700 dark:text-emerald-300">{success}</p>
-        </Card>
-      )}
+      <FlashToastBar toast={flash} onDismiss={clearFlash} />
 
       <PageTabPanel id="company" activeTab={tab}>
         {canManageCompanyDocuments ? (
@@ -255,6 +264,11 @@ const DocumentsContent = () => {
           <div hidden={!uploadOpen}>
             <Card title="Add Company Document">
               <form className="space-y-4" onSubmit={(event) => void submitCompanyDocument(event)}>
+                {error ? (
+                  <FeedbackToast variant={'error'} messageKey={error}>
+                    {error}
+                  </FeedbackToast>
+                ) : null}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <Select
                     fullWidth

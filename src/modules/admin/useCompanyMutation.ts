@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { authorizationStateKey } from '../../auth/permissionService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -20,12 +21,12 @@ export const useCompanyMutation = () => {
   if (current.current.client !== client || current.current.identity !== identity)
     current.current = { client, identity };
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   useEffect(() => {
     lock.current = false;
     setBusy(false);
     setError(null);
-  }, [client, identity]);
+  }, [client, identity, setError]);
   useEffect(() => {
     mounted.current = true;
     return () => {

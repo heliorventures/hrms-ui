@@ -1,8 +1,11 @@
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 
-import Modal from './Modal';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
+
 import Button from './Button';
+import FeedbackToast from './FeedbackToast';
 import Input from './Input';
+import Modal from './Modal';
 
 export interface HighRiskActionDialogProps {
   open: boolean;
@@ -34,7 +37,7 @@ const HighRiskActionDialog = ({
   const [reason, setReason] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [failureMessage, setFailureMessage] = useState<string | null>(null);
+  const [failureMessage, setFailureMessage] = useFeedbackState<string | null>(null, 'error');
   const submittingRef = useRef(false);
   const mountedRef = useRef(true);
 
@@ -50,7 +53,7 @@ const HighRiskActionDialog = ({
     setReason('');
     setConfirmation('');
     setFailureMessage(null);
-  }, [open]);
+  }, [open, setFailureMessage]);
 
   const canSubmit = useMemo(() => {
     const reasonRequired = !requireReason || reason.trim().length > 0;
@@ -94,12 +97,7 @@ const HighRiskActionDialog = ({
       isDismissible={!locked}
       footer={
         <div className="flex w-full items-start justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={requestClose}
-            disabled={locked}
-          >
+          <Button type="button" variant="outline" onClick={requestClose} disabled={locked}>
             Cancel
           </Button>
           <Button
@@ -162,9 +160,9 @@ const HighRiskActionDialog = ({
         ) : null}
 
         {failureMessage ? (
-          <p role="alert" className="text-sm font-medium text-status-danger">
+          <FeedbackToast variant={'error'} messageKey={failureMessage}>
             {failureMessage}
-          </p>
+          </FeedbackToast>
         ) : null}
       </div>
     </Modal>

@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
+
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { accessibleText } from '../../testUtils/accessibleText';
+
 import { SetupModal, SaveBenefitType } from './benefitsSetup';
+
 const request = vi.hoisted(() => vi.fn());
 vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => ({ request }) }));
 vi.mock('../../components/common/Modal', () => ({
@@ -47,7 +52,7 @@ describe('benefit setup save', () => {
       />
     );
     fireEvent.submit(container.querySelector('form')!);
-    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Enter name.');
+    expect(accessibleText(await screen.findByRole('alert'))).toBe('Enter name.');
     expect(request).not.toHaveBeenCalled();
   });
   it('retries refresh without submitting the successful creation twice', async () => {

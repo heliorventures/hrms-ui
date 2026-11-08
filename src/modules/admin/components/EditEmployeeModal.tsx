@@ -9,11 +9,14 @@ import {
   UpdateEmployeeDocument as UpdateEmployeeWithLoginEmailDocument,
 } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Select from '../../../components/common/Select';
 import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { parseEmployeeStatus } from '../../employeeStatus';
@@ -51,6 +54,8 @@ interface EditEmployeeModalProps {
 }
 
 const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmployeeModalProps) => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const { can } = useAuth();
   const canManageLoginAccounts = can('role:manage');
@@ -72,12 +77,12 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
   const [accountConfirmPassword, setAccountConfirmPassword] = useState('');
   const [accountRoleId, setAccountRoleId] = useState('');
   const [accountBusy, setAccountBusy] = useState(false);
-  const [accountMessage, setAccountMessage] = useState<string | null>(null);
+  const [accountMessage, setAccountMessage] = useFeedbackState<string | null>(null, 'success');
   const [deptOptions, setDeptOptions] = useState<SelectOption[]>([]);
   const [desigOptions, setDesigOptions] = useState<SelectOption[]>([]);
   const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
   const [roleOptions, setRoleOptions] = useState<SelectOption[]>([]);
-  const [orgLoadError, setOrgLoadError] = useState<string | null>(null);
+  const [orgLoadError, setOrgLoadError] = useFeedbackState<string | null>(null, 'error');
 
   const loadOrg = useCallback(async () => {
     if (!isOpen) return;
@@ -105,7 +110,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     } catch (e) {
       setOrgLoadError(graphQlUserMessage(e));
     }
-  }, [canReadRoleDirectory, client, isOpen, employee?.id]);
+  }, [canReadRoleDirectory, client, isOpen, employee?.id, setOrgLoadError]);
 
   useEffect(() => {
     void loadOrg();
@@ -129,7 +134,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     setAccountRoleId('');
     setAccountMessage(null);
     setFormError(null);
-  }, [employee, isOpen]);
+  }, [employee, isOpen, setFormError, setAccountMessage]);
 
   const validateAccountPassword = () => {
     if (accountPassword.length < 8) {
@@ -255,6 +260,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
       await client.request(UpdateEmployeeWithLoginEmailDocument, {
         input,
       });
+      notifyAction('saved');
       onUpdated();
       onClose();
     } catch (err) {
@@ -269,9 +275,15 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Edit Employee - ${employee.employeeCode}`}>
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4" autoComplete="off">
-        {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+        {formError && (
+          <FeedbackToast variant={'error'} messageKey={formError}>
+            {formError}
+          </FeedbackToast>
+        )}
         {orgLoadError && (
-          <p className="text-sm text-amber-800 dark:text-amber-200">{orgLoadError}</p>
+          <FeedbackToast variant={'error'} messageKey={orgLoadError}>
+            {orgLoadError}
+          </FeedbackToast>
         )}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
@@ -350,7 +362,9 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
             </span>
           </p>
           {accountMessage && (
-            <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300">{accountMessage}</p>
+            <FeedbackToast variant={'success'} messageKey={accountMessage}>
+              {accountMessage}
+            </FeedbackToast>
           )}
           {canManageLoginAccounts ? (
             <div className="mt-3 space-y-3">

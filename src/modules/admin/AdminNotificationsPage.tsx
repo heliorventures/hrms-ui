@@ -1,4 +1,4 @@
-import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { usePageTabs } from '../../hooks/usePageTabs';
@@ -26,23 +26,19 @@ const AdminNotificationsPage = () => {
       </div>
 
       {model.error ? (
-        <Card>
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <>
+          <FeedbackToast variant={'error'} messageKey={model.error}>
             {model.error}
-          </p>
-        </Card>
+          </FeedbackToast>
+        </>
       ) : null}
 
       {model.success ? (
-        <Card>
-          <p
-            className="text-sm text-green-700 dark:text-green-300"
-            role="status"
-            aria-live="polite"
-          >
+        <>
+          <FeedbackToast variant={'success'} messageKey={model.success}>
             {model.success}
-          </p>
-        </Card>
+          </FeedbackToast>
+        </>
       ) : null}
 
       <AnnouncementWorkspace model={model} tab={tab} />

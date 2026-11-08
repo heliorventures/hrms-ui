@@ -46,6 +46,11 @@ export const UI_A11Y_TEXT = {
 } as const;
 
 export const UI_FEEDBACK_TEXT = {
+  saved: 'Changes saved.',
+  created: 'Record created.',
+  updated: 'Changes updated.',
+  removed: 'Record removed.',
+  submitted: 'Submitted successfully.',
   copied: 'Copied.',
   copyUnavailable: 'Copy is unavailable. Select the value and copy it manually.',
   unknownStatus: 'Unknown status',

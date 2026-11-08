@@ -2,6 +2,7 @@ import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes } from 'react';
 
 import { requireAccessibleName } from './accessibleName';
+import FeedbackToast from './FeedbackToast';
 import FormField, { mergeDescribedBy } from './FormField';
 
 type AccessibleNameProps =
@@ -99,9 +100,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             </p>
           ) : null}
           {error ? (
-            <p id={errorId} role="alert" className="text-sm font-medium text-status-danger">
+            <FeedbackToast variant={'error'} id={errorId} messageKey={error}>
               {error}
-            </p>
+            </FeedbackToast>
           ) : null}
         </div>
       );

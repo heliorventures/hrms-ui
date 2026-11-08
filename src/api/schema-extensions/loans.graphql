@@ -1,0 +1,477 @@
+# Generated from the Payroll service SDL by generate-loans-client.mjs.
+type Separation {
+  id: ID!
+  tenantId: ID!
+  employeeId: ID!
+  separationType: String!
+  resignationDate: NaiveDate
+  lastWorkingDate: NaiveDate!
+  reason: String
+  status: String!
+  approvedBy: ID
+  workflowInstanceId: ID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Implement the DateTime<Utc> scalar
+
+The input/output is a string in RFC3339 format.
+"""
+scalar DateTime
+
+"""
+ISO 8601 calendar date without timezone.
+Format: %Y-%m-%d
+
+# Examples
+
+* `1994-11-13`
+* `2000-02-24`
+"""
+scalar NaiveDate
+
+input SaveFnfFinancialReviewInput {
+  separationId: UUID!
+  input: JSON!
+  expectedRevision: Int
+  expectedFingerprint: String
+}
+
+"""A scalar that can represent any JSON value."""
+scalar JSON
+
+"""
+A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as
+Strings within GraphQL. UUIDs are used to assign unique identifiers to
+entities without requiring a central allocating authority.
+
+# References
+
+* [Wikipedia: Universally Unique Identifier](http://en.wikipedia.org/wiki/Universally_unique_identifier)
+* [RFC4122: A Universally Unique Identifier (UUID) URN Namespace](http://tools.ietf.org/html/rfc4122)
+"""
+scalar UUID
+
+input UpsertFnfSettlementInput {
+  separationId: ID!
+  leaveEncashment: String
+  gratuityAmount: String
+  bonusPayable: String
+  recoveryAmount: String
+}
+
+type LoanExitReviewResult {
+  id: UUID!
+  separationId: UUID!
+  exposure: JSON!
+  decision: JSON!
+}
+
+input LoanExitReviewInput {
+  separationId: UUID!
+  settlementDate: NaiveDate!
+  separationFingerprint: String!
+  exposureFingerprint: String!
+  decision: JSON!
+}
+
+input ReverseLoanPostingInput {
+  loanId: String!
+  postingId: String!
+  reason: String!
+  reconciliationReference: String!
+  reviewFingerprint: String
+  meta: LoanCommandMetaInput!
+}
+
+input LoanCommandMetaInput {
+  idempotencyKey: String!
+  expectedVersion: Int!
+}
+
+input RecordLoanPaymentInput {
+  loanId: String!
+  amount: String!
+  valueDate: String!
+  method: String!
+  externalReference: String!
+  evidenceReference: String!
+  resignationExceptionReason: String
+  meta: LoanCommandMetaInput!
+}
+
+input WithdrawLoanRequestInput {
+  requestId: String!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+input DecideLoanRequestInput {
+  requestId: String!
+  stepId: String!
+  decision: LoanRequestDecision!
+  reason: String!
+  terms: JSON
+  effectiveFrom: String
+  firstDueDate: String
+  agreementReference: String
+  meta: LoanCommandMetaInput!
+}
+
+enum LoanRequestDecision {
+  APPROVE
+  RETURN
+  REJECT
+}
+
+input PublishLoanPolicyInput {
+  key: String!
+  currency: String!
+  minorUnits: Int!
+  effectiveFrom: String!
+  effectiveTo: String
+  rules: JSON!
+  meta: LoanCommandMetaInput!
+}
+
+input SubmitLoanRequestInput {
+  requestId: String
+  employeeId: String
+  policyId: String!
+  amount: String!
+  purpose: String!
+  notes: String
+  preferences: JSON!
+  meta: LoanCommandMetaInput!
+}
+
+input RetireLoanPolicyInput {
+  policyId: String!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+input CancelLoanFundingInput {
+  loanId: String!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+type LoanCommandResult {
+  recordId: String!
+  loanId: String
+  employeeId: String
+  version: Int!
+  state: String!
+  postingIds: [String!]!
+  unappliedCredit: String!
+}
+
+input RecordHistoricalLoanPaymentInput {
+  loanId: String!
+  amount: String!
+  valueDate: String!
+  method: String!
+  externalReference: String!
+  evidenceReference: String!
+  resignationExceptionReason: String
+  meta: LoanCommandMetaInput!
+  kind: LoanHistoricalPaymentKind!
+  reason: String!
+  reconciliationReference: String!
+  reviewFingerprint: String!
+}
+
+enum LoanHistoricalPaymentKind {
+  DISBURSEMENT
+  RECEIPT
+}
+
+"""
+Company HR recovery view of a durable approval operation; no client-supplied state.
+"""
+type ExitApprovalOperation {
+  id: ID!
+  reviewId: ID!
+  state: String!
+  canResume: Boolean!
+}
+
+type FnfFinancialPreparation {
+  settlement: FnfSettlement
+  revision: Int
+  fingerprint: String
+  input: JSON
+  legacyFiguresFingerprint: String
+}
+
+type FnfSettlement {
+  id: ID!
+  tenantId: ID!
+  separationId: ID!
+  leaveEncashment: String
+  gratuityAmount: String
+  bonusPayable: String
+  recoveryAmount: String
+  netPayable: String
+  status: String!
+  processedAt: DateTime
+  processedBy: ID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  financials: JSON
+}
+
+type FinanceOwnerConnection {
+  nodes: [FinanceOwner!]!
+  pageInfo: FinanceOwnerPageInfo!
+}
+
+type FinanceOwnerPageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+type FinanceOwner {
+  id: UUID!
+  name: String!
+}
+
+type LoanExitReviewPreview {
+  separationId: UUID!
+  employeeId: UUID!
+  lastWorkingDate: NaiveDate!
+  separationFingerprint: String!
+  exposure: JSON!
+  payrollContext: JSON!
+}
+
+type LoanAccount {
+  id: String!
+  employeeId: String!
+  requestId: String!
+  loanNumber: String!
+  employeeName: String!
+  employeeCode: String!
+  purpose: String!
+  disbursed: String!
+  repaid: String!
+  outstanding: String!
+  unappliedCredit: String!
+  approvedPrincipal: String!
+  currency: String!
+  minorUnits: Int!
+  state: String!
+  fundingState: String!
+  version: Int!
+  principal: String!
+  interest: String!
+  terms: JSON!
+}
+
+type LoanRequestConnection {
+  nodes: [LoanRequest!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanPageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+type LoanRequest {
+  id: String!
+  employeeId: String!
+  employeeName: String!
+  employeeCode: String!
+  policyId: String!
+  preferences: JSON!
+  createdAt: DateTime!
+  requestedAmount: String!
+  currency: String!
+  purpose: String!
+  employeeNotes: String
+  state: String!
+  version: Int!
+  workflowInstanceId: String
+  currentStepId: String
+  isFinalApprovalStep: Boolean!
+  decisionReason: String
+}
+
+type LoanAccountConnection {
+  nodes: [LoanAccount!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanScheduleConnection {
+  nodes: [LoanSchedule!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanSchedule {
+  id: String!
+  version: Int!
+  effectiveFrom: String!
+  monthlyAmount: String!
+  recoveryMode: String!
+  isProjection: Boolean!
+}
+
+type LoanPaymentConnection {
+  nodes: [LoanPayment!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanPayment {
+  id: String!
+  kind: String!
+  amount: String!
+  valueDate: String!
+  method: String!
+  externalReference: String!
+  unappliedCredit: String!
+  resignationExceptionReason: String
+}
+
+type LoanCorrectionPreview {
+  loanId: String!
+  postingId: String!
+  accountVersion: Int!
+  occurrenceDate: String!
+  postingDate: String!
+  currency: String!
+  currentPrincipal: String!
+  currentInterest: String!
+  correctedPrincipal: String!
+  correctedInterest: String!
+  preservedPayrollPostings: [String!]!
+  reviewFingerprint: String!
+}
+
+type LoanPolicyConnection {
+  nodes: [LoanPolicy!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanPolicy {
+  id: String!
+  key: String!
+  version: Int!
+  status: String!
+  currency: String!
+  minorUnits: Int!
+  effectiveFrom: String!
+  effectiveTo: String
+  rules: JSON!
+}
+
+type LoanApprovalWorkflowConnection {
+  nodes: [LoanApprovalWorkflow!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanApprovalWorkflow {
+  id: String!
+  name: String!
+}
+
+type LoanPostingConnection {
+  nodes: [LoanPosting!]!
+  pageInfo: LoanPageInfo!
+}
+
+type LoanPosting {
+  id: String!
+  kind: String!
+  sourceKind: String!
+  sourceId: String!
+  valueDate: String!
+  amount: String!
+  principalDelta: String!
+  interestDelta: String!
+  reversalOf: String
+}
+
+input SetLoanPeriodOverrideInput {
+  loanId: String!
+  periodStart: String!
+  amount: String
+  pauseInterest: Boolean!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+input SetLoanDeductionInput {
+  loanId: String!
+  effectiveFrom: String!
+  firstDueDate: String!
+  amount: String!
+  recovery: LoanRecoveryMode!
+  reason: String!
+  meta: LoanCommandMetaInput!
+}
+
+enum LoanRecoveryMode {
+  PAYROLL
+  EXTERNAL
+  MIXED
+}
+
+extend type Query {
+  previewLoanDeduction(input: SetLoanDeductionInput!): JSON!
+  previewLoanPeriodOverride(input: SetLoanPeriodOverrideInput!): JSON!
+  loanPolicy(id: String!): LoanPolicy!
+  previewLoanApproval(requestId: String!, terms: JSON!, effectiveFrom: NaiveDate!, firstDueDate: NaiveDate!): JSON!
+  loanSchedulePreview(loanId: String!, firstDueDate: NaiveDate): JSON!
+  loanStatement(loanId: String!, expectedVersion: Int!, after: String, first: Int! = 100): LoanPostingConnection!
+  loanApprovalWorkflows(after: String, first: Int! = 25): LoanApprovalWorkflowConnection!
+  loanPolicyVersions(after: String, first: Int! = 25): LoanPolicyConnection!
+  previewLoanReversal(loanId: String!, postingId: String!): LoanCorrectionPreview!
+  loanPayments(loanId: String!, after: String, first: Int! = 25): LoanPaymentConnection!
+  loanSchedules(loanId: String!, after: String, first: Int! = 25): LoanScheduleConnection!
+  myLoans(after: String, first: Int! = 25): LoanAccountConnection!
+  loanAccounts(employeeId: String, search: String, state: String, after: String, first: Int! = 25): LoanAccountConnection!
+  myLoanRequests(after: String, first: Int! = 25): LoanRequestConnection!
+  loanRequestQueue(employeeId: String, search: String, state: String, after: String, first: Int! = 25): LoanRequestConnection!
+  loanAccount(id: String!): LoanAccount!
+  loanPolicies(after: String, first: Int! = 25): LoanPolicyConnection!
+  loanLedger(loanId: String!, after: String, first: Int! = 25): LoanPostingConnection!
+  previewLoanExitReview(separationId: UUID!, settlementDate: NaiveDate!): LoanExitReviewPreview!
+  previewFnfLoanExposure(separationId: UUID!, settlementDate: NaiveDate!): JSON!
+  financeFollowUpOwners(after: UUID, first: Int! = 25): FinanceOwnerConnection!
+  fnfSettlement(separationId: ID!): FnfSettlement
+  fnfFinancialReview(separationId: UUID!): FnfFinancialPreparation!
+  """
+  Recover an uncertain approval without creating a second financial decision.
+  """
+  exitApprovalOperation(separationId: ID!): ExitApprovalOperation
+}
+
+extend type Mutation {
+  recordHistoricalLoanPayment(input: RecordHistoricalLoanPaymentInput!): LoanCommandResult!
+  cancelLoanFunding(input: CancelLoanFundingInput!): LoanCommandResult!
+  retireLoanPolicy(input: RetireLoanPolicyInput!): LoanCommandResult!
+  saveLoanRequest(input: SubmitLoanRequestInput!): LoanCommandResult!
+  publishLoanPolicy(input: PublishLoanPolicyInput!): LoanCommandResult!
+  submitLoanRequest(input: SubmitLoanRequestInput!): LoanCommandResult!
+  decideLoanRequest(input: DecideLoanRequestInput!): LoanCommandResult!
+  withdrawLoanRequest(input: WithdrawLoanRequestInput!): LoanCommandResult!
+  recordLoanDisbursement(input: RecordLoanPaymentInput!): LoanCommandResult!
+  recordLoanReceipt(input: RecordLoanPaymentInput!): LoanCommandResult!
+  setLoanDeduction(input: SetLoanDeductionInput!): LoanCommandResult!
+  setLoanPeriodOverride(input: SetLoanPeriodOverrideInput!): LoanCommandResult!
+  reverseLoanPosting(input: ReverseLoanPostingInput!): LoanCommandResult!
+  saveLoanExitReview(input: LoanExitReviewInput!): LoanExitReviewResult!
+  upsertFnfSettlement(input: UpsertFnfSettlementInput!): FnfSettlement!
+  saveFnfFinancialReview(input: SaveFnfFinancialReviewInput!): FnfFinancialPreparation!
+  finalizeFnfSettlement(separationId: ID!, expectedRevision: Int, expectedFingerprint: String): FnfSettlement!
+  """
+  Approve a pending separation (HR / directory roles — same gate as `createEmployee`).
+  """
+  approveSeparation(separationId: ID!, financeReviewId: ID): Separation!
+  """Reject a pending separation (HR / directory roles)."""
+  cancelExitApproval(operationId: ID!): Boolean!
+}

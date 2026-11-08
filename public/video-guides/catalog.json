@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-17T08:23:32.792Z",
+  "videos": [
+    {
+      "id": "login",
+      "title": "How to sign in",
+      "feature": "Getting started",
+      "description": "Sign in with your demo account and complete verification.",
+      "keywords": ["login", "sign in", "password", "verification"],
+      "src": "/video-guides/assets/5bf1739c1890cd88b9263ad52a9ad9ddd2375e7de1c44f51c639db2816e62db7.mp4",
+      "durationSeconds": 12.43,
+      "poster": "/video-guides/assets/49a4080101f791af6be78bc88ae74ba5caaf6759cb50c8c131b8f6374ac4b8cd.png",
+      "disclosure": "demo",
+      "updatedAt": "2026-10-17T08:23:31.689Z"
+    },
+    {
+      "id": "punch",
+      "title": "Punch in and punch out",
+      "feature": "Attendance",
+      "description": "Keep GPS enabled and record your punch in and punch out.",
+      "keywords": ["punch in", "punch out", "gps", "location", "check in"],
+      "src": "/video-guides/assets/1aadf2076cf2ab8393e1ca190aa4069af199e39d41a74547713f7186f3321172.mp4",
+      "durationSeconds": 11.6,
+      "poster": "/video-guides/assets/3e9c19d1127bfcb5df33460881963d3d83dc919f90baed6e6cce6efddfe93b27.png",
+      "disclosure": "simulated-gps",
+      "updatedAt": "2026-10-17T08:23:31.842Z"
+    },
+    {
+      "id": "attendance",
+      "title": "View your attendance",
+      "feature": "Attendance",
+      "description": "Choose a month and review your own attendance records.",
+      "keywords": ["self attendance", "attendance history", "hours", "month"],
+      "src": "/video-guides/assets/5bc2207c8d18f15d52d585cef13379aa7475baf10bf112b5938f6c09a6fa861d.mp4",
+      "durationSeconds": 9.6,
+      "poster": "/video-guides/assets/05180aaf9b0763a7fd0e7dd9a137989d37b23a0f6b6d18655a6691ee325503c2.png",
+      "disclosure": "demo",
+      "updatedAt": "2026-10-17T08:23:31.998Z"
+    },
+    {
+      "id": "leave-apply",
+      "title": "Apply for leave",
+      "feature": "Leave",
+      "description": "Choose a leave type and dates, then submit your request.",
+      "keywords": ["apply leave", "leave request", "holiday"],
+      "src": "/video-guides/assets/4f1a6c5a6f361c0149c9d1ae8ddd580cabf86a0cbf117648e8f688d6cfc21b4a.mp4",
+      "durationSeconds": 18.03,
+      "poster": "/video-guides/assets/412da12c5da68e27b1584c9b93046cff4a73e16284d447858408f8f1b2377e1d.png",
+      "disclosure": "demo",
+      "updatedAt": "2026-10-17T08:23:32.115Z"
+    },
+    {
+      "id": "leave-approve",
+      "title": "Approve a leave request",
+      "feature": "Leave",
+      "description": "Review and approve a leave request as a manager or HR.",
+      "keywords": ["approve leave", "manager", "hr", "approval"],
+      "src": "/video-guides/assets/27734d1fe8a09316dbd12cb7f780f429597ee22cc6b5ffd5960fe8526a036c1a.mp4",
+      "durationSeconds": 9.6,
+      "poster": "/video-guides/assets/2b8e6cefefd0dc4603de883d437f269fe423f8922f374cb357eb1835351df108.png",
+      "disclosure": "demo",
+      "updatedAt": "2026-10-17T08:23:32.250Z"
+    },
+    {
+      "id": "payroll",
+      "title": "Your payslip, CTC and income tax",
+      "feature": "Payroll",
+      "description": "View your payslip, salary CTC and projected income tax.",
+      "keywords": ["payslip", "pay slip", "ctc", "salary", "tax", "tds"],
+      "src": "/video-guides/assets/6b55722e6542ccfa3f04c575e209d69dc7add586fdb5b1816faf46a305d30517.mp4",
+      "durationSeconds": 15.53,
+      "poster": "/video-guides/assets/eee5750f697a9c37e6955a4e3d2b66fb69b05845368901352a3cff0eeaf872ff.png",
+      "disclosure": "sample-payroll",
+      "updatedAt": "2026-10-17T08:23:32.389Z"
+    },
+    {
+      "id": "expense-submit",
+      "title": "Submit an expense claim",
+      "feature": "Expenses & travel",
+      "description": "Add an expense claim and attach its receipt.",
+      "keywords": ["expense", "claim", "receipt", "reimbursement"],
+      "src": "/video-guides/assets/75b72504b1567da0dc3f0f96190b6f614de11355cec5310798f9883a4441c67a.mp4",
+      "durationSeconds": 21.47,
+      "poster": "/video-guides/assets/c445b1ee0b63911bad1d12c7f2a8592db66b1bacab9d47d43d6ff1f660fa5dbb.png",
+      "disclosure": "demo",
+      "updatedAt": "2026-10-17T08:23:32.544Z"
+    },
+    {
+      "id": "travel-submit",
+      "title": "Request travel",
+      "feature": "Expenses & travel",
+      "description": "Enter your travel details and submit a request.",
+      "keywords": ["travel", "trip", "journey", "request"],
+      "src": "/video-guides/assets/2d54a4ccddc5d79f2c3e49d0a6d698b6f859a4fbc28376aadee6799a76bb4939.mp4",
+      "durationSeconds": 23.97,
+      "poster": "/video-guides/assets/489d6f8fc0a8bbce3bec76840b755fbd4f028dcc04a94b377992ef9f8409578c.png",
+      "disclosure": "demo",
+      "updatedAt": "2026-10-17T08:23:32.669Z"
+    },
+    {
+      "id": "expense-travel-approve",
+      "title": "Approve expenses and travel",
+      "feature": "Expenses & travel",
+      "description": "Review expense and travel requests and record your approval step.",
+      "keywords": ["approve expense", "approve travel", "manager", "hr", "approval"],
+      "src": "/video-guides/assets/a263cc4f09b10bb7a2bb8989588f5a8eef4b3e53c60426c63e99e27d8d8c0123.mp4",
+      "durationSeconds": 19.2,
+      "poster": "/video-guides/assets/58572e6a312f1b2857f47d58d2054290450385e96ae06a8879d0e076c36444ca.png",
+      "disclosure": "demo",
+      "updatedAt": "2026-10-17T08:23:32.792Z"
+    }
+  ]
+}

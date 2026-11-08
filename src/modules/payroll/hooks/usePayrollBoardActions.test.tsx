@@ -4,6 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import type { PropsWithChildren } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+import { SetPayrollCyclePaymentDateDocument } from '../../../api/loans/graphql';
 import { DialogProvider } from '../../../contexts/DialogContext';
 import { calculateMutation, finalizeMutation, draftQuery } from '../taxProjectionTypes';
 
@@ -27,6 +28,29 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+it('saves the reviewed payment date and removes the stale draft until recalculation', async () => {
+  const request = vi
+    .fn()
+    .mockResolvedValueOnce({ payrollDraft: null })
+    .mockResolvedValueOnce({ calculatePayrollCycle: draft })
+    .mockResolvedValueOnce({ setPayrollCyclePaymentDate: true });
+  const client = new GraphQLClient('https://example.invalid');
+  Object.defineProperty(client, 'request', { value: request });
+  const reload = vi.fn().mockResolvedValue(undefined);
+  const { result } = renderHook(
+    () => usePayrollDraftActions(client, true, 'tenant-admin', reload),
+    { wrapper }
+  );
+  await act(async () => result.current.runPayroll('cycle'));
+  await act(async () => result.current.savePaymentDate('2026-10-09'));
+  expect(request).toHaveBeenLastCalledWith(SetPayrollCyclePaymentDateDocument, {
+    cycleId: 'cycle',
+    paymentDate: '2026-10-09',
+    expectedRevision: 3,
+  });
+  expect(result.current.draft).toBeNull();
+  expect(reload).toHaveBeenCalledOnce();
 });
 it('calculates without finalization and confirms the exact reviewed revision', async () => {
   const request = vi

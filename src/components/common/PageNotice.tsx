@@ -3,6 +3,8 @@ import { useEffect, useRef, type ReactNode } from 'react';
 
 import { UI_A11Y_TEXT } from '../../constants/uiText';
 
+import FeedbackToast from './FeedbackToast';
+
 export type PageNoticeVariant = 'error' | 'info' | 'success' | 'warning';
 
 export interface PageNoticeProps {
@@ -13,6 +15,7 @@ export interface PageNoticeProps {
   onDismiss?: () => void;
   focusOnMount?: boolean;
   className?: string;
+  messageKey?: unknown;
 }
 
 const VARIANT_CLASSES: Record<PageNoticeVariant, string> = {
@@ -44,6 +47,7 @@ const PageNotice = ({
   onDismiss,
   focusOnMount = false,
   className = '',
+  messageKey,
 }: PageNoticeProps) => {
   const noticeRef = useRef<HTMLDivElement>(null);
 
@@ -53,14 +57,28 @@ const PageNotice = ({
     return () => window.cancelAnimationFrame(focusFrame);
   }, [focusOnMount]);
 
-  const isError = variant === 'error';
+  if (variant === 'error' || variant === 'success' || messageKey !== undefined) {
+    return (
+      <FeedbackToast
+        variant={variant}
+        title={title}
+        action={action}
+        onDismiss={onDismiss}
+        focusOnMount={focusOnMount}
+        messageKey={messageKey}
+      >
+        {children}
+      </FeedbackToast>
+    );
+  }
+
   const NoticeIcon = VARIANT_ICONS[variant];
 
   return (
     <div
       ref={noticeRef}
-      role={isError ? 'alert' : 'status'}
-      aria-live={isError ? undefined : 'polite'}
+      role="status"
+      aria-live="polite"
       aria-atomic="true"
       tabIndex={focusOnMount ? -1 : undefined}
       className={`rounded-lg border px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 ${VARIANT_CLASSES[variant]} ${className}`}

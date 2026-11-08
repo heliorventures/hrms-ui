@@ -5,6 +5,7 @@ import {
   CancelLeaveRequestDocument,
   type ApproveLeaveRequestMutationVariables,
 } from '../../../api/graphql/graphql';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import type { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { LEAVE_APPROVAL_REFRESH_MESSAGE, leaveApprovalTarget } from '../../leave/leaveApproval';
@@ -30,13 +31,16 @@ export const useHrLeaveMutations = ({
 }: MutationOptions) => {
   const [approveBusyId, setApproveBusyId] = useState<string | null>(null);
   const [cancelBusyId, setCancelBusyId] = useState<string | null>(null);
-  const [approveWorkflowNotice, setApproveWorkflowNotice] = useState<string | null>(null);
+  const [approveWorkflowNotice, setApproveWorkflowNotice] = useFeedbackState<string | null>(
+    null,
+    'info'
+  );
 
   const clearMutationState = useCallback(() => {
     setApproveBusyId(null);
     setCancelBusyId(null);
     setApproveWorkflowNotice(null);
-  }, []);
+  }, [setApproveWorkflowNotice]);
 
   const approve = useCallback(
     async (leaveRequestId: string, pendingApprovalStepId?: string | null) => {
@@ -73,7 +77,15 @@ export const useHrLeaveMutations = ({
       }
       await refresh(true, approved ? leaveRequestId : undefined);
     },
-    [client, clearWorkflowFailure, isCurrent, refresh, setFailure, showFlash]
+    [
+      client,
+      clearWorkflowFailure,
+      isCurrent,
+      refresh,
+      setFailure,
+      showFlash,
+      setApproveWorkflowNotice,
+    ]
   );
 
   const cancelOwn = useCallback(

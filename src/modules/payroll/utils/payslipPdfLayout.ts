@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 
 import { payslipCompanyAddressText } from '../payslipCompanyAddress';
 import { payslipDetailValue } from '../payslipDetailValue';
+import { payslipLoanText } from '../payslipLoans';
 import { resolvePayslipTemplate } from '../payslipTemplates';
 
 import type { PdfPayslipLine, PdfPayslipPayload, PayslipPdfBranding } from './payslipPdf';
@@ -76,6 +77,10 @@ const components = (writer: PdfWriter, slip: PdfPayslipPayload) => {
 const settlement = (writer: PdfWriter, slip: PdfPayslipPayload) => {
   const statement = slip.presentation?.statement;
   if (!statement) return;
+  if (statement.loans && statement.loans.lines.length > 0) {
+    writer.space();
+    for (const line of payslipLoanText(statement.loans, money)) writer.text(line);
+  }
   writer.space();
   writer.text(
     `Leave without pay: ${statement.lwp_days} days. Gross basis ${money(statement.lwp_basis_amount)} / ${statement.lwp_divisor}. LWP adjustment ${money(statement.lwp_amount)} is already included in earned gross.`

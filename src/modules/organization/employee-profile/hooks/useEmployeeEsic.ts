@@ -2,6 +2,7 @@ import type { GraphQLClient } from 'graphql-request';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import { readEmployeeEsic, saveEmployeeEsic } from '../../../../api/employeeEsic';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { useRetainedQuery } from '../../../../hooks/useRetainedQuery';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 
@@ -23,7 +24,7 @@ export const useEmployeeEsic = (
   const [draft, setDraft] = useState('');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [success, setSuccess] = useState(false);
   const generation = useRef(0);
   const inFlight = useRef(false);
@@ -44,7 +45,7 @@ export const useEmployeeEsic = (
     return () => {
       generation.current += 1;
     };
-  }, [client, employeeId, canEdit]);
+  }, [client, employeeId, canEdit, setError]);
 
   const startEditing = () => {
     setDraft(number ?? '');

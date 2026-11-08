@@ -1,5 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import type { useGraphClient } from '../../../hooks/useGraphClient';
 import type { AttendanceBoardData } from '../types';
 
@@ -25,8 +26,8 @@ export function usePersonalAttendanceBoard(
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshRevision, setRefreshRevision] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [success, setSuccess] = useFeedbackState<string | null>(null, 'success');
   const boardRequestGeneration = useRef(0);
   const committedRequestIdentityRef = useRef<BoardRequestIdentity | null>(null);
   const refreshRevisionRef = useRef(0);
@@ -68,7 +69,7 @@ export function usePersonalAttendanceBoard(
     refreshRevisionRef.current = nextRevision;
     refreshIntentRef.current = { identity: requestIdentity, revision: nextRevision };
     setRefreshRevision(nextRevision);
-  }, [requestIdentity]);
+  }, [requestIdentity, setError, setSuccess]);
 
   const boardIsCurrent = boardRequestIdentityMatches(boardSnapshotIdentity, requestIdentity);
   const currentBoard = boardIsCurrent ? board : null;

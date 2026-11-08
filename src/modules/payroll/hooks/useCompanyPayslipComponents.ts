@@ -6,11 +6,13 @@ import {
   SetSalaryComponentPayslipVisibilityDocument,
   type CompanyPayslipComponentsQuery,
 } from '../../../api/graphql/graphql';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { PAYSLIP_SETTINGS_CHANGED } from '../payslipTemplates';
 
 type DisplayComponent = CompanyPayslipComponentsQuery['salaryComponents'][number];
 export const useCompanyPayslipComponents = (client: GraphQLClient) => {
+  const notifyAction = useActionFeedback();
   const owner = useMemo(() => ({ client }), [client]);
   const activeOwner = useRef<object | null>(null);
   const pending = useRef<object | null>(null);
@@ -66,6 +68,7 @@ export const useCompanyPayslipComponents = (client: GraphQLClient) => {
         ),
       }));
       window.dispatchEvent(new Event(PAYSLIP_SETTINGS_CHANGED));
+      notifyAction();
     } catch (reason) {
       if (activeOwner.current === owner)
         setState((current) => ({ ...current, error: graphQlUserMessage(reason) }));

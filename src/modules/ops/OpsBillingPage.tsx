@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
 import Button from '@/components/common/Button';
 import PageHeader from '@/components/common/PageHeader';
 import { useGraphClient } from '@/hooks/useGraphClient';
 import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
-import CreateInvoiceModal, {
-  type CreateInvoiceInput,
-} from './components/CreateInvoiceModal';
-import OpsBillingTables from './components/OpsBillingTables';
-import RecordPaymentModal, {
-  type RecordPaymentInput,
-} from './components/RecordPaymentModal';
+import { useCallback, useEffect, useState } from 'react';
+
+import FeedbackToast from '../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
+
 import type { CycleRow, InvoiceRow, PaymentRow, TenantRow } from './billingTypes';
+import CreateInvoiceModal, { type CreateInvoiceInput } from './components/CreateInvoiceModal';
+import OpsBillingTables from './components/OpsBillingTables';
+import RecordPaymentModal, { type RecordPaymentInput } from './components/RecordPaymentModal';
 import {
   OPS_BILLING_CYCLES,
   OPS_CREATE_INVOICE,
@@ -30,9 +30,9 @@ const OpsBillingPage = () => {
   const [cycles, setCycles] = useState<CycleRow[]>([]);
   const [tenantFilter, setTenantFilter] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [toast, setToast] = useFeedbackState<string | null>(null, 'success');
+  const [actionError, setActionError] = useFeedbackState<string | null>(null, 'error');
   const [createOpen, setCreateOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [creatingInvoice, setCreatingInvoice] = useState(false);
@@ -67,7 +67,7 @@ const OpsBillingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [client, tenantFilter]);
+  }, [client, tenantFilter, setError]);
 
   useEffect(() => {
     void load();
@@ -158,23 +158,16 @@ const OpsBillingPage = () => {
       </label>
 
       {toast ? (
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+        <FeedbackToast variant={'success'} messageKey={toast} onDismiss={() => setToast(null)}>
           {toast}
-          <button
-            type="button"
-            className="ml-2 text-emerald-700 underline dark:text-emerald-300"
-            onClick={() => setToast(null)}
-          >
-            Dismiss
-          </button>
-        </p>
+        </FeedbackToast>
       ) : null}
 
       {loading ? <p className="text-sm text-slate-500">Loading...</p> : null}
       {error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       ) : null}
 
       <CreateInvoiceModal

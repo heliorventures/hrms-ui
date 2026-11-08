@@ -1,5 +1,6 @@
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type { ImportedLeaveHistory } from '../importedLeaveTypes';
 
 interface Props {
@@ -11,9 +12,9 @@ const ImportedLeaveHistoryCard = ({ data, error, onRetry }: Props) => {
   if (error)
     return (
       <Card title="Imported leave history">
-        <p role="alert" className="text-sm text-red-600">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
         <Button variant="outline" onClick={onRetry}>
           Retry
         </Button>
