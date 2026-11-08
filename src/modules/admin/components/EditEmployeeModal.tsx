@@ -67,7 +67,9 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
   const canManageLoginAccounts = can('role:manage');
   const canReadRoleDirectory = can('role:manage');
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useFeedbackState<string | null>(null, 'error');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [employeeCode, setEmployeeCode] = useState('');
+  const [dateOfJoining, setDateOfJoining] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [status, setStatus] = useState('ACTIVE');
@@ -122,6 +124,8 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
 
   useEffect(() => {
     if (!employee || !isOpen) return;
+    setEmployeeCode(employee.employeeCode);
+    setDateOfJoining(employee.dateOfJoining.slice(0, 10));
     setFirstName(employee.firstName ?? '');
     setLastName(employee.lastName ?? '');
     setStatus(parseEmployeeStatus(employee.status) ?? '');
@@ -213,6 +217,19 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     e.preventDefault();
     if (!employee) return;
     setFormError(null);
+    const trimmedCode = employeeCode.trim();
+    if (!trimmedCode) {
+      setFormError('Employee code is required.');
+      return;
+    }
+    if ([...trimmedCode].length > 50) {
+      setFormError('Employee code must be at most 50 characters.');
+      return;
+    }
+    if (!dateOfJoining) {
+      setFormError('Date of joining is required.');
+      return;
+    }
     const canonicalStatus = parseEmployeeStatus(status);
     if (!canonicalStatus) {
       setFormError('Select a valid employee status before saving.');
@@ -220,8 +237,10 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
     }
     setSubmitting(true);
     try {
-      const input: Record<string, unknown> = {
+      const input: UpdateEmployeeInput = {
         id: employee.id,
+        employeeCode: trimmedCode,
+        dateOfJoining,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         status: canonicalStatus,
@@ -248,7 +267,7 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
         input.linkedUserEmail = accountEmail.trim();
       }
       await client.request(UpdateEmployeeWithLoginEmailDocument, {
-        input: input as UpdateEmployeeInput,
+        input,
       });
       notifyAction('saved');
       onUpdated();
@@ -275,26 +294,26 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdated }: EditEmploye
             {orgLoadError}
           </FeedbackToast>
         )}
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Employee code and date of joining are not editable here (backend limitation).
-        </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input
             label={UI_FIELD_LABELS.employeeCode}
             name="edit-employee-code"
             autoComplete="off"
-            value={employee.employeeCode}
+            value={employeeCode}
+            onChange={(e) => setEmployeeCode(e.target.value)}
+            maxLength={50}
             fullWidth
-            disabled
+            required
           />
           <Input
             type="date"
             label={UI_FIELD_LABELS.dateOfJoining}
             name="edit-employee-date-of-joining"
             autoComplete="off"
-            value={employee.dateOfJoining.slice(0, 10)}
+            value={dateOfJoining}
+            onChange={(e) => setDateOfJoining(e.target.value)}
             fullWidth
-            disabled
+            required
           />
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

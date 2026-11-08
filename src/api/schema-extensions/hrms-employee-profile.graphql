@@ -2,6 +2,11 @@
 
 scalar JSON
 
+extend input UpdateEmployeeInput {
+  employeeCode: String
+  dateOfJoining: NaiveDate
+}
+
 extend type Employee {
   reportingManagerPrincipalId: ID
   reportingManagerTenantId: ID
