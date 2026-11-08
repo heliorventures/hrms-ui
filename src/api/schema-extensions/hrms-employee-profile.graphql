@@ -2,6 +2,11 @@
 
 scalar JSON
 
+extend input UpdateEmployeeInput {
+  employeeCode: String
+  dateOfJoining: NaiveDate
+}
+
 extend type Employee {
   linkedUserUsername: String
   dateOfBirth: NaiveDate

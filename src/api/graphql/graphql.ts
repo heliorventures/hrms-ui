@@ -6139,8 +6139,10 @@ export type UpdateCelebrationPreferencesInput = {
 };
 
 export type UpdateEmployeeInput = {
+  dateOfJoining?: InputMaybe<Scalars['NaiveDate']['input']>;
   departmentId?: InputMaybe<Scalars['ID']['input']>;
   designationId?: InputMaybe<Scalars['ID']['input']>;
+  employeeCode?: InputMaybe<Scalars['String']['input']>;
   employmentType?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
