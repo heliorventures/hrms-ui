@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type { PayslipRow } from '../payrollTypes';
 
 import type { PayrollPayslipTabProps } from './PayrollPayslipTab';
@@ -41,12 +42,19 @@ const EmployeePayslipDetails = (props: PayrollPayslipTabProps & { activePayslip:
       {details.map((detail) => (
         <Fragment key={detail.id}>
           {detail.error && (
-            <div role="alert" className="no-print flex items-center gap-3 text-sm text-red-600">
+            <FeedbackToast
+              variant={'error'}
+              messageKey={detail.errorLabel}
+              action={
+                <>
+                  <Button size="sm" variant="outline" onClick={detail.retry}>
+                    {detail.retryLabel}
+                  </Button>
+                </>
+              }
+            >
               {detail.errorLabel} {detail.error}
-              <Button size="sm" variant="outline" onClick={detail.retry}>
-                {detail.retryLabel}
-              </Button>
-            </div>
+            </FeedbackToast>
           )}
           {detail.loading && (
             <p role="status" className="no-print text-sm text-slate-500">

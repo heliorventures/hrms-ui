@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -60,9 +61,9 @@ const ClaimTravelReportFilters = ({ kind, filters, onClear }: Props) => {
         </p>
       ) : null}
       {query.error ? (
-        <p role="alert" className="text-sm text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={query.error}>
           {query.error}
-        </p>
+        </FeedbackToast>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Select

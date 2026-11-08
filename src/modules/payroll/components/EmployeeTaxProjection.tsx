@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useState } from 'react';
 
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import { useTenant } from '../../../contexts/TenantContext';
 import { tenantCalendarPeriod } from '../../../utils/tenantCalendar';
@@ -73,7 +74,11 @@ const EmployeeTaxProjection = ({
         </PayrollHelp>
       </div>
       {state.loading && <p role="status">Loading tax projection…</p>}
-      {state.error && <p role="alert">{state.error} Contact HR to review your settings.</p>}
+      {state.error && (
+        <FeedbackToast variant={'error'} messageKey={state.error}>
+          {state.error} Contact HR to review your settings.
+        </FeedbackToast>
+      )}
       {state.data && (
         <>
           <div className="grid items-start gap-3 xl:grid-cols-2">

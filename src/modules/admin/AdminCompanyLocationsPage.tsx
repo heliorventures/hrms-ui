@@ -1,6 +1,7 @@
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
@@ -64,9 +65,17 @@ const LocationsWorkspace = () => {
           </Button>
         </div>
         {resource.error ? (
-          <p role="alert">
-            {resource.error} <Button onClick={resource.reload}>Reload</Button>
-          </p>
+          <FeedbackToast
+            variant={'error'}
+            messageKey={resource.error}
+            action={
+              <>
+                <Button onClick={resource.reload}>Reload</Button>
+              </>
+            }
+          >
+            {resource.error}
+          </FeedbackToast>
         ) : null}
         <CompanyLocationsTable
           rows={resource.data?.companyLocations}

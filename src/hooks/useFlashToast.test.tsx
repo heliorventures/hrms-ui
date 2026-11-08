@@ -51,13 +51,15 @@ describe('useFlashToast', () => {
     expect(result.current.flash).toBeNull();
   });
 
-  it('keeps explicitly recoverable errors until explicitly cleared', () => {
+  it('expires explicitly recoverable errors', () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useFlashToast(1_000));
 
-    act(() => result.current.show('Attendance was not saved.', 'error', { recoverableWithoutAction: true }));
+    act(() =>
+      result.current.show('Attendance was not saved.', 'error', { recoverableWithoutAction: true })
+    );
     act(() => {
-      void vi.advanceTimersByTime(60_000);
+      void vi.advanceTimersByTime(999);
     });
     expect(result.current.flash).toEqual({
       text: 'Attendance was not saved.',
@@ -65,7 +67,23 @@ describe('useFlashToast', () => {
       recoverableWithoutAction: true,
     });
 
-    act(() => result.current.clear());
+    act(() => {
+      void vi.advanceTimersByTime(1);
+    });
+    expect(result.current.flash).toBeNull();
+  });
+
+  it('expires messages after five seconds by default', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useFlashToast());
+    act(() => result.current.show('Saved.', 'success'));
+    act(() => {
+      void vi.advanceTimersByTime(4_999);
+    });
+    expect(result.current.flash?.text).toBe('Saved.');
+    act(() => {
+      void vi.advanceTimersByTime(1);
+    });
     expect(result.current.flash).toBeNull();
   });
 
@@ -99,13 +117,13 @@ describe('useFlashToast', () => {
       recoverableWithoutAction: true,
     });
     act(() => {
-      void vi.advanceTimersByTime(60_000);
+      void vi.advanceTimersByTime(998);
     });
-    expect(result.current.flash).toEqual({
-      text: 'Attendance was not saved.',
-      variant: 'error',
-      recoverableWithoutAction: true,
+    expect(result.current.flash?.text).toBe('Attendance was not saved.');
+    act(() => {
+      void vi.advanceTimersByTime(1);
     });
+    expect(result.current.flash).toBeNull();
   });
 
   it('gives a replacement transient its full duration after the old deadline', () => {

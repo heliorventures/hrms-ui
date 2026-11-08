@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
+
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
-import { formatCurrency } from '../utils/formatters';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import type { ExpenseRow } from '../types';
+import { formatCurrency } from '../utils/formatters';
 
 interface PaymentReferenceModalProps {
   busy: boolean;
@@ -19,13 +22,13 @@ const PaymentReferenceModal = ({
   onConfirm,
 }: PaymentReferenceModalProps) => {
   const [paymentReference, setPaymentReference] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
   useEffect(() => {
     if (!target) return;
     setPaymentReference('');
     setError(null);
-  }, [target]);
+  }, [target, setError]);
 
   const submit = () => {
     const trimmed = paymentReference.trim();
@@ -40,9 +43,17 @@ const PaymentReferenceModal = ({
     <Modal isOpen={target !== null} onClose={onCancel} title="Mark Expense Paid">
       {target ? (
         <div className="space-y-4">
-          {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+          {error ? (
+            <FeedbackToast variant={'error'} messageKey={error}>
+              {error}
+            </FeedbackToast>
+          ) : null}
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Record payment for <strong>{formatCurrency(target.approvedAmount ?? target.amount, target.currency)}</strong>.
+            Record payment for{' '}
+            <strong>
+              {formatCurrency(target.approvedAmount ?? target.amount, target.currency)}
+            </strong>
+            .
           </p>
           <Input
             label="Payment Reference"

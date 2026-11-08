@@ -33,6 +33,7 @@ const UpcomingHolidaysFooter = ({ hasRows, onRefresh, phase }: UpcomingHolidaysF
         variant="quiet"
         size="sm"
         busy={phase === 'refreshing'}
+        aria-label="Refresh Upcoming Holidays"
         busyLabel="Refreshing Upcoming Holidays…"
         onClick={onRefresh}
       >

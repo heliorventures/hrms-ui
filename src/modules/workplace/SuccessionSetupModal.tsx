@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -29,7 +31,7 @@ const SuccessionSetupModal = ({
   );
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const label = kind === 'competency' ? 'Competency' : 'Talent Pool';
   return (
     <Modal
@@ -75,9 +77,9 @@ const SuccessionSetupModal = ({
         }}
       >
         {error && (
-          <p role="alert" className="text-sm text-red-600">
+          <FeedbackToast variant={'error'} messageKey={error}>
             {error}
-          </p>
+          </FeedbackToast>
         )}
         <fieldset disabled={busy} className="space-y-4">
           <Input

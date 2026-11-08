@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 
 import { SubmitTravelRequestDocument } from '../../../api/graphql/graphql';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -16,6 +18,8 @@ interface TravelSubmissionOptions {
 }
 
 export const useTravelSubmission = ({ isOpen, onClose, onSubmitted }: TravelSubmissionOptions) => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const {
     file,
@@ -36,7 +40,7 @@ export const useTravelSubmission = ({ isOpen, onClose, onSubmitted }: TravelSubm
     purpose: '',
     estimatedCost: '',
   });
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useFeedbackState<string | null>(null, 'error');
   const [submitting, setSubmitting] = useState(false);
 
   const reset = useCallback(() => {
@@ -50,7 +54,7 @@ export const useTravelSubmission = ({ isOpen, onClose, onSubmitted }: TravelSubm
     });
     setSubmitError(null);
     resetFile();
-  }, [resetFile]);
+  }, [resetFile, setSubmitError]);
 
   useEffect(() => {
     reset();
@@ -110,6 +114,7 @@ export const useTravelSubmission = ({ isOpen, onClose, onSubmitted }: TravelSubm
       };
       await client.request(SubmitTravelRequestDocument, { input });
       if (!stillOwned()) return;
+      notifyAction('submitted');
       onSubmitted?.();
       onClose();
       reset();

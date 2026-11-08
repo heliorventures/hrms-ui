@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DialogProvider } from '../../contexts/DialogContext';
+import { accessibleText } from '../../testUtils/accessibleText';
 import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
 
 import AdminNotificationsPage from './AdminNotificationsPage';
@@ -278,7 +279,7 @@ describe('AdminNotificationsPage audience-change safeguards', () => {
 
     expect(refreshedClient.request).toHaveBeenCalledTimes(1);
     const errorAlert = await screen.findByRole('alert');
-    expect(errorAlert.textContent).toBe(
+    expect(accessibleText(errorAlert)).toBe(
       'This announcement is no longer available. Review the current announcements and start the edit again.'
     );
     expect(screen.getByText('New announcement (HR)')).toBeTruthy();
@@ -478,5 +479,5 @@ it('retains an announcement attachment when returning to history and reopening t
   await user.upload(screen.getByLabelText('Document'), file);
   await user.click(screen.getByRole('button', { name: 'Back to announcements' }));
   await user.click(screen.getByRole('button', { name: 'Create Announcement' }));
-  expect((screen.getByLabelText('Document') as HTMLInputElement).files?.[0]).toBe(file);
+  expect(screen.getByLabelText<HTMLInputElement>('Document').files?.[0]).toBe(file);
 });

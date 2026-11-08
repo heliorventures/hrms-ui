@@ -3,8 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { EmployeeProfileShell } from '../organization/employee-profile/EmployeeProfileShell';
@@ -26,7 +28,7 @@ const ProfileSettingsPage = () => {
     navigate({ search: next.toString() });
   };
   const [employeeId, setEmployeeId] = useState<string | null | undefined>(undefined);
-  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useFeedbackState<string | null>(null, 'error');
   const userId = user?.id;
 
   useEffect(() => {
@@ -53,7 +55,7 @@ const ProfileSettingsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [client, userId]);
+  }, [client, userId, setProfileError]);
 
   if (!user) {
     return (
@@ -132,7 +134,9 @@ const ProfileSettingsPage = () => {
           <p className="font-medium text-red-700 dark:text-red-300">
             We could not load your employee profile.
           </p>
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{profileError}</p>
+          <FeedbackToast variant={'error'} messageKey={profileError}>
+            {profileError}
+          </FeedbackToast>
         </Card>
       </div>
     );

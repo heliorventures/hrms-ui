@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type { FyPayrollExportKey, MonthlyPayrollExportKey } from '../hooks/usePayrollExports';
 import { PAYROLL_MONTHS } from '../payrollFormatters';
 
@@ -176,7 +177,9 @@ const PayrollExportsSection = ({
             )}
           </div>
           {status.error && (
-            <p className="mt-3 text-sm text-red-600 dark:text-red-400">{status.error}</p>
+            <FeedbackToast variant={'error'} messageKey={status.error}>
+              {status.error}
+            </FeedbackToast>
           )}
         </Card>
       );

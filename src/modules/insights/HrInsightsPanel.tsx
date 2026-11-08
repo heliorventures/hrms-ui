@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Modal from '../../components/common/Modal';
 import PageInformation from '../../components/common/PageInformation';
 import { useTenant } from '../../contexts/TenantContext';
@@ -51,18 +52,25 @@ const InsightsData = ({ period }: { period: { fromDate: string; toDate: string }
         </p>
       )}
       {query.error && (
-        <div role="alert" className="flex items-center gap-3 text-sm text-status-danger">
+        <FeedbackToast
+          variant={'error'}
+          messageKey={query.error}
+          action={
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  void query.refresh();
+                }}
+              >
+                Retry
+              </Button>
+            </>
+          }
+        >
           {query.error}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              void query.refresh();
-            }}
-          >
-            Retry
-          </Button>
-        </div>
+        </FeedbackToast>
       )}
       {data && (
         <>
@@ -126,9 +134,9 @@ const HrInsightsPanel = () => {
         change={(values) => setPeriod((current) => ({ ...current, ...values }))}
       />
       {error ? (
-        <p role="alert" className="text-sm text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       ) : (
         <InsightsData key={JSON.stringify(period)} period={period} />
       )}

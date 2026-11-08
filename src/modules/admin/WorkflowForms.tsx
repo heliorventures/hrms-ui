@@ -1,5 +1,6 @@
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 
@@ -44,13 +45,12 @@ export const CreateWorkflowForm = ({
         className="space-y-3"
       >
         {wMsg && (
-          <p
-            className={
-              wMsg.startsWith('Workflow') ? 'text-sm text-emerald-600' : 'text-sm text-red-600'
-            }
+          <FeedbackToast
+            variant={wMsg.startsWith('Workflow') ? 'success' : 'error'}
+            messageKey={wMsg}
           >
             {wMsg}
-          </p>
+          </FeedbackToast>
         )}
         <Input
           label="Name"
@@ -135,13 +135,9 @@ export const AddWorkflowStepForm = ({
         className="space-y-3"
       >
         {sMsg && (
-          <p
-            className={
-              sMsg.startsWith('Step') ? 'text-sm text-emerald-600' : 'text-sm text-red-600'
-            }
-          >
+          <FeedbackToast variant={sMsg.startsWith('Step') ? 'success' : 'error'} messageKey={sMsg}>
             {sMsg}
-          </p>
+          </FeedbackToast>
         )}
         <Select
           label="Workflow"

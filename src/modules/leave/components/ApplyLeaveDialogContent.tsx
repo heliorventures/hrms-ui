@@ -40,6 +40,7 @@ export const ApplyLeaveFormFailure = ({
 }) =>
   error ? (
     <PageNotice
+      messageKey={error.message}
       key={`${error.title}:${error.message}`}
       variant="error"
       title={error.title}
@@ -76,6 +77,7 @@ export const ApplyLeaveHolidayStatus = ({
   if (!failure) return null;
   return (
     <PageNotice
+      messageKey={failure}
       variant="error"
       title="Holiday dates could not be loaded"
       action={

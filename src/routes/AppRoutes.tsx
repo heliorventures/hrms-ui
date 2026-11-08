@@ -44,6 +44,11 @@ const PREJOINING_PAGE: Pick<RoutePage, 'title' | 'load'> = {
   load: () => import('../modules/prejoining/public/PrejoiningFormPage'),
 };
 
+const VIDEO_GUIDES_PAGE: Pick<RoutePage, 'title' | 'load'> = {
+  title: 'Video guides',
+  load: () => import('../modules/video-guides/VideoGuidesPage'),
+};
+
 function routeKey(route: AppChildRoute): string {
   return route.kind === 'redirect' && route.index ? 'index' : (route.path ?? 'missing-path');
 }
@@ -181,6 +186,15 @@ const AppRoutes = () => {
   const { isAuthenticated, isOpsAuthenticated, tenantId } = useAuth();
   const { currentTenant, resolutionStatus, tenantSlug } = useTenant();
   const location = useLocation();
+
+  // Public training content is independent of tenant resolution and authentication.
+  if (location.pathname === '/hrms-demos' || location.pathname === '/hrms-demos/') {
+    return (
+      <Routes>
+        <Route path="/hrms-demos" element={<RouteContent {...VIDEO_GUIDES_PAGE} />} />
+      </Routes>
+    );
+  }
 
   // The invitation API resolves its own tenant and never issues a client session.
   if (location.pathname === '/prejoining' || location.pathname === '/prejoining/') {

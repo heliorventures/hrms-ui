@@ -3,14 +3,19 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { WorkplaceGrievanceDocument, SubmitGrievanceCaseDocument } from '../../api/graphql/graphql';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
 import Select from '../../components/common/Select';
 import Textarea from '../../components/common/Textarea';
+import { useActionFeedback } from '../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
 const GrievancePage = () => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const [categories, setCategories] = useState<{ id: string; name: string; code: string }[]>([]);
   const [cases, setCases] = useState<
@@ -24,12 +29,12 @@ const GrievancePage = () => {
     }[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [categoryId, setCategoryId] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useFeedbackState<string | null>(null, 'error');
 
   const load = useCallback(async () => {
     return client.request(WorkplaceGrievanceDocument, { clim: 30, calim: 50 });
@@ -56,7 +61,7 @@ const GrievancePage = () => {
     return () => {
       c = true;
     };
-  }, [load]);
+  }, [load, setError]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -74,6 +79,7 @@ const GrievancePage = () => {
           description: description.trim() || null,
         },
       });
+      notifyAction('submitted');
       const r = await load();
       setCases(r.grievanceCases);
       setSubject('');
@@ -92,9 +98,11 @@ const GrievancePage = () => {
     <div className="space-y-4">
       <PageHeader title="Grievance" />
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
       <div className="flex justify-end" data-tour-anchor="grievance.workspace">
         <Button
@@ -108,7 +116,11 @@ const GrievancePage = () => {
       <div hidden={!filing}>
         <Card title="File A Case">
           <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
-            {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+            {formError && (
+              <FeedbackToast variant={'error'} messageKey={formError}>
+                {formError}
+              </FeedbackToast>
+            )}
             <Select
               id="grievance-category"
               label="Category"

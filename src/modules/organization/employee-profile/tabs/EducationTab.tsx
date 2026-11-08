@@ -1,23 +1,26 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { GraduationCap, Paperclip, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 
-import type { EducationEntry, TenantDocumentTypeOption, VerificationStatus } from '../types';
-import Button from '../../../../components/common/Button';
-import Input from '../../../../components/common/Input';
-import Modal from '../../../../components/common/Modal';
-import Select from '../../../../components/common/Select';
-import { EmptySection } from '../components/SectionStates';
-import { VerificationBadge } from '../components/StatusBadge';
-import { UploadModal } from '../components/UploadModal';
-import { ConfirmProfileActionModal } from '../components/ConfirmProfileActionModal';
 import {
   DeleteEmployeeEducationDocument,
   ResolveEmployeeEducationDocument,
   UploadEmployeeEducationEvidenceDocument,
   UpsertEmployeeEducationDocument,
 } from '../../../../api/graphql/graphql';
+import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
+import Input from '../../../../components/common/Input';
+import Modal from '../../../../components/common/Modal';
+import Select from '../../../../components/common/Select';
+import { useActionFeedback } from '../../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
+import { ConfirmProfileActionModal } from '../components/ConfirmProfileActionModal';
+import { EmptySection } from '../components/SectionStates';
+import { VerificationBadge } from '../components/StatusBadge';
+import { UploadModal } from '../components/UploadModal';
+import type { EducationEntry, TenantDocumentTypeOption, VerificationStatus } from '../types';
 
 interface EducationTabProps {
   employeeId: string;
@@ -59,14 +62,19 @@ export function EducationTab({
   canReview = false,
   onChanged,
 }: EducationTabProps) {
+  const notifyAction = useActionFeedback();
+
   const [entries, setEntries] = useState<EducationEntry[]>(initial);
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<EducationEntry | null>(null);
   const [form, setForm] = useState(blankForm);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [evidenceTarget, setEvidenceTarget] = useState<string | null>(null);
-  const [actionTarget, setActionTarget] = useState<{ kind: 'delete' | 'reject'; id: string } | null>(null);
+  const [actionTarget, setActionTarget] = useState<{
+    kind: 'delete' | 'reject';
+    id: string;
+  } | null>(null);
   const [actionReason, setActionReason] = useState('');
   const [actionBusy, setActionBusy] = useState(false);
 
@@ -147,6 +155,7 @@ export function EducationTab({
           ? current.map((entry) => (entry.id === mapped.id ? mapped : entry))
           : [mapped, ...current];
       });
+      notifyAction('saved');
       onChanged?.();
       setModal(false);
     } catch (cause) {
@@ -162,6 +171,7 @@ export function EducationTab({
     try {
       await client.request(DeleteEmployeeEducationDocument, { employeeId, educationId: id });
       setEntries((current) => current.filter((entry) => entry.id !== id));
+      notifyAction('removed');
       onChanged?.();
     } catch (cause) {
       setError(graphQlUserMessage(cause));
@@ -194,6 +204,7 @@ export function EducationTab({
           : entry
       )
     );
+    notifyAction('saved');
     onChanged?.();
   };
 
@@ -218,6 +229,7 @@ export function EducationTab({
             : entry
         )
       );
+      notifyAction('updated');
       onChanged?.();
     } catch (cause) {
       setError(graphQlUserMessage(cause));
@@ -236,7 +248,9 @@ export function EducationTab({
         </Button>
       </div>
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
       ) : null}
       {entries.length === 0 ? (
         <EmptySection
@@ -447,17 +461,27 @@ export function EducationTab({
       />
       <ConfirmProfileActionModal
         isOpen={actionTarget !== null}
-        title={actionTarget?.kind === 'reject' ? 'Reject education evidence' : 'Delete education record'}
-        description={actionTarget?.kind === 'reject' ? 'The evidence and record will be marked rejected. Provide a clear reason.' : 'This removes the education record from the employee profile.'}
+        title={
+          actionTarget?.kind === 'reject' ? 'Reject education evidence' : 'Delete education record'
+        }
+        description={
+          actionTarget?.kind === 'reject'
+            ? 'The evidence and record will be marked rejected. Provide a clear reason.'
+            : 'This removes the education record from the employee profile.'
+        }
         confirmLabel={actionTarget?.kind === 'reject' ? 'Reject evidence' : 'Delete record'}
         busy={actionBusy}
         reason={actionReason}
         reasonRequired={actionTarget?.kind === 'reject'}
         onReasonChange={setActionReason}
-        onClose={() => { setActionTarget(null); setActionReason(''); }}
+        onClose={() => {
+          setActionTarget(null);
+          setActionReason('');
+        }}
         onConfirm={() => {
           if (!actionTarget) return;
-          if (actionTarget.kind === 'reject') void review(actionTarget.id, false, actionReason.trim());
+          if (actionTarget.kind === 'reject')
+            void review(actionTarget.id, false, actionReason.trim());
           else void remove(actionTarget.id);
         }}
       />

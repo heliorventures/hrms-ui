@@ -2,6 +2,7 @@ import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
 import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import { type ImportedProfile, importedProfileDocument } from '../importedProfile';
 import { formatCompactDate } from '../lib/masking';
@@ -50,12 +51,19 @@ const ImportedProfileDetails = ({ client, employeeId, section }: Props) => {
   }, [client, employeeId, retry]);
   if (current?.error)
     return (
-      <div role="alert">
+      <FeedbackToast
+        variant={'error'}
+        messageKey={current.error}
+        action={
+          <>
+            <Button type="button" size="sm" onClick={() => setRetry((value) => value + 1)}>
+              Retry imported details
+            </Button>
+          </>
+        }
+      >
         <p>{current.error}</p>
-        <Button type="button" size="sm" onClick={() => setRetry((value) => value + 1)}>
-          Retry imported details
-        </Button>
-      </div>
+      </FeedbackToast>
     );
   if (!current?.data) return <p className="text-sm text-gray-500">Loading additional details...</p>;
   const { data } = current;

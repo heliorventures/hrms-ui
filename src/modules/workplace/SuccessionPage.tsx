@@ -4,9 +4,11 @@ import { type WorkplaceSuccessionDataQuery } from '../../api/graphql/graphql';
 import { scopeForPermission } from '../../auth/approvalScope';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -38,7 +40,7 @@ const SuccessionPage = () => {
   const client = useGraphClient('client');
   const [data, setData] = useState<WorkplaceSuccessionDataQuery | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
   const load = useCallback(async () => {
     return client.request<WorkplaceSuccessionDataQuery>(successionSetupPageDocument, { offset });
@@ -71,7 +73,7 @@ const SuccessionPage = () => {
     return () => {
       c = true;
     };
-  }, [load, refresh]);
+  }, [load, refresh, setError]);
 
   return (
     <div className="space-y-4">
@@ -80,9 +82,11 @@ const SuccessionPage = () => {
         <PageTabs tabs={tabs} value={tab} onValueChange={setTab} />
       </div>
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
       <PageTabPanel id="competencies" activeTab={tab}>
         <Card

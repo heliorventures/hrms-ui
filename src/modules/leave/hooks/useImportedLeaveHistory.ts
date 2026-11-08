@@ -1,6 +1,7 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useState } from 'react';
 
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import { leaveImportHistoryDocument, type ImportedLeaveHistory } from '../importedLeaveTypes';
 
@@ -11,7 +12,7 @@ export const useImportedLeaveHistory = (
   employeeId?: string
 ) => {
   const [data, setData] = useState<ImportedLeaveHistory | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
@@ -31,6 +32,6 @@ export const useImportedLeaveHistory = (
     return () => {
       active = false;
     };
-  }, [client, year, employeeId, attempt]);
+  }, [client, year, employeeId, attempt, setError]);
   return { data, error, retry: () => setAttempt((value) => value + 1) };
 };

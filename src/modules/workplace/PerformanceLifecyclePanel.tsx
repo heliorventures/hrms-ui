@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import FeedbackToast from '../../components/common/FeedbackToast';
 import { useKeyedAction } from '../../hooks/useKeyedAction';
 
 import PerformanceLifecyclePanelContent from './PerformanceLifecyclePanelContent';
@@ -103,14 +104,14 @@ const PerformanceLifecyclePanel = ({
   return (
     <div className="space-y-4">
       {notice && (
-        <p role="status" className="text-sm text-status-success">
+        <FeedbackToast variant={'success'} messageKey={notice}>
           {notice}
-        </p>
+        </FeedbackToast>
       )}
       {error && (
-        <p role="alert" className="text-sm text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
       <PerformanceLifecyclePanelContent
         activeProgram={activeProgram}

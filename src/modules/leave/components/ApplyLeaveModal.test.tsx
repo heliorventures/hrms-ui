@@ -329,7 +329,7 @@ it('associates validation feedback with the first invalid field and moves focus 
   const leaveType = screen.getByLabelText('Leave type');
   await waitFor(() => expect(document.activeElement).toBe(leaveType));
   expect(leaveType.getAttribute('aria-invalid')).toBe('true');
-  expect(screen.getByText('Choose a leave type.').getAttribute('role')).toBe('alert');
+  expect(screen.getByRole('alert').textContent).toContain('Choose a leave type.');
   expect(request).not.toHaveBeenCalled();
 });
 

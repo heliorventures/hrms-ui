@@ -5,15 +5,33 @@ export type OverlayEntry = {
 };
 
 const overlayStack: OverlayEntry[] = [];
-const surfaceStates = new Map<symbol, {
-  ariaHidden: string | null;
-  inert: boolean;
-  surface: HTMLElement;
-}>();
-const backgroundStates = new Map<HTMLElement, {
-  ariaHidden: string | null;
-  inert: boolean;
-}>();
+const overlayListeners = new Set<() => void>();
+
+export const subscribeOverlays = (listener: () => void) => {
+  overlayListeners.add(listener);
+  return () => {
+    overlayListeners.delete(listener);
+  };
+};
+
+const notifyOverlayListeners = () => {
+  for (const listener of overlayListeners) listener();
+};
+const surfaceStates = new Map<
+  symbol,
+  {
+    ariaHidden: string | null;
+    inert: boolean;
+    surface: HTMLElement;
+  }
+>();
+const backgroundStates = new Map<
+  HTMLElement,
+  {
+    ariaHidden: string | null;
+    inert: boolean;
+  }
+>();
 const ROOT_ID = 'root';
 
 let bodyOverflowBeforeFirstOverlay: string | null = null;
@@ -125,6 +143,7 @@ export const registerOverlay = (entry: OverlayEntry) => {
     return 0;
   });
   syncOverlayModality();
+  notifyOverlayListeners();
 };
 
 export const unregisterOverlay = (id: symbol) => {
@@ -138,6 +157,7 @@ export const unregisterOverlay = (id: symbol) => {
 
   if (overlayStack.length > 0) {
     syncOverlayModality();
+    notifyOverlayListeners();
     return wasTopmost;
   }
 
@@ -148,6 +168,8 @@ export const unregisterOverlay = (id: symbol) => {
   if (rootWasIsolated) setRootInert(rootInertBeforeFirstOverlay);
   rootInertBeforeFirstOverlay = false;
   rootWasIsolated = false;
+
+  notifyOverlayListeners();
 
   return wasTopmost;
 };

@@ -6,15 +6,19 @@ import {
   SaveCompanyPayrollPolicyDocument,
 } from '../../../api/graphql/graphql';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type { ContributionPolicy, PolicyVersion } from '../contributionTypes';
 
 import ContributionRuleEditor from './ContributionRuleEditor';
 
 const CompanyContributionRules = ({ client }: { client: GraphQLClient }) => {
+  const notifyAction = useActionFeedback();
   const [versions, setVersions] = useState<PolicyVersion[]>([]);
   const [busy, setBusy] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const lifetime = useRef(0);
   useEffect(() => {
     const generation = ++lifetime.current;
@@ -35,7 +39,7 @@ const CompanyContributionRules = ({ client }: { client: GraphQLClient }) => {
     return () => {
       lifetime.current = generation + 1;
     };
-  }, [client]);
+  }, [client, setError]);
   const latest = versions.reduce<PolicyVersion | null>(
     (prior, row) => (!prior || row.revision > prior.revision ? row : prior),
     null
@@ -49,8 +53,10 @@ const CompanyContributionRules = ({ client }: { client: GraphQLClient }) => {
         SaveCompanyPayrollPolicyDocument,
         { input, expectedRevision: latest?.revision ?? null }
       );
-      if (lifetime.current === generation)
+      if (lifetime.current === generation) {
         setVersions((prior) => [...prior, value.saveCompanyPayrollPolicy]);
+        notifyAction();
+      }
     } catch (cause) {
       if (lifetime.current === generation) setError(graphQlUserMessage(cause));
     } finally {
@@ -59,7 +65,11 @@ const CompanyContributionRules = ({ client }: { client: GraphQLClient }) => {
   };
   return (
     <Card>
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
+      )}
       {busy ? (
         <p role="status">Loading or saving rules…</p>
       ) : (

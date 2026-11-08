@@ -3,7 +3,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { PrejoiningPipelineCsvDocument } from '../../api/graphql/graphql';
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 import { downloadReportCsv } from '../reports/downloadReportCsv';
@@ -19,7 +21,7 @@ const PrejoiningPipelineExport = ({ status }: { status: string }) => {
     'ALL',
   ]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const alive = useRef(true);
   const request = useRef<object | null>(null);
   const current = useRef({ client, owner, status, allowed });
@@ -34,7 +36,7 @@ const PrejoiningPipelineExport = ({ status }: { status: string }) => {
     request.current = null;
     setBusy(false);
     setError(null);
-  }, [client, owner, status, allowed]);
+  }, [client, owner, status, allowed, setError]);
   const download = async () => {
     if (!allowed || request.current) return;
     const marker = {};
@@ -78,9 +80,9 @@ const PrejoiningPipelineExport = ({ status }: { status: string }) => {
         Download CSV
       </Button>
       {error && (
-        <p role="alert" className="max-w-sm text-sm text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
     </div>
   );

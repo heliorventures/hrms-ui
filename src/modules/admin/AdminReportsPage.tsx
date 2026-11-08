@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
@@ -120,9 +121,9 @@ const ReportWorkspace = ({
         />
       ) : null}
       {error && (
-        <p role="alert" className="text-sm text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
       <div data-tour-anchor="admin.reports.output">
         {!error && selected === 'ATTENDANCE_DAILY' && (

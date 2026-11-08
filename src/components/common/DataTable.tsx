@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import FeedbackToast from './FeedbackToast';
+
 export type DataTableState = 'ready' | 'loading' | 'empty' | 'error' | 'partial';
 
 export interface DataTableColumn<T> {
@@ -40,7 +42,10 @@ const DEFAULT_MESSAGES: Record<Exclude<DataTableState, 'ready'>, string> = {
   partial: 'Some records could not be loaded.',
 };
 
-const resolveState = <T,>(state: DataTableState | undefined, rows: readonly T[]): DataTableState => {
+const resolveState = <T,>(
+  state: DataTableState | undefined,
+  rows: readonly T[]
+): DataTableState => {
   if (state) {
     return state;
   }
@@ -80,16 +85,17 @@ interface StateMessageProps {
 const StateMessage = ({ state, message, recoveryAction }: StateMessageProps) => {
   const isError = state === 'error';
   const isWarning = state === 'partial';
-  const toneClassName = isError
-    ? 'border-status-danger text-status-danger'
-    : isWarning
-      ? 'border-status-warning text-status-warning'
-      : 'border-line text-content-secondary';
+  if (isError) {
+    return <FeedbackToast action={recoveryAction}>{message}</FeedbackToast>;
+  }
+  const toneClassName = isWarning
+    ? 'border-status-warning text-status-warning'
+    : 'border-line text-content-secondary';
 
   return (
     <div
-      role={isError ? 'alert' : 'status'}
-      aria-live={isError ? undefined : 'polite'}
+      role="status"
+      aria-live="polite"
       aria-atomic="true"
       className={`rounded-md border bg-surface-raised px-4 py-5 text-center text-sm ${toneClassName}`}
     >
@@ -100,8 +106,10 @@ const StateMessage = ({ state, message, recoveryAction }: StateMessageProps) => 
   );
 };
 
-const hasMobileAlternative = <T,>(columns: readonly DataTableColumn<T>[], renderMobileRow?: (row: T) => ReactNode) =>
-  Boolean(renderMobileRow) || columns.some((column) => column.mobilePriority !== undefined);
+const hasMobileAlternative = <T,>(
+  columns: readonly DataTableColumn<T>[],
+  renderMobileRow?: (row: T) => ReactNode
+) => Boolean(renderMobileRow) || columns.some((column) => column.mobilePriority !== undefined);
 
 const DataTable = <T,>({
   ariaLabel,
@@ -123,8 +131,9 @@ const DataTable = <T,>({
   const selectionEnabled =
     visibleRows && selectedRowIds !== undefined && onSelectionChange !== undefined;
   const selectedIds = selectedRowIds ?? new Set<string>();
-  const allVisibleSelected = selectionEnabled && rows.length > 0 && rows.every((row) => selectedIds.has(getRowId(row)));
-  const stateCopy = visualState === 'ready' ? '' : stateMessage ?? DEFAULT_MESSAGES[visualState];
+  const allVisibleSelected =
+    selectionEnabled && rows.length > 0 && rows.every((row) => selectedIds.has(getRowId(row)));
+  const stateCopy = visualState === 'ready' ? '' : (stateMessage ?? DEFAULT_MESSAGES[visualState]);
   const mobileAlternative = visibleRows && hasMobileAlternative(columns, renderMobileRow);
   const colSpan = Math.max(columns.length + (selectionEnabled ? 1 : 0), 1);
 
@@ -197,7 +206,11 @@ const DataTable = <T,>({
     const label = getRowLabel?.(row) || `row ${index + 1}`;
     return (
       <td className="border-b border-line px-3 py-2">
-        <SelectionControl label={`Select ${label}`} checked={selectedIds.has(id)} onChange={() => requestRowSelection(row)} />
+        <SelectionControl
+          label={`Select ${label}`}
+          checked={selectedIds.has(id)}
+          onChange={() => requestRowSelection(row)}
+        />
       </td>
     );
   };
@@ -209,8 +222,15 @@ const DataTable = <T,>({
         <thead>
           <tr>
             {selectionEnabled ? (
-              <th scope="col" className="border-b border-line bg-surface-raised px-3 py-2 text-left">
-                <SelectionControl label="Select all visible rows" checked={allVisibleSelected} onChange={requestVisibleSelection} />
+              <th
+                scope="col"
+                className="border-b border-line bg-surface-raised px-3 py-2 text-left"
+              >
+                <SelectionControl
+                  label="Select all visible rows"
+                  checked={allVisibleSelected}
+                  onChange={requestVisibleSelection}
+                />
               </th>
             ) : null}
             {columns.map(renderHeader)}
@@ -221,7 +241,10 @@ const DataTable = <T,>({
             rows.map((row, index) => {
               const selected = selectionEnabled && selectedIds.has(getRowId(row));
               return (
-                <tr key={getRowId(row)} className={selected ? 'bg-surface-selected' : 'hover:bg-surface-raised'}>
+                <tr
+                  key={getRowId(row)}
+                  className={selected ? 'bg-surface-selected' : 'hover:bg-surface-raised'}
+                >
                   {renderSelectionCell(row, index)}
                   {columns.map((column) => (
                     <td
@@ -237,7 +260,11 @@ const DataTable = <T,>({
           ) : (
             <tr>
               <td colSpan={colSpan} className="px-4 py-5">
-                <StateMessage state={visualState === 'ready' ? 'empty' : visualState} message={visualState === 'ready' ? DEFAULT_MESSAGES.empty : stateCopy} recoveryAction={recoveryAction} />
+                <StateMessage
+                  state={visualState === 'ready' ? 'empty' : visualState}
+                  message={visualState === 'ready' ? DEFAULT_MESSAGES.empty : stateCopy}
+                  recoveryAction={recoveryAction}
+                />
               </td>
             </tr>
           )}
@@ -253,7 +280,10 @@ const DataTable = <T,>({
     return (
       <ul aria-label={`${ariaLabel} mobile view`} className="space-y-3 md:hidden">
         {rows.map((row, index) => (
-          <li key={getRowId(row)} className="rounded-md border border-line bg-surface-raised p-4 text-content-primary">
+          <li
+            key={getRowId(row)}
+            className="rounded-md border border-line bg-surface-raised p-4 text-content-primary"
+          >
             {selectionEnabled ? (
               <div className="mb-3">
                 <SelectionControl
@@ -267,12 +297,16 @@ const DataTable = <T,>({
               renderMobileRow(row)
             ) : (
               <div className="space-y-2">
-                {columns.filter((column) => column.mobilePriority !== 'hidden').map((column) => (
-                  <div key={column.id} className={numericClassName(column.numeric)}>
-                    <div className="text-xs font-medium text-content-secondary">{headerName(column.header)}</div>
-                    <div className="mt-1 text-sm text-content-primary">{column.cell(row)}</div>
-                  </div>
-                ))}
+                {columns
+                  .filter((column) => column.mobilePriority !== 'hidden')
+                  .map((column) => (
+                    <div key={column.id} className={numericClassName(column.numeric)}>
+                      <div className="text-xs font-medium text-content-secondary">
+                        {headerName(column.header)}
+                      </div>
+                      <div className="mt-1 text-sm text-content-primary">{column.cell(row)}</div>
+                    </div>
+                  ))}
               </div>
             )}
           </li>
@@ -292,12 +326,29 @@ const DataTable = <T,>({
         <StateMessage state="partial" message={stateCopy} recoveryAction={recoveryAction} />
       ) : null}
       {pagination && (visibleRows || visualState === 'ready') ? (
-        <nav aria-label={`${ariaLabel} pagination`} className="flex items-center justify-end gap-3 text-sm text-content-secondary">
-          <button type="button" aria-label="Previous page" disabled={!isPageChangeAllowed(previousPage ?? 0)} onClick={() => pagination.onPageChange(previousPage as number)} className="min-h-8 rounded border border-line px-3 text-content-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50">
+        <nav
+          aria-label={`${ariaLabel} pagination`}
+          className="flex items-center justify-end gap-3 text-sm text-content-secondary"
+        >
+          <button
+            type="button"
+            aria-label="Previous page"
+            disabled={!isPageChangeAllowed(previousPage ?? 0)}
+            onClick={() => pagination.onPageChange(previousPage as number)}
+            className="min-h-8 rounded border border-line px-3 text-content-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50"
+          >
             Previous
           </button>
-          <span>Page {pagination.page} of {pagination.pageCount}</span>
-          <button type="button" aria-label="Next page" disabled={!isPageChangeAllowed(nextPage ?? 0)} onClick={() => pagination.onPageChange(nextPage as number)} className="min-h-8 rounded border border-line px-3 text-content-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50">
+          <span>
+            Page {pagination.page} of {pagination.pageCount}
+          </span>
+          <button
+            type="button"
+            aria-label="Next page"
+            disabled={!isPageChangeAllowed(nextPage ?? 0)}
+            onClick={() => pagination.onPageChange(nextPage as number)}
+            className="min-h-8 rounded border border-line px-3 text-content-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50"
+          >
             Next
           </button>
         </nav>

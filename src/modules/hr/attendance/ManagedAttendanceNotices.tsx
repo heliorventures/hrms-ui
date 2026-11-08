@@ -14,7 +14,7 @@ const ManagedAttendanceNotices = ({
   return (
     <>
       {rangeError ? (
-        <PageNotice variant="error" title="Update the date range">
+        <PageNotice messageKey={rangeError} variant="error" title="Update the date range">
           {rangeError}
         </PageNotice>
       ) : null}
@@ -27,6 +27,7 @@ const ManagedAttendanceNotices = ({
 
       {error ? (
         <PageNotice
+          messageKey={error}
           variant="error"
           title="Attendance could not be loaded"
           action={
@@ -41,6 +42,7 @@ const ManagedAttendanceNotices = ({
 
       {success ? (
         <PageNotice
+          messageKey={success}
           variant="success"
           onDismiss={() => setSuccessState({ owner: client, value: null })}
         >

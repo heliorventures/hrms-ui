@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 import Button from '../../components/common/Button';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Modal from '../../components/common/Modal';
 import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
@@ -229,14 +230,14 @@ const SurveysWorkspace = ({ respondentOnly = false, initialSurveyId }: SurveysPa
         </p>
       </PageInformation>
       {model.notice && (
-        <p role="status" className="text-sm text-status-success">
+        <FeedbackToast variant={'success'} messageKey={model.notice}>
           {model.notice}
-        </p>
+        </FeedbackToast>
       )}
       {model.error && (
-        <p role="alert" className="text-sm text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={model.error}>
           {model.error}
-        </p>
+        </FeedbackToast>
       )}
       <div hidden={model.screen !== 'list'}>
         <SurveyLists model={model} />

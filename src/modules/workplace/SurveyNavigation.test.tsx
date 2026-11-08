@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
+
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+import { renderWithRouter as render } from '../../testUtils/renderWithRouter';
 
 import SurveysPage from './SurveysPage';
 

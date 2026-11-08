@@ -82,14 +82,14 @@ describe('UpcomingHolidays truthful states', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Upcoming Holidays Could Not Be Loaded');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
-    expect(screen.queryByText('No Upcoming Holidays in Range.')).toBeNull();
+    expect(screen.queryByText('No upcoming holidays in this period.')).toBeNull();
   });
 
   it('renders intentional empty copy after a successful empty response', async () => {
     graphState.client.request.mockResolvedValue(holidays(0));
     renderCard();
 
-    expect(await screen.findByText('No Upcoming Holidays in Range.')).toBeTruthy();
+    expect(await screen.findByText('No upcoming holidays in this period.')).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 

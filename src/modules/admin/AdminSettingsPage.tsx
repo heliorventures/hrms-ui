@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react';
 import { ClientOpsAdminSettingsEmployeesDocument } from '../../api/graphql/graphql';
 import Badge from '../../components/common/Badge';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageInformation from '../../components/common/PageInformation';
 import Table from '../../components/common/Table';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
 
@@ -26,7 +28,7 @@ const AdminSettingsPage = () => {
   const client = useGraphClient('client');
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
 
   useEffect(() => {
     let cancelled = false;
@@ -52,16 +54,18 @@ const AdminSettingsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [client]);
+  }, [client, setError]);
 
   return (
     <div className="space-y-4">
       <PageHeader title="Admin Settings" />
 
       {error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       )}
 
       <div data-tour-anchor="admin.settings.directory-snapshot">

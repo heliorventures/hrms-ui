@@ -1,4 +1,6 @@
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import FileInput from '../../../components/common/FileInput';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Textarea from '../../../components/common/Textarea';
@@ -33,7 +35,11 @@ const SubmitTravelModal = (props: SubmitTravelModalProps) => {
       title="Submit Travel Request"
     >
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
-        {submitError && <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
+        {submitError && (
+          <FeedbackToast variant={'error'} messageKey={submitError}>
+            {submitError}
+          </FeedbackToast>
+        )}
 
         <TravelRouteFields form={form} />
 
@@ -62,21 +68,16 @@ const SubmitTravelModal = (props: SubmitTravelModalProps) => {
           fullWidth
         />
 
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Supporting file
-          <input
-            key={inputKey}
-            type="file"
-            accept="application/pdf,image/jpeg,image/png"
-            required
-            disabled={submitting}
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          />
-          <span className="mt-1 block text-xs text-gray-500">
-            Required. PDF, JPG, or PNG up to 6 MB.
-          </span>
-        </label>
+        <FileInput
+          label="Supporting file"
+          description="Required. PDF, JPG, or PNG up to 6 MB."
+          key={inputKey}
+          accept="application/pdf,image/jpeg,image/png"
+          required
+          disabled={submitting}
+          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+        />
 
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Creates a <strong>pending travel request</strong>. When your tenant configures a{' '}

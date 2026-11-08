@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 
 import { authorizationStateKey } from '../../auth/permissionService';
-import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
@@ -24,9 +24,11 @@ const WorkflowWorkspace = ({ domain }: { domain: WorkflowDomain }) => {
         <AddWorkflowStepForm editor={editor} workspace={workspace} />
       </div>
       {workspace.error && (
-        <Card>
-          <p className="text-sm text-red-600 dark:text-red-400">{workspace.error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={workspace.error}>
+            {workspace.error}
+          </FeedbackToast>
+        </>
       )}
       <div data-tour-anchor="workflows.records">
         <WorkflowRecords
@@ -48,7 +50,7 @@ const AdminWorkflowsPage = () => {
   const { currentTenant } = useTenant();
   const { clientSession } = useAuth();
   const domain = parseWorkflowDomain(params);
-  if (!domain) return <p role="alert">Invalid approval rules view.</p>;
+  if (!domain) return <FeedbackToast variant={'error'}>Invalid approval rules view.</FeedbackToast>;
   return (
     <WorkflowWorkspace
       key={`${domain}|${currentTenant.id}|${authorizationStateKey(clientSession)}`}

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import { useAuth } from '../../contexts/AuthContext';
@@ -68,18 +69,24 @@ const PayrollCompensationPageContent = ({ canManagePayroll }: { canManagePayroll
       <div></div>
 
       {error ? (
-        <Card>
-          <p className="text-sm text-red-600">{error}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        </>
       ) : null}
       {actionError ? (
-        <Card>
-          <p className="text-sm text-red-600">{actionError}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'error'} messageKey={actionError}>
+            {actionError}
+          </FeedbackToast>
+        </>
       ) : null}
       {ok ? (
         <Card>
-          <p className="text-sm text-emerald-700">{ok}</p>
+          <FeedbackToast variant={'success'} messageKey={ok}>
+            {ok}
+          </FeedbackToast>
         </Card>
       ) : null}
 

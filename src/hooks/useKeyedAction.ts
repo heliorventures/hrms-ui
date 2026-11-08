@@ -2,12 +2,14 @@ import { useCallback, useRef, useState } from 'react';
 
 import { graphQlUserMessage } from '../utils/graphqlUserMessage';
 
+import { useFeedbackState } from './useFeedbackState';
+
 /** Loading belongs to an operation, not every button in its containing page. */
 export function useKeyedAction() {
   const pending = useRef(new Set<string>());
   const [busyKeys, setBusyKeys] = useState<ReadonlySet<string>>(new Set());
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [notice, setNotice] = useFeedbackState<string | null>(null, 'info');
   const run = useCallback(
     async (
       key: string,
@@ -30,7 +32,7 @@ export function useKeyedAction() {
         setBusyKeys(new Set(pending.current));
       }
     },
-    []
+    [setError, setNotice]
   );
   return { run, isBusy: (key: string) => busyKeys.has(key), error, notice, setError };
 }

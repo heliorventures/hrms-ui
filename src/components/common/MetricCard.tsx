@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import Card from './Card';
+import FeedbackToast from './FeedbackToast';
 import Skeleton from './Skeleton';
 
 export interface MetricCardProps {
@@ -32,9 +33,7 @@ const MetricCard = ({ label, value, context, state = 'ready', action }: MetricCa
         <p className="mt-2 text-base font-semibold text-content-muted">Unavailable</p>
       ) : null}
       {effectiveState === 'error' ? (
-        <p role="alert" className="mt-2 text-sm font-medium text-status-danger">
-          {label} could not be loaded.
-        </p>
+        <FeedbackToast variant={'error'}>{label} could not be loaded.</FeedbackToast>
       ) : null}
       {context ? <p className="mt-1 text-sm text-content-secondary">{context}</p> : null}
       {action ? <div className="mt-4">{action}</div> : null}

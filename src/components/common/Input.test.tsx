@@ -47,7 +47,8 @@ describe('Input', () => {
       'work-email-description',
       'work-email-error',
     ]);
-    expect(screen.getByRole('alert').id).toBe('work-email-error');
+    expect(document.getElementById('work-email-error')?.textContent).toBe('Enter a valid email.');
+    expect(screen.getByRole('alert').textContent).toContain('Enter a valid email.');
   });
 
   it('uses mobile-safe text and target sizing with responsive compact density', () => {

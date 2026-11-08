@@ -1,8 +1,10 @@
 import type { PayslipPresentationQuery } from '../../api/graphql/graphql';
 
 import { decodePayslipEmployeeFields } from './payslipEmployeeFields';
+import { decodePayslipLoans, type PayslipLoans } from './payslipLoans';
 
 export interface PayslipStatement {
+  loans?: PayslipLoans;
   gross: string;
   incentive: string;
   total_deductions: string;
@@ -21,7 +23,7 @@ export type PayslipPresentation = Omit<GeneratedPresentation, 'statement'> & {
   statement: PayslipStatement | null;
 };
 
-const statementFields: (keyof PayslipStatement)[] = [
+const statementFields: (keyof Omit<PayslipStatement, 'loans'>)[] = [
   'gross',
   'incentive',
   'total_deductions',
@@ -61,5 +63,6 @@ export const decodePayslipPresentation = (
   const statement: unknown = Reflect.get(value, 'statement');
   if (statement === null || statement === undefined) return { ...value, statement: null };
   if (!isPayslipStatement(statement)) throw new Error('Payslip settlement details are invalid.');
-  return { ...value, statement };
+  const loans = decodePayslipLoans(Reflect.get(statement, 'loans'));
+  return { ...value, statement: { ...statement, loans } };
 };

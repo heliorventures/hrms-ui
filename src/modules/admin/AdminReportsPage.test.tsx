@@ -9,6 +9,7 @@ import {
   AdminAttendanceReportSummaryDocument,
 } from '../../api/graphql/graphql';
 import type { ParsedClientSession } from '../../auth/clientSession';
+import { accessibleText } from '../../testUtils/accessibleText';
 import { attendanceCsvRows } from '../reports/AttendanceDailyReportPanel';
 import { HrReportRowsDocument } from '../reports/reportDocuments';
 
@@ -131,8 +132,7 @@ describe('AdminReportsPage report catalogue', () => {
         <AdminReportsPage />
       </MemoryRouter>
     );
-    expect(screen.getByRole('status')).toHaveProperty(
-      'textContent',
+    expect(accessibleText(screen.getByRole('status'))).toBe(
       'No company reports are available with your permissions.'
     );
     expect(state.client.request).not.toHaveBeenCalled();
@@ -249,8 +249,7 @@ describe('AdminReportsPage report catalogue', () => {
     await settle();
     state.client.request.mockClear();
     fireEvent.change(screen.getByLabelText('From date'), { target: { value: '2026-09-10' } });
-    expect(screen.getByRole('alert')).toHaveProperty(
-      'textContent',
+    expect(accessibleText(screen.getByRole('alert'))).toBe(
       'From date must be on or before to date.'
     );
     await settle();

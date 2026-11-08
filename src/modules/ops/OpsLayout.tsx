@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 
 import Drawer from '@/components/common/Drawer';
 import IconButton from '@/components/common/IconButton';
@@ -38,19 +38,19 @@ const OperatorNavigation = ({
     <div className="flex h-full min-h-0 flex-col">
       <nav aria-label={ariaLabel} className="flex-1 space-y-1 p-3">
         {OPERATOR_WORKSPACES.map(({ label, tasks }) => (
-          <NavLink
+          <Link
             key={label}
             to={tasks[0].path}
-            className={() =>
-              navLinkClass({ isActive: tasks.some((task) => task.path === location.pathname) })
-            }
+            className={navLinkClass({
+              isActive: tasks.some((task) => task.path === location.pathname),
+            })}
             aria-current={
               tasks.some((task) => task.path === location.pathname) ? 'page' : undefined
             }
             onClick={onNavigate}
           >
             {label}
-          </NavLink>
+          </Link>
         ))}
       </nav>
       <div className="border-t border-line-subtle p-3 text-xs text-content-secondary">
@@ -139,12 +139,12 @@ const OpsLayout = () => {
             Operator console
           </p>
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <NavLink
+            <Link
               to="/dashboard"
               className="shrink-0 rounded-md px-2 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
             >
               ← Back to employee app
-            </NavLink>
+            </Link>
           </div>
         </header>
 

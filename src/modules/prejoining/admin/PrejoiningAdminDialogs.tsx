@@ -1,6 +1,7 @@
 import Badge from '../../../components/common/Badge';
 import Button from '../../../components/common/Button';
 import Drawer from '../../../components/common/Drawer';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 
 import type {
@@ -50,9 +51,9 @@ export const InvitationResult = ({
         </Badge>
       </div>
       {invitation.emailError ? (
-        <p role="alert" className="text-sm text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={invitation.emailError}>
           {invitation.emailError}
-        </p>
+        </FeedbackToast>
       ) : null}
     </div>
   );
@@ -256,7 +257,9 @@ const CandidateBody = (props: CandidateDrawerProps & { candidate: PrejoiningCand
       {row.feedback ? (
         <section>
           <h3 className="text-sm font-semibold">Correction feedback</h3>
-          <p className="text-sm text-content-secondary">{row.feedback}</p>
+          <FeedbackToast variant={'info'} messageKey={row.feedback}>
+            {row.feedback}
+          </FeedbackToast>
         </section>
       ) : null}
       <CandidateDetails {...props} candidate={row} />

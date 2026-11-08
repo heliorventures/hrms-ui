@@ -2,6 +2,7 @@ import { formatLeaveDays } from './leaveBalanceFormat';
 
 interface LeaveBalanceMeterProps {
   name: string;
+  showSummary?: boolean;
   balanceDays: string;
   entitledDays: string;
 }
@@ -12,7 +13,12 @@ const hasValidEntitlement = (balance: string, entitlement: string) =>
   Number.isFinite(Number(entitlement)) &&
   Number(entitlement) > 0;
 
-const LeaveBalanceMeter = ({ name, balanceDays, entitledDays }: LeaveBalanceMeterProps) => {
+const LeaveBalanceMeter = ({
+  name,
+  balanceDays,
+  entitledDays,
+  showSummary = true,
+}: LeaveBalanceMeterProps) => {
   const balance = Number(balanceDays);
   const entitlement = Number(entitledDays);
   const valid = hasValidEntitlement(balanceDays, entitledDays);
@@ -33,14 +39,16 @@ const LeaveBalanceMeter = ({ name, balanceDays, entitledDays }: LeaveBalanceMete
           }
         : {})}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span className="font-medium text-content-primary">{name}</span>
-        <span
-          className={`tabular-nums ${balance < 0 ? 'text-status-danger' : 'text-content-secondary'}`}
-        >
-          <strong>{label}</strong> days left {valid ? `/ ${formatLeaveDays(entitledDays)}` : ''}
-        </span>
-      </div>
+      {showSummary && (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span className="font-medium text-content-primary">{name}</span>
+          <span
+            className={`tabular-nums ${balance < 0 ? 'text-status-danger' : 'text-content-secondary'}`}
+          >
+            <strong>{label}</strong> days left {valid ? `/ ${formatLeaveDays(entitledDays)}` : ''}
+          </span>
+        </div>
+      )}
       {valid ? (
         <div className="h-1.5 overflow-hidden rounded-full bg-line-subtle" aria-hidden="true">
           <div className="h-full rounded-full bg-accent" style={{ width: `${percentage}%` }} />

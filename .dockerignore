@@ -5,3 +5,5 @@ dist-images/
 *.tar
 *.log
 *.tsbuildinfo
+public/video-guides/assets/
+.video-guides-build/

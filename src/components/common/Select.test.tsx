@@ -49,7 +49,8 @@ describe('Select', () => {
       'role-description',
       'role-error',
     ]);
-    expect(screen.getByRole('alert').id).toBe('role-error');
+    expect(document.getElementById('role-error')?.textContent).toBe('Choose a role.');
+    expect(screen.getByRole('alert').textContent).toContain('Choose a role.');
     expect(select.className).toContain('min-h-11');
     expect(select.className).toContain('text-base');
   });
@@ -72,7 +73,9 @@ describe('Select', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const options = [{ value: 'manager', label: 'Manager' }];
 
-    expect(() => render(<Select label="" options={options} />)).toThrow(/non-blank accessible name/i);
+    expect(() => render(<Select label="" options={options} />)).toThrow(
+      /non-blank accessible name/i
+    );
     expect(() => render(<Select aria-label="   " options={options} />)).toThrow(
       /non-blank accessible name/i
     );

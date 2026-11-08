@@ -2,6 +2,8 @@ import type { FormEvent } from 'react';
 
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import FileInput from '../../../components/common/FileInput';
 import Input from '../../../components/common/Input';
 import { hasTaxSubmissionSettings } from '../hooks/taxFormValidation';
 import type { TaxSectionCatalogRow } from '../payrollTypes';
@@ -97,29 +99,21 @@ export const EmployeeTaxProofFormCard = ({
           value={actual}
           onChange={(event) => onActualChange(event.target.value)}
         />
-        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-          Proof File
-          <input
-            type="file"
-            accept="application/pdf,image/jpeg,image/png"
-            onChange={(event) => onProofFileChange(event.target.files?.[0] ?? null)}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:file:bg-slate-700 dark:file:text-slate-100"
-            required={!proofFile}
-          />
-          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-            PDF, JPG, or PNG up to 6 MB.
-          </span>
-        </label>
+        <FileInput
+          label="Proof File"
+          description="PDF, JPG, or PNG up to 6 MB."
+          accept="application/pdf,image/jpeg,image/png"
+          onChange={(event) => onProofFileChange(event.target.files?.[0] ?? null)}
+          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:file:bg-slate-700 dark:file:text-slate-100"
+          required={!proofFile}
+        />
         {message && (
-          <p
-            className={`text-sm ${
-              message.startsWith('Proof line submitted')
-                ? 'text-emerald-700 dark:text-emerald-300'
-                : 'text-red-600 dark:text-red-400'
-            }`}
+          <FeedbackToast
+            variant={message.startsWith('Proof line submitted') ? 'success' : 'error'}
+            messageKey={message}
           >
             {message}
-          </p>
+          </FeedbackToast>
         )}
         <Button type="submit" disabled={busy}>
           {busy ? 'Submitting...' : 'Submit Proof Line'}
@@ -197,15 +191,12 @@ export const EmployeeTaxDeclarationFormCard = ({
           />
         </div>
         {message && (
-          <p
-            className={`text-sm ${
-              message.startsWith('Saved')
-                ? 'text-emerald-700 dark:text-emerald-300'
-                : 'text-red-600 dark:text-red-400'
-            }`}
+          <FeedbackToast
+            variant={message.startsWith('Saved') ? 'success' : 'error'}
+            messageKey={message}
           >
             {message}
-          </p>
+          </FeedbackToast>
         )}
         <Button type="submit" disabled={submitting || loading}>
           {submitting ? 'Saving...' : 'Save Declaration'}

@@ -1,5 +1,7 @@
 import { useId } from 'react';
 
+import FeedbackToast from './FeedbackToast';
+
 export interface ChoiceOption {
   value: string;
   label: string;
@@ -94,9 +96,9 @@ const RadioGroup = ({ label, name, value, options, onChange, error }: RadioGroup
         ))}
       </div>
       {error ? (
-        <p id={errorId} role="alert" className="text-sm font-medium text-status-danger">
+        <FeedbackToast variant={'error'} id={errorId} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       ) : null}
     </fieldset>
   );

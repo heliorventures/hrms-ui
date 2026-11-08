@@ -1,5 +1,11 @@
 export const WORKFLOW_TYPES = [
   {
+    value: 'LOAN_REQUEST',
+    label: 'Loans',
+    permission: 'loan:approve',
+    description: 'Approve employee loans under the selected company policy.',
+  },
+  {
     value: 'LEAVE_REQUEST',
     label: 'Leave',
     permission: 'leave:approve',
@@ -26,6 +32,7 @@ export const WORKFLOW_TYPES = [
 ] as const;
 
 export const WORKFLOW_DOMAINS = {
+  loans: { label: 'Loans', entityTypes: ['LOAN_REQUEST'] },
   leave: { label: 'Leave', entityTypes: ['LEAVE_REQUEST'] },
   timesheets: { label: 'Timesheets', entityTypes: ['TIMESHEET_WEEK_BATCH'] },
   expenses: { label: 'Expenses & Travel', entityTypes: ['EXPENSE', 'TRAVEL_REQUEST'] },

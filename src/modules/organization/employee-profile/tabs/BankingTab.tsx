@@ -1,18 +1,21 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
 import type { GraphQLClient } from 'graphql-request';
 import { Landmark, Pencil, Shield } from 'lucide-react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 
-import type { EmployeeProfileModel } from '../types';
-import { InfoCard } from '../components/InfoCard';
-import ImportedProfileDetails from '../components/ImportedProfileDetails';
-import { VerificationBadge } from '../components/StatusBadge';
-import Input from '../../../../components/common/Input';
-import Button from '../../../../components/common/Button';
 import {
   SubmitEmployeeProfileChangeDocument,
   UpsertEmployeePrimaryBankDocument,
 } from '../../../../api/graphql/graphql';
+import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
+import Input from '../../../../components/common/Input';
+import { useActionFeedback } from '../../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
+import ImportedProfileDetails from '../components/ImportedProfileDetails';
+import { InfoCard } from '../components/InfoCard';
+import { VerificationBadge } from '../components/StatusBadge';
+import type { EmployeeProfileModel } from '../types';
 
 interface BankingTabProps {
   employeeId: string;
@@ -29,11 +32,13 @@ export function BankingTab({
   canManageSensitiveFields = false,
   onChanged,
 }: BankingTabProps) {
+  const notifyAction = useActionFeedback();
+
   const [bank, setBank] = useState(model.banking);
   const b = bank;
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [submitted, setSubmitted] = useState(false);
   const [bankName, setBankName] = useState(b.bankName === '—' ? '' : b.bankName);
   const [accountNumber, setAccountNumber] = useState('');
@@ -59,7 +64,7 @@ export function BankingTab({
       setAccountNumber('');
       setError(null);
     }
-  }, [b.bankName, b.ifscCode, b.accountType, editing]);
+  }, [b.bankName, b.ifscCode, b.accountType, editing, setError]);
 
   const save = async () => {
     setSaving(true);
@@ -89,6 +94,7 @@ export function BankingTab({
         });
         setSubmitted(true);
       }
+      notifyAction(canManageSensitiveFields ? 'saved' : 'submitted');
       onChanged?.();
       setEditing(false);
       setAccountNumber('');
@@ -161,9 +167,9 @@ export function BankingTab({
   return (
     <div className="space-y-4">
       {error ? (
-        <div className="rounded-2xl border border-red-200/80 bg-red-50/90 px-4 py-2 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-100">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </div>
+        </FeedbackToast>
       ) : null}
       <InfoCard title="Edit Primary Bank" subtitle="Stored as the employee’s salary account">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

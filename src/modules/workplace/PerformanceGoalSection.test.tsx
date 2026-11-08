@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
+
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { UpdatePerformanceGoalWorkspaceDocument } from '../../api/graphql/graphql';
+import { accessibleText } from '../../testUtils/accessibleText';
 
 import PerformanceGoalSection from './PerformanceGoalSection';
 import type { PerformanceReviewDetailRow } from './performanceLifecycleQueries';
@@ -212,5 +214,5 @@ it('disables goal controls during a conflicting participant mutation', () => {
 it('presents the active review mutation result', () => {
   renderGoalSection({ mutationMessage: { kind: 'error', text: 'Retry the goal update.' } });
 
-  expect(screen.getByRole('alert').textContent).toBe('Retry the goal update.');
+  expect(accessibleText(screen.getByRole('alert'))).toBe('Retry the goal update.');
 });

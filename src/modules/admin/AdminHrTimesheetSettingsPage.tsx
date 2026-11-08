@@ -13,11 +13,13 @@ import {
 import { createPermissionService } from '../../auth/permissionService';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import PageHeader from '../../components/common/PageHeader';
 import PageTabs, { PageTabPanel } from '../../components/common/PageTabs';
 import Select from '../../components/common/Select';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
 import { useGraphClient } from '../../hooks/useGraphClient';
 import { usePageTabs } from '../../hooks/usePageTabs';
 import { graphQlUserMessage } from '../../utils/graphqlUserMessage';
@@ -39,8 +41,8 @@ const AdminHrTimesheetSettingsPage = () => {
   const [taskProjectCode, setTaskProjectCode] = useState('');
   const [taskLines, setTaskLines] = useState('INTERNAL\nMEETING');
 
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useFeedbackState<string | null>(null, 'success');
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [busy, setBusy] = useState(false);
 
   const reloadPolicies = useCallback(async () => {
@@ -203,8 +205,16 @@ const AdminHrTimesheetSettingsPage = () => {
 
       {(message || error) && (
         <Card>
-          {message && <p className="text-sm text-green-700 dark:text-green-400">{message}</p>}
-          {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {message && (
+            <FeedbackToast variant={'success'} messageKey={message}>
+              {message}
+            </FeedbackToast>
+          )}
+          {error && (
+            <FeedbackToast variant={'error'} messageKey={error}>
+              {error}
+            </FeedbackToast>
+          )}
         </Card>
       )}
 

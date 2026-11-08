@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import { GraphQLClient } from 'graphql-request';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { accessibleText } from '../../../../testUtils/accessibleText';
 
 import EmployeeEsicCard from './EmployeeEsicCard';
 
@@ -64,10 +66,8 @@ describe('EmployeeEsicCard', () => {
     render(<EmployeeEsicCard client={client} employeeId="employee-1" canEdit />);
     await user.click(await screen.findByRole('button', { name: 'Add ESIC number' }));
     await user.type(screen.getByRole('textbox', { name: 'ESIC number' }), value);
-    expect(screen.getByRole('alert').textContent).toBe('Enter exactly 10 digits.');
-    expect(
-      (screen.getByRole('button', { name: 'Save ESIC number' }) as HTMLButtonElement).disabled
-    ).toBe(true);
+    expect(accessibleText(screen.getByRole('alert'))).toBe('Enter exactly 10 digits.');
+    expect(screen.getByRole('button', { name: 'Save ESIC number' }).disabled).toBe(true);
     expect(request).toHaveBeenCalledTimes(1);
   });
 

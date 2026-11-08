@@ -14,10 +14,12 @@ export type FlashToastShow = (
     | [text: string, variant: 'error', options: FlashToastErrorOptions]
 ) => void;
 
+export const FLASH_TOAST_DURATION_MS = 5_000;
+
 /**
- * Fixed-duration message bar (use for approve/reject outcomes where inline Card errors are easy to miss).
+ * Temporary action feedback. Keep validation and load-state errors beside their recovery controls.
  */
-export function useFlashToast(durationMs = 8000) {
+export function useFlashToast(durationMs = FLASH_TOAST_DURATION_MS) {
   const [flash, setFlash] = useState<FlashToastState | null>(null);
   const timerRef = useRef<number | undefined>();
   const generationRef = useRef(0);
@@ -71,7 +73,7 @@ export function useFlashToast(durationMs = 8000) {
 
     const currentFlash = flashRef.current;
     invalidateTimer();
-    if (currentFlash && currentFlash.variant !== 'error') scheduleExpiry(currentFlash);
+    if (currentFlash) scheduleExpiry(currentFlash);
   }, [normalizedDurationMs, invalidateTimer, scheduleExpiry]);
 
   useLayoutEffect(() => {
@@ -101,6 +103,7 @@ export function useFlashToast(durationMs = 8000) {
         };
         flashRef.current = nextFlash;
         setFlash(nextFlash);
+        scheduleExpiry(nextFlash);
         return;
       }
 

@@ -1,8 +1,9 @@
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
-import { formatCurrency } from '../utils/formatters';
 import type { ApproveExpenseTarget } from '../types';
+import { formatCurrency } from '../utils/formatters';
 
 interface ApproveExpenseModalProps {
   busy: boolean;
@@ -22,20 +23,13 @@ const ApproveExpenseModal = ({
   onConfirm,
 }: ApproveExpenseModalProps) => {
   return (
-    <Modal
-      isOpen={target !== null}
-      onClose={onCancel}
-      title="Approve Expense Claim"
-    >
+    <Modal isOpen={target !== null} onClose={onCancel} title="Approve Expense Claim">
       {target ? (
         <div className="space-y-4">
           {error ? (
-            <p
-              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100"
-              role="alert"
-            >
+            <FeedbackToast variant={'error'} messageKey={error}>
               {error}
-            </p>
+            </FeedbackToast>
           ) : null}
           <p className="text-sm text-gray-700 dark:text-gray-300">
             Claimed <strong>{formatCurrency(target.claimAmount, target.currency)}</strong>. Adjust
@@ -51,20 +45,10 @@ const ApproveExpenseModal = ({
             required
           />
           <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="primary"
-              disabled={busy}
-              onClick={onConfirm}
-            >
+            <Button type="button" variant="primary" disabled={busy} onClick={onConfirm}>
               {busy ? 'Submitting...' : 'Submit Approval'}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy}
-              onClick={onCancel}
-            >
+            <Button type="button" variant="outline" disabled={busy} onClick={onCancel}>
               Cancel
             </Button>
           </div>

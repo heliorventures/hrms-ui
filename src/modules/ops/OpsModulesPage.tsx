@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Card from '@/components/common/Card';
-import Table from '@/components/common/Table';
-import PageHeader from '@/components/common/PageHeader';
-import Input from '@/components/common/Input';
+
 import Button from '@/components/common/Button';
-import { useGraphClient } from '@/hooks/useGraphClient';
+import Card from '@/components/common/Card';
+import Input from '@/components/common/Input';
+import PageHeader from '@/components/common/PageHeader';
+import Table from '@/components/common/Table';
 import { useDialogs } from '@/contexts/DialogContext';
+import { useGraphClient } from '@/hooks/useGraphClient';
 import { graphQlUserMessage } from '@/utils/graphqlUserMessage';
+
+import FeedbackToast from '../../components/common/FeedbackToast';
+import Select from '../../components/common/Select';
+import { useFeedbackState } from '../../hooks/useFeedbackState';
+
 import {
   SUBSCRIPTION_OVERAGE_OPTIONS,
   SUBSCRIPTION_STATUS_OPTIONS,
@@ -31,8 +37,8 @@ const OpsModulesPage = () => {
   const [subs, setSubs] = useState<SubRow[]>([]);
   const [tenantFilter, setTenantFilter] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [toast, setToast] = useFeedbackState<string | null>(null, 'success');
   const [modBusy, setModBusy] = useState<string | null>(null);
 
   const [subOpen, setSubOpen] = useState(false);
@@ -64,7 +70,7 @@ const OpsModulesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [client, tenantFilter]);
+  }, [client, tenantFilter, setError]);
 
   useEffect(() => {
     void load();
@@ -211,52 +217,41 @@ const OpsModulesPage = () => {
       </div>
 
       {toast && (
-        <p className="text-sm text-emerald-700 dark:text-emerald-400" role="status">
+        <FeedbackToast variant={'success'} messageKey={toast}>
           {toast}
-        </p>
+        </FeedbackToast>
       )}
       {loading && <p className="text-sm text-slate-500">Loading...</p>}
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       )}
 
       {subOpen && (
         <Card title={subId ? 'Edit subscription' : 'New subscription'}>
-          <form onSubmit={onSaveSubscription} className="max-w-lg space-y-3">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Tenant</label>
-              <select
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-                value={subTenantId}
-                onChange={(e) => setSubTenantId(e.target.value)}
-                required
-                disabled={!!subId}
-              >
-                {tenants.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Module</label>
-              <select
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-                value={subModuleId}
-                onChange={(e) => setSubModuleId(e.target.value)}
-                required
-                disabled={!!subId}
-              >
-                {modules.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.code} — {m.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <form onSubmit={(event) => void onSaveSubscription(event)} className="max-w-lg space-y-3">
+            <Select
+              label="Tenant"
+              options={tenants.map((tenant) => ({ value: tenant.id, label: tenant.name }))}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+              value={subTenantId}
+              onChange={(e) => setSubTenantId(e.target.value)}
+              required
+              disabled={!!subId}
+            />
+            <Select
+              label="Module"
+              options={modules.map((module) => ({
+                value: module.id,
+                label: `${module.code} \u2014 ${module.name}`,
+              }))}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+              value={subModuleId}
+              onChange={(e) => setSubModuleId(e.target.value)}
+              required
+              disabled={!!subId}
+            />
             <Input
               label="Contracted Seats"
               type="number"
@@ -266,8 +261,11 @@ const OpsModulesPage = () => {
             />
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">Status</label>
+                <label htmlFor="subscription-status" className="mb-1 block text-sm font-medium">
+                  Status
+                </label>
                 <select
+                  id="subscription-status"
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
                   value={subStatus}
                   onChange={(e) => setSubStatus(e.target.value)}
@@ -280,8 +278,11 @@ const OpsModulesPage = () => {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Overage</label>
+                <label htmlFor="subscription-overage" className="mb-1 block text-sm font-medium">
+                  Overage
+                </label>
                 <select
+                  id="subscription-overage"
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
                   value={subOverage}
                   onChange={(e) => setSubOverage(e.target.value)}

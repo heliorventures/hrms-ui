@@ -44,6 +44,7 @@ export const AttendancePageNotices = ({ model }: { model: AttendancePageModel })
       {' '}
       {error && (
         <PageNotice
+          messageKey={error}
           variant="error"
           title="Attendance could not be refreshed"
           focusOnMount
@@ -64,6 +65,7 @@ export const AttendancePageNotices = ({ model }: { model: AttendancePageModel })
       )}
       {attendanceWindowError ? (
         <PageNotice
+          messageKey={attendanceWindowError}
           variant="error"
           title="Current attendance day could not be loaded"
           action={
@@ -81,7 +83,7 @@ export const AttendancePageNotices = ({ model }: { model: AttendancePageModel })
         </PageNotice>
       ) : null}
       {success && (
-        <PageNotice variant="success" onDismiss={() => setSuccess(null)}>
+        <PageNotice messageKey={success} variant="success" onDismiss={() => setSuccess(null)}>
           {success}
         </PageNotice>
       )}

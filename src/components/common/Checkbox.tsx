@@ -1,6 +1,7 @@
 import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes } from 'react';
 
+import FeedbackToast from './FeedbackToast';
 import { mergeDescribedBy } from './FormField';
 
 export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -54,9 +55,9 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           </span>
         </label>
         {error ? (
-          <p id={errorId} role="alert" className="text-sm font-medium text-status-danger">
+          <FeedbackToast variant={'error'} id={errorId} messageKey={error}>
             {error}
-          </p>
+          </FeedbackToast>
         ) : null}
       </div>
     );

@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 
 import { PERMISSIONS } from '../../auth/permissions';
 import { authorizationStateKey, createPermissionService } from '../../auth/permissionService';
-import Card from '../../components/common/Card';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGraphClient } from '../../hooks/useGraphClient';
@@ -58,11 +58,11 @@ const PayrollPage = () => {
       />
       <PayrollWorkspaceNavigation state={workspace} />
       {board.error && (
-        <Card>
-          <p role="alert" className="text-sm text-danger">
+        <>
+          <FeedbackToast variant={'error'} messageKey={board.error}>
             {board.error}
-          </p>
-        </Card>
+          </FeedbackToast>
+        </>
       )}
       <div className="space-y-2">
         <PayrollWorkspacePanels

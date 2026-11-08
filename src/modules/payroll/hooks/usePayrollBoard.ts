@@ -7,6 +7,7 @@ import {
   PayrollComplianceSettingDocument,
   type PayrollComplianceSettingQuery,
 } from '../../../api/graphql/graphql';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type {
   PayrollArrearRow,
@@ -58,7 +59,7 @@ export function usePayrollBoard(
 ) {
   const [data, setData] = useState<PayrollBoardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
   const [complianceForm, setComplianceForm] =
     useState<PayrollComplianceFormState>(DEFAULT_COMPLIANCE_FORM);
   const requestGeneration = useRef(0);
@@ -101,7 +102,7 @@ export function usePayrollBoard(
     } finally {
       if (generation === requestGeneration.current) setLoading(false);
     }
-  }, [client, enabled, ownerKey]);
+  }, [client, enabled, ownerKey, setError]);
 
   useEffect(() => {
     void loadData();

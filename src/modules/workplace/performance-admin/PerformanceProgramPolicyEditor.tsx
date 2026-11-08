@@ -3,14 +3,11 @@ import { useState } from 'react';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import ConfirmDialog from '../../../components/common/ConfirmDialog';
-
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import type { PerformancePopulationMode } from '../performanceAdminQueries';
 
-import {
-  PopulationPicker,
-  PolicyDeadlines,
-} from './PerformanceProgramPolicyFields';
 import { fieldClass, modes } from './performanceProgramPolicy';
+import { PopulationPicker, PolicyDeadlines } from './PerformanceProgramPolicyFields';
 import { usePerformanceProgramPolicyActions } from './usePerformanceProgramPolicyActions';
 import { usePerformanceProgramPolicyData } from './usePerformanceProgramPolicyData';
 
@@ -40,9 +37,9 @@ const PerformanceProgramPolicyEditor = ({
   return (
     <Card title={`Policy · ${programName}`}>
       {policy.message && (
-        <p role="status" className="mb-3 text-sm text-content-secondary">
+        <FeedbackToast variant={'info'} messageKey={policy.message}>
           {policy.message}
-        </p>
+        </FeedbackToast>
       )}
       <label className="text-sm">
         Population
@@ -50,9 +47,7 @@ const PerformanceProgramPolicyEditor = ({
           className={fieldClass}
           disabled={actions.busy}
           value={policy.draft.populationMode}
-          onChange={(event) =>
-            policy.changeMode(event.target.value as PerformancePopulationMode)
-          }
+          onChange={(event) => policy.changeMode(event.target.value as PerformancePopulationMode)}
         >
           {modes.map((mode) => (
             <option key={mode.value} value={mode.value}>
@@ -75,9 +70,7 @@ const PerformanceProgramPolicyEditor = ({
       <PolicyDeadlines
         draft={policy.draft}
         disabled={actions.busy}
-        onChange={(key, value) =>
-          policy.setDraft((current) => ({ ...current, [key]: value }))
-        }
+        onChange={(key, value) => policy.setDraft((current) => ({ ...current, [key]: value }))}
       />
       <div className="mt-4 flex flex-wrap gap-2">
         <Button busy={actions.busy} onClick={() => void actions.savePolicy()}>

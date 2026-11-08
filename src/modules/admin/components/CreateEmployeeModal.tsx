@@ -7,11 +7,14 @@ import {
   EmployeeModalAdminDirectoryDocument,
 } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import Select from '../../../components/common/Select';
 import { UI_ACTION_TEXT, UI_FIELD_LABELS, UI_STATUS_TEXT } from '../../../constants/uiText';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useActionFeedback } from '../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { toDateInputValue } from '../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
@@ -31,6 +34,8 @@ interface CreateEmployeeModalProps {
 }
 
 const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModalProps) => {
+  const notifyAction = useActionFeedback();
+
   const client = useGraphClient('client');
   const { can } = useAuth();
   const canManageLoginAccounts = can('role:manage');
@@ -41,7 +46,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   const [confirmPassword, setConfirmPassword] = useState('');
   const [roleId, setRoleId] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useFeedbackState<string | null>(null, 'error');
   const [employeeCode, setEmployeeCode] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -54,7 +59,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
   const [desigOptions, setDesigOptions] = useState<SelectOption[]>([]);
   const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
   const [roleOptions, setRoleOptions] = useState<SelectOption[]>([]);
-  const [orgLoadError, setOrgLoadError] = useState<string | null>(null);
+  const [orgLoadError, setOrgLoadError] = useFeedbackState<string | null>(null, 'error');
 
   const resetForm = useCallback(() => {
     setCreateLogin(canManageLoginAccounts);
@@ -73,7 +78,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
     setDesignationId('');
     setReportingManagerId('');
     setOrgLoadError(null);
-  }, [canManageLoginAccounts]);
+  }, [canManageLoginAccounts, setFormError, setOrgLoadError]);
 
   const loadOrg = useCallback(async () => {
     if (!isOpen) return;
@@ -103,7 +108,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
     } catch (e) {
       setOrgLoadError(graphQlUserMessage(e));
     }
-  }, [canManageLoginAccounts, client, isOpen]);
+  }, [canManageLoginAccounts, client, isOpen, setOrgLoadError]);
 
   useEffect(() => {
     void loadOrg();
@@ -168,6 +173,7 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         };
       }
       await client.request(CreateEmployeeDocument, { input: input as CreateEmployeeInput });
+      notifyAction('created');
       onCreated();
       resetForm();
       onClose();
@@ -202,9 +208,15 @@ const CreateEmployeeModal = ({ isOpen, onClose, onCreated }: CreateEmployeeModal
         className="space-y-3"
         autoComplete="off"
       >
-        {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+        {formError && (
+          <FeedbackToast variant={'error'} messageKey={formError}>
+            {formError}
+          </FeedbackToast>
+        )}
         {orgLoadError && (
-          <p className="text-sm text-amber-800 dark:text-amber-200">{orgLoadError}</p>
+          <FeedbackToast variant={'error'} messageKey={orgLoadError}>
+            {orgLoadError}
+          </FeedbackToast>
         )}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Input

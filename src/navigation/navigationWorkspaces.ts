@@ -54,6 +54,11 @@ const WORKSPACES: Partial<Record<NavigationSectionKey, readonly WorkspaceDefinit
     { label: 'Salary & tax', paths: ['/payroll/compensation', '/payroll/tax'] },
     { label: 'Benefits & reviews', paths: ['/workplace/benefits', '/workplace/compensation'] },
   ],
+  loans: [
+    { label: 'My loans', paths: ['/loans/my'] },
+    { label: 'Loan administration', paths: ['/loans/admin'] },
+    { label: 'Policies', paths: ['/loans/policies'] },
+  ],
   performance: [
     { label: 'My reviews', paths: ['/performance?tab=my'] },
     { label: 'Team reviews', paths: ['/performance?tab=team'] },
@@ -87,8 +92,8 @@ export function workspaceDestinations(
   if (!definitions) return tasks.map((task) => ({ ...task, members: [task] }));
   const grouped = definitions.flatMap((definition) => {
     const members = definition.paths.flatMap((path) => tasks.filter((task) => task.path === path));
-    const first = members[0];
-    if (!first) return [];
+    if (members.length === 0) return [];
+    const [first] = members;
     return [{ ...first, label: definition.label, members }];
   });
   const mappedPaths = new Set(grouped.flatMap((item) => item.members.map((member) => member.path)));

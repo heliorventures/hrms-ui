@@ -1,0 +1,43 @@
+{
+  "baseUrl": "https://heliorprd.heliorsoft.com",
+  "allowedOrigins": ["https://heliorprd.heliorsoft.com"],
+  "allowedApiOrigins": ["https://api.heliorsoft.com"],
+  "environment": "demo",
+  "headless": true,
+  "approvalRole": "manager",
+  "viewport": { "width": 1920, "height": 1080 },
+  "maxSeconds": 60,
+  "paceMs": 1200,
+  "timeoutMs": 20000,
+  "attendance": {
+    "year": null,
+    "month": null,
+    "recordGps": true,
+    "geolocation": { "mode": "simulated-demo", "latitude": null, "longitude": null, "accuracy": 10 }
+  },
+  "leave": {
+    "typeLabel": "",
+    "fromDate": "",
+    "toDate": "",
+    "reason": "Demo training - leave request",
+    "supportingFile": ""
+  },
+  "expense": {
+    "categoryLabel": "",
+    "title": "Demo training - office supplies",
+    "amount": "",
+    "currency": "INR",
+    "date": "",
+    "receipt": ""
+  },
+  "travel": {
+    "fromLocation": "",
+    "toLocation": "",
+    "fromDate": "",
+    "toDate": "",
+    "estimatedCost": "",
+    "purpose": "Demo training - client visit",
+    "supportingFile": ""
+  },
+  "payroll": { "payPeriodLabel": "", "financialYear": null }
+}

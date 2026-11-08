@@ -1,6 +1,8 @@
 import type { FormEvent } from 'react';
-import Card from '../../../components/common/Card';
+
 import Button from '../../../components/common/Button';
+import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
 import Table from '../../../components/common/Table';
 import type { TaxSectionDefRow } from '../payrollTaxTypes';
@@ -40,7 +42,11 @@ const TaxSectionsCard = ({
     <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
       Maintain section labels for employee proofs. Use OLD, NEW, or ALL for regime scope.
     </p>
-    {error && <p className="mb-2 text-sm text-amber-800 dark:text-amber-200">{error}</p>}
+    {error && (
+      <FeedbackToast variant={'error'} messageKey={error}>
+        {error}
+      </FeedbackToast>
+    )}
     {sections.length > 0 && (
       <div className="mb-4 overflow-x-auto">
         <Table
@@ -50,19 +56,39 @@ const TaxSectionsCard = ({
             { key: 'sectionCode', label: 'Code', render: (row) => row.sectionCode },
             { key: 'sectionLabel', label: 'Label', render: (row) => row.sectionLabel },
             { key: 'regimeScope', label: 'Regime', render: (row) => row.regimeScope ?? 'ALL' },
-            { key: 'maxDeductionAmount', label: 'Cap', render: (row) => row.maxDeductionAmount ?? '-' },
+            {
+              key: 'maxDeductionAmount',
+              label: 'Cap',
+              render: (row) => row.maxDeductionAmount ?? '-',
+            },
             { key: 'isActive', label: 'Active', render: (row) => (row.isActive ? 'Yes' : 'No') },
           ]}
         />
       </div>
     )}
     <form className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end" onSubmit={onSubmit}>
-      <Input label="Section Code" value={sectionCode} onChange={(event) => onCodeChange(event.target.value)} />
+      <Input
+        label="Section Code"
+        value={sectionCode}
+        onChange={(event) => onCodeChange(event.target.value)}
+      />
       <div className="min-w-[14rem] flex-1">
-        <Input label="Label" value={sectionLabel} onChange={(event) => onLabelChange(event.target.value)} />
+        <Input
+          label="Label"
+          value={sectionLabel}
+          onChange={(event) => onLabelChange(event.target.value)}
+        />
       </div>
-      <Input label="Regime" value={sectionRegime} onChange={(event) => onRegimeChange(event.target.value)} />
-      <Input label="Max Deduction" value={sectionMax} onChange={(event) => onMaxChange(event.target.value)} />
+      <Input
+        label="Regime"
+        value={sectionRegime}
+        onChange={(event) => onRegimeChange(event.target.value)}
+      />
+      <Input
+        label="Max Deduction"
+        value={sectionMax}
+        onChange={(event) => onMaxChange(event.target.value)}
+      />
       <Button type="submit" variant="secondary" size="sm" disabled={submitting}>
         {submitting ? 'Saving...' : 'Upsert section'}
       </Button>

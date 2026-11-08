@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import AppLogo from '../../components/brand/AppLogo';
 import Button from '../../components/common/Button';
+import FeedbackToast from '../../components/common/FeedbackToast';
 import Input from '../../components/common/Input';
 import PageNotice from '../../components/common/PageNotice';
 import { useAuth } from '../../contexts/AuthContext';
@@ -130,12 +131,9 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {passwordChangedNotice && (
-              <div
-                role="status"
-                className="rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-800 dark:border-green-700/60 dark:bg-green-900/30 dark:text-green-100"
-              >
+              <FeedbackToast variant={'success'}>
                 Password changed successfully. Sign in with your new password.
-              </div>
+              </FeedbackToast>
             )}
             <Input
               ref={usernameRef}
@@ -250,16 +248,19 @@ const LoginPage = () => {
             </div>
 
             {resolutionStatus === 'not-found' && (
-              <div
-                role="alert"
-                className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-100"
-              >
+              <FeedbackToast variant={'error'}>
                 {resolutionError ?? 'We could not find this organization.'}
-              </div>
+              </FeedbackToast>
             )}
 
             {authError && (
-              <PageNotice key={authError} variant="error" title="Unable to sign in" focusOnMount>
+              <PageNotice
+                messageKey={authError}
+                key={authError}
+                variant="error"
+                title="Unable to sign in"
+                focusOnMount
+              >
                 {authError}
               </PageNotice>
             )}

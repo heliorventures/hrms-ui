@@ -14,6 +14,7 @@ import { useRetainedQuery, type RetainedQueryPhase } from '../../../hooks/useRet
 
 import { DashboardCardInitialState, DashboardCardRefreshNotice } from './DashboardCardQueryState';
 import { formatLeaveDays } from './leaveBalanceFormat';
+import LeaveBalanceMeter from './LeaveBalanceMeter';
 
 interface TypeRow {
   id: string;
@@ -53,6 +54,7 @@ const LeaveBalanceFooter = ({ hasData, onRefresh, phase }: LeaveBalanceFooterPro
         variant="quiet"
         size="sm"
         busy={phase === 'refreshing'}
+        aria-label="Refresh Leave Balances"
         busyLabel="Refreshing Leave Balances…"
         onClick={onRefresh}
       >
@@ -91,10 +93,18 @@ const LeaveBalanceList = ({ rows, typeMap }: LeaveBalanceListProps) => {
             <p className="text-3xl font-semibold tabular-nums">
               {formatLeaveDays(row.balanceDays)}
             </p>
-            <p className="mt-1 text-sm font-medium text-content-secondary">{name}</p>
+            <p className="mt-1 min-w-0 break-words text-sm font-medium text-content-secondary">
+              {name}
+            </p>
             <p className="text-xs text-content-muted">
               days available of {formatLeaveDays(row.entitledDays)}
             </p>
+            <LeaveBalanceMeter
+              name={name}
+              balanceDays={row.balanceDays}
+              entitledDays={row.entitledDays}
+              showSummary={false}
+            />
             <p className="mt-1 text-xs tabular-nums text-content-muted">
               <span>Used {formatLeaveDays(row.usedDays)}</span>
               {' · '}

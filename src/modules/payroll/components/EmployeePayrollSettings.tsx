@@ -8,7 +8,9 @@ import {
 } from '../../../api/graphql/graphql';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import type { PeriodInput } from '../periodInputTypes';
 
@@ -45,9 +47,9 @@ const EmployeeEligibilityEditor = ({
     revision: null,
   });
   const [busy, setBusy] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const [loadFailed, setLoadFailed] = useState(false);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useFeedbackState('', 'info');
   useEffect(() => {
     let active = true;
     void client
@@ -75,7 +77,7 @@ const EmployeeEligibilityEditor = ({
     return () => {
       active = false;
     };
-  }, [client, employeeId, date]);
+  }, [client, employeeId, date, setError, setNotice]);
   const save = async () => {
     setBusy(true);
     setError('');
@@ -95,8 +97,16 @@ const EmployeeEligibilityEditor = ({
   };
   return (
     <div className="mt-4 space-y-3">
-      {error && <p role="alert">{error}</p>}
-      {notice && <p role="status">{notice}</p>}
+      {error && (
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
+      )}
+      {notice && (
+        <FeedbackToast variant={'info'} messageKey={notice}>
+          {notice}
+        </FeedbackToast>
+      )}
       <fieldset disabled={busy} className="grid gap-3 sm:grid-cols-2">
         <EmployeeEligibilityFields
           eligibility={setting.eligibility}
@@ -121,7 +131,7 @@ const EmployeePayrollSettings = ({ client }: { client: GraphQLClient }) => {
   >([]);
   const [employeeId, setEmployeeId] = useState('');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   useEffect(() => {
     let active = true;
     void client
@@ -135,7 +145,7 @@ const EmployeePayrollSettings = ({ client }: { client: GraphQLClient }) => {
     return () => {
       active = false;
     };
-  }, [client]);
+  }, [client, setError]);
   return (
     <Card>
       <div data-tour-anchor="payroll.employee-settings" className="space-y-3">
@@ -144,7 +154,11 @@ const EmployeePayrollSettings = ({ client }: { client: GraphQLClient }) => {
           until changed. Company rules determine contribution amounts; tax settings are managed in
           Employee Tax &amp; History.
         </p>
-        {error && <p role="alert">{error}</p>}
+        {error && (
+          <FeedbackToast variant={'error'} messageKey={error}>
+            {error}
+          </FeedbackToast>
+        )}
         <div className="flex flex-wrap gap-3">
           <label>
             Employee

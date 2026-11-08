@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { graphqlDocumentSource } from '../../testUtils/graphqlDocumentSource';
+import { renderWithRouter as render } from '../../testUtils/renderWithRouter';
 
 import BenefitsPage from './BenefitsPage';
 
@@ -36,6 +38,7 @@ describe('benefits setup access', () => {
     state.request.mockResolvedValue({ benefitTypes: [], benefitPlans: [] });
     render(<BenefitsPage />);
     await waitFor(() => expect(state.request).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('tab', { name: 'Benefit Types' }));
     expect(screen.queryByText('My Enrollments')).toBeNull();
     expect(screen.getByRole('button', { name: 'Create benefit type' })).toBeTruthy();
   });
@@ -66,6 +69,7 @@ describe('benefits setup access', () => {
       }
     );
     render(<BenefitsPage />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Benefit Types' }));
     await screen.findByText('Type 0');
     fireEvent.click(screen.getByRole('button', { name: 'Next benefit types' }));
     await screen.findByText('Type 20');
@@ -73,6 +77,7 @@ describe('benefits setup access', () => {
       expect.anything(),
       expect.objectContaining({ typeOffset: 20 })
     );
+    fireEvent.click(screen.getByRole('tab', { name: 'Benefit Plans' }));
     fireEvent.click(screen.getByRole('button', { name: 'Create benefit plan' }));
     expect(await screen.findByRole('option', { name: 'Type 100' })).toBeTruthy();
     expect(state.request).toHaveBeenCalledWith(expect.anything(), { offset: 100 });

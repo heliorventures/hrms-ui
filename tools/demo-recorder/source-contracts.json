@@ -1,0 +1,1252 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "file": "src/routes/appRouteConfig.tsx",
+      "sha256": "775e39bbfd924190c4317c2ba75c6230bc1ccb2989449ee12c9c213b4143fb9a",
+      "attributes": [],
+      "routes": [
+        {
+          "path": "appearance",
+          "title": "Appearance",
+          "line": 6
+        },
+        {
+          "path": "my-work",
+          "line": 12
+        },
+        {
+          "path": "my-work/tasks",
+          "title": "My Tasks",
+          "line": 13
+        },
+        {
+          "path": "my-work/completed",
+          "title": "Completed / Archive",
+          "line": 20
+        },
+        {
+          "path": "performance",
+          "title": "Performance",
+          "line": 27
+        },
+        {
+          "path": "dashboard",
+          "title": "Home",
+          "line": 35
+        },
+        {
+          "path": "insights",
+          "title": "Insights",
+          "line": 42
+        },
+        {
+          "path": "attendance",
+          "title": "Attendance",
+          "line": 49
+        },
+        {
+          "path": "timesheet",
+          "title": "Timesheet",
+          "line": 56
+        },
+        {
+          "path": "leave/holidays",
+          "title": "Company holidays",
+          "line": 63
+        },
+        {
+          "path": "leave/team-calendar",
+          "title": "Team leave calendar",
+          "line": 70
+        },
+        {
+          "path": "leave",
+          "title": "Leave",
+          "line": 77
+        },
+        {
+          "path": "payroll",
+          "line": 84
+        },
+        {
+          "path": "payroll/payslips",
+          "title": "Payslips and tax",
+          "line": 85
+        },
+        {
+          "path": "payroll/pay",
+          "title": "Payroll processing",
+          "line": 92
+        },
+        {
+          "path": "payroll/tax",
+          "title": "Tax administration",
+          "line": 99
+        },
+        {
+          "path": "payroll/compensation",
+          "title": "Compensation setup",
+          "line": 106
+        },
+        {
+          "path": "expenses",
+          "title": "Expenses & Travel",
+          "line": 113
+        },
+        {
+          "path": "notifications",
+          "title": "Notifications",
+          "line": 120
+        },
+        {
+          "path": "profile/settings",
+          "title": "Profile and settings",
+          "line": 127
+        },
+        {
+          "path": "organization/employees",
+          "title": "Organization people",
+          "line": 134
+        },
+        {
+          "path": "organization/employees/:employeeId",
+          "title": "Employee details",
+          "line": 141
+        },
+        {
+          "path": "organization/org-chart",
+          "title": "Organization chart",
+          "line": 148
+        },
+        {
+          "path": "organization/documents",
+          "title": "Organization documents",
+          "line": 155
+        },
+        {
+          "path": "organization/profile-reviews",
+          "title": "Profile reviews",
+          "line": 162
+        },
+        {
+          "path": "workplace/benefits",
+          "title": "Benefits",
+          "line": 169
+        },
+        {
+          "path": "workplace/recruitment",
+          "title": "Hiring & Applicants",
+          "line": 176
+        },
+        {
+          "path": "workplace/prejoining",
+          "title": "Pre-joining",
+          "line": 183
+        },
+        {
+          "path": "workplace/onboarding",
+          "title": "Onboarding and exit",
+          "line": 190
+        },
+        {
+          "path": "workplace/performance",
+          "title": "Performance",
+          "line": 197
+        },
+        {
+          "path": "workplace/surveys",
+          "title": "Surveys",
+          "line": 204
+        },
+        {
+          "path": "workplace/succession",
+          "title": "Succession planning",
+          "line": 211
+        },
+        {
+          "path": "workplace/compensation",
+          "title": "Compensation",
+          "line": 218
+        },
+        {
+          "path": "workplace/learning",
+          "title": "Learning",
+          "line": 225
+        },
+        {
+          "path": "workplace/assets",
+          "title": "Assets",
+          "line": 232
+        },
+        {
+          "path": "workplace/grievance",
+          "title": "Grievance and speak up",
+          "line": 239
+        },
+        {
+          "path": "workplace/workflows",
+          "title": "Workflows",
+          "line": 246
+        },
+        {
+          "path": "hr",
+          "title": "HR workbench",
+          "line": 253
+        },
+        {
+          "path": "hr/people",
+          "title": "HR people",
+          "line": 260
+        },
+        {
+          "path": "hr/leaves",
+          "title": "Leave approvals",
+          "line": 267
+        },
+        {
+          "path": "hr/attendance",
+          "title": "Attendance management",
+          "line": 274
+        },
+        {
+          "path": "hr/timesheets",
+          "title": "Timesheet approvals",
+          "line": 281
+        },
+        {
+          "path": "hr/timesheet-assignments",
+          "title": "Timesheet project access",
+          "line": 288
+        },
+        {
+          "path": "hr/leave-settings",
+          "line": 295
+        },
+        {
+          "path": "hr/access",
+          "line": 301
+        },
+        {
+          "path": "admin/leave-settings",
+          "title": "Leave settings",
+          "line": 307
+        },
+        {
+          "path": "admin/expense-categories",
+          "title": "Expense Categories & Policies",
+          "line": 314
+        },
+        {
+          "path": "admin/notifications",
+          "title": "Announcements & Messages",
+          "line": 321
+        },
+        {
+          "path": "admin/employees",
+          "title": "Employee administration",
+          "line": 328
+        },
+        {
+          "path": "admin/attendance-policy",
+          "title": "Attendance policy",
+          "line": 335
+        },
+        {
+          "path": "admin/company-locations",
+          "title": "Company locations",
+          "line": 342
+        },
+        {
+          "path": "admin/timesheet-settings",
+          "title": "Timesheet settings",
+          "line": 349
+        },
+        {
+          "path": "admin/reports",
+          "title": "Reports",
+          "line": 356
+        },
+        {
+          "path": "admin/access",
+          "title": "Roles and permissions",
+          "line": 363
+        },
+        {
+          "path": "admin/settings",
+          "title": "Administration settings",
+          "line": 370
+        },
+        {
+          "path": "admin/module-health",
+          "title": "Module health",
+          "line": 377
+        }
+      ],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/auth/LoginPage.tsx",
+      "sha256": "21326fde02b18f4f2b687aa46e47482e2784a942de74eb49fb956a412c3e36e0",
+      "attributes": [
+        {
+          "attribute": "label",
+          "value": "Email, mobile number, or unique name",
+          "line": 140
+        },
+        {
+          "attribute": "aria-label",
+          "value": "Password",
+          "line": 173
+        },
+        {
+          "attribute": "title",
+          "value": "Refresh Captcha",
+          "line": 211
+        },
+        {
+          "attribute": "aria-label",
+          "value": "Refresh verification code",
+          "line": 212
+        },
+        {
+          "attribute": "label",
+          "value": "Verification code",
+          "line": 232
+        },
+        {
+          "attribute": "title",
+          "value": "Unable to sign in",
+          "line": 261
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/auth/authClient.ts",
+      "sha256": "4ea65491be85e7b1f7f4b22ef5d88d1f57c027b12585dd18f34ae3b149c0281e",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/auth/tokenStore.ts",
+      "sha256": "dad1efba7899e18641ccbed791c42e845619e8fca4da37a3d7e6cef38b55416c",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/contexts/TenantContext.tsx",
+      "sha256": "04466e599041e29f830a3332131524d1e9cab47a19c032be47310a0ce0f0d045",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/dashboard/components/PunchInOut.tsx",
+      "sha256": "3b6d3eeb7482336e97a0a5ea7e35b3e88d306a28fad4101d85423c3478a83957",
+      "attributes": [
+        {
+          "attribute": "title",
+          "value": "Punch Could Not Be Recorded",
+          "line": 300
+        },
+        {
+          "attribute": "title",
+          "value": "Attendance totals",
+          "line": 314
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "dashboard-punch-action",
+          "line": 323
+        },
+        {
+          "attribute": "aria-label",
+          "value": "Current company time",
+          "line": 391
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "dashboard-attendance-summary",
+          "line": 399
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": [
+        {
+          "value": "dashboard.attendance",
+          "line": 449
+        },
+        {
+          "value": "action.attendance.punch",
+          "line": 454
+        }
+      ]
+    },
+    {
+      "file": "src/modules/attendance/AttendancePage.tsx",
+      "sha256": "14cba6ab8dcad614898e244fcd31d06fc0d701a7a013eac41ae9fad99554bd6f",
+      "attributes": [
+        {
+          "attribute": "data-tour-anchor",
+          "value": "attendance.records",
+          "line": 51
+        },
+        {
+          "attribute": "title",
+          "value": "Attendance records",
+          "line": 58
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/attendance/guidance/AttendancePageTour.ts",
+      "sha256": "deaefd6dc90963d3580952b83db9543b50019a614c85c1ef6aa24c5fd2955f43",
+      "attributes": [],
+      "routes": [],
+      "guidance": [
+        {
+          "anchor": "attendance.month-controls",
+          "title": "Choose an attendance month",
+          "body": "Change the month or year to review attendance records for that period. Refresh reloads the current view.",
+          "line": 7
+        },
+        {
+          "anchor": "attendance.month-summary",
+          "title": "Read the monthly summary",
+          "body": "The summary counts completed workdays and time separately from incomplete punch segments.",
+          "line": 13
+        },
+        {
+          "anchor": "attendance.records",
+          "title": "Review attendance records",
+          "body": "Each row shows punch times, completed duration, status, and available adjustment actions.",
+          "line": 19
+        },
+        {
+          "anchor": "attendance.adjust-trigger",
+          "title": "Understand a missed punch adjustment",
+          "body": "This opens the attendance adjustment form. It requires a work date and punch in and out dates and times. Self-service limits can apply; authorized regularizers can follow the policy shown in the form. This tour does not save an adjustment.",
+          "line": 25
+        }
+      ],
+      "capabilities": [
+        {
+          "value": "action.attendance.punch",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "file": "src/modules/attendance/components/AttendanceMonthControls.tsx",
+      "sha256": "80ed7e003dc409ec8ea0fce7515ccb04859888d16286ba03efb7021c02a881f1",
+      "attributes": [
+        {
+          "attribute": "aria-label",
+          "value": "Attendance month",
+          "line": 24
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "attendance.month-controls",
+          "line": 25
+        },
+        {
+          "attribute": "aria-label",
+          "value": "Month",
+          "line": 41
+        },
+        {
+          "attribute": "aria-label",
+          "value": "Year",
+          "line": 56
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/leave/guidance/LeavePageTour.ts",
+      "sha256": "2562903f81d6eb9cdac3e4d450b364612a43cc81f710507df952b66cf8ebb07c",
+      "attributes": [],
+      "routes": [],
+      "guidance": [
+        {
+          "anchor": "leave.refresh",
+          "title": "Refresh leave information",
+          "body": "Refresh reloads leave balances, requests, and the supporting leave information on this page.",
+          "line": 7
+        },
+        {
+          "anchor": "leave.balances",
+          "title": "Review leave balances",
+          "body": "Choose a year to review available balances and leave types. The values shown depend on your tenant policy and leave history.",
+          "line": 13
+        },
+        {
+          "anchor": "leave.requests",
+          "title": "Review leave requests",
+          "body": "Recent requests show their status and workflow history. Pending requests may offer actions according to your role and the request assignment.",
+          "line": 19
+        },
+        {
+          "anchor": "leave.apply-trigger",
+          "title": "Understand the leave application form",
+          "body": "The form asks for a leave type, date range, and reason. Some leave types also require a supporting document; eligible requests can specify a half day. This tour does not create a request.",
+          "line": 25
+        },
+        {
+          "anchor": "leave.requests",
+          "title": "Understand approval actions",
+          "body": "Requests assigned to your approval scope can show Approve and Reject actions. Rejection requires a reason. These actions follow the configured approval workflow and are not run by this tour.",
+          "line": 32
+        },
+        {
+          "anchor": "leave.holiday-summary",
+          "title": "Manage leave policy",
+          "body": "If your role can manage leave, the holiday summary links to leave settings for policy and holiday administration.",
+          "line": 39
+        },
+        {
+          "anchor": "leave.comp-off-trigger",
+          "title": "Understand a comp-off request",
+          "body": "A credit request records the date worked, units, and a reason. Approved credits follow the expiry policy shown on this page; pending requests may offer a cancel action. The tour does not send a request.",
+          "line": 46
+        },
+        {
+          "anchor": "leave.holiday-summary",
+          "title": "Review holiday and leave-type references",
+          "body": "The summary shows upcoming holidays and opens the full company holiday list. Leave types below describe the options available for requests.",
+          "line": 53
+        }
+      ],
+      "capabilities": [
+        {
+          "value": "action.leave.submit",
+          "line": 30
+        },
+        {
+          "value": "action.leave.approve",
+          "line": 37
+        },
+        {
+          "value": "action.leave.manage",
+          "line": 44
+        },
+        {
+          "value": "action.leave.submit",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "file": "src/modules/leave/components/ApplyLeaveFormFields.tsx",
+      "sha256": "f63ae9cd9240e9b4c3cfb5872a1475f1e1502ab0c1943bb68d705ccbce29e79c",
+      "attributes": [
+        {
+          "attribute": "label",
+          "value": "Leave type",
+          "line": 103
+        },
+        {
+          "attribute": "label",
+          "value": "From",
+          "line": 118
+        },
+        {
+          "attribute": "label",
+          "value": "To",
+          "line": 128
+        },
+        {
+          "attribute": "label",
+          "value": "Half day",
+          "line": 138
+        },
+        {
+          "attribute": "label",
+          "value": "Session",
+          "line": 148
+        },
+        {
+          "attribute": "label",
+          "value": "Reason",
+          "line": 160
+        },
+        {
+          "attribute": "label",
+          "value": "Supporting document",
+          "line": 174
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/leave/components/ApplyLeaveDialogContent.tsx",
+      "sha256": "8a52ae49f4267d787ec3ec5b448e5ed92c8af9c52c4415e85d50ce4808bd294a",
+      "attributes": [
+        {
+          "attribute": "title",
+          "value": "Discard this leave request?",
+          "line": 17
+        },
+        {
+          "attribute": "title",
+          "value": "Checking holidays",
+          "line": 72
+        },
+        {
+          "attribute": "title",
+          "value": "Holiday dates could not be loaded",
+          "line": 82
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/leave/components/LeaveRequestsTableSection.tsx",
+      "sha256": "4d33dc96288e14bdbccf368d13da09e66b6107138a76916055e50ec50708a888",
+      "attributes": [
+        {
+          "attribute": "data-tour-anchor",
+          "value": "leave.approve-trigger",
+          "line": 69
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "leave.reject-trigger",
+          "line": 79
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "leave.workflow-trigger",
+          "line": 165
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "leave.workflow-trigger",
+          "line": 244
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/hr/guidance/HrLeavesPageTour.ts",
+      "sha256": "2103883d8ef58bff448f409b2d7b12957cf356061ee7f17ed127ce661335c007",
+      "attributes": [],
+      "routes": [],
+      "guidance": [
+        {
+          "anchor": "hr-leaves.queue",
+          "title": "Review leave requests",
+          "body": "Review and table views show request dates, leave type, duration, status, and workflow history. Filters and paging help narrow the queue. Open leave calendar in the request review to view scheduled leave and holidays together.",
+          "line": 7
+        },
+        {
+          "anchor": "hr-leaves.apply-trigger",
+          "title": "Understand the leave application form",
+          "body": "The form asks for a leave type, date range, and reason; some leave types require a supporting document and eligible requests can specify a half day. Submission access is enforced by the leave workflow. This tour does not create a request.",
+          "line": 13
+        },
+        {
+          "anchor": "leave.approve-trigger",
+          "title": "Understand approval and rejection",
+          "body": "Requests assigned to your approval scope can offer Approve. Approval records your workflow step and may leave the request pending for another approver. This tour does not approve a request.",
+          "line": 20
+        },
+        {
+          "anchor": "leave.reject-trigger",
+          "title": "Understand leave rejection",
+          "body": "Reject opens a form that requires a reason, then records the rejection for the selected request. This tour does not reject a request.",
+          "line": 27
+        },
+        {
+          "anchor": "leave.workflow-trigger",
+          "title": "Read leave request history",
+          "body": "View opens Leave Request History with the request summary and any recorded workflow step actions, dates, and remarks. It is a read-only view.",
+          "line": 34
+        },
+        {
+          "anchor": "leave.comp-off-approvals",
+          "title": "Review comp-off credit decisions",
+          "body": "Authorized approvers can approve a comp-off credit or reject it with a required reason. A decision updates the request and its approval state. This tour does not make a decision.",
+          "line": 40
+        },
+        {
+          "anchor": "hr-leaves.configure-trigger",
+          "title": "Open leave and holiday setup",
+          "body": "Leave & holidays setup opens the policy and company-holiday administration page when your role can manage leave settings.",
+          "line": 47
+        }
+      ],
+      "capabilities": [
+        {
+          "value": "action.leave.submit",
+          "line": 18
+        },
+        {
+          "value": "action.leave.approve",
+          "line": 25
+        },
+        {
+          "value": "action.leave.approve",
+          "line": 32
+        },
+        {
+          "value": "action.leave.approve",
+          "line": 45
+        },
+        {
+          "value": "action.leave.manage",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "file": "src/modules/hr/components/LeaveApprovalReview.tsx",
+      "sha256": "37a75e07d8c9921a23d5bbf469a1541b7fd0aa5fa634be9a057b22da676faa1b",
+      "attributes": [
+        {
+          "attribute": "aria-label",
+          "value": "Selected leave request",
+          "line": 68
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/hr/components/HrLeaveQueueSection.tsx",
+      "sha256": "55eb09e31629dd86bdb8e2f1f0f8a745ddda0f2de6f5ff0fa4d4ea68f54184ca",
+      "attributes": [
+        {
+          "attribute": "aria-label",
+          "value": "Leave approval queue",
+          "line": 51
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "hr-leaves.queue",
+          "line": 52
+        },
+        {
+          "attribute": "title",
+          "value": "Requests",
+          "line": 54
+        },
+        {
+          "attribute": "aria-label",
+          "value": "Request view",
+          "line": 56
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/payroll/PayrollPayPage.tsx",
+      "sha256": "1e17554499e9a8330b131bf6271b3545c5b6cc184d55acf440d7c63725b21d16",
+      "attributes": [
+        {
+          "attribute": "data-tour-anchor",
+          "value": "payroll.pay.salary-preview",
+          "line": 66
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "payroll.pay.income-tax-actions",
+          "line": 80
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": [
+        {
+          "value": "action.tax.submit",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "file": "src/modules/payroll/components/PayrollPayslipTab.tsx",
+      "sha256": "64ffeff7514555b2751d95bec9fc55e496eaf6e288cb9ccf1e941de9533f7b7f",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/payroll/components/PayrollSalaryTab.tsx",
+      "sha256": "9c874bfa6c299bb97f9cea0f8468e6c2cae86e3cfb88bc98e0d48927b352327c",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/payroll/components/TaxProjectionSummary.tsx",
+      "sha256": "5573558b2bea9619896d476fab3b222eaa57577dbc9396ad9358e1a270a5b952",
+      "attributes": [
+        {
+          "attribute": "data-tour-anchor",
+          "value": "payroll.pay.tax-projection",
+          "line": 40
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/payroll/guidance/PayrollPayPageTour.ts",
+      "sha256": "aa77c06a7f49b5f9ad3d99e217e090a7196dfee86c22ad0315e87ad227217e3d",
+      "attributes": [],
+      "routes": [],
+      "guidance": [
+        {
+          "anchor": "payroll.pay.sections",
+          "title": "Choose a pay section",
+          "body": "Salary shows your current salary breakdown. Payslip lets you choose a pay period and view its payslip. Income Tax appears when your role can read tax details.",
+          "line": 7
+        },
+        {
+          "anchor": "payroll.pay.sections",
+          "title": "Review your salary breakdown",
+          "body": "After the tour, select Salary to see recurring earnings and annual CTC based on regular salary. Employer PF appears separately as Other, with the combined annual total below. Employer PF is excluded from payslip earnings and salary income tax. Monthly deductions and settlement amounts are shown on the payslip. Contact HR if the structure needs correction.",
+          "line": 13
+        },
+        {
+          "anchor": "payroll.pay.sections",
+          "title": "Choose a payslip period",
+          "body": "Open Payslip after the tour to review finalized earnings, deductions, LWP and net salary. A salary advance reduces the remaining payable amount, not earned salary. HR controls company-wide component visibility. A period without a finalized payslip is not available yet.",
+          "line": 19
+        },
+        {
+          "anchor": "payroll.pay.sections",
+          "title": "Review income tax details",
+          "body": "After closing the tour, open Income Tax and select a financial year. The compact summary and slab calculation appear side by side on wide screens, followed by the salary component matrix. Expand Month by month records and projections for the timeline. Imported actuals and finalized payroll remain distinct from estimates. Earlier TDS stays Not provided until HR supplies it. Employer PF is excluded. Recorded deductions do not confirm government remittance; contact HR about actual liability.",
+          "line": 25
+        },
+        {
+          "anchor": "payroll.pay.sections",
+          "title": "Submit a tax declaration or proof",
+          "body": "With tax submission access, choose a financial year in Income Tax, then open Declarations and proofs. Your assigned regime and financial year are shared with the projection. Save estimated gross income and deductions, or submit a deduction section, declared and actual amounts and proof file. HR changes your assigned regime; declaration estimates do not change payroll calculations. This tour does not submit records.",
+          "line": 33
+        }
+      ],
+      "capabilities": [
+        {
+          "value": "tax:read",
+          "line": 31
+        },
+        {
+          "value": "tax:read",
+          "line": 39
+        },
+        {
+          "value": "action.tax.submit",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "file": "src/modules/expenses/ExpensesPage.tsx",
+      "sha256": "b84e0202ab12e21b69925d9688458c2dfbdf3bb949f1a700390d09ba57d5ebbc",
+      "attributes": [
+        {
+          "attribute": "data-tour-anchor",
+          "value": "expenses.sections",
+          "line": 104
+        },
+        {
+          "attribute": "title",
+          "value": "Expense Categories",
+          "line": 185
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "expenses.claim-actions",
+          "line": 192
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": [
+        {
+          "value": "action.expense.submit",
+          "line": 36
+        },
+        {
+          "value": "action.travel.submit",
+          "line": 37
+        },
+        {
+          "value": "action.expense.approve",
+          "line": 38
+        },
+        {
+          "value": "action.travel.approve",
+          "line": 39
+        },
+        {
+          "value": "action.expense.manage",
+          "line": 40
+        },
+        {
+          "value": "action.expense.pay",
+          "line": 41
+        },
+        {
+          "value": "action.travel.manage",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "file": "src/modules/expenses/guidance/ExpensesPageTour.ts",
+      "sha256": "f9ffea8b1a0b8a125d77c363a73cc73fe26d070fd3c0030e0e2734bb159d5de1",
+      "attributes": [],
+      "routes": [],
+      "guidance": [
+        {
+          "anchor": "expenses.sections",
+          "title": "Choose expense or travel requests",
+          "body": "Expense Claims lists submitted claims and their workflow and payment status. Travel Requests lists trip requests and their approval status. Each section is shown only when your access allows it.",
+          "line": 7
+        },
+        {
+          "anchor": "expenses.submit-expense",
+          "title": "Submit an expense claim",
+          "body": "Submit Expense opens a form for category, title, amount, currency, expense date, and a required receipt. Attach a PDF, JPG, or PNG up to 6 MB. A linked travel request is optional. Submission creates a claim for review. If submission fails after the upload, retry uses the same uploaded file. This tour does not submit a claim.",
+          "line": 13
+        },
+        {
+          "anchor": "expenses.sections",
+          "title": "Request business travel",
+          "body": "On Travel Requests, Request travel opens a form for locations, dates, purpose, estimated cost, and a required supporting PDF, JPG, or PNG up to 6 MB. Submitting creates a travel request for approval. Download file retrieves evidence from an accessible request.",
+          "line": 20
+        },
+        {
+          "anchor": "expenses.claim-actions",
+          "title": "Review expense approval results",
+          "body": "For claims assigned to your approval scope, Approve opens a dialog with the claimed amount and an editable reimbursable amount. The approved amount cannot exceed the claim; a lower amount records a partial approval. If more approvers remain, the claim stays pending for the next step. Reject opens a reason form and records the rejection. This tour does not approve, reject, or change a claim.",
+          "line": 27
+        },
+        {
+          "anchor": "expenses.sections",
+          "title": "Review travel approval results",
+          "body": "On Travel Requests, assigned approvers can approve a request or reject it with a reason. Approval may remain pending when another workflow approver must act. The request status updates after the workflow action; this tour does not approve or reject it.",
+          "line": 34
+        },
+        {
+          "anchor": "expenses.claim-actions",
+          "title": "Record an expense payment",
+          "body": "When an approved claim is ready for payment, Mark paid asks for a payment reference and then updates the payment status. A reference is required. This tour does not mark a claim as paid.",
+          "line": 41
+        },
+        {
+          "anchor": "expenses.category-settings",
+          "title": "Configure expense categories",
+          "body": "Configure categories opens the expense category administration page, where authorized users maintain categories and their claim rules.",
+          "line": 48
+        }
+      ],
+      "capabilities": [
+        {
+          "value": "action.expense.submit",
+          "line": 18
+        },
+        {
+          "value": "action.travel.submit",
+          "line": 25
+        },
+        {
+          "value": "action.expense.approve",
+          "line": 32
+        },
+        {
+          "value": "action.travel.approve",
+          "line": 39
+        },
+        {
+          "value": "action.expense.pay",
+          "line": 46
+        },
+        {
+          "value": "action.expense.manage",
+          "line": 53
+        }
+      ]
+    },
+    {
+      "file": "src/modules/expenses/components/ExpenseClaimFields.tsx",
+      "sha256": "31a25a4007d78e246959ce656a0b94e97fafe19e36b43c943fea7c5feeefcdd5",
+      "attributes": [
+        {
+          "attribute": "label",
+          "value": "Category",
+          "line": 41
+        },
+        {
+          "attribute": "label",
+          "value": "Title",
+          "line": 51
+        },
+        {
+          "attribute": "label",
+          "value": "Amount",
+          "line": 60
+        },
+        {
+          "attribute": "label",
+          "value": "Currency",
+          "line": 70
+        },
+        {
+          "attribute": "label",
+          "value": "Expense Date",
+          "line": 81
+        },
+        {
+          "attribute": "label",
+          "value": "Linked Travel Request",
+          "line": 104
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/expenses/components/SubmitTravelModal.tsx",
+      "sha256": "9154772428904720cc5b356b5d845b1dcedd38850114e23d7860599a50e6d92c",
+      "attributes": [
+        {
+          "attribute": "title",
+          "value": "Submit Travel Request",
+          "line": 34
+        },
+        {
+          "attribute": "label",
+          "value": "Estimated Cost (₹)",
+          "line": 46
+        },
+        {
+          "attribute": "label",
+          "value": "Purpose of travel",
+          "line": 60
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/expenses/components/TravelRouteFields.tsx",
+      "sha256": "bb89e17083ed5b0ddbeaa0557c39afe944a3aba6d485785fb31d9a00bce7030c",
+      "attributes": [
+        {
+          "attribute": "label",
+          "value": "From Location",
+          "line": 10
+        },
+        {
+          "attribute": "label",
+          "value": "To Location",
+          "line": 21
+        },
+        {
+          "attribute": "label",
+          "value": "From Date",
+          "line": 34
+        },
+        {
+          "attribute": "label",
+          "value": "To Date",
+          "line": 46
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/expenses/components/ExpensesHeader.tsx",
+      "sha256": "a4d4866ee2e133e895b55ebeffd54614f640b7c0eb97e6d39995e6bb9fa2e4c5",
+      "attributes": [
+        {
+          "attribute": "title",
+          "value": "Expenses & Travel",
+          "line": 24
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "expenses.action-bar",
+          "line": 27
+        },
+        {
+          "attribute": "label",
+          "value": "Configure categories",
+          "line": 31
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "expenses.submit-expense",
+          "line": 37
+        },
+        {
+          "attribute": "data-tour-anchor",
+          "value": "expenses.request-travel",
+          "line": 45
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/expenses/components/ApproveExpenseModal.tsx",
+      "sha256": "a0fb730829af4f78bfd40962c04ef72718801bc3ef6ab15a676dd1a3ca20377d",
+      "attributes": [
+        {
+          "attribute": "title",
+          "value": "Approve Expense Claim",
+          "line": 26
+        },
+        {
+          "attribute": "label",
+          "value": "Approve Amount",
+          "line": 39
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/expenses/components/ExpenseClaimsTable.tsx",
+      "sha256": "7f0cc83cc7c42c9439c51c0146ae882b07c7a2a9f2e456ccaf697a555b3b583e",
+      "attributes": [
+        {
+          "attribute": "title",
+          "value": "Expense Claims",
+          "line": 53
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/expenses/components/TravelRequestsTable.tsx",
+      "sha256": "7b511306404b7a8b45759e55b3751056bd90a96fe6eb2000d331a2821ade62e6",
+      "attributes": [
+        {
+          "attribute": "title",
+          "value": "Travel Requests",
+          "line": 35
+        }
+      ],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/expenses/hooks/useExpenseSubmission.ts",
+      "sha256": "f4babd49b62f9cfba33faf3f28f547a65bd5dd5a8a27477f0605b0b11185e71e",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/expenses/hooks/useTravelSubmission.ts",
+      "sha256": "ac758caadcd2174958c35d50dcca4f852504ac61c6dab81fc3b1ddb0c51bfc02",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/leave/components/useApplyLeaveForm.ts",
+      "sha256": "a1290c1926922b5b7bcac9bbcda0ab8ecddb32ee1fb6d5bdaa2ead9978a4c8d9",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/leave/components/useLeaveDatePreview.ts",
+      "sha256": "23231e619e7046186a44322e84f1ad3f3c46273e85e16d356dfc0000e3167c65",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/payroll/hooks/useEmployeePayRecords.ts",
+      "sha256": "468c112c78cc98c733a507e24b4d8639b3b86bf6c03c7181af09ab4cca5881f2",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/payroll/payslipPresentation.ts",
+      "sha256": "bc16fa7df33db7d70ee5fae9f1e803fbb080e6844575a07e4c95a83e1852710e",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/modules/payroll/projectionViewTypes.ts",
+      "sha256": "1b8b3d1d52221ccd6c055303e27804c24448702078246f40e0e994fa46694bb5",
+      "attributes": [],
+      "routes": [],
+      "guidance": [],
+      "capabilities": []
+    },
+    {
+      "file": "src/api/documents/clientOperations.graphql",
+      "sha256": "f31497c0fa3c35006a53c176e0c36045299cc25032db47bf745de30dcbda751b",
+      "contract": "GraphQL operation definitions"
+    },
+    {
+      "file": "src/api/documents/importSalaryPreview.graphql",
+      "sha256": "e60b199cd51d286e6eee420c35ce57ad3817d2c93909667ceadcd0187b89cb0b",
+      "contract": "GraphQL operation definitions"
+    },
+    {
+      "file": "src/api/documents/payslipOperations.graphql",
+      "sha256": "aa9cb1c1e997ac758f23decb74131a45a04dab5030e0e2ad9321590409da94ae",
+      "contract": "GraphQL operation definitions"
+    },
+    {
+      "file": "src/api/documents/taxProjection.graphql",
+      "sha256": "5f26b96c6a2102ec6de1849a09af5060a0abb57cc2e4fd2f20872985a8b879d3",
+      "contract": "GraphQL operation definitions"
+    }
+  ]
+}

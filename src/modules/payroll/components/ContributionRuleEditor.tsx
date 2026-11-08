@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react';
 
 import Button from '../../../components/common/Button';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import Input from '../../../components/common/Input';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import {
   emptyFormula,
   type ContributionPolicy,
@@ -60,7 +62,7 @@ const ContributionRuleEditor = ({
       .map(([code, value]) => `${code}=${value}`)
       .join('\n')
   );
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setError('');
@@ -136,7 +138,11 @@ const ContributionRuleEditor = ({
         classes={classes}
         setClasses={setClasses}
       />
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <FeedbackToast variant={'error'} messageKey={error}>
+          {error}
+        </FeedbackToast>
+      )}
       <Button type="submit" disabled={busy}>
         Save company rules
       </Button>

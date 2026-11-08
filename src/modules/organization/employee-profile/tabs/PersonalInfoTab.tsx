@@ -10,7 +10,10 @@ import {
   UpdateEmployeeSelfServiceProfileDocument,
 } from '../../../../api/graphql/graphql';
 import Button from '../../../../components/common/Button';
+import FeedbackToast from '../../../../components/common/FeedbackToast';
 import Input from '../../../../components/common/Input';
+import { useActionFeedback } from '../../../../hooks/useActionFeedback';
+import { useFeedbackState } from '../../../../hooks/useFeedbackState';
 import { toDateInputValue } from '../../../../utils/dateInput';
 import { graphQlUserMessage } from '../../../../utils/graphqlUserMessage';
 import type { PersonalInfoFields, ProfileChangeRequest } from '../types';
@@ -51,11 +54,13 @@ export function PersonalInfoTab({
   isSelf = false,
   onChanged,
 }: PersonalInfoTabProps) {
+  const notifyAction = useActionFeedback();
+
   const [values, setValues] = useState<PersonalInfoFields>(initial);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useFeedbackState<string | null>(null, 'error');
+  const [successMessage, setSuccessMessage] = useFeedbackState<string | null>(null, 'success');
   const [requests, setRequests] = useState(pendingRequests);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
 
@@ -63,7 +68,7 @@ export function PersonalInfoTab({
     setValues(initial);
     setDirty(false);
     setError(null);
-  }, [initial]);
+  }, [initial, setError]);
 
   useEffect(() => setRequests(pendingRequests), [pendingRequests]);
 
@@ -180,6 +185,7 @@ export function PersonalInfoTab({
             : request
         )
       );
+      notifyAction('updated');
       onChanged?.();
     } catch (cause) {
       setError(graphQlUserMessage(cause));
@@ -191,21 +197,15 @@ export function PersonalInfoTab({
   return (
     <div className="space-y-4">
       {successMessage ? (
-        <div
-          className="flex items-center gap-2 rounded-2xl border border-emerald-200/80 bg-emerald-50/80 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100"
-          role="status"
-        >
+        <FeedbackToast variant={'success'} messageKey={successMessage}>
           <Check className="h-4 w-4 shrink-0" aria-hidden />
           {successMessage}
-        </div>
+        </FeedbackToast>
       ) : null}
       {error ? (
-        <div
-          className="rounded-2xl border border-red-200/80 bg-red-50/90 px-4 py-2 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-100"
-          role="alert"
-        >
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </div>
+        </FeedbackToast>
       ) : null}
 
       <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50">

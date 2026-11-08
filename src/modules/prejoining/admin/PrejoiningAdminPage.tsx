@@ -2,6 +2,7 @@ import { useRef } from 'react';
 
 import { authorizationStateKey } from '../../../auth/permissionService';
 import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import PageHeader from '../../../components/common/PageHeader';
 import PageInformation from '../../../components/common/PageInformation';
 import Tabs from '../../../components/common/Tabs';
@@ -38,14 +39,14 @@ const PrejoiningAdminWorkspace = () => {
         </PageInformation>
       </div>
       {notice ? (
-        <p role="status" className="text-sm text-status-success">
+        <FeedbackToast variant={'success'} messageKey={notice}>
           {notice}
-        </p>
+        </FeedbackToast>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={error}>
           {error}
-        </p>
+        </FeedbackToast>
       ) : null}
       <div data-tour-anchor="prejoining.sections">
         <Tabs

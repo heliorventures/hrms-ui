@@ -15,6 +15,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { matchedTenantRoute } from '../../guidance/matchedTenantRoute';
 
 import AppLayout from './AppLayout';
+import { CommandPaletteProvider } from './CommandPaletteContext';
 
 vi.mock('../../hooks/useGraphClient', () => ({ useGraphClient: () => ({ request: vi.fn() }) }));
 
@@ -149,7 +150,14 @@ function renderLayout(initialEntries = ['/dashboard']) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
-        <Route path="*" element={<AppLayout />}>
+        <Route
+          path="*"
+          element={
+            <CommandPaletteProvider>
+              <AppLayout />
+            </CommandPaletteProvider>
+          }
+        >
           <Route path="*" element={<RouteControls />} />
         </Route>
       </Routes>

@@ -1,4 +1,4 @@
-import Card from '../../../components/common/Card';
+import FeedbackToast from '../../../components/common/FeedbackToast';
 import FlashToastBar from '../../../components/common/FlashToastBar';
 import { useImportedLeaveHistory } from '../hooks/useImportedLeaveHistory';
 import { usePersonalLeaveModel, type PersonalLeaveOptions } from '../hooks/usePersonalLeaveModel';
@@ -44,9 +44,11 @@ const PersonalLeaveContent = (options: PersonalLeaveOptions) => {
         />
       )}
       {approveWorkflowNotice && (
-        <Card>
-          <p className="text-sm text-sky-800 dark:text-sky-200">{approveWorkflowNotice}</p>
-        </Card>
+        <>
+          <FeedbackToast variant={'info'} messageKey={approveWorkflowNotice}>
+            {approveWorkflowNotice}
+          </FeedbackToast>
+        </>
       )}
       <div data-tour-anchor="leave.balances">
         <LeaveBalancesCard

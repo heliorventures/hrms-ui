@@ -1,7 +1,9 @@
 import type { GraphQLClient } from 'graphql-request';
 import { useEffect, useRef, useState } from 'react';
 
+import { SetPayrollCyclePaymentDateDocument } from '../../../api/loans/graphql';
 import { useDialogs } from '../../../contexts/DialogContext';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
 import {
   draftQuery,
@@ -9,6 +11,15 @@ import {
   finalizeMutation,
   type PayrollDraft,
 } from '../taxProjectionTypes';
+
+const FINALIZATION_CONFIRMATION = {
+  title: 'Finalize and lock payroll?',
+  message:
+    'This saves the reviewed payslips and prevents recalculation of this cycle. It does not transfer salary or remit tax.',
+  confirmLabel: 'Finalize & Lock',
+  cancelLabel: 'Keep draft',
+  variant: 'danger',
+} as const;
 
 export const usePayrollDraftActions = (
   client: GraphQLClient,
@@ -24,7 +35,7 @@ export const usePayrollDraftActions = (
   const draft = draftState.owner === ownerKey && enabled ? draftState.value : null;
   const setDraft = (value: PayrollDraft | null) => setDraftState({ owner: ownerKey, value });
   const [runBusy, setRunBusy] = useState<string | null>(null);
-  const [runError, setRunError] = useState<string | null>(null);
+  const [runError, setRunError] = useFeedbackState<string | null>(null, 'error');
   const [runOk, setRunOk] = useState<string | null>(null);
   const lifetime = useRef(0);
   useEffect(() => {
@@ -36,7 +47,7 @@ export const usePayrollDraftActions = (
     return () => {
       lifetime.current = generation + 1;
     };
-  }, [ownerKey, enabled]);
+  }, [ownerKey, enabled, setRunError]);
   const runPayroll = async (cycleId: string) => {
     if (!enabled || runBusy) return;
     const generation = lifetime.current;
@@ -63,14 +74,7 @@ export const usePayrollDraftActions = (
   const finalize = async (employees: string[]) => {
     if (!enabled || !draft || runBusy) return;
     const generation = lifetime.current;
-    const approved = await confirm({
-      title: 'Finalize and lock payroll?',
-      message:
-        'This saves the reviewed payslips and prevents recalculation of this cycle. It does not transfer salary or remit tax.',
-      confirmLabel: 'Finalize & Lock',
-      cancelLabel: 'Keep draft',
-      variant: 'danger',
-    });
+    const approved = await confirm(FINALIZATION_CONFIRMATION);
     if (!approved || generation !== lifetime.current) return;
     setRunBusy(draft.cycle_id);
     setRunError(null);
@@ -94,5 +98,27 @@ export const usePayrollDraftActions = (
       if (generation === lifetime.current) setRunBusy(null);
     }
   };
-  return { draft, runPayroll, finalize, runBusy, runError, runOk };
+  const savePaymentDate = async (paymentDate: string) => {
+    if (!enabled || !draft || runBusy) return;
+    const generation = lifetime.current;
+    setRunBusy(draft.cycle_id);
+    setRunError(null);
+    setRunOk(null);
+    try {
+      await client.request(SetPayrollCyclePaymentDateDocument, {
+        cycleId: draft.cycle_id,
+        paymentDate,
+        expectedRevision: draft.revision,
+      });
+      if (generation !== lifetime.current) return;
+      setDraft(null);
+      setRunOk('Payment date saved. Calculate and review payroll again.');
+      await reload();
+    } catch (cause) {
+      if (generation === lifetime.current) setRunError(graphQlUserMessage(cause));
+    } finally {
+      if (generation === lifetime.current) setRunBusy(null);
+    }
+  };
+  return { draft, runPayroll, finalize, runBusy, runError, runOk, savePaymentDate };
 };

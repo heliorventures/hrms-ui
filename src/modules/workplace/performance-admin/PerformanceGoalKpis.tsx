@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Button from '../../../components/common/Button';
 import ConfirmDialog from '../../../components/common/ConfirmDialog';
+import FeedbackToast from '../../../components/common/FeedbackToast';
+import { useFeedbackState } from '../../../hooks/useFeedbackState';
 import { useGraphClient } from '../../../hooks/useGraphClient';
 import { graphQlUserMessage } from '../../../utils/graphqlUserMessage';
-
 import {
   DeletePerformanceGoalKpiDocument,
   PerformanceGoalKpisDocument,
@@ -202,7 +203,7 @@ const PerformanceGoalKpis = ({
 }: Props) => {
   const client = useGraphClient('client');
   const [kpis, setKpis] = useState<PerformanceGoalKpi[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useFeedbackState<string | null>(null, 'error');
   const [targetGoalId, setTargetGoalId] = useState<string | null>(null);
   const [targetKpiId, setTargetKpiId] = useState<string | null>(null);
   const [targetDraft, setTargetDraft] = useState<TargetDraft>(emptyTarget);
@@ -225,7 +226,7 @@ const PerformanceGoalKpis = ({
 
   useEffect(() => {
     void loadKpis().catch((cause) => setMessage(graphQlUserMessage(cause)));
-  }, [loadKpis]);
+  }, [loadKpis, setMessage]);
 
   const stopTargetEdit = () => {
     setTargetGoalId(null);
@@ -290,9 +291,9 @@ const PerformanceGoalKpis = ({
     <section className="mt-4" aria-label="Goal KPIs">
       <h3 className="font-semibold">Goal KPIs</h3>
       {message && (
-        <p role="alert" className="mt-2 text-sm text-status-danger">
+        <FeedbackToast variant={'error'} messageKey={message}>
           {message}
-        </p>
+        </FeedbackToast>
       )}
       {detail.goals.map((goal) => {
         const goalKpis = kpis.filter((kpi) => kpi.goalId === goal.id);
