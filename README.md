@@ -20,7 +20,7 @@ Browser  →  kabipay-auth (REST)     JWT + refresh
 
 | Requirement | Notes |
 |-------------|--------|
-| **Node.js** | LTS (v20+ recommended). |
+| **Node.js** | 22.18 or newer; release images use Node 22. |
 | **npm** | Package manager. |
 | **Full functionality** | PostgreSQL 16 + **kabipay-database** migrations, **kabipay-svc** (auth + subgraphs), **kabipay-gateway**. |
 
@@ -43,6 +43,21 @@ See [FEATURES.md](FEATURES.md) for a detailed UI breakdown. Screens may call the
 
 - React 18, TypeScript, Vite, Tailwind CSS, React Router, context for auth/tenant/theme.
 - GraphQL over HTTP to `gatewayUrl` (see `src/api` and hooks).
+
+## Dependency security
+
+Run `npm run security:audit` before a release. It includes build and test tools
+and fails on any known advisory or an unavailable registry. Docker builds enforce
+this check during installation, and the shared release script runs fresh audits
+before image builds to avoid stale cached audit results.
+
+`node --test scripts/security-tooling.test.mjs` checks offline client generation,
+TypeScript ESLint configuration and glob matching. The scoped `minimatch@^10.0.0`
+override selects patched v11 for GraphQL Config and TypeScript ESLint because v10
+is affected by [GHSA-g3hv-75wg-m249](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249).
+Legacy v3 consumers retain their compatible API. Remove the override when those
+parents support the patched major themselves. Vite's browser targets remain
+explicitly set to the former build baseline.
 
 ## Configure
 

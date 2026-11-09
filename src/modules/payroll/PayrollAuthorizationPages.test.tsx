@@ -110,7 +110,7 @@ describe('payroll administration page authorization', () => {
     testState.permissions = new Set(['tax:read', 'tax:submit']);
     testState.permissionScopes = { 'tax:read': 'SELF', 'tax:submit': 'SELF' };
     const view = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter>
         <PayrollTaxPage />
       </MemoryRouter>
     );
@@ -123,7 +123,7 @@ describe('payroll administration page authorization', () => {
     testState.permissions = new Set(['tax:manage']);
     testState.permissionScopes = { 'tax:manage': 'ALL' };
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter>
         <PayrollTaxPage />
       </MemoryRouter>
     );
@@ -135,7 +135,7 @@ describe('payroll administration page authorization', () => {
     testState.permissions = new Set(['payroll:manage']);
     testState.permissionScopes = { 'payroll:manage': 'SELF' };
     const view = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter>
         <PayrollCompensationPage />
       </MemoryRouter>
     );
@@ -148,7 +148,7 @@ describe('payroll administration page authorization', () => {
     testState.permissions = new Set(['payroll:manage']);
     testState.permissionScopes = { 'payroll:manage': 'ALL' };
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter>
         <PayrollCompensationPage />
       </MemoryRouter>
     );
@@ -161,7 +161,7 @@ it('keeps tax setup actions with their feature and excludes employee submission 
   testState.permissions = new Set(['tax:manage']);
   testState.permissionScopes = { 'tax:manage': 'ALL' };
   render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <MemoryRouter>
       <PayrollTaxPage />
     </MemoryRouter>
   );
@@ -184,7 +184,7 @@ it('guides salary setup through structures to employee assignment without stacki
   testState.permissions = new Set(['payroll:manage']);
   testState.permissionScopes = { 'payroll:manage': 'ALL' };
   render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <MemoryRouter>
       <PayrollCompensationPage />
     </MemoryRouter>
   );

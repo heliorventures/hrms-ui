@@ -50,7 +50,7 @@ afterEach(cleanup);
 
 function renderPage() {
   return render(
-    <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+    <MemoryRouter>
       <ExpensesPage />
     </MemoryRouter>
   );

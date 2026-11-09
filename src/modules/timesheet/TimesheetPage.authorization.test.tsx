@@ -47,7 +47,7 @@ afterEach(cleanup);
 describe('TimesheetPage authorization', () => {
   const renderPage = () =>
     render(
-      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+      <MemoryRouter>
         <TimesheetPage />
       </MemoryRouter>
     );

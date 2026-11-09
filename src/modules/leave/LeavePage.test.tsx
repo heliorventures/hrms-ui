@@ -144,7 +144,7 @@ afterEach(cleanup);
 describe('LeavePage approval', () => {
   it('keeps requests on the page and opens holiday and leave-type references from one control', async () => {
     render(
-      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+      <MemoryRouter>
         <PageInformationProvider scopeKey="leave">
           <LeavePage />
         </PageInformationProvider>
@@ -163,7 +163,7 @@ describe('LeavePage approval', () => {
 
   it('pages through all leave requests instead of truncating the board at twenty rows', async () => {
     render(
-      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+      <MemoryRouter>
         <LeavePage />
       </MemoryRouter>
     );
@@ -185,7 +185,7 @@ describe('LeavePage approval', () => {
   it('does not render or request the board without leave:read', async () => {
     testState.permissions = new Set();
     const view = render(
-      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+      <MemoryRouter>
         <LeavePage />
       </MemoryRouter>
     );
@@ -197,7 +197,7 @@ describe('LeavePage approval', () => {
   it('loads read-only leave data without submit or approval controls', async () => {
     testState.permissions = new Set(['leave:read']);
     render(
-      <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+      <MemoryRouter>
         <LeavePage />
       </MemoryRouter>
     );
@@ -214,7 +214,6 @@ describe('LeavePage approval', () => {
     render(
       <MemoryRouter
         initialEntries={['/leave']}
-        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
       >
         <LeavePage />
       </MemoryRouter>

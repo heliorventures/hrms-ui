@@ -15,11 +15,6 @@ vi.mock('../../../hooks/useGraphClient', () => ({
   useGraphClient: () => graphState.client,
 }));
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-};
-
 const deferred = <T,>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
   const promise = new Promise<T>((res) => {
@@ -42,7 +37,7 @@ const holidays = (count: number) => ({
 
 function renderCard() {
   return render(
-    <MemoryRouter future={routerFuture}>
+    <MemoryRouter>
       <UpcomingHolidays />
     </MemoryRouter>
   );

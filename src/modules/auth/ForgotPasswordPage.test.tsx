@@ -18,14 +18,9 @@ vi.mock('../../contexts/TenantContext', () => ({
   useTenant: () => tenantState,
 }));
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-};
-
 function renderPage() {
   return render(
-    <MemoryRouter future={routerFuture}>
+    <MemoryRouter>
       <ForgotPasswordPage />
     </MemoryRouter>
   );

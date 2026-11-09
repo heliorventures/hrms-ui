@@ -60,11 +60,6 @@ export const preview = [
   },
 ];
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-};
-
 function employeeSession(): ParsedClientSession {
   return {
     jwtRoles: [],
@@ -122,7 +117,7 @@ export const notificationRequestScenarios = {
 
 export function notificationTree() {
   return (
-    <MemoryRouter future={routerFuture}>
+    <MemoryRouter>
       <NotificationDropdown />
       <button type="button" data-testid="outside">
         Outside

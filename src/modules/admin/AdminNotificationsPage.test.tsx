@@ -76,7 +76,7 @@ const consoleData = {
 
 const renderPage = () =>
   render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <MemoryRouter>
       <DialogProvider>
         <AdminNotificationsPage />
       </DialogProvider>
@@ -267,7 +267,7 @@ describe('AdminNotificationsPage audience-change safeguards', () => {
     };
     graphState.client = refreshedClient;
     view.rerender(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter>
         <DialogProvider>
           <AdminNotificationsPage />
         </DialogProvider>

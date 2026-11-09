@@ -30,11 +30,6 @@ vi.mock('../../../contexts/AuthContext', () => ({
   }),
 }));
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-};
-
 const deferred = <T,>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
   const promise = new Promise<T>((res) => {
@@ -66,7 +61,7 @@ function responseForVariables(variables: { limit: number }) {
 
 function renderCard() {
   return render(
-    <MemoryRouter future={routerFuture}>
+    <MemoryRouter>
       <LeaveBalanceCard />
     </MemoryRouter>
   );

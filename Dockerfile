@@ -5,7 +5,7 @@ FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci && npm run security:audit
 
 COPY tsconfig.json tsconfig.build.json tsconfig.node.json vite.config.ts ./
 COPY postcss.config.js tailwind.config.js index.html ./

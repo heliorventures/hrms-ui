@@ -74,11 +74,6 @@ const LocationProbe = () => {
   return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
 };
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-} as const;
-
 const operatorPair: TokenPair = {
   access: 'operator-access',
   refresh: 'operator-refresh',
@@ -391,7 +386,7 @@ describe('OpsProtectedLayout', () => {
       )
     );
     render(
-      <MemoryRouter future={routerFuture} initialEntries={['/ops/modules']}>
+      <MemoryRouter initialEntries={['/ops/modules']}>
         <AuthProvider>
           <OperatorSessionRoutes />
         </AuthProvider>

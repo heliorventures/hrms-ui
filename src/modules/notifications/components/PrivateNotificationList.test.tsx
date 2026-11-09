@@ -49,18 +49,13 @@ const notification = {
   createdAt: '2026-08-20T08:00:00.000Z',
 };
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-};
-
 function notificationList(
   actionUrl: string,
   overrides: Partial<typeof notification> = {},
   onMarkRead = vi.fn()
 ) {
   return (
-    <MemoryRouter future={routerFuture}>
+    <MemoryRouter>
       <PrivateNotificationList
         actionBusy={false}
         filter="all"

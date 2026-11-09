@@ -7,11 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import OpsLoginPage from './OpsLoginPage';
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-} as const;
-
 const auth = vi.hoisted(() => ({
   loading: false,
   loginOps: vi.fn((): Promise<void> => Promise.resolve()),
@@ -24,7 +19,7 @@ vi.mock('@/contexts/AuthContext', () => ({
 
 const renderLogin = () =>
   render(
-    <MemoryRouter future={routerFuture}>
+    <MemoryRouter>
       <OpsLoginPage />
     </MemoryRouter>
   );
@@ -92,7 +87,7 @@ describe('OpsLoginPage', () => {
     await user.type(password, 'secret value');
     auth.opsError = 'Email or password is incorrect.';
     view.rerender(
-      <MemoryRouter future={routerFuture}>
+      <MemoryRouter>
         <OpsLoginPage />
       </MemoryRouter>
     );

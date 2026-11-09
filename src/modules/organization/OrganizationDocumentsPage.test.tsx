@@ -48,7 +48,7 @@ it('keeps the selected file visible across closing and reopening, then clears it
   state.stageFile.mockResolvedValue('stage-1');
   const user = userEvent.setup();
   render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <MemoryRouter>
       <OrganizationDocumentsPage />
     </MemoryRouter>
   );
@@ -144,7 +144,7 @@ it('requires an explicit category and saves the selected category for library fi
   state.stageFile.mockResolvedValue('stage-onboarding');
   const user = userEvent.setup();
   render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <MemoryRouter>
       <OrganizationDocumentsPage />
     </MemoryRouter>
   );

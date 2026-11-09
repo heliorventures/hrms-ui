@@ -7,11 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import LoginPage from './LoginPage';
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-} as const;
-
 const mocks = vi.hoisted(() => ({
   auth: {
     error: null as string | null,
@@ -35,7 +30,7 @@ vi.mock('../../contexts/TenantContext', () => ({
 
 const renderLogin = () =>
   render(
-    <MemoryRouter future={routerFuture}>
+    <MemoryRouter>
       <LoginPage />
     </MemoryRouter>
   );
@@ -103,7 +98,7 @@ describe('LoginPage', () => {
     await user.type(password, 'secret value');
     mocks.auth.error = 'Username or password is incorrect.';
     view.rerender(
-      <MemoryRouter future={routerFuture}>
+      <MemoryRouter>
         <LoginPage />
       </MemoryRouter>
     );

@@ -57,7 +57,6 @@ function Workspace({ travelAllowed = true }: { travelAllowed?: boolean }) {
 const wrap = (child: React.ReactNode, entry = '/expenses?status=pending') => (
   <MemoryRouter
     initialEntries={[entry]}
-    future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
   >
     {child}
   </MemoryRouter>

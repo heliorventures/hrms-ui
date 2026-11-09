@@ -42,11 +42,6 @@ vi.mock('../../hooks/useGraphClient', () => ({
   useGraphClient: () => ({ request: vi.fn() }),
 }));
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-};
-
 const announcement = (index: number) => ({
   id: `announcement-${index}`,
   title: `Announcement ${index}`,
@@ -94,7 +89,7 @@ function boardState(overrides: Record<string, unknown> = {}) {
 
 function renderPage() {
   return render(
-    <MemoryRouter future={routerFuture}>
+    <MemoryRouter>
       <NotificationsPage />
     </MemoryRouter>
   );

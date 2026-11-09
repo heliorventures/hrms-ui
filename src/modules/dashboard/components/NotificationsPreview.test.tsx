@@ -28,11 +28,6 @@ vi.mock('../../notifications/components/AnnouncementAttachmentAction', () => ({
   default: () => null,
 }));
 
-const routerFuture = {
-  v7_relativeSplatPath: true,
-  v7_startTransition: true,
-};
-
 const deferred = <T,>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
   let reject!: (reason?: unknown) => void;
@@ -72,7 +67,7 @@ const board = (announcementCount = 0, notificationCount = 0) => ({
 
 function renderPreview(fullHeight = false) {
   return render(
-    <MemoryRouter future={routerFuture}>
+    <MemoryRouter>
       <NotificationsPreview fullHeight={fullHeight} />
     </MemoryRouter>
   );
