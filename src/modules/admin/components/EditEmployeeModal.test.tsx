@@ -8,7 +8,7 @@ import { graphqlDocumentSource } from '../../../testUtils/graphqlDocumentSource'
 import EditEmployeeModal, { type EditEmployeeRow } from './EditEmployeeModal';
 
 const graphClient = vi.hoisted(() => ({
-  request: vi.fn<(document: unknown, variables?: unknown) => Promise<unknown>>(),
+  request: vi.fn<[unknown, unknown?], Promise<unknown>>(),
 }));
 
 vi.mock('../../../hooks/useGraphClient', () => ({ useGraphClient: () => graphClient }));
@@ -24,6 +24,7 @@ const employee: EditEmployeeRow = {
   fullName: 'Test Employee',
   status: 'ACTIVE',
   dateOfJoining: '2026-01-01',
+  reportingManagerOrganizationManaged: false,
 };
 
 const props = {
@@ -43,11 +44,13 @@ const submit = () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  graphClient.request.mockImplementation(async () => ({
-    departments: [],
-    designations: [],
-    employees: [],
-  }));
+  graphClient.request.mockImplementation(() =>
+    Promise.resolve({
+      departments: [],
+      designations: [],
+      employees: [],
+    })
+  );
 });
 
 afterEach(() => {
@@ -74,12 +77,12 @@ describe('EditEmployeeModal identity corrections', () => {
     const update = graphClient.request.mock.calls.find(([document]) =>
       graphqlDocumentSource(document).includes('mutation UpdateEmployee(')
     );
-    expect(update?.[1]).toEqual({
-      input: expect.objectContaining({
+    expect(update?.[1]).toMatchObject({
+      input: {
         id: employee.id,
         employeeCode: 'EMP-002',
         dateOfJoining: '2026-02-15',
-      }),
+      },
     });
     expect(props.onClose).toHaveBeenCalledOnce();
   });
@@ -109,16 +112,18 @@ describe('EditEmployeeModal identity corrections', () => {
 
   it('retains corrections after a duplicate code error and permits a successful retry', async () => {
     let updates = 0;
-    graphClient.request.mockImplementation(async (document: unknown) => {
+    graphClient.request.mockImplementation((document: unknown) => {
       if (graphqlDocumentSource(document).includes('mutation UpdateEmployee(')) {
         updates += 1;
         if (updates === 1) {
-          throw Object.assign(new Error('employee code is already in use in this tenant'), {
-            code: 'EMPLOYEE_CODE_CONFLICT',
-          });
+          return Promise.reject(
+            Object.assign(new Error('employee code is already in use in this tenant'), {
+              code: 'EMPLOYEE_CODE_CONFLICT',
+            })
+          );
         }
       }
-      return { departments: [], designations: [], employees: [] };
+      return Promise.resolve({ departments: [], designations: [], employees: [] });
     });
     render(<EditEmployeeModal {...props} />);
     fireEvent.change(codeInput(), { target: { value: 'EMP-002' } });
