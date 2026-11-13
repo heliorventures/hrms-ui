@@ -207,13 +207,18 @@ function rawTextToMessage(raw: string): string {
   return FALLBACK_MESSAGE;
 }
 
+function graphQlErrorCode(error: { extensions?: Readonly<Record<string, unknown>> }): unknown {
+  return error.extensions?.code;
+}
+
 function errorCode(err: unknown): string | null {
   if (err instanceof ClientError) {
     const graphqlCode = err.response.errors?.find((item) => {
-      const { code } = item.extensions;
+      const code = graphQlErrorCode(item);
       return typeof code === 'string' && code.length > 0;
-    })?.extensions.code;
-    if (typeof graphqlCode === 'string') return graphqlCode;
+    });
+    const code = graphqlCode ? graphQlErrorCode(graphqlCode) : undefined;
+    if (typeof code === 'string') return code;
   }
 
   if (err !== null && typeof err === 'object' && 'code' in err) {
@@ -223,7 +228,7 @@ function errorCode(err: unknown): string | null {
   return null;
 }
 
-export function graphQlUserMessage(
+function standardGraphQlUserMessage(
   err: unknown,
   context: GraphQlUserMessageContext = 'default'
 ): string {
@@ -268,6 +273,26 @@ export function graphQlUserMessage(
   }
 
   return FALLBACK_MESSAGE;
+}
+
+function taxSetupMessage(err: unknown): string | null {
+  if (!(err instanceof ClientError)) return null;
+  const { errors } = err.response;
+  if (
+    errors?.length !== 1 ||
+    graphQlErrorCode(errors[0]) !== 'VALIDATION_ERROR' ||
+    errors[0].message !== 'validation error: HR tax settings are not configured for this period'
+  ) {
+    return null;
+  }
+  return 'Employee tax settings are not configured for this period.';
+}
+
+export function graphQlUserMessage(
+  err: unknown,
+  context: GraphQlUserMessageContext = 'default'
+): string {
+  return taxSetupMessage(err) ?? standardGraphQlUserMessage(err, context);
 }
 
 export const toUserMessage = graphQlUserMessage;
