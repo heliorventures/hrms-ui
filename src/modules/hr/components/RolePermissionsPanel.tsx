@@ -1,6 +1,8 @@
-import Card from '../../../components/common/Card';
 import Button from '../../../components/common/Button';
-import type { RbacPermissionRow, RbacRoleRow } from '../rbacTypes';
+import Card from '../../../components/common/Card';
+import type { RbacPermissionRow, RbacRoleRow, RbacScopeRow } from '../rbacTypes';
+
+import PermissionScopeControl from './PermissionScopeControl';
 
 interface RolePermissionsPanelProps {
   loading: boolean;
@@ -8,9 +10,12 @@ interface RolePermissionsPanelProps {
   permissionsByResource: Map<string, RbacPermissionRow[]>;
   roles: RbacRoleRow[];
   selectedRoleId: string | null;
+  scopeRows: RbacScopeRow[];
+  saving: boolean;
   onRoleChange: (id: string | null) => void;
   onSave: () => void;
   onTogglePermission: (permissionId: string) => void;
+  onScopeChange: (permission: RbacPermissionRow, scope: string) => void;
 }
 
 const RolePermissionsPanel = ({
@@ -19,13 +24,18 @@ const RolePermissionsPanel = ({
   permissionsByResource,
   roles,
   selectedRoleId,
+  scopeRows,
+  saving,
   onRoleChange,
   onSave,
   onTogglePermission,
+  onScopeChange,
 }: RolePermissionsPanelProps) => (
   <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
     <Card title="Role">
       <select
+        aria-label="Role to configure"
+        disabled={saving}
         className="mt-2 w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-sm dark:border-gray-600 dark:bg-gray-900"
         value={selectedRoleId ?? ''}
         onChange={(event) => onRoleChange(event.target.value || null)}
@@ -38,13 +48,15 @@ const RolePermissionsPanel = ({
         ))}
       </select>
     </Card>
-    <Card title="Permissions">
-      {!selectedRoleId ? (
-        <p className="text-sm text-gray-500">Select A Role.</p>
-      ) : loading ? (
-        <p className="text-sm text-gray-500">Loading Permissions...</p>
-      ) : (
+    <Card title="Permissions and data scopes">
+      {!selectedRoleId && <p className="text-sm text-gray-500">Select A Role.</p>}
+      {selectedRoleId && loading && <p className="text-sm text-gray-500">Loading Permissions...</p>}
+      {selectedRoleId && !loading && (
         <>
+          <p className="mb-3 text-sm text-gray-500">
+            Save permissions and their exact scopes together. Existing grants without a scope are
+            inactive. Select a supported scope deliberately to enable them.
+          </p>
           <div className="max-h-[32rem] space-y-4 overflow-y-auto">
             {Array.from(permissionsByResource.entries())
               .sort(([a], [b]) => a.localeCompare(b))
@@ -55,29 +67,29 @@ const RolePermissionsPanel = ({
                   </h3>
                   <div className="mt-2 space-y-1">
                     {permissions.map((permission) => (
-                      <label key={permission.id} className="flex cursor-pointer items-start gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={permissionIds.has(permission.id)}
-                          onChange={() => onTogglePermission(permission.id)}
-                        />
-                        <span>
-                          <span className="font-mono text-xs text-gray-700 dark:text-gray-300">
-                            {permission.action}
-                          </span>
-                          {permission.description ? (
-                            <span className="ml-2 text-xs text-gray-500">{permission.description}</span>
-                          ) : null}
-                        </span>
-                      </label>
+                      <PermissionScopeControl
+                        key={permission.id}
+                        permission={permission}
+                        selected={permissionIds.has(permission.id)}
+                        saving={saving}
+                        scope={
+                          scopeRows.find(
+                            (row) =>
+                              row.resource === permission.resource &&
+                              row.action === permission.action
+                          )?.scopeType ?? ''
+                        }
+                        onToggle={onTogglePermission}
+                        onScopeChange={onScopeChange}
+                      />
                     ))}
                   </div>
                 </div>
               ))}
           </div>
           <div className="mt-4">
-            <Button type="button" variant="primary" onClick={onSave}>
-              Save Permissions
+            <Button type="button" variant="primary" disabled={saving} onClick={onSave}>
+              {saving ? 'Saving...' : 'Save permissions and scopes'}
             </Button>
           </div>
         </>

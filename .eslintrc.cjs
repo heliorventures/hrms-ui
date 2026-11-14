@@ -18,6 +18,7 @@ module.exports = {
     'dist',
     '.eslintrc.cjs',
     'src/api/graphql/**',
+    'src/api/rbac/**',
     'src/api/attendance/**',
     'src/api/loans/**',
     'src/api/organization/**',

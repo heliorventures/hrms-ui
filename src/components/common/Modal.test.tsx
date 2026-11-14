@@ -30,6 +30,40 @@ const renderInApplicationRoot = (node: React.ReactNode) => {
   return render(node, { container: root });
 };
 
+describe('Modal opening focus', () => {
+  it.each(['validation alert', 'user input'])(
+    'preserves %s focus before the opening frame runs',
+    (target) => {
+      const frames: FrameRequestCallback[] = [];
+      vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      });
+
+      renderInApplicationRoot(
+        <Modal isOpen onClose={() => undefined} title="Leave application">
+          <div role="alert" tabIndex={-1}>
+            Submission failed
+          </div>
+          <input aria-label="Leave reason" />
+        </Modal>
+      );
+
+      const focused =
+        target === 'validation alert'
+          ? screen.getByRole('alert')
+          : screen.getByRole('textbox', { name: 'Leave reason' });
+      focused.focus();
+      expect(document.activeElement).toBe(focused);
+      expect(frames.length).toBeGreaterThan(0);
+
+      frames.forEach((callback) => callback(0));
+
+      expect(document.activeElement).toBe(focused);
+    }
+  );
+});
+
 describe('Modal', () => {
   it('portals an accessible dialog, inerts the application, and restores document state', () => {
     const view = renderInApplicationRoot(

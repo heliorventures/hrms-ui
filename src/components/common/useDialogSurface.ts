@@ -197,7 +197,12 @@ export function useDialogSurface({
     document.addEventListener('keydown', trapFocus);
 
     const focusFrame = window.requestAnimationFrame(() => {
-      if (isTopmostOverlay(surfaceId)) focusSurface();
+      if (!isTopmostOverlay(surfaceId)) return;
+      const surface = surfaceRefRef.current.current;
+      const active = document.activeElement;
+      // Validation or user interaction may already have moved focus inside the dialog.
+      if (active !== surface && surface?.contains(active)) return;
+      focusSurface();
     });
 
     return () => {

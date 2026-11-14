@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "codegen": "graphql-codegen --config codegen.ts",
     "codegen:attendance": "node scripts/generate-attendance-client.mjs",
+    "codegen:rbac": "node scripts/generate-rbac-client.mjs",
     "codegen:leave-queue": "node scripts/generate-leave-queue-client.mjs",
     "codegen:loans": "node scripts/generate-loans-client.mjs",
     "codegen:organization": "node scripts/generate-organization-client.mjs",

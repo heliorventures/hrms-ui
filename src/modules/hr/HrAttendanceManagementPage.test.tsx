@@ -370,6 +370,7 @@ it('fails closed across a client replacement and ignores the old page request', 
   fireEvent.click(screen.getAllByRole('button', { name: 'Adjust Bina Shah on 2026-08-24' })[0]);
   expect(screen.getByRole('dialog')).toBeTruthy();
 
+  const oldClientCallsBeforeReplacement = oldClient.request.mock.calls.length;
   const replacementClient = { request: vi.fn().mockReturnValue(replacementPage.promise) };
   graphState.client = replacementClient;
   rerender(<HrAttendanceManagementPage />);
@@ -398,7 +399,7 @@ it('fails closed across a client replacement and ignores the old page request', 
     await Promise.resolve();
   });
   expect(screen.getAllByText('Replacement Client Row')[0]).toBeTruthy();
-  expect(oldClient.request).toHaveBeenCalledTimes(5);
+  expect(oldClient.request).toHaveBeenCalledTimes(oldClientCallsBeforeReplacement);
 });
 
 it('does not publish a late query completion from a replaced client', async () => {

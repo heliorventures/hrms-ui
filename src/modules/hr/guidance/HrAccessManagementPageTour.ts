@@ -19,7 +19,7 @@ export const hrAccessManagementPageTour: TourDefinition = {
       id: 'admin-access-role-permissions',
       anchor: 'admin.access.tab.roles',
       title: 'Set permissions for a role',
-      body: 'In Role permissions, select a role and review its permissions grouped by resource. Save Permissions opens a confirmation; confirming replaces every permission assigned to that role and can change access immediately. This tour does not save changes.',
+      body: 'In Role permissions, select a role and review its permissions and supported scopes grouped by resource. Save permissions and scopes confirms and replaces both together. Existing grants without scopes are shown as inactive and stay inactive until a supported scope is selected. This tour does not save changes.',
       isVisible: ({ canCapability, canScopedPermission }) =>
         Boolean(canCapability?.('route.admin.access')) && canManageRoles(canScopedPermission),
     },
@@ -27,7 +27,7 @@ export const hrAccessManagementPageTour: TourDefinition = {
       id: 'admin-access-data-scopes',
       anchor: 'admin.access.tab.scopes',
       title: 'Limit data with permission scopes',
-      body: 'In Data scopes, choose a role and configure which records its permissions cover. SELF, TEAM, DEPARTMENT, and ALL have different reach. Saving a scope set that includes ALL requires a danger confirmation because it applies across the tenant. This tour does not add, remove, or save scope rows.',
+      body: 'Data scopes opens the same combined role editor. Each action offers only its supported scopes. SELF, TEAM, DEPARTMENT, and ALL have different reach. Permissions and scopes save together; ALL requires a danger confirmation because it applies across the company. This tour does not save changes.',
       isVisible: ({ canCapability, canScopedPermission }) =>
         Boolean(canCapability?.('route.admin.access')) && canManageRoles(canScopedPermission),
     },

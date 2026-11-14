@@ -1,0 +1,14 @@
+query RbacAccessBoard {
+  tenantDirectoryUsers(limit: 200) { id username email isActive }
+  tenantDirectoryRoles(limit: 200) { id name description isSystemRole }
+  tenantCatalogPermissions(limit: 500) { id resource action description supportedScopeTypes }
+}
+
+query RoleAccessConfiguration($roleId: ID!) {
+  permissionIdsForRole(roleId: $roleId)
+  permissionScopesForRole(roleId: $roleId) { resource action scopeType }
+}
+
+mutation SetRoleAccess($roleId: ID!, $permissionIds: [ID!]!, $scopes: [PermissionScopeAssignmentInput!]!) {
+  setRoleAccess(roleId: $roleId, permissionIds: $permissionIds, scopes: $scopes)
+}

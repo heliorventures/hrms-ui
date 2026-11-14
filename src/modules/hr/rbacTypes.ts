@@ -1,4 +1,4 @@
-import type { RbacAdminBoardQuery } from '../../api/graphql/graphql';
+import type { RbacAccessBoardQuery } from '../../api/rbac/graphql';
 
 export type RbacAccessTab = 'users' | 'roles' | 'scopes';
 
@@ -14,8 +14,8 @@ export interface RbacUserRow {
   email?: string | null;
   isActive: boolean;
 }
-export type RbacRoleRow = RbacAdminBoardQuery['tenantDirectoryRoles'][number];
-export type RbacPermissionRow = RbacAdminBoardQuery['tenantCatalogPermissions'][number];
+export type RbacRoleRow = RbacAccessBoardQuery['tenantDirectoryRoles'][number];
+export type RbacPermissionRow = RbacAccessBoardQuery['tenantCatalogPermissions'][number];
 
 export const RBAC_TABS: RbacAccessTab[] = ['users', 'roles', 'scopes'];
 export const RBAC_SCOPE_TYPES = ['SELF', 'TEAM', 'DEPARTMENT', 'ALL'] as const;

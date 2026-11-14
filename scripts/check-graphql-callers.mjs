@@ -8,7 +8,7 @@ import ts from 'typescript';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = resolve(root, 'src');
 const generatedDirectories = new Set(
-  ['graphql', 'attendance', 'leave-queue', 'loans', 'organization', 'organization-employee'].map(
+  ['graphql', 'attendance', 'leave-queue', 'loans', 'organization', 'organization-employee', 'rbac'].map(
     (directory) => resolve(sourceRoot, 'api', directory)
   )
 );
