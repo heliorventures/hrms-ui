@@ -1,13 +1,21 @@
 import Badge from '../../../components/common/Badge';
+import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import type { SalaryComponentRow } from '../payrollTypes';
 
 interface PayrollSalaryComponentsCardProps {
   rows: SalaryComponentRow[];
   loading: boolean;
+  error: string | null;
+  onRetry: () => void;
 }
 
-const PayrollSalaryComponentsCard = ({ rows, loading }: PayrollSalaryComponentsCardProps) => (
+const PayrollSalaryComponentsCard = ({
+  rows,
+  loading,
+  error,
+  onRetry,
+}: PayrollSalaryComponentsCardProps) => (
   <Card title="Salary Components">
     <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
       Once a component is used, its code, type and tax treatment are protected. Create a new
@@ -16,7 +24,15 @@ const PayrollSalaryComponentsCard = ({ rows, loading }: PayrollSalaryComponentsC
     {loading && (
       <p className="text-sm text-gray-500 dark:text-gray-400">Loading Salary Components...</p>
     )}
-    {!loading && rows.length > 0 && (
+    {!loading && error && (
+      <div role="alert" className="space-y-2 text-sm text-content-secondary">
+        <p>{error}</p>
+        <Button size="sm" variant="outline" onClick={onRetry}>
+          Retry salary components
+        </Button>
+      </div>
+    )}
+    {!loading && !error && rows.length > 0 && (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {rows.map((item) => (
           <div key={item.id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
@@ -44,7 +60,7 @@ const PayrollSalaryComponentsCard = ({ rows, loading }: PayrollSalaryComponentsC
         ))}
       </div>
     )}
-    {!loading && rows.length === 0 && (
+    {!loading && !error && rows.length === 0 && (
       <p className="text-sm text-gray-500 dark:text-gray-400">No Salary Components Found.</p>
     )}
   </Card>

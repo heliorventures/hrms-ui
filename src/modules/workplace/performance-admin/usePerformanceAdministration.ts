@@ -53,6 +53,9 @@ export const usePerformanceAdministration = ({ performanceProgramId }: Props) =>
     administration: cycleData.administration,
     chooseRevision: selection.chooseRevision,
     cycles: cycleList.cycles,
+    cyclesLoading: cycleList.loading,
+    cyclesError: cycleList.error,
+    reloadCycles: cycleList.reloadCycles,
     isBusy,
     loadMoreCycles: cycleList.loadMoreCycles,
     loadMoreFeedback: () =>

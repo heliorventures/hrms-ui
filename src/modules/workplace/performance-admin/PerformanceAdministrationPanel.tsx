@@ -18,17 +18,33 @@ const CycleList = ({
   nextCursor,
   onSelect,
   onLoadMore,
+  loading,
+  error,
+  onRetry,
 }: {
   cycles: PerformanceAdminCycleRow[];
   selectedCycleId?: string;
   nextCursor?: string | null;
   onSelect: (reviewCycleId: string) => void;
   onLoadMore: () => void;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
 }) => (
   <Card title="Cycle administration">
-    {cycles.length === 0 ? (
+    {loading && <p className="text-sm text-content-secondary">Loading cycles...</p>}
+    {!loading && error && (
+      <div role="alert" className="space-y-2 text-sm text-content-secondary">
+        <p>{error}</p>
+        <Button size="sm" variant="outline" onClick={onRetry}>
+          Retry cycles
+        </Button>
+      </div>
+    )}
+    {!loading && !error && cycles.length === 0 && (
       <p className="text-sm text-content-secondary">No cycles match this program.</p>
-    ) : (
+    )}
+    {cycles.length > 0 && (
       <ul className="divide-y divide-line">
         {cycles.map((cycle) => (
           <li
@@ -56,7 +72,7 @@ const CycleList = ({
       </ul>
     )}
     {nextCursor && (
-      <Button className="mt-3" size="sm" variant="outline" onClick={onLoadMore}>
+      <Button className="mt-3" size="sm" variant="outline" disabled={loading} onClick={onLoadMore}>
         Load more cycles
       </Button>
     )}
@@ -165,6 +181,9 @@ const PerformanceAdministrationPanel = ({ performanceProgramId }: Props) => {
       )}
       <CycleList
         cycles={administration.cycles}
+        loading={administration.cyclesLoading}
+        error={administration.cyclesError}
+        onRetry={administration.reloadCycles}
         selectedCycleId={current?.reviewCycle.id}
         nextCursor={administration.nextCycleCursor}
         onSelect={administration.selectCycle}

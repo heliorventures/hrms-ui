@@ -95,6 +95,8 @@ const PayrollWorkspacePanels = ({
         <PayrollSalaryComponentsCard
           rows={board.data?.salaryComponents ?? []}
           loading={board.loading}
+          error={board.error}
+          onRetry={() => void board.loadData()}
         />
       </>
     ),
