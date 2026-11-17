@@ -113,7 +113,7 @@ it('shows punch, leave submission, approval, and leave management guidance only 
   expect(employeeLeaveSteps).not.toContain('leave-management-settings');
 
   const approverLeaveSteps = visibleSteps(leavePageTour, approver).map((step) => step.id);
-  expect(approverLeaveSteps).toContain('leave-approval-actions');
+  expect(approverLeaveSteps).not.toContain('leave-approval-actions');
   expect(approverLeaveSteps).not.toContain('leave-apply-dialog');
   expect(approverLeaveSteps).not.toContain('leave-management-settings');
 
@@ -150,7 +150,6 @@ it.each([
   [attendancePageTour, 'attendance-adjustment', 'attendance.adjust-trigger', 'Add Missed Punches'],
   [timesheetPageTour, 'timesheet-submit-week', 'timesheet.submit-week', 'Submit week'],
   [leavePageTour, 'leave-apply-dialog', 'leave.apply-trigger', 'Apply for leave'],
-  [leavePageTour, 'leave-approval-actions', 'leave.requests', 'Approve'],
 ] as const)(
   'blocks a live action while the %s tour is open',
   async (tour, stepId, anchor, label) => {

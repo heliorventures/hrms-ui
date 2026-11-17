@@ -21,8 +21,9 @@ extend type Query {
     offset: Int! = 0
     fromDate: NaiveDate
     toDate: NaiveDate
+    mine: Boolean! = false
   ): [LeaveRequest!]!
-  leaveRequestCount(fromDate: NaiveDate, toDate: NaiveDate): Int!
+  leaveRequestCount(fromDate: NaiveDate, toDate: NaiveDate, mine: Boolean! = false): Int!
 }
 
 type LeaveApprovalQueue {

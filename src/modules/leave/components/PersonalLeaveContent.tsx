@@ -1,4 +1,3 @@
-import FeedbackToast from '../../../components/common/FeedbackToast';
 import FlashToastBar from '../../../components/common/FlashToastBar';
 import { useImportedLeaveHistory } from '../hooks/useImportedLeaveHistory';
 import { usePersonalLeaveModel, type PersonalLeaveOptions } from '../hooks/usePersonalLeaveModel';
@@ -21,7 +20,6 @@ const PersonalLeaveContent = (options: PersonalLeaveOptions) => {
     retryWorkflowTrail,
     loading,
     workflowTrail,
-    approveWorkflowNotice,
     balanceYear,
     data,
     leaveTypeNameById,
@@ -42,13 +40,6 @@ const PersonalLeaveContent = (options: PersonalLeaveOptions) => {
           onRetryWorkflowTrail={retryWorkflowTrail}
           refreshing={loading || workflowTrail.loading}
         />
-      )}
-      {approveWorkflowNotice && (
-        <>
-          <FeedbackToast variant={'info'} messageKey={approveWorkflowNotice}>
-            {approveWorkflowNotice}
-          </FeedbackToast>
-        </>
       )}
       <div data-tour-anchor="leave.balances">
         <LeaveBalancesCard

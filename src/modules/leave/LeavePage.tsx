@@ -45,7 +45,6 @@ const LeavePage = () => {
       yearChoices={yearChoices}
       updateView={updateView}
       canSubmitLeave={permissions.canCapability('action.leave.submit')}
-      canApproveLeave={permissions.canCapability('action.leave.approve')}
       canManageLeave={permissions.canCapability('action.leave.manage')}
     />
   );

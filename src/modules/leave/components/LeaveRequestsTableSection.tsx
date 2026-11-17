@@ -29,8 +29,8 @@ export interface LeaveRequestsTableSectionProps {
   viewerId?: string;
   approveBusyId: string | null;
   cancelBusyId: string | null;
-  onApprove: (leaveRequestId: string, pendingApprovalStepId?: string | null) => void;
-  onRejectClick: (leaveRequestId: string, pendingApprovalStepId?: string | null) => void;
+  onApprove?: (leaveRequestId: string, pendingApprovalStepId?: string | null) => void;
+  onRejectClick?: (leaveRequestId: string, pendingApprovalStepId?: string | null) => void;
   onCancelOwn: (leaveRequestId: string) => void;
   onOpenTrail: (row: LeaveRequestRow) => void;
   emptyLabel?: string;
@@ -52,7 +52,9 @@ export const ApprovalActions = ({
   if (
     row.status.toLowerCase() !== 'pending' ||
     row.viewerMayApprove !== true ||
-    viewerId === row.employeeId
+    viewerId === row.employeeId ||
+    !onApprove ||
+    !onRejectClick
   )
     return null;
   if (!row.pendingApprovalStepId?.trim()) {

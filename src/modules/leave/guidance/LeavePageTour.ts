@@ -20,7 +20,7 @@ export const leavePageTour: TourDefinition = {
       id: 'leave-requests',
       anchor: 'leave.requests',
       title: 'Review leave requests',
-      body: 'Recent requests show their status and workflow history. Pending requests may offer actions according to your role and the request assignment.',
+      body: "My Leave Requests shows only your applications, their status, and workflow history. You can cancel your pending requests. Review other employees' requests on Leave Approval.",
     },
     {
       id: 'leave-apply-dialog',
@@ -28,13 +28,6 @@ export const leavePageTour: TourDefinition = {
       title: 'Understand the leave application form',
       body: 'The form asks for a leave type, date range, and reason. Some leave types also require a supporting document; eligible requests can specify a half day. This tour does not create a request.',
       isVisible: ({ canCapability }) => canCapability?.('action.leave.submit') ?? false,
-    },
-    {
-      id: 'leave-approval-actions',
-      anchor: 'leave.requests',
-      title: 'Understand approval actions',
-      body: 'Requests assigned to your approval scope can show Approve and Reject actions. Rejection requires a reason. These actions follow the configured approval workflow and are not run by this tour.',
-      isVisible: ({ canCapability }) => canCapability?.('action.leave.approve') ?? false,
     },
     {
       id: 'leave-management-settings',

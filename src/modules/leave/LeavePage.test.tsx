@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApproveLeaveRequestDocument, LeaveBoardDocument } from '../../api/graphql/graphql';
+import { CancelLeaveRequestDocument, LeaveBoardDocument } from '../../api/graphql/graphql';
 import PageInformationProvider from '../../components/common/PageInformationProvider';
 import type * as UseFlashToastModule from '../../hooks/useFlashToast';
 
@@ -87,9 +87,9 @@ const board = {
   leaveRequests: [
     {
       id: 'leave-1',
-      employeeId: 'employee-1',
-      employeeName: 'Asha Rao',
-      employeeCode: 'EMP-001',
+      employeeId: 'manager-1',
+      employeeName: 'Logged In Employee',
+      employeeCode: 'EMP-SELF',
       leaveTypeId: 'annual-leave',
       fromDate: '2026-08-27',
       toDate: '2026-08-27',
@@ -128,8 +128,8 @@ beforeEach(() => {
             availableUnits: '0',
           },
         });
-      if (document === ApproveLeaveRequestDocument) {
-        return Promise.resolve({ approveLeaveRequest: { status: 'APPROVED' } });
+      if (document === CancelLeaveRequestDocument) {
+        return Promise.resolve({ cancelLeaveRequest: { status: 'CANCELLED' } });
       }
       return Promise.reject(new Error('Unexpected GraphQL document.'));
     }),
@@ -141,7 +141,38 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-describe('LeavePage approval', () => {
+describe('LeavePage personal requests', () => {
+  it('never shows other employees or review actions even if a response includes them', async () => {
+    const normal = testState.client.request.getMockImplementation() as
+      ((document: unknown) => Promise<unknown>) | undefined;
+    if (!normal) throw new Error('Missing baseline GraphQL fixture.');
+    testState.client.request.mockImplementation((document: unknown) => {
+      if (document === LeaveBoardDocument)
+        return Promise.resolve({
+          ...board,
+          leaveRequests: [
+            ...board.leaveRequests,
+            {
+              ...board.leaveRequests[0],
+              id: 'foreign-leave',
+              employeeId: 'other-employee',
+              reason: 'Private reason',
+            },
+          ],
+        });
+      return normal(document);
+    });
+    render(
+      <MemoryRouter>
+        <LeavePage />
+      </MemoryRouter>
+    );
+    await screen.findByRole('table', { name: 'Leave requests' });
+    expect(screen.queryByText('Private reason')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull();
+  });
+
   it('keeps requests on the page and opens holiday and leave-type references from one control', async () => {
     render(
       <MemoryRouter>
@@ -151,7 +182,7 @@ describe('LeavePage approval', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Recent Leave Requests')).toBeTruthy();
+    expect(await screen.findByText('My Leave Requests')).toBeTruthy();
     expect(screen.queryByText('Upcoming public holidays')).toBeNull();
     expect(screen.queryByText('Carry Forward')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Page information' }));
@@ -203,29 +234,28 @@ describe('LeavePage approval', () => {
     );
 
     const desktop = within(await screen.findByRole('table', { name: 'Leave requests' }));
-    expect(desktop.getByText('Asha Rao (EMP-001)')).toBeTruthy();
+    expect(desktop.queryByRole('columnheader', { name: 'Employee' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Apply for leave' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
   });
 
-  it('loads with LeaveBoardDocument and forwards the row workflow step when approving', async () => {
+  it('allows cancelling an own pending request without approval or rejection controls', async () => {
     render(
-      <MemoryRouter
-        initialEntries={['/leave']}
-      >
+      <MemoryRouter initialEntries={['/leave']}>
         <LeavePage />
       </MemoryRouter>
     );
 
     const desktop = within(await screen.findByRole('table', { name: 'Leave requests' }));
-    fireEvent.click(desktop.getByRole('button', { name: 'Approve' }));
+    expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull();
+    fireEvent.click(desktop.getByRole('button', { name: 'Cancel' }));
 
     await waitFor(() =>
-      expect(testState.client.request).toHaveBeenCalledWith(ApproveLeaveRequestDocument, {
+      expect(testState.client.request).toHaveBeenCalledWith(CancelLeaveRequestDocument, {
         leaveRequestId: 'leave-1',
-        expectedWorkflowStepId: 'workflow-step-1',
       })
     );
     expect(testState.client.request).toHaveBeenCalledWith(LeaveBoardDocument, {
@@ -242,8 +272,7 @@ describe('LeavePage ownership', () => {
   it('ignores an old identity response after A to B to A navigation', async () => {
     const pending: ((value: typeof board) => void)[] = [];
     const normal = testState.client.request.getMockImplementation() as
-      | ((document: unknown) => Promise<unknown>)
-      | undefined;
+      ((document: unknown) => Promise<unknown>) | undefined;
     if (!normal) throw new Error('Missing baseline GraphQL fixture.');
     testState.client.request.mockImplementation((document: unknown) => {
       if (document === LeaveBoardDocument)
@@ -275,16 +304,15 @@ describe('LeavePage ownership', () => {
     expect(screen.queryByText(/of 99 leave requests/)).toBeNull();
   });
 
-  it('does not toast or refresh a new owner when an old approval completes', async () => {
-    let resolveApproval!: (value: unknown) => void;
+  it('does not toast or refresh a new owner when an old cancellation completes', async () => {
+    let resolveCancellation!: (value: unknown) => void;
     const normal = testState.client.request.getMockImplementation() as
-      | ((document: unknown) => Promise<unknown>)
-      | undefined;
+      ((document: unknown) => Promise<unknown>) | undefined;
     if (!normal) throw new Error('Missing baseline GraphQL fixture.');
     testState.client.request.mockImplementation((document: unknown) =>
-      document === ApproveLeaveRequestDocument
+      document === CancelLeaveRequestDocument
         ? new Promise((resolve) => {
-            resolveApproval = resolve;
+            resolveCancellation = resolve;
           })
         : normal(document)
     );
@@ -295,7 +323,7 @@ describe('LeavePage ownership', () => {
     );
     const view = render(page());
     const desktop = within(await screen.findByRole('table', { name: 'Leave requests' }));
-    fireEvent.click(desktop.getByRole('button', { name: 'Approve' }));
+    fireEvent.click(desktop.getByRole('button', { name: 'Cancel' }));
     testState.userId = 'user-b';
     view.rerender(page());
     await screen.findByRole('table', { name: 'Leave requests' });
@@ -303,7 +331,7 @@ describe('LeavePage ownership', () => {
       ([document]) => document === LeaveBoardDocument
     ).length;
     await act(async () => {
-      resolveApproval({ approveLeaveRequest: { status: 'APPROVED' } });
+      resolveCancellation({ cancelLeaveRequest: { status: 'CANCELLED' } });
       await Promise.resolve();
     });
     expect(testState.flash.show).not.toHaveBeenCalled();
@@ -314,15 +342,14 @@ describe('LeavePage ownership', () => {
 });
 
 describe('LeavePage dialog and query boundaries', () => {
-  it('closes a rejection target when the query year changes', async () => {
+  it('reloads personal requests when the query year changes without a rejection dialog', async () => {
     render(
       <MemoryRouter>
         <LeavePage />
       </MemoryRouter>
     );
-    const desktop = within(await screen.findByRole('table', { name: 'Leave requests' }));
-    fireEvent.click(desktop.getByRole('button', { name: 'Reject' }));
-    expect(screen.getByRole('dialog', { name: 'Reject Leave Request' })).toBeTruthy();
+    await screen.findByRole('table', { name: 'Leave requests' });
+    expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull();
     fireEvent.change(screen.getByRole('combobox', { name: 'Year' }), {
       target: { value: String(new Date().getFullYear() - 1) },
     });

@@ -2,20 +2,15 @@ import type { PersonalLeaveModel } from '../hooks/usePersonalLeaveModel';
 
 import AllHolidaysModal from './AllHolidaysModal';
 import ApplyLeaveModal from './ApplyLeaveModal';
-import LeaveRejectModal from './LeaveRejectModal';
 import LeaveWorkflowTrailModal from './LeaveWorkflowTrailModal';
 
 const PersonalLeaveDialogs = ({ model }: { model: PersonalLeaveModel }) => {
   const {
     canSubmitLeave,
-    canApproveLeave,
     applyOpen,
     data,
     setApplyOpen,
     refreshBoard,
-    rejectLeaveTarget,
-    setRejectLeaveTarget,
-    onRejected,
     workflowTrail,
     allHolidays,
     employeeLabel,
@@ -34,15 +29,6 @@ const PersonalLeaveDialogs = ({ model }: { model: PersonalLeaveModel }) => {
           onSubmitted={() => {
             void refreshBoard();
           }}
-        />
-      ) : null}
-      {canApproveLeave ? (
-        <LeaveRejectModal
-          isOpen={rejectLeaveTarget !== null}
-          leaveRequestId={rejectLeaveTarget?.leaveRequestId ?? null}
-          expectedWorkflowStepId={rejectLeaveTarget?.expectedWorkflowStepId ?? null}
-          onClose={() => setRejectLeaveTarget(null)}
-          onRejected={onRejected}
         />
       ) : null}
       <LeaveWorkflowTrailModal

@@ -7,19 +7,13 @@ import LeaveRequestsTableSection from './LeaveRequestsTableSection';
 const PersonalLeaveRequests = ({ model }: { model: PersonalLeaveModel }) => {
   const {
     loading,
-    approveBusyId,
     cancelBusyId,
-    hideEmployeeColumn,
-    employeeLabel,
     leaveTypeNameById,
-    data,
-    showApprovalColumn,
+    requests,
     canSubmitLeave,
     viewerId,
-    handleApprove,
     handleCancelOwn,
     openWorkflowTrail,
-    onRejectClick,
     leaveRequestCount,
     firstVisibleRequest,
     lastVisibleRequest,
@@ -27,24 +21,21 @@ const PersonalLeaveRequests = ({ model }: { model: PersonalLeaveModel }) => {
     updateView,
   } = model;
   return (
-    <Card id="leave-requests-section" title="Recent Leave Requests">
+    <Card id="leave-requests-section" title="My Leave Requests">
       {loading ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">Loading Leave Requests...</p>
       ) : (
         <LeaveRequestsTableSection
-          approveBusyId={approveBusyId}
+          approveBusyId={null}
           cancelBusyId={cancelBusyId}
-          employeeLabel={hideEmployeeColumn ? undefined : employeeLabel}
-          emptyLabel="No Leave Requests Found."
-          hideEmployeeColumn={hideEmployeeColumn}
+          emptyLabel="You have no leave requests for this year."
+          hideEmployeeColumn
           leaveTypeNameById={leaveTypeNameById}
-          rows={data?.leaveRequests ?? []}
-          showApprovalColumn={showApprovalColumn}
+          rows={requests}
+          showApprovalColumn={false}
           viewerId={canSubmitLeave ? viewerId : undefined}
-          onApprove={handleApprove}
           onCancelOwn={handleCancelOwn}
           onOpenTrail={openWorkflowTrail}
-          onRejectClick={onRejectClick}
         />
       )}
       {!loading && leaveRequestCount > 0 ? (

@@ -4,11 +4,7 @@ import type { LeaveBoardQuery } from '../../../api/graphql/graphql';
 
 import { PERSONAL_LEAVE_LIMIT } from './usePersonalLeaveBoard';
 
-export function usePersonalLeaveLabels(
-  data: LeaveBoardQuery | null,
-  canApproveLeave: boolean,
-  requestPage: number
-) {
+export function usePersonalLeaveLabels(data: LeaveBoardQuery | null, requestPage: number) {
   const leaveTypeNameById = useMemo(
     () => new Map((data?.leaveTypes ?? []).map((leaveType) => [leaveType.id, leaveType.name])),
     [data?.leaveTypes]
@@ -16,17 +12,13 @@ export function usePersonalLeaveLabels(
 
   const viewerId = data?.viewerEmployeeId;
 
-  const showApprovalColumn = useMemo(
+  const requests = useMemo(
     () =>
-      canApproveLeave && (data?.leaveRequests ?? []).some((row) => row.viewerMayApprove === true),
-    [canApproveLeave, data?.leaveRequests]
+      (data?.leaveRequests ?? []).filter(
+        (request) => !!viewerId && request.employeeId === viewerId
+      ),
+    [data?.leaveRequests, viewerId]
   );
-
-  const hideEmployeeColumn = useMemo(() => {
-    const requests = data?.leaveRequests ?? [];
-    if (!viewerId || requests.length === 0 || showApprovalColumn) return false;
-    return requests.every((request) => request.employeeId === viewerId);
-  }, [data?.leaveRequests, viewerId, showApprovalColumn]);
 
   const leaveRequestCount = data?.leaveRequestCount ?? 0;
   const firstVisibleRequest = leaveRequestCount === 0 ? 0 : requestPage * PERSONAL_LEAVE_LIMIT + 1;
@@ -52,8 +44,7 @@ export function usePersonalLeaveLabels(
   return {
     leaveTypeNameById,
     viewerId,
-    showApprovalColumn,
-    hideEmployeeColumn,
+    requests,
     leaveRequestCount,
     firstVisibleRequest,
     lastVisibleRequest,

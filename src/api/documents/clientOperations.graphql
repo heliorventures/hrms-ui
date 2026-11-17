@@ -1571,7 +1571,7 @@ query LeaveBoard(
   $toDate: NaiveDate
 ) {
   viewerEmployeeId
-  leaveRequestCount(fromDate: $fromDate, toDate: $toDate)
+  leaveRequestCount(fromDate: $fromDate, toDate: $toDate, mine: true)
   upcomingHolidays(limit: 100) {
     id
     calendarId
@@ -1605,6 +1605,7 @@ query LeaveBoard(
     offset: $requestOffset
     fromDate: $fromDate
     toDate: $toDate
+    mine: true
   ) {
     id
     employeeId
